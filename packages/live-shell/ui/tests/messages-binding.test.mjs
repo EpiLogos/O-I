@@ -248,7 +248,19 @@ test('a roster agent\'s direct conversation binds the session AIKit opened it in
   assert.equal(msg.conversationTrack(tracks, undefined), null)
   const source = readFileSync(new URL('../src/agent/devices/AgentRailDevices.tsx', import.meta.url), 'utf8')
   assert.match(source, /conversationTrack\(tracks, chat\?\.session\)/, 'the publisher reads the conversation\'s session')
-  assert.match(source, /shell\.setSelectedTrackId\(trackKey\(chatTrack\)/, 'and makes it THE selection the Agent widget and the chain\'s Agent read')
+  assert.match(source, /shell\.setSelectedTrackId\(trackKey\(chatTrack\), chatName \?\?/, 'and makes it THE selection, under the agent\'s name, that Factory\'s chain reads')
+})
+
+// Walk 13 Nov: the title line, the Trail and the Context's subject read "Your conversation with agent:expressed-…": the selection carried
+// the session's purpose, which names the agent by its ref.
+test('the conversation\'s agent is named as Messages names it, never by its ref', () => {
+  const population = {positions: [], agents: [{agent_ref: 'agent:expressed-0600', purpose: 'Keeps my practice and reads today\'s Flow with me',
+    source_relation: {intent_provenance: {intent_expression: 'Keeps my practice and reads today\'s Flow with me'}}}]}
+  const name = msg.conversationName(population, 'agent:expressed-0600')
+  assert.ok(name && !name.includes('agent:expressed'), name)
+  assert.match(name, /^Keeps my practice/)
+  assert.equal(msg.conversationName(population, 'agent:other'), null, 'an agent the population does not name has no name here')
+  assert.equal(msg.conversationName(null, null), null)
 })
 
 test('(b) every key the design reads is an owner reading, absent with its missing operation named, or a hold of the hand', () => {

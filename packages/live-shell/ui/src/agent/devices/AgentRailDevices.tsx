@@ -38,7 +38,7 @@ import {chainDeviceId, slotRows} from './agentChainDevices'
 import {gatewayBinding, holdView, openRefinement, useChainHolds, viewHolds} from './designBindings'
 import {FRAMES_ID, FRAMES_VIEW, framesBinding, journalAsks, journalSessions, mainDevices, rackBinding} from './mainTrackBindings'
 import {CARRIER_PAGE, CHECKOUTS_PAGE, GATEWAYS_PAGE, LEFT_BEHIND_PAGE, MACHINE_PAGE, SEAT_PAGE, carryPages} from './oneAgentBinding'
-import {AGENT_ROSTER, MESSAGES_ID, PERSON_ACTS, acceptedProfilesOf, agentPlaces, conversationTrack, handlingAdvertisedOf, isRosterAgent, madeOf, messagesBinding, messagesDevice, positionRefs, sentOf, type MessagesPorts} from './messagesBinding'
+import {AGENT_ROSTER, MESSAGES_ID, PERSON_ACTS, acceptedProfilesOf, agentPlaces, conversationName, conversationTrack, handlingAdvertisedOf, isRosterAgent, madeOf, messagesBinding, messagesDevice, positionRefs, sentOf, type MessagesPorts} from './messagesBinding'
 import {lastUsageModels} from './designBindings'
 import {runStateOfSession} from './runFaces'
 import {hostState} from '../../frame/devices/deviceHost'
@@ -47,7 +47,7 @@ import type {GatewayWriteRequest, KernelTransportStatus} from '../../../../../..
 import {APPROVALS_ID, LEDGER_ID, approvalsBinding, ledgerBinding, ledgerReceiptSession, receiptDevices, withNoticeReasons} from './receiptBindings'
 import {useAgentChainReading} from './useAgentChainReading'
 import {useConversationAnswer} from './useConversationAnswer'
-import {useAgentConversation} from './useAgentConversation'
+import {holdOpenConversation, openConversationOf, useAgentConversation} from './useAgentConversation'
 import {ROUTE_WORDS, centralRevisionWrite, gatewayWriteOp, ownerRouteWrite, refinementWrite, refusalWords, workcellWriteOp} from './ownerRoutes'
 import {usePopulationAnswer} from './usePopulationAnswer'
 import {projectOfSession, registerOf, returnProjectOf, ROOT_REGISTER, useWorldReturns} from '../worldScope'
@@ -277,16 +277,21 @@ export function AgentRailDevices() {
   const messages = useMemo(() => messagesBinding({population, gateway: reading, conversation, chat, review, runs, accepted, ...(railRegister === null ? {} : {project: railRegister}), agentSets, holds,
     skillsets, places, ...(handlingAdvertised === undefined ? {} : {handlingAdvertised}), ...(heard ? {heard} : {})}, ports),
     [population, reading, conversation, chat, review, runs, accepted, agentSets, holds, ports, railRegister, handlingAdvertised, heard, skillsets, places])
-  // The roster agent open in Messages speaks in the session AIKit's agent_conversation bound it to: once the agency reading lists that
-  // session, it becomes THE selection, so the Agent widget and the chain's Agent read that conversation (once per session opened, so a
-  // selection you make afterwards stands).
+  // The roster agent open in Messages speaks in the session AIKit's agent_conversation bound it to. The Agent reads that conversation
+  // directly (useAgentConversation.ts holdOpenConversation: Central's Agent and the rail's Agent widget), by the name Messages gives the
+  // agent; once the agency reading lists the session, its track also becomes THE selection, under that name, so Factory's chain reads it
+  // (once per session opened, so a selection you make afterwards stands).
+  const chatName = useMemo(() => conversationName(population.status === 'answered' ? population.value : null, chat?.agent ?? null), [population, chat?.agent])
+  const openChat = useMemo(() => openConversationOf(chat, chatName, say), [chat, chatName, say])
+  useEffect(() => { holdOpenConversation(openChat) }, [openChat])
+  useEffect(() => () => holdOpenConversation(null), [])
   const boundSession = useRef<string | null>(null)
   const chatTrack = conversationTrack(tracks, chat?.session)
   useEffect(() => {
     if (!chatTrack || !shell || boundSession.current === chatTrack.sessionRef) return
     boundSession.current = chatTrack.sessionRef
-    if (shell.selectedTrackId !== trackKey(chatTrack)) shell.setSelectedTrackId(trackKey(chatTrack), chatTrack.purpose ?? chatTrack.agentName ?? chatTrack.sessionRef)
-  }, [chatTrack, shell])
+    if (shell.selectedTrackId !== trackKey(chatTrack)) shell.setSelectedTrackId(trackKey(chatTrack), chatName ?? chatTrack.agentName ?? chatTrack.purpose ?? chatTrack.sessionRef)
+  }, [chatTrack, shell, chatName])
 
   // Workcell's instrument: the workcell whose return track is selected, its seats and the chain devices' own values; it sets none of them
   // (§19.23: each is set on its device).

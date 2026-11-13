@@ -271,6 +271,14 @@ export function conversationTrack<T extends {readonly sessionRef: string; readon
   return session ? (tracks ?? []).find(track => !track.group && track.sessionRef === session) ?? null : null
 }
 
+/** The name Messages gives the agent of a conversation (messagesAgents: its Position's label, else Central's label or your words for it),
+ * never its ref; null when the population does not name it. Pure. */
+export function conversationName(population: unknown, agent: string | null): string | null {
+  if (!agent) return null
+  const name = messagesAgents(population)?.find(row => row.id === agent)?.name
+  return typeof name === 'string' && name && name !== agent ? name : null
+}
+
 /** AIKit's set list (`aikit set list`: {sets [{name, members, …}]}) as the card's Carries: each set by its name. Null when not a set list. */
 export function skillsetsOf(list: unknown): string[] | null {
   if (!isObj(list) || !Array.isArray(list.sets)) return null

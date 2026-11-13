@@ -4,7 +4,7 @@
 // thread is AIKit's own transcript view (`aikit session-space encounter view`), read again while the agent stays open; Send is the
 // owner's draft at the view's revision, then the prompt of that revision. Every refusal is AIKit's own words. A conversation renewed after
 // its owner restarted (a harness that cannot resume) keeps its history in its earlier sessions: their views are read once and stand first.
-import {useCallback, useEffect, useRef, useState} from 'react'
+import {useCallback, useEffect, useRef, useState, useSyncExternalStore} from 'react'
 import {agentConversation, encounter, type Draft, type EncounterReading} from '../../../../../../desktop/cradle/src/encounter/client'
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 
@@ -64,4 +64,36 @@ export function useAgentConversation(transport: KernelTransportStatus, agent: st
     await refresh.current()
   }, [transport])
   return {chat, say}
+}
+
+/** The roster conversation open in Messages, as the Agent reads it in every mode (Central's Agent, the rail's Agent widget): the agent by
+ * its ref and by the name Messages gives it, the session AIKit bound it to, that session's transcript view and the act that speaks to it.
+ * Messages' publisher (AgentRailDevices.tsx) holds the one open; null while none is. */
+export interface OpenConversation {
+  readonly agent: string
+  readonly name: string
+  readonly session: string
+  readonly view?: EncounterReading
+  readonly say: (words: string) => Promise<void>
+}
+
+let open: OpenConversation | null = null
+const watchers = new Set<() => void>()
+/** Holds the open conversation (null: none is open). */
+export function holdOpenConversation(next: OpenConversation | null): void {
+  if (next === open || (next && open && next.agent === open.agent && next.name === open.name && next.session === open.session && next.view === open.view && next.say === open.say)) return
+  open = next
+  for (const watcher of watchers) watcher()
+}
+const watch = (watcher: () => void) => { watchers.add(watcher); return () => { watchers.delete(watcher) } }
+const snapshot = () => open
+/** The open roster conversation, read where the Agent is drawn. */
+export function useOpenConversation(): OpenConversation | null {
+  return useSyncExternalStore(watch, snapshot, snapshot)
+}
+
+/** What the open conversation holds for the Agent: nothing until AIKit has bound it to a session. Pure. */
+export function openConversationOf(chat: AgentChat | null, name: string | null, say: OpenConversation['say']): OpenConversation | null {
+  if (!chat?.session) return null
+  return {agent: chat.agent, name: name || chat.agent, session: chat.session, ...(chat.view ? {view: chat.view} : {}), say}
 }

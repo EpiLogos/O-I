@@ -68,10 +68,11 @@ import {heldField, holdDayEntries, starHand, subscribeSystem, systemReading} fro
 import {dayFieldOf, dayFieldReading} from '../../projections/atlas/system/fieldModel'
 import {useCentralAction, useCentralGroundAnswer, useDayDieReading, useDayOwnReadings, useNaraReading, useRosterReading, type DayDieAperture} from './useCentralReadings'
 import {useDocsDevice, usePageDevices, type PageDevices} from './pageDevices'
-import {CENTRAL_AGENT_ID, centralAgentBinding, centralAgentRef} from './answerBinding'
+import {CENTRAL_AGENT_ID, centralAgentBinding, centralAgentRef, openConversationInput, type AnswerInput} from './answerBinding'
 import {useAnswerVoice} from './useAnswerVoice'
 import {observedState, useEncounterSessions, type ObservedSession} from '../../agent/devices/EncounterObservers'
 import {composeAgentBinding, withAgentGit} from '../../agent/devices/oneAgentBinding'
+import {useOpenConversation} from '../../agent/devices/useAgentConversation'
 import {ChainSlot, chainLaw, chainSlotOf} from '../../frame/devices/ChainOrder'
 import {useSessionGit} from '../../agent/devices/useAgentChainReading'
 import {openSeatDiff} from '../../agent/AgentShellBrowser'
@@ -581,12 +582,18 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
   const naraAsks = useAikitRead(transport, nara.session ? {kind: 'decision-asks', agent_session: nara.session} : null)
   // The packet the Agent reads (§19.4 "intent on the packet while it reads"): the prepared items its Send carries, with the session they are
   // prepared for (answerBinding.ts centralAgentValues shows them only for the bound session's own turn).
-  const answerInput = useMemo(() => ({nara: {state: nara.state, session: nara.session, resume: nara.resume}, observed: answerObserved, roster: answerAgents,
-    packet: preparedItems ? {items: preparedItems, session: packetSession} : null, asks: naraAsks}),
-  [nara.state, nara.session, nara.resume, answerObserved, answerAgents, preparedItems, packetSession, naraAsks])
+  // A roster agent's conversation open in Messages is the Agent while it stands open (useAgentConversation.ts useOpenConversation): that
+  // agent, by the name Messages gives it, in the session AIKit bound it to, its turns the session's transcript view, its Send that
+  // conversation's own.
+  const openChat = useOpenConversation()
+  const answerInput = useMemo((): AnswerInput => (openChat ? openConversationInput(openChat, answerAgents)
+    : {nara: {state: nara.state, session: nara.session, resume: nara.resume}, observed: answerObserved, roster: answerAgents,
+      packet: preparedItems ? {items: preparedItems, session: packetSession} : null, asks: naraAsks}),
+  [openChat, nara.state, nara.session, nara.resume, answerObserved, answerAgents, preparedItems, packetSession, naraAsks])
   // The session's next turn: its encounter's own draft, then its Send (the thread pane's). A typed question and a spoken one go this way.
-  const answerSend = useMemo(() => (answerHandle && 'actions' in answerHandle
-    ? async (text: string) => { answerHandle.actions.change(text); await answerHandle.actions.send() } : null), [answerHandle])
+  const openSay = openChat?.say
+  const answerSend = useMemo(() => (openSay ?? (answerHandle && 'actions' in answerHandle
+    ? async (text: string) => { answerHandle.actions.change(text); await answerHandle.actions.send() } : null)), [openSay, answerHandle])
   const own = useMemo(() => centralAgentBinding(CENTRAL_AGENT_ID, answerInput, {
     bind: conversation ? async () => { await bindConversation(transport, conversation); refreshNara() } : null,
     send: answerSend,

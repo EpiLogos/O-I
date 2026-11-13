@@ -8,6 +8,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {register} from 'node:module'
+import {readFileSync} from 'node:fs'
 
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
 const boundary = new URL('packages/expressions-boundary/src/', new URL('../../../../', import.meta.url)).href
@@ -239,4 +240,36 @@ test('Scope on Central carries Context & world\'s readings in Scope\'s keys; the
   const unbound = world.centralScopeBinding(world.CENTRAL_SCOPE_ID, {...input, answer: {bound: false, session: null}})
   assert.equal(unbound.values.light, 'dark')
   assert.equal(unbound.values.reads, undefined)
+})
+
+// Walk 13 Nov: a roster agent opened in Messages answered "walk check." in its thread, but the Agent widget stayed "Agent · —", "No reading
+// of the conversation.", because the Agent read only the Nara dialogue, and the selection only once the agency reading listed the session.
+test('a roster conversation open in Messages is the Agent: its name, its session and its last turn, with no track listing that session', async () => {
+  pages.resetHolds()
+  const conv = await import('../src/agent/devices/useAgentConversation.ts')
+  const msg = await import('../src/agent/devices/messagesBinding.ts')
+  const OPEN = 'agent-session/conversation-z'
+  const said = []
+  const chat = {agent: 'agent:expressed-060026caa5e342c39ff6f7d3296e1430', status: 'answered', session: OPEN,
+    view: {agent_session: OPEN, more: false, draft: {revision: 2, text: ''}, connection: {state: 'Resident'},
+      blocks: [{id: 1, kind: 'user', text: 'Reply with exactly: walk check.'}, {id: 2, kind: 'assistant', text: 'walk check.'}]}}
+  assert.equal(msg.conversationTrack([TRACK], chat.session), null, 'no track lists the conversation\'s session')
+  const open = conv.openConversationOf(chat, 'Keeps my practice and reads…', async words => { said.push(words) })
+  assert.equal(open.session, OPEN)
+  const own = answer.centralAgentBinding(answer.CENTRAL_AGENT_ID, answer.openConversationInput(open, ROSTER), {bind: null, send: open.say})
+  assert.equal(own.values.light, 'lit', 'bound to the conversation\'s session')
+  assert.equal(own.values.agent, 'Keeps my practice and reads…', 'by the name Messages gives it, never Nara and never its ref')
+  assert.match(String(own.values.thread), /walk check\./, 'its last turn')
+  assert.equal(answer.centralAgentRef(answer.openConversationInput(open, ROSTER)), chat.agent, 'its Identity page reads that agent')
+  await own.write([{key: 'sent', value: 'Again.'}])
+  assert.deepEqual(said, ['Again.'], 'Send speaks in that conversation')
+  const tile = draw(agentDesign, 'widget', own)
+  assert.match(tile, /Agent · Keeps my practice and reads…/)
+  assert.match(tile, /walk check\./)
+  assert.doesNotMatch(tile, /No reading of the conversation|agent:expressed-/)
+  assert.equal(conv.openConversationOf({agent: chat.agent, status: 'reading'}, 'x', async () => {}), null, 'nothing until AIKit binds a session')
+  const source = readFileSync(new URL('../src/central/devices/CentralDevices.tsx', import.meta.url), 'utf8')
+  assert.match(source, /openChat \? openConversationInput\(openChat, answerAgents\)/, 'Central\'s Agent reads the open conversation')
+  const rail = readFileSync(new URL('../src/agent/devices/AgentRailDevices.tsx', import.meta.url), 'utf8')
+  assert.match(rail, /holdOpenConversation\(openChat\)/, 'Messages\' publisher holds it')
 })
