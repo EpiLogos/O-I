@@ -46,7 +46,7 @@ export const MATERIAL_FIELD_UI_STANDARDS = Object.freeze([
   {id: 'useful-only', rule: 'Actual useful info only: a page shows rows with their controls, never an owner\'s raw record.',
     home: [MANUAL, '§10.10 Settings, Rules', 'An owner\'s raw record never stands on a page; its configuration as written stands read only on the System page.'], check: 'no raw record in the page\'s values'},
   {id: 'no-secret', rule: 'No secret: a machine\'s connection and a credential show their reference, and a token is never entered.',
-    home: [MANUAL, '§10.10 Settings, Rules', 'Settings shows no secret. A credential, a projection and a machine\'s connection show their reference.'], check: 'no secret in the values; a token is refused'},
+    home: [MANUAL, '§10.10 Settings, Rules', 'Settings shows no secret and takes none. A credential, a projection and a machine\'s connection show their reference.'], check: 'no secret in the values; a token is refused'},
   {id: 'yours-until-applied', rule: 'A change stays yours until its owner applies it: an act re-reads the owner first, and a stale read keeps your draft.',
     home: [MANUAL, '§10.10 Settings, Rules', 'A change stays yours until its owner applies it.'], check: 'the act reads the owner again before acting'},
   {id: 'dimmed-says-why', rule: 'An act its owner cannot take stays in place, dimmed, and says why.',
