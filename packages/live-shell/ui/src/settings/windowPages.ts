@@ -21,8 +21,8 @@ import {connectionBasis, machineBasis, validateMachine, type MachineConnection, 
 import {authorityAllowsTrigger, eligibleProofs, routineBasis, scheduleFromInput, type RoutineAuthoringOptions, type RoutineAuthoringResult, type ScheduleShape} from './routines'
 import {appearanceValues, automationValues, credentialValues, NEW_SCHEDULE, ROUTINE_FORM, scanWords, workcellSecretValues, folderOf, harnessValues, machineValues, NO_AUTHORING, NO_HARNESS, NO_INVOKE, NO_MACHINES, NO_NAVIGATE, NO_PRODUCTS,
   NO_PROFILES, NO_SETUP_AIKIT, NO_SETUP_SOURCE, NO_VISUALS, groundBound, productValues, profileValues, SECRET_REFERENCE, setupFolder, setupHarnessClients, setupHarnessProviders,
-  setupKeyFindings, setupNamespace, setupSkillRoots, setupValues, systemValues, type CredentialRow, type SetupCredentials, type SetupHarnesses, type SetupMachine, type SetupPreview,
-  harnessLoginClients, harnessLoginsOf, loginCheckOf, loginReadBack, commandWords, type HarnessLoginClient, type HarnessLoginReading,
+  setupKeyFindings, setupNamespace, setupOpenKeys, harnessOwned, setupSkillRoots, setupValues, systemValues, type CredentialRow, type SetupCredentials, type SetupHarnesses, type SetupMachine, type SetupPreview,
+  harnessLoginClients, harnessLoginsOf, harnessNoteOf, loginChecksOf, loginReadBack, commandWords, type HarnessLoginClient, type HarnessLoginReading,
   setupExtensionLine, setupPlacementLine, possessive, type SetupExtension, type SetupLeft, type SetupPlacement, type SetupSnapshot, type SetupWorkFolder, type SetupFounding, type SetupKey, type SetupAgreement, type SetupForm, type SetupMusic, type CivilTimePreview, type SetupBirth, type SetupCivilTime, type SetupDisclosure, groundNameRefusal, groundParts, groundPath} from './windowValues'
 import type {IdentityProfile} from '../../../../../desktop/cradle/src/nara/identity/types'
 import {chooseFolder, nativeFolderChooser, NO_NATIVE_FOLDER_CHOOSER} from './folderChooser'
@@ -126,8 +126,9 @@ export function pickFile(accept: string): Promise<File | null> {
 
 // ---------------------------------------------------------------------------------------------------------------- Harnesses & models
 
-/** Harnesses & models (HarnessPreferences.tsx): the providers and the chat default through the adapter's HarnessSource, each harness client's
- * install and folder through the kernel channel, and its Sign in from AIKit's reading of its own login (useSignIn's `logins`). The provider a
+/** Harnesses & models (HarnessPreferences.tsx): the providers and the chat default through the adapter's HarnessSource; each harness client
+ * AIKit detects is ready as it stands, its login its own (useSignIn's `logins`: what its own status command says). Its folder, and AIKit's
+ * optional hooks and skills for it (`aikit client install`, which the harness works without), through the kernel channel. The provider a
  * new chat starts with is a local change of O:I's chat-default setting (chatDefaultSetting.ts), which Review changes… plans and applies
  * through its owner, and Reset on its row withdraws (O-I #744): this page reads the owner for the engine (`reading`) and takes its new
  * reading after (`set`). */
@@ -143,14 +144,15 @@ export function useHarnessPage(adapter: SettingsAdapter, enabled: boolean, login
     if (!row) throw new Error(`${String(client)} is no harness client the owner reports.`)
     const path = folderOf(row.config_dir)
     if (!install && !path) throw new Error(`${row.harness} reports no configuration folder to reveal.`)
+    if (install && !row.detected) throw new Error(`${row.harness} is not on this computer: AIKit adds its hooks and skills to a harness that is.`)
     await operation(adapter, install ? {op: 'client_install', client: row.client} : {op: 'settings_reveal', path: path!}, install ? 'client_installed' : 'settings_revealed')
     if (!install) return 'The native owner revealed the configuration folder.'
     await read.refresh()
-    return `Native installation acknowledged. ${row.effect ?? 'Read detection again before starting work.'}`
+    return `AIKit added its hooks and skills to ${row.harness}.${row.effect ? ` ${row.effect}.` : ''}`
   }, [adapter, rows, read])
   return useMemo(() => {
     const why: Record<string, string> = {}
-    if (!adapter.invoke) { why.install = NO_INVOKE('Install and Folder'); why.reveal = NO_INVOKE('Install and Folder') }
+    if (!adapter.invoke) { why.install = NO_INVOKE('AIKit hooks and Folder'); why.reveal = NO_INVOKE('AIKit hooks and Folder') }
     const refused: Record<string, string> = {}
     if (!adapter.harnesses) refused.effectiveDefault = NO_HARNESS
     if (read.error) refused.effectiveDefault = read.error
@@ -172,8 +174,10 @@ const NO_PROFILE = /harness_auth\.unknown_harness|not a harness AIKit carries a 
 const LOGIN_DEADLINE_MS = 10_000
 
 /** What Sign in reads, over the adapter's kernel channel (manual §10.10 Rules): AIKit's client status (harness_status: each client, whether
- * it is on this computer, and its credential leg), then the logins each client on this computer declares (harness_auth_describe: `aikit
- * harness auth <client> --json`). A client whose logins cannot be read stands with why, and the others stand as read. */
+ * it is on this computer), the logins each client on this computer declares (harness_auth_describe: `aikit harness auth <client> --json`),
+ * and, where one declares its own status command, what that says now (harness_auth_describe with check: `aikit harness auth <client>
+ * --check --json`, which runs e.g. `claude auth status --json` and nothing interactive). A client whose logins cannot be read stands with
+ * why, and the others stand as read. Nothing here signs in, stores or copies a login: the harness keeps its own. */
 export function harnessLogins(adapter: SettingsAdapter) {
   return {
     read: async (): Promise<HarnessLoginReading> => {
@@ -181,12 +185,20 @@ export function harnessLogins(adapter: SettingsAdapter) {
       const clients = harnessLoginClients(status.result === 'harness_status_reading' ? status.data : null)
       return {clients: await Promise.all(clients.map(async (client): Promise<HarnessLoginClient> => {
         if (!client.detected) return client
+        let face: unknown
         try {
-          const face = await operation(adapter, {op: 'harness_auth_describe', harness: client.client}, 'harness_auth_reading')
-          return {...client, logins: harnessLoginsOf(face.result === 'harness_auth_reading' ? face.data : null)}
+          const answer = await operation(adapter, {op: 'harness_auth_describe', harness: client.client}, 'harness_auth_reading')
+          face = answer.result === 'harness_auth_reading' ? answer.data : null
         } catch (cause) {
           return NO_PROFILE.test(words(cause)) ? {...client, logins: []} : {...client, unread: `AIKit did not say how ${client.harness} signs in: ${words(cause)}`}
         }
+        const logins = harnessLoginsOf(face), note = harnessNoteOf(face)
+        const read = {...client, logins, ...(note ? {note} : {})}
+        if (!logins.some(login => login.check)) return read
+        try {
+          const answer = await operation(adapter, {op: 'harness_auth_describe', harness: client.client, check: true}, 'harness_auth_reading')
+          return {...read, checks: loginChecksOf(answer.result === 'harness_auth_reading' ? answer.data : null)}
+        } catch (cause) { return {...read, checkUnread: words(cause)} }
       }))}
     },
   }
@@ -206,19 +218,17 @@ export function loginOf(reading: HarnessLoginReading | null, key: string): {clie
   return {client: client.client, harness: client.harness, provider: login.provider, command: login.command!, title: `Sign in · ${client.harness}`, ...(login.check ? {check: login.check} : {})}
 }
 
-/** What Sign in reads back once a login's terminal ended (manual §10.10 Rules: "the page reads the result back"): the logins read again
- * (AIKit's client status and each client's declared logins), and, where AIKit declares the harness's own logged-in check, that check run
- * (harness_auth_describe with `check`: `aikit harness auth <client> --check --json`); the result in words (loginReadBack). */
+/** What Sign in reads back once a login's terminal ended (manual §10.10 Rules: "the page reads the result back"): the logins read again,
+ * which runs the harness's own status command where AIKit declares one; the result in words (loginReadBack). */
 export async function loginResult(source: SettingsAdapter, login: ReturnType<typeof loginOf>): Promise<{after: HarnessLoginReading | null; said: string}> {
-  let after: HarnessLoginReading | null = null, error: string | undefined, check: {signedIn: boolean} | {unread: string} | undefined
+  let after: HarnessLoginReading | null = null, error: string | undefined
   try { after = await harnessLogins(source).read() } catch (cause) { error = words(cause) }
-  if (login.check) {
-    try {
-      const answer = await operation(source, {op: 'harness_auth_describe', harness: login.client, check: true}, 'harness_auth_reading')
-      check = loginCheckOf(answer.result === 'harness_auth_reading' ? answer.data : null, login.provider)
-    } catch (cause) { check = {unread: words(cause)} }
-  }
-  return {after, said: loginReadBack(login, after, error, check)}
+  if (!login.check) return {after, said: loginReadBack(login)}
+  const client = after?.clients.find(item => item.client === login.client)
+  const row = client?.checks?.find(item => item.provider === login.provider)
+  const check = row && typeof row.signedIn === 'boolean' ? {signedIn: row.signedIn}
+    : {unread: client?.checkUnread ?? row?.unread ?? error ?? `AIKit ran no check for ${login.provider}`}
+  return {after, said: loginReadBack(login, check)}
 }
 
 /** Ask the frame for a terminal running the login (settings/host.ts LOGIN_TERMINAL_PRESENT): resolves with the terminal's id once the
@@ -282,7 +292,7 @@ export function useSignIn(adapter: SettingsAdapter, enabled: boolean): PagePart 
   return useMemo(() => {
     const why: Record<string, string> = {}
     if (!adapter.invoke) why.signIn = NO_INVOKE('Sign in')
-    const loginSaid = said ?? (read.error ? `Sign in: AIKit's client status could not be read, so no harness's own login is offered: ${read.error}` : null)
+    const loginSaid = said ?? (read.error ? `AIKit's client status could not be read, so no harness's own login is shown: ${read.error}` : null)
     const values: Record<string, Value> = loginSaid ? {loginSaid} : {}
     return {values, why, refused: {}, logins: read.value, reread: read.refresh, acts: {signIn}}
   }, [adapter, read.value, read.error, read.refresh, said, signIn])
@@ -1144,8 +1154,10 @@ export class SetupWalk {
     const reading = this.credentials
     if (reading?.state !== 'read') throw new Error(reading?.error ?? 'AIKit did not read your keys.')
     const bound = new Set(reading.bindings.filter(row => !row.revoked).map(row => row.credential))
-    const open = reading.findings.filter(row => row.credential && !row.bound && !bound.has(row.credential))
+    const open = setupOpenKeys(reading)
     const credential = text(held('credential')) || open[0]?.credential
+    const owned = reading.findings.find(row => harnessOwned(row) && row.credential === credential)
+    if (owned && !open.some(row => row.credential === credential)) throw new Error(`${credential} is a tool's own login (${owned.location}): the tool keeps it, and nothing is bound.`)
     if (!credential) throw new Error(bound.size ? 'Accepted: every key found is bound. Nothing is made twice.' : 'Nothing found to bring in: AIKit finds no provider\'s key on this computer.')
     if (bound.has(credential)) throw new Error(`Accepted: ${credential} is bound already. Nothing is made twice.`)
     if (!open.some(row => row.credential === credential)) throw new Error(`${credential} is no key AIKit found here. Read again.`)

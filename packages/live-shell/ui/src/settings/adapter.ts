@@ -136,8 +136,6 @@ export interface SettingsAdapter {
   /** Reuse Cradle's convertImportedTheme validator before theme_import. */
   importTheme?(text: string, fileName: string): Promise<PresentationDocument>
   themeLibrary?: readonly Pick<PresentationCustomTheme, 'id' | 'name' | 'appearance' | 'preview'>[]
-  /** Qualified by credential capabilities; a generic invoke channel is insufficient. */
-  readonly canEnterCredentialMaterial?: boolean
   /** Retained Cradle renderer store. Never instantiate a second preference owner. */
   visualPreferences?: {
     getSnapshot(): { enabled: boolean; welcomeEnabled: boolean }

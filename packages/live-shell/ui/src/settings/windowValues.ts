@@ -311,7 +311,9 @@ export function harnessValues(reading: HarnessReading | null, logins: HarnessLog
       if (effective) values.effectiveDefault = json(effective)
     }
   }
-  if (reading.harnesses.state === 'ok') values.harnesses = json(reading.harnesses.rows.map(row => ({client: row.client, harness: row.harness, installed: row.installed,
+  // A harness AIKit detects is ready as it stands (`ready`); `aikit` is whether AIKit's own hooks and skills are added to it, which the
+  // harness works without (`aikit client status` installed), never whether the harness itself is installed.
+  if (reading.harnesses.state === 'ok') values.harnesses = json(reading.harnesses.rows.map(row => ({client: row.client, harness: row.harness, ready: row.detected, aikit: row.installed,
     detection: row.detected ? 'detected' : row.detection, ...(row.detection_reason ? {reason: row.detection_reason} : {}), capability: row.capability,
     ...(row.effect ? {effect: row.effect} : {}), ...(folderOf(row.config_dir) ? {folder: folderOf(row.config_dir)} : {}),
     ...(row.adapter_gap ? {gap: {contract: row.adapter_gap.missing_contract, skill: row.adapter_gap.authoring_skill_ref}} : {}), ...harnessSignIn(logins, row.client)})))
@@ -325,35 +327,34 @@ export function harnessValues(reading: HarnessReading | null, logins: HarnessLog
 // ---------------------------------------------------------------------------------------------------------------- Sign in
 
 /** One login a harness has of its own, as AIKit's profile declares it (`aikit harness auth <client> --json`: own_login): a runnable one
- * carries the argv it runs; one with no command to run carries only its note, the harness's own words for how it signs in. */
+ * carries the argv it runs; one with no command to run carries only its note, the harness's own words for how it signs in. `check` is the
+ * harness's own status command (own_login status), which says whether it is signed in already. */
 export interface HarnessLogin {readonly provider: string; readonly command?: readonly string[]; readonly note?: string; readonly check?: readonly string[]}
-/** What AIKit reads of one harness client for Sign in (manual §10.10 Rules): from its client status (harness_status), whether it is on this
- * computer and its credential leg (whether AIKit finds what the client needs to sign in, and if not, why, in AIKit's words); from
- * harness_auth_describe, its logins, or why they could not be read (that client's alone). */
+/** What the harness's own status command answered for one provider (`aikit harness auth <client> --check --json`). */
+export interface HarnessLoginCheck {readonly provider: string; readonly signedIn?: boolean; readonly unread?: string}
+/** One harness client for Sign in (manual §10.10 Rules). A detected harness is usable as it stands: its login is its own (~/.claude,
+ * ~/.codex, ~/.pi/agent …), and Settings only reads it. From AIKit's client status (harness_status), whether it is on this computer; from
+ * harness_auth_describe, its logins (or why they could not be read), and the harness's own words where it keeps its login inside itself
+ * (`note`); from the harness's own status command (harness_auth_describe with check), whether it is signed in now. */
 export interface HarnessLoginClient {
   readonly client: string
   readonly harness: string
   readonly detected: boolean
-  readonly credential?: string
-  readonly credentialWhy?: string
   readonly logins?: readonly HarnessLogin[]
+  readonly note?: string
+  readonly checks?: readonly HarnessLoginCheck[]
+  readonly checkUnread?: string
   readonly unread?: string
 }
 export interface HarnessLoginReading {readonly clients: readonly HarnessLoginClient[]}
 
-/** The clients of AIKit's client status with their credential leg (aikit-cli client.rs: `credential` ok | credential-gated | unsupported
- * …, and `credential_reason`). Pure. */
-export function harnessLoginClients(status: unknown): Omit<HarnessLoginClient, 'logins' | 'unread'>[] {
-  const raw = rec(status) && Array.isArray(status.clients) ? status.clients.filter(rec) : []
-  return shapeHarnessClients(status).flatMap(row => {
-    if (!row.client) return []
-    const from = raw.find(item => item.client === row.client) ?? {}, credential = txt(from.credential), why = txt(from.credential_reason)
-    return [{client: row.client, harness: row.harness || row.client, detected: row.detected, ...(credential ? {credential} : {}), ...(why ? {credentialWhy: why} : {})}]
-  })
+/** The clients of AIKit's client status, each with whether it is on this computer. AIKit's credential leg (an API key bound in AIKit) is
+ * no part of a harness's own login and is not read here. Pure. */
+export function harnessLoginClients(status: unknown): Omit<HarnessLoginClient, 'logins' | 'unread' | 'note' | 'checks' | 'checkUnread'>[] {
+  return shapeHarnessClients(status).flatMap(row => (row.client ? [{client: row.client, harness: row.harness || row.client, detected: row.detected}] : []))
 }
 /** A harness's declared logins (harness_auth.rs AuthFace own_login). A login whose command cannot run (no argv) is offered by its note only,
- * never as a command. A runnable one carries the harness's own logged-in check where AIKit declares one (`status`, its argv), which reads
- * the result back. Pure. */
+ * never as a command. A runnable one carries the harness's own logged-in check where AIKit declares one (`status`, its argv). Pure. */
 export function harnessLoginsOf(face: unknown): HarnessLogin[] {
   const rows = rec(face) && Array.isArray(face.own_login) ? face.own_login.filter(rec) : []
   const words = (value: unknown): string[] => (Array.isArray(value) ? value.filter((token): token is string => typeof token === 'string' && token.length > 0) : [])
@@ -365,14 +366,22 @@ export function harnessLoginsOf(face: unknown): HarnessLogin[] {
     return note ? [{provider, note}] : []
   })
 }
-/** What the harness's own logged-in check answered for one provider (`aikit harness auth <client> --check --json`: harness_auth.rs
- * LoginChecks): signed in or not, or why no answer came. Pure. */
-export function loginCheckOf(data: unknown, provider: string): {signedIn: boolean} | {unread: string} {
+/** The harness's own words for a login it keeps inside itself, where AIKit's profile names no login to run (AuthFace `note`, as pi's). Pure. */
+export const harnessNoteOf = (face: unknown): string | undefined => (rec(face) ? txt(face.note) : undefined)
+/** Every provider's answer from the harness's own status command (`aikit harness auth <client> --check --json`: LoginChecks). Pure. */
+export function loginChecksOf(data: unknown): HarnessLoginCheck[] {
   const rows = rec(data) && Array.isArray(data.checks) ? data.checks.filter(rec) : []
-  const row = rows.find(item => item.provider_ref === provider)
+  return rows.flatMap((row): HarnessLoginCheck[] => {
+    const provider = txt(row.provider_ref)
+    if (!provider) return []
+    return [typeof row.signed_in === 'boolean' ? {provider, signedIn: row.signed_in} : {provider, unread: txt(row.unread) ?? 'it gave no answer'}]
+  })
+}
+/** What the harness's own logged-in check answered for one provider: signed in or not, or why no answer came. Pure. */
+export function loginCheckOf(data: unknown, provider: string): {signedIn: boolean} | {unread: string} {
+  const row = loginChecksOf(data).find(item => item.provider === provider)
   if (!row) return {unread: `AIKit ran no check for ${provider}`}
-  if (typeof row.signed_in === 'boolean') return {signedIn: row.signed_in}
-  return {unread: txt(row.unread) ?? 'it gave no answer'}
+  return typeof row.signedIn === 'boolean' ? {signedIn: row.signedIn} : {unread: row.unread ?? 'it gave no answer'}
 }
 /** A provider as one name: `provider:openai`, `ai-kit:credential:openai`, `OpenAI` → openai. */
 const providerName = (ref: string): string => (ref.split(':').pop() ?? ref).trim().toLowerCase()
@@ -381,45 +390,56 @@ export const loginKey = (client: string, provider: string): string => `${client}
 /** The login's command as you would type it. */
 export const commandWords = (command: readonly string[]): string => command.join(' ')
 
-/** What AIKit finds now for a client's login, in words (its credential leg). */
-function loginNow(client: HarnessLoginClient): string | undefined {
-  if (client.credential === 'ok') return `AIKit finds what ${client.harness} needs to sign in.`
-  if (client.credential === 'credential-gated') return `AIKit does not find what ${client.harness} needs to sign in yet: ${client.credentialWhy ?? 'its credential is missing'}.`
-  return client.credential ? `AIKit cannot check ${client.harness}'s login: ${client.credentialWhy ?? client.credential}.` : undefined
+/** Where one runnable login stands now, from the harness's own status command: signed in, not signed in, or not known (no status command
+ * declared, or it gave no answer), with the words that say so. Pure. */
+function loginStanding(client: HarnessLoginClient, login: HarnessLogin): {signedIn?: boolean; said: string} {
+  if (!login.check) return {said: `${client.harness} keeps its own login; it declares no status command, so Settings cannot read whether it is signed in.`}
+  const check = client.checks?.find(item => item.provider === login.provider)
+  const how = commandWords(login.check)
+  if (client.checkUnread) return {said: `${how} did not answer: ${client.checkUnread}`}
+  if (!check) return {said: `${how} gave no answer for ${providerName(login.provider)}.`}
+  if (typeof check.signedIn === 'boolean') return {signedIn: check.signedIn, said: check.signedIn ? `${how} says ${client.harness} is signed in.` : `${how} says ${client.harness} is not signed in.`}
+  return {said: `${how} did not answer: ${check.unread ?? 'it gave no answer'}`}
 }
-/** One harness row's Sign in, from AIKit's reading of that client (manual §10.10 Rules): a runnable login, the command it runs; one that
- * signs in only inside itself, its note and no button; a login AIKit could not read, why, on that row alone. A client not on this
- * computer has none: it is installed first. Pure. */
+/** One harness row's login, from the harness's own reading (manual §10.10 Rules). A detected harness is ready as it stands. `signedIn`
+ * is what its own status command says (absent where it has none, or none answered); Sign in is offered only where that is not yes — the
+ * harness's own login, which does its own browser return. One that signs in only inside itself: its note, no button. A login AIKit could
+ * not read: why, on that row alone. A client not on this computer has none. Pure. */
 function harnessSignIn(logins: HarnessLoginReading | null, client: string): Record<string, unknown> {
   const found = logins?.clients.find(item => item.client === client)
   if (!found?.detected) return {}
   if (found.unread) return {signInUnread: found.unread}
-  const runnable = (found.logins ?? []).filter(login => login.command), notes = (found.logins ?? []).filter(login => !login.command).map(login => login.note!)
-  const now = loginNow(found)
-  return {...(runnable.length ? {signIn: runnable.map(login => ({key: loginKey(client, login.provider), provider: providerName(login.provider), command: commandWords(login.command!)}))} : {}),
-    ...(!runnable.length && notes.length ? {signInNote: notes.join(' ')} : {}), ...(runnable.length && now ? {loginNow: now} : {})}
+  const runnable = (found.logins ?? []).filter(login => login.command)
+  const notes = [...(found.logins ?? []).filter(login => !login.command).map(login => login.note!), ...(found.note ? [found.note] : [])]
+  const standing = runnable.map(login => ({login, ...loginStanding(found, login)}))
+  const known = standing.filter(row => typeof row.signedIn === 'boolean')
+  const offered = standing.filter(row => row.signedIn !== true)
+  return {
+    ...(known.length ? {signedIn: known.every(row => row.signedIn)} : {}),
+    ...(standing.length ? {loginWhy: standing.map(row => row.said).join(' ')} : {}),
+    ...(offered.length ? {signIn: offered.map(({login}) => ({key: loginKey(client, login.provider), provider: providerName(login.provider), command: commandWords(login.command!)}))} : {}),
+    ...(!runnable.length && notes.length ? {signInNote: notes.join(' ')} : {}),
+  }
 }
-/** Beside a provider's key on Credentials: the runnable logins of the harnesses on this computer that serve that provider. Pure. */
+/** Beside a provider's key on Credentials: the harnesses on this computer that serve that provider with a login of their own — those
+ * their own status command says are signed in (`signedInBy`: the key is not what they use), and the Sign in of each that is not. Pure. */
 function providerSignIn(logins: HarnessLoginReading | null, row: CredentialRow): Record<string, unknown> {
   const names = new Set([providerName(row.provider), providerName(row.credential)])
-  const offered = (logins?.clients ?? []).filter(client => client.detected && !client.unread).flatMap(client => (client.logins ?? [])
-    .filter(login => login.command && names.has(providerName(login.provider))).map(login => ({key: loginKey(client.client, login.provider), harness: client.harness, command: commandWords(login.command!)})))
-  return offered.length ? {signIn: offered} : {}
+  const serving = (logins?.clients ?? []).filter(client => client.detected && !client.unread).flatMap(client => (client.logins ?? [])
+    .filter(login => login.command && names.has(providerName(login.provider))).map(login => ({client, login, ...loginStanding(client, login)})))
+  const by = serving.filter(item => item.signedIn === true).map(item => item.client.harness)
+  const offered = serving.filter(item => item.signedIn !== true).map(({client, login}) => ({key: loginKey(client.client, login.provider), harness: client.harness, command: commandWords(login.command!)}))
+  return {...(by.length ? {signedInBy: by} : {}), ...(offered.length ? {signIn: offered} : {})}
 }
-/** The result read back after a login's terminal ended, in words: the harness's own logged-in check where AIKit declares one (`check`,
- * what it answered), and where it declares none or the check gave no answer, AIKit's client status read again (its credential leg). Pure. */
+/** The result read back after a login's terminal ended, in words: what the harness's own status command answers now, where it declares
+ * one; else that the harness keeps its login itself and Settings cannot read it. Pure. */
 export function loginReadBack(login: {readonly client: string; readonly harness: string; readonly command: readonly string[]; readonly check?: readonly string[]},
-  after: HarnessLoginReading | null, error?: string, check?: {signedIn: boolean} | {unread: string}): string {
+  check?: {signedIn: boolean} | {unread: string}): string {
   const ended = `${commandWords(login.command)} has ended`
-  if (login.check && check && 'signedIn' in check)
+  if (!login.check) return `${ended}. ${login.harness} keeps its own login and declares no status command, so Settings cannot read it back.`
+  if (check && 'signedIn' in check)
     return check.signedIn ? `${ended}, and ${commandWords(login.check)} says ${login.harness} is signed in.` : `${ended}, but ${commandWords(login.check)} says ${login.harness} is not signed in.`
-  if (login.check && check && 'unread' in check) return `${commandWords(login.check)} did not answer: ${check.unread}. ${loginReadBack({client: login.client, harness: login.harness, command: login.command}, after, error)}`
-  if (!after) return `${ended}, but AIKit's client status could not be read again: ${error ?? 'no reading came back'}`
-  const client = after.clients.find(item => item.client === login.client)
-  if (!client) return `${ended}, but AIKit no longer reports ${login.harness} on this computer.`
-  if (client.credential === 'ok') return `${ended}, and AIKit now finds what ${client.harness} needs to sign in.`
-  if (client.credential === 'credential-gated') return `${ended}, but AIKit does not find what ${client.harness} needs yet: ${client.credentialWhy ?? 'its credential is missing'}.`
-  return `${ended}. AIKit cannot check ${client.harness}'s login: ${client.credentialWhy ?? client.credential ?? 'it reports no credential leg'}.`
+  return `${ended}, but ${commandWords(login.check)} did not answer: ${check?.unread ?? 'no answer came back'}.`
 }
 
 /** A harness's configuration folder, as the owner names it (its first absolute path; HarnessPreferences.tsx's reveal path). */
@@ -1007,6 +1027,14 @@ export function setupHarnessProviders(tool: SetupHarness, auth: unknown): SetupH
     return {harness: tool.harness, ...(tool.folder ? {folder: tool.folder} : {}), provider: name, ...(envVar ? {envVar} : {}), ...(ownLogin ? {ownLogin} : {})}
   })
 }
+/** A key found inside a harness's own login store (`aikit credential discover` source harness-auth): the harness signed itself in and
+ * keeps it there. Binding it into AIKit would copy the harness's own login into a second store, so Setup never offers it. Pure. */
+export const harnessOwned = (row: SetupKeyFinding): boolean => row.source === 'harness-auth'
+/** The keys Setup's Credentials step offers to bind: found, with a provider, not bound, and not a harness's own login. Pure. */
+export function setupOpenKeys(reading: Extract<SetupCredentials, {state: 'read'}>): SetupKeyFinding[] {
+  const bound = new Set(reading.bindings.filter(row => !row.revoked).map(row => row.credential))
+  return reading.findings.filter(row => row.credential && !row.bound && !bound.has(row.credential) && !harnessOwned(row))
+}
 /** The credential a provider's key binds as (AIKit's own convention, `credential:<provider>`: discovery proposes it, client status names it). */
 const credentialFor = (provider: string) => `credential:${provider}`
 /** The schemes of a stored-secret reference AIKit declares (`aikit credential setup --ref`): a place in a store, never a key. */
@@ -1021,24 +1049,28 @@ export function setupCredentialStep(reading: SetupCredentials | undefined, held:
   if (!reading) return undefined
   if (reading.state === 'refused') return {step: 'credentials', state: 'found', items: [{name: 'Your keys', why: reading.error}]}
   const bound = new Map(reading.bindings.filter(row => !row.revoked).map(row => [row.credential, row.reference]))
-  const open = reading.findings.filter(row => row.credential && !row.bound && !bound.has(row.credential))
+  const open = setupOpenKeys(reading)
   const chosen = txt(held('credential')) ?? open[0]?.credential, reference = txt(held('reference'))
-  const items: Record<string, unknown>[] = reading.findings.map(row => {
+  // A harness's own login store (codex's ~/.codex/auth.json, pi's ~/.pi/agent/auth.json): the harness signed itself in and keeps it.
+  const own = new Set(reading.findings.filter(harnessOwned).map(row => row.location))
+  const items: Record<string, unknown>[] = reading.findings.filter(row => !harnessOwned(row)).map(row => {
     if (!row.credential) return {name: row.name, where: row.location, why: `AIKit knows no provider for ${row.name}: it is left as it is.`}
     if (row.bound || bound.has(row.credential)) return {name: row.name, where: row.location, credential: row.credential, bound: true,
       change: `${row.credential} is bound by reference${bound.get(row.credential) ? ` to ${bound.get(row.credential)}` : ''} · the key stays where it lies`}
     return {name: row.name, where: row.location, credential: row.credential,
       change: `AIKit binds ${row.credential} ${row.credential === chosen && reference ? `to ${reference}` : 'by the reference you give'} · the key stays where it lies; the DLW never shows it and never keeps it`}
   })
-  const covered = new Set([...reading.findings.flatMap(row => (row.credential ? [row.credential] : [])), ...bound.keys()])
+  for (const where of own) items.push({name: where.replace(/^.*\(([^)]+)\)\s*$/, '$1'), where: where.replace(/\s*\([^)]+\)\s*$/, ''),
+    change: 'its own login, kept by the tool itself · nothing to bind'})
+  const covered = new Set([...reading.findings.filter(row => !harnessOwned(row)).flatMap(row => (row.credential ? [row.credential] : [])), ...bound.keys()])
   for (const [credential, where] of bound) if (!reading.findings.some(row => row.credential === credential))
     items.push({name: credential, where: where ?? credential, credential, bound: true, change: `bound by reference${where ? ` to ${where}` : ''}`})
   for (const provider of reading.providers) {
     if (provider.unread) { items.push({name: provider.harness, where: provider.folder ?? provider.harness, why: provider.unread}); continue }
     if (covered.has(credentialFor(provider.provider))) continue
     covered.add(credentialFor(provider.provider))
-    items.push({name: `${provider.provider} for ${provider.harness}`, where: provider.folder ?? provider.harness,
-      why: provider.ownLogin ?? `No key for it lies on this computer${provider.envVar ? ` (${provider.envVar} is not set)` : ''}.`})
+    items.push(provider.ownLogin ? {name: `${provider.provider} for ${provider.harness}`, where: provider.folder ?? provider.harness, change: `${provider.harness} signs in itself · nothing to bind`}
+      : {name: `${provider.provider} for ${provider.harness}`, where: provider.folder ?? provider.harness, why: `No key for it lies on this computer${provider.envVar ? ` (${provider.envVar} is not set)` : ''}.`})
   }
   // Nothing waiting to be bound is done (manual §10.11: what you leave out is not shown as missing), and says so.
   if (!open.length) return {step: 'credentials', state: 'accepted', items, ...(bound.size ? {} : {said: 'Nothing to bind: AIKit finds no provider\'s key waiting on this computer. Each tool keeps its own login.'})}
@@ -1111,7 +1143,6 @@ export const NO_PRODUCTS = NO('Products and System', 'readProducts')
 export const NO_VISUALS = NO('Opening', 'visualPreferences')
 export const NO_AUTHORING = NO('Making and enabling a routine', 'routineAuthoring')
 export const NO_NAVIGATE = (what: string) => `${what} stands beside its instrument, and this window reaches no other place from here (SettingsAdapter.navigate).`
-export const NO_SECURE_FIELD = 'Enter key: a write-only key goes to the native host\'s own secure field, never through the window; no host qualifies that capability here (SettingsAdapter.canEnterCredentialMaterial).'
 export const NO_STANDING = 'A route\'s standing (unproven, observed, usable) is not the catalogue\'s: AIKit\'s model catalogue is catalogue identity only, '
   + 'and a route\'s availability is its composition of a project (`aikit compose --json`), which Settings does not read here.'
 export const NO_SETUP_SOURCE = NO('Setup', 'setup')
@@ -1133,13 +1164,13 @@ export const SETTINGS_WINDOW_WIRING = {
     result: 'the owners\' answer to Apply or Reset (config_apply_reviewed, config_reset)',
     back: 'the name of the work Settings returns to: a contextual entry\'s own (SettingsRequest.returnLabel), else the mode the frame stands in (settings/host.ts setSettingsReturnLabel)',
     providers: 'the configured providers (HarnessSource.read: the encounter providers)', heldDefault: 'the saved chat default (HarnessSource.read)',
-    effectiveDefault: 'the provider new chats use, and its rule (harnessSource.ts effectiveChatDefault)', harnesses: 'each harness client (harness_status: aikit client status)',
+    effectiveDefault: 'the provider new chats use, and its rule (harnessSource.ts effectiveChatDefault)', harnesses: 'each harness client (harness_status: aikit client status), ready when detected, and whether its own status command says it is signed in (harness_auth_describe with check)',
     routes: 'the catalogue\'s declared routes (model_catalogue)', credentials: 'AIKit\'s credential binding metadata (credential_list), each Verify\'s verdict (credential_verify)',
     found: 'keys discovery found (credential_discover, presence only)',
     secretRefs: 'the credential references Workcell records, each with where it is observed (workcell_read secret-list: `workcell secret list`, workcell.secret-reference-inventory/v1)',
     projections: 'Workcell\'s projection ledger, the projections it holds active (workcell_read secret-projections: `workcell secret projections`)',
     outside: 'the credentials Workcell\'s last scan found outside a secret store, by location and presence only (workcell_read secret-scan: `workcell secret scan`)',
-    loginSaid: 'the result read back after a login\'s terminal ended, in words: the harness\'s own logged-in check where AIKit declares one (harness_auth_describe with check: `aikit harness auth <client> --check --json`, what it answered for that provider), and otherwise, or when that check gives no answer, AIKit\'s client status read again (harness_status: that client\'s credential leg)',
+    loginSaid: 'the result read back after a login\'s terminal ended, in words: what the harness\'s own status command answers now, where AIKit declares one (harness_auth_describe with check: `aikit harness auth <client> --check --json`), else that the harness keeps its login itself',
     routesWhy: 'why a route\'s standing stands unread (NO_STANDING: AIKit\'s catalogue is identity only; availability is `aikit compose` of a project)', profiles: 'O:I\'s named profiles (SettingsAdapter.profiles listProfiles)',
     machines: 'Workcell\'s machine declarations (RemoteMachinesSource.readMachines)', connections: 'its connection receipts (RemoteMachinesSource.readConnections)',
     operations: 'the control operations a declaration may expect (RemoteMachinesSource.allowedOperations)', workcell: 'the workcell the machines belong to (RemoteMachinesSource.scope)',
@@ -1163,9 +1194,9 @@ export const SETTINGS_WINDOW_WIRING = {
     plan: 'config_plan_reviewed, and each owned setting\'s owner\'s plan of its change on the basis it was made on (settings/ownedSettings.ts: the theme through presentation_read, the chat default through HarnessSource.read)', apply: 'config_apply_reviewed, and each owned setting\'s owner applies its plan (theme_apply; chat_default_hold through HarnessSource.holdDefault)', reset: 'config_reset on the reading digest; an owned setting\'s owner\'s reset (the chat default: chat_default_discard through HarnessSource.discardDefault)', keep: 'the draft re-based on the current reading (the window\'s own)',
     discard: 'every local change dropped (the window\'s own)', returnToWork: 'the work Settings was opened from (the host\'s return)',
     reread: 'the owners read again: config_registry_read, config_resolutions_read and every opened page\'s reading',
-    install: 'client_install',
+    install: 'client_install: AIKit\'s optional hooks and skills for a detected harness, which works without them',
     reveal: 'settings_reveal', scan: 'Workcell\'s scan for material outside a secret store (workcell_read secret-scan: `workcell secret scan`), said on the Info line',
-    revokeProjection: 'Workcell\'s revocation at the origin (workcell_write revoke-projection: `workcell secret revoke-projection --name`), the ledger read back', signIn: 'the harness\'s own login as AIKit declares it (harness_auth_describe: `aikit harness auth <client> --json`), run in a terminal in the Workbench (LOGIN_TERMINAL_PRESENT, settings/host.ts), and the result read back when that terminal ends (the harness\'s own check, harness_auth_describe with check: `--check`, where AIKit declares one; harness_status otherwise)', discover: 'credential_discover', verify: 'credential_verify',
+    revokeProjection: 'Workcell\'s revocation at the origin (workcell_write revoke-projection: `workcell secret revoke-projection --name`), the ledger read back', signIn: 'the harness\'s own login as AIKit declares it (harness_auth_describe: `aikit harness auth <client> --json`), run in a terminal in the Workbench (LOGIN_TERMINAL_PRESENT, settings/host.ts), offered only where the harness\'s own status command does not say it is signed in (harness_status, then harness_auth_describe with check: `--check`), and read back the same way when that terminal ends', discover: 'credential_discover', verify: 'credential_verify',
     rotate: 'credential_rotate with new.reference', revoke: 'credential_revoke', bind: 'credential_setup with new.credential and new.reference',
     useProfile: 'profile_use_plan, staged as local changes', saveProfile: 'createProfile and saveProfile with your valid local changes', importProfile: 'the system file picker, then createProfile and saveProfile',
     runNow: 'routine run_now on the basis read', disableRoutine: 'routine disable on the basis read', revertTheme: 'theme_revert', removeTheme: 'theme_remove',
@@ -1193,9 +1224,7 @@ export const SETTINGS_WINDOW_WIRING = {
     credential: 'the key the Credentials step binds (a found key\'s credential)', reference: 'where that key lies in your secure store, which Accept binds it to: a reference, never the key',
     'new.<field>': 'the open form\'s fields', 'new.from': 'what opened the new routine (SettingsRequest.newRoutine: a pad\'s Make routine, a song\'s Routine…), forgotten when the form closes', 'draft:<ref>': 'your local change of a setting, until Review and Apply',
   },
-  refused: {
-    enterKey: NO_SECURE_FIELD,
-  },
+  refused: {} as Record<string, string>,
   absent: {},
 } as const
 
