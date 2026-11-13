@@ -479,6 +479,9 @@ const AGENT_WRITES = new Set(['effort', 'input', 'heartbeat', 'quantize', 'draft
 
 /** The Agent's binding: its values, and each change through its row's own write path (or held, for the composer's text). */
 /** Why the Agent stands in no run state: no session is selected, or its task, needle and thread say none (runFaces.ts runStateOfSession). */
+/** Where no agent session is seated (a fresh world, before any agent has run), a message has nowhere to go: the composer says so
+ * instead of taking the words and losing them (the DLW map, 12 Nov empty-start walk). */
+export const AGENT_NO_SESSION = 'No agent is running in this world yet, so a message has nowhere to go. Start one first.'
 export const RUN_UNREAD = 'The run state is a reading: no session is selected, or its task, its needle and its thread (runFaces.ts) stand it in none yet.'
 
 export function agentBinding(id: string, input: AgentInput, rows: AgentRows, write: RowWrite, steering: () => boolean): DesignBinding {
@@ -493,7 +496,7 @@ export function agentBinding(id: string, input: AgentInput, rows: AgentRows, wri
     id,
     values,
     standing: {...disabled(contextStanding(input.context, values)), ...disabled(REFUSED_WRITES[AGENT_DESIGN]!), ...('run' in values ? {} : {run: {disabled: RUN_UNREAD}}),
-      autonomy: {disabled: AGENT_AUTONOMY_RETIRED}},
+      autonomy: {disabled: AGENT_AUTONOMY_RETIRED}, ...(input.sessionRef == null ? {sent: {disabled: AGENT_NO_SESSION}} : {})},
     writes: key => AGENT_WRITES.has(key),
     write: async (changes: readonly ValueChange[]) => {
       for (const {key, value} of changes) {

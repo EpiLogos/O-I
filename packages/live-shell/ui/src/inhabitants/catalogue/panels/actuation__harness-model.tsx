@@ -385,10 +385,11 @@ function handBackToggle(p: ViewProps) {
 function Composer({p}: {p: ViewProps}) {
   const send = st(p, 'sent'), draft = strOf(p.v, 'draft') ?? '', who = strOf(p.v, 'agent')
   const says = 'Type a message and press Enter. It steers the turn that runs, or waits as the next task, as Input says.'
-  return <input className="hm-composer" aria-label="Message" placeholder={who ? `Message ${who}` : 'Message the agent'} value={draft} disabled={!!send.disabled}
+  // A composer that cannot send says why where you type, not only on hover; the words you typed stay.
+  return <input className="hm-composer" aria-label="Message" placeholder={send.disabled ? String(send.disabled) : who ? `Message ${who}` : 'Message the agent'} title={send.disabled ? String(send.disabled) : undefined} value={draft} disabled={!!send.disabled}
     data-i={`Composer|${[says, send.disabled, send.refused ? `The owner refused: ${send.refused}` : undefined].filter(Boolean).join(' ')}`}
     onChange={e => p.set('draft', e.target.value)}
-    onKeyDown={e => { if (e.key === 'Enter' && draft.trim()) { p.set('sent', draft.trim()); p.set('draft', '') } }} />
+    onKeyDown={e => { if (e.key === 'Enter' && draft.trim() && !send.disabled) { p.set('sent', draft.trim()); p.set('draft', '') } }} />
 }
 
 /** The Run page: Power, Agent, Model, Harness; Effort, Budget; Heartbeat, On stall; Input; the held items and Hand back. */

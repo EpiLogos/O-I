@@ -21,7 +21,6 @@ import {useCallback, useContext, useEffect, useRef, useState, type ReactNode} fr
 import {createRoot} from 'react-dom/client'
 import {registerProjectionModule} from '../../../../../../desktop/cradle/src/surface/projectionModules'
 import {detectTransport} from '../../../../../../desktop/cradle/src/kernel/bridge'
-import {USER_FLOWS_DIR} from '../../../../../../desktop/cradle/src/flow/flowsDir'
 import type {CentralLocation, KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {PageFace, type PageLinkTarget} from '../../inhabitants/DocumentPageFace'
 import {openBinding} from '../../../../../../desktop/cradle/src/surface/engine'
@@ -29,6 +28,7 @@ import {listFiles} from '../../../../../../desktop/cradle/src/files/client'
 import {readPageOwned} from '../../../../../../desktop/cradle/src/personal/pageOwner'
 import type {DayDocumentStanding} from '../centralVertical'
 import {CentralDayNotice} from '../CentralDayNotice'
+import {Refusal} from '../../../../../../desktop/cradle/src/shared/Refusal'
 import {CENTRAL_DOCUMENT_PANE_KIND, openCentralDocumentAt, parseDocumentSubject} from './centralDocuments'
 import {readLatestFlow, type FlowReading} from './documentReadings'
 import {useDayAnswer} from '../../owners/day'
@@ -151,24 +151,50 @@ export function FlowDocument({transport, location}: {transport: KernelTransportS
 }
 
 /** The most recent Flow as the owner lists it, or what the owner says about there being none. */
-export function LatestFlowView({transport, reading}: {transport: KernelTransportStatus; reading: FlowReading | null}) {
+export function LatestFlowView({transport, reading, onStarted}: {transport: KernelTransportStatus; reading: FlowReading | null; onStarted?: (location: CentralLocation) => void}) {
   if (!reading) return <Absence form="Flow" state="reading"><p>Reading the owner’s Flows…</p></Absence>
   if (reading.state === 'found') return <FlowDocument transport={transport} location={reading.row.location} />
   if (reading.state === 'none') {
     return <Absence form="Flow" state="none">
-      <p>{USER_FLOWS_DIR} holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written.</p>
-      <p className="central-document-owner">owner: Central files · op: <span className="mono">files_list</span> at <span className="mono">{USER_FLOWS_DIR}</span></p>
+      <p>No Flow yet. A Flow begins when you write its first entry.</p>
+      <StartFlow transport={transport} onStarted={onStarted} />
     </Absence>
   }
   return <Absence form="Flow" state="refused">
-    <p role="alert">The owner refused the Flow listing — “{reading.message}”</p>
-    <p className="central-document-owner">owner: Central files · op: <span className="mono">files_list</span> at <span className="mono">{USER_FLOWS_DIR}</span></p>
+    <p role="alert">Central could not list your Flows: “{reading.message}”</p>
   </Absence>
 }
 
-/** The most recent Flow. */
+/** Start a Flow: Central writes a blank Flow from the Flow form (document-01, createFormInPlace — the browser's New › Flow) into the
+ * world's flows, and the pane shows it. Loaded on the press, so the forms are not part of the first frame. */
+function StartFlow({transport, onStarted}: {transport: KernelTransportStatus; onStarted?: (location: CentralLocation) => void}) {
+  const [pending, setPending] = useState(false)
+  const [fault, setFault] = useState<unknown>(null)
+  if (!onStarted) return null
+  const press = () => {
+    if (pending) return
+    setPending(true); setFault(null)
+    void Promise.all([import('../../../../../../desktop/cradle/src/flow/documentForms'), import('../../../../../../desktop/cradle/src/flow/createInPlace')])
+      .then(([{DOCUMENT_FORMS}, {createFormInPlace}]) => {
+        const form = DOCUMENT_FORMS.find(entry => entry.kind === 'document-01')
+        if (!form) throw new Error('This build carries no Flow form.')
+        return createFormInPlace(transport, form, {})
+      })
+      .then(copy => onStarted(copy.location), cause => setFault(cause ?? 'Central gave no reason.'))
+      .finally(() => setPending(false))
+  }
+  return <>
+    <button type="button" disabled={pending} onClick={press} data-central-flow-start="">{pending ? 'Starting a Flow…' : 'Start a Flow'}</button>
+    {fault != null && <Refusal className="inhabitant-device-fault" said="The Flow was not started." error={fault} />}
+  </>
+}
+
+/** The most recent Flow; a Flow started here is the one shown. */
 export function LatestFlowDocument({transport}: {transport: KernelTransportStatus}) {
-  return <LatestFlowView transport={transport} reading={useLatestFlow(transport)} />
+  const reading = useLatestFlow(transport)
+  const [started, setStarted] = useState<CentralLocation | null>(null)
+  if (started) return <FlowDocument transport={transport} location={started} />
+  return <LatestFlowView transport={transport} reading={reading} onStarted={setStarted} />
 }
 
 /** Open what a page's link names, in the shell: an http(s) address in a web pane; a page of a world by the owner's own listing of its
