@@ -90,8 +90,10 @@ export const FIELD_UNREPORTED: Readonly<Partial<Record<FieldDesignFamily, Readon
     // lastResonanceDrive; resonanceDrive.ts ResolvedResonanceDrive) and the frame's editor carries it in the observation (hostEditor.ts).
     drive: 'The engine has not reported what drives the plate yet (its telemetry cymatic.driver, which the editor reading\'s observation carries while the plate is on): a reading, when it does.'},
 }
-/** The view's own keys of a family's design (DesignBinding.local): Focus's chosen formation in its route. */
-export const FIELD_LOCAL: Readonly<Partial<Record<FieldDesignFamily, readonly string[]>>> = {focus: ['chosen']}
+/** The view's own keys of a family's design (DesignBinding.local): Focus's chosen formation in its route, and Colour's chosen stop (the
+ * palette stop its swatch sets: expressions__colour.tsx `stopAt`, `p.set('stop', …)`). Without the hold the Stop chooser's press is
+ * refused as a reading and the swatch can only ever set the first stop. */
+export const FIELD_LOCAL: Readonly<Partial<Record<FieldDesignFamily, readonly string[]>>> = {focus: ['chosen'], colour: ['stop']}
 /** The depth settings the scene keeps as numbers, written as the editor's panel settings (nativeFieldPanelSettings.ts vortex3d, dispersion3d). */
 const DEPTH_NUMBERS = ['vortex3d', 'dispersion3d'] as const
 

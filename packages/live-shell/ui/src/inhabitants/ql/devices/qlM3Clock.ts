@@ -8,6 +8,7 @@
 //   clock.degree720, clock.tick12, clock.backbone, aperture.index, form.address, form.codon   the state's own readings;
 //   law.matrix, law.seed, law.poseMap      the generation law (ql.m3-state/v1 `law`, QL-MEF ec79681: law.matrix.family,
 //                                          law.seed.in_force.law, law.pose_map.in_force; QL's names, crates/ql-mef/src/m3_state/form_cell.rs);
+//   pose.bin, pose.slot                    the active pose: form.pose (0..7) and the `current` entry of law.pose_map.slots (its lawful_slot);
 //   generation.lower, upper, positive, negative, nonDual   the cell of the form's hexagram under that matrix (`generation.cell`:
 //                                          lower_pair / upper_pair / positive / negative `.sequence`, `non_dual`);
 //   a new degree is the owner's `advance-clock{steps}` forward by the difference on the double cover, a new cut its `set-aperture`, a new
@@ -215,6 +216,13 @@ export function qlM3Values(m3: QlM3State): Record<string, Value> {
   if (typeof law?.matrix?.family === 'string') values['law.matrix'] = law.matrix.family
   if (typeof law?.seed?.in_force?.law === 'string') values['law.seed'] = law.seed.in_force.law
   if (typeof law?.pose_map?.in_force === 'string') values['law.poseMap'] = law.pose_map.in_force
+  // The active pose under the laws (the Reading band's "pose · bin|slot"): the raw bin is the form's own `pose` (0..7), the lawful slot is the
+  // one the pose map marks `current` (law.pose_map.slots[]: `slot` the raw bin, `lawful_slot` where the law lands it). QL names both; the shell works neither out.
+  const slots: unknown = law?.pose_map?.slots, current = Array.isArray(slots) ? slots.find(slot => slot?.current === true) : undefined
+  const bin = (form as Record<string, any>).form?.pose
+  if (int(bin)) values['pose.bin'] = bin
+  else if (int(current?.slot)) values['pose.bin'] = current.slot
+  if (int(current?.lawful_slot)) values['pose.slot'] = current.lawful_slot
   if (typeof cell?.lower_pair?.sequence === 'string') values['generation.lower'] = cell.lower_pair.sequence
   if (typeof cell?.upper_pair?.sequence === 'string') values['generation.upper'] = cell.upper_pair.sequence
   if (typeof cell?.positive?.sequence === 'string') values['generation.positive'] = cell.positive.sequence

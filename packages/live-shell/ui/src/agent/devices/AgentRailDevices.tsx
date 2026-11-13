@@ -34,7 +34,7 @@ import {fireWritePath} from '../agentNativeDispatch'
 import {trackKey} from '../agentRunModel'
 import {chainDeviceId, slotRows} from './agentChainDevices'
 import {gatewayBinding, useChainHolds, viewHolds} from './designBindings'
-import {AGENCY_GATEWAY_ID, FRAMES_ID, FRAMES_VIEW, framesBinding, journalAsks, journalSessions, mainDevices, rackBinding} from './mainTrackBindings'
+import {FRAMES_ID, FRAMES_VIEW, framesBinding, journalAsks, journalSessions, mainDevices, rackBinding} from './mainTrackBindings'
 import {CARRIER_PAGE, CHECKOUTS_PAGE, GATEWAYS_PAGE, LEFT_BEHIND_PAGE, MACHINE_PAGE, SEAT_PAGE, carryPages} from './oneAgentBinding'
 import {AGENT_ROSTER, MESSAGES_ID, PERSON_ACTS, acceptedProfilesOf, handlingAdvertisedOf, madeOf, messagesBinding, messagesDevice, positionRefs, sentOf, type MessagesPorts} from './messagesBinding'
 import {runStateOfSession} from './runFaces'
@@ -92,8 +92,10 @@ export function AgentRailDevices() {
   const main = useMemo(() => mainDevices(), [])
   const workcellAnswer = useWorkcellAnswer(transport).reading
   const carrier = useMemo(() => carrierChainState(workcellAnswer), [workcellAnswer])
+  // The agency build stands on no chain and has no device of its own (§19.9: its mark stands in the head of Messages, and nothing publishes
+  // AGENCY_GATEWAY_ID: the placement tests keep it unpublished), so its row shows Messages, where the mark and its state are.
   const showChain = useCallback((chain: string) => {
-    const shown = chain === 'hermes' ? chainDeviceId('gateway') : chain === 'aikit-agency-gateway' ? AGENCY_GATEWAY_ID : chain === 'remote-carrier' ? CARRIER_ID : null
+    const shown = chain === 'hermes' ? chainDeviceId('gateway') : chain === 'aikit-agency-gateway' ? MESSAGES_ID : chain === 'remote-carrier' ? CARRIER_ID : null
     if (shown) selectDevice(shown)
   }, [])
   const gateways = useMemo(() => rackBinding({reading, holds, carrier}, {show: showChain}), [reading, holds, carrier, showChain])
