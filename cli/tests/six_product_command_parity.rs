@@ -369,6 +369,177 @@ mod unix {
         );
     }
 
+    fn script(dir: &Path, name: &str, body: &str) {
+        let path = dir.join(name);
+        fs::write(&path, body).expect("write fake owner");
+        let mut permissions = fs::metadata(&path).expect("metadata").permissions();
+        permissions.set_mode(0o755);
+        fs::set_permissions(path, permissions).expect("chmod fake owner");
+    }
+
+    /// An owner answering the shared field contract (`oi.owner-action-field/v1`) with `actions`,
+    /// and running `action run <id> -` by recording its argv and the JSON on stdin.
+    fn shared_owner(dir: &Path, name: &str, field: &str) {
+        script(
+            dir,
+            name,
+            &format!(
+                "#!/bin/sh\nif [ \"$1\" = actions ]; then\n  printf '%s\\n' '{field}'\n  exit 0\nfi\n/bin/cat > \"$0.payload\"\nprintf '{name}:%s|%s|%s|%s\\n' \"$1\" \"$2\" \"$3\" \"$4\"\nexit 0\n"
+            ),
+        );
+    }
+
+    /// O-I #1002: `oi act` holds every owner's field — Central's, AIKit's, and each other owner's
+    /// `oi.owner-action-field/v1` — names an owner it cannot read, refuses a field that lists an
+    /// id outside its owner's prefix, describes an Action from its owner's own descriptor, and
+    /// routes each invocation to the owner its prefix names (a seat's to the seat instrument),
+    /// with the input on stdin, `--input -` included.
+    #[test]
+    fn act_holds_every_owners_field_and_routes_each_action_to_its_owner() {
+        let _serial = serial();
+        let home = TempDir::new().expect("home");
+        let bin = TempDir::new().expect("bin");
+        script(
+            bin.path(),
+            "ctrl",
+            "#!/bin/sh\nif [ \"$1\" = \"actions\" ]; then\n  printf '%s\\n' '{\"ok\":true,\"data\":{\"actions\":[{\"id\":\"central.doctor\",\"title\":\"Doctor\",\"mutation_class\":\"read\",\"inputs\":[]}]}}'\n  exit 0\nfi\nexit 14\n",
+        );
+        shared_owner(
+            bin.path(),
+            "factory",
+            r#"{"schema":"oi.owner-action-field/v1","owner":"factory","actions":[{"id":"factory.development.commission","title":"Submit a Commission","mutation_class":"locally-mutating","inputs":[{"name":"state","type":"path","required":true}],"output":{"type":"factory.commission-receipt/v1"},"availability":{"available":true,"reason":null}}]}"#,
+        );
+        shared_owner(
+            bin.path(),
+            "seat",
+            r#"{"schema":"oi.owner-action-field/v1","owner":"workcell","actions":[{"id":"workcell.seat.join","title":"Join a seat","mutation_class":"locally-mutating","inputs":[{"name":"workcell","type":"string","required":true}]}]}"#,
+        );
+        // The Workcell product listing a seat's id is not its own field: refused, never listed.
+        shared_owner(
+            bin.path(),
+            "workcell",
+            r#"{"schema":"oi.owner-action-field/v1","owner":"workcell","actions":[{"id":"workcell.seat.join"}]}"#,
+        );
+
+        let listed = run_oi_args(&home, &bin, &["act", "--json"]);
+        assert!(
+            listed.status.success(),
+            "{}",
+            String::from_utf8_lossy(&listed.stderr)
+        );
+        let value: serde_json::Value =
+            serde_json::from_slice(&listed.stdout).expect("field listing parses");
+        let fields = value["fields"].as_array().expect("owner fields");
+        let field = |source: &str| {
+            fields
+                .iter()
+                .find(|field| field["source"] == source)
+                .unwrap_or_else(|| panic!("no {source} field: {value}"))
+        };
+        assert_eq!(
+            fields
+                .iter()
+                .map(|field| field["owner"].as_str().unwrap())
+                .collect::<Vec<_>>(),
+            [
+                "central",
+                "ai-kit",
+                "factory",
+                "workcell",
+                "workcell",
+                "actuation",
+                "ql"
+            ]
+        );
+        assert_eq!(field("central")["count"], 1);
+        assert_eq!(field("factory")["count"], 1);
+        assert_eq!(
+            field("factory")["actions"][0]["id"],
+            "factory.development.commission"
+        );
+        assert_eq!(field("seat")["count"], 1);
+        assert!(
+            field("workcell")["unavailable"]
+                .as_str()
+                .is_some_and(|why| why.contains("not under its own prefix")),
+            "{value}"
+        );
+        for absent in ["aikit", "actuation", "ql"] {
+            assert!(
+                field(absent)["unavailable"].is_string(),
+                "{absent} is named: {value}"
+            );
+        }
+
+        let described = run_oi_args(
+            &home,
+            &bin,
+            &[
+                "act",
+                "describe",
+                "factory.development.commission",
+                "--json",
+            ],
+        );
+        assert!(described.status.success());
+        let descriptor: serde_json::Value =
+            serde_json::from_slice(&described.stdout).expect("descriptor");
+        assert_eq!(descriptor["title"], "Submit a Commission");
+        let stray = run_oi_args(&home, &bin, &["act", "describe", "factory.no.such"]);
+        assert_ne!(stray.status.code(), Some(0));
+
+        let invoked = run_oi_args(
+            &home,
+            &bin,
+            &[
+                "act",
+                "invoke",
+                "factory.development.commission",
+                "--input",
+                r#"{"state": "/s"}"#,
+            ],
+        );
+        assert!(
+            invoked.status.success(),
+            "{}",
+            String::from_utf8_lossy(&invoked.stderr)
+        );
+        assert_eq!(
+            String::from_utf8_lossy(&invoked.stdout),
+            "factory:action|run|factory.development.commission|-\n"
+        );
+        assert_eq!(
+            fs::read_to_string(bin.path().join("factory.payload")).expect("factory payload"),
+            r#"{"state":"/s"}"#
+        );
+
+        let mut seat = Command::new(env!("CARGO_BIN_EXE_oi"))
+            .args(["act", "invoke", "workcell.seat.join", "--input", "-"])
+            .env("OI_HOME", home.path())
+            .env("OI_DATA_HOME", home.path().join("data"))
+            .env("PATH", bin.path())
+            .stdin(std::process::Stdio::piped())
+            .stdout(std::process::Stdio::piped())
+            .spawn()
+            .expect("run O:I CLI");
+        use std::io::Write;
+        seat.stdin
+            .take()
+            .expect("stdin")
+            .write_all(br#"{"workcell":"env-2"}"#)
+            .expect("write input");
+        let seat = seat.wait_with_output().expect("seat answered");
+        assert!(seat.status.success());
+        assert_eq!(
+            String::from_utf8_lossy(&seat.stdout),
+            "seat:action|run|workcell.seat.join|-\n"
+        );
+        assert_eq!(
+            fs::read_to_string(bin.path().join("seat.payload")).expect("seat payload"),
+            r#"{"workcell":"env-2"}"#
+        );
+    }
+
     #[test]
     fn act_invoke_large_input_reaches_the_owner_through_native_stdin_intact() {
         let _serial = serial();

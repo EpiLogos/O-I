@@ -330,7 +330,7 @@ fn resolve_owner_executable(namespace: &str) -> Result<PathBuf, String> {
     resolve_product_executable(product)
 }
 
-const ACT_USAGE: &str = "oi act [--json]                               the unified Action doorway: every owner's callable field, one listing\n       oi act describe <action> [--json]          the exact input/output/effect contract of one Action, whichever owner holds it\n       oi act invoke <action> --input <json>|@file [--json]\n                                                  one explicit invocation, routed to the owning product; exact subject and input required";
+const ACT_USAGE: &str = "oi act [--json]                               the one Action registry: every owner's Actions with their descriptors, one listing\n       oi act describe <action> [--json]          the exact input/output/effect contract of one Action, whichever owner holds it\n       oi act invoke <action> --input <json>|@file|- [--json]\n                                                  one explicit invocation, routed to the owning product; exact subject and input required (`-`: the JSON on stdin)";
 
 fn command_act(args: &[OsString]) -> Result<i32, String> {
     let verb = args.first().and_then(|value| value.to_str());
@@ -348,6 +348,65 @@ fn command_act(args: &[OsString]) -> Result<i32, String> {
         Some("describe") => act_describe(rest),
         Some("invoke") => act_invoke(rest),
         Some(other) => Err(format!("unknown `oi act` doorway `{other}`; usage:\n{ACT_USAGE}")),
+    }
+}
+
+/// The contract every owner but Central and AIKit answers `<owner> actions --json` with:
+/// `{"schema", "owner", "actions": [descriptor]}`, each descriptor in Central's shape — `id`
+/// (under the owner's own prefix), `title`, `description`, `mutation_class`, `inputs` (`name`,
+/// `type`, `required`), `output`, `availability` — and `<owner> action run <id> <json|->` runs
+/// one, answering the route's JSON on stdout or refusing in the owner's words with a non-zero
+/// exit, exactly as Central's `action run` does.
+const OWNER_ACTION_FIELD_SCHEMA: &str = "oi.owner-action-field/v1";
+
+/// One owner's Action field as the registry holds it (docs/architecture/world-shell.md §9.2,
+/// layer 3; O-I #1002).
+#[derive(Clone, Copy, Debug)]
+struct ActionOwner {
+    /// The owner as the listing names it.
+    owner: &'static str,
+    /// Where its field is read and its Actions run: a catalogue namespace, `aikit`, or `seat`.
+    source: &'static str,
+    /// The id prefix its Actions carry; Central's field, which has several, has none.
+    prefix: Option<&'static str>,
+}
+
+/// The owners, in the order the listing gives them. Central answers its native field (`ctrl
+/// actions --json`, its `data.actions`), AIKit its contextual field (`aikit act discover`, its
+/// `data.rows`), every other owner [`OWNER_ACTION_FIELD_SCHEMA`]. The Workcell's seats are held by
+/// the seat instrument (`seat`, Control/user/workcell), so the Workcell field is read from both.
+const ACTION_OWNERS: [ActionOwner; 7] = [
+    ActionOwner { owner: "central", source: "central", prefix: None },
+    ActionOwner { owner: "ai-kit", source: "aikit", prefix: Some("aikit.") },
+    ActionOwner { owner: "factory", source: "factory", prefix: Some("factory.") },
+    ActionOwner { owner: "workcell", source: "workcell", prefix: Some("workcell.") },
+    ActionOwner { owner: "workcell", source: "seat", prefix: Some("workcell.seat.") },
+    ActionOwner { owner: "actuation", source: "actuation", prefix: Some("actuation.") },
+    ActionOwner { owner: "ql", source: "ql", prefix: Some("ql.") },
+];
+
+/// The owner whose prefix an Action id carries — the longest that matches, so a seat's
+/// `workcell.seat.join` is the seat instrument's and `workcell.place.request` the Workcell's.
+/// `None`: Central's, or one of AIKit's contextual refs, which carry no owner prefix.
+fn action_owner_of(reference: &str) -> Option<ActionOwner> {
+    ACTION_OWNERS
+        .iter()
+        .filter(|owner| owner.prefix.is_some_and(|prefix| reference.starts_with(prefix)))
+        .max_by_key(|owner| owner.prefix.map(str::len))
+        .copied()
+}
+
+/// The executable an owner's field is read from and its Actions run by.
+fn action_owner_executable(owner: &ActionOwner) -> Result<PathBuf, String> {
+    match owner.source {
+        "aikit" => resolve_aikit_executable(),
+        // The seat instrument is the machine's, not a catalogue product: `OI_SEAT_BIN`, else
+        // `seat` on PATH, as the kernel's own seat route resolves it.
+        "seat" => Ok(env::var_os("OI_SEAT_BIN")
+            .filter(|value| !value.is_empty())
+            .map(PathBuf::from)
+            .unwrap_or_else(|| "seat".into())),
+        namespace => resolve_owner_executable(namespace),
     }
 }
 
@@ -419,40 +478,124 @@ fn read_central_action_field() -> Result<Vec<serde_json::Value>, String> {
         .ok_or_else(|| "Central's native Action field has no action list".to_owned())
 }
 
+/// One bounded read of an owner's [`OWNER_ACTION_FIELD_SCHEMA`] field. An owner that answers
+/// another document, refuses, or lists an id outside its own prefix is named unavailable with
+/// its words; the registry never lists an Action its owner did not give it.
+fn read_shared_action_field(owner: &ActionOwner) -> Result<Vec<serde_json::Value>, String> {
+    let executable = action_owner_executable(owner)?;
+    let output = Command::new(&executable)
+        .args(["actions", "--json"])
+        .stdin(Stdio::null())
+        .output()
+        .map_err(|error| format!("cannot read {}'s Action field: {error}", owner.source))?;
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        let words = if stdout.trim().is_empty() { stderr.trim() } else { stdout.trim() };
+        return Err(format!(
+            "{} answered its Action field with exit {}: {}",
+            owner.source,
+            output.status.code().unwrap_or(1),
+            words.chars().take(200).collect::<String>()
+        ));
+    }
+    let parsed: serde_json::Value = serde_json::from_str(stdout.trim())
+        .map_err(|_| format!("{} answered without a readable Action field", owner.source))?;
+    if parsed["schema"] != OWNER_ACTION_FIELD_SCHEMA {
+        return Err(format!(
+            "{} answered {} where its Action field is {OWNER_ACTION_FIELD_SCHEMA}",
+            owner.source,
+            parsed["schema"].as_str().unwrap_or("no schema")
+        ));
+    }
+    let actions = parsed["actions"]
+        .as_array()
+        .cloned()
+        .ok_or_else(|| format!("{}'s Action field has no action list", owner.source))?;
+    let prefix = owner.prefix.unwrap_or_default();
+    if let Some(stray) = actions.iter().find(|action| {
+        !action["id"]
+            .as_str()
+            .is_some_and(|id| id.starts_with(prefix) && action_owner_of(id).is_some_and(|holder| holder.source == owner.source))
+    }) {
+        return Err(format!(
+            "{}'s Action field lists `{}`, which is not under its own prefix `{prefix}`",
+            owner.source,
+            stray["id"].as_str().unwrap_or("an Action without an id")
+        ));
+    }
+    Ok(actions)
+}
+
+fn read_owner_field(owner: &ActionOwner) -> Result<Vec<serde_json::Value>, String> {
+    match owner.source {
+        "central" => read_central_action_field(),
+        "aikit" => read_aikit_act_field(),
+        _ => read_shared_action_field(owner),
+    }
+}
+
+/// Every owner's field, read at once (one bounded read each, side by side).
+fn read_action_fields() -> Vec<(ActionOwner, Result<Vec<serde_json::Value>, String>)> {
+    std::thread::scope(|scope| {
+        let reads: Vec<_> = ACTION_OWNERS
+            .iter()
+            .map(|owner| (*owner, scope.spawn(move || read_owner_field(owner))))
+            .collect();
+        reads
+            .into_iter()
+            .map(|(owner, read)| {
+                let answer = read.join().unwrap_or_else(|_| {
+                    Err(format!("the read of {}'s Action field stopped before it answered", owner.source))
+                });
+                (owner, answer)
+            })
+            .collect()
+    })
+}
+
 /// The read-only field listing: what is callable at all, before any choice
 /// of one Action to describe or invoke.
 fn act_list(json: bool) -> Result<i32, String> {
-    let actions = read_central_action_field()?;
-    // AIKit's field is contextual; an unreadable field is named, never
-    // silently dropped, and an empty one is an honest scope answer.
-    let aikit_field = read_aikit_act_field();
+    let fields = read_action_fields();
+    // Central's field is the ground the doorway stands on: unreadable, the listing refuses.
+    let central = match &fields[0].1 {
+        Ok(actions) => actions.clone(),
+        Err(error) => return Err(error.clone()),
+    };
     if json {
-        let mut fields = vec![json!({
-            "owner": "central",
-            "count": actions.len(),
-            "actions": actions,
-        })];
-        match &aikit_field {
-            Ok(rows) => fields.push(json!({
-                "owner": "ai-kit",
-                "count": rows.len(),
-                "scope_note": if rows.is_empty() {
-                    "AIKit resolves no acts for this scope; describe still answers for any AIKit ref"
-                } else {
-                    "AIKit's contextual field for the current scope"
-                },
-                "actions": rows,
-            })),
-            Err(error) => fields.push(json!({
-                "owner": "ai-kit",
-                "unavailable": error,
-            })),
-        }
+        let listed: Vec<serde_json::Value> = fields
+            .iter()
+            .map(|(owner, read)| match read {
+                Ok(actions) if owner.source == "aikit" => json!({
+                    "owner": owner.owner,
+                    "source": owner.source,
+                    "count": actions.len(),
+                    "scope_note": if actions.is_empty() {
+                        "AIKit resolves no acts for this scope; describe still answers for any AIKit ref"
+                    } else {
+                        "AIKit's own route Actions, and its contextual field for the current scope"
+                    },
+                    "actions": actions,
+                }),
+                Ok(actions) => json!({
+                    "owner": owner.owner,
+                    "source": owner.source,
+                    "count": actions.len(),
+                    "actions": actions,
+                }),
+                Err(error) => json!({
+                    "owner": owner.owner,
+                    "source": owner.source,
+                    "unavailable": error,
+                }),
+            })
+            .collect();
         let document = json!({
             "schema": "oi.action-field/v2",
-            "fields": fields,
+            "fields": listed,
             // Compatibility: existing consumers read the Central field here.
-            "actions": actions,
+            "actions": central,
         });
         println!(
             "{}",
@@ -463,30 +606,38 @@ fn act_list(json: bool) -> Result<i32, String> {
     }
     println!(
         "Unified Action doorway ({} Central actions, read-only):",
-        actions.len()
+        central.len()
     );
-    for action in &actions {
+    for action in &central {
         let id = action["id"].as_str().unwrap_or("?");
         let title = action["title"].as_str().unwrap_or("");
         let mutation = action["mutation_class"].as_str().unwrap_or("");
         println!("  {id:<44} {mutation:<10} {title}");
     }
-    match &aikit_field {
-        Ok(rows) if rows.is_empty() => println!(
-            "AIKit (ai-kit): resolves no acts for this scope; `oi act describe <ref>` still answers for any AIKit ref"
-        ),
-        Ok(rows) => {
-            println!("AIKit (ai-kit, {} contextual acts):", rows.len());
-            for action in rows.iter().take(24) {
-                let id = action["id"].as_str().or(action["resource"].as_str()).unwrap_or("?");
-                let kind = action["kind"].as_str().unwrap_or("");
-                println!("  {id:<44} act        {kind}");
+    for (owner, read) in fields.iter().skip(1) {
+        let named = match owner.source {
+            "aikit" => "AIKit (ai-kit)".to_owned(),
+            "seat" => "Workcell seats (the seat instrument)".to_owned(),
+            source => format!("{} ({source})", owner.owner),
+        };
+        match read {
+            Ok(actions) if actions.is_empty() && owner.source == "aikit" => println!(
+                "{named}: resolves no acts for this scope; `oi act describe <ref>` still answers for any AIKit ref"
+            ),
+            Ok(actions) => {
+                println!("{named}, {} actions:", actions.len());
+                for action in actions.iter().take(24) {
+                    let id = action["id"].as_str().or(action["ref"].as_str()).unwrap_or("?");
+                    let mutation = action["mutation_class"].as_str().or(action["kind"].as_str()).unwrap_or("");
+                    let title = action["title"].as_str().or(action["label"].as_str()).unwrap_or("");
+                    println!("  {id:<44} {mutation:<10} {title}");
+                }
+                if actions.len() > 24 {
+                    println!("  … {} more (`oi act --json` lists the whole field)", actions.len() - 24);
+                }
             }
-            if rows.len() > 24 {
-                println!("  … {} more (aikit act discover --limit 200 --json lists the field)", rows.len() - 24);
-            }
+            Err(error) => println!("{named}: unavailable — {error}"),
         }
-        Err(error) => println!("AIKit (ai-kit): unavailable — {error}"),
     }
     println!(
         "`oi act describe <action>` names the exact input contract, whichever owner holds the ref; `oi act invoke <action> --input '<json>'` performs one explicit act through the owning product."
@@ -511,14 +662,10 @@ fn act_describe(args: &[OsString]) -> Result<i32, String> {
     let [reference] = positional.as_slice() else {
         return Err("usage: oi act describe <action> [--json] — one exact Action ref is required".to_owned());
     };
-    let actions = read_central_action_field()?;
-    let descriptor = actions
-        .iter()
-        .find(|action| action["id"].as_str() == Some(reference));
-    if descriptor.is_none() {
-        // Not Central's: ask the AIKit owner before refusing. Its describe
-        // is the native answer for any ref it holds (skills, capabilities,
-        // acts); a refusal there is the aggregate answer.
+    let reference = *reference;
+    let aikit_describe = |reference: &str| -> Result<i32, String> {
+        // AIKit's describe is the native answer for any ref it holds (its route Actions,
+        // skills, capabilities, contextual acts); a refusal there is the aggregate answer.
         let aikit = resolve_aikit_executable()?;
         let mut argv: Vec<OsString> = vec![
             OsString::from("act"),
@@ -528,13 +675,31 @@ fn act_describe(args: &[OsString]) -> Result<i32, String> {
         if json {
             argv.push(OsString::from("--json"));
         }
-        return exec_native(&aikit, argv);
-    }
-    let descriptor = descriptor.unwrap();
+        exec_native(&aikit, argv)
+    };
+    let descriptor = match action_owner_of(reference) {
+        Some(owner) if owner.source == "aikit" => return aikit_describe(reference),
+        Some(owner) => read_owner_field(&owner)?
+            .into_iter()
+            .find(|action| action["id"].as_str() == Some(reference))
+            .ok_or_else(|| {
+                format!(
+                    "`{reference}` is not in {}'s Action field (its own listing decided that); `oi act` lists it",
+                    owner.source
+                )
+            })?,
+        None => match read_central_action_field()?
+            .into_iter()
+            .find(|action| action["id"].as_str() == Some(reference))
+        {
+            Some(descriptor) => descriptor,
+            None => return aikit_describe(reference),
+        },
+    };
     if json {
         println!(
             "{}",
-            serde_json::to_string_pretty(descriptor)
+            serde_json::to_string_pretty(&descriptor)
                 .map_err(|error| format!("cannot encode Action descriptor: {error}"))?
         );
         return Ok(0);
@@ -552,7 +717,7 @@ fn act_describe(args: &[OsString]) -> Result<i32, String> {
                 "    {}{} ({})",
                 input["name"].as_str().unwrap_or("?"),
                 if input["required"].as_bool() == Some(true) { "" } else { " (optional)" },
-                input["input_type"].as_str().unwrap_or("?")
+                input["input_type"].as_str().or(input["type"].as_str()).unwrap_or("?")
             );
         }
     }
@@ -571,7 +736,7 @@ fn act_invoke(args: &[OsString]) -> Result<i32, String> {
             .ok_or("act invoke arguments must be UTF-8")?;
         match text {
             "--input" => {
-                let value = iter.next().ok_or("--input requires a JSON value or @file")?;
+                let value = iter.next().ok_or("--input requires a JSON value, @file or -")?;
                 input = Some(
                     value
                         .to_str()
@@ -601,16 +766,57 @@ fn act_invoke(args: &[OsString]) -> Result<i32, String> {
     let reference = reference.to_str().ok_or("Action ref must be UTF-8")?;
     let Some(input) = input else {
         return Err(format!(
-            "`oi act invoke {reference}` requires the exact input (`--input '<json>'` or `--input @file`); pass `{{}}` explicitly when an Action takes no fields"
+            "`oi act invoke {reference}` requires the exact input (`--input '<json>'`, `--input @file` or `--input -`); pass `{{}}` explicitly when an Action takes no fields"
         ));
     };
-    let encoded = if let Some(file) = input.strip_prefix('@') {
+    let encoded = if input == "-" {
+        // The caller's JSON on stdin: what the kernel's `act` hands every invocation, so no
+        // input meets the argv limit.
+        let mut read = String::new();
+        std::io::Read::read_to_string(&mut std::io::stdin(), &mut read)
+            .map_err(|error| format!("cannot read the Action input from stdin: {error}"))?;
+        read
+    } else if let Some(file) = input.strip_prefix('@') {
         fs::read_to_string(file).map_err(|error| format!("cannot read {file}: {error}"))?
     } else {
         input
     };
     let parsed: serde_json::Value = serde_json::from_str(encoded.trim())
         .map_err(|error| format!("Action input must be one JSON value: {error}"))?;
+    let compact = serde_json::to_vec(&parsed)
+        .map_err(|error| format!("cannot encode Action input: {error}"))?;
+    let aikit_invoke = |passthrough: Vec<OsString>| -> Result<i32, String> {
+        let aikit = resolve_aikit_executable()?;
+        let mut argv: Vec<OsString> = vec![
+            OsString::from("act"),
+            OsString::from("invoke"),
+            OsString::from(reference),
+            OsString::from("--input"),
+            OsString::from(String::from_utf8(compact.clone()).map_err(|_| "Action input is not valid UTF-8")?),
+        ];
+        if structured {
+            argv.push(OsString::from("--json"));
+        }
+        argv.extend(passthrough);
+        exec_native(&aikit, argv)
+    };
+    match action_owner_of(reference) {
+        Some(owner) if owner.source == "aikit" => return aikit_invoke(passthrough),
+        // Every other owner runs its own Action from the JSON on stdin and answers its route's
+        // JSON (OWNER_ACTION_FIELD_SCHEMA): the owner decides its input, never this doorway.
+        Some(owner) => {
+            let executable = action_owner_executable(&owner)?;
+            let mut argv = vec![
+                OsString::from("action"),
+                OsString::from("run"),
+                OsString::from(reference),
+                OsString::from("-"),
+            ];
+            argv.extend(passthrough);
+            return exec_native_with_stdin(&executable, argv, &compact);
+        }
+        None => {}
+    }
     let central_holds = read_central_action_field()?
         .iter()
         .any(|action| action["id"].as_str() == Some(reference));
@@ -629,26 +835,13 @@ fn act_invoke(args: &[OsString]) -> Result<i32, String> {
             .unwrap_or(false);
         if !known_to_aikit {
             return Err(format!(
-                "`{reference}` is in neither Central's Action field nor AIKit's capability field (AIKit's own answer decided that); `oi act` lists both fields"
+                "`{reference}` is in neither Central's Action field nor AIKit's capability field (AIKit's own answer decided that), and carries no other owner's prefix; `oi act` lists every field"
             ));
         }
-        let mut argv: Vec<OsString> = vec![
-            OsString::from("act"),
-            OsString::from("invoke"),
-            OsString::from(reference),
-            OsString::from("--input"),
-            OsString::from(encoded.trim().to_owned()),
-        ];
-        if structured {
-            argv.push(OsString::from("--json"));
-        }
-        argv.extend(passthrough);
-        return exec_native(&aikit, argv);
+        return aikit_invoke(passthrough);
     }
     let executable = resolve_owner_executable("central")?;
-    let encoded = serde_json::to_vec(&parsed)
-        .map_err(|error| format!("cannot encode Action input: {error}"))?;
-    if encoded.len() > 64 * 1024 {
+    if compact.len() > 64 * 1024 {
         // Large native inputs exceed OS argv limits; the explicit `-` input
         // argument tells Central to read the same JSON object on stdin (the
         // same rule the O:I kernel's Central dispatch applies). Without `-`
@@ -664,13 +857,13 @@ fn act_invoke(args: &[OsString]) -> Result<i32, String> {
         if structured {
             argv.push(OsString::from("--json"));
         }
-        return exec_native_with_stdin(&executable, argv, &encoded);
+        return exec_native_with_stdin(&executable, argv, &compact);
     }
     let mut argv = vec![
         OsString::from("action"),
         OsString::from("run"),
         OsString::from(reference),
-        OsString::from(String::from_utf8(encoded).map_err(|_| "Action input is not valid UTF-8")?),
+        OsString::from(String::from_utf8(compact).map_err(|_| "Action input is not valid UTF-8")?),
     ];
     argv.extend(passthrough);
     if structured {
