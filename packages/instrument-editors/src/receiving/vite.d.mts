@@ -9,9 +9,6 @@ export interface InstrumentEditorBundlerPlugin {
     resolve?: {alias?: Record<string, string> | readonly {find: string | RegExp; replacement: string}[]};
   }): {
     resolve: {alias: {find: string | RegExp; replacement: string}[]; dedupe: string[]};
-    optimizeDeps: {exclude: string[]};
   };
-  resolveId(id: string): string | undefined;
-  load(id: string): Promise<string | undefined>;
 }
 export declare function instrumentEditorBundler(options?: InstrumentEditorBundlerOptions): InstrumentEditorBundlerPlugin;

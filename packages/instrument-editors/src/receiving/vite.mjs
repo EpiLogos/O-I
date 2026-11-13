@@ -5,10 +5,9 @@ import {dirname, resolve} from 'node:path';
 const root = fileURLToPath(new URL('../../../../', import.meta.url));
 const vendor = root + 'desktop/cradle/expressions-app/vendor/research-canvas/';
 const dependency = createRequire(import.meta.url);
-const {build: bundleWorker} = dependency(root + 'desktop/cradle/node_modules/esbuild/lib/main.js');
-const workerImport = 'maplibre-gl/dist/maplibre-gl-worker.mjs?url';
-const workerModule = '\0oi-instrument-editor-maplibre-worker';
-const aliases = ['schema', 'domain', 'desktop-api', 'geography', 'viewers', 'node-document']
+// The research frame's aliases (field-studies-journeys/scripts/build.mjs). Its geography package and the MapLibre worker route went with
+// the hosted map, whose last view, the Places editor, retired in #762: Places is the shell's Earth atlas (O-I #1009, one earth viewer).
+const aliases = ['schema', 'domain', 'desktop-api', 'viewers', 'node-document']
   .map(name => ({find: '@research-canvas/' + name, replacement: vendor + 'packages/' + name + '/src/index.ts'}));
 aliases.push({find: '@research-canvas/exporter', replacement: vendor + 'browserExporter.ts'});
 for (const name of ['d3-force', 'd3-selection', 'd3-zoom']) {
@@ -16,9 +15,6 @@ for (const name of ['d3-force', 'd3-selection', 'd3-zoom']) {
     paths: [root + 'desktop/cradle', root + 'desktop/cradle/expressions-app', root + 'packages/live-shell/ui'],
   })});
 }
-// Match the main package only: a prefix alias would rewrite the worker import
-// before this plugin can bundle its shared dependencies.
-aliases.push({find: /^maplibre-gl$/, replacement: root + 'desktop/cradle/expressions-app/node_modules/maplibre-gl'});
 
 function hasAlias(config, name) {
   const entries = Array.isArray(config.resolve?.alias)
@@ -51,19 +47,7 @@ export function instrumentEditorBundler({reactRoot} = {}) {
       }
       return {
         resolve: {alias: receivingAliases, dedupe: ['react', 'react-dom']},
-        optimizeDeps: {exclude: ['maplibre-gl', workerImport]},
       };
-    },
-    resolveId(id) { return id === workerImport ? workerModule : undefined; },
-    async load(id) {
-      if (id !== workerModule) return;
-      // Same complete offline worker recipe as native Expressions. The URL
-      // belongs to the receiver document's lifetime, including its MapLibre views.
-      const result = await bundleWorker({
-        entryPoints: [root + 'desktop/cradle/expressions-app/node_modules/maplibre-gl/dist/maplibre-gl-worker.mjs'],
-        bundle: true, write: false, platform: 'browser', format: 'iife', target: 'es2022', minify: true,
-      });
-      return `export default URL.createObjectURL(new Blob([${JSON.stringify(result.outputFiles[0].text)}],{type:'text/javascript'}));`;
     },
   };
 }

@@ -17,7 +17,6 @@ Reuse installed `desktop/cradle/node_modules` React/React DOM and `desktop/cradl
 | `@research-canvas/schema` | `desktop/cradle/expressions-app/vendor/research-canvas/packages/schema/src/index.ts` |
 | `@research-canvas/domain` | `desktop/cradle/expressions-app/vendor/research-canvas/packages/domain/src/index.ts` |
 | `@research-canvas/desktop-api` | `desktop/cradle/expressions-app/vendor/research-canvas/packages/desktop-api/src/index.ts` |
-| `@research-canvas/geography` | `desktop/cradle/expressions-app/vendor/research-canvas/packages/geography/src/index.ts` |
 | `@research-canvas/viewers` | `desktop/cradle/expressions-app/vendor/research-canvas/packages/viewers/src/index.ts` |
 | `@research-canvas/node-document` | `desktop/cradle/expressions-app/vendor/research-canvas/packages/node-document/src/index.ts` |
 | `@research-canvas/exporter` | `desktop/cradle/expressions-app/vendor/research-canvas/browserExporter.ts` |
