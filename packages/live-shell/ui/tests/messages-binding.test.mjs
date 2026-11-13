@@ -263,7 +263,7 @@ test('Make, Change, Accept and Discard: Central\'s own acts carried with the per
   binding.local['new.carries']('central:documentation')
   await binding.write([{key: 'make', value: 'Watches the build and tells me when it breaks'}])
   assert.deepEqual(central.acts[0], ['agent-profile.express', {scope: 'root', world_ref: 'project:O-I', intent_expression: 'Watches the build and tells me when it breaks',
-    ratified_world_refs: ['project:O-I'], skill_set_refs: ['central:documentation']}])
+    purpose: 'Watches the build and tells me when it breaks', ratified_world_refs: ['project:O-I'], skill_set_refs: ['central:documentation']}])
   // The card turns to Central's proposal, read back through its review.
   binding = msg.messagesBinding({...input, holds: bind.chainHolds(), review: REVIEW}, {act: central.act, page: () => 'new-agent'})
   assert.deepEqual(JSON.parse(binding.values.proposal), {role: 'build-watcher', purpose: 'Watches the O-I build and tells you when a check breaks.', world: 'project:O-I',
@@ -361,7 +361,8 @@ test('the design draws on its binding in its tile and its Full — no NaN, no un
   host.setHostPage(msg.MESSAGES_ID, 'new-agent')
   assert.ok(draw(cases[1], 'full').includes(escaped(msg.MESSAGES_REFUSE.noCarrier)), 'with no carrier, Make says why')
   const card = draw(cases[0], 'full')
-  assert.ok(card.includes('project:O-I') && card.includes('control:root'), 'Works in offers the worlds AIKit names')
+  assert.ok(card.includes('>O-I<') && card.includes('>Central<'), 'Works in offers the worlds AIKit names, by name')
+  assert.doesNotMatch(card.replace(/value="[^"]*"/g, ''), /control:root|project:O-I/, 'no world is drawn as its raw ref')
   host.resetHost()
   const full = draw(cases[0], 'full')
   assert.ok(full.includes('Nara (M4 domain agent)') && full.includes('Agency gateway · Ready') && full.includes('38 waiting'), 'the real agents, and the mark in the head')

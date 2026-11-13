@@ -97,11 +97,18 @@ function List({p, agents, groups}: {p: ViewProps; agents: readonly Agent[] | und
   </div>
 }
 
+/** A world's name as you know it: your own world (Central's root, `control:root`) is Central, a project's world (`project:<Name>`) is the
+ * project; any other ref as it came. */
+export function worldName(ref: string): string {
+  if (ref === 'control:root') return 'Central'
+  return ref.startsWith('project:') && ref.length > 8 ? ref.slice(8) : ref
+}
+
 /** The card for a new agent (page new-agent) or group (page new-group). */
 function Card({p, group}: {p: ViewProps; group: boolean}) {
   const v = p.v, field = (key: string) => strOf(v, `new.${key}`) ?? ''
   const types = json<string[]>(v, 'types', []).map(t => ({value: t, label: t}))
-  const worlds = json<string[]>(v, 'worlds', []).map(t => ({value: t, label: t}))
+  const worlds = json<string[]>(v, 'worlds', []).map(t => ({value: t, label: worldName(t)}))
   const skillsets = json<string[]>(v, 'skillsets', []).map(t => ({value: t, label: t}))
   // Central's answer to Make: the proposal it wrote from your words (agent-profile.express → role, purpose, world, sources).
   const proposal = json<{role?: string; purpose?: string; world?: string; sources?: string[]; revision?: string} | null>(v, 'proposal', null)
@@ -109,7 +116,7 @@ function Card({p, group}: {p: ViewProps; group: boolean}) {
     <h3>{group ? 'Central proposes this group' : 'Central proposes this agent'}</h3>
     <Readout label="role" does="The role Central read from your words." value={proposal.role} />
     <p className="ms-card-purpose" data-i="Purpose|What the agent is for, as Central wrote it from your words.">{proposal.purpose ?? NONE}</p>
-    <Readout label="world" does="The world the agent stands in." value={proposal.world} />
+    <Readout label="world" does="The world the agent stands in." value={proposal.world && worldName(proposal.world)} />
     <Readout label="may read" does="The sources the agent may read." value={proposal.sources?.length ? proposal.sources.join(', ') : undefined} />
     <div className="ms-card-do">
       <Action {...st(p, 'accept')} label="Accept" does="Keep the proposal in your roster. Until you accept, the agent stands proposed." onPress={() => { p.set('accept', proposal.revision ?? true); p.setPage('') }} />
