@@ -1945,6 +1945,26 @@ impl Client {
         self.provision_inner(cwd, project_ref, preferred_body_ref, None, None, true)
     }
 
+    /// Attach one AgentSession of a roster Agent's conversation to its space
+    /// and mint its Agency for exactly that Agent.
+    fn attach_agent_conversation_session(
+        &self,
+        cwd: &Path,
+        space: &str,
+        agent_session: &str,
+        agent: &str,
+    ) -> Result<(), String> {
+        let attachment = serde_json::json!({"agent_session":agent_session,
+            "purpose":format!("Your conversation with {agent}"),"provenance":[]});
+        let intent =
+            serde_json::json!({"operation":"attach-agent-session","attachment":attachment});
+        let staged = self.stage_intent(cwd, space, &intent)?;
+        self.apply_preview(cwd, &staged)?;
+        self.mint_agency_as(cwd, agent_session, Some(agent), false)
+            .map_err(|refused| format!("{agent} was not given an Agency: {refused}"))?;
+        Ok(())
+    }
+
     /// Bring a named roster agent into a shared Flow (O:I #558): a fresh
     /// Agency session minted for exactly that agent, its resident opened, and
     /// then the one sender and the one Flow source admitted to it. The
@@ -1992,6 +2012,137 @@ impl Client {
         data["sender"] = Value::String(sender.to_owned());
         data["requested_agent_ref"] = Value::String(agent_ref.to_owned());
         Ok(data)
+    }
+
+    /// The conversation you hold with one roster Agent (Messages, §19.24): its
+    /// own SessionSpace and AgentSession, named from the Agent so the same
+    /// conversation reopens every time; its context composed for that Agent
+    /// alone (`project-context --agent`, so a ground with several profiles is
+    /// never guessed at); its Agency minted for exactly that Agent under the
+    /// owner's standing grant; its provider opened, or resumed when the
+    /// session already has a recorded body. A ground with no encounter
+    /// provider is given `pi` from its harness profile first (AIKit
+    /// `encounter-configure`): without one no Agent can answer at all.
+    /// Answers the space, the session, the provider and how it stood.
+    pub fn provision_agent_conversation(
+        &self,
+        cwd: &Path,
+        project_ref: &str,
+        agent_ref: &str,
+    ) -> Result<Value, String> {
+        let agent = agent_ref.trim();
+        if !agent.starts_with("agent:") && !agent.starts_with("agent/") {
+            return Err(format!("{agent_ref} is not an Agent ref"));
+        }
+        let mut configured = self.encounter(cwd, project_ref, &EncounterRequest::Providers)?;
+        let mut provider_connected = false;
+        if configured.as_array().is_none_or(Vec::is_empty) {
+            self.session_space(
+                cwd,
+                &[
+                    "encounter-configure",
+                    "--provider-json",
+                    r#"{"id":"pi","label":"pi","from_profile":"pi","argv":[]}"#,
+                ],
+            )?;
+            provider_connected = true;
+            configured = self.encounter(cwd, project_ref, &EncounterRequest::Providers)?;
+        }
+        let rows = configured.as_array().map(Vec::as_slice).unwrap_or_default();
+        let held = crate::chat_defaults::held_provider();
+        let (provider, _) = default_provider_choice(rows, held.as_deref())
+            .ok_or("No encounter provider is configured, and AIKit did not take pi")?;
+
+        let slug = chat_slug(
+            agent
+                .trim_start_matches("agent:")
+                .trim_start_matches("agent/"),
+        );
+        let space = format!("session-space/agent-{slug}");
+        let first_session = format!("agent-session/agent-{slug}");
+        let listed: Value = serde_json::from_str(&self.session_space(cwd, &["list"])?)
+            .map_err(|e| format!("Unreadable AIKit SessionSpace list: {e}"))?;
+        let row = listed
+            .as_array()
+            .and_then(|rows| rows.iter().find(|row| row["definition"]["id"] == space));
+        let exists = row.is_some();
+        // The conversation's sessions, oldest first: the first, then each one
+        // opened because the one before could not be resumed.
+        let mut sessions = agent_conversation_sessions(
+            &first_session,
+            row.and_then(|row| row["agent_sessions"].as_object())
+                .map(|held| held.keys().cloned().collect())
+                .unwrap_or_default(),
+        );
+        let mut agent_session = sessions.last().cloned().unwrap_or(first_session.clone());
+        let mut agency = "retained";
+        if !exists {
+            let label = format!("Conversation with {agent}");
+            let preview = self.session_space(cwd, &["create", &space, "--label", &label])?;
+            self.apply_preview(cwd, &preview)?;
+            let context = self.session_space(cwd, &["project-context", "--agent", agent])?;
+            let binding: Value = serde_json::from_str(&context)
+                .map_err(|e| format!("Unreadable AIKit project-context reading: {e}"))?;
+            let intent = serde_json::json!({"operation":"bind-project-context","binding":binding});
+            let staged = self.stage_intent(cwd, &space, &intent)?;
+            self.apply_preview(cwd, &staged)?;
+            self.attach_agent_conversation_session(cwd, &space, &agent_session, agent)?;
+            agency = "minted";
+            sessions = vec![agent_session.clone()];
+        }
+        // Open the body; a session with a recorded body resumes it instead,
+        // and one already resident stands as it is.
+        let open = EncounterRequest::Open {
+            space: space.clone(),
+            agent_session: agent_session.clone(),
+            provider: provider.clone(),
+        };
+        let opened = match self.encounter(cwd, project_ref, &open) {
+            Ok(value) => ("opened", value),
+            Err(error) if error.ends_with("[encounter.resume_required]") => {
+                let reconnect = EncounterRequest::Reconnect {
+                    space: space.clone(),
+                    agent_session: agent_session.clone(),
+                    provider: provider.clone(),
+                };
+                match self.encounter(cwd, project_ref, &reconnect) {
+                    Ok(value) => ("resumed", value),
+                    // A harness that cannot resume (pi) leaves the recorded
+                    // session closed for good once its owner restarted. AIKit's
+                    // own answer is a new canonical session: the conversation
+                    // continues in the next one, the earlier ones stay readable.
+                    Err(error)
+                        if error.ends_with("[encounter.reconnect_unsupported]")
+                            || error.ends_with("[encounter.resume_unsupported]") =>
+                    {
+                        agent_session = next_agent_conversation_session(&first_session, &sessions);
+                        self.attach_agent_conversation_session(cwd, &space, &agent_session, agent)?;
+                        agency = "minted";
+                        sessions.push(agent_session.clone());
+                        let open = EncounterRequest::Open {
+                            space: space.clone(),
+                            agent_session: agent_session.clone(),
+                            provider: provider.clone(),
+                        };
+                        ("renewed", self.encounter(cwd, project_ref, &open)?)
+                    }
+                    Err(error) => return Err(error),
+                }
+            }
+            Err(error) if error.contains("resident") => ("resident", Value::Null),
+            Err(error) => return Err(error),
+        };
+        Ok(serde_json::json!({
+            "agent_ref": agent,
+            "space": space,
+            "agent_session": agent_session,
+            "sessions": sessions,
+            "provider": provider,
+            "provider_connected": provider_connected,
+            "agency": agency,
+            "body": opened.0,
+            "open": opened.1,
+        }))
     }
 
     /// Exact native attachment identity lets a personal dialogue reopen without
@@ -3510,5 +3661,72 @@ mod gateway_agent_tests {
         let refused = super::tests::retry_busy(|| client.decision_status())
             .expect_err("another schema is refused");
         assert!(refused.contains("aikit.decision-status/v1"), "{refused}");
+    }
+}
+
+/// A roster Agent's conversation sessions, oldest first: `first`, then
+/// `first-2`, `first-3`, … as each was opened. Sessions of other names are
+/// not this conversation's.
+pub(crate) fn agent_conversation_sessions(first: &str, held: Vec<String>) -> Vec<String> {
+    let mut sessions: Vec<(u32, String)> = held
+        .into_iter()
+        .filter_map(|session| {
+            if session == first {
+                return Some((1, session));
+            }
+            let generation = session
+                .strip_prefix(first)?
+                .strip_prefix('-')?
+                .parse::<u32>()
+                .ok()
+                .filter(|n| *n >= 2)?;
+            Some((generation, session))
+        })
+        .collect();
+    sessions.sort();
+    sessions.into_iter().map(|(_, session)| session).collect()
+}
+
+/// The session a conversation continues in when its latest cannot resume.
+pub(crate) fn next_agent_conversation_session(first: &str, sessions: &[String]) -> String {
+    format!("{first}-{}", sessions.len().max(1) + 1)
+}
+
+#[cfg(test)]
+mod agent_conversation_session_tests {
+    use super::*;
+
+    #[test]
+    fn sessions_are_ordered_by_generation_and_foreign_ones_dropped() {
+        let first = "agent-session/agent-a";
+        let held = vec![
+            "agent-session/agent-a-10".to_owned(),
+            "agent-session/agent-a".to_owned(),
+            "agent-session/agent-a-2".to_owned(),
+            "agent-session/agent-ab".to_owned(),
+            "agent-session/agent-a-x".to_owned(),
+        ];
+        assert_eq!(
+            agent_conversation_sessions(first, held),
+            [
+                "agent-session/agent-a",
+                "agent-session/agent-a-2",
+                "agent-session/agent-a-10"
+            ]
+        );
+    }
+
+    #[test]
+    fn the_next_session_follows_the_last() {
+        let first = "agent-session/agent-a";
+        assert_eq!(
+            next_agent_conversation_session(first, &[first.to_owned()]),
+            "agent-session/agent-a-2"
+        );
+        let two = [first.to_owned(), format!("{first}-2")];
+        assert_eq!(
+            next_agent_conversation_session(first, &two),
+            "agent-session/agent-a-3"
+        );
     }
 }

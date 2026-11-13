@@ -205,7 +205,7 @@ const WRITING_OPS: ReadonlySet<string> = new Set(["file_operation", "decide", "d
   "chat_default_discard", "credential_setup", "credential_rotate", "credential_revoke", "client_install", "product_action_run", "dictation_configure", "working_surface_attachment",
   // The person's keys to a room (AIKit's working-surface input): they change what runs there.
   "working_surface_input",
-  "encounter_provision", "flow_participant_provision", "config_apply_reviewed",
+  "encounter_provision", "agent_conversation", "flow_participant_provision", "config_apply_reviewed",
   // AIKit's task creation: a session's new task, made of a constellation (O-I #768).
   "encounter_task_configure",
   // Lane W3's owner routes that write (kernel/src/owner_routes.rs).

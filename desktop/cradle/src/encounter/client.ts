@@ -55,6 +55,17 @@ export async function encounterProvision(transport:KernelTransportStatus,project
   if(result.error || result.outcome?.result!=="encounter_provisioned")throw new Error(result.error??"AIKit did not provision a chat conversation");
   return result.outcome.data as EncounterProvisioning;
 }
+/** A conversation with one named Agent of the World (the kernel's agent_conversation): the SessionSpace, the agent session bound to that
+ * Agent, its Agency, the provider body — made once and reopened after. Every later act is the ordinary encounter action. */
+export interface AgentConversation {agent_ref:string;space:string;agent_session:string;provider:string;provider_connected?:boolean;agency:"minted"|"retained";body:"opened"|"resumed"|"resident"|"renewed";
+  /** Every canonical session of this conversation, oldest first; the last is `agent_session`. A harness that cannot resume (pi) renews
+   * into a new session after its owner restarts, so the earlier ones hold the conversation's history. */
+  sessions?:string[]}
+export async function agentConversation(transport:KernelTransportStatus,agentRef:string,project=""):Promise<AgentConversation> {
+  const result=await kernelOp(transport,{op:"agent_conversation",project,agent_ref:agentRef});
+  if(result.error || result.outcome?.result!=="encounter_provisioned")throw new Error(result.error??"AIKit did not open a conversation with this agent");
+  return result.outcome.data as AgentConversation;
+}
 /** The session's task record (`aikit.encounter-task/v1`), read through the
  * owner's `encounter-task-read`. `null` is honest absence — no task is bound
  * to this session. Refusals surface the owner's own words. */
