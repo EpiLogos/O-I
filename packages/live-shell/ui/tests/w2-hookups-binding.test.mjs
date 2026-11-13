@@ -138,7 +138,8 @@ test('the NOWs\' Close refused before Central is asked: no carrier (drawn on the
 
 test('the rail\'s NOWs binding hands railBindings.nowsCloseWrites the ground it read and closeNowClearing (loaded at the press) — the Close is no longer refused as absent', () => {
   const source = read('widgets/railDevices.tsx')
-  assert.match(source, /\.\.\.nowsCloseWrites\(transport, reading\.status === 'read' \? reading\.ground : null, closeNow\)/)
+  // REPLACED (parity audit D-03): with each project's listing too, so a project's clearing closes in its own register.
+  assert.match(source, /\.\.\.nowsCloseWrites\(transport, reading\.status === 'read' \? reading\.ground : null, closeNow, projects\)/)
   assert.match(source, /const closeNow: typeof closeNowClearing = \(\.\.\.args\) => import\('\.\.\/central\/devices\/nowsClose'\)\.then\(module => module\.closeNowClearing\(\.\.\.args\)\)/,
     'closeNowClearing itself, loaded at the press')
   assert.doesNotMatch(source + read('widgets/railBindings.ts'), /NOW_CLOSE_ABSENT/, 'REPLACED: the missing-op refusal is gone')

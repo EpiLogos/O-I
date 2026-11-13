@@ -14,6 +14,7 @@ import {useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore}
 import {useHeldRead, useOwnerOp} from '../owners/ownerCall'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import {readGround, type CentralGroundReading} from '../../../../../desktop/cradle/src/central/client'
+import {nowReading, type NowListing} from '../../../../../desktop/cradle/src/receiving/now'
 import {useTape} from '../../../../../desktop/cradle/src/agent/tape/journal'
 import {listFiles, readFile} from '../../../../../desktop/cradle/src/files/client'
 import {parseWiki, type WikiNode} from '../../../../../desktop/cradle/src/techne/wikiReading'
@@ -22,7 +23,7 @@ import {useAgencySessions} from '../agent/useAgencySessions'
 import {COMPANIONS} from '../shell/modeDockTiles'
 import {conversationOf} from './agentConversation'
 import {useAgentSessionsOptional} from '../agent/AgentSessionsProvider'
-import {gitRepositoryAbsence, projectOfSession, ROOT_REGISTER, useWorldReturns} from '../agent/worldScope'
+import {gitRepositoryAbsence, projectOfSession, ROOT_REGISTER, useWorldProjects, useWorldReturns} from '../agent/worldScope'
 import {useOptionalContinuity} from '../continuity/workspace'
 import {publishDevice, publishedDevice, subscribeDeviceDoor, useRailHolds} from '../frame/devices/deviceDoor'
 import {GIT_ID} from '../agent/devices/workcellBindings'
@@ -37,7 +38,7 @@ import type {DesignBinding, Value} from '../frame/devices/designed'
 import type {DeviceInstance} from '../frame/devices/deviceRuntime'
 import {useWidgetReading} from './widgetReading'
 import type {OwnerReading} from '../owners/ownerReading'
-import {NOTIFY_LIST_ACTION, dayStartMs, diffFilesOf, filesOf, groundPlaceOf, keptTrackOf, nowsCloseWrites, nowsValues, openFileOf, pagesOf, proposedFilesOf, put, reachPathsOf, trailIndexOf, trailValues, usedRecordsOf, wikiPagesOf, withReach, type NotifyLedgerAnswer, type UsedRecord} from './railBindings'
+import {NOTIFY_LIST_ACTION, dayStartMs, diffFilesOf, filesOf, groundPlaceOf, keptTrackOf, nowsCloseWrites, nowsValues, openFileOf, pagesOf, wikiReadLastOf, proposedFilesOf, put, reachPathsOf, trailIndexOf, trailValues, usedRecordsOf, wikiPagesOf, withReach, type NotifyLedgerAnswer, type ProjectNows, type UsedRecord} from './railBindings'
 import {returnToStop} from '../shell/TrailWidget'
 import {standingOn} from '../../../../../desktop/cradle/src/workspace/store'
 import {DIFF_PAGE, carryPages} from '../agent/devices/oneAgentBinding'
@@ -50,9 +51,10 @@ import {loadWhenDrawn} from '../shell/loadWhenDrawn'
 export {RAIL_FAMILY, RAIL_DEVICES, railDeviceId, railDevice, type RailDeviceId} from './railDeviceIds'
 
 type Holds = Readonly<Record<string, Value | undefined>>
-/** The view's own holds for a design's tile keys: each set goes straight here, never to an owner. */
-function useHolds(keys: readonly string[]): {holds: Holds; local: Record<string, (value: Value | undefined) => void>} {
-  const [holds, setHolds] = useState<Holds>({})
+/** The view's own holds for a design's tile keys: each set goes straight here, never to an owner. `initial`: the design's own defaults
+ * (the value its tile and lists fall back to), held from the start so its controls draw the choice the lists already make. */
+function useHolds(keys: readonly string[], initial: Holds = {}): {holds: Holds; local: Record<string, (value: Value | undefined) => void>} {
+  const [holds, setHolds] = useState<Holds>(initial)
   const local = useMemo(() => Object.fromEntries(keys.map(key => [key, (value: Value | undefined) => setHolds(current => ({...current, [key]: value}))])),
     // The keys are fixed per device.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -63,10 +65,13 @@ const withHolds = (values: Record<string, Value>, holds: Holds) => { for (const 
 
 // ---------------------------------------------------------------------------------------------------------------- the Trail
 
+const TRAIL_HOLDS: Holds = {limit: 8}
+
 function useTrailBinding(): DesignBinding {
   const continuity = useOptionalContinuity()
   const context = continuity?.current.context
-  const {holds, local} = useHolds(['limit', 'chosen'])
+  // Limit: the design's tile and list show 8 stops unless told (widgets__trail.tsx LIMIT.min); Full's Limit box reads the same hold.
+  const {holds, local} = useHolds(['limit', 'chosen'], TRAIL_HOLDS)
   // The latest book, for the one walk a press makes (the binding stays the same object while the trail does).
   const latest = useRef(continuity)
   latest.current = continuity
@@ -194,8 +199,11 @@ function useProposedChanges(transport: KernelTransportStatus | undefined): Recor
 /** The Diff page's binding (Files' Diff page, §23.4; widgets__files.tsx `diff.` keys): the working diff as read, the changes agents propose
  * (useProposedChanges), the session Files follows (Session: Selected), and the page's own holds. Files carries it under `diff.`
  * (railDevices.tsx RailDevices). */
+const DIFF_HOLDS: Holds = {show: 'both', session: 'selected', layout: 'unified'}
+
 function useDiffBinding(reading: DiffReading, proposed: Record<string, Value>[] | null, followed: string | null): DesignBinding {
-  const {holds, local} = useHolds(['show', 'session', 'layout', 'open'])
+  // The Diff page's choices as its lists make them unless told (widgets__files.tsx: Changes Both, Session Selected, Layout Unified).
+  const {holds, local} = useHolds(['show', 'session', 'layout', 'open'], DIFF_HOLDS)
   return useMemo(() => {
     const values: Record<string, Value> = {}
     if (reading.status === 'read' || proposed?.length) put(values, 'files', JSON.stringify([...(reading.status === 'read' ? reading.files : []), ...(proposed ?? [])]))
@@ -269,9 +277,12 @@ function useReach(transport: KernelTransportStatus | undefined, paths: readonly 
   return useCentralAction(transport ?? {kind: 'unavailable', reason: 'No kernel carrier stands.'}, 'central.files.reach', input)
 }
 
+const FILES_HOLDS: Holds = {show: 'touched'}
+
 function useFilesBinding(tape: ReturnType<typeof useFollowedTape>, diff: DiffReading, transport: KernelTransportStatus | undefined,
   hold: ReturnType<typeof useFollowHold>): DesignBinding {
-  const {holds, local} = useHolds(['show', 'blocked', 'open'])
+  // Show as the tree lists unless told (widgets__files.tsx: Read · changed).
+  const {holds, local} = useHolds(['show', 'blocked', 'open'], FILES_HOLDS)
   const root = diff.status === 'read' ? diff.root : null
   const path = openFileOf(holds.open, root)
   const opened = useOpenFile(transport, path)
@@ -451,8 +462,12 @@ export function wikiLinksOf(reading: unknown, nodeRef: string, lines: readonly s
 type WikiPagesReading = {status: 'reading'} | {status: 'refused'; words: string} | {status: 'read'; nodes: readonly WikiNode[]}
 type WikiBody = {ref: string; lines: readonly string[]} | {ref: string; words: string}
 
-function useWikiBinding(transport: KernelTransportStatus | undefined): DesignBinding {
-  const {holds, local} = useHolds(['follow', 'page'])
+const WIKI_HOLDS: Holds = {follow: true}
+
+/** The Wiki (§23.7): `tape`, the selected agent's (useFollowedTape), for the page it read last (railBindings.ts wikiReadLastOf); Follow on
+ * — as it opens — shows that page whenever it moves. */
+function useWikiBinding(transport: KernelTransportStatus | undefined, tape: ReturnType<typeof useFollowedTape>): DesignBinding {
+  const {holds, local} = useHolds(['follow', 'page'], WIKI_HOLDS)
   // The register's wiki.json through the files seam, held once for the window and read again when the ground moves.
   const wiki = useHeldRead(transport && transport.kind !== 'unavailable' ? ['rail-wiki', transport, ROOT_WIKI_FOLDER] : null, async () => {
     const folder = await listFiles(transport!, ROOT_WIKI_FOLDER)
@@ -465,7 +480,11 @@ function useWikiBinding(transport: KernelTransportStatus | undefined): DesignBin
   const pages = useMemo((): WikiPagesReading => !transport || transport.kind === 'unavailable' ? {status: 'refused', words: transport?.reason ?? 'No kernel carrier stands.'}
     : wiki.status === 'answered' && wiki.value ? {status: 'read', nodes: wiki.value}
     : wiki.status === 'refused' ? {status: 'refused', words: wiki.error ?? 'The wiki reading did not resolve.'} : {status: 'reading'}, [transport, wiki])
-  const shown = typeof holds.page === 'string' ? holds.page : pages.status === 'read' ? pages.nodes[0]?.ref : undefined
+  const readLast = useMemo(() => (pages.status === 'read' ? wikiReadLastOf(tape.rows, pages.nodes) : undefined), [pages, tape.rows])
+  // Follow: the page shown follows the page the agent read last, each time it moves; a page you press stands until it moves again.
+  const following = holds.follow !== false
+  useEffect(() => { if (following && readLast) local.page!(readLast) }, [following, readLast, local])
+  const shown = typeof holds.page === 'string' ? holds.page : pages.status === 'read' ? readLast ?? pages.nodes[0]?.ref : undefined
   const node = pages.status === 'read' ? pages.nodes.find(candidate => candidate.ref === shown) : undefined
   const source = node?.source_refs?.[0]
   const text = useOwnerOp(transport, node && source ? {op: 'knowledge', request: {action: 'read', address: {kind: 'source', value: source}}} : null, 'knowledge').reading
@@ -480,6 +499,7 @@ function useWikiBinding(transport: KernelTransportStatus | undefined): DesignBin
     if (pages.status === 'read') put(values, 'pages', JSON.stringify(wikiPagesOf(pages.nodes)))
     else if (pages.status === 'refused') put(values, 'reason', pages.words)
     put(values, 'page', shown)
+    put(values, 'readLast', readLast)
     if (body && body.ref === shown) {
       if ('lines' in body) {
         // The links stand once Central's wiki reading answered; until then, or where it refused, the page draws without them.
@@ -488,7 +508,7 @@ function useWikiBinding(transport: KernelTransportStatus | undefined): DesignBin
       } else put(values, 'reason', body.words)
     }
     return {id: railDeviceId('wiki'), values: withHolds(values, holds), local}
-  }, [pages, body, shown, typed, holds, local])
+  }, [pages, body, shown, readLast, typed, holds, local])
 }
 
 // ---------------------------------------------------------------------------------------------------------------- the NOWs
@@ -509,14 +529,35 @@ function useGround(transport: KernelTransportStatus | undefined): GroundReading 
  * first load. */
 const closeNow: typeof closeNowClearing = (...args) => import('../central/devices/nowsClose').then(module => module.closeNowClearing(...args))
 
+/** Each project's NOW clearings (§23.6 "the clearings of every register"): the `now` listing asked in each project's register Central
+ * discloses (agent/worldScope.ts useWorldProjects; desktop/cradle/src/receiving/now.ts nowReading), held for the window and read again when
+ * the ground moves. A project whose register refuses is left out; your ground's listing is the ground's own reading (useGround). */
+function useProjectNows(transport: KernelTransportStatus | undefined): readonly ProjectNows[] {
+  const carrier = transport ?? {kind: 'unavailable' as const, reason: 'No kernel carrier stands.'}
+  const world = useWorldProjects(carrier)
+  const projects = world.status === 'answered' ? (world.value ?? []).filter(name => name !== ROOT_REGISTER) : []
+  const read = useHeldRead(transport && transport.kind !== 'unavailable' && projects.length ? ['rail-project-nows', transport, projects.join('\n')] : null, async () => {
+    const listings: ProjectNows[] = []
+    for (const project of projects) {
+      try { listings.push({project, records: (await nowReading<NowListing>(transport!, project, {kind: 'list'})).records}) } catch { /* that register refused: its clearings are not read */ }
+    }
+    return listings
+  })
+  return read.value ?? NO_PROJECT_NOWS
+}
+const NO_PROJECT_NOWS: readonly ProjectNows[] = []
+
 function useNowsBinding(transport: KernelTransportStatus | undefined): DesignBinding {
   const reading = useGround(transport)
-  const {holds, local} = useHolds(['machine', 'open'])
+  const projects = useProjectNows(transport)
+  // Machines and Where are the monitor's own (widgets__nows.tsx); the moment opened too.
+  const {holds, local} = useHolds(['machine', 'where', 'open'])
   return useMemo(() => {
-    const values = reading.status === 'read' ? nowsValues(reading.ground) : reading.status === 'refused' ? {reason: reading.words} : {}
-    // Close writes through Central's central.now.lifecycle on the listing and the policy this reading gave (railBindings.ts).
-    return {id: railDeviceId('nows'), values: withHolds(values, holds), local, ...nowsCloseWrites(transport, reading.status === 'read' ? reading.ground : null, closeNow)}
-  }, [reading, holds, local, transport])
+    const values = reading.status === 'read' ? nowsValues(reading.ground, projects) : reading.status === 'refused' ? {reason: reading.words} : {}
+    // Close writes through Central's central.now.lifecycle on the listing and the policy this reading gave (railBindings.ts), a project's
+    // clearing in its own register.
+    return {id: railDeviceId('nows'), values: withHolds(values, holds), local, ...nowsCloseWrites(transport, reading.status === 'read' ? reading.ground : null, closeNow, projects)}
+  }, [reading, projects, holds, local, transport])
 }
 
 // ---------------------------------------------------------------------------------------------------------------- Notifications
@@ -562,6 +603,10 @@ function PublishesNothingYet() { return null }
 const AgentRailDevices = loadWhenDrawn('The rail\'s agent devices', () => import('../agent/devices/AgentRailDevices').then(module => module.AgentRailDevices), PublishesNothingYet)
 /** The rail's Sky (widgets/railSky.tsx): the QL Sky device, published while its tile is open; its code and its sky read load only then. */
 const RailSky = loadWhenDrawn('The rail\'s Sky', () => import('./railSky').then(module => module.RailSky), PublishesNothingYet)
+/** The rail's Packet and Graph (widgets/railChainDevices.tsx): Central's Packet and the Knowledge graph, published while their tile is open
+ * and no chain holds them; their code and their reads load only then. */
+const RailPacket = loadWhenDrawn('The rail\'s Packet', () => import('./railChainDevices').then(module => module.RailPacket), PublishesNothingYet)
+const RailGraph = loadWhenDrawn('The rail\'s Graph', () => import('./railChainDevices').then(module => module.RailGraph), PublishesNothingYet)
 
 /** Publish each rail-born device on the door while the rail stands, and claim the rail's widget of the same id for it; and the rail's
  * agent devices with it. */
@@ -573,7 +618,9 @@ export function RailDevices() {
   const diffReading = useDiffReading(transport), filesTape = useFollowedTape(filesFollow.kept), webTape = useFollowedTape(webFollow.kept)
   const proposed = useProposedChanges(transport)
   const trail = useTrailBinding(), diff = useDiffBinding(diffReading, proposed, filesTape.session), nows = useNowsBinding(transport)
-  const ownFiles = useFilesBinding(filesTape, diffReading, transport, filesFollow), web = useWebBinding(webTape, webFollow), wiki = useWikiBinding(transport)
+  const ownFiles = useFilesBinding(filesTape, diffReading, transport, filesFollow), web = useWebBinding(webTape, webFollow)
+  // The Wiki reads the selected agent's tape (it keeps no agent of its own: its Follow follows the page, not the agent).
+  const wikiTape = useFollowedTape(null), wiki = useWikiBinding(transport, wikiTape)
   // Files carries its Diff page under `diff.` (§23.2, §23.4): the Diff's own binding, prefixed.
   const files = useMemo(() => carryPages(ownFiles, [{page: DIFF_PAGE, binding: diff}]), [ownFiles, diff])
   const devices = useMemo(() => Object.fromEntries(RAIL_DEVICES.map(spec => [spec.id, railDevice(spec.id)])) as Record<RailDeviceId, DeviceInstance>, [])
@@ -589,6 +636,8 @@ export function RailDevices() {
   useEffect(() => { publishDevice(devices.wiki.id, {device: devices.wiki, binding: wiki}) }, [devices, wiki])
   useEffect(() => { publishDevice(devices.nows.id, {device: devices.nows, binding: nows}) }, [devices, nows])
   useEffect(() => () => { for (const spec of RAIL_DEVICES) publishDevice(railDeviceId(spec.id), null); publishDevice(TERMINAL_ID, null) }, [])
-  const sky = useRailHolds('sky')
+  const sky = useRailHolds('sky'), packet = useRailHolds('packet'), graph = useRailHolds('graph')
+  // The Packet and the Graph join after the Sky, in the same places, so the publishers before them never remount.
+  if (packet || graph) return <><AgentRailDevices />{sky && <RailSky />}{packet && <RailPacket />}{graph && <RailGraph />}</>
   return <><AgentRailDevices />{sky && <RailSky />}</>
 }
