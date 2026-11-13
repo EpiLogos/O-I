@@ -522,9 +522,9 @@ test('a receipt moves the temporal field only when it can: an instant-bearing ke
 
 const {readDayOf, dayStandingKey} = await import('../src/owners/day.ts')
 
-test('Central open-day: a refused Day (the stale-today pointer) is remembered for its epoch; an uninitialised Day is an answer', async () => {
+test('Central open-day: a refused Day is remembered for its epoch; an uninitialised Day, and today not opened past the boundary, are answers', async () => {
   const transport = {kind: 'bridge', url: 'http://bridge.test/open-day'}
-  let answer = {ok: false, error: 'the today pointer is stale: day 2026-10-13 was never closed'}
+  let answer = {ok: false, error: 'the Day policy source is denied'}
   const stub = bridge(transport.url, () => answer)
   try {
     const registry = createOwnerReadings()
@@ -532,7 +532,7 @@ test('Central open-day: a refused Day (the stale-today pointer) is remembered fo
     const off = today.subscribe(() => {})
     await today.ensure(EPOCH)
     assert.equal(today.snapshot().status, 'refused')
-    assert.match(today.snapshot().error, /today pointer is stale/)
+    assert.match(today.snapshot().error, /Day policy source is denied/)
     await today.refresh(EPOCH)
     await today.ensure(EPOCH)
     assert.equal(stub.calls.length, 1, 'the window regained and every reader mounting ask nothing more in the epoch')
@@ -541,6 +541,11 @@ test('Central open-day: a refused Day (the stale-today pointer) is remembered fo
     await today.retry(EPOCH)
     assert.equal(today.snapshot().status, 'answered', 'no native document yet is the owner\'s answer about the Day, not a refusal')
     assert.equal(today.snapshot().value.state, 'uninitialised')
+    // Past the boundary (walk 13 Nov): Central's stale today pointer is today not opened yet — an answer, never a refusal.
+    answer = {ok: false, error: 'The native today pointer is stale; explicitly ensure the current Day under the native time policy'}
+    await today.retry(EPOCH)
+    assert.equal(today.snapshot().status, 'answered')
+    assert.equal(today.snapshot().value.state, 'unopened')
     off()
   } finally { stub.restore() }
 })

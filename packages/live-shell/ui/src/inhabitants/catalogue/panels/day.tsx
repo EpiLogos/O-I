@@ -283,10 +283,11 @@ function FieldKept({p}: {p: ViewProps}) {
 
 /** The owner's refusal, in its own words, across the well (manual §16.12): what stops the Day, drawn instead of guessing. */
 function Refusal({v, w, y}: {v: ViewProps['v']; w: number; y: number}) {
-  const said = strOf(v, 'refusal')
-  if (!said) return null
+  const said = strOf(v, 'refusal'), notice = strOf(v, 'notice')
+  if (!said && !notice) return null
   return <foreignObject x={4} y={y} width={w - 8} height={44}>
-    <p className="ref-refusal" data-i={`The owner refuses|${said}`}>{said}</p>
+    {said ? <p className="ref-refusal" data-i={`The owner refuses|${said}`}>{said}</p>
+      : <p className="ref-notice" data-i={`Today|${notice}`}>{notice}</p>}
   </foreignObject>
 }
 
@@ -392,7 +393,7 @@ export const day: DesignedDevice = {
       <Display w={140} h={146} label="The die" does="The open face is lit. A dot marks agent proposals that wait for you." corner={shortDate(p.v, 'date')}>
         <Net v={p.v} set={p.set} cell={32} x0={6} y0={22} names={false} />
         {/* The reading under the net says when tomorrow opens (Central's bound). */}
-        {has(p.v, 'refusal') ? <Refusal v={p.v} w={140} y={100} /> : <text x={6} y={138} className="dp-ink-dim" data-i="Tomorrow opens|When tomorrow's Day opens beside today's, as Central keeps it.">tomorrow opens {bound(p.v, 'rollover') ?? NONE}</text>}
+        {has(p.v, 'refusal') || has(p.v, 'notice') ? <Refusal v={p.v} w={140} y={100} /> : <text x={6} y={138} className="dp-ink-dim" data-i="Tomorrow opens|When tomorrow's Day opens beside today's, as Central keeps it.">tomorrow opens {bound(p.v, 'rollover') ?? NONE}</text>}
       </Display>
     </Section>
     <Section label="Macros" cols={2}>

@@ -204,7 +204,9 @@ try {
     const panes = await page.evaluate(() => window.__seen.panes)
     assert.deepEqual(panes, ['projection.device central:day-die'], `${label}: the device pane, for the Day`)
     const text = await page.locator('#pane').innerText()
-    assert.match(text, /earlier civil Day/, `${label}: the Day's page in the owner's words`)
+    // Past the boundary (walk 13 Nov): today not opened yet, with Open today — never Central's stale-pointer words.
+    assert.match(text, /Today has not opened yet/, `${label}: the Day's page, today not opened yet`)
+    assert.doesNotMatch(text, /earlier civil Day|today pointer/, `${label}: never Central's raw words`)
     assert.equal(await page.locator('#pane iframe').count(), 0, 'never the design\'s template')
     return `opened ${panes[0]}: "${text.replace(/\s+/g, ' ').slice(0, 90)}…"`
   }
