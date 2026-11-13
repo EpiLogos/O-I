@@ -36,7 +36,7 @@ const React = await import('react')
 const {renderToStaticMarkup} = await import('react-dom/server')
 const {readFile} = await import('node:fs/promises')
 const cssText = await readFile(new URL('../src/frame/tracks/tracks.css', import.meta.url), 'utf8')
-const {ArrangementRulerView, loopOf} = await import('../src/frame/tracks/ArrangementRuler.tsx')
+const {ArrangementRulerView, loopOf} = {...await import('../src/frame/tracks/ArrangementRuler.tsx'), ...await import('../src/inhabitants/catalogue/panels/dlw__arrangement-ruler.tsx')}
 const {bandIn, rangeBounds} = await import('../src/frame/tracks/rulerWindow.ts')
 
 const noop = () => {}

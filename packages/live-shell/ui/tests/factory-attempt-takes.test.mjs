@@ -42,7 +42,7 @@ const takes = await import('../src/agent/factoryTakes.ts')
 const model = await import('../src/agent/agentRunModel.ts')
 const factory = await import('../src/timeline/factoryTrackAdapter.ts')
 const owner = await import('../src/owners/attemptTakes.ts')
-const {ArrangementRulerView} = await import('../src/frame/tracks/ArrangementRuler.tsx')
+const {ArrangementRulerView} = {...await import('../src/frame/tracks/ArrangementRuler.tsx'), ...await import('../src/inhabitants/catalogue/panels/dlw__arrangement-ruler.tsx')}
 const {answerOf} = await import('../src/frame/tracks/SessionGrid.tsx')
 const lanes = await import('../src/frame/tracks/trackLanes.ts')
 

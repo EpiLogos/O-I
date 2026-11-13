@@ -10,10 +10,11 @@ export const NO_TRACKS: WorldTrackSet = {columns: [], tracks: [], clips: []}
 
 type ViewProps = {reading: TimelineHostReading; pinnedRef?: string}
 
-// The Arrangement's ruler (ArrangementRuler.tsx) loads when it first draws, not with the window's first script: the mode's tracks carry it,
-// and the waiting Arrangement below loads it, saying so in words meanwhile (round 891; tests/first-load-budget.test.mjs LOADS_LATER).
+// The Arrangement's ruler (catalogue dlw__arrangement-ruler.tsx, which draws the Arrangement: parity D-26) loads when it first draws, not
+// with the window's first script: the mode's tracks carry it, and the waiting Arrangement below loads it, saying so in words meanwhile
+// (round 891; tests/first-load-budget.test.mjs LOADS_LATER).
 const ArrangementWaiting = loadWhenDrawn<{set: WorldTrackSet; selection: TracksSelection; empty?: string}>(
-  'The arrangement', () => import('./ArrangementRuler').then(module => module.ArrangementRuler))
+  'The arrangement', () => import('../../inhabitants/catalogue/panels/dlw__arrangement-ruler').then(module => module.ArrangementRuler))
 
 // The Session grid's design (catalogue dlw__session-grid.tsx, which draws the Session: parity D-25) loads when it first draws, as the ruler does.
 const SessionWaiting = loadWhenDrawn<{set: WorldTrackSet; selection: TracksSelection; empty?: string}>(

@@ -16,10 +16,45 @@
 // stalled?}]), `clips` (JSON [{id, track, label, at, end?, status?, standing?, takes?}]), `sections` (JSON [{id, name, from, to}]), `end`,
 // `now`, `unit`, `word` and the ruler's own words — `labels` (JSON {at: words}, each point the views label) and `spans` (JSON {span: words}),
 // as the set's ruler says them (its label and duration), since a ruler's words are its owner's and never made up here.
-import {useRef, type CSSProperties, type KeyboardEvent, type PointerEvent, type ReactNode} from 'react'
+// The Full IS the Arrangement (parity D-26; Lead, 13 Nov: the catalogue design is the view and the wiring goes into it): the ruler's law
+// moved here from frame/tracks/ArrangementRuler.tsx — scrubbing, the wheel and keyboard window, the marker and the time selection, the cuts,
+// the take comps, the lanes and their drawing, the rails, the mixer row, the menus and the loop brace's handles — and the Session ·
+// Arrangement pane draws this Full on its live set (frame/tracks/tracksDoor.ts TracksMaterial), the gallery on the set its keys carry
+// (rulerSetOfKeys). Its window, snap, marker, lanes and cut modes are the device's holds (useRulerView), so every view of the device and the
+// pane's ruler move one state.
+import {useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent, type ReactNode,
+  type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type RefObject} from 'react'
 import {Band, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, Toggle, ValueBox, type LightState, type Option, type RowItem} from '../../sdk/panel'
 import {clampTo, num, on, str, type DesignedDevice, type Values, type ViewProps} from './design'
-import {clampRange, markStep, percentOf, rangeBounds, snapAt, windowMarks, zoomAround, type RangeBounds, type SnapMode, type TimeRange} from '../../../frame/tracks/rulerWindow'
+import {
+  bandIn, clampRange, fitRange, isFit, markStep, nextSnap, panBy, percentOf, rangeBounds, snapAt, snapOfPress, wheelZoomFactor, windowMarks,
+  windowOfKey, zoomAround, braceEdgeAt, SNAP_MODES, type BraceDrag, type RangeBounds, type SnapMode, type TimeRange,
+} from '../../../frame/tracks/rulerWindow'
+import type {TrackLaneKind, WorldEventLane, WorldTakeLane, WorldTrackClip, WorldTrackSet} from '../../../timeline/worldTrackAdapter'
+import {answerOf, heldLaunchReceipt, pressedIn, MixerLevels, MixerRow, STATUS_WORD, stalledLanes, TrackDeviceButton, trackColour, trackInk, trackTree, type PressedReceipt, type TracksSelection} from '../../../frame/tracks/SessionGrid'
+import {chooseTrack, usePartChoice} from '../../../frame/tracks/partChoice'
+import {trackHeadDevice, useTrackHeadDevices} from '../../../frame/tracks/trackHeads'
+import {automationPoints, compRange, DEFAULT_LANES, drawnLane, LANE_WORD, laneCount, lanesUnder, mainLast, mixerCells, type LanesShown} from '../../../frame/tracks/trackLanes'
+import {CutIcon} from '../../../agent/agentIcons'
+import {clipAccessibleName, clipStandingAttributes, clipStandingEdge, clipStandingMark, clipStandingTag, clipStandingTitle} from '../../../frame/tracks/trackMarks'
+import {narrowestSectionOf, sectionLanes} from '../../../frame/tracks/trackSections'
+import {railKindText, railSegments, railStopTitle, walkRails, type WalkRail} from '../../../frame/tracks/trackRails'
+import {occasionLight} from '../../../frame/tracks/worldCutTracks'
+import {useTracksMenu} from '../../../frame/menu/TracksMenu'
+import {missingAct, ownerStepped, undoable} from '../../../frame/menu/objectActions'
+import {recordStep, subscribeUndo} from '../../../frame/menu/undo'
+import {
+  carriesEdgeCuts, carriesMove, cutOf, cutPress, cutTargets, modeOf, MOVE_MODES, nextMode, partOf, placeClips, SNAP_PX, snapCut, TRIM_MODES,
+  type ClipDrag, type CutPreview, type MoveMode, type TrimMode,
+} from '../../../frame/tracks/clipCuts'
+import {publishShownMarker, publishShownSpan, TracksMaterial} from '../../../frame/tracks/tracksDoor'
+import {RULER_ID} from '../../../frame/tracks/rulerBinding'
+import {hold, useHeld} from '../../../techne/devices/designDevices'
+import {
+  contentMarks, fitHeadColumn, HEADS, LoopBrace, LoopBraceEnds, loopOf, plainDuration, SIDE_WORD, STILL_LANES,
+  type ArrangementRulerViewProps, type LaneDraw, type RulerGesture, type RulerWindowProps, type TakeSelection,
+} from '../../../frame/tracks/ArrangementRuler'
+import '../../../frame/tracks/tracks.css'
 import {createTimeScale, formatYear} from '../../../projections/atlas/src/data/time'
 import './dlw__arrangement-ruler.css'
 
@@ -251,7 +286,7 @@ function viewOf(v: Values): View {
   const clips = d.clips.filter(c => tracks.some(t => t.id === c.track) && shownStanding(v, c))
   return {d, b, range, snap: str(v, 'snap') as SnapMode, tracks, clips}
 }
-const isFit = (view: View) => view.range.start <= 0 && view.range.end >= view.d.end
+const isFitView = (view: View) => view.range.start <= 0 && view.range.end >= view.d.end
 /** Keyboard and button zoom hold the marker still when it is in view, else the window's middle (ArrangementRuler.tsx anchor). */
 const anchorOf = (v: Values, view: View) => {
   const m = num(v, 'marker')
@@ -370,7 +405,7 @@ function Pic({v, set, geo, uid, handles}: {v: Values; set?: SetFn; geo: Geo; uid
   const loop = on(v, 'loop'), loopIn = num(v, 'loopIn'), loopOut = num(v, 'loopOut')
   const oy = geo.h - 17, oh = 13, ox = (at: number) => x0 + at / d.end * pw, ot = (x: number) => clampTo(0, d.end, (x - x0) / pw * d.end)
   const chosen = str(v, 'sel')
-  const fit = isFit(view)
+  const fit = isFitView(view)
   const rel = relOf(v, view)
 
   const clipEl = (c: Clip) => {
@@ -514,7 +549,7 @@ function Thin({v, set, w, h, onOpen}: {v: Values; set?: SetFn; w: number; h: num
   const view = viewOf(v), {d, b, range} = view
   const x0 = 4, pw = w - 8, X = (at: number) => x0 + at / d.end * pw
   const n = Math.max(1, view.tracks.length), top = 14, th = (h - top - 3) / n
-  const loop = on(v, 'loop'), marker = num(v, 'marker'), fit = isFit(view)
+  const loop = on(v, 'loop'), marker = num(v, 'marker'), fit = isFitView(view)
   const span = range.end - range.start
   const marks = windowMarks({start: 0, end: d.end}, b, pw)
   return <g>
@@ -533,118 +568,731 @@ function Thin({v, set, w, h, onOpen}: {v: Values; set?: SetFn; w: number; h: num
   </g>
 }
 
-// ---------------------------------------------------------------- the pane
+// ---------------------------------------------------------------- the pane: the Arrangement itself
 
-function FullRuler({v}: {v: Values}) {
-  const view = viewOf(v), {d, b, range} = view
+/** The ruler the keys carry, as the ruler's law reads a set: the gallery's and any place's that draws the design with no live set (a set
+ * with no actions, so the ruler stands read-only and says so). What the view shows (show:*, st:*) and the loop it holds stand. Pure. */
+export function rulerSetOfKeys(v: Values): WorldTrackSet {
+  const view = viewOf(v), d = view.d
+  const loop = v.loopIn !== undefined && typeof v.loopIn === 'number' ? {start: num(v, 'loopIn'), ...(typeof v.loopOut === 'number' ? {end: num(v, 'loopOut')} : {}), ...(on(v, 'loop') ? {} : {off: true})} : undefined
+  return {columns: [],
+    ruler: {unit: d.unit, end: d.end, ...(d.now !== undefined ? {now: d.now} : {}), label: at => d.label(at), duration: d.span},
+    tracks: view.tracks.map(t => ({id: t.id, name: t.name, kind: 'track', color: t.c, ...(t.needle !== undefined ? {needle: t.needle} : {}), ...(t.stalled ? {stalled: true} : {})})),
+    clips: view.clips.map(c => ({id: c.id, trackId: c.track, columnId: '', label: c.label, at: {start: c.at, ...(c.end !== undefined ? {end: c.end} : {})},
+      ...(c.status ? {status: c.status} : {}), ...(c.standing ? {standing: {visual: c.standing, verbatim: null, rule: 'the design\'s keys'}} : {}),
+      ...(c.takes ? {takes: Array.from({length: c.takes}, (_, j) => ({id: `${c.id}:take:${j + 1}`, name: `Take ${j + 1}`}))} : {})})),
+    sections: d.sections.map(x => ({id: x.id, name: x.name, span: {start: x.from, end: x.to}})),
+    ...(loop ? {loop} : {})}
+}
+
+/** The Arrangement the pane draws: the live set the pane hands its device (frame/tracks/tracksDoor.ts TracksMaterial), else the set the
+ * keys carry. Its window, snap, marker, lanes and cut modes are the device's holds either way (useRulerView). */
+function RulerFull({p}: {p: ViewProps}) {
+  const material = useContext(TracksMaterial)
+  const set = material?.set ?? rulerSetOfKeys(p.v)
+  const selection: TracksSelection = material?.selection ?? {ref: str(p.v, 'sel') || undefined, select: target => { if (target.kind === 'clip') p.set('sel', target.ref) }}
+  return <ArrangementRuler set={set} selection={selection} empty={material?.empty} />
+}
+
+// ---------------------------------------------------------------- the ruler's law, moved from frame/tracks/ArrangementRuler.tsx (parity D-26)
+
+/** The ruler's tools: zoom out, zoom in, fit, and the snap (nativeArrangementTimeline.tsx:309-312; the loop toggle there was an
+ * owner write and is not here). */
+function rulerTools(view: RulerWindowProps, range: TimeRange, bounds: ReturnType<typeof rangeBounds>, anchor: number, set?: WorldTrackSet) {
   const span = range.end - range.start
-  const pc = (at: number) => `${percentOf(clampTo(0, d.end, at), range)}%`
-  const marks = windowMarks(range, b, 900)
-  const marker = num(v, 'marker'), loop = on(v, 'loop'), chosen = str(v, 'sel')
-  const lead = d.lanes && view.tracks.some(t => t.id === d.lanes!.track) ? d.lanes : undefined
-  const stalled = stalledOf(view)
-  const picked = view.clips.find(c => c.id === chosen)
-  const inView = (a: number, e: number) => e >= range.start && a <= range.end
-  const fit = isFit(view)
-  const overview = (at: number) => `${at / d.end * 100}%`
-  const needleText = (t: Track) => t.stalled ? `${t.name} · stalled ${d.span(Math.max(0, (d.now ?? d.end) - t.needle!))}` : undefined
-  const rel = relOf(v, view), x10 = (at: number) => percentOf(clampTo(0, d.end, at), range) * 10
-  const litHops = rel.read.filter(h => h.n !== undefined)
-  const relSays = (c: Clip) => {
-    if (rel.by === 'cause') return litHops.filter(h => h.a.id === c.id || h.b.id === c.id).map(h => ` · ${h.n}: ${h.a.label} → ${h.b.label}, ${d.gap(h.a, h.b)}`).join('')
-    if (rel.by === 'recurrence') return rel.read.filter(h => h.b.id === c.id).map(h => ` · returns ${h.a.label}, ${d.gap(h.a, h.b)} on`).join('')
-    if (rel.by === 'concurrency') return rel.once.filter(o => o.a.id === c.id || o.b.id === c.id).map(o => ` · at once with ${(o.a.id === c.id ? o.b : o.a).label}, ${d.label(o.lo, true)} to ${d.label(o.hi, true)}`).join('')
-    return ''
+  const cuts = view.cuts, move = modeOf(MOVE_MODES, cuts?.move ?? 'insert'), trim = modeOf(TRIM_MODES, cuts?.trim ?? 'trim')
+  return <span className="tl-head tl-tools">
+    <button type="button" aria-label="Zoom out" title="Zoom out (↓ or − on the ruler, ⌘/Ctrl-wheel)" disabled={span >= bounds.end - bounds.start} onClick={() => view.onWindow(zoomAround(range, anchor, .5, bounds))}>−</button>
+    <button type="button" aria-label="Zoom in" title="Zoom in (↑ or + on the ruler, ⌘/Ctrl-wheel or pinch)" disabled={span <= bounds.minSpan} onClick={() => view.onWindow(zoomAround(range, anchor, 2, bounds))}>+</button>
+    <button type="button" aria-label="Fit the whole ruler" title="Fit the whole ruler" disabled={isFit(range, bounds)} onClick={() => view.onWindow(null)}>Fit</button>
+    <button type="button" className="tl-snap" data-snap={view.snap} aria-label={`Snap: ${view.snap}`}
+      title={`Snap · ${view.snap} — the insert marker snaps to a twentieth of a mark (grid), half a mark (coarse), or not at all (free). Shift frees one press, Alt coarsens it. Click for the next.`}
+      onClick={() => view.onSnap(nextSnap(view.snap))}>⌗ {view.snap}</button>
+    {cuts && set && carriesMove(set) && <button type="button" className="tl-cutmode" data-move={move.value} aria-label={`Move mode: ${move.label}`}
+      title={`Move mode · ${move.label} — a drag on a clip ${move.value === 'insert' ? 'moves it and shifts the clips after it' : 'moves it and replaces what was there'}. Click for the next.`}
+      onClick={() => cuts.onMove(nextMode(MOVE_MODES, move.value))}>{move.label}</button>}
+    {cuts && set && carriesEdgeCuts(set) && <button type="button" className="tl-cutmode" data-trim={trim.value} aria-label={`Trim mode: ${trim.label}`}
+      title={`Trim mode · ${trim.label} — what an edge drag does: ${trim.does} Click for the next.`}
+      onClick={() => cuts.onTrim(nextMode(TRIM_MODES, trim.value))}>{trim.label}</button>}
+  </span>
+}
+
+export function ArrangementRulerView({set, selection, empty, view, lanes: lanesView = STILL_LANES, receipt, onPress, onDismiss, chosen = []}: ArrangementRulerViewProps) {
+  const {placed, end} = placeClips(set)
+  const bounds = rangeBounds(end)
+  const range = clampRange(view.window ?? fitRange(bounds), bounds)
+  const held = (at: number) => Math.min(Math.max(at, 0), end)
+  const pct = (at: number) => `${percentOf(held(at), range)}%`
+  const span = range.end - range.start
+  const marks = windowMarks(range, bounds, view.width)
+  const label = set.ruler?.label ?? ((at: number) => String(Math.round(at * 10) / 10))
+  const now = set.ruler?.now
+  const tree = trackTree(set.tracks)
+  const {own: stalled} = stalledLanes(set, tree)
+  const left = set.clips.length - new Set(placed.map(p => p.clip.id)).size
+  const inWindow = (at: number) => at >= range.start && at <= range.end
+  // Keyboard and button zoom hold the insert marker still when it is in view (Live zooms about it), else the window's middle.
+  const anchor = view.marker !== null && inWindow(view.marker) ? view.marker : (range.start + range.end) / 2
+  const markRow = <div className="tl-marks">{marks.map(mark => <span key={mark.at} className={mark.end ? 'end' : undefined} style={{left: `${percentOf(mark.at, range)}%`}}>{label(mark.at)}</span>)}</div>
+  // An empty work draws the ruler and the lane area with the reason in it, as the Session does — never a blank box.
+  if (!set.tracks.length) return <div ref={view.rootRef as RefObject<HTMLDivElement>} className="tl" aria-label="Arrangement" data-tracks-view="arrangement" data-empty="true">
+    <div className="tl-ruler" aria-label="Ruler"><span className="tl-head" />{markRow}</div>
+    <div className="sg-drop" role="status">{empty ?? 'No tracks in this work yet.'}</div>
+  </div>
+
+  // Sections: one lane per layer under the ruler; a clip takes the atmosphere of the narrowest section it stands in.
+  const lanesOfSections = sectionLanes(set)
+  const trackOf = new Map(set.tracks.map(track => [track.id, track]))
+  // Rails: under the lane of each walk's first placed stop; a rail with no placed stop stands after the tracks.
+  const rails = walkRails(set, placed)
+  const railsUnder = new Map<string, WalkRail[]>()
+  for (const rail of rails) if (rail.trackId !== undefined) railsUnder.set(rail.trackId, [...(railsUnder.get(rail.trackId) ?? []), rail])
+  const focusStop = set.actions?.focusStop
+  // The occasion stood in: a line through the lanes where its clip stands (:367), and its readout with the admission light.
+  const occasion = set.occasion
+  const occasionAt = occasion?.at !== undefined && inWindow(occasion.at) ? occasion.at : undefined
+  const light = occasion ? occasionLight(occasion) : undefined
+  const marker = view.marker !== null && inWindow(view.marker) ? view.marker : undefined
+  // The playhead where something plays, as its owner reports it (WorldTrackSet.playhead, O-I #747 round 883): a line through the lanes and
+  // a mark on the ruler. Nothing plays: none, and the insert marker stands as before.
+  const playhead = set.playhead !== undefined && inWindow(set.playhead) ? set.playhead : undefined
+  // The time selection, cut to the window: a band over the marks and through the lanes.
+  const spanBand = view.span ? bandIn(view.span, range, bounds) : null
+  const spanWords = view.span ? `Selected · ${label(view.span.start)} – ${label(view.span.end)} · the pane's own; Consolidate joins what plays here` : ''
+  // The loop its owner carries, held to the ruler and cut to the window (rulerWindow.ts bandIn); with none, no brace stands.
+  const loop = loopOf(set, bounds.end)
+  // XT15 (round 890): an end under the hand draws the brace where the hand has it; let go, the owner's reading draws it again.
+  const setLoop = set.actions?.setLoop
+  const braceDrag = setLoop && loop ? view.brace?.drag ?? null : null
+  const shownLoop = loop && braceDrag ? braceEdgeAt(loop, braceDrag.edge, braceDrag.at, bounds) : loop
+  const loopBand = shownLoop ? bandIn(shownLoop, range, bounds) : null
+  const loopOff = set.loop?.off === true
+  const loopWords = !shownLoop ? '' : loopOff ? `Loop off · ${label(shownLoop.start)} – ${label(shownLoop.end)} · kept where it stands; Loop on repeats it`
+    : `Loop · ${label(shownLoop.start)} – ${label(shownLoop.end)} · its owner's; ${setLoop ? 'drag its ends to set its in and out' : 'set it where its owner sets it'}`
+
+  // The ruler's gestures (nativeArrangementTimeline.tsx:142-148, :173-198): a drag pans the window, a press sets the marker.
+  const gesture = view.gesture ?? {current: null}
+  const pointAt = (clientX: number): number | null => {
+    const box = view.marksRef?.current?.getBoundingClientRect()
+    return box && box.width > 0 ? range.start + (clientX - box.left) / box.width * span : null
   }
-  return <div className="arp-pane" aria-label="Arrangement">
-    <div className="arp-ruler" aria-label={`Ruler in ${d.unit}`}>
-      <span className="arp-head arp-corner">{d.unit} · {d.scale}</span>
-      <div className="arp-marks">
-        {loop && <i className="arp-brace" style={{left: pc(num(v, 'loopIn')), width: `${(clampTo(0, d.end, num(v, 'loopOut')) - clampTo(0, d.end, num(v, 'loopIn'))) / span * 100}%`}} />}
-        {marks.map(m => <span key={m.at} data-end={m.end || undefined} style={{left: `${percentOf(m.at, range)}%`}}>{d.label(m.at)}</span>)}
-        {marker >= 0 && marker >= range.start && marker <= range.end && <span className="arp-marker-tag" style={{left: pc(marker)}}>{d.label(marker)}</span>}
-      </div>
+  // XT15 (round 890): the brace's ends, where its owner lets it be set (loopBraceEnds.tsx).
+  const braceEnds = setLoop && loop && shownLoop ? <LoopBraceEnds loop={loop} shown={shownLoop} bounds={bounds} range={range} snap={view.snap} width={view.width}
+    drag={braceDrag} onDrag={next => view.brace?.onDrag(next)} setLoop={setLoop} receipt={receipt} onPress={onPress} pointAt={pointAt} label={label} /> : null
+  const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0) return
+    const box = event.currentTarget.getBoundingClientRect()
+    if (box.width <= 0) return
+    gesture.current = {pointer: event.pointerId, startX: event.clientX, start: range, scale: box.width / span, moved: false}
+    event.currentTarget.setPointerCapture?.(event.pointerId)
+  }
+  const onPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const active = gesture.current
+    if (!active || event.pointerId !== active.pointer) return
+    const dx = event.clientX - active.startX
+    if (!active.moved && Math.abs(dx) <= 3) return
+    active.moved = true
+    view.onWindow(panBy(active.start, -dx / active.scale, bounds))
+  }
+  const onPointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const active = gesture.current
+    if (!active || event.pointerId !== active.pointer) return
+    gesture.current = null
+    if (active.moved) return
+    const at = pointAt(event.clientX)
+    if (at === null) return
+    const point = snapAt(at, snapOfPress(view.snap, event), markStep(range, bounds, view.width), bounds)
+    // Shift-press with the insert marker standing selects the stretch between them (Live's Shift-click extends a selection; the press's
+    // own point is freed from the snap, as Shift frees a press); a plain press sets the marker and lets the selection go.
+    if (event.shiftKey && view.marker !== null && view.onSpan && point !== view.marker) {
+      view.onSpan({start: Math.min(view.marker, point), end: Math.max(view.marker, point)})
+      return
+    }
+    view.onSpan?.(null)
+    view.onMarker(point)
+  }
+  const onKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Escape' && (view.marker !== null || view.span)) { event.preventDefault(); view.onMarker(null); view.onSpan?.(null); return }
+    const next = windowOfKey(event.key, range, bounds, anchor)
+    if (!next) return
+    event.preventDefault()
+    view.onWindow(next)
+  }
+  const marksProps = {
+    ref: view.marksRef as RefObject<HTMLDivElement>,
+    role: 'slider', tabIndex: 0,
+    'aria-label': `Visible window of the ruler${set.ruler ? `, in ${set.ruler.unit}` : ''}`,
+    'aria-valuemin': bounds.start, 'aria-valuemax': Math.max(bounds.start, bounds.end - span), 'aria-valuenow': range.start,
+    'aria-valuetext': `${label(range.start)} to ${label(range.end)}`,
+    title: 'Drag to pan · press to set the insert marker, Shift-press to select from it · ⌘/Ctrl-wheel or pinch to zoom · ←→ pan · ↑↓ zoom · Home or End to the ends',
+  }
+  // A line at the window's very end is held just inside it, and a readout past the middle reads back from its point, as a dash does.
+  const lineAt = (at: number) => { const p = percentOf(held(at), range); return p >= 99.5 ? 'calc(100% - 2px)' : `${p}%` }
+  const readoutAt = (at: number): CSSProperties => { const p = percentOf(at, range); return p > 70 ? {right: `calc(100% - ${p}%)`} : {left: `${p}%`} }
+  const occasionReadout = occasion && light && <span className={`tl-occ-mark${occasionAt === undefined ? ' off' : percentOf(occasionAt, range) > 70 ? ' back' : ''}`} data-occasion={occasion.ref}
+    style={occasionAt !== undefined ? readoutAt(occasionAt) : undefined}
+    title={`Occasion · ${occasion.label}${occasion.year !== undefined ? ` · ${occasion.year}` : ''}${occasion.at === undefined ? ' · no clip of this work stands it on the ruler' : occasionAt === undefined ? ' · outside the window' : ''} · ${light.title}`}>
+    occasion · {occasion.label.length > 28 ? `${occasion.label.slice(0, 28)}…` : occasion.label}
+    <i className="tl-light" data-admission={light.state} aria-label={light.title} />
+  </span>
+  // The overview strip (catalogue dlw__arrangement-ruler.tsx FullRuler's `arp-over`): the whole ruler, thin, each placed clip a tick in its
+  // track's colour at its track's height, and the window marked on it; a press centres the window on that moment. Its head carries the
+  // ruler's scale: the set's unit, or, where the set has no ruler, that the rows are laid one after another (placeClips).
+  const extent = Math.max(bounds.end - bounds.start, Number.EPSILON)
+  const overAt = (at: number) => `${(held(at) - bounds.start) / extent * 100}%`
+  const trackRow = new Map(set.tracks.map((track, index) => [track.id, index]))
+  const scaleWord = set.ruler ? set.ruler.unit : 'rows in order'
+  const overviewStrip = <div className="tl-lane tl-over" role="group" aria-label={`The whole ruler, in ${scaleWord}`}>
+    <span className="tl-head tl-over-head" title={set.ruler ? `The ruler's scale: ${set.ruler.unit}` : 'No ruler: the Arrangement lays the rows one after another'}>
+      <span className="tl-scale">{scaleWord}</span><small>whole ruler</small>
+    </span>
+    <div className="tl-over-body" title="The whole ruler · press to centre the window on that moment"
+      onClick={event => {
+        const box = event.currentTarget.getBoundingClientRect()
+        if (box.width <= 0) return
+        const at = bounds.start + (event.clientX - box.left) / box.width * extent
+        view.onWindow(clampRange({start: at - span / 2, end: at + span / 2}, bounds))
+      }}>
+      {placed.map(({clip, start, end: to}) => {
+        const track = trackOf.get(clip.trackId)
+        return <i key={clip.id} data-over-clip={clip.id} style={{left: overAt(start), width: `max(2px, ${(held(to) - held(start)) / extent * 100}%)`,
+          top: 2 + (trackRow.get(clip.trackId) ?? 0) * 2.6, ...(track ? {'--tc': trackColour(track)} : {})} as CSSProperties} />
+      })}
+      <i className="tl-over-win" data-fit={isFit(range, bounds) || undefined} style={{left: overAt(range.start), width: `${span / extent * 100}%`}} />
     </div>
-    {d.sections.length > 0 && <div className="arp-lane" data-sections="true">
-      <span className="arp-head"><span>{d.sectionWord}</span><small>sections</small></span>
-      <div className="arp-body">
-        {d.sections.filter(s => inView(s.from, s.to)).map(s => {
-          const from = Math.max(s.from, range.start), to = Math.min(s.to, range.end)
-          return <i key={s.id} className="arp-sect" style={{left: pc(from), width: `${(to - from) / span * 100}%`}} title={s.name}>{s.name}</i>
+  </div>
+  // A drag on a clip (clipCuts.ts): its part and the modes say the cut, its moving point snaps unless Alt is held or the snap is Free, and
+  // its end is one press of the owner's op — or, where the owner carries none, the op it waits for, in words. A press that does not move
+  // is the clip's own click, and selects it; the click a drag ends in selects nothing.
+  const cuts = view.cuts && (carriesMove(set) || carriesEdgeCuts(set)) ? view.cuts : undefined
+  const pressOf = (event: {clientX: number; altKey?: boolean}, drag: ClipDrag, clip: WorldTrackClip) => {
+    const targets = cutTargets(set, drag.clipId, {marker: view.marker, ...(loop ? {loop} : {}), ...(now !== undefined ? {now} : {}),
+      ...(set.playhead !== undefined ? {playhead: set.playhead} : {})})
+    const off = event.altKey === true || view.snap === 'free'
+    return cutPress(set, clip, cutOf(drag.part, cuts!.move, cuts!.trim), drag, (event.clientX - drag.startX) / drag.scale,
+      at => snapCut(at, targets, SNAP_PX / drag.scale, off))
+  }
+  const clipDrag = (clip: WorldTrackClip, start: number, stop: number) => cuts && !trackOf.get(clip.trackId)?.readOnly ? {
+    onPointerDown: (event: ReactPointerEvent<HTMLButtonElement>) => {
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey) return
+      const box = event.currentTarget.getBoundingClientRect(), body = event.currentTarget.parentElement?.getBoundingClientRect()
+      if (!body || !(body.width > 0) || !(box.width > 0)) return
+      cuts.drag.current = {pointer: event.pointerId, clipId: clip.id, part: partOf(event.clientX - box.left, box.width), startX: event.clientX,
+        scale: body.width / span, start, end: stop, moved: false}
+      event.currentTarget.setPointerCapture?.(event.pointerId)
+    },
+    onPointerMove: (event: ReactPointerEvent<HTMLButtonElement>) => {
+      const drag = cuts.drag.current
+      if (!drag || drag.ended || drag.clipId !== clip.id || event.pointerId !== drag.pointer) return
+      if (!drag.moved && Math.abs(event.clientX - drag.startX) <= 3) return
+      drag.moved = true
+      const press = pressOf(event, drag, clip)
+      cuts.onPreview({clipId: clip.id, point: press.point, words: press.what})
+    },
+    onPointerUp: (event: ReactPointerEvent<HTMLButtonElement>) => {
+      const drag = cuts.drag.current
+      if (!drag || drag.ended || drag.clipId !== clip.id || event.pointerId !== drag.pointer) return
+      if (!drag.moved) { cuts.drag.current = null; return }
+      const press = pressOf(event, drag, clip)
+      cuts.drag.current = {...drag, ended: true}
+      cuts.onPreview(null)
+      onPress(press.key, press.what, press.run ?? (() => ({ok: false, error: missingAct(press.op, set.actions)})))
+    },
+    onPointerCancel: () => { cuts.drag.current = null; cuts.onPreview(null) },
+  } : {}
+  /** The click a drag ended in is the drag's: it selects nothing. */
+  const dragClick = (clipId: string) => {
+    const drag = cuts?.drag.current
+    if (!drag?.ended || drag.clipId !== clipId) return false
+    cuts!.drag.current = null
+    return true
+  }
+  const preview = cuts?.preview ?? null
+  const playheadMark = playhead !== undefined && <span className="tl-playhead-mark" style={{left: lineAt(playhead)}} aria-hidden="true"
+    title={`Playhead at ${label(playhead)}: where what plays stands, as its owner reports it`} />
+  const markerMark = marker !== undefined && <span className="tl-marker-mark" style={{left: lineAt(marker)}} title={`Insert marker at ${label(marker)} · the pane's own, snapped ${view.snap}; it writes no time to any owner`}>{label(marker)}</span>
+
+  // A rail stands under its track in that track's colour; one with no placed stop stands after the tracks, uncoloured.
+  const railLane = (rail: WalkRail, colour?: string) => {
+    const total = rail.walk.stops.length
+    const off = total - rail.placed
+    return <div key={`rail:${rail.walk.id}`} className="tl-lane tl-rail" data-walk-row={rail.walk.id} data-walk-kind={rail.walk.kind} data-walk-derived={rail.walk.derived ? 'derived' : 'curated'}
+      style={colour ? {'--tc': colour} as CSSProperties : undefined}>
+      <span className="tl-head tl-rail-head" title={`${rail.walk.name} · ${railKindText(rail.walk)}${off ? ` · ${off} of ${total} ${total === 1 ? 'stop has' : 'stops have'} no place on this ruler` : ''}`}>
+        <span className="tl-lane-name">{rail.walk.name}</span><small>{off ? `${rail.placed}/${total} placed` : `${total} ${total === 1 ? 'stop' : 'stops'}`}</small>
+      </span>
+      <div className="tl-body">
+        {railSegments(rail).map((segment, i) => <i key={i} className="tl-rail-seg" style={{left: pct(segment.from), width: `${(held(segment.to) - held(segment.from)) / span * 100}%`}} aria-hidden="true" />)}
+        {rail.stops.map(({stop, index, at}) => {
+          if (at === undefined) return null
+          const key = `stop:${rail.walk.id}:${index}`
+          const words = `${index + 1}/${total} · ${railStopTitle(stop)}`
+          return focusStop
+            ? <button type="button" key={key} className="tl-stop" data-walk-stop={index + 1} data-stop-ref={stop.id} data-receipt={receipt?.key === key ? (receipt.ok ? 'ok' : 'refused') : undefined}
+              style={{left: pct(at)}} title={`${words} · press to stand it (${focusStop.op})`} aria-label={`Stand stop ${index + 1} of ${total}: ${stop.label}`}
+              onClick={() => onPress(key, `Stand ${stop.label}`, () => focusStop.run(rail.walk.id, index))}>{index + 1}</button>
+            : <span key={key} className="tl-stop" data-walk-stop={index + 1} data-stop-ref={stop.id} style={{left: pct(at)}} title={`${words} · no stop focus: the owner gives none`}>{index + 1}</span>
         })}
       </div>
-    </div>}
-    {view.tracks.map(t => {
-      const clips = view.clips.filter(c => c.track === t.id)
-      return [<div key={t.id} className="arp-lane" style={{'--tc': t.c} as CSSProperties}>
-        <span className="arp-head" data-stalled={t.stalled || undefined}>{t.name}</span>
-        <div className="arp-body">
-          {loop && <i className="arp-brace" style={{left: pc(num(v, 'loopIn')), width: `${(clampTo(0, d.end, num(v, 'loopOut')) - clampTo(0, d.end, num(v, 'loopIn'))) / span * 100}%`, opacity: 0.6}} />}
-          {d.now !== undefined && <i className="arp-now" style={{left: pc(d.now)}} />}
-          {marker >= 0 && marker >= range.start && marker <= range.end && <i className="arp-marker" style={{left: pc(marker)}} />}
-          {rel.once.filter(o => inView(o.lo, o.hi)).map(o => <i key={o.id} className="arp-once" style={{left: pc(Math.max(o.lo, range.start)), width: `max(2px, ${(Math.min(o.hi, range.end) - Math.max(o.lo, range.start)) / span * 100}%)`}} />)}
-          {clips.map(c => {
-            const point = c.end === undefined || !(c.end > c.at), flip = percentOf(clampTo(0, d.end, c.at), range) > 85
-            const std = c.standing ? standingOf(c.standing) : undefined
-            const place: CSSProperties = c.status === 'waiting'
-              ? (flip ? {right: `calc(100% - ${pc(c.at)})`, width: 120} : {left: pc(c.at), width: 120})
-              : {left: pc(Math.max(c.at, range.start)), width: `max(6px, ${point ? 0 : (Math.min(clampTo(0, d.end, c.end!), range.end) - Math.max(clampTo(0, d.end, c.at), range.start)) / span * 100}%)`}
-            return <span key={c.id} className="arp-clip" data-status={c.status} data-sel={c.id === chosen || undefined} data-point={point && c.status !== 'waiting' || undefined}
-              data-band={c.band || undefined} data-returns={rel.returns.get(c.id)}
-              style={{...place, ...(std ? {borderLeft: `2px ${std.css} ${std.line}`} : {})}}>{c.status === 'waiting' ? `▸ ${c.label}` : point ? '' : c.label}</span>
-          })}
-          {t.needle !== undefined && <>
-            <i className="arp-needle" data-stalled={t.stalled || undefined} style={{left: pc(t.needle)}} />
-            {t.stalled && <span className="arp-readout" style={percentOf(t.needle, range) > 60 ? undefined : {right: 'auto', left: `calc(${pc(t.needle)} + 6px)`, borderRight: 0, borderLeft: '2px solid var(--arp-stall)'}}>{needleText(t)}</span>}
-          </>}
-        </div>
-      </div>,
-      // The relations lane: what Read by draws between this track's events, in the line of each relation's standing.
-      (rel.drawn.some(h => h.a.track === t.id) || clips.some(c => rel.returns.has(c.id))) && <div key={`${t.id}-rel`} className="arp-lane" data-sub="true" data-rel="true" style={{'--tc': t.c} as CSSProperties}>
-        <span className="arp-head"><span>{READ_BYS.find(o => o.value === rel.by)!.label}</span><small>{rel.drawn.filter(h => h.a.track === t.id).length}</small></span>
-        <div className="arp-body">
-          <svg viewBox="0 0 1000 26" preserveAspectRatio="none" aria-hidden="true">
-            {rel.drawn.filter(h => h.a.track === t.id).map(h => {
-              const xa = x10(h.a.at), xb = x10(h.b.at), s = standingOf(h.e.standing), lit = h.n !== undefined
-              return <path key={h.e.id} vectorEffect="non-scaling-stroke" fill="none" d={`M${xa.toFixed(1)} 25Q${((xa + xb) / 2).toFixed(1)} -9 ${xb.toFixed(1)} 25`}
-                stroke={lit ? 'var(--accent)' : s.line} strokeWidth={lit ? 1.6 : 1.1} strokeDasharray={s.dash} opacity={rel.by === 'cause' && !lit ? 0.45 : 1} />
-            })}
-          </svg>
-          {litHops.filter(h => h.a.track === t.id).map(h => <span key={h.e.id} className="arp-hop" style={{left: `${(x10(h.a.at) + x10(h.b.at)) / 20}%`}}>{h.n} · {d.gap(h.a, h.b)}</span>)}
-          {clips.filter(c => rel.returns.has(c.id)).map(c => <i key={c.id} className="arp-ret" style={{left: pc(c.at)}}>{rel.returns.get(c.id)! > 1 ? rel.returns.get(c.id) : ''}</i>)}
-        </div>
-      </div>,
-      lead && lead.track === t.id && on(v, 'laneTakes') && clips.some(c => c.takes) && <div key={`${t.id}-takes`} className="arp-lane" data-sub="true" style={{'--tc': t.c} as CSSProperties}>
-        <span className="arp-head"><span>takes</span></span>
-        <div className="arp-body">{clips.filter(c => c.takes).map(c => Array.from({length: c.takes!}, (_, j) =>
-          <i key={`${c.id}${j}`} className="arp-take" data-standing={j === c.takes! - 1 || undefined} style={{left: pc(c.at), width: `${(clampTo(0, d.end, c.end ?? c.at) - clampTo(0, d.end, c.at)) / span * 100}%`, top: 3 + j * 5}} />))}</div>
-      </div>,
-      lead && lead.track === t.id && on(v, 'laneAuto') && <div key={`${t.id}-auto`} className="arp-lane" data-sub="true" style={{'--tc': t.c} as CSSProperties}>
-        <span className="arp-head"><span>{lead.auto.name}</span><small>recorded</small></span>
-        <div className="arp-body"><svg viewBox="0 0 1000 18" preserveAspectRatio="none" aria-hidden="true">
-          <path vectorEffect="non-scaling-stroke" fill="none" stroke="var(--rec)" strokeWidth={1.2}
-            d={stepPath(lead.auto.points, at => percentOf(at, range) * 10, val => 16 - val * 14)} />
-        </svg></div>
-      </div>,
-      lead && lead.track === t.id && on(v, 'laneEvents') && <div key={`${t.id}-events`} className="arp-lane" data-sub="true" style={{'--tc': t.c} as CSSProperties}>
-        <span className="arp-head"><span>events</span><small>{lead.events.length}</small></span>
-        <div className="arp-body">{lead.events.map(([name, at], i) => <i key={i} className="arp-ev" style={{left: pc(at)}} title={name} />)}</div>
-      </div>]
-    })}
-    {view.tracks.length === 0 && <div className="arp-empty">No tracks shown.</div>}
-    {on(v, 'strip') && <div className="arp-over" style={{marginTop: 'auto'}}>
-      <span className="arp-head arp-corner">whole ruler</span>
-      <div className="arp-over-body">
-        {view.clips.map(c => <i key={c.id} style={{left: overview(c.at), width: `max(2px, ${((c.end ?? c.at) - c.at) / d.end * 100}%)`, top: 2 + Math.max(0, view.tracks.findIndex(t => t.id === c.track)) * 2.6, '--tc': view.tracks.find(t => t.id === c.track)!.c} as CSSProperties} />)}
-        <i className="arp-over-win" style={{left: overview(range.start), width: `${span / d.end * 100}%`, opacity: fit ? 0.5 : 1}} />
+    </div>
+  }
+
+  const colourOf = (track: {color?: string}) => ({'--tc': track.color ?? 'var(--track-default, var(--bg-3))'}) as CSSProperties
+  const receiptOn = (key: string) => receipt?.key === key ? (receipt.ok ? 'ok' : 'refused') : undefined
+  // A point on a lane's body from the pointer: the body spans the same window as the ruler's marks.
+  const bodyAt = (element: HTMLElement, clientX: number): number | null => {
+    const box = element.getBoundingClientRect()
+    return box.width > 0 ? range.start + (clientX - box.left) / box.width * span : null
+  }
+
+  // A take lane (Live cap 44–45): its name, its Activator and Solo where its owner keeps them (O-I #855 round 25), and its audition, lit
+  // where the lane sounds in place of the main lane; a stretch dragged across it is the pane's choice, and Return copies it into the main
+  // lane through the owner's comp. The stretch chosen and the take that stands are marked; nothing is copied here.
+  const comp = set.actions?.comp, audition = set.actions?.audition, laneWrite = set.actions?.takeLane
+  const takeLane = (take: WorldTakeLane, colour: CSSProperties, index: number) => {
+    const chosen = lanesView.take?.takeId === take.id && lanesView.take.trackId === take.trackId ? lanesView.take : null
+    const stretch = chosen ? compRange(take, chosen.from, chosen.to) : null
+    const auditionKey = `audition:${take.trackId}:${take.id}`, compKey = `comp:${take.trackId}:${take.id}`
+    // Each comp is one labelled step in the undo list where its owner gives the way back (§16.6 Rules; XT08, round 888); none, and it is no step.
+    const press = () => {
+      if (!comp || !stretch) return
+      const what = `Comp ${take.name} ${label(stretch.start)} – ${label(stretch.end)}`, run = () => comp.run(take.trackId, take.id, stretch)
+      onPress(compKey, what, comp.back ? undoable({record: recordStep}, what, run, () => comp.back!(take.trackId, take.id, stretch)) : run)
+    }
+    // The lane's Activator and Solo (Live's take lanes carry both): each pressed writes the pair with itself turned, through the owner.
+    const laneSwitch = (control: 'activator' | 'solo') => {
+      if (take.enabled === undefined || take.solo === undefined) return null
+      const on = control === 'activator' ? take.enabled : take.solo
+      const word = control === 'activator' ? 'Activator' : 'Solo'
+      const key = `take-${control}:${take.trackId}:${take.id}`
+      const next = control === 'activator' ? {enabled: !take.enabled, solo: take.solo} : {enabled: take.enabled, solo: !take.solo}
+      const meaning = control === 'activator' ? 'the lane sounds while it is on' : 'while any lane on is soloed, only the soloed lanes sound'
+      return <button type="button" className={`mx mx-${control}`} data-mix={control} data-state={on ? 'on' : 'off'} aria-label={`${word} of ${take.name}`} aria-pressed={on}
+        disabled={!laneWrite} data-receipt={receiptOn(key)}
+        title={`${word} · ${meaning} · ${on ? 'on' : 'off'}${laneWrite ? ` · press to turn it ${on ? 'off' : 'on'} (${laneWrite.op})` : ' · the owner gives no op that writes a take lane'}`}
+        onClick={() => { if (laneWrite) onPress(key, `${word} of ${take.name} ${on ? 'off' : 'on'}`, () => laneWrite.run(take.trackId, take.id, next)) }}>
+        {control === 'activator' ? String(index + 1) : 'S'}</button>
+    }
+    const heard = take.auditioned === true
+    return <div key={`take:${take.id}`} className="tl-lane tl-take" data-take={take.id} data-standing={take.standing ? 'true' : undefined} style={colour}>
+      <span className="tl-head tl-take-head" title={`${take.name} · a take${take.standing ? ' · it stands' : ''} · select a stretch and press Return to copy it into the main lane`}>
+        <span className="tl-lane-name">{take.name}</span>
+        {laneSwitch('activator')}{laneSwitch('solo')}
+        <button type="button" className={`tl-audition${heard ? ' lit' : ''}`} aria-label={`Audition ${take.name}`} aria-pressed={take.auditioned} disabled={!audition} data-receipt={receiptOn(auditionKey)}
+          title={audition ? heard ? `${take.name} sounds in place of the main lane · press to hear the main lane again (${audition.op})` : `Audition ${take.name} (${audition.op})`
+            : 'Audition: the owner gives no op that plays a take alone'}
+          onClick={() => { if (audition) onPress(auditionKey, `Audition ${take.name}`, () => audition.run(take.trackId, take.id)) }}><CutIcon name="play" size={10} /></button>
+      </span>
+      <div className="tl-body tl-take-body" tabIndex={0} role="group" aria-label={`Take ${take.name}`} data-receipt={receiptOn(compKey)}
+        title={comp ? `Drag across the take to choose a stretch; Return copies it into the main lane (${comp.op})` : 'Comp: the owner gives no op that copies a stretch of a take into the main lane'}
+        onPointerDown={event => { if (event.button !== 0) return; const at = bodyAt(event.currentTarget, event.clientX); if (at === null) return
+          event.currentTarget.setPointerCapture?.(event.pointerId); lanesView.onTake({trackId: take.trackId, takeId: take.id, from: at, to: at}) }}
+        onPointerMove={event => { if (!chosen || !(event.buttons & 1)) return; const at = bodyAt(event.currentTarget, event.clientX); if (at !== null) lanesView.onTake({...chosen, to: at}) }}
+        onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); press() } else if (event.key === 'Escape' && chosen) { event.preventDefault(); lanesView.onTake(null) } }}>
+        {take.spans.map((piece, i) => <span key={i} className="tl-take-span" style={{left: pct(piece.start), width: `max(4px, ${Math.max(0, held(piece.end) - held(piece.start)) / span * 100}%)`}}
+          title={`${piece.label} · ${label(piece.start)} – ${label(piece.end)}`}>{piece.label}</span>)}
+        {stretch && <span className="tl-take-sel" style={{left: pct(stretch.start), width: `${Math.max(0, held(stretch.end) - held(stretch.start)) / span * 100}%`}}
+          title={`Chosen: ${label(stretch.start)} – ${label(stretch.end)} · press Return to copy it into the main lane`} aria-hidden="true" />}
       </div>
+    </div>
+  }
+
+  // An event lane (Factory): a session's events of one kind, each a tick; clicked, it opens beside the ruler.
+  const eventLane = (lane: WorldEventLane, colour: CSSProperties) => <div key={`events:${lane.id}`} className="tl-lane tl-events" data-event-lane={lane.id} data-event-kind={lane.kind} style={colour}>
+    <span className="tl-head tl-events-head" title={`${lane.name} · ${lane.events.length} ${lane.events.length === 1 ? 'event' : 'events'}`}>
+      <span className="tl-lane-name">{lane.name}</span><small>{lane.events.length}</small>
+    </span>
+    <div className="tl-body">
+      {lane.events.map(event => <button type="button" key={event.id} className={`tl-event${lanesView.opened?.eventId === event.id && lanesView.opened.laneId === lane.id ? ' sel' : ''}`}
+        data-event={event.id} style={{left: pct(event.at)}} title={`${event.label} · ${label(event.at)}`} aria-label={`${lane.name}: ${event.label}`}
+        onClick={() => lanesView.onOpened({laneId: lane.id, eventId: event.id})} />)}
+    </div>
+  </div>
+  const openedLane = lanesView.opened ? set.lanes?.events?.find(lane => lane.id === lanesView.opened!.laneId) : undefined
+  const openedEvent = openedLane?.events.find(event => event.id === lanesView.opened!.eventId)
+
+  // The Lanes setting (manual §16.6 settings table): Takes, Automation, Events, each On or Off; why a kind has nothing, beside it;
+  // and Re-enable, lit while the owner counts parameters held off their automation by hand.
+  const heldCount = set.lanes?.held
+  const reenableAll = set.actions?.reenable
+  const lanesBar = <div className="tl-lane tl-setbar" role="group" aria-label="Lanes">
+    <span className="tl-head tl-setbar-head">Lanes</span>
+    <div className="tl-body tl-setbar-body">
+      {(['takes', 'automation', 'events'] as TrackLaneKind[]).map(kind => {
+        const count = laneCount(set, kind), why = set.lanes?.absent?.[kind]
+        return <button type="button" key={kind} className="tl-lanes-kind" data-lanes={kind} aria-pressed={lanesView.shown[kind]} data-count={count}
+          title={`${LANE_WORD[kind]} · ${lanesView.shown[kind] ? 'On' : 'Off'} · ${count} ${count === 1 ? 'lane' : 'lanes'}${why ? ` · ${why}` : ''}`}
+          onClick={() => lanesView.onShown({...lanesView.shown, [kind]: !lanesView.shown[kind]})}>{LANE_WORD[kind]}<small>{count}</small></button>
+      })}
+      {(heldCount !== undefined || reenableAll) && <button type="button" className={`tl-reenable${heldCount ? ' lit' : ''}`} disabled={!reenableAll || !heldCount} data-receipt={receiptOn('reenable')}
+        title={heldCount === undefined ? 'Re-enable: the owner reports no count of values held by hand' : heldCount ? `Re-enable: ${heldCount} ${heldCount === 1 ? 'parameter is' : 'parameters are'} held off ${heldCount === 1 ? 'its' : 'their'} automation${reenableAll ? ` (${reenableAll.op})` : ''}` : 'Re-enable: nothing is held off its automation'}
+        onClick={() => { if (reenableAll && heldCount) onPress('reenable', 'Re-enable', () => reenableAll.run()) }}>Re-enable</button>}
+    </div>
+  </div>
+
+  return <div ref={view.rootRef as RefObject<HTMLDivElement>} className="tl" aria-label="Arrangement" data-tracks-view="arrangement" data-window={isFit(range, bounds) ? undefined : 'zoomed'}>
+    <div className="tl-ruler" aria-label={`Ruler${set.ruler ? ` in ${set.ruler.unit}` : ''}`}>
+      {rulerTools(view, range, bounds, anchor, set)}
+      <div {...marksProps} className="tl-marks tl-window" onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}
+        onPointerCancel={() => { gesture.current = null }} onKeyDown={onKeyDown}>
+        {loopBand && <LoopBrace band={loopBand} words={loopWords} off={loopOff} />}
+        {braceEnds}
+        {marks.map(mark => <span key={mark.at} className={mark.end ? 'end' : undefined} style={{left: `${percentOf(mark.at, range)}%`}}>{label(mark.at)}</span>)}
+        {occasionReadout}
+        {spanBand && <i className="tl-span" role="img" aria-label={spanWords} title={spanWords} style={{left: `${spanBand.left}%`, width: `${spanBand.width}%`}} />}
+        {markerMark}
+        {playheadMark}
+      </div>
+    </div>
+    {(set.lanes || set.mixer) && lanesBar}
+    {lanesOfSections.map(lane => <div key={`sections:${lane.layerId ?? ''}`} className="tl-lane tl-sections" data-section-layer={lane.layerId}
+      style={{'--levels': lane.levels} as CSSProperties}>
+      <span className="tl-head tl-sections-head" title={`${lane.name} · sections · nested`}><span className="tl-lane-name">{lane.name}</span><small>sections</small></span>
+      <div className="tl-body">
+        {lane.items.map(({section, depth}) => {
+          const from = held(section.span.start), to = held(section.span.end)
+          if (to < range.start || from > range.end) return null
+          // A section that began before the window is drawn from the window's edge, so its name stays in view; it has no edge there.
+          const shownFrom = Math.max(from, range.start), shownTo = Math.min(to, range.end)
+          return <button type="button" key={section.id} className="tl-sect" data-section={section.id} data-depth={depth} data-before={from < range.start || undefined}
+            style={{left: pct(shownFrom), width: `${Math.max(0, shownTo - shownFrom) / span * 100}%`, '--depth': depth, ...(section.atmosphere ? {'--atm': section.atmosphere} : {})} as CSSProperties}
+            title={`${section.name} · ${label(section.span.start)} – ${label(section.span.end)} · press to fit the window to it`}
+            onClick={() => view.onWindow(clampRange({start: from, end: to}, bounds))}>{section.name}</button>
+        })}
+      </div>
+    </div>)}
+    {mainLast(set.tracks).flatMap((track, position, drawn) => {
+      const ink = trackInk(track.color)
+      const style = {'--tc': trackColour(track), ...(ink ? {'--tc-ink': ink} : {})} as CSSProperties
+      const clips = placed.filter(p => p.clip.trackId === track.id)
+      // A rail per level, in each ancestor's colour, as the Session draws them (manual §6).
+      const rails = tree.ancestorsOf(track).map(trackColour)
+      const stoppedNeedle = track.needle !== undefined && stalled.has(track.id)
+      const age = stoppedNeedle && now !== undefined ? (set.ruler?.duration ?? plainDuration(set.ruler?.unit ?? ''))(Math.max(0, now - track.needle!)) : undefined
+      const readout = stoppedNeedle ? `${track.name} · stalled${age ? ` ${age}` : ''}` : undefined
+      // The head carries the track's mixer switches and, on a line under them, its Volume and Pan, as Live's Arrangement header does
+      // (cap 43); a head with none is the name alone.
+      const cells = mixerCells(set, track, position).filter(cell => cell.id !== 'input' && cell.id !== 'output')
+      const headName = <>
+        {rails.length > 0 && <span className="rails" aria-hidden="true">{rails.map((colour, i) => <i key={i} style={{background: colour}} />)}</span>}
+        {track.name}{track.lane ? <small>{SIDE_WORD[track.lane]}</small> : null}{track.main ? <small>Main</small> : null}</>
+      // a Shift- or ⌘-click chooses it with the parts chosen before (O9, partChoice.ts), so ⌘G groups them all
+      // over the parts its heads draw, in their order, less the returns (0D item 9)
+      const selectTrack = (event?: ReactMouseEvent<HTMLElement>) => chooseTrack(selection, set, track, drawn.filter(part => !part.main && !part.returns).map(part => part.id), event)
+      const chosenTrack = selection.ref === track.id || chosen.includes(track.id)
+      // The track's own device, opened from its head (trackHeads.ts; §18.1: the world's Workspace).
+      const device = trackHeadDevice(track.id)
+      const under = lanesUnder(set, track.id, lanesView.shown)
+      const comps = (set.lanes?.comp ?? []).filter(stretch => stretch.trackId === track.id)
+      const takeName = (takeId: string) => set.lanes?.takes?.find(take => take.id === takeId)?.name ?? takeId
+      return [<div key={track.id} className={`tl-lane${track.lane ? ` lane-${track.lane}` : ''}`} style={{...style, ...(rails.length ? {'--rails': rails.length} : {})} as CSSProperties} data-track={track.id} data-off={track.mix?.activator === false ? 'true' : undefined} data-main={track.main ? 'true' : undefined} data-return={track.returns ? 'true' : undefined}>
+        {cells.length || device
+          ? <div className={`tl-head tl-track-head${chosenTrack ? ' sel' : ''}`}>
+            <button type="button" className="tl-name" title={`${track.name} · ${track.kind}${track.info ? ` — ${track.info}` : ''}`} onClick={selectTrack}>{headName}</button>
+            <TrackDeviceButton device={device} track={track} selection={selection} />
+            {cells.length > 0 && <MixerRow cells={cells} shown routes={false} trackId={track.id} receipt={receipt} onPress={onPress} />}
+            <MixerLevels cells={cells} trackId={track.id} receipt={receipt} onPress={onPress} />
+          </div>
+          : <button type="button" className={`tl-head${chosenTrack ? ' sel' : ''}`} title={`${track.name} · ${track.kind}${track.info ? ` — ${track.info}` : ''}`} onClick={selectTrack}>{headName}</button>}
+        <div className="tl-body">
+          {loopBand && <LoopBrace band={loopBand} words={loopWords} lane off={loopOff} />}
+          {now !== undefined && <span className="tl-now" style={{left: pct(now)}} aria-hidden="true" />}
+          {occasionAt !== undefined && <span className="tl-occ" style={{left: lineAt(occasionAt)}} aria-hidden="true" />}
+          {marker !== undefined && <span className="tl-marker" style={{left: lineAt(marker)}} aria-hidden="true" />}
+          {playhead !== undefined && <span className="tl-playhead" style={{left: lineAt(playhead)}} aria-hidden="true" />}
+          {spanBand && <i className="tl-span" aria-hidden="true" style={{left: `${spanBand.left}%`, width: `${spanBand.width}%`}} />}
+          {clips.map(({clip, start, end: stop}) => {
+            const lengthless = !(stop > start)
+            // A waiting clip with no length is a dash: nobody knows how long it will take. A point near the window's end (a dash,
+            // or any clip with no length) reaches back from it instead of past the edge.
+            const dash = clip.status === 'waiting' && lengthless
+            const flip = lengthless && percentOf(held(start), range) > 85
+            const word = clip.status ? STATUS_WORD[clip.status] : undefined
+            const when = `${label(start)}${stop > start ? ` – ${label(stop)}` : ''}`
+            const edge = clip.status === 'running' ? ' · no end is drawn: its needle is the edge' : dash ? ' · no length is drawn' : ''
+            const mark = clipStandingMark(clip)
+            const section = narrowestSectionOf(set, clip, trackOf.get(clip.trackId))
+            const atmosphere = section?.atmosphere
+            const width = `max(6px, ${((held(Math.max(stop, start)) - held(start)) / span) * 100}%)`
+            const placeStyle: CSSProperties = dash ? (flip ? {right: `calc(100% - ${pct(start)})`} : {left: pct(start)}) : flip ? {right: `calc(100% - ${pct(start)})`, width} : {left: pct(start), width}
+            // Its content (round 893): the content's seconds it plays, from where it starts in them, over the stretch the clip is drawn.
+            const content = clip.content && !lengthless ? clip.content : undefined
+            const drawnFrom = content ? content.from + held(start) - start : 0
+            const contentMarksOf = content ? contentMarks(drawnFrom, held(stop) - held(start)) : []
+            const fromWords = content && content.from > 0 ? set.ruler?.duration?.(content.from) ?? `${Math.round(content.from * 100) / 100}${content.unit ? ` ${content.unit}` : ''}` : ''
+            return <button type="button" key={clip.id} data-clip={clip.id} data-clip-status={clip.status ?? 'undisclosed'}
+              className={`tl-clip${clip.status ? ` ${clip.status}` : ''}${dash ? ' dash' : ''}${selection.ref === clip.id ? ' sel' : ''}`}
+              style={{...placeStyle, ...(mark ? {borderLeft: clipStandingEdge(mark)} : {}), ...(atmosphere ? {'--atm': atmosphere} : {})} as CSSProperties}
+              title={`${clip.label} · ${when}${word ? ` · ${word}` : ''}${edge}${clip.note ? ` · ${clip.note}` : ''}${clipStandingTitle(mark)}${section ? ` · in ${section.name}` : ''}${clip.source ? ` · ${clip.source.mark}: ${clip.source.said}` : ''}${fromWords ? ` · starts ${fromWords} into its own content` : ''}`}
+              {...clipStandingAttributes(mark)} data-section={section?.id} data-source={clip.source?.standing} aria-label={mark ? clipAccessibleName(clip.label, mark) : undefined}
+              data-cut-edge={cuts && carriesEdgeCuts(set) && !trackOf.get(clip.trackId)?.readOnly ? cuts.trim : undefined} {...clipDrag(clip, start, stop)}
+              onClick={() => { if (!dragClick(clip.id)) selection.select({kind: 'clip', ref: clip.id, title: clip.label, track: clip.trackId}) }}>{dash ? `▸ ${clip.label}` : clip.label}{clipStandingTag(mark)}{clip.source ? ` · ${clip.source.mark}` : ''}{fromWords && <small className="tl-from"> · from {fromWords}</small>}
+              {contentMarksOf.map(m => <i key={m.at} className={`tl-cm${m.major ? ' major' : ''}`} data-content-at={m.at} style={{left: `${m.left}%`}} aria-hidden="true" />)}</button>
+          })}
+          {preview && preview.point !== null && clips.some(p => p.clip.id === preview.clipId) && <span className="tl-cut" style={{left: lineAt(preview.point)}}
+            role="img" aria-label={`${preview.words} to ${label(preview.point)}`} title={`${preview.words} to ${label(preview.point)}`} />}
+          {comps.map((stretch, i) => <span key={`comp:${i}`} className="tl-comp" data-comp-take={stretch.takeId}
+            style={{left: pct(stretch.start), width: `${Math.max(0, held(stretch.end) - held(stretch.start)) / span * 100}%`}}
+            title={`${label(stretch.start)} – ${label(stretch.end)} came from ${takeName(stretch.takeId)}`}>{takeName(stretch.takeId)}</span>)}
+          {track.needle !== undefined && <span className="tl-needle" style={{left: pct(track.needle)}} data-stalled={stoppedNeedle ? 'true' : undefined} data-edge={percentOf(held(track.needle), range) > 60 ? 'end' : undefined}
+            title={readout ?? `${track.name} has got to ${label(track.needle)}`}>{readout && <span className="tl-readout">{readout}</span>}</span>}
+        </div>
+      </div>,
+      ...under.takes.map((take, i) => takeLane(take, colourOf(track), i)),
+      ...under.automation.map(lane => {
+        const points = automationPoints(lane, clipId => placed.find(p => p.clip.id === clipId)?.start, range.end, clipId => placed.find(p => p.clip.id === clipId)?.end)
+        const line = points.map(point => `${percentOf(point.at, range).toFixed(3)},${(100 - Math.min(1, Math.max(0, point.value)) * 100).toFixed(3)}`).join(' ')
+        const reenable = set.actions?.reenable, unfreeze = set.actions?.unfreeze
+        const key = `reenable:${lane.id}`, frozenKey = `frozen:${lane.id}`, unfreezeKey = `unfreeze:${lane.id}`
+        const frozen = lane.frozen
+        const receiptOf = (at: string) => receipt?.key === at ? (receipt.ok ? 'ok' : 'refused') : undefined
+        // XT10 (round 889; §16.6 automation lanes): a drawable lane is drawn by dragging across it; on release the moves drawn, in the
+        // lane's own time, go to the owner, which lays them over the stretch they cover. A looping clip's lane is not drawn here.
+        const drawLane = set.actions?.drawLane, drawKey = `draw:${lane.id}`
+        const drawBase = lane.clipId === undefined ? 0 : (() => { const lies = placed.find(p => p.clip.id === lane.clipId)?.start; return lies !== undefined ? lies - (lane.start ?? 0) : lane.clipAt })()
+        const drawable = !!drawLane && lane.drawable === true && !frozen && !lane.loop && drawBase !== undefined
+        const drawing = drawable && lanesView.draw?.laneId === lane.id ? lanesView.draw : null
+        const sampleAt = (element: HTMLElement, clientX: number, clientY: number) => {
+          const box = element.getBoundingClientRect()
+          return box.width > 0 && box.height > 0 ? {at: range.start + (clientX - box.left) / box.width * span, value: 1 - (clientY - box.top) / box.height} : null
+        }
+        const drawProps = drawable ? {'data-draw': 'on', 'data-receipt': receiptOf(drawKey),
+          title: `Drag across the lane to draw ${lane.device} / ${lane.parameter}'s moves: they lie over the stretch you draw (${drawLane!.op})`,
+          onPointerDown: (event: ReactPointerEvent<HTMLDivElement>) => { if (event.button !== 0) return; const at = sampleAt(event.currentTarget, event.clientX, event.clientY); if (!at) return
+            event.currentTarget.setPointerCapture?.(event.pointerId); lanesView.onDraw?.({laneId: lane.id, samples: [at]}) },
+          onPointerMove: (event: ReactPointerEvent<HTMLDivElement>) => { if (!drawing || !(event.buttons & 1)) return; const at = sampleAt(event.currentTarget, event.clientX, event.clientY)
+            if (at) lanesView.onDraw?.(current => current?.laneId === lane.id ? {laneId: lane.id, samples: [...current.samples, at]} : current) },
+          onPointerUp: () => { if (!drawing) return; lanesView.onDraw?.(null); const points = drawnLane(drawing.samples, drawBase)
+            if (points) onPress(drawKey, `Draw ${lane.parameter}`, () => drawLane!.run(lane.id, points)) },
+          onPointerCancel: () => lanesView.onDraw?.(null)} : {}
+        const draft = drawing ? drawing.samples.map(sample => `${percentOf(sample.at, range).toFixed(3)},${(100 - Math.min(1, Math.max(0, sample.value)) * 100).toFixed(3)}`).join(' ') : null
+        return <div key={`auto:${lane.id}`} className="tl-lane tl-auto" data-automation={lane.id} data-overridden={lane.overridden ? 'true' : undefined} data-frozen={frozen ? 'true' : undefined} style={colourOf(track)}>
+          <span className="tl-head tl-auto-head" title={`${lane.device} / ${lane.parameter}${lane.range ? ` · ${lane.range.min} – ${lane.range.max}` : ''}${lane.modulatedBy ? ` · moved by ${lane.modulatedBy}` : ''}${points.length ? ` · ${points.length} points` : ' · no points on this ruler'}${frozen ? ` · ${frozen}` : ''}`}>
+            {/* A frozen take's lane (O-I #849 round 22): touched, it says the take is frozen, in words, and Unfreeze stands beside it. */}
+            {frozen
+              ? <button type="button" className="tl-lane-name tl-frozen" data-receipt={receiptOf(frozenKey)} title={frozen}
+                onClick={() => onPress(frozenKey, `${lane.device} / ${lane.parameter}`, () => ({ok: true, note: frozen}))}>{lane.device} / {lane.parameter}</button>
+              : <span className="tl-lane-name">{lane.device} / {lane.parameter}</span>}
+            {lane.modulatedBy && <small className="tl-mod">{lane.modulatedBy}</small>}
+            {lane.overridden && <button type="button" className="tl-reenable lit" disabled={!reenable} data-receipt={receiptOf(key)}
+              title={reenable ? `Re-enable: give ${lane.parameter} back to its lane (${reenable.op})` : 'Re-enable: the owner gives no op that gives the value back'}
+              onClick={() => { if (reenable) onPress(key, `Re-enable ${lane.parameter}`, () => reenable.run(lane.id)) }}>Re-enable</button>}
+            {frozen && <button type="button" className="tl-reenable lit" disabled={!unfreeze} data-receipt={receiptOf(unfreezeKey)}
+              title={unfreeze ? `Unfreeze: ${lane.device}'s part plays its live Torus again (${unfreeze.op})` : 'Unfreeze: the owner gives no op that lets the frozen take go'}
+              onClick={() => { if (unfreeze) onPress(unfreezeKey, `Unfreeze ${lane.device}`, () => unfreeze.run(lane.id)) }}>Unfreeze</button>}
+          </span>
+          <div className="tl-body" {...drawProps}>
+            {lane.modulatedBy && !points.length && <span className="tl-mod-band" aria-hidden="true" />}
+            {points.length > 0 && <svg className="tl-auto-line" viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label={`${lane.device} / ${lane.parameter}: ${points.length} points`}>
+              <polyline points={line} vectorEffect="non-scaling-stroke" />
+            </svg>}
+            {draft && <svg className="tl-auto-line tl-auto-draft" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+              <polyline points={draft} vectorEffect="non-scaling-stroke" />
+            </svg>}
+          </div>
+        </div>
+      }),
+      ...under.events.map(lane => eventLane(lane, colourOf(track))),
+      ...(railsUnder.get(track.id) ?? []).map(rail => railLane(rail, trackColour(track)))]
+    })}
+    {rails.filter(rail => rail.trackId === undefined).map(rail => railLane(rail))}
+    {openedLane && openedEvent && <aside className="tl-event-open" role="dialog" aria-label={`${openedLane.name}: ${openedEvent.label}`} data-event={openedEvent.id}>
+      <header><b>{openedLane.name}</b><span>{label(openedEvent.at)}</span>
+        <button type="button" aria-label="Close" onClick={() => lanesView.onOpened(null)}>×</button></header>
+      <p>{openedEvent.label}</p>
+      {openedEvent.detail && <p className="tl-event-detail">{openedEvent.detail}</p>}
+      {openedEvent.ref && <code>{openedEvent.ref}</code>}
+    </aside>}
+    {(receipt || left > 0) && <div className="tl-foot">
+      {receipt && <p className="sg-receipt tl-receipt" role="status" data-ok={receipt.ok}>
+        <b>{receipt.what}</b>
+        <span title={receipt.text}>{receipt.text}</span>
+        <button type="button" aria-label="Dismiss" onClick={onDismiss}>×</button>
+      </p>}
+      {left > 0 && <p className="tl-note" role="status">{left} {left === 1 ? 'clip has' : 'clips have'} no place on this ruler: its owner gives none. The Session grid holds {left === 1 ? 'it' : 'them'}.</p>}
     </div>}
-    <footer className="arp-bar">
-      {d.mode === 'factory'
-        ? (['running', 'waiting', 'stopped', 'stalled'] as const).map(s => <span key={s} className="arp-key"><i data-status={s} />{s[0]!.toUpperCase() + s.slice(1)}</span>)
-        : STANDINGS.map(s => <span key={s.id} className="arp-key"><svg width="16" height="8" aria-hidden="true"><line x1="1" x2="15" y1="4" y2="4" stroke={s.line} strokeWidth="2" strokeDasharray={s.dash} /></svg>{s.label}</span>)}
-      <span className="arp-says">{stalled.length ? `${stalled.map(t => needleText(t)).join(' · ')}` : picked ? `${picked.label} · ${picked.when ?? d.label(picked.at)}${picked.standing ? ` · ${standingOf(picked.standing).label.toLowerCase()}` : ''}${relSays(picked)}` : `${view.clips.length} clips on ${view.tracks.length} tracks`}</span>
-    </footer>
+    {overviewStrip}
+    <RulerLegend set={set} stalled={stalled} now={now} />
+  </div>
+}
+
+/** The states a clip lies in on the ruler, in the order the legend names them (dlw:arrangement-ruler's foot). */
+const RULER_LEGEND = ['running', 'waiting', 'stopped', 'stalled'] as const
+/** The ruler's legend (catalogue dlw__arrangement-ruler.tsx's foot): how each state lies on the ruler, and the lanes that have stalled, each
+ * with how long since its needle stopped. */
+function RulerLegend({set, stalled, now}: {set: WorldTrackSet; stalled: ReadonlySet<string>; now: number | undefined}) {
+  const duration = set.ruler?.duration ?? plainDuration(set.ruler?.unit ?? '')
+  const says = set.tracks.filter(track => track.needle !== undefined && stalled.has(track.id))
+    .map(track => `${track.name} · stalled${now !== undefined ? ` ${duration(Math.max(0, now - track.needle!))}` : ''}`).join(' · ')
+  return <footer className="sg-legend tl-legend" aria-label="Legend">
+    {RULER_LEGEND.map(state => <span key={state} className="sg-key"><i data-status={state} />{STATUS_WORD[state]}</span>)}
+    <span className="sg-says">{says || 'No lane has stalled'}</span>
+  </footer>
+}
+
+// ---------------------------------------------------------------- the head column (round 892, XT01)
+// Walk 891 found the column cutting what its heads hold: a track's name beside its Activator, Solo and Arm ("Dawn field: vis"), and the
+// ruler's own tools and cut modes ("gri", "Inse"), in a column of 132 px whatever it held. The column is as wide as its widest head lays
+// out — measured as the browser lays it out, so the face the shell is drawn in is the measure — and never under its own 132 px. Every head
+// stands in the one column (tracks.css --tl-head-w), so the lanes keep in line. tests/arrangement-head-column-892.test.mjs guards it.
+
+/** Fits the column again whenever what its heads hold changes (their words, and a lane's rails or colour); not while the Arrangement is not
+ * laid out (a hidden pane measures nothing). */
+function useHeadColumn(rootRef: RefObject<HTMLDivElement | null>) {
+  const fitted = useRef<{node: HTMLElement; key: string} | null>(null)
+  useLayoutEffect(() => {
+    const node = rootRef.current
+    if (!node || node.clientWidth === 0) return
+    const key = [...node.querySelectorAll<HTMLElement>(HEADS)].map(head => `${head.textContent ?? ''}\u0001${head.parentElement?.getAttribute('style') ?? ''}`).join('\u0000')
+    if (fitted.current?.node === node && fitted.current.key === key) return
+    fitted.current = {node, key}
+    fitHeadColumn(node)
+  })
+}
+
+const numberHeld = (value: unknown): number | undefined => (typeof value === 'number' && Number.isFinite(value) ? value : undefined)
+const oneOf = <T extends string>(value: unknown, modes: readonly {value: T}[] | readonly T[], otherwise: T): T =>
+  (modes as readonly (T | {value: T})[]).some(mode => (typeof mode === 'string' ? mode : mode.value) === value) ? value as T : otherwise
+
+/** The ruler's view state is its device's (rulerBinding.ts RULER_ID, parity D-26): the window, the snap, the insert marker, the lanes shown
+ * and the cut modes (manual §16.6: Move default Insert, Trim default Trim) are the device's own holds, so the pane's ruler and every place
+ * of the device read and write one of each. Unheld, what the pane starts with: the whole ruler, snap Grid, no marker, the default lanes. */
+export function useRulerView() {
+  const start = numberHeld(useHeld(RULER_ID, 'start')), span = numberHeld(useHeld(RULER_ID, 'span'))
+  const at = numberHeld(useHeld(RULER_ID, 'marker'))
+  const snap = oneOf<SnapMode>(useHeld(RULER_ID, 'snap'), SNAP_MODES, 'grid')
+  const takes = useHeld(RULER_ID, 'laneTakes'), automation = useHeld(RULER_ID, 'laneAuto'), events = useHeld(RULER_ID, 'laneEvents')
+  const moveMode = oneOf<MoveMode>(useHeld(RULER_ID, 'move'), MOVE_MODES, 'insert')
+  const trimMode = oneOf<TrimMode>(useHeld(RULER_ID, 'trim'), TRIM_MODES, 'trim')
+  return {
+    shown: start !== undefined && span !== undefined ? {start, end: start + span} : null,
+    setShown: (next: TimeRange | null) => { hold(RULER_ID, 'start', next ? next.start : undefined); hold(RULER_ID, 'span', next ? next.end - next.start : undefined) },
+    snap, setSnap: (next: SnapMode) => hold(RULER_ID, 'snap', next),
+    marker: at !== undefined && at >= 0 ? at : null, setMarker: (next: number | null) => hold(RULER_ID, 'marker', next === null ? undefined : next),
+    shownLanes: {takes: typeof takes === 'boolean' ? takes : DEFAULT_LANES.takes, automation: typeof automation === 'boolean' ? automation : DEFAULT_LANES.automation,
+      events: typeof events === 'boolean' ? events : DEFAULT_LANES.events} as LanesShown,
+    setShownLanes: (next: LanesShown) => { hold(RULER_ID, 'laneTakes', next.takes); hold(RULER_ID, 'laneAuto', next.automation); hold(RULER_ID, 'laneEvents', next.events) },
+    moveMode, setMoveMode: (next: MoveMode) => hold(RULER_ID, 'move', next),
+    trimMode, setTrimMode: (next: TrimMode) => hold(RULER_ID, 'trim', next),
+  }
+}
+
+/** The Arrangement: the view, with the state a ruler keeps — the window, the snap and the insert marker (the pane's
+ * presentation, never the book's and never an owner's), and the owner's last answer to a rail's stop. */
+export function ArrangementRuler({set, selection, empty}: {set: WorldTrackSet; selection: TracksSelection; empty?: string}) {
+  // A mode naming its tracks' own devices again draws their head buttons (trackHeads.ts).
+  useTrackHeadDevices()
+  const {shown, setShown, snap, setSnap, marker, setMarker, shownLanes, setShownLanes, moveMode, setMoveMode, trimMode, setTrimMode} = useRulerView()
+  const [span, setSpan] = useState<TimeRange | null>(null)
+  const [width, setWidth] = useState(0)
+  const [receipt, setReceipt] = useState<PressedReceipt | null>(null)
+  const [take, setTake] = useState<TakeSelection | null>(null)
+  const [laneDraw, setLaneDraw] = useState<LaneDraw | null>(null)
+  const [braceDrag, setBraceDrag] = useState<BraceDrag | null>(null)
+  const [opened, setOpened] = useState<{laneId: string; eventId: string} | null>(null)
+  // The clip drag under way and what it draws.
+  const [cutPreview, setCutPreview] = useState<CutPreview | null>(null)
+  const clipDragRef = useRef<ClipDrag | null>(null)
+  const latest = useRef(0)
+  const rootRef = useRef<HTMLDivElement | null>(null)
+  const marksRef = useRef<HTMLDivElement | null>(null)
+  const gesture = useRef<RulerGesture | null>(null)
+  useHeadColumn(rootRef)
+  const {end} = placeClips(set)
+  const bounds = rangeBounds(end)
+  const range = clampRange(shown ?? fitRange(bounds), bounds)
+  // What the wheel and the pinch read, current at the event (they are bound once).
+  const live = useRef({range, bounds})
+  live.current = {range, bounds}
+
+  // The stretch is shared with the set it was drawn on (tracksDoor.ts), for the commands that act on the range you select.
+  useEffect(() => { publishShownSpan(span ? {set, range: span} : null) }, [span, set])
+  useEffect(() => () => publishShownSpan(null), [])
+  // The insert marker likewise, for the acts that place at it (a sample made a clip from the browser, DLW build ruling 2026-11-08, 0.9).
+  useEffect(() => { publishShownMarker({set, at: marker}) }, [marker, set])
+  useEffect(() => () => publishShownMarker(null), [])
+
+  // The marks' width, for the 64px floor and the wheel's pan scale (nativeArrangementTimeline.tsx:82-90).
+  useEffect(() => {
+    const node = marksRef.current
+    if (!node || typeof ResizeObserver === 'undefined') return
+    const measure = () => setWidth(node.clientWidth)
+    const observer = new ResizeObserver(measure)
+    observer.observe(node)
+    measure()
+    return () => observer.disconnect()
+  }, [set.tracks.length > 0])
+
+  // The wheel (nativeArrangementTimeline.tsx:92-111): ⌘/Ctrl zooms about the pointer, sideways or Shift pans, a plain wheel
+  // scrolls the lanes. WebKit's pinch arrives as gesture events, so it zooms through the same rule.
+  useEffect(() => {
+    const root = rootRef.current
+    if (!root) return
+    const apply = (next: TimeRange) => setShown(next)
+    const anchorAt = (clientX: number): number | null => {
+      const box = marksRef.current?.getBoundingClientRect()
+      const {range: current} = live.current
+      return box && box.width > 0 ? current.start + (clientX - box.left) / box.width * (current.end - current.start) : null
+    }
+    const onWheel = (event: WheelEvent) => {
+      const {range: current, bounds: limits} = live.current
+      if (event.ctrlKey || event.metaKey) {
+        const anchor = anchorAt(event.clientX)
+        if (anchor === null) return
+        event.preventDefault()
+        apply(zoomAround(current, anchor, wheelZoomFactor(event.deltaY), limits))
+      } else if (event.shiftKey || Math.abs(event.deltaX) > Math.abs(event.deltaY)) {
+        const box = marksRef.current?.getBoundingClientRect()
+        if (!box || box.width <= 0) return
+        event.preventDefault()
+        apply(panBy(current, (event.deltaX || event.deltaY) / (box.width / (current.end - current.start)), limits))
+      }
+    }
+    let pinch = 1
+    const onGestureStart = (event: Event) => { pinch = 1; event.preventDefault() }
+    const onGestureChange = (event: Event) => {
+      const gesture = event as Event & {scale?: number; clientX?: number}
+      if (typeof gesture.scale !== 'number' || !(gesture.scale > 0)) return
+      event.preventDefault()
+      const anchor = anchorAt(gesture.clientX ?? 0) ?? (live.current.range.start + live.current.range.end) / 2
+      apply(zoomAround(live.current.range, anchor, gesture.scale / pinch, live.current.bounds))
+      pinch = gesture.scale
+    }
+    root.addEventListener('wheel', onWheel, {passive: false})
+    root.addEventListener('gesturestart', onGestureStart)
+    root.addEventListener('gesturechange', onGestureChange)
+    return () => {
+      root.removeEventListener('wheel', onWheel)
+      root.removeEventListener('gesturestart', onGestureStart)
+      root.removeEventListener('gesturechange', onGestureChange)
+    }
+  }, [set.tracks.length > 0])
+
+  // An act whose owner answers with its own way back (a scene cut: the frame's labelled step, O-I #747 round 892) is listed for Undo under
+  // the press's words — a drag's, the menu's and ⌘E's alike.
+  const press = (key: string, what: string, run: () => unknown) => {
+    const turn = ++latest.current
+    setReceipt(null)
+    void answerOf(ownerStepped({record: recordStep}, what, run)).then(answer => { if (answer && turn === latest.current) setReceipt(pressedIn(set, key, what, answer)) })
+  }
+  // A held launch's line follows its clip until it lands (round 886), as the Session's does.
+  useEffect(() => { setReceipt(current => heldLaunchReceipt(current, set)) }, [set])
+  // The receipt says the last act: Undo, Redo or another act listed changes the undo list, and clears it (O-I #747 round 893). A press's own
+  // step is listed before its answer is shown (objectActions.ts ownerStepped), so its receipt comes after the clearing.
+  useEffect(() => subscribeUndo(() => setReceipt(null)), [])
+  // Every object's acts, after Live's: its menu, Live's keys on the selection, rename in place (frame/menu/TracksMenu.tsx). The host
+  // takes no room of its own: it holds the ruler's events, and the ruler keeps its own root.
+  const menu = useTracksMenu({set, selection, view: 'arrangement', press, marker, span})
+  // The parts chosen with THE selection (O9): the view draws each as chosen on its head.
+  const chosen = usePartChoice(selection.ref, set).parts
+  return <div className="tracks-menu-host" ref={menu.rootRef} onContextMenu={menu.onContextMenu} onKeyDown={menu.onKeyDown}>
+    <ArrangementRulerView set={set} selection={selection} empty={empty} receipt={receipt} onPress={press} chosen={chosen}
+      lanes={{shown: shownLanes, onShown: setShownLanes, take, onTake: setTake, draw: laneDraw, onDraw: setLaneDraw, opened, onOpened: setOpened}}
+      onDismiss={() => { latest.current += 1; setReceipt(null) }}
+      view={{window: shown, onWindow: setShown, snap, onSnap: setSnap, marker, onMarker: setMarker, span, onSpan: setSpan, width, marksRef, rootRef, gesture,
+        cuts: {move: moveMode, onMove: setMoveMode, trim: trimMode, onTrim: setTrimMode, drag: clipDragRef, preview: cutPreview, onPreview: setCutPreview},
+        brace: {drag: braceDrag, onDrag: setBraceDrag}}} />
+    {menu.layer}
   </div>
 }
 
@@ -783,7 +1431,7 @@ export const design: DesignedDevice = {
 
   whole: p => {
     const view = viewOf(p.v), d = view.d, span = view.range.end - view.range.start, stalled = stalledOf(view)
-    const fit = isFit(view)
+    const fit = isFitView(view)
     const shown = view.tracks.length
     const picture = <Section width={206}>
       <Display w={194} h={146} label="Ruler" corner={stalled.length ? `${stalled.length} stalled` : d.span(span)}
@@ -860,7 +1508,7 @@ export const design: DesignedDevice = {
     </Panel>
   },
 
-  full: p => <FullRuler v={p.v} />,
+  full: p => <RulerFull p={p} />,
 
   widget: p => {
     const view = viewOf(p.v), stalled = stalledOf(view)

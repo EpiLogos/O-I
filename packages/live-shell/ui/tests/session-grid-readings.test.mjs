@@ -45,7 +45,7 @@ const {liveSetTrackAdapter, LIVE_ACT_OP} = await import('../src/timeline/liveSet
 const {mixerCells} = await import('../src/frame/tracks/trackLanes.ts')
 const {SessionGridView, emptySlotChoice} = await import('../src/inhabitants/catalogue/panels/dlw__session-grid.tsx')
 const {setSelectionOf} = await import('../src/shell/liveSelection.ts')
-const {ArrangementRulerView} = await import('../src/frame/tracks/ArrangementRuler.tsx')
+const {ArrangementRulerView} = {...await import('../src/frame/tracks/ArrangementRuler.tsx'), ...await import('../src/inhabitants/catalogue/panels/dlw__arrangement-ruler.tsx')}
 
 const noop = () => {}
 const grid = set => renderToStaticMarkup(React.createElement(SessionGridView,

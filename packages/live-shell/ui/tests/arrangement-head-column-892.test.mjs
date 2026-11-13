@@ -70,7 +70,7 @@ const LAID_OUT = `
 import {createRoot} from 'react-dom/client'
 import {flushSync} from 'react-dom'
 import {createElement as h} from 'react'
-import {ArrangementRuler} from './src/frame/tracks/ArrangementRuler'
+import {ArrangementRuler} from './src/inhabitants/catalogue/panels/dlw__arrangement-ruler'
 import './src/styles.css'
 const press = {op: 'a cut', run() { return {ok: true} }}
 ;(window as any).__lay = async (set: any, cuts: boolean) => {

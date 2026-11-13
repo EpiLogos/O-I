@@ -31,7 +31,7 @@ export async function load(url,context,next){
 
 globalThis.document = {getElementById: () => null, createElement: () => ({}), head: {appendChild: () => {}}}
 const {nativeTracks, expressionsControls} = await import('../src/frame/tracks/modeTracks.ts')
-const {ArrangementRulerView} = await import('../src/frame/tracks/ArrangementRuler.tsx')
+const {ArrangementRulerView} = {...await import('../src/frame/tracks/ArrangementRuler.tsx'), ...await import('../src/inhabitants/catalogue/panels/dlw__arrangement-ruler.tsx')}
 const {answerOf} = await import('../src/frame/tracks/SessionGrid.tsx')
 const lanes = await import('../src/frame/tracks/trackLanes.ts')
 const undo = await import('../src/frame/menu/undo.ts')

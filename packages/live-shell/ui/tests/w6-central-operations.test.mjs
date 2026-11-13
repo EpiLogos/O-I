@@ -353,7 +353,7 @@ test('a clip\'s second line says what follows it and its takes, as the owner wor
 })
 
 test('the ruler\'s overview strip draws the whole ruler with each placed clip and the window, its head the ruler\'s scale; a press centres the window there', async () => {
-  const {ArrangementRulerView} = await import('../src/frame/tracks/ArrangementRuler.tsx')
+  const {ArrangementRulerView} = {...await import('../src/frame/tracks/ArrangementRuler.tsx'), ...await import('../src/inhabitants/catalogue/panels/dlw__arrangement-ruler.tsx')}
   const set = {columns: [{id: 'r1', name: '1'}], ruler: {unit: 'seconds', end: 1000}, tracks: [{id: 'a', name: 'A', kind: 'session', color: '#4cc9f0'}, {id: 'b', name: 'B', kind: 'session'}],
     clips: [{id: 'c1', trackId: 'a', columnId: 'r1', label: 'one', status: 'stopped', at: {start: 100, end: 300}}, {id: 'c2', trackId: 'b', columnId: 'r1', label: 'two', status: 'running', at: {start: 500}}]}
   const windows = []

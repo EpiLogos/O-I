@@ -39,7 +39,7 @@ const {renderToStaticMarkup} = await import('react-dom/server')
 const {readFile} = await import('node:fs/promises')
 const cssText = await readFile(new URL('../src/frame/tracks/tracks.css', import.meta.url), 'utf8')
 const grid = {...await import('../src/frame/tracks/SessionGrid.tsx'), ...await import('../src/inhabitants/catalogue/panels/dlw__session-grid.tsx')}
-const {ArrangementRuler, ArrangementRulerView, placeClips} = await import('../src/frame/tracks/ArrangementRuler.tsx')
+const {ArrangementRuler, ArrangementRulerView, placeClips} = {...await import('../src/frame/tracks/ArrangementRuler.tsx'), ...await import('../src/inhabitants/catalogue/panels/dlw__arrangement-ruler.tsx')}
 const {SessionGridView, trackTree, stalledLanes, receiptOf, answerOf} = grid
 
 const SELECT = {select() {}}

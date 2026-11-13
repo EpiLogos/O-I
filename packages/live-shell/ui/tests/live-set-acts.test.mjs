@@ -410,7 +410,7 @@ test('the ruler counts bars and beats by the set\'s time signature, and Insert c
 test('the Arrangement draws its time selection over the marks and through the lanes', async () => {
   const React = await import('react')
   const {renderToStaticMarkup} = await import('react-dom/server')
-  const {ArrangementRulerView} = await import('../src/frame/tracks/ArrangementRuler.tsx')
+  const {ArrangementRulerView} = {...await import('../src/frame/tracks/ArrangementRuler.tsx'), ...await import('../src/inhabitants/catalogue/panels/dlw__arrangement-ruler.tsx')}
   const {set} = grouped()
   const noop = () => {}
   const html = renderToStaticMarkup(React.createElement(ArrangementRulerView, {set, selection: {select: noop}, receipt: null, onPress: noop, onDismiss: noop,

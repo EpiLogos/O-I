@@ -38,7 +38,7 @@ const [model, {kernelDocumentToJourney}, {projectNativeScenes}, {nativeTracks}, 
   import(new URL('kernelDocumentBridge.ts', app)),
   import(new URL('scenes.ts', boundary)),
   import('../src/frame/tracks/modeTracks.ts'),
-  import('../src/frame/tracks/ArrangementRuler.tsx'),
+  import('../src/frame/tracks/ArrangementRuler.tsx').then(async own => ({...own, ...await import('../src/inhabitants/catalogue/panels/dlw__arrangement-ruler.tsx')})),
   import('../src/inhabitants/catalogue/panels/dlw__session-grid.tsx'),
 ])
 const E = 'expression:made'

@@ -1,6 +1,6 @@
 // Parity D-26: the Arrangement ruler stands as its catalogue design (dlw__arrangement-ruler.tsx) on a binding over the tracks the Session ·
-// Arrangement pane reads, laid as the pane's ruler lays them (frame/tracks/rulerBinding.ts), published by the pane (ModeTracksView.tsx) with
-// the shell's own ruler as its Full.
+// Arrangement pane reads, laid as the pane's ruler lays them (frame/tracks/rulerBinding.ts), drawn by the pane (ModeTracksView.tsx) as the
+// Arrangement itself: its Full is the ruler, its window, snap, marker, lanes and cut modes the device's holds.
 // - FIXTURE, owner-shaped: a Factory-shaped WorldTrackSet on a ruler of seconds (its label and duration functions, a fixed window, now),
 //   a stalled needle, a running clip with takes, a section, and the loop its owner carries with its setLoop op.
 // - SCRIPTED: the design drawn through the runtime's host on the binding, and the design's own draw on the same values; writes go to a
@@ -92,7 +92,7 @@ test('D-26: a press selects through the pane\'s selection, the loop\'s ends move
   assert.deepEqual(looped, [['start', 300], ['end', 540]])
   await assert.rejects(() => b.write([{key: 'loop', value: false}]), /missing op/)
   // REPLACED (Lead, 13 Nov: the ruler's window/snap/marker state moves into the device's view state, so pane and device share it): Move and
-  // Trim were refused as the pane's ruler's own; they are the device's holds now, which the pane's ruler reads (ArrangementRuler.tsx useRulerView).
+  // Trim were refused as the pane's ruler's own; they are the device's holds now, which the pane's ruler reads (dlw__arrangement-ruler.tsx useRulerView).
   assert.deepEqual([b.values.move, b.values.trim], ['insert', 'trim'], 'unheld, the pane\'s own starts: Insert and Trim')
   for (const key of ['start', 'span', 'marker', 'snap', 'move', 'trim', 'strip', 'laneTakes', 'laneAuto', 'laneEvents', 'show:bo', 'st:derived']) assert.equal(typeof b.local[key], 'function', key)
   assert.equal(b.writes('move'), false, 'a cut mode is never sent to an owner')
@@ -110,7 +110,7 @@ test('D-26: a press selects through the pane\'s selection, the loop\'s ends move
 
 test('D-26: the pane\'s ruler and the device share one view state — what the device holds the ruler draws, and the ruler\'s presses hold it', async () => {
   holds.resetHolds()
-  const {ArrangementRuler} = await import('../src/frame/tracks/ArrangementRuler.tsx')
+  const {ArrangementRuler} = {...await import('../src/frame/tracks/ArrangementRuler.tsx'), ...await import('../src/inhabitants/catalogue/panels/dlw__arrangement-ruler.tsx')}
   const draw = () => renderToStaticMarkup(createElement(ArrangementRuler, {set: SET, selection}))
   assert.match(draw(), /data-snap="grid" aria-label="Snap: grid"/, 'unheld, the pane starts with snap Grid')
   const b = ruler.rulerBinding(SET, selection, 'factory')
@@ -118,7 +118,7 @@ test('D-26: the pane\'s ruler and the device share one view state — what the d
   const drawn = draw()
   assert.match(drawn, /data-snap="coarse" aria-label="Snap: coarse"/, 'the device\'s Snap is the ruler\'s')
   assert.doesNotMatch(drawn, /aria-label="Fit the whole ruler"[^>]*disabled=""/, 'the device\'s window is the ruler\'s: zoomed, Fit stands')
-  const {useRulerView} = await import('../src/frame/tracks/ArrangementRuler.tsx')
+  const {useRulerView} = {...await import('../src/frame/tracks/ArrangementRuler.tsx'), ...await import('../src/inhabitants/catalogue/panels/dlw__arrangement-ruler.tsx')}
   let view = null
   renderToStaticMarkup(createElement(() => { view = useRulerView(); return null }))
   assert.deepEqual([view.shown, view.snap, view.marker], [{start: 240, end: 360}, 'coarse', null])
@@ -148,9 +148,30 @@ test('D-26: drawn through the host on the binding, every view is the design\'s o
   host.resetHost()
 })
 
-test('D-26: the pane publishes the design as the Arrangement ruler, with the shell\'s own ruler as its Full (scrubbing, the cuts and the loop brace stay)', () => {
+// REPLACED (Lead, 13 Nov: "the catalogue design IS the view and the wiring goes into it"): the pane published the design with the shell's
+// own <ArrangementRuler> as its Full and drew that ruler beside it, two drawings of one thing. The ruler now IS the design's Full: the pane
+// draws the design through the host, on the binding, with the live set handed in on TracksMaterial (frame/tracks/tracksDoor.ts).
+test('D-26: the pane draws the design itself — its Full is the Arrangement on the live set, scrubbing, the cuts and the loop brace standing', async () => {
   const pane = source('frame/tracks/ModeTracksView.tsx')
-  assert.match(pane, /publishDevice\(RULER_ID, \{device: rulerDevice, binding: ruler, full: \{draw: \(\) => <ArrangementRuler set=\{shown\} selection=\{selection\} empty=\{waiting\} \/>\}\}\)/)
+  assert.match(pane, /publishDevice\(RULER_ID, \{device: rulerDevice, binding: ruler, full: \{draw: \(\) => <ArrangementPane binding=\{ruler\} material=\{\{set: shown, selection, empty: waiting\}\} \/>\}\}\)/)
   assert.match(pane, /publishDevice\(RULER_ID, null\)/, 'withdrawn when the pane goes')
-  assert.match(pane, /presented === 'arrangement' \? <ArrangementRuler set=\{shown\}/, 'the pane still draws the shell\'s ruler')
+  assert.match(pane, /presented === 'arrangement' \? <ArrangementPane binding=\{ruler\}/, 'the pane draws the design\'s Full')
+  assert.doesNotMatch(pane, /<ArrangementRuler\b/, 'and no second, hand-made ruler')
+  assert.doesNotMatch(source('frame/tracks/ArrangementRuler.tsx'), /export function (ArrangementRulerView|ArrangementRuler)\b/, 'the shell keeps the ruler\'s law and parts, not a drawing')
+  const {TracksMaterial} = await import('../src/frame/tracks/tracksDoor.ts')
+  const moved = await import('../src/inhabitants/catalogue/panels/dlw__arrangement-ruler.tsx')
+  holds.resetHolds(); host.resetHost()
+  const b = ruler.rulerBinding(SET, selection, 'factory')
+  const drawn = renderToStaticMarkup(createElement(TracksMaterial.Provider, {value: {set: SET, selection}},
+    createElement(host.HostedDevice, {designed: design, binding: b, view: 'full', nav: {}, title: 'Arrangement ruler'})))
+  const own = renderToStaticMarkup(createElement(moved.ArrangementRuler, {set: SET, selection}))
+  assert.ok(drawn.includes(own), 'the device\'s Full is the ruler itself, drawn once')
+  for (const [mark, why] of [[/aria-label="Arrangement"/, 'the Arrangement'], [/class="tl-brace" data-loop="ruler"/, 'the loop brace'], [/aria-label="Fit the whole ruler"/, 'the window tools'],
+    [/plan the east port/, 'the live set\'s clips, not the fixtures']]) assert.match(drawn, mark, why)
+  assert.doesNotMatch(drawn, /re-plan port|Naassene/, 'none of the fixtures\' run')
+  // In the gallery, with no live set, the Full is the same ruler over the set its keys carry.
+  const gallery = renderToStaticMarkup(design.full({v: {...design.defaults}, set() {}, nav: {}, page: 'ruler', setPage() {}, standing: {}}))
+  assert.match(gallery, /aria-label="Arrangement"/, 'the gallery draws the ruler itself')
+  assert.match(gallery, /re-plan port/, 'on the fixtures\' run')
+  host.resetHost(); holds.resetHolds()
 })

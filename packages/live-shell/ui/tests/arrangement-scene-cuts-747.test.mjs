@@ -38,7 +38,7 @@ const React = await import('react')
 const {renderToStaticMarkup} = await import('react-dom/server')
 const {projectExpressionsWork} = await import('../src/timeline/expressionsTrackAdapter.ts')
 const cuts = await import('../src/frame/tracks/clipCuts.ts')
-const {ArrangementRulerView} = await import('../src/frame/tracks/ArrangementRuler.tsx')
+const {ArrangementRulerView} = {...await import('../src/frame/tracks/ArrangementRuler.tsx'), ...await import('../src/inhabitants/catalogue/panels/dlw__arrangement-ruler.tsx')}
 const acts = await import('../src/frame/menu/objectActions.ts')
 
 const E = 'expression:cuts'

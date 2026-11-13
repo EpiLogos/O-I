@@ -43,7 +43,7 @@ const {renderToStaticMarkup} = await import('react-dom/server')
 const host = await import('../src/frame/devices/deviceHost.tsx')
 const heads = await import('../src/frame/tracks/trackHeads.ts')
 const grid = {...await import('../src/frame/tracks/SessionGrid.tsx'), ...await import('../src/inhabitants/catalogue/panels/dlw__session-grid.tsx')}
-const {ArrangementRulerView} = await import('../src/frame/tracks/ArrangementRuler.tsx')
+const {ArrangementRulerView} = {...await import('../src/frame/tracks/ArrangementRuler.tsx'), ...await import('../src/inhabitants/catalogue/panels/dlw__arrangement-ruler.tsx')}
 const pages = await import('../src/central/devices/pageBindings.ts')
 // The Workspace's design (central__workspace.tsx) was retired in the 22 Oct manual rewrite (#725): a world's settings stand on its track's head
 // and its account is Docs (§18.1, §18.5); the Workspace's binding stays (pageBindings.ts workspaceBinding) and is checked on its own values.

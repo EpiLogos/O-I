@@ -138,7 +138,7 @@ test('the Arrangement lists an act whose owner answers with its way back, under 
 })
 
 test('CODE-READING: the Arrangement\'s press lists what the owner gives back; the menu bar\'s Undo and Redo say a refusal; ⌘E says why Split stands disabled', async () => {
-  const ruler = await readFile(new URL('../src/frame/tracks/ArrangementRuler.tsx', import.meta.url), 'utf8')
+  const ruler = await readFile(new URL('../src/inhabitants/catalogue/panels/dlw__arrangement-ruler.tsx', import.meta.url), 'utf8')
   assert.match(ruler, /answerOf\(ownerStepped\(\{record: recordStep\}, what, run\)\)/)
   const app = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8')
   assert.match(app, /undoStep\(sayRefused\) : redoStep\(sayRefused\)/)

@@ -150,7 +150,7 @@ test('r886 item 3: a held launch\'s line says that it landed, or clears — neve
   assert.equal(grid.heldLaunchReceipt(plain, setWith('stopped')), plain, 'a line that waits for nothing stands')
   const source = readFileSync(src('inhabitants/catalogue/panels/dlw__session-grid.tsx'), 'utf8')
   assert.match(source, /useEffect\(\(\) => \{ setReceipt\(current => heldLaunchReceipt\(current, set\)\) \}, \[set\]\)/, 'the grid follows the set')
-  const ruler = readFileSync(src('frame/tracks/ArrangementRuler.tsx'), 'utf8')
+  const ruler = readFileSync(src('inhabitants/catalogue/panels/dlw__arrangement-ruler.tsx'), 'utf8')
   assert.match(ruler, /heldLaunchReceipt\(current, set\)/, 'and so does the ruler')
 })
 

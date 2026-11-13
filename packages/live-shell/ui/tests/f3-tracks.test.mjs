@@ -32,7 +32,7 @@ const {renderToStaticMarkup} = await import('react-dom/server')
 const {liveSetTrackAdapter} = await import('../src/timeline/liveSetTrackAdapter.ts')
 const {setSelectionOf} = await import('../src/shell/liveSelection.ts')
 const {SessionGrid} = await import('../src/inhabitants/catalogue/panels/dlw__session-grid.tsx')
-const {ArrangementRuler, placeClips} = await import('../src/frame/tracks/ArrangementRuler.tsx')
+const {ArrangementRuler, placeClips} = {...await import('../src/frame/tracks/ArrangementRuler.tsx'), ...await import('../src/inhabitants/catalogue/panels/dlw__arrangement-ruler.tsx')}
 const {MODE_TRACKS, mergeSets, nativeTracks} = await import('../src/frame/tracks/modeTracks.ts')
 const {SURF_MODES} = await import('../src/shell/modeGrammar.ts')
 // The frame's lazy parts (a mode's bodies, its transport and tracks, a device's face) load when first drawn (shell/loadWhenDrawn.ts;
