@@ -18,6 +18,7 @@ import {readFile} from 'node:fs/promises'
 import {register} from 'node:module'
 import {createElement} from 'react'
 import {renderToStaticMarkup} from 'react-dom/server'
+import {withWorldModel} from './support/worldModelFixture.mjs'
 
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
 register(`data:text/javascript,${encodeURIComponent(`
@@ -338,12 +339,13 @@ test('Search\'s Reach lists the world\'s projects as Central discloses them, tho
   holds.resetHolds()
   const bridge = {kind: 'bridge', url: 'http://search-world.fixture'}
   const realFetch = globalThis.fetch
-  globalThis.fetch = async (_url, init) => {
+  // The world's projects are the World Model's worlds slice (O-I #1001), composed here over Central's own world reading.
+  globalThis.fetch = withWorldModel(async (_url, init) => {
     const body = JSON.parse(init.body)
     if (body.op === 'world_browse') return {json: async () => ({ok: true, outcome: {result: 'world_read', snapshot: {navigator: {root: {control: {agent_wiki: {wiki: {space_ref: 'central:wiki:root'}}},
       work: {projects: [{name: 'O-I', path: 'Work/O-I'}, {name: 'Archetypal-Earth', path: 'Work/Archetypal-Earth'}]}}}}}})}
     return {json: async () => ({ok: false, error: `unexpected op ${body.op}`})}
-  }
+  })
   try { await ownerReadings.entry(worldScope.worldProjectsKey(bridge), async () => ({value: await worldScope.readWorldProjects(bridge)})).ensure(spineEpochKey(0, null)) }
   finally { globalThis.fetch = realFetch }
   let bound = null
