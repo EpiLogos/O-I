@@ -143,24 +143,50 @@ test('ligament 1 — double-booking normalizes onto slots: a row binding collide
   door.resetFamilyManifestsForTest()
 })
 
-test('ligament 3 — the value ARRIVES at the kernel boundary: carrier rows dispatch configure, armed shell rows disclose their setter', async () => {
+test('ligament 3 — the rack writes AIKit’s own operations: Model rides `model --model`, Connect is pause/resume, the rest dispatch nothing', async () => {
   standWorld()
   const captured = []
+  let document = {type: 'conversation', operation: {op: 'model', model: 'gpt-5'}, result: {selected: 'gpt-5'}}
   const invoke = async (_transport, op) => {
     captured.push(op)
-    return {outcome: {result: 'harness_agent_outcome', document: {state: 'configured'}}, error: undefined}
+    return {outcome: {result: 'harness_agent_outcome', document}, error: undefined}
   }
-  // A KERNEL-channel row: the gateway transport value rides the carrier.
-  const gatewayTransport = sdkParamRowOf('actuation', 'gateway', 'transport')
-  const receipt = await dispatch.fireWritePath(gatewayTransport, 'ws', {transport: TRANSPORT, binding: BINDING, invoke})
-  assert.equal(receipt.kind, 'fired', `gateway transport fires: ${JSON.stringify(receipt)}`)
-  assert.deepEqual(captured[0], {op: 'harness_agent_control', binding: BINDING, control: 'configure', value: {transport: 'ws'}})
-  // An ARMED SHELL row (the effort row's verified path is shell.setEffort):
-  // before the shell registers its setter, the dispatch refuses NAMING the
-  // setter — the honest pre-wiring state the ligament-4 bridge closes.
+  const ctx = {transport: TRANSPORT, binding: BINDING, invoke}
+  // Model: AIKit's `gateway agent --binding B model --model ID` (the one value-carrying conversation operation).
+  const model = await dispatch.fireWritePath(sdkParamRowOf('actuation', 'agent', 'model'), 'gpt-5', ctx)
+  assert.equal(model.kind, 'fired', JSON.stringify(model))
+  assert.deepEqual(captured.at(-1), {op: 'harness_agent_control', binding: BINDING, control: 'model', model: 'gpt-5'})
+  // The gateway answers the select unavailable (the real answer of a binding with no agent backing): that is a refusal in its words.
+  document = {type: 'conversation', operation: {op: 'model', model: 'gpt-5'}, result: {available: false, reason: 'this conversation has no agent backing'}}
+  const unbacked = await dispatch.fireWritePath(sdkParamRowOf('actuation', 'agent', 'model'), 'gpt-5', ctx)
+  assert.equal(unbacked.kind, 'refused')
+  assert.match(unbacked.reason, /no agent backing/)
+  // Connect: the binding's connector ingress — on resumes it, off pauses it.
+  document = {type: 'conversation', result: {paused: true}}
+  assert.equal((await dispatch.fireWritePath(sdkParamRowOf('actuation', 'gateway', 'connect'), false, ctx)).kind, 'fired')
+  assert.deepEqual(captured.at(-1), {op: 'harness_agent_control', binding: BINDING, control: 'pause'})
+  await dispatch.fireWritePath(sdkParamRowOf('actuation', 'gateway', 'connect'), true, ctx)
+  assert.deepEqual(captured.at(-1), {op: 'harness_agent_control', binding: BINDING, control: 'resume'})
+  // The settings AIKit's gateway has no operation for are refused naming that, and nothing is sent.
+  const before = captured.length
+  for (const [instance, key, value] of [['gateway', 'transport', 'ws'], ['gateway', 'approvals', 'ask'], ['gateway', 'stall-after', 90], ['agent', 'steer-line', 'settle physics next']]) {
+    const receipt = await dispatch.fireWritePath(sdkParamRowOf('actuation', instance, key), value, ctx)
+    assert.equal(receipt.kind, 'refused', key)
+    assert.match(receipt.reason, /AIKit's gateway has no operation/, key)
+    assert.match(receipt.missingOp ?? '', /aikit gateway agent/, key)
+  }
+  for (const [key, value] of [['effort', 'high'], ['interrupt-quantize', 'now'], ['input', 'steer'], ['new-task', 'write the tests']]) {
+    const receipt = await dispatch.fireHarnessControlByKey(key, value, ctx)
+    assert.equal(receipt.kind, 'refused', key)
+    assert.match(receipt.missingOp ?? '', /aikit gateway agent/, key)
+  }
+  assert.equal(captured.length, before, 'nothing reached the kernel for a setting AIKit has no operation for')
+  assert.equal(JSON.stringify(captured).includes('configure'), false, 'configure is no AIKit operation and is never sent')
+  // An ARMED SHELL row (the effort row's verified path is shell.setEffort): before the shell registers its setter, the dispatch refuses
+  // NAMING the setter.
   const effortRow = sdkDefine.transportBindingRow({mode: 'factory', row: 'tempo', face: 'harness-model', key: 'effort', family: 'actuation'})
   assert.equal(effortRow.writePath, 'shell.setEffort')
-  const preWiring = await dispatch.fireWritePath(effortRow, 'max', {transport: TRANSPORT, binding: BINDING, invoke})
+  const preWiring = await dispatch.fireWritePath(effortRow, 'max', ctx)
   assert.equal(preWiring.kind, 'refused')
   assert.equal(preWiring.missingOp, 'shell.setEffort')
 })
@@ -190,15 +216,17 @@ test('ligament 3 — the bare lifecycle control fires TODAY: task-control resume
   assert.match(bad.reason, /not one of the control union/)
 })
 
-test('ligament 3 — the unpatched kernel\u2019s refusal is the honest state: steer-line names the carrier', async () => {
+test('ligament 3 — a bare new task still fires AIKit’s `new`; a task with words is refused, since `new` carries none', async () => {
   standWorld()
-  const invoke = async () => ({outcome: null, error: 'the kernel refused the operation: unknown variant `configure`, expected one of `new`, `stop`, `restart`, `pause`, `resume`'})
-  const row = sdkDefine.transportBindingRow({mode: 'factory', row: 'tempo', face: 'harness-model', key: 'steer-line', family: 'actuation'})
-  assert.ok(row, 'the steer-line row stands (same-day declaration)')
-  const receipt = await dispatch.fireWritePath(row, 'settle physics next', {transport: TRANSPORT, binding: BINDING, invoke})
-  assert.equal(receipt.kind, 'refused')
-  assert.match(receipt.reason, /unknown variant `configure`/)
-  assert.match(receipt.missingOp ?? '', /value-carrier patch/)
+  const captured = []
+  const invoke = async (_t, op) => { captured.push(op); return {outcome: {result: 'harness_agent_outcome', document: {type: 'conversation'}}, error: undefined} }
+  const row = sdkParamRowOf('software-factory', 'agent', 'new-task')
+  assert.equal((await dispatch.fireWritePath(row, '', {transport: TRANSPORT, binding: BINDING, invoke})).kind, 'fired')
+  assert.deepEqual(captured.at(-1), {op: 'harness_agent_control', binding: BINDING, control: 'new'})
+  const worded = await dispatch.fireWritePath(row, 'write the tests', {transport: TRANSPORT, binding: BINDING, invoke})
+  assert.equal(worded.kind, 'refused')
+  assert.match(worded.reason, /carries no words/)
+  assert.equal(captured.length, 1)
 })
 
 test('ligament 4 — heartbeat and write-arm refuse honestly, their owner ops named', async () => {
@@ -246,17 +274,13 @@ test('ligament 4 — the setter bridge wires the armed values: registration, arr
     // Capture at the kernel boundary: the value ARRIVES through the bridge.
     invoke: async (_t, op) => { captured.push(op); return {outcome: {result: 'harness_agent_outcome', document: {}}, error: undefined} },
   })
+  // REPLACED (lane A wiring): AIKit's gateway has no effort or input operation, so the setters refuse naming that and send nothing.
   const receipt = await sdkSetters.shellSetter('shell.setEffort')('medium')
-  assert.ok(presented.some(([key, value]) => key === 'effort' && value === 'medium'), 'presentation keeps the control\u2019s value true')
-  assert.equal(receipt.kind, 'fired', `the setter returns a fired receipt: ${JSON.stringify(receipt)}`)
-  assert.deepEqual(captured.at(-1), {op: 'harness_agent_control', binding: BINDING, control: 'configure', value: {effort: 'medium'}}, 'the value ARRIVES through the bridge')
-  // The shell holds steer as a boolean; the carrier's input mode arrives as its word.
+  assert.equal(receipt.kind, 'refused', JSON.stringify(receipt))
+  assert.match(receipt.missingOp ?? '', /aikit gateway agent/)
   await sdkSetters.shellSetter('shell.setSteer')(true)
-  await sdkSetters.shellSetter('shell.setSteer')(false)
-  const sent = JSON.stringify(captured)
-  assert.match(sent, /"input_mode":"steer"/, 'steer arrives as input_mode steer'); assert.match(sent, /"input_mode":"queue"/, 'release arrives as queue')
-  assert.doesNotMatch(sent, /"input_mode":(true|false)/, 'never a boolean')
-  assert.ok(presented.some(([key, value]) => key === 'steer' && value === true), 'the presentation keeps the boolean')
+  assert.deepEqual(captured, [], 'nothing reached the kernel')
+  assert.deepEqual(presented, [], 'a refused setting never moves its flag')
   // The setter channel also answers refusals through the bridge: heartbeat
   // refuses naming the cron owner, nothing captured.
   const hbReceipt = await sdkSetters.shellSetter('shell.setHeartbeat')(false)
@@ -297,35 +321,16 @@ test('ligament 4 — a shell flag moves only after the owner accepts, and what t
   registerAgentShellSetters({transport: () => TRANSPORT, binding: () => BINDING, shell, onReceipt: r => receipts.push(r), invoke: async () => answer})
   const press = (path, value) => sdkSetters.shellSetter(path)(value)
   try {
-    // the unpatched kernel refuses the carrier: the flag stays where it was, and nothing is recorded as the owner's
-    answer = {outcome: null, error: 'the kernel refused the operation: unknown variant `configure`, expected one of `new`, `stop`, `restart`, `pause`, `resume`'}
-    const unpatched = await press('shell.setEffort', 'max')
-    assert.equal(unpatched.kind, 'refused'); assert.match(unpatched.reason, /unknown variant `configure`/)
-    assert.deepEqual(presented, [], 'the owner refused: the effort flag did not move')
-    assert.deepEqual(accepted.ownerAccepted(BINDING), {})
-    // the harness answers, and its own document refuses: an answer that refuses is not an acceptance
-    answer = {outcome: {result: 'harness_agent_outcome', document: {refused: {message: 'effort max is not allowed here'}}}}
-    const harnessRefused = await press('shell.setEffort', 'max')
-    assert.equal(harnessRefused.kind, 'refused'); assert.match(harnessRefused.reason, /effort max is not allowed here/)
-    assert.deepEqual(presented, [], 'the harness refused in its own document: nothing moved')
-    assert.deepEqual(accepted.ownerAccepted(BINDING), {})
-    // the owner accepts: now the flag moves, after the answer, and the value is recorded for the devices
+    // REPLACED (lane A wiring): no shell setter has an AIKit operation behind it — effort, steer and timing are refused naming the missing
+    // `aikit gateway agent` operation, heartbeat and the write arm as presentation-state — so no flag moves and nothing is recorded.
     answer = {outcome: {result: 'harness_agent_outcome', document: {state: 'configured'}}}
-    const taken = await press('shell.setEffort', 'max')
-    assert.equal(taken.kind, 'fired')
-    assert.deepEqual(presented, [['effort', 'max']])
-    await press('shell.setSteer', false)
-    assert.deepEqual(presented.at(-1), ['steer', false], 'the shell keeps its boolean')
-    assert.deepEqual(accepted.ownerAccepted(BINDING), {effort: 'max', input: 'queue'}, 'the devices read the owner\u2019s acceptance, in the owner\u2019s word for steer')
-    assert.deepEqual(accepted.ownerAccepted('hermes'), {}, 'on this binding only')
-    // the dispatcher calls these two presentation-state and refuses them: they never flip and are never recorded
-    for (const [path, value] of [['shell.setHeartbeat', false], ['shell.setWriteArm', true]]) {
+    for (const [path, value] of [['shell.setEffort', 'max'], ['shell.setSteer', false], ['shell.setQuantize', 'now'], ['shell.setHeartbeat', false], ['shell.setWriteArm', true]]) {
       const receipt = await press(path, value)
       assert.equal(receipt.kind, 'refused', path)
     }
-    assert.deepEqual(presented.map(([key]) => key), ['effort', 'steer'], 'heartbeat and the write arm stayed where they were')
-    assert.deepEqual(accepted.ownerAccepted(BINDING), {effort: 'max', input: 'queue'})
-    assert.equal(receipts.filter(r => r.kind === 'refused').length, 4, 'every refusal still reached the receipt sink')
+    assert.deepEqual(presented, [], 'no flag moved')
+    assert.deepEqual(accepted.ownerAccepted(BINDING), {}, 'nothing is recorded as the owner\u2019s')
+    assert.equal(receipts.filter(r => r.kind === 'refused').length, 5, 'every refusal still reached the receipt sink')
   } finally { accepted.resetOwnerAccepted() }
 })
 

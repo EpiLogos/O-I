@@ -1,0 +1,74 @@
+{
+ "_provenance": "Captured 2026-11-13 from the installed aikit 0.1.0 (514aba066e51) in an isolated AIKIT_HOME: `aikit --json client status` .data (clients[] trimmed to three of its 25 rows and the four fields the shell reads; values unchanged \u2014 no harness is installed in the isolated home), and `aikit gateway ecology --json` .data, verbatim, against `aikit gateway serve --unix` holding one bound conversation.",
+ "client_status": {
+  "clients": [
+   {
+    "client": "claude",
+    "harness": "claude-code",
+    "detection": "not-installed",
+    "installed": false
+   },
+   {
+    "client": "pi",
+    "harness": "pi",
+    "detection": "not-installed",
+    "installed": false
+   },
+   {
+    "client": "broker",
+    "harness": null,
+    "detection": "self",
+    "installed": true
+   }
+  ]
+ },
+ "gateway_ecology": {
+  "ecology": {
+   "agencies": [
+    {
+     "agency_ref": "agency/lanea",
+     "sessions": [
+      {
+       "actuation_refs": [
+        "actuation/lanea"
+       ],
+       "agency_ref": "agency/lanea",
+       "agent_session_ref": "agent-session/lanea",
+       "invocation_modes": [
+        "communique",
+        "session-contribution",
+        "delegation",
+        "session-fork",
+        "co-actuation"
+       ],
+       "streams": [
+        {
+         "event_count": 0,
+         "last_sequence": 0,
+         "stream_ref": "actuation-stream/lanea"
+        }
+       ],
+       "surfaces": [
+        {
+         "address": {
+          "conversation_id": "main",
+          "platform": "lanea"
+         },
+         "binding_ref": "gateway-binding/lanea",
+         "connector_ref": "gateway-connector/lanea/main",
+         "context_revision": 1,
+         "ingress_default": "allow",
+         "platform": "lanea"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "authority": "presence-does-not-imply-authority",
+   "gateway_ref": "agency-gateway/local",
+   "version": "aikit.agency-gateway/v1"
+  },
+  "type": "ecology"
+ }
+}

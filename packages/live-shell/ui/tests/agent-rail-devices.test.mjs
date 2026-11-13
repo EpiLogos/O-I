@@ -146,6 +146,18 @@ test('one publisher: the rail\'s own publisher draws it in every mode; Factory\'
   assert.doesNotMatch(publisher, /APPROVALS_ID/, 'Approvals stays Factory\'s Main track effect')
 })
 
+const HARNESS_CAPTURE = JSON.parse(readFileSync(new URL('./fixtures/aikit-harness-binding-2026-11-13.json', import.meta.url), 'utf8'))
+
+test('the harness binding is read from the owners\' real shapes: harnesses from client status clients[], the binding from the gateway\'s ecology', async () => {
+  const {foundHarnesses, gatewayBindingOf} = await import('../src/agent/useHarnessBinding.ts')
+  // Client status names harnesses and no binding (the shape `harnesses[{id,binding}]` was never AIKit's).
+  assert.deepEqual(foundHarnesses(HARNESS_CAPTURE.client_status), [], 'no harness is detected in the captured isolated home')
+  assert.deepEqual(foundHarnesses({clients: [{harness: 'pi', detection: 'detected'}, {harness: 'codex', detection: 'not-installed'}]}), ['pi'])
+  assert.equal(gatewayBindingOf(HARNESS_CAPTURE.client_status), null, 'client status names no gateway binding')
+  assert.equal(gatewayBindingOf(HARNESS_CAPTURE.gateway_ecology), 'gateway-binding/lanea', 'the gateway names its binding in its ecology')
+  assert.equal(gatewayBindingOf({type: 'ecology', ecology: {agencies: []}}), null, 'a gateway with no conversation names none')
+})
+
 test('the harness binding is read once for the window: the chain and the rail\'s publisher share the held answer (harness_status, harness_agent_read)', async () => {
   const {useAgentChainReading} = await import('../src/agent/devices/useAgentChainReading.ts')
   // A counting stand-in for the kernel bridge: each op asked is recorded; the harness answers in its own shapes, every other read refuses.
@@ -154,7 +166,10 @@ test('the harness binding is read once for the window: the chain and the rail\'s
   globalThis.fetch = async (url, init) => {
     const op = JSON.parse(init.body)
     asked.push(op.binding ? `${op.op}:${op.binding}` : op.op)
-    const outcome = op.op === 'harness_status' ? {result: 'harness_status_reading', data: {harnesses: [{id: 'pi', binding: 'pi'}]}}
+    // The owners' own shapes, captured from the real AIKit (fixtures/aikit-harness-binding-2026-11-13.json): client status carries clients[]
+    // (harness names, no binding); the gateway's bindings are its ecology's surfaces.
+    const outcome = op.op === 'harness_status' ? {result: 'harness_status_reading', data: HARNESS_CAPTURE.client_status}
+      : op.op === 'aikit_read' && op.request?.kind === 'gateway-ecology' ? {result: 'owner_route_reading', route: 'aikit gateway ecology', data: HARNESS_CAPTURE.gateway_ecology}
       : op.op === 'harness_agent_read' ? {result: 'harness_agent_reading', binding: op.binding, document: {state: 'ready'}} : null
     return {json: async () => (outcome ? {ok: true, outcome} : {ok: false, error: `${op.op} is not answered in this suite`})}
   }
@@ -166,11 +181,11 @@ test('the harness binding is read once for the window: the chain and the rail\'s
   const root = createRoot(container)
   try {
     flushSync(() => root.render(createElement(StubWorkspaceProvider, {transport: bridge}, createElement(ChainReads), createElement(rail.AgentRailDevices))))
-    for (let tick = 0; tick < 20 && !asked.includes('harness_agent_read:pi'); tick++) await new Promise(resolve => setTimeout(resolve, 10))
+    for (let tick = 0; tick < 20 && !asked.includes('harness_agent_read:gateway-binding/lanea'); tick++) await new Promise(resolve => setTimeout(resolve, 10))
     await settle()
     assert.equal(asked.filter(op => op === 'harness_status').length, 1, 'harness_status: one ask for both readers')
     // Each binding is one ask for both readers: the shell's default before the owner names one, then the binding the owner named.
-    assert.equal(asked.filter(op => op === 'harness_agent_read:pi').length, 1, 'harness_agent_read on the named binding: one ask for both readers')
+    assert.equal(asked.filter(op => op === 'harness_agent_read:gateway-binding/lanea').length, 1, 'harness_agent_read on the binding the gateway names: one ask for both readers')
     assert.ok(asked.filter(op => op === 'harness_agent_read:cursor').length <= 1, 'and on the default, at most one')
   } finally {
     flushSync(() => root.unmount())

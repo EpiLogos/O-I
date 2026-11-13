@@ -95,8 +95,9 @@ export const MESSAGES_REFUSE = {
   delegate: 'A message dragged onto a track: `aikit gateway delegate` takes the Communique, the work it becomes and why (--communique C --work W --reason R), and the drop did not name all three.',
   /** The groups while Central has not answered its agent-set listing. */
   team: 'Your groups: Central has not answered its agent-set listing yet (`central.agent-set.list`).',
-  /** The conversation's Voice: speech turned into the composer's words. */
-  voice: missing('Voice', 'dictation into Messages\' composer (`aikit gateway send` carries words; the Thread holds no capture of its own)', 'AIKit'),
+  /** The conversation's Voice: speech turned into the composer's words by the kernel's local dictation (dictation_probe, then
+   * dictation_transcribe; agent/useAgentVoice.ts), which needs the native kernel carrier. */
+  voice: 'Voice: the kernel carrier is unavailable here, so its local dictation (dictation_probe, then dictation_transcribe) cannot be asked.',
   /** The conversation's session acts: a Position's journal names no session, so nothing here answers its proposals or stalls. */
   conversation: missing('The conversation\'s session acts (Approve, Diff, Retry, Hard stop, Tell parent, a spawn\'s thread)', 'a session for the Position\'s conversation (`aikit gateway conversation` carries Communiques, not a session\'s turns)', 'AIKit'),
   session: unread('The session\'s light and its last check-in', 'a session for the Position\'s conversation (`aikit gateway conversation` carries Communiques, not a session)', 'AIKit'),
@@ -121,10 +122,9 @@ export const MESSAGES_ABSENT: Readonly<Record<string, string>> = {
 }
 
 /** The writes no owner carries, by key: the conversation's own controls (the Thread's Full under `conv.`, thread.tsx:8-17:
- * Input, Voice, the proposal's and the stall's buttons, a spawn row's open). Send (`conv.sent`) and a drop onto a track (`delegate`) write
- * through AIKit's gateway (MessagesPorts.gateway). */
+ * the proposal's and the stall's buttons, a spawn row's open). Send (`conv.sent`) and a drop onto a track (`delegate`) write
+ * through AIKit's gateway (MessagesPorts.gateway); Voice (`conv.voice`) through the kernel's dictation (MessagesPorts.voice). */
 export const MESSAGES_REFUSED: Readonly<Record<string, string>> = {
-  'conv.voice': MESSAGES_REFUSE.voice,
   'conv.approve': MESSAGES_REFUSE.conversation, 'conv.diff': MESSAGES_REFUSE.conversation, 'conv.retry': MESSAGES_REFUSE.conversation,
   'conv.hardStop': MESSAGES_REFUSE.conversation, 'conv.tellParent': MESSAGES_REFUSE.conversation, 'conv.session': MESSAGES_REFUSE.conversation,
 }
@@ -425,6 +425,9 @@ export interface MessagesPorts {
   /** AIKit's gateway writes through the kernel's route (ownerRoutes.ts gateway_write): resolves with AIKit's reading or rejects with its
    * words. Absent: no carrier stands. */
   readonly gateway?: (request: GatewayWriteRequest) => Promise<unknown>
+  /** The kernel's local dictation (agent/useAgentVoice.ts agentVoicePort): start arms the capture, stop resolves with the transcript or
+   * rejects with the dictation's named refusal. Absent: no carrier stands. */
+  readonly voice?: {readonly start: () => Promise<void>; readonly stop: () => Promise<string>}
 }
 
 /** What a drop onto a track names for `aikit gateway delegate` (the drop's value, JSON): the Communique, the work it becomes and why, and
@@ -445,6 +448,8 @@ export function messagesValues(input: MessagesInput): Values {
   const values: Record<string, Value> = {}
   const view = viewHolds(input.holds, MESSAGES_ID)
   for (const key of MESSAGES_LOCAL) { const held = view[key] ?? MESSAGES_VIEW[key]; if (held !== undefined) values[key] = held }
+  // Voice: listening while the hand holds it on (the composer draws the wave), off otherwise.
+  values['conv.voice'] = view['conv.voice'] === true
   // Input starts where the running gateway can land the words, until the hand moves it.
   if (view['conv.input'] === undefined) values['conv.input'] = inputDefaultOf(input.handlingAdvertised)
   const known = input.population.status === 'answered' ? input.population.value : null
@@ -525,6 +530,7 @@ export function messagesBinding(input: MessagesInput, ports: MessagesPorts = {})
   if (!('proposal' in values) && made && !view.editing) standing.proposal = {disabled: reviewWhy ?? MESSAGES_REFUSE.noProposal}
   // Send: to the open agent's Position, while a carrier stands; a drop onto a track names its own Communique, so only the carrier gates it.
   const positions = positionRefs(known)
+  if (!ports.voice) standing['conv.voice'] = {disabled: MESSAGES_REFUSE.voice}
   if (!ports.gateway) for (const key of ['conv.sent', 'delegate', 'service']) standing[key] = {disabled: MESSAGES_REFUSE.noCarrier}
   else if (typeof values.open !== 'string' || !positions.includes(values.open)) standing['conv.sent'] = {disabled: MESSAGES_REFUSE.send}
   // Heard, where it has no reading: AIKit's send named no Communique, or its desk read refused (in its words), or it is being read.
@@ -622,6 +628,21 @@ export function messagesBinding(input: MessagesInput, ports: MessagesPorts = {})
     const ref = communiqueRefOf(answer)
     holdView(MESSAGES_ID, 'sent', JSON.stringify({to: open, words: words.trim(), ...(ref ? {ref} : {})}))
   }
+  /** Voice: on arms the kernel's dictation; off ends it and lands the transcript after the draft, editable and unsent. A refused
+   * dictation rejects in its own words and nothing lands. */
+  const voice = async (on: Value | undefined) => {
+    if (!ports.voice) throw Error(MESSAGES_REFUSE.voice)
+    if (on === true) {
+      await ports.voice.start()
+      holdView(MESSAGES_ID, 'conv.voice', true)
+      return
+    }
+    holdView(MESSAGES_ID, 'conv.voice', false)
+    const words = (await ports.voice.stop()).trim()
+    if (!words) return
+    const draft = pressed()['conv.draft']
+    holdView(MESSAGES_ID, 'conv.draft', typeof draft === 'string' && draft.trim() ? `${draft.trimEnd()} ${words}` : words)
+  }
   /** A message dropped onto a track: the Communique crosses into that work (`aikit gateway delegate`; Factory assigns custody). */
   const delegate = async (drop: Value | undefined) => {
     if (!ports.gateway) throw Error(MESSAGES_REFUSE.noCarrier)
@@ -656,6 +677,7 @@ export function messagesBinding(input: MessagesInput, ports: MessagesPorts = {})
     write: async (changes: readonly ValueChange[]) => {
       for (const {key, value} of changes) {
         if (key === 'conv.sent') { await send(value); continue }
+        if (key === 'conv.voice') { await voice(value); continue }
         if (key === 'delegate') { await delegate(value); continue }
         if (key === 'service') { await service(value); continue }
         if (key === 'make') { await make(value); continue }

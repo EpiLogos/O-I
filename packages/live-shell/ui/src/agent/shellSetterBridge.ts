@@ -7,13 +7,9 @@
  * misleading at the world level. This bridge closes that honestly, value
  * by value, each traced to its ACTUAL destination:
  *
- * - effort → the armed session's harness, through the value-carrying
- *   harness control (`configure {effort}` — the kernel patch). The harness
- *   answer or refusal comes back as the receipt. Until the carrier lands,
- *   the kernel's own unknown-variant refusal IS the honest state, verbatim.
- * - input (steer vs queue) → the same carrier, `{input_mode}`.
- * - quantize → the carrier, `{quantize}`; its consumption (stop/steer
- *   reading the armed timing) is WO-A5 and stays owner-named.
+ * - effort, input (steer vs queue), quantize → refused before anything is
+ *   sent: AIKit's gateway (`aikit gateway agent`) has no operation that
+ *   carries any of them (agent/aikitGatewayOps.ts names the missing op).
  * - heartbeat → NO dispatch: its owner is the cron stratum (§15.3 /
  *   WO-A3), a cadence the gateway owns — a shell toggle scheduling
  *   check-ins would be a family scheduler, which §15 forbids. The value
