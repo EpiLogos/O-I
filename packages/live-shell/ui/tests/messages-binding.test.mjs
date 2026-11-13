@@ -127,6 +127,10 @@ test('the Agency gateway\'s mark starts the gateway while it is off (§19.10 Ser
   await off.write([{key: 'service', value: true}])
   assert.equal(generation.gatewayGeneration(), before + 1, 'a started gateway moves its readers\' epoch, so Messages and the chain ask again')
   assert.notEqual(generation.gatewayEpochKey('1|central'), generation.gatewayEpochKey('1|central', before))
+  // The chain's harness read goes through the kernel's held-read holder, which keeps a refused document as an answer: once the
+  // gateway has moved here it asks fresh (walk18: Start ran the gateway and the mark stayed Refused on the held answer).
+  const chain = readFileSync(new URL('../src/agent/devices/useAgentChainReading.ts', import.meta.url), 'utf8')
+  assert.match(chain, /kernelRead\(transport, \{op: 'harness_agent_read', binding\}, gatewayAt \? \{fresh: true\} : \{\}\)/)
   const offCard = draw(off, 'full')
   assert.match(offCard, /<button[^>]*class="ms-gateway"[^>]*>.*Start/s, 'off: the mark is a press that starts it')
   const ready = msg.messagesBinding({population: answered(REAL.population), gateway: ANSWERED, holds: bind.chainHolds()}, {gateway})

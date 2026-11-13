@@ -74,7 +74,7 @@ export function useAgentChainReading(sessionRef: string | null): {reading: Agent
     setOwn(null)
     if (transport.kind === 'unavailable') return
     void (async () => {
-      const gatewayOp = await kernelRead(transport, {op: 'harness_agent_read', binding})
+      const gatewayOp = await kernelRead(transport, {op: 'harness_agent_read', binding}, gatewayAt ? {fresh: true} : {})
       const gatewayOutcome = gatewayOp.error ? null : gatewayOp.outcome
       const gatewayReading = gatewayOutcome?.result === 'harness_agent_reading' ? gatewayOutcome : null
       const gatewayAnswered = !!gatewayReading && !(isObj(gatewayReading.document) && 'refused' in gatewayReading.document)
