@@ -90,6 +90,7 @@ export const SHELL_MARK_SET = 'blade'
 
 /** A write no owner operation carries: refused in words that name the owner and the operation it lacks. */
 const missing = (what: string, op: string, owner: string) => `${what}: no owner operation carries it yet — missing op: ${op} (${owner}).`
+const unread = (what: string, op: string, owner: string) => `${what}: no reading reaches it yet — missing op: ${op} (${owner}).`
 
 /** Scope's Calls to other agents (§19.12 Asks): AIKit's ingress rule for the sender kind agent on each gateway binding of the session
  * (GatewayIngressPolicy kind_rules, decided after a sender's own id and before the binding's one default), set through the kernel's
@@ -638,11 +639,17 @@ function member(ref: string, row: CatalogueRow | undefined, available: boolean |
 
 /** The repertoire the seated agent carries: every set's members as AIKit replies (projected, or withheld with its reason), each
  * child set by reference, and the skills the profile names directly. Null when nothing is read yet. */
-export function rackMembers(input: Pick<RackInput, 'profile' | 'sets' | 'setList' | 'skills' | 'activity'>): Member[] | null {
+/** A member as the rack lists it: every carried set that holds it (`sets`, in the profile's order), beside the first (`set`). */
+export type RackMember = Member & {readonly sets?: readonly string[]}
+
+export function rackMembers(input: Pick<RackInput, 'profile' | 'sets' | 'setList' | 'skills' | 'activity'>): RackMember[] | null {
   if (!input.profile) return null
   const rows = catalogue(input.skills)
   const practice = sessionPractice(input.activity)
   const out = new Map<string, Member>()
+  // Every set that holds each member (a member two sets carry stands once, under the first; both carry it).
+  const carriers = new Map<string, string[]>()
+  const carry = (ref: string, set: string) => { const held = carriers.get(ref) ?? []; if (!held.includes(set)) carriers.set(ref, [...held, set]) }
   const sizes = new Map<string, number>()
   if (isObj(input.setList) && Array.isArray(input.setList.sets)) {
     for (const set of input.setList.sets) if (isObj(set) && typeof set.name === 'string' && typeof set.members === 'number') sizes.set(set.name, set.members)
@@ -652,13 +659,15 @@ export function rackMembers(input: Pick<RackInput, 'profile' | 'sets' | 'setList
     if (!isObj(reply)) continue
     // Each member stands under the set that holds it (round 869), set by set in the profile's order.
     const set = setName(ref)
-    for (const cap of strings(reply.projected)) if (!out.has(cap)) out.set(cap, {...member(cap, rows.get(cap), true, null, practice), set})
+    for (const cap of strings(reply.projected)) { carry(cap, set); if (!out.has(cap)) out.set(cap, {...member(cap, rows.get(cap), true, null, practice), set}) }
     for (const held of Array.isArray(reply.withheld) ? reply.withheld : []) {
       if (!isObj(held) || typeof held.capability !== 'string') continue
+      carry(held.capability, set)
       out.set(held.capability, {...member(held.capability, rows.get(held.capability), false, typeof held.reason === 'string' ? held.reason : 'Withheld.', practice), set})
     }
     for (const child of strings(reply.child_refs)) {
       const name = setName(child)
+      carry(child, set)
       out.set(child, {id: child, name, form: 'skillset', rev: '', says: '', rungs: [true, sizes.has(name), null, null, null, null, null, null, null, null],
         ...(sizes.has(name) ? {holds: sizes.get(name)!} : {}), set})
     }
@@ -668,7 +677,7 @@ export function rackMembers(input: Pick<RackInput, 'profile' | 'sets' | 'setList
     const row = rows.get(ref)
     out.set(ref, member(ref, row, row ? row.eligible : null, row && row.eligible === false ? row.reason ?? 'Not eligible here.' : null, practice))
   }
-  return [...out.values()]
+  return [...out.values()].map(m => (carriers.has(m.id) ? {...m, sets: carriers.get(m.id)!} : m))
 }
 
 /** Your request for a member: the intent held at the scope, else whether AIKit has it active (the plane's native reading). */
@@ -811,6 +820,10 @@ export const RACK_UPKEEP_ABSENT: Readonly<Record<string, string>> = {
   procedures: 'The changes AIKit made to the machine: AIKit\'s `aikit procedure list` is not read here.',
   bypasses: 'The hook bypasses: AIKit\'s `aikit bypass list` is not read here.',
 }
+/** The rack's readings no owner reports, by key, each with the read it waits for. */
+export const RACK_ABSENT: Readonly<Record<string, string>> = {
+  author: unread('The set\'s author', 'the set\'s package metadata (`[package.author]`, which only `aikit set package export` writes into a plugin manifest; `aikit set show` carries no author)', 'AIKit'),
+}
 /** The upkeep acts that stay refused, naming what each lacks: none since the kernel routes `aikit bypass issue` (lane K0). */
 export const RACK_UPKEEP_REFUSE: Readonly<Record<string, string>> = {}
 /** The acts routed to AIKit's own commands (aikit_write), each a person's press on the thing the page chose. */
@@ -887,7 +900,7 @@ export function rackBinding(id: string, input: RackInput, ports: ComposePorts | 
   if (bypasses) values.bypasses = JSON.stringify(bypasses)
   if (procedures) values.procedures = JSON.stringify(procedures)
   if (adoption) values.adoption = JSON.stringify(adoption)
-  const standing: Record<string, Standing> = {...disabled(RACK_UPKEEP_REFUSE), ...disabled(REFUSED_WRITES[RACK_DESIGN]!)}
+  const standing: Record<string, Standing> = {...disabled(RACK_UPKEEP_REFUSE), ...disabled(REFUSED_WRITES[RACK_DESIGN]!), ...disabled(RACK_ABSENT)}
   const absentWhy = (key: string, answer: AikitAnswer | undefined) => (answer?.status === 'refused' ? answer.error ?? RACK_UPKEEP_ABSENT[key]!
     : answer?.status === 'reading' ? `AIKit has not answered yet (${RACK_UPKEEP_ABSENT[key]!.split(': ')[1] ?? key}).` : answer ? `AIKit answered something other than ${key}.` : RACK_UPKEEP_ABSENT[key]!)
   for (const [key, answer] of [['unused', upkeep.unused], ['sources', upkeep.sources], ['roots', upkeep.collate], ['bypasses', upkeep.bypasses], ['procedures', upkeep.procedures], ['adoption', upkeep.adoption]] as const) {
@@ -1368,10 +1381,19 @@ export function memberValues(rack: Values, chosen: string | null, held: ChainHol
   if (chosen) {
     put(values, 'member', chosen)
     put(values, 'requested', rack[`req:${chosen}`])
+    // Carried by: the sets of the rack that hold it (rackMembers `sets`); a member the profile names directly no set carries.
+    const listed = typeof rack.members === 'string' ? (JSON.parse(rack.members) as RackMember[]).find(m => m.id === chosen) : undefined
+    if (listed) put(values, 'carriedBy', carriedByOf(listed))
   }
   if (held.member.reviewAsk) values.reviewAsk = true
   if (held.member.run) values.run = held.member.run
   return values
+}
+
+/** "Sets that carry it" (member.tsx `carriedBy`), as the design words it: how many of the rack's sets hold the member. Pure. */
+export function carriedByOf(member: RackMember): string {
+  const n = member.sets?.length ?? (member.set ? 1 : 0)
+  return n === 0 ? 'no set — the profile names it' : `${n} set${n === 1 ? '' : 's'}`
 }
 
 /** The rack's members as chains for its selector (skillRackSelection.ts chosenChain: the one chosen, else the first). */
@@ -1388,6 +1410,8 @@ export function memberChains(rack: Values): {ref: string}[] | null {
 export const MEMBER_UPKEEP_ABSENT: Readonly<Record<string, string>> = {
   why: 'Why it stands as it does: AIKit\'s `aikit explain <capability>` is not read here (choose a member in the rack).',
   history: 'Its recorded changes: AIKit\'s `aikit history <capability>` is not read here (choose a member in the rack).',
+  when: unread('The Methods it points at', 'the Methodology\'s table of Methods and when each applies (its SKILL.md; `aikit explain` names what selects it and its dependencies, not that table)', 'AIKit'),
+  instantiate: unread('Whether the Methodology must be instantiated for the act in hand', 'an answer per act (AIKit answers it for an act it is asked about; no read asks it for the act in hand)', 'AIKit'),
   ground: 'Its standing in Central\'s ground: no reading reaches it yet — missing op: a tie from an AIKit capability ref to its ground path (control.skills.inspect lists skills by ground name and path; `aikit explain` names what selects the capability and where it is projected, not its ground path) (Central).',
 }
 export const MEMBER_UPKEEP_REFUSE: Readonly<Record<string, string>> = {

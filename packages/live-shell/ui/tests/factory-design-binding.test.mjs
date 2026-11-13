@@ -572,12 +572,31 @@ test('Preview, then Apply: the composition is held until previewed, the plane pl
   bind.resetHolds()
 })
 
+test('the member reads which of the rack\'s sets carry it; the set\'s author stands absent with the read it waits for (batch 4, D-31, D-32)', () => {
+  bind.resetHolds()
+  // A second set that also holds documentation-standing: both carry it, and it stands once, under the first.
+  const both = rackInput({profile: {...PROFILE, skill_set_refs: ['suite-foundations', 'docs-pair']},
+    sets: {'suite-foundations': SET_SHOW, 'docs-pair': {...SET_SHOW, name: 'docs-pair', projected: ['skill/central/documentation-standing'], withheld: []}}})
+  const rack = bind.rackValues(both)
+  const listed = JSON.parse(rack.members).find(m => m.id === 'skill/central/documentation-standing')
+  assert.deepEqual([listed.set, listed.sets], ['suite-foundations', ['suite-foundations', 'docs-pair']])
+  assert.equal(bind.memberBinding(bind.MEMBER_DEVICE_ID, rack, 'skill/central/documentation-standing', bind.chainHolds()).values.carriedBy, '2 sets')
+  assert.equal(bind.memberBinding(bind.MEMBER_DEVICE_ID, rack, 'skill/central/docs-methodology', bind.chainHolds()).values.carriedBy, 'no set — the profile names it')
+  const binding = bind.rackBinding(bind.SKILLSET_RACK_ID, both, null, {project: 'O-I', sessionRef: null})
+  assert.equal('author' in binding.values, false, 'no owner reports the set\'s author')
+  assert.match(binding.standing.author.disabled, /The set's author: no reading reaches it yet — missing op: the set's package metadata/)
+})
+
 test('the member is the rack\'s chosen chain: Enabled is your request in the rack\'s composition; Review asks first; Trust and Run are refused by name', async () => {
   bind.resetHolds()
   const rack = bind.rackValues(rackInput())
   assert.deepEqual(bind.memberChains(rack).map(chain => chain.ref).slice(0, 2), ['skill/central/documentation-standing', 'skill/central/projectcentral-ontology'])
   const member = () => bind.memberBinding(bind.MEMBER_DEVICE_ID, bind.rackValues(rackInput()), 'skill/aikit/knowledge-navigation', bind.chainHolds())
-  assert.deepEqual(Object.keys(member().values).sort(), ['marks', 'member', 'members'], 'no request read (the plane is not read), no review, no run')
+  // REPLACED (batch 4, D-31): Carried by is read from the rack's members (the sets that hold the chosen one).
+  assert.deepEqual(Object.keys(member().values).sort(), ['carriedBy', 'marks', 'member', 'members'], 'no request read (the plane is not read), no review, no run')
+  assert.equal(member().values.carriedBy, '1 set', 'Carried by: the rack\'s sets that hold it')
+  assert.match(member().standing.when.disabled, /The Methods it points at: no reading reaches it yet/)
+  assert.match(member().standing.instantiate.disabled, /AIKit answers it for an act/)
   noDefaultPassed(memberDesign, member().values, ['marks'])
   await member().write([{key: 'requested', value: false}])
   assert.equal(bind.rackValues(rackInput())['req:skill/aikit/knowledge-navigation'], false, 'the member\'s Enabled is the rack\'s request: one composition')
