@@ -145,13 +145,14 @@ export function bringInRefusal(world: string, ground: CentralGroundReading | nul
   const again = `then bring ${world} in again.`
   const today = ground.time.state === 'ready' ? ground.time.data?.civil_date ?? null : null
   const named = (date: string) => civilDayName(date) ?? date
+  // Past the boundary: Central's Day is an earlier one, and today has not opened yet (centralVertical.ts dayTurned).
+  if (pointer && today && pointer !== today) {
+    const press = canCloseDay(ground) ? `press Close now to close ${named(pointer)}, then Open today` : 'press Open today'
+    return `${kept}, and the Day Central names is ${named(pointer)}, not today, ${named(today)}. On the Day device, ${press}; ${again}`
+  }
   if (standing.state === 'unopened') return `${world} cannot come into today: no Day is open yet. On the Day device, press Open today; ${again}`
   if (standing.state === 'uninitialised') {
     return `${kept}, and ${named(standing.civilDate)} has no document yet (${standing.op}). On the Day device, press Open today to make it; ${again}`
-  }
-  if (pointer && today && pointer !== today) {
-    const press = canCloseDay(ground) ? `press Close now to close ${named(pointer)}, then Open today` : 'press Open today'
-    return `${kept}, and the Day Central names is ${named(pointer)}, not today, ${named(today)} (Central: "${standing.message}"). On the Day device, ${press}; ${again}`
   }
   return `${kept}, which Central did not read: ${standing.message}`
 }

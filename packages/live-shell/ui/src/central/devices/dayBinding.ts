@@ -624,6 +624,7 @@ export function dayFactsOf({ground, groundError, selected}: DayFactsInput): DayF
 
 function refusalOf(standing: DayDocumentStanding | null, pointer: string | null, today: string | null): string | null {
   if (!standing || standing.state === 'ready') return null
+  if (standing.state === 'unopened') return standing.message
   // The stale pointer: the owner's words, and the two dates it compares (central.rs Request::Inspect).
   if (pointer && today && pointer !== today) return `${standing.message} (Central's Day: ${civilDayName(pointer) ?? pointer}; civil today: ${civilDayName(today) ?? today})`
   return standing.message

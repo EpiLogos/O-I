@@ -199,7 +199,8 @@ test('REAL CAPTURE — the stale Day pointer: the date is Central\'s civil today
   assert.equal(values.date, 'Fri 16 Oct', 'the civil date the time policy reads, by its own calendar')
   assert.equal(values.tomorrow, undefined, 'no reading reports tomorrow\'s Day: absent, never a calendar guess')
   assert.equal(values.light, 'dark', 'the owner reports no Day for today: dark, not hollow and not lit')
-  assert.equal(values.refusal, `${STALE_WORDS} (Central's Day: Tue 13 Oct; civil today: Fri 16 Oct)`, 'the owner\'s words, and the two dates it compares')
+  // Walk 13 Nov: past the boundary, Central's stale pointer is no refusal — today has not opened yet (never Central's raw words).
+  assert.equal(values.refusal, 'Today has not opened yet (the last Day was Tue 13 Oct). Open today opens it.', 'today not opened yet, and the last Day Central kept')
   assert.equal(values.canOpenToday, true, 'the ground panel\'s own rule: the policy answered and the Day is stale')
   assert.equal(values.dayStart, 0, 'the policy\'s day boundary: 00:00')
   assert.equal(values.rollover, 0, 'automatic rollover opens the next Day at the boundary')
@@ -305,7 +306,7 @@ test('the die turns through the owner\'s mutate-field on the ready Day; with no 
   const stale = bindingOf(STALE, none)
   await withOwner(none, async () => {
     host.setDraft(ID, 'face', 3)
-    assert.match(await host.flushDrafts(stale, 0), /The native today pointer belongs to an earlier civil Day/, 'the well\'s words, on the Info line')
+    assert.match(await host.flushDrafts(stale, 0), /Today has not opened yet/, 'the well\'s words, on the Info line')
   })
   assert.equal(none.sent.length, 0, 'no aperture: the owner is not asked')
   host.resetHost(ID)
@@ -404,8 +405,9 @@ test('Full is the Day\'s page as the owner stands it — the owner\'s words whil
   hosting(stale, bind.dayValuesOf(stale, null), () => {
     const pane = html(createElement(DeviceFullPane, {id: ID}))
     assert.match(pane, /data-device-design="central:day-die"/)
-    assert.match(pane, /data-central-absence="refused"/, 'the Day pane\'s own absence')
-    assert.match(pane, /The native today pointer belongs to an earlier civil Day/, 'in the owner\'s words')
+    assert.match(pane, /data-central-absence="unopened"/, 'the Day pane\'s own absence: today, not opened yet')
+    assert.match(pane, /Today has not opened yet \(the last Day was Tue 13 Oct\)/, 'today not opened yet, never Central\'s raw words')
+    assert.match(pane, /data-central-day-open="today"/, 'with Open today on the page')
     assert.doesNotMatch(pane, /<iframe|data-param=|role="slider"/, 'no blank template, no controls in the pane')
   })
   const ready = factsOf(READY)
@@ -450,7 +452,7 @@ test('with no Day selected the Day device stands on today as Central\'s ground r
   const read = JSON.parse(html(createElement(Probe)).replace(/^<pre>|<\/pre>$/g, '').replace(/&quot;/g, '"'))
   assert.equal(read.values.date, 'Fri 16 Oct')
   assert.equal(read.values.canOpenToday, true)
-  assert.match(read.values.refusal, /earlier civil Day/)
+  assert.match(read.values.refusal, /Today has not opened yet/)
   assert.deepEqual(read.writes, [true, true, true], 'Rollover goes to the binding, which refuses it naming the person\'s route')
   // The chain's own plate: the binding stands as soon as the ground answers (no shell design to wait for), so the Day's design draws
   // on today's date, the light off.
@@ -470,7 +472,7 @@ test('the Day design is the catalogue\'s own in all five views; its Full is the 
   const entry = dayEntryOf(facts)
   const published = chain.centralPublication(entry, null)
   assert.equal(typeof published.full.draw, 'function', 'the Day carries its own Full')
-  assert.match(html(published.full.draw()), /data-central-absence="refused"/, 'its page as the owner stands it')
+  assert.match(html(published.full.draw()), /data-central-absence="unopened"/, 'its page as the owner stands it')
   for (const other of chain.centralDeviceEntries(input()).filter(candidate => candidate.id !== ID)) assert.equal(chain.centralPublication(other, null).full, undefined, `${other.id}: its design's Full`)
   const source = await readFile(new URL('../src/central/devices/CentralDevices.tsx', import.meta.url), 'utf8')
   assert.doesNotMatch(source, /DayDieNet|DieFaceList|\/dayDesign'|registerDesignedDevice/, 'the net and face list the design replaces are not drawn, and the shell stands no Day of its own')
