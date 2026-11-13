@@ -257,12 +257,11 @@ async fn run_kernel_op<R: tauri::Runtime>(
     // dispatch the walk-bridge also calls (kernel dispatch.rs): owner work
     // runs outside the kernel lock wherever the op has a prepared form.
     tauri::async_runtime::spawn_blocking(move || {
-        let host = app.state::<KernelHost>();
         // One timing line per op, in the dev bridge's format, to the file
         // OI_KERNEL_TRACE_FILE names (a Finder launch has no stderr).
         let name = oi_cradle_kernel::dispatch::op_name(&op);
         let started = std::time::Instant::now();
-        let (result, timing) = oi_cradle_kernel::dispatch::dispatch_with(&host.0, &host.1, op);
+        let (result, timing) = dispatch_kernel_op(&app, op);
         oi_cradle_kernel::dispatch::trace_op(
             "native",
             &name,
@@ -270,19 +269,32 @@ async fn run_kernel_op<R: tauri::Runtime>(
             started.elapsed(),
             &timing,
         );
-        let outcome = result?;
+        result
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+/// The host's one dispatch (kernel dispatch.rs): an op a shell page sends (`run_kernel_op`) and a read the World Model makes
+/// (O-I #1001) both run here, and each receipt is told to the shell on the event topic, the window's appearance following a
+/// presentation change.
+fn dispatch_kernel_op<R: tauri::Runtime>(
+    app: &AppHandle<R>,
+    op: KernelOp,
+) -> (Result<KernelOpOutcome, String>, oi_cradle_kernel::dispatch::Timing) {
+    let host = app.state::<KernelHost>();
+    let (result, timing) = oi_cradle_kernel::dispatch::dispatch_with(&host.0, &host.1, op);
+    if let Ok(outcome) = &result {
         for receipt in &outcome.receipts {
             if let oi_cradle_kernel::events::KernelEvent::PresentationChanged { theme, .. } =
                 &receipt.envelope.event
             {
-                apply_native_appearance(&app, &theme.appearance);
+                apply_native_appearance(app, &theme.appearance);
             }
             let _ = app.emit(KERNEL_EVENT_TOPIC, receipt);
         }
-        Ok(outcome)
-    })
-    .await
-    .map_err(|e| e.to_string())?
+    }
+    (result, timing)
 }
 
 /// Each window's page loads (G2): the holder of a field op, and when the driver a page held is freed.
@@ -542,16 +554,7 @@ fn main() {
                 let asking = app.handle().clone();
                 let telling = app.handle().clone();
                 let via: std::sync::Arc<dyn Fn(KernelOp) -> Result<KernelOpOutcome, String> + Send + Sync> =
-                    std::sync::Arc::new(move |op| {
-                        let host = asking.state::<KernelHost>();
-                        let (outcome, _) = oi_cradle_kernel::dispatch::dispatch_with(&host.0, &host.1, op);
-                        if let Ok(outcome) = &outcome {
-                            for receipt in &outcome.receipts {
-                                let _ = asking.emit(KERNEL_EVENT_TOPIC, receipt);
-                            }
-                        }
-                        outcome
-                    });
+                    std::sync::Arc::new(move |op| dispatch_kernel_op(&asking, op).0);
                 let changed = std::sync::Arc::new(move |slice, version| {
                     let host = telling.state::<KernelHost>();
                     let receipt = match host.0.lock() {

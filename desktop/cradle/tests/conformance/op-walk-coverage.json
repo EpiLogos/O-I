@@ -1152,6 +1152,15 @@
       "reason": "Native ranked roster read added; candidate build and real native no-inference replay still required."
     },
     {
+      "op": "model_subscribe",
+      "native_owner": "kernel/src/world_model.rs",
+      "spec_ref": "docs/architecture/world-shell.md \u00a79.2 (the World Model); O-I #1001",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "O-I #1001/foundation gate",
+      "reason": "model_subscribe is run by the foundation gate's acts 1 and 2 (gates/foundation/acts.json, at the repository root), which this walk register does not reach; no walk scenario names it yet, so its walk coverage stays explicit debt."
+    },
+    {
       "op": "music_modes_read",
       "native_owner": "kernel/src/ql_music.rs",
       "spec_ref": "docs/world-shell/wayfinder/tickets/T-LIVE-MODE-SCALES.md; DEVICE-SEMANTICS-LOCK \u00a70.2; QL-MEF ql music modes --json (ql.music-modes/v1)",
