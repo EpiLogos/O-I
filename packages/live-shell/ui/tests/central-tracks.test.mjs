@@ -203,7 +203,8 @@ test('today\'s set reads from the ground\'s Day: a Day with no document says to 
   const uninitialised = setReadingOf({time, day: {state: 'ready', data: {day_ref: 'central:day:control:root:2026-10-18', temporal: {civil_date: '2026-10-18'}, document_state: 'absent'}}}, null)
   assert.equal(uninitialised.state, 'none'); assert.match(uninitialised.reason, /open today/)
   const stale = setReadingOf({time, day: {state: 'stale', error: {message: 'the Day is stale'}}}, null)
-  assert.deepEqual(stale, {state: 'none', reason: 'the Day is stale'})
+  // Past the boundary (walk 13 Nov): today not opened yet, with the way on, never Central's stale-pointer words.
+  assert.deepEqual(stale, {state: 'none', reason: 'Today has not opened yet. Open today opens it.'})
 })
 
 test('the hook returns your world and the Day whatever has been read, and names what has not', () => {

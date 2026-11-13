@@ -89,7 +89,7 @@ function List({p, agents, groups}: {p: ViewProps; agents: readonly Agent[] | und
       {!!unread && <span className="ms-unread">{unread}</span>}
     </button>
   return <div className="ms-list" role="listbox" aria-label="Your agents and groups">
-    {agents === undefined && <p className="ms-none">No reading of your agents.</p>}
+    {agents === undefined && <p className="ms-none">No reading of your agents{st(p, 'agents').disabled ? `: ${st(p, 'agents').disabled}` : '.'}</p>}
     {show !== 'groups' && agents && ordered(v, agents).map(a => row(a.id, <Face agent={a} size={34} />, a.name, a.for,
       `${a.state ? STATE_WORD[a.state] : NONE}${a.where?.mode ? ` · ${a.where.mode}` : ''} · ${a.last ?? NONE}`, a.unread, a.state))}
     {show !== 'agents' && groups?.map(g => row(g.id, <span className="ms-faces">{g.members.slice(0, 3).map(m => <Face key={m} agent={byId.get(m)} size={18} />)}</span>,

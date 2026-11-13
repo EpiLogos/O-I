@@ -156,41 +156,46 @@ pub fn install(app: &AppHandle, arrangements: &[Arrangement], active: &str) -> t
         .separator()
         .fullscreen()
         .build()?;
-    let browser = MenuItemBuilder::with_id("workspace.browser", "New Browser Pane")
-        .accelerator("CmdOrCtrl+Shift+L")
-        .build(app)?;
-    let address = MenuItemBuilder::with_id("workspace.browser-address", "Go to Web Address…")
-        .accelerator("CmdOrCtrl+L")
-        .build(app)?;
-    let fresh = MenuItemBuilder::with_id("workspace.new-tab", "New Tab")
-        .accelerator("CmdOrCtrl+T")
-        .build(app)?;
-    let terminal = MenuItemBuilder::with_id("workspace.terminal", "New Terminal")
-        .accelerator("CmdOrCtrl+Shift+J")
-        .build(app)?;
-    let mut workspace = SubmenuBuilder::new(app, "Workspace")
-        .item(&fresh)
-        .item(&terminal)
-        .item(&browser)
-        .item(&address)
-        .text("workspace.create", "New Workspace…")
-        .text("workspace.rename", "Rename Workspace…")
-        .text("workspace.recover", "Recover Saved Arrangement…")
-        .separator();
-    for arrangement in arrangements {
-        // A workspace's name is someone's words: the menu and the title draw it on one plain line.
-        let name = crate::windows::window_title(&arrangement.name);
-        let label = if arrangement.id == active {
-            format!("✓ {name}")
-        } else {
-            name
-        };
-        workspace = workspace.text(format!("workspace.activate:{}", arrangement.id), label);
-    }
-    let workspace = workspace.build()?;
-    let window = SubmenuBuilder::new(app, "Window")
-        .minimize()
-        .maximize()
+    // The Workspace menu and the Window's surface and region items are the legacy desktop's (CradleFrame.tsx listens for
+    // `oi:arrangement-action`); the candidate's window has no listener, so there they would be dead items holding ⌘T, ⌘L, ⇧⌘L and ⇧⌘J.
+    #[cfg(not(feature = "native_shell"))]
+    let workspace = {
+        let browser = MenuItemBuilder::with_id("workspace.browser", "New Browser Pane")
+            .accelerator("CmdOrCtrl+Shift+L")
+            .build(app)?;
+        let address = MenuItemBuilder::with_id("workspace.browser-address", "Go to Web Address…")
+            .accelerator("CmdOrCtrl+L")
+            .build(app)?;
+        let fresh = MenuItemBuilder::with_id("workspace.new-tab", "New Tab")
+            .accelerator("CmdOrCtrl+T")
+            .build(app)?;
+        let terminal = MenuItemBuilder::with_id("workspace.terminal", "New Terminal")
+            .accelerator("CmdOrCtrl+Shift+J")
+            .build(app)?;
+        let mut workspace = SubmenuBuilder::new(app, "Workspace")
+            .item(&fresh)
+            .item(&terminal)
+            .item(&browser)
+            .item(&address)
+            .text("workspace.create", "New Workspace…")
+            .text("workspace.rename", "Rename Workspace…")
+            .text("workspace.recover", "Recover Saved Arrangement…")
+            .separator();
+        for arrangement in arrangements {
+            // A workspace's name is someone's words: the menu and the title draw it on one plain line.
+            let name = crate::windows::window_title(&arrangement.name);
+            let label = if arrangement.id == active {
+                format!("✓ {name}")
+            } else {
+                name
+            };
+            workspace = workspace.text(format!("workspace.activate:{}", arrangement.id), label);
+        }
+        workspace.build()?
+    };
+    let window = SubmenuBuilder::new(app, "Window").minimize().maximize();
+    #[cfg(not(feature = "native_shell"))]
+    let window = window
         .separator()
         .text("surface.split-right", "Split Active Surface Right")
         .text("surface.split-down", "Split Active Surface Down")
@@ -206,20 +211,21 @@ pub fn install(app: &AppHandle, arrangements: &[Arrangement], active: &str) -> t
     let help = SubmenuBuilder::new(app, "Help")
         .item(&item("help.expressions-guide", "Expressions Guide", None)?)
         .build()?;
-    app.set_menu(
-        MenuBuilder::new(app)
-            .items(&[
-                &application,
-                &file,
-                &edit,
-                &create,
-                &view,
-                &workspace,
-                &window,
-                &help,
-            ])
-            .build()?,
-    )?;
+    #[cfg(not(feature = "native_shell"))]
+    let menus: [&dyn tauri::menu::IsMenuItem<_>; 8] = [
+        &application,
+        &file,
+        &edit,
+        &create,
+        &view,
+        &workspace,
+        &window,
+        &help,
+    ];
+    #[cfg(feature = "native_shell")]
+    let menus: [&dyn tauri::menu::IsMenuItem<_>; 7] =
+        [&application, &file, &edit, &create, &view, &window, &help];
+    app.set_menu(MenuBuilder::new(app).items(&menus).build()?)?;
     if let Some(current) = arrangements.iter().find(|w| w.id == active) {
         if let Some(window) = app.get_window("main") {
             window.set_title(&format!(

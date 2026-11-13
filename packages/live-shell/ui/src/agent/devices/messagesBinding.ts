@@ -58,6 +58,7 @@
 // Every refusal is its owner's own words. The list's settings, the agent you open, the composer's draft, the conversation's filters, the
 // card's fields and the proposal the card is on are the shell's own holds. Pure, apart from the view holds (designBindings.ts holdView); the
 // acts go through the ports the publisher gives (AgentRailDevices.tsx: the kernel's invoke_action for Central's, gateway_write for AIKit's).
+import {gatewayMoved} from '../../owners/gatewayGeneration'
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
 import type {GatewayWriteRequest} from '../../../../../../desktop/cradle/src/kernel/types'
@@ -632,6 +633,7 @@ export function messagesBinding(input: MessagesInput, ports: MessagesPorts = {})
   const service = async (on: Value | undefined) => {
     if (!ports.gateway) throw Error(MESSAGES_REFUSE.noCarrier)
     await ports.gateway({kind: 'service', on: on !== false})
+    gatewayMoved()
   }
   return {
     id: MESSAGES_ID,

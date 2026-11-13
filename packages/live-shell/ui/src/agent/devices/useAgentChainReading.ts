@@ -12,6 +12,7 @@ import {useWorkspace} from '../../shell/workspaceContext'
 import {OWNER_BINDINGS, SKILLSETS_ARRIVE, ownerRefusalLine} from '../agentChainDrag'
 import {refusalLine, safeJson} from '../RefusalCard'
 import {useHarnessBinding} from '../useHarnessBinding'
+import {useGatewayGeneration} from '../../owners/gatewayGeneration'
 import {useRosterAnswer, useTaskAnswer, useWorkcellAnswer} from '../../owners/readers'
 import {useAgentSessionsOptional} from '../AgentSessionsProvider'
 import {gitRepositoryAbsence, projectOfSession} from '../worldScope'
@@ -65,13 +66,15 @@ export function useAgentChainReading(sessionRef: string | null): {reading: Agent
   const task = useTaskAnswer(transport, transport.kind === 'unavailable' ? null : sessionRef, project).reading
   const seat = useWorkcellAnswer(transport).reading
   const [own, setOwn] = useState<OwnRead | null>(null)
+  // A gateway started or stopped here is asked again (owners/gatewayGeneration.ts).
+  const gatewayAt = useGatewayGeneration()
 
   useEffect(() => {
     let live = true
     setOwn(null)
     if (transport.kind === 'unavailable') return
     void (async () => {
-      const gatewayOp = await kernelRead(transport, {op: 'harness_agent_read', binding})
+      const gatewayOp = await kernelRead(transport, {op: 'harness_agent_read', binding}, gatewayAt ? {fresh: true} : {})
       const gatewayOutcome = gatewayOp.error ? null : gatewayOp.outcome
       const gatewayReading = gatewayOutcome?.result === 'harness_agent_reading' ? gatewayOutcome : null
       const gatewayAnswered = !!gatewayReading && !(isObj(gatewayReading.document) && 'refused' in gatewayReading.document)
@@ -93,7 +96,7 @@ export function useAgentChainReading(sessionRef: string | null): {reading: Agent
       if (live) setOwn(previous => ({gateway, gatewayWaiting: previous?.gatewayWaiting ?? null, git: {doc, error: gitOp.error ?? null}}))
     })()
     return () => { live = false }
-  }, [transport, binding, sessionRef, project])
+  }, [transport, binding, sessionRef, project, gatewayAt])
 
   const reading = useMemo((): AgentChainReading => {
     if (transport.kind === 'unavailable') {

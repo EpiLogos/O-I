@@ -13,6 +13,7 @@ import {readConversation} from '../../../../../../desktop/cradle/src/contributio
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {useOwnerReading} from '../../owners/ownerReading'
 import {useSpineEpoch} from '../../owners/spine'
+import {gatewayEpochKey, useGatewayGeneration} from '../../owners/gatewayGeneration'
 import type {WorkcellAnswer} from './workcellBindings'
 
 export const CONVERSATION_OP = 'inhabitation_read'
@@ -37,7 +38,7 @@ export function mergeConversations(position: string, readings: readonly unknown[
  * world's root register ('' or null) names no project world. */
 export function useConversationAnswer(transport: KernelTransportStatus, register: string | null, position: string | null, others: readonly string[]): WorkcellAnswer {
   const project = register || undefined
-  const epoch = useSpineEpoch()
+  const epoch = gatewayEpochKey(useSpineEpoch(), useGatewayGeneration())
   const carried = transport.kind !== 'unavailable'
   const withs = useMemo(() => others.filter(other => other !== position), [others, position])
   const key = carried && position && withs.length ? JSON.stringify([CONVERSATION_OP, transport, 'conversation', project ?? null, position, withs]) : null

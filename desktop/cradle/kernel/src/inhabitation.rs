@@ -385,6 +385,57 @@ pub(crate) fn run_bounded_raw(
     source: &str,
     environment: &[(OsString, OsString)],
 ) -> Result<Vec<u8>, Error> {
+    let (status, stdout, stderr) =
+        run_bounded_captured(executable, args, cwd, timeout, source, environment)?;
+    if !status.success() {
+        return Err(Error {
+            kind: "owner-refused-or-failed".into(),
+            message: refusal_words(&stdout, &stderr),
+            operation_may_have_run: false,
+        });
+    }
+    Ok(stdout)
+}
+
+/// One bounded owner process whose JSON document is its answer whatever its
+/// exit: an owner that refuses (AIKit's gateway client exits 1 with its
+/// `ok:false` envelope on stdout) has answered, in its own code. A failed
+/// exit with no document is the owner refusing or failing in its words.
+pub(crate) fn run_bounded_document_with_env(
+    executable: &Path,
+    args: &[OsString],
+    cwd: Option<&Path>,
+    timeout: Duration,
+    source: &str,
+    environment: &[(OsString, OsString)],
+) -> Result<Value, Error> {
+    let (status, stdout, stderr) =
+        run_bounded_captured(executable, args, cwd, timeout, source, environment)?;
+    match serde_json::from_slice::<Value>(&stdout) {
+        Ok(document) if document.is_object() => Ok(document),
+        _ if !status.success() => Err(Error {
+            kind: "owner-refused-or-failed".into(),
+            message: refusal_words(&stdout, &stderr),
+            operation_may_have_run: false,
+        }),
+        Ok(_) | Err(_) => Err(Error {
+            kind: "incompatible".into(),
+            message: format!("{source} answered without a JSON document"),
+            operation_may_have_run: false,
+        }),
+    }
+}
+
+/// The owner process run to its end inside the bound: its exit, stdout and
+/// stderr (each at most 8 MiB).
+fn run_bounded_captured(
+    executable: &Path,
+    args: &[OsString],
+    cwd: Option<&Path>,
+    timeout: Duration,
+    source: &str,
+    environment: &[(OsString, OsString)],
+) -> Result<(std::process::ExitStatus, Vec<u8>, Vec<u8>), Error> {
     let fail = |kind: &str, message: String| Error {
         kind: kind.into(),
         message,
@@ -440,13 +491,7 @@ pub(crate) fn run_bounded_raw(
             format!("{source} answered more than 8 MiB"),
         ));
     }
-    if !status.success() {
-        return Err(fail(
-            "owner-refused-or-failed",
-            refusal_words(&stdout, &stderr),
-        ));
-    }
-    Ok(stdout)
+    Ok((status, stdout, stderr))
 }
 
 #[cfg(test)]

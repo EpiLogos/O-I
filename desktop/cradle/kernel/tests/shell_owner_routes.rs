@@ -6451,7 +6451,7 @@ fn gateway_service_starts_a_gateway_when_none_answers_and_stops_only_its_own() {
             "#!/bin/sh\n\
              printf '%s\\n' \"$*\" >> \"{d}/argv.txt\"\n\
              case \"$*\" in\n\
-             'gateway serve --unix') touch \"{d}/served\"; trap 'rm -f \"{d}/served\"; exit 0' TERM; while :; do sleep 1; done ;;\n\
+             'gateway serve --unix') printf '%s|%s\\n' \"$CENTRAL_ROOT\" \"$AIKIT_HOME\" > \"{d}/served-env\"; touch \"{d}/served\"; trap 'rm -f \"{d}/served\"; exit 0' TERM; while :; do sleep 1; done ;;\n\
              'gateway protocol --json') if [ -f \"{d}/served\" ]; then cat \"{d}/protocol.json\"; else echo 'no gateway answers' >&2; exit 2; fi ;;\n\
              esac\n"
         ),
@@ -6465,6 +6465,12 @@ fn gateway_service_starts_a_gateway_when_none_answers_and_stops_only_its_own() {
     )
     .unwrap();
     let _bin = Bound::set("OI_AIKIT_BIN", &bin);
+    // The started gateway reads the world this window reads, never a Central
+    // or AIKit home it would fall back to on its own (walk 22: it listed no Agents).
+    let world = dir.join("world");
+    let world_aikit = dir.join("world-aikit");
+    let _root = Bound::set("OI_CENTRAL_ROOT", &world);
+    let _aikit_home = Bound::set("AIKIT_HOME", &world_aikit);
     let service =
         |on: bool| op(json!({"op": "gateway_write", "request": {"kind": "service", "on": on}}));
     let asked = || fs::read_to_string(dir.join("argv.txt")).unwrap_or_default();
@@ -6485,6 +6491,13 @@ fn gateway_service_starts_a_gateway_when_none_answers_and_stops_only_its_own() {
     assert_eq!(data["protocol"]["schema"], "aikit.gateway-protocol/v1");
     assert!(asked().contains("gateway serve --unix\n"), "{}", asked());
     assert!(dir.join("served").exists());
+    assert_eq!(
+        fs::read_to_string(dir.join("served-env"))
+            .unwrap()
+            .trim_end(),
+        format!("{}|{}", world.display(), world_aikit.display()),
+        "the gateway is handed this window's Central root and AIKit home"
+    );
 
     // Already answering: nothing more starts.
     fs::write(dir.join("argv.txt"), "").unwrap();
@@ -6500,4 +6513,11 @@ fn gateway_service_starts_a_gateway_when_none_answers_and_stops_only_its_own() {
     );
     let (outcome, _) = dispatched(no_central(&dir), service(false));
     assert!(outcome.is_err(), "nothing of this window's is left to stop");
+
+    // The window closing stops the gateway it started, and only that.
+    let (outcome, _) = dispatched(no_central(&dir), service(true));
+    assert_eq!(reading(&outcome.unwrap()).1["started"], true);
+    assert!(oi_cradle_kernel::owner_routes::stop_served_gateway());
+    assert!(!dir.join("served").exists(), "closed with the window");
+    assert!(!oi_cradle_kernel::owner_routes::stop_served_gateway());
 }

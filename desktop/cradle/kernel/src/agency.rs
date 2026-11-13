@@ -191,7 +191,10 @@ impl Client {
         if let Some(root) = std::env::var_os("OI_CENTRAL_ROOT") {
             environment.push(("CENTRAL_ROOT".into(), root));
         }
-        let answer = match crate::inhabitation::run_bounded_with_env(
+        // The gateway client's document is its answer whatever its exit (a
+        // refusal exits 1 with its `ok:false` envelope); only no document is
+        // the gateway unreachable.
+        let answer = match crate::inhabitation::run_bounded_document_with_env(
             &self.executable,
             &args,
             cwd,
@@ -3055,6 +3058,39 @@ mod tests {
             .mint_agency(std::path::Path::new("/tmp"), "agent-session/x")
             .is_err());
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// Walk 21: a gateway that refuses (an unknown binding) answers its envelope on stdout and
+    /// exits 1. That is the gateway's answer, carried with its code, never "unreachable"; a
+    /// process that answers no document at all still is. Channels: SCRIPTED — a faked AIKit.
+    #[test]
+    fn a_gateway_refusal_on_a_failed_exit_is_its_answer_and_no_document_is_unreachable() {
+        let dir =
+            std::env::temp_dir().join(format!("oi-gateway-refusal-test-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let stub = dir.join("aikit");
+        write_executable_stub(
+            &stub,
+            r#"#!/bin/sh
+case " $* " in
+  *" --binding cursor "*) echo '{"ok":false,"schema":1,"error":{"code":"agency_gateway_client.gateway_refused","message":"gateway refused the command: gateway binding cursor does not exist"}}'; exit 1 ;;
+  *) echo "no gateway answers" >&2; exit 2 ;;
+esac"#,
+        );
+        let client = Client::with(stub, None);
+        let refused = client.gateway_agent(None, "cursor", "sessions").unwrap();
+        assert_eq!(refused["refused"], true);
+        assert_eq!(
+            refused["error"]["code"],
+            "agency_gateway_client.gateway_refused"
+        );
+        assert_eq!(
+            refused["message"],
+            "gateway refused the command: gateway binding cursor does not exist"
+        );
+        let down = client.gateway_agent(None, "telegram", "sessions").unwrap();
+        assert_eq!(down["error"]["code"], "owner_unreachable");
     }
 
     /// O-I 768: a Factory task session (the desktop's `encounter_provision`) asks for the task Action with `--for-task`, which

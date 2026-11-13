@@ -95,7 +95,7 @@ const WORLDS = {state: 'read', worlds: [
 test('a world refused today says why in the Day owner\'s words and names the press that opens today: Close now, then Open today', () => {
   const words = daySet.bringInRefusal('O-I', STALE, null)
   assert.match(words, /^O-I cannot come into today/)
-  assert.ok(words.includes(STALE_WORDS), 'Central\'s own words, verbatim')
+  assert.ok(!words.includes(STALE_WORDS), 'past the boundary is no refusal: the two Days and the press, never Central\'s raw words (walk 13 Nov)')
   assert.match(words, /Mon 19 Oct/, 'the Day Central names')
   assert.match(words, /Wed 28 Oct/, 'civil today')
   assert.match(words, /today's set is kept in today's Day/, 'why the Day matters to the set')

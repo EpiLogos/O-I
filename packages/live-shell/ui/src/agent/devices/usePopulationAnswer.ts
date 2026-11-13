@@ -9,6 +9,7 @@ import {readPopulation} from '../../../../../../desktop/cradle/src/contributions
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {useOwnerReading} from '../../owners/ownerReading'
 import {useSpineEpoch} from '../../owners/spine'
+import {gatewayEpochKey, useGatewayGeneration} from '../../owners/gatewayGeneration'
 import type {WorkcellAnswer} from './workcellBindings'
 
 export const POPULATION_OP = 'inhabitation_read'
@@ -16,7 +17,7 @@ export const POPULATION_OP = 'inhabitation_read'
 /** A register's population as the Link reads it: the owner's document, or its refusal in its own words with the command named. `project`
  * is a register (agent/worldScope.ts): your world's root register ('' or null) reads the whole population, named by no project world. */
 export function usePopulationAnswer(transport: KernelTransportStatus, project: string | null): WorkcellAnswer {
-  const epoch = useSpineEpoch()
+  const epoch = gatewayEpochKey(useSpineEpoch(), useGatewayGeneration())
   const carried = transport.kind !== 'unavailable'
   const world = project || undefined
   const {reading} = useOwnerReading(carried ? JSON.stringify([POPULATION_OP, transport, 'population', world ?? null]) : null, async () => {

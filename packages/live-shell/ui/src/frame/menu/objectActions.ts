@@ -374,6 +374,10 @@ export function objectKeyAct(event: {readonly key: string; readonly code?: strin
   if (event.metaKey && !event.shiftKey) {
     if (key === 'r') return 'rename'
     if (key === 'd') return 'duplicate'
+    // Cut, Copy and Paste hold and place a clip (manual §10.9: "The same keys act on whatever is selected"); C alone stays the macro key.
+    if (key === 'x') return 'cut'
+    if (key === 'c') return 'copy'
+    if (key === 'v') return 'paste'
     if (key === 'g') return 'group'
     if (key === 'i') return 'insert'
     if (key === 'e') return 'split'

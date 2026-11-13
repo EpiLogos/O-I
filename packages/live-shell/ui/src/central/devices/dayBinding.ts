@@ -48,7 +48,7 @@ import {CONTROL, DAY_ENTRY_CANDIDATE, INVISIBLE, proseFault, proseText, shownPro
 
 /** The value keys the Day design reads that an owner reports or takes (day.tsx `defaults`), and the three this binding adds for the
  * catalogue to draw (`refusal`, `canOpenToday`, `canClose`) and the two it takes (`openToday`, `closeNow`). */
-export const DAY_KEYS = ['light', 'date', 'face', 'dayStart', 'rollover', 'c0', 'c1', 'c2done', 'refusal', 'canOpenToday', 'canClose', 'tomorrow', 'tomorrowOpen', 'fieldDay', 'fieldWhy',
+export const DAY_KEYS = ['light', 'date', 'face', 'dayStart', 'rollover', 'c0', 'c1', 'c2done', 'refusal', 'notice', 'canOpenToday', 'canClose', 'tomorrow', 'tomorrowOpen', 'fieldDay', 'fieldWhy',
   'fieldKept', 'fieldRefusal', 'fieldSkipped'] as const
 
 /** The held field beside the Day (SF06, SF08; DLW build ruling 2026-11-06): the field as the Day reads it (system/fieldModel.ts
@@ -624,6 +624,7 @@ export function dayFactsOf({ground, groundError, selected}: DayFactsInput): DayF
 
 function refusalOf(standing: DayDocumentStanding | null, pointer: string | null, today: string | null): string | null {
   if (!standing || standing.state === 'ready') return null
+  if (standing.state === 'unopened') return standing.message
   // The stale pointer: the owner's words, and the two dates it compares (central.rs Request::Inspect).
   if (pointer && today && pointer !== today) return `${standing.message} (Central's Day: ${civilDayName(pointer) ?? pointer}; civil today: ${civilDayName(today) ?? today})`
   return standing.message
@@ -643,7 +644,8 @@ export function dayValuesOf(facts: DayFacts, document: {readonly face: number; r
     values.dayStart = facts.boundary
     if (facts.automaticRollover !== null) values.rollover = facts.automaticRollover ? facts.boundary : -15
   }
-  if (facts.refusal) values.refusal = facts.refusal
+  // Today not opened yet (a fresh ground, or past the boundary) is no refusal: it stands in the well as a notice, beside Open today.
+  if (facts.refusal) { if (facts.standing?.state === 'unopened') values.notice = facts.refusal; else values.refusal = facts.refusal }
   // Tomorrow's Day stands beside today's once Central opened it (central.day.rollover, or the close's carry).
   const tomorrow = civilDayName(facts.tomorrow ?? null)
   if (tomorrow) { values.tomorrow = tomorrow; values.tomorrowOpen = true }

@@ -555,7 +555,7 @@ function useDayValues(transport: KernelTransportStatus, selection: CentralClipSe
   if (selection?.kind !== 'day') return null
   const values: Record<string, Value> = {kind: 'day', name: `Day · ${selection.civilDate ?? selection.subjectRef}`}
   if (ready) values.revision = ready.revision
-  if (standing && standing.state !== 'ready') values.page = JSON.stringify(pageOfText(standing.state === 'uninitialised'
+  if (standing && standing.state !== 'ready') values.page = JSON.stringify(pageOfText(standing.state === 'unopened' ? standing.message : standing.state === 'uninitialised'
     ? `The owner says: “${standing.message}” — ${standing.owner} · ${standing.op}` : `The owner refused the Day document: “${standing.message}”`))
   if (payload && payload.phase !== 'reading') Object.assign(values, payload.values)
   return values

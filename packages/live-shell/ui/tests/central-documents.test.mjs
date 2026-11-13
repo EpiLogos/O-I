@@ -13,6 +13,7 @@ import assert from 'node:assert/strict'
 import {readFile} from 'node:fs/promises'
 import {register} from 'node:module'
 import {createElement} from 'react'
+import {readFileSync} from 'node:fs'
 import {renderToStaticMarkup} from 'react-dom/server'
 
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
@@ -238,8 +239,10 @@ test('the Day pane draws the Day die\'s own hosted form when the owner has stood
   assert.match(waiting, /data-central-absence="reading"/)
   const none = html(createElement(pane.DayView, {transport, standing: uninitialised}))
   assert.match(none, /data-central-absence="uninitialised"/)
-  assert.match(none, /The owner says: “Current Day has no native document yet\.”/, 'the owner\'s words, verbatim')
-  assert.match(none, /data-owner-op="central · initialise-day"/, 'with the owner op that would admit the Day')
+  assert.match(none, /Today&#x27;s page is not made yet\. Open today makes it\./, 'in plain words, with the way on')
+  assert.match(none, /data-central-day-open="today"/, 'Open today makes the page (centralDeviceWrites.ts openToday: initialise-day)')
+  assert.doesNotMatch(none.replace(/ data-[a-z-]+="[^"]*"/g, ''), /The owner says|op: |native document/, 'never Central\'s raw sentence or the op as text')
+  assert.match(none, /data-owner-op="central · initialise-day"/, 'the op stays on the element, for a reader')
   assert.doesNotMatch(none, /ql-daily-die/, 'no die is drawn for a Day that has no document')
   const no = html(createElement(pane.DayView, {transport, standing: refused}))
   assert.match(no, /data-central-absence="refused"/)
@@ -251,12 +254,22 @@ test('the Flow pane draws the Flow\'s own hosted form, or says what the owner sa
   assert.match(found, /data-document-device="ql-flow"/, 'the Flow face, ported')
   assert.match(html(createElement(pane.LatestFlowView, {transport, reading: null})), /data-central-absence="reading"/)
   const none = html(createElement(pane.LatestFlowView, {transport, reading: {state: 'none'}}))
-  assert.match(none, /Control\/user\/flows holds no Flow document/)
-  assert.match(none, /files_list/, 'the owner op the listing came from')
+  // Empty start (map #706): plain words for a world with no Flow yet, no folder path or owner op printed on the page.
+  assert.match(none, /No Flow yet\. A Flow begins when you write its first entry\./)
+  assert.doesNotMatch(none, /files_list|Control\/user\/flows|owner:/, 'no path or op residue on the page')
+  const startable = html(createElement(pane.LatestFlowView, {transport, reading: {state: 'none'}, onStarted: () => {}}))
+  assert.match(startable, /data-central-flow-start=""[^>]*>Start a Flow</, 'where the pane can show what it starts, Start a Flow stands')
+  // It writes the Flow from the Flow form itself (the browser's New › Flow), never a fresh choice: that fills only a blank pane, and
+  // a document pane is none, so the press did nothing on the 12 Nov walk.
+  const source = readFileSync(new URL('../src/central/documents/CentralDocumentPane.tsx', import.meta.url), 'utf8')
+  assert.match(source, /entry\.kind === 'document-01'[\s\S]*createFormInPlace\(transport, form/)
+  assert.doesNotMatch(source, /oi:fresh-choice/)
+  assert.match(source, /if \(started\) return <FlowDocument transport=\{transport\} location=\{started\} \/>/, 'the pane shows the Flow it started')
   assert.doesNotMatch(none, /ql-flow/, 'no Flow is drawn where there is none')
   const refused = html(createElement(pane.LatestFlowView, {transport, reading: {state: 'refused', message: 'Central denies this listing.'}}))
   assert.match(refused, /Central denies this listing\./)
   assert.match(refused, /role="alert"/)
+  assert.doesNotMatch(refused, /files_list|owner:/)
 })
 
 test('a pane whose subject is no Day or Flow says so, and draws nothing in its place', () => {
