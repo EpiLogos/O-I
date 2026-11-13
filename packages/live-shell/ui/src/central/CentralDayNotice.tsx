@@ -9,14 +9,11 @@ import {Refusal} from '../../../../../desktop/cradle/src/shared/Refusal'
  * fault: it says so and offers Open today, Central's ensure-day (centralDeviceWrites.ts openToday). */
 export function CentralDayNotice({notice, transport = null}: {notice: NonNullable<CentralRackApertures['dayNotice']>; transport?: KernelTransportStatus | null}) {
   if (notice.state === 'unopened') return <UnopenedDay message={notice.message} transport={transport} />
+  // The Day stands without its page (ensure-day ran, initialise-day has not): the same press makes it (openToday skips the ensure and
+  // initialises), so this is no dead end. Central's own sentence and op stay on the element for a reader, never as text.
   if (notice.state === 'uninitialised') {
-    return (
-      <div className="inhabitant-device-notice" role="status" data-central-day-notice="uninitialised" data-owner={notice.owner} data-owner-op={notice.op}>
-        <p>Day {notice.civilDate} has no Day document yet. The owner says: “{notice.message}”</p>
-        <p>Owner: {notice.owner} · op: <span className="mono">{notice.op}</span></p>
-        <p>{notice.remedy}</p>
-      </div>
-    )
+    return <UnopenedDay message="Today's page is not made yet. Open today makes it." transport={transport}
+      attrs={{'data-central-day-notice': 'uninitialised', 'data-owner': notice.owner, 'data-owner-op': notice.op, 'data-owner-said': notice.message}} />
   }
   return (
     <div className="inhabitant-device-fault" role="alert" data-central-day-notice="refused">
@@ -25,7 +22,7 @@ export function CentralDayNotice({notice, transport = null}: {notice: NonNullabl
   )
 }
 
-function UnopenedDay({message, transport}: {message: string; transport: KernelTransportStatus | null}) {
+function UnopenedDay({message, transport, attrs = {'data-central-day-notice': 'unopened'}}: {message: string; transport: KernelTransportStatus | null; attrs?: Readonly<Record<string, string>>}) {
   const [pending, setPending] = useState(false)
   const [fault, setFault] = useState<unknown>(null)
   const press = () => {
@@ -36,7 +33,7 @@ function UnopenedDay({message, transport}: {message: string; transport: KernelTr
     import('./devices/centralDeviceWrites').then(writes => writes.openToday(transport)).catch(cause => setFault(cause ?? 'Central gave no reason.')).finally(() => setPending(false))
   }
   return (
-    <div className="inhabitant-device-notice" role="status" data-central-day-notice="unopened">
+    <div className="inhabitant-device-notice" role="status" {...attrs}>
       <p>{message}</p>
       {transport && <button type="button" disabled={pending} onClick={press} data-central-day-open="today">{pending ? 'Opening today…' : 'Open today'}</button>}
       {fault != null && <Refusal className="inhabitant-device-fault" said="Today did not open." error={fault} />}

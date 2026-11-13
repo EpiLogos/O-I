@@ -129,8 +129,9 @@ test('a selected Day occasion with a ready Day: the Day die stands lit on its Da
 test('a selected Day occasion with an uninitialised Day: the owner state is named above the chain, and the die is lit off, never on', () => {
   const markup = html(createElement(BaseDevicesDetail, {transport, world: worldWith([nowEvent], nowEvent), standing: uninitialisedStanding}))
   assert.match(markup, /data-central-day-notice="uninitialised"/)
-  assert.match(markup, /has no Day document yet/)
-  assert.match(markup, /central · initialise-day/, 'the owner op that would admit the Day is named')
+  assert.match(markup, /page is not made yet\. Open today makes it\./)
+  assert.match(markup, /data-central-day-open="today"/, 'with the press that makes it')
+  assert.match(markup, /data-owner-op="central · initialise-day"/, 'the owner op that would admit the Day stays on the element')
   assert.match(deviceMarkup(markup, 'day-die'), /data-device-light="off"/, 'the owner says the Day is not ready: off, not dark and not on')
 })
 
