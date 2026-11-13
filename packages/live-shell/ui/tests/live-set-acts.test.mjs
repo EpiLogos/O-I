@@ -204,7 +204,7 @@ test('a dimmed act says why on the status bar: its entry takes the pointer, carr
 test('a slot whose stop button the set has removed is drawn blank, and still opens its menu', async () => {
   const React = await import('react')
   const {renderToStaticMarkup} = await import('react-dom/server')
-  const {SessionGridView} = await import('../src/frame/tracks/SessionGrid.tsx')
+  const {SessionGridView} = await import('../src/inhabitants/catalogue/panels/dlw__session-grid.tsx')
   const {set} = liveSet()
   const html = renderToStaticMarkup(React.createElement(SessionGridView, {set, selection: {select: () => {}}, folded: {}, onFold: () => {},
     receipt: null, onPress: () => {}, onDismiss: () => {}}))

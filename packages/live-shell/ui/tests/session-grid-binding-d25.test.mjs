@@ -1,5 +1,5 @@
 // Parity D-25: the Session grid stands as its catalogue design (dlw__session-grid.tsx) on a binding over the tracks the Session ·
-// Arrangement pane reads (frame/tracks/sessionGridBinding.ts), published by the pane (ModeTracksView.tsx) with the shell's own grid as its Full.
+// Arrangement pane reads (frame/tracks/sessionGridBinding.ts), drawn by the pane (ModeTracksView.tsx) as the Session itself: its Full is the grid.
 // - FIXTURE, owner-shaped: a Factory-shaped WorldTrackSet (a crew under a group, a stalled member, a running clip with its progress and takes,
 //   the mixer's arm and solo) and the pane's selection.
 // - SCRIPTED: the design drawn through the runtime's host (deviceHost.HostedDevice) on the binding, and the design's own draw on the same
@@ -130,12 +130,31 @@ test('D-25: drawn through the host on the binding, every view is the design\'s o
   host.resetHost()
 })
 
-test('D-25: the pane publishes the design as the Session grid, with the shell\'s own grid as its Full (launch, stop, record and the mixer stay)', () => {
+// REPLACED (Lead, 13 Nov: "the catalogue design IS the view and the wiring goes into it"): the pane published the design with the shell's
+// own <SessionGrid> as its Full and drew that grid beside it, two drawings of one thing. The grid now IS the design's Full: the pane draws the
+// design through the host, on the binding, with the live set handed in on TracksMaterial (frame/tracks/tracksDoor.ts).
+test('D-25: the pane draws the design itself — its Full is the Session grid on the live set, launch, stop, record and the mixer standing', async () => {
   const pane = source('frame/tracks/ModeTracksView.tsx')
-  assert.match(pane, /publishDevice\(SESSION_GRID_ID, \{device: sessionGridDevice, binding: gridBinding, full: \{draw: \(\) => <SessionGrid set=\{shown\} selection=\{selection\} empty=\{waiting\} \/>\}\}\)/)
+  assert.match(pane, /publishDevice\(SESSION_GRID_ID, \{device: sessionGridDevice, binding: gridBinding, full: \{draw: \(\) => <SessionPane binding=\{gridBinding\} material=\{\{set: shown, selection, empty: waiting\}\} \/>\}\}\)/)
   assert.match(pane, /publishDevice\(SESSION_GRID_ID, null\)/, 'withdrawn when the pane goes')
-  assert.match(pane, /<SessionGrid set=\{shown\} selection=\{selection\} empty=\{waiting\} \/>\}/, 'the pane still draws the shell\'s grid')
+  assert.match(pane, /<HostedDevice designed=\{sessionGridDesign\} binding=\{binding\} view="full"/, 'the pane draws the design\'s Full through the host')
+  assert.doesNotMatch(pane, /<SessionGrid\b/, 'and no second, hand-made grid')
+  const shell = source('frame/tracks/SessionGrid.tsx')
+  assert.doesNotMatch(shell, /export function (SessionGridView|SessionGrid)\b/, 'the shell keeps the shared law and parts, not a drawing')
+  const {TracksMaterial} = await import('../src/frame/tracks/tracksDoor.ts')
+  const moved = await import('../src/inhabitants/catalogue/panels/dlw__session-grid.tsx')
+  holds.resetHolds()
+  const b = grid.sessionGridBinding(SET, selection, 'factory')
+  const drawn = renderToStaticMarkup(createElement(TracksMaterial.Provider, {value: {set: SET, selection}},
+    createElement(host.HostedDevice, {designed: design, binding: b, view: 'full', nav: {}, title: 'Session grid'})))
+  const folded = {crew: false}
+  const own = renderToStaticMarkup(createElement(moved.SessionGrid, {set: SET, selection, folded, onFold() {}}))
+  assert.ok(drawn.includes(own), 'the device\'s Full is the grid itself, drawn once')
+  for (const [mark, why] of [[/data-track-head="main"/, 'the Main column'], [/aria-label="Stops"/, 'the stops'], [/class="cs roll"|data-status="stalled"/, 'the stalled member'],
+    [/plan the east port/, 'the live set\'s clips, not the mockup']]) assert.match(drawn, mark, why)
+  assert.doesNotMatch(drawn, /Port bridge-2|Fizz · lead/, 'none of the mockup\'s rows')
+  host.resetHost()
   const panel = source('inhabitants/catalogue/panels/dlw__session-grid.tsx')
   const views = panel.slice(panel.indexOf('function Grid'), panel.indexOf('  defaults: {')) + panel.slice(panel.indexOf('  fixtures: {'))
-  assert.doesNotMatch(views, /\bMOCK_(TRACKS|CLIPS|ROWS)\b|'fixture:2'/, 'the views draw from their keys; the mockup is the defaults alone')
+  assert.doesNotMatch(views.split("the grid's law, moved from")[0], /\bMOCK_(TRACKS|CLIPS|ROWS)\b|'fixture:2'/, 'the views draw from their keys; the mockup is the defaults alone')
 })

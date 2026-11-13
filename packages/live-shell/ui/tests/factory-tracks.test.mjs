@@ -34,7 +34,7 @@ const {readFile} = await import('node:fs/promises')
 const model = await import('../src/agent/agentRunModel.ts')
 const {factoryTrackAdapter, factoryTaskRef, parseFactoryTaskRef, FACTORY_TRACK_PALETTE, FACTORY_MIN_BATCH_ROWS, FACTORY_STOP_OP, FACTORY_LAUNCH_OP, FACTORY_BATCH_OP, FACTORY_RETRY_OP, FACTORY_SEAT_OP, FACTORY_GRAIN}
   = await import('../src/timeline/factoryTrackAdapter.ts')
-const {SessionGrid} = await import('../src/frame/tracks/SessionGrid.tsx')
+const {SessionGrid} = await import('../src/inhabitants/catalogue/panels/dlw__session-grid.tsx')
 const {ArrangementRuler, placeClips} = await import('../src/frame/tracks/ArrangementRuler.tsx')
 const {useFactoryTracks} = await import('../src/frame/tracks/useFactoryTracks.ts')
 

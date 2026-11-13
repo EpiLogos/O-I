@@ -2,7 +2,7 @@
 // Arrangement, Tab between them. It reads the reading the frame publishes (projections/timelinePaneHost.ts), takes the
 // mode's tracks from its registration (modeTracks.ts) and draws one of the two shared views. It knows no mode.
 import {useTimelinePanePresentation, useTimelineReading, type TimelineHostReading} from '../../projections/timelinePaneHost'
-import {SessionGrid, type TracksSelection} from './SessionGrid'
+import type {TracksSelection} from './SessionGrid'
 import type {WorldTrackSet} from '../../timeline/worldTrackAdapter'
 import {loadWhenDrawn} from '../../shell/loadWhenDrawn'
 
@@ -15,6 +15,10 @@ type ViewProps = {reading: TimelineHostReading; pinnedRef?: string}
 const ArrangementWaiting = loadWhenDrawn<{set: WorldTrackSet; selection: TracksSelection; empty?: string}>(
   'The arrangement', () => import('./ArrangementRuler').then(module => module.ArrangementRuler))
 
+// The Session grid's design (catalogue dlw__session-grid.tsx, which draws the Session: parity D-25) loads when it first draws, as the ruler does.
+const SessionWaiting = loadWhenDrawn<{set: WorldTrackSet; selection: TracksSelection; empty?: string}>(
+  'The session', () => import('../../inhabitants/catalogue/panels/dlw__session-grid').then(module => module.SessionGrid))
+
 /** The tracks' place before the mode's tracks arrive: the empty Session or Arrangement with what it waits for in it, as a mode whose
  * owner has not answered draws it. */
 function TracksWaiting({reading, pinnedRef}: ViewProps) {
@@ -22,7 +26,7 @@ function TracksWaiting({reading, pinnedRef}: ViewProps) {
   const selection = {ref: pinnedRef ?? reading.selectedRef, select: reading.selectTrackItem}
   const waiting = 'The tracks are loading…'
   return <div className="tracks-pane" style={{position: 'absolute', inset: 0}} data-tracks-mode={reading.mode} data-waiting>
-    {presented === 'arrangement' ? <ArrangementWaiting set={NO_TRACKS} selection={selection} empty={waiting} /> : <SessionGrid set={NO_TRACKS} selection={selection} empty={waiting} />}
+    {presented === 'arrangement' ? <ArrangementWaiting set={NO_TRACKS} selection={selection} empty={waiting} /> : <SessionWaiting set={NO_TRACKS} selection={selection} empty={waiting} />}
   </div>
 }
 

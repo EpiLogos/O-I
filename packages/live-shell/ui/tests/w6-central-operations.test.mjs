@@ -337,7 +337,7 @@ test('Central\'s Approvals carries Changes over the Approvals binding: disabled 
 const noopFn = () => {}
 
 test('a clip\'s second line says what follows it and its takes, as the owner words them, in the grid\'s 52px cell; with nothing to say there is none', async () => {
-  const grid = await import('../src/frame/tracks/SessionGrid.tsx')
+  const grid = {...await import('../src/frame/tracks/SessionGrid.tsx'), ...await import('../src/inhabitants/catalogue/panels/dlw__session-grid.tsx')}
   const set = {columns: [{id: 'r1', name: '1'}, {id: 'r2', name: '2'}], tracks: [{id: 't', name: 'Lead', kind: 'session'}],
     clips: [{id: 'a', trackId: 't', columnId: 'r1', label: 'map field', status: 'running', launch: {quantize: 'next turn', follow: 'next'}, takes: [{id: 'k1', name: '1'}, {id: 'k2', name: '2', standing: true}]},
       {id: 'b', trackId: 't', columnId: 'r2', label: 'plain', status: 'stopped'}]}

@@ -43,7 +43,7 @@ const {factoryTrackAdapter, factoryTaskLaunch} = await import('../src/timeline/f
 const model = await import('../src/agent/agentRunModel.ts')
 const {liveSetTrackAdapter, LIVE_ACT_OP} = await import('../src/timeline/liveSetTrackAdapter.ts')
 const {mixerCells} = await import('../src/frame/tracks/trackLanes.ts')
-const {SessionGridView, emptySlotChoice} = await import('../src/frame/tracks/SessionGrid.tsx')
+const {SessionGridView, emptySlotChoice} = await import('../src/inhabitants/catalogue/panels/dlw__session-grid.tsx')
 const {setSelectionOf} = await import('../src/shell/liveSelection.ts')
 const {ArrangementRulerView} = await import('../src/frame/tracks/ArrangementRuler.tsx')
 

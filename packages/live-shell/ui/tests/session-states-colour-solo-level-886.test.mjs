@@ -47,7 +47,7 @@ globalThis.document ??= {getElementById: () => null, createElement: () => ({}), 
 const React = await import('react')
 const {renderToStaticMarkup} = await import('react-dom/server')
 const src = path => new URL(`../src/${path}`, import.meta.url)
-const grid = await import(src('frame/tracks/SessionGrid.tsx').href)
+const grid = {...await import(src('frame/tracks/SessionGrid.tsx').href), ...await import(src('inhabitants/catalogue/panels/dlw__session-grid.tsx').href)}
 const sound = await import(src('native/frameSound.ts').href)
 const {projectExpressionsWork} = await import(src('timeline/expressionsTrackAdapter.ts').href)
 const {expressionsControls, nativeTracks} = await import(src('frame/tracks/modeTracks.ts').href)
@@ -148,7 +148,7 @@ test('r886 item 3: a held launch\'s line says that it landed, or clears — neve
   assert.equal(grid.heldLaunchReceipt(held, setWith('stopped')), held, 'not yet seen waiting: the reading has not caught up')
   const plain = {key: 'clip:noon', what: 'Launch Noon', ok: true, text: 'The scene plays.'}
   assert.equal(grid.heldLaunchReceipt(plain, setWith('stopped')), plain, 'a line that waits for nothing stands')
-  const source = readFileSync(src('frame/tracks/SessionGrid.tsx'), 'utf8')
+  const source = readFileSync(src('inhabitants/catalogue/panels/dlw__session-grid.tsx'), 'utf8')
   assert.match(source, /useEffect\(\(\) => \{ setReceipt\(current => heldLaunchReceipt\(current, set\)\) \}, \[set\]\)/, 'the grid follows the set')
   const ruler = readFileSync(src('frame/tracks/ArrangementRuler.tsx'), 'utf8')
   assert.match(ruler, /heldLaunchReceipt\(current, set\)/, 'and so does the ruler')

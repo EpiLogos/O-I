@@ -39,7 +39,7 @@ const [model, {kernelDocumentToJourney}, {projectNativeScenes}, {nativeTracks}, 
   import(new URL('scenes.ts', boundary)),
   import('../src/frame/tracks/modeTracks.ts'),
   import('../src/frame/tracks/ArrangementRuler.tsx'),
-  import('../src/frame/tracks/SessionGrid.tsx'),
+  import('../src/inhabitants/catalogue/panels/dlw__session-grid.tsx'),
 ])
 const E = 'expression:made'
 const S = n => `${E}:scene:s${n}`

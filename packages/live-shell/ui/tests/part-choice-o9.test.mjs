@@ -33,7 +33,7 @@ const React = await import('react')
 const {renderToStaticMarkup} = await import('react-dom/server')
 const acts = await import('../src/frame/menu/objectActions.ts')
 const parts = await import('../src/frame/tracks/partChoice.ts')
-const sessionModule = await import('../src/frame/tracks/SessionGrid.tsx')
+const sessionModule = {...await import('../src/frame/tracks/SessionGrid.tsx'), ...await import('../src/inhabitants/catalogue/panels/dlw__session-grid.tsx')}
 const rulerModule = await import('../src/frame/tracks/ArrangementRuler.tsx')
 const {SessionGrid} = sessionModule
 const {ArrangementRuler} = rulerModule
@@ -100,7 +100,7 @@ test('SSR — every part chosen draws as chosen on its head in Session and Arran
 })
 
 test('CODE-READING — the hosts read the part choice with THE selection and their set, and the menu reads what is chosen', async () => {
-  const grid = await readFile(new URL('../src/frame/tracks/SessionGrid.tsx', import.meta.url), 'utf8')
+  const grid = await readFile(new URL('../src/inhabitants/catalogue/panels/dlw__session-grid.tsx', import.meta.url), 'utf8')
   const ruler = await readFile(new URL('../src/frame/tracks/ArrangementRuler.tsx', import.meta.url), 'utf8')
   const menu = await readFile(new URL('../src/frame/menu/TracksMenu.tsx', import.meta.url), 'utf8')
   // The views stay hook-free (tests call them as functions): the part choice is read by their hosts and handed in. (How a head's click

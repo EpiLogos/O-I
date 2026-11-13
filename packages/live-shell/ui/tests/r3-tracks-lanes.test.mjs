@@ -48,7 +48,8 @@ const {techneTakeLanes, TECHNE_MIXER} = await import('../src/timeline/techneTrac
 const {liveSetTrackAdapter, LIVE_MIXER} = await import('../src/timeline/liveSetTrackAdapter.ts')
 const {nativeTracks, sceneAutomationOf} = await import('../src/frame/tracks/modeTracks.ts')
 const {shellWriteArm} = await import('../src/frame/tracks/useFactoryTracks.ts')
-const {SessionGrid, SessionGridView, answerOf} = await import('../src/frame/tracks/SessionGrid.tsx')
+const {answerOf} = await import('../src/frame/tracks/SessionGrid.tsx')
+const {SessionGrid, SessionGridView} = await import('../src/inhabitants/catalogue/panels/dlw__session-grid.tsx')
 const {ArrangementRuler, ArrangementRulerView} = await import('../src/frame/tracks/ArrangementRuler.tsx')
 const lanes = await import('../src/frame/tracks/trackLanes.ts')
 

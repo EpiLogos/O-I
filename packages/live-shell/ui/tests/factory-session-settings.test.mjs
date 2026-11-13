@@ -298,7 +298,7 @@ test('a track\'s Stop is that session\'s own: its running turn cancelled on its 
   assert.deepEqual(stopped, ['ses-214']); assert.deepEqual(harness, [], 'the harness is not stopped')
   assert.equal(set.actions.stopAll.op, FACTORY_STOP_ALL_OP, 'Stop All stays the harness\'s')
   assert.deepEqual(await set.actions.stopTrack.run('space:none:nobody'), {ok: false, error: '"space:none:nobody" is not a session of this work.'})
-  const source = await (await import('node:fs/promises')).readFile(new URL('../src/frame/tracks/SessionGrid.tsx', import.meta.url), 'utf8')
+  const source = await (await import('node:fs/promises')).readFile(new URL('../src/inhabitants/catalogue/panels/dlw__session-grid.tsx', import.meta.url), 'utf8')
   assert.match(source, /trackStop\.grain !== undefined \? \(trackStop\.grain \?/, 'the grid says a stop\'s own grain, or none')
 })
 
