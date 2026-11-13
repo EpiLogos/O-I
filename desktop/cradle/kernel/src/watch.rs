@@ -1087,7 +1087,12 @@ pub fn start_global(
     configured_root: Option<&Path>,
     announce: impl Fn(Vec<String>, u64) + Send + Sync + 'static,
 ) -> Result<(), String> {
-    let announce = Arc::new(announce);
+    // The World Model is kept by the same notices (world_model.rs): the slices whose scopes moved are read again on its thread,
+    // before the host is told. Without the model's thread running this does nothing.
+    let announce = Arc::new(move |scopes: Vec<String>, epoch: u64| {
+        crate::world_model::Model::global().scopes_moved(&scopes);
+        announce(scopes, epoch)
+    });
     let clock = Arc::clone(&announce);
     start_clock_notices(move |epoch| clock(vec!["clock".to_owned()], epoch));
     let Some(roots) = Roots::resolve(configured_root) else {

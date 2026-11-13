@@ -33,6 +33,7 @@ pub mod agent_definition;
 pub mod agent_prepared;
 pub mod application_asset;
 pub mod being;
+pub mod census;
 pub mod central;
 pub mod chat_defaults;
 pub mod commission;
@@ -137,6 +138,7 @@ pub mod temporal_sources;
 pub mod watch;
 pub mod working_surface;
 pub mod world;
+pub mod world_model;
 pub mod world_prepared;
 pub mod world_resolve;
 // --- expression_world (ES1 knowledge side + ES4 joint focus/deixis/portals),
@@ -1600,6 +1602,15 @@ pub enum KernelOp {
     ExpressionWorld {
         request: expression_world::Request,
     },
+    /// The World Model's one subscription (world_model.rs; docs/architecture/world-shell.md §9.2 layer 2; O-I #1001): one
+    /// slice of the owners' present state as the kernel holds it, read first when it has never been read or was written since.
+    /// A `model_changed` notice names each later move of its version; the subscriber asks again. `fresh` reads it from its
+    /// owner first, past every held reading: the read that precedes a write.
+    ModelSubscribe {
+        slice: world_model::Slice,
+        #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+        fresh: bool,
+    },
 }
 
 /// What an operation produced: its payload plus the receipts of the state
@@ -2211,6 +2222,11 @@ pub enum KernelOpResult {
     },
     // --- expression_world (ES1/ES4, lane aikit/es-one-state-relation).
     ExpressionWorld {
+        data: serde_json::Value,
+    },
+    /// One World Model slice (`oi.world-model-slice/v1`): its owner, scopes, version, state, value and the owner's words when
+    /// it could not be read.
+    ModelSlice {
         data: serde_json::Value,
     },
 }
@@ -3210,6 +3226,19 @@ impl Kernel {
     ) -> events::KernelEventReceipt {
         self.log
             .record(events::KernelEvent::ReadingsChanged { scopes, epoch })
+    }
+
+    /// A World Model slice's version moved (world_model.rs): record it and
+    /// hand back the receipt the host sends on its channel.
+    pub fn record_model_changed(
+        &mut self,
+        slice: world_model::Slice,
+        version: u64,
+    ) -> events::KernelEventReceipt {
+        self.log.record(events::KernelEvent::ModelChanged {
+            slice: slice.name().to_owned(),
+            version,
+        })
     }
 
     /// The held SharedField client took a transaction that changed what this
@@ -4423,6 +4452,10 @@ impl Kernel {
             KernelOp::SurfaceFocus { surface_id } => self.surface_focus(surface_id),
             // --- expression_world (ES1/ES4, lane aikit/es-one-state-relation).
             KernelOp::ExpressionWorld { request } => self.expression_world(request),
+            // The model reads its slices through dispatch, outside this lock (dispatch.rs `run`).
+            KernelOp::ModelSubscribe { .. } => Err(
+                "model_subscribe is answered by the kernel's dispatch, never under its lock".into(),
+            ),
         }
     }
 

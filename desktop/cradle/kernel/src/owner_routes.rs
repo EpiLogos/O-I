@@ -144,6 +144,12 @@ pub enum ActuationRead {
     /// Actuation's own store, revoked ones included
     /// (`actuation.local-authority-listing/v1`). Reads the store; writes none.
     AuthorityList,
+    /// `actuation harness detect --json` (`actuation.harness-detection/v1`):
+    /// the harnesses and model providers Actuation's catalogue finds on this
+    /// machine, each with its probes (the executable's path, its config
+    /// directory, a credential) and its state. The agents census (census.rs)
+    /// is built from it. Reads the machine; writes none.
+    HarnessDetect,
     /// `actuation stream list [--session S] --json` (EpiLogos/Actuation#142):
     /// the durable streams in Actuation's own store, or one Agent session's,
     /// with lifecycle and counts, never events
@@ -1729,6 +1735,7 @@ fn actuation_schema(request: &ActuationRead) -> (&'static str, &'static str) {
         ActuationRead::Usage { .. } => ("usage", "actuation.model-usage/v1"),
         ActuationRead::Comparison { .. } => ("comparison", ""),
         ActuationRead::AuthorityList => ("authority list", "actuation.local-authority-listing/v1"),
+        ActuationRead::HarnessDetect => ("harness detect", "actuation.harness-detection/v1"),
         ActuationRead::StreamList { .. } => ("stream list", "actuation.stream-listing/v1"),
         ActuationRead::StreamReplay { .. } => ("stream replay", "actuation.stream/v1"),
         ActuationRead::UsageList { .. } => ("usage list", "actuation.usage-listing/v1"),
@@ -1808,6 +1815,18 @@ fn actuation_answer(request: &ActuationRead) -> Result<Reading, Error> {
             data,
             &[("authorities", Kind::List), ("invalid", Kind::List)],
         )?;
+        return Ok(reading(route.into(), data, Vec::new()));
+    }
+    if let ActuationRead::HarnessDetect = request {
+        let route = "actuation harness detect";
+        let call = Call::new(
+            actuation(),
+            route,
+            words(&["harness", "detect", "--json"]),
+            READ_LIMIT,
+        );
+        let data = schema(route, run(call)?, wanted)?;
+        let data = fields(route, data, &[("harnesses", Kind::List)])?;
         return Ok(reading(route.into(), data, Vec::new()));
     }
     if let ActuationRead::StreamList { session } = request {
@@ -1899,6 +1918,7 @@ fn actuation_answer(request: &ActuationRead) -> Result<Reading, Error> {
         | ActuationRead::Usage { document } => document,
         ActuationRead::Comparison { .. }
         | ActuationRead::AuthorityList
+        | ActuationRead::HarnessDetect
         | ActuationRead::StreamList { .. }
         | ActuationRead::StreamReplay { .. }
         | ActuationRead::UsageList { .. }

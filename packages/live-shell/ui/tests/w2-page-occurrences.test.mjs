@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {register} from 'node:module'
+import {withWorldModel} from './support/worldModelFixture.mjs'
 
 // W2 (T-WORLDS §4 "Beings and Things in reading, walks and sky"): each page projects one occurrence into the Earth's field through
 // the one admission path, as the QL family places the Sun. Channels: PURE — page readings as the page owner gives them (kernel/src/
@@ -92,7 +93,7 @@ test('the Earth reads every world\'s Beings and Things through the page owner; a
     {location: loc('Control/user/flows/things-1.html'), name: 'things-1.html', form: 'thing', title: 'T', revision: 'r', world: 'central:wiki:root'}]}
   const asked = []
   const real = globalThis.fetch
-  globalThis.fetch = async (_url, init) => {
+  globalThis.fetch = withWorldModel(async (_url, init) => {
     const body = JSON.parse(init.body)
     if (body.op === 'world_browse') return answer({result: 'world_read', snapshot: {navigator: {root}}})
     if (body.op === 'page' && body.request.operation === 'list') {
@@ -105,7 +106,7 @@ test('the Earth reads every world\'s Beings and Things through the page owner; a
       return answer({result: 'page_reading', data: HILDEGARD})
     }
     return {json: async () => ({ok: false, error: `unexpected ${body.op}`})}
-  }
+  })
   try {
     const {readings, unread} = await pages.readWorldPagesForEarth({kind: 'bridge', url: 'http://central.fixture'})
     assert.deepEqual(asked, ['Control/user/flows/beings-1.html', 'Control/user/flows/things-1.html'], 'only Beings and Things are read; a Flow is no occurrence')
@@ -123,13 +124,13 @@ test('your pages come to the Earth after it stands: each page\'s occurrence with
     {location: HILDEGARD.location, name: 'beings-2026-10-18-0930.html', form: 'being', title: 'H', revision: 'r', world: 'central:wiki:root'},
     {location: loc('Control/user/flows/things-9.html'), name: 'things-9.html', form: 'thing', title: 'T', revision: 'r', world: 'central:wiki:root'}]}
   const real = globalThis.fetch
-  globalThis.fetch = async (_url, init) => {
+  globalThis.fetch = withWorldModel(async (_url, init) => {
     const body = JSON.parse(init.body)
     if (body.op === 'world_browse') return answer({result: 'world_read', snapshot: {navigator: {root}}})
     if (body.op === 'page' && body.request.operation === 'list') return answer({result: 'page_reading', data: listing})
     if (body.op === 'page' && body.request.operation === 'read' && body.request.location.path === HILDEGARD.location.path) return answer({result: 'page_reading', data: HILDEGARD})
     return {json: async () => ({ok: false, error: 'the page is gone'})}
-  }
+  })
   try {
     const said = []
     const pagesOnEarth = await pages.yourPagesForEarth({kind: 'bridge', url: 'http://central.fixture'}, 2026, text => said.push(text))

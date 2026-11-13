@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {register} from 'node:module'
+import {withWorldModel} from './support/worldModelFixture.mjs'
 
 // T-WORLDS W4 (manual §24), the face side: the practice world derived from Central's own disclosure; practice pages made in its folder
 // through Central's own creation door and written on the source owner's CAS; the dream journal as the atlas's dreams; Amplify's Source
@@ -122,10 +123,10 @@ function fakeCentral({projects = ['personal']} = {}) {
       default: throw new Error(`the fake Central has no ${op.op}`)
     }
   }
-  globalThis.fetch = async (_url, init) => {
+  globalThis.fetch = withWorldModel(async (_url, init) => {
     const op = JSON.parse(init.body)
     try { return {json: async () => ({ok: true, outcome: outcome(op)})} } catch (error) { return {json: async () => ({ok: false, error: error.message})} }
-  }
+  })
   return {transport: {kind: 'bridge', url: 'http://kernel'}, files, ops, loc, put, islandOf}
 }
 

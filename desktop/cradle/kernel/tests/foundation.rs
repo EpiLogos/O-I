@@ -21,11 +21,13 @@
 //! Owners come from `OI_AIKIT_BIN`, `OI_CENTRAL_CTRL_BIN`, `OI_FACTORY_BIN`, `OI_ACTUATION_BIN`, `OI_WORKCELL_BIN`, `OI_QL_BIN` and
 //! `OI_BIN`, defaulting to the installed suite. Every owner process an act started (its command line names the act's own home) is
 //! stopped by pid at the end, failure included.
-use oi_cradle_kernel::{dispatch, person_press, Kernel, KernelOp};
+use oi_cradle_kernel::{
+    dispatch, person_press, watch, world_model, Kernel, KernelOp, KernelOpOutcome,
+};
 use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 const SUITE_BIN: &str = "/Users/admin/Library/Application Support/OI/bin";
@@ -54,7 +56,7 @@ fn owner_bin(var: &str, name: &str) -> PathBuf {
 struct World {
     root: PathBuf,
     home: PathBuf,
-    kernel: Mutex<Kernel>,
+    kernel: Arc<Mutex<Kernel>>,
 }
 
 impl World {
@@ -118,11 +120,49 @@ impl World {
             String::from_utf8_lossy(&init.stderr)
         );
         println!("world {}", home.join("Central").display());
-        World {
-            root,
-            home,
-            kernel: Mutex::new(Kernel::discover()),
+        let kernel = Arc::new(Mutex::new(Kernel::discover()));
+        // The host's launch (src-tauri main.rs): the change watch over the World, and the World Model read once on its own
+        // thread and kept by the watch and the kernel's writes, each move recorded in the event log.
+        let watched = Arc::clone(&kernel);
+        if let Err(error) =
+            watch::start_global(Some(&home.join("Central")), move |scopes, epoch| {
+                if let Ok(mut kernel) = watched.lock() {
+                    kernel.record_readings_changed(scopes, epoch);
+                }
+            })
+        {
+            println!("change watch degraded: {error}");
         }
+        let asked = Arc::clone(&kernel);
+        let told = Arc::clone(&kernel);
+        let via: Arc<dyn Fn(KernelOp) -> Result<KernelOpOutcome, String> + Send + Sync> =
+            Arc::new(move |op| dispatch::dispatch(&asked, op).0);
+        let changed = Arc::new(move |slice, version| {
+            if let Ok(mut kernel) = told.lock() {
+                kernel.record_model_changed(slice, version);
+            }
+        });
+        world_model::Model::global()
+            .start(via, changed)
+            .expect("start the World Model");
+        World { root, home, kernel }
+    }
+
+    /// One slice of the World Model, as a device reads it (`model_subscribe`): the slice's own answer, refused when the model
+    /// holds no state of it.
+    fn model(&self, slice: &str) -> Result<Value, String> {
+        let answer = self.send(json!({"op": "model_subscribe", "slice": slice}))?;
+        let answer = result_of(&answer, "model_slice")
+            .map_err(|e| format!("model_subscribe {slice} {e}"))?;
+        let data = answer["data"].clone();
+        if data["state"] != "read" {
+            return Err(format!(
+                "the World Model's {slice} slice is {}: {}",
+                data["state"],
+                data["error"].as_str().unwrap_or("no state")
+            ));
+        }
+        Ok(data)
     }
 
     fn central(&self) -> PathBuf {
@@ -342,18 +382,60 @@ struct SavedPage {
     words: String,
 }
 
-/// The World the window opens: its root World, read as the window reads it
-/// (`world_read`, the shell's recovery read of the World). It must be the
-/// fresh, valid World this act made.
+/// The World the window opens, read from the World Model as a device reads it (`model_subscribe` worlds): Central's root
+/// disclosure must be the fresh, valid World this act made, and your world the first of its worlds.
 fn open_the_world(world: &World) -> Act {
-    let read = world.send(json!({"op": "world_read"}))?;
-    let read = result_of(&read, "world_read").map_err(|e| format!("world_read {e}"))?;
-    let root = &read["snapshot"]["navigator"]["root"];
+    let worlds = world.model("worlds")?;
+    let root = &worlds["value"]["root"];
     let central = world.central().to_string_lossy().into_owned();
     if root["root"].as_str() != Some(central.as_str()) || root["valid"] != true {
         return Err(format!(
             "the window does not open the fresh World at {central}: root {}",
             clip(root)
+        ));
+    }
+    let yours = &worlds["value"]["worlds"][0];
+    if yours["kind"] != "yours" || yours["folder"] != "Control/user/flows" {
+        return Err(format!(
+            "the World Model's first world is not yours: {}",
+            clip(yours)
+        ));
+    }
+    Ok(())
+}
+
+/// The page saved, listed among your world's pages in the World Model as soon as the save has answered: the model is read
+/// again after a write before anyone is answered from it.
+fn page_in_the_model(world: &World, page: &SavedPage) -> Act {
+    let worlds = world.model("worlds")?;
+    let name = page
+        .path
+        .file_name()
+        .and_then(|name| name.to_str())
+        .unwrap_or_default()
+        .to_owned();
+    let yours = worlds["value"]["pages"]
+        .as_array()
+        .and_then(|pages| {
+            pages
+                .iter()
+                .find(|entry| entry["folder"] == "Control/user/flows")
+        })
+        .ok_or_else(|| {
+            format!(
+                "the World Model holds no pages for your world: {}",
+                clip(&worlds["value"]["pages"])
+            )
+        })?;
+    let listed = yours["listing"]["pages"]
+        .as_array()
+        .cloned()
+        .unwrap_or_default();
+    if !listed.iter().any(|row| row.to_string().contains(&name)) {
+        return Err(format!(
+            "the World Model's worlds slice (version {}) does not list the page just saved ({name}): {}",
+            worlds["version"],
+            clip(yours)
         ));
     }
     Ok(())
@@ -376,8 +458,16 @@ fn save_a_page(world: &World, name: &str) -> Result<SavedPage, String> {
             .map(|v| v["data"].clone())
             .map_err(|e| format!("saving {path} {e}"))
     };
+    // A page as the window makes one (createInPlace.ts, the Flow form): a ql-doc island with its meta and its entries, tied to
+    // your world by its wiki space ref, which the World Model names.
+    let worlds = world.model("worlds")?;
+    let yours = worlds["value"]["worlds"][0]["ref"]
+        .as_str()
+        .unwrap_or("central:wiki:root")
+        .to_owned();
+    let island = json!({"meta": {"title": name, "revision": 0, "view": "dialogue", "world": yours}, "entries": [], "notes": []});
     let first = format!(
-        "<!doctype html><title>{name}</title><h1>{name}</h1><p>A page made by the foundation gate.</p>"
+        "<!doctype html><title>{name}</title><script type=\"application/json\" id=\"ql-doc\">{island}</script><h1>{name}</h1><p>A page made by the foundation gate.</p>"
     );
     let made = write("", &first)?;
     let revision = made["revision"]
@@ -444,6 +534,7 @@ fn act_1_open_a_world_and_save_a_page() {
         open_the_world(world)?;
         let page = save_a_page(world, "foundation-page")?;
         page_holds(world, &page)?;
+        page_in_the_model(world, &page)?;
         println!("page {} saved at {}", page.path.display(), page.revision);
         Ok(())
     });
@@ -495,27 +586,26 @@ fn agents_that_start(world: &World) -> Result<Vec<(String, String)>, String> {
     Ok(starting)
 }
 
-/// The agents the window offers a person to talk to (the chat's agent list:
-/// harnessSource.ts reads the encounter providers).
+/// The agents the window offers a person to talk to: the World Model's agents slice (the census), the rows that started.
 fn window_agents(world: &World) -> Result<Vec<String>, String> {
-    let answer = world.send(json!({"op": "encounter", "project": "Central",
-        "request": {"action": "providers"}}))?;
-    let answer =
-        result_of(&answer, "encounter_reading").map_err(|e| format!("the agent list {e}"))?;
-    let rows = answer["data"]["providers"]
-        .as_array()
-        .or_else(|| answer["data"].as_array())
-        .cloned()
-        .unwrap_or_default();
+    let agents = world.model("agents")?;
+    let rows = agents["value"]["agents"].as_array().ok_or_else(|| {
+        format!(
+            "the World Model's agents slice lists no agents: {}",
+            clip(&agents["value"])
+        )
+    })?;
+    for row in rows.iter().filter(|row| row["starts"] != true) {
+        println!(
+            "listed as not starting: {} ({})",
+            row["slug"],
+            row["why"].as_str().unwrap_or("")
+        );
+    }
     Ok(rows
         .iter()
-        .filter_map(|row| {
-            row["harness"]
-                .as_str()
-                .or_else(|| row["provider"].as_str())
-                .or_else(|| row["id"].as_str())
-                .map(str::to_owned)
-        })
+        .filter(|row| row["starts"] == true)
+        .filter_map(|row| row["slug"].as_str().map(str::to_owned))
         .collect())
 }
 

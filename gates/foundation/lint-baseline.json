@@ -2,7 +2,7 @@
   "schema": "oi.foundation-lint-baseline/v1",
   "rule": "Counts of kernel ops named in device and view code (packages/live-shell/ui/src) other than the foundation doors. Each count may only fall.",
   "totals": {
-    "direct-read": 131,
+    "direct-read": 127,
     "non-action-write": 117
   },
   "files": {
@@ -76,19 +76,10 @@
     "packages/live-shell/ui/src/agent/wavePlan.ts": {
       "non-action-write": 1
     },
-    "packages/live-shell/ui/src/agent/worldScope.ts": {
-      "direct-read": 1
-    },
-    "packages/live-shell/ui/src/central/centralWorlds.ts": {
-      "direct-read": 1
-    },
     "packages/live-shell/ui/src/central/devices/agentChainDevices.ts": {
       "direct-read": 2
     },
     "packages/live-shell/ui/src/central/devices/CentralDevices.tsx": {
-      "direct-read": 1
-    },
-    "packages/live-shell/ui/src/central/devices/centralDeviceWrites.ts": {
       "direct-read": 1
     },
     "packages/live-shell/ui/src/central/devices/groundDevices.ts": {
@@ -99,7 +90,7 @@
       "direct-read": 4
     },
     "packages/live-shell/ui/src/central/pageActs.ts": {
-      "direct-read": 2
+      "direct-read": 1
     },
     "packages/live-shell/ui/src/central/searchLineSends.ts": {
       "non-action-write": 1,

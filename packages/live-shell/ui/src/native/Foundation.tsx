@@ -1,4 +1,5 @@
 import {windowReadingsChanged} from '../owners/readingsChanged'
+import {windowModel} from '../owners/model'
 import '../owners/ownerCall'
 import {useCallback, useEffect, useMemo, useRef, useState, type ReactNode} from 'react'
 import {KernelProvider} from '../../../../../desktop/cradle/src/kernel/KernelProvider'
@@ -121,6 +122,8 @@ export function NativeFoundation({children}: {children: ReactNode}) {
   }, [attempt, qualify, retire, showFailure])
   const receive = useCallback((receipts: KernelReceipt[]) => {
     if (!live.current) return
+    // The World Model first: a reading any other receiver asks again for, on these same receipts, finds the newer slice wanted.
+    windowModel.receive(receipts)
     currentWorkspace.current.publishReceipts(receipts)
     windowReadingsChanged.receive(receipts)
     const changed = new Set(receipts.filter(row => row.event === 'file_changed' && typeof row.path === 'string').map(row => row.path as string))

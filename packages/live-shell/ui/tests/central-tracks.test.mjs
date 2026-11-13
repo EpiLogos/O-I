@@ -18,6 +18,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {readFile} from 'node:fs/promises'
 import {register} from 'node:module'
+import {worldsOfRoot} from './support/worldModelFixture.mjs'
 
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
 register(`data:text/javascript,${encodeURIComponent(`
@@ -78,7 +79,7 @@ const root = {schema: 'central.world/v1', root: '/ground', ground_state: 'ready'
     {name: 'O-I', path: 'Work/O-I', source_files: 1, projectcentral: {...ground('Work/O-I/ProjectCentral', 'central:wiki:project:O-I'), state: 'ready'}},
     {name: 'face-rig', path: 'Work/face-rig', source_files: 1, projectcentral: {...ground('Work/face-rig/ProjectCentral', 'central:wiki:project:face-rig', false), state: 'ready'}},
   ]}}
-const worlds = worldsMod.worldsOf(root)
+const worlds = worldsOfRoot(root)
 const loc = path => ({schema: 'central.path-ref/v1', ref: `central:path:/ground:${path}`, root: '/ground', path})
 const listingOf = (folder, pages) => ({state: 'read', listing: {schema: 'oi.page-list/v1', path: folder, more: false, not_pages: [{name: 'notes.html', why: 'it carries no ql-doc island'}],
   pages: pages.map(([name, form, title]) => ({location: loc(`${folder}/${name}`), name, form, title, revision: 'r1', world: null}))}})

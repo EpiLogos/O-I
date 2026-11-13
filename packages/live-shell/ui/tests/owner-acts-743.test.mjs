@@ -3,6 +3,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {readFileSync} from 'node:fs'
 import {register} from 'node:module'
+import {worldsOfRoot} from './support/worldModelFixture.mjs'
 
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
 register(`data:text/javascript,${encodeURIComponent(`
@@ -51,7 +52,7 @@ const root = {schema: 'central.world/v1', root: '/ground', ground_state: 'ready'
   work: {path: 'Work', exists: true, projects: [
     {name: 'O-I', path: 'Work/O-I', source_files: 1, world_name: 'The Instrument', manifest_revision: 'm-1', projectcentral: {...ground('Work/O-I/ProjectCentral', 'central:wiki:project:O-I'), state: 'ready'}},
     {name: 'QL', path: 'Work/QL', source_files: 1, projectcentral: {...ground('Work/QL/ProjectCentral', 'central:wiki:project:QL'), state: 'ready'}}]}}
-const worlds = worldsMod.worldsOf(root)
+const worlds = worldsOfRoot(root)
 const loc = path => ({schema: 'central.path-ref/v1', ref: `central:path:/ground:${path}`, root: '/ground', path})
 const listingOf = (folder, pages) => ({state: 'read', listing: {schema: 'oi.page-list/v1', path: folder, more: false, not_pages: [],
   pages: pages.map(([name, form, title]) => ({location: loc(`${folder}/${name}`), name, form, title, revision: `rev-${name}`, world: null}))}})
@@ -222,7 +223,7 @@ test('the page owner\'s duplicate and trash, and Central\'s world name, are the 
     assert.equal(named.outcome, 'named')
     assert.deepEqual(owner.sent[3], {op: 'invoke_action', project: 'O-I', invocation: {action: 'central.world.name', target_ref: 'central:action:central.world.name',
       input: {project: 'O-I', name: 'The Lyre', expected_revision: 'm-1'}}})
-    assert.deepEqual(owner.sent[4], {op: 'world_browse', fresh: true}, 'the worlds are browsed afresh, so the browser reads the name')
+    assert.ok(!owner.sent.some(body => body.op === 'world_browse'), 'nothing browses the worlds again after a name: the kernel reads its World Model again itself (world_model.rs written)')
     await assert.rejects(pageActs.nameWorld(bridge, worlds[1], 'Stale'), /moved since it was read/)
     await assert.rejects(pageActs.nameWorld(bridge, worlds[2], 'Q'), /names no manifest revision/)
     await assert.rejects(pageActs.nameWorld(bridge, worlds[0], 'Me'), /no project's world/)

@@ -45,7 +45,7 @@ import {conversationGap} from '../centralVertical'
 import {DIE_POSITIONS, dieFaceLabel, dieFaceOf} from './dayDie'
 import {canEnsureDay, centralsOpenToday, currentDayOf, NO_CIVIL_TIME, wantsCivilTime} from './dayBinding'
 import {carriedSet, daySetOf, writeDaySet, type DaySet} from '../daySet'
-import {readWorlds} from '../centralWorlds'
+import {readRoot, readWorlds} from '../centralWorlds'
 import {nowReading, type NowListing} from '../../../../../../desktop/cradle/src/receiving/now'
 import {playingOf} from '../../timeline/centralTrackAdapter'
 import type {CentralGroundReading} from '../../../../../../desktop/cradle/src/central/client'
@@ -119,8 +119,8 @@ export async function openToday(transport: KernelTransportStatus): Promise<{ensu
   const form = DOCUMENT_FORMS.find(candidate => candidate.kind === 'document-42' && candidate.file === 'ql-daily-die.html')
   if (!form) throw new Error('The Day form is missing from the document roster')
   if (ground.placement.state !== 'ready' || !ground.placement.data) throw new Error('Central\'s native placement authority is unavailable; the Day document cannot be made')
-  const world = await kernelOp(transport, {op: 'world_browse'})
-  const projects = world.outcome?.result === 'world_read' ? world.outcome.snapshot.navigator?.root?.work.projects : undefined
+  const root = await readRoot(transport)
+  const projects = root.state === 'read' ? root.root.work.projects : undefined
   const formLocation = await dayFormLocation(transport, () => resolveDocumentForm(transport, form, projects), form.file)
   const original = await readFile(transport, formLocation, true)
   await central(transport, null, {kind: 'initialise-day', day_ref: day.day_ref, document_id: `document:${crypto.randomUUID()}`, expected_revision: day.revision.revision,
@@ -169,7 +169,7 @@ async function carryInto(transport: KernelTransportStatus, closed: {readonly day
   const ground = await readGround(transport, null, true)
   const aperture = currentDayOf(ground).aperture
   if (!aperture) throw new Error('Today\'s Day was made, but Central names no document for it yet; nothing was carried into its set')
-  const worlds = await readWorlds(transport, undefined, true)
+  const worlds = await readWorlds(transport, {fresh: true})
   if (worlds.state !== 'read') throw new Error(`Today's Day was made, but Central's worlds are ${worlds.state}${worlds.state === 'unavailable' ? `: ${worlds.reason}` : ''}; nothing was carried into its set`)
   const projects = worlds.worlds.filter(world => world.project && closed.set.tracks.some(track => track.world === world.ref)).map(world => world.project!)
   const listings = await Promise.all([null, ...projects].map(project => nowReading(transport, project, {kind: 'list'})

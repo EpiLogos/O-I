@@ -446,7 +446,10 @@ fn dispatch_in(
         timing: Timing::default(),
     };
     let memory_only = reads_kernel_memory_only(&op);
+    // The World Model slices this op writes to (world_model.rs): read again once the owner took it. A refused write moves none.
+    let writing = crate::world_model::Writing::of(&op);
     let (result, scopes) = crate::read_cache::attributed(|| run(&mut seat, field, op));
+    writing.settle(crate::world_model::Model::global(), &result);
     let result = result.map(|mut outcome| {
         // An op that read nothing through the model is attributed only when
         // it is known to read the kernel's own memory; any other stays
@@ -498,6 +501,9 @@ fn run(
     if let KernelOp::NativeExpression { request, holder } = op {
         return run_field(seat, field, request, holder);
     }
+    if let KernelOp::ModelSubscribe { slice, fresh } = op {
+        return run_model(seat, field, slice, fresh);
+    }
     if !is_free(&op) {
         return run_prepared(seat, op);
     }
@@ -529,6 +535,37 @@ fn run_field(
         read_scopes: None,
         receipts: Vec::new(),
         result: KernelOpResult::NativeExpression { data },
+    })
+}
+
+/// The World Model's subscription (world_model.rs): the slice as the model holds it, read first through this same dispatch when
+/// it is due, never under the kernel lock. A read that moved the slice's version is recorded as its change notice, which the
+/// host forwards with the outcome's receipts.
+fn run_model(
+    seat: &mut Seat<'_>,
+    field: Option<&native_expression::Field>,
+    slice: crate::world_model::Slice,
+    fresh: bool,
+) -> Result<KernelOpOutcome, String> {
+    seat.timing.form = "model";
+    let kernel = seat.kernel;
+    let via = |op: KernelOp| dispatch_in(kernel, field, op).0;
+    let (data, moved) =
+        seat.owner(|| crate::world_model::Model::global().subscribe(slice, &via, fresh));
+    let mut receipts = Vec::new();
+    if let Some(version) = moved {
+        receipts.push(seat.hold(|kernel| kernel.record_model_changed(slice, version))?);
+    }
+    Ok(KernelOpOutcome {
+        read_scopes: Some(
+            slice
+                .scopes()
+                .iter()
+                .map(|scope| (*scope).to_owned())
+                .collect(),
+        ),
+        receipts,
+        result: KernelOpResult::ModelSlice { data },
     })
 }
 
@@ -1701,7 +1738,7 @@ else:
         live_samples_list
         live_set_from_template live_set_new live_set_read live_sets_list live_take_comp live_track_mixer_write
         m3_reception
-        material_read model_catalogue model_roster music_modes_read nara_coordinate
+        material_read model_catalogue model_roster model_subscribe music_modes_read nara_coordinate
         nara_current nara_dialogue nara_elemental nara_epii nara_expressive_act nara_identity
         nara_journey nara_lived_context nara_presence nara_voice native_expression now page
         product_action_run profile_create profile_edit profile_list profile_read

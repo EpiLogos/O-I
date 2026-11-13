@@ -3,6 +3,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {readFile} from 'node:fs/promises'
 import {register} from 'node:module'
+import {worldsSliceOf} from './support/worldModelFixture.mjs'
 
 // Reads that remember, second pass: engine views that polled an owner on a period re-read on the kernel's notice where the window
 // carries one, and keep the period where it does not (the legacy frame installs no notice source). The read-before-write sites of
@@ -152,11 +153,23 @@ test('the press of Show on a Day entry reads Central\'s ground afresh before it 
   assert.deepEqual(asked[0], {op: 'central', kind: 'inspect', fresh: true}, 'the Day is checked as today\'s open one on the owner\'s present reading')
 })
 
-test('readWorlds asks afresh on the first browse when told to, and not otherwise', async () => {
-  const plain = await withHolder(() => readWorlds(transport, {tries: 1, apartMs: 0}))
-  assert.deepEqual(plain.map(row => row.fresh), [false])
-  const fresh = await withHolder(() => readWorlds(transport, {tries: 1, apartMs: 0}, true))
-  assert.deepEqual(fresh.map(row => row.fresh), [true])
+test('readWorlds reads the World Model\'s worlds slice: held once read, and asked afresh when told to (the read before a write)', async () => {
+  const own = {kind: 'bridge', url: 'http://127.0.0.1:2'}
+  const asked = []
+  const original = globalThis.fetch
+  globalThis.fetch = async (target, init) => {
+    if (!String(target).startsWith(own.url)) return original(target, init)
+    asked.push(JSON.parse(init.body))
+    return {json: async () => worldsSliceOf({}, null, asked.length)}
+  }
+  try {
+    assert.equal((await readWorlds(own)).state, 'read')
+    assert.equal((await readWorlds(own)).state, 'read')
+    assert.deepEqual(asked, [{op: 'model_subscribe', slice: 'worlds'}], 'asked once, then held at its version')
+    assert.equal((await readWorlds(own, {fresh: true})).state, 'read')
+    assert.deepEqual(asked.at(-1), {op: 'model_subscribe', slice: 'worlds', fresh: true}, 'the kernel reads Central first, past every held reading')
+    assert.ok(!asked.some(op => op.op === 'world_browse'), 'no device browses Central itself')
+  } finally { globalThis.fetch = original }
 })
 
 test('every read in the Central device writes that precedes a write is fresh', async () => {
@@ -166,5 +179,5 @@ test('every read in the Central device writes that precedes a write is fresh', a
   // so does the press of Show on a Day entry, which checks the Day is still today's open one (SF06; DLW build ruling 2026-11-09).
   assert.equal((text.match(/readGround\(transport, null, true\)/g) ?? []).length, 7)
   assert.match(text, /readFile\(transport, formLocation, true\)/)
-  assert.match(text, /readWorlds\(transport, undefined, true\)/)
+  assert.match(text, /readWorlds\(transport, \{fresh: true\}\)/)
 })

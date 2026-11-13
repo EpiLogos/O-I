@@ -12,6 +12,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {register} from 'node:module'
 import {readFileSync} from 'node:fs'
+import {withWorldModel} from './support/worldModelFixture.mjs'
 
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
 register(`data:text/javascript,${encodeURIComponent(`
@@ -120,7 +121,7 @@ function worldKernel(projects) {
 
 async function withKernel(owner, run) {
   const real = globalThis.fetch
-  globalThis.fetch = owner.fetch
+  globalThis.fetch = withWorldModel(owner.fetch)
   try { return await run() } finally { globalThis.fetch = real }
 }
 

@@ -201,6 +201,7 @@ export const KERNEL_OPS = [
   'surface_close',
   'surface_focus',
   'expression_world',
+  'model_subscribe',
 ] as const
 
 export type KernelOpName = (typeof KERNEL_OPS)[number]

@@ -534,6 +534,36 @@ fn main() {
             let field = kernel.native_field();
             live_engine_host::follow_torus(app.handle(), &field);
             app.manage(KernelHost(Mutex::new(kernel), field));
+            // The World Model (kernel world_model.rs; O-I #1001): every slice of the owners' present state read once now, on the
+            // model's own thread, and kept by the watch's notices and the kernel's own writes. Each move of a slice is recorded
+            // in the event log and told to the shell on the event topic (`model_changed`); a read the model makes through the
+            // kernel forwards that read's receipts like any other op.
+            {
+                let asking = app.handle().clone();
+                let telling = app.handle().clone();
+                let via: std::sync::Arc<dyn Fn(KernelOp) -> Result<KernelOpOutcome, String> + Send + Sync> =
+                    std::sync::Arc::new(move |op| {
+                        let host = asking.state::<KernelHost>();
+                        let (outcome, _) = oi_cradle_kernel::dispatch::dispatch_with(&host.0, &host.1, op);
+                        if let Ok(outcome) = &outcome {
+                            for receipt in &outcome.receipts {
+                                let _ = asking.emit(KERNEL_EVENT_TOPIC, receipt);
+                            }
+                        }
+                        outcome
+                    });
+                let changed = std::sync::Arc::new(move |slice, version| {
+                    let host = telling.state::<KernelHost>();
+                    let receipt = match host.0.lock() {
+                        Ok(mut kernel) => kernel.record_model_changed(slice, version),
+                        Err(_) => return,
+                    };
+                    let _ = telling.emit(KERNEL_EVENT_TOPIC, &receipt);
+                });
+                if let Err(error) = oi_cradle_kernel::world_model::Model::global().start(via, changed) {
+                    eprintln!("{error}; each slice is read when it is first asked for");
+                }
+            }
             // The window's one SharedField client for its identity (O-I #858),
             // held for the window's life: every transaction it takes — the
             // rows it moved, by view and ref — is recorded in the event log

@@ -105,6 +105,31 @@ export interface SharedFieldChangedReceipt extends KernelReceipt {
   more: number;
 }
 
+/** The World Model's slices (kernel world_model.rs; docs/architecture/world-shell.md §9.2 layer 2; O-I #1001). */
+export type ModelSliceName = "worlds" | "day" | "agents" | "sessions" | "models" | "factory" | "workcells" | "sky";
+
+/** One slice as the kernel holds it (`oi.world-model-slice/v1`): its owner and scopes, the version that moves exactly when its state
+ * or its owner's refusal changes, and its state: `read` (a value), `refused` (the owner's words, no value yet), `stale` (the owner's
+ * words beside the last value it held) or `unread`. */
+export interface ModelSliceAnswer {
+  schema: "oi.world-model-slice/v1";
+  slice: ModelSliceName;
+  owner: string;
+  scopes: string[];
+  version: number;
+  state: "read" | "refused" | "stale" | "unread";
+  value: unknown;
+  error: string | null;
+  read_at_unix_ms: number | null;
+}
+
+/** A World Model slice's state changed (`KernelEvent::ModelChanged`): ask for it again (`model_subscribe`). */
+export interface ModelChangedReceipt extends KernelReceipt {
+  event: "model_changed";
+  slice: ModelSliceName;
+  version: number;
+}
+
 /** Ephemeral disclosure only. A gap or changed process generation requires
  * current owner readings; it cannot be accepted as an empty event history. */
 export interface KernelEventReplay {
@@ -1024,7 +1049,10 @@ export type KernelOp =
   // ES1/ES4 expression-world operations (kernel `expression_world.rs`):
   // shared selection/deictic context, Surface portals, ExpressiveActs and
   // bounded local-whole bindings over exact native refs.
-  | { op: "expression_world"; request: import("../expression/world").WorldRequest };
+  | { op: "expression_world"; request: import("../expression/world").WorldRequest }
+  // The World Model's one subscription (kernel world_model.rs, O-I #1001).
+  /** `fresh`: read from its owner first, past every held reading — the read that precedes a write. */
+  | { op: "model_subscribe"; slice: ModelSliceName; fresh?: boolean };
 
 /** The outcome payloads (the Rust `KernelOpResult`, tagged snake_case).
  * The Rust seam serialises `{ receipts, #[serde(flatten)] result }`, so on
@@ -1204,7 +1232,8 @@ export type KernelOpResult =
   | { result: "surface_opened"; snapshot: KernelSnapshotState }
   | { result: "surface_closed"; snapshot: KernelSnapshotState }
   | { result: "surface_focused"; snapshot: KernelSnapshotState }
-  | { result: "expression_world"; data: unknown };
+  | { result: "expression_world"; data: unknown }
+  | { result: "model_slice"; data: ModelSliceAnswer };
 
 /** One operation's outcome: the flattened result beside its receipts
  * (receipts are omitted on the wire when empty — an operation that

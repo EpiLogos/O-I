@@ -906,7 +906,8 @@ pub fn with_fresh<T>(f: impl FnOnce() -> T) -> T {
     value
 }
 
-fn fresh_asked() -> bool {
+/// Whether the reading being served was asked for afresh (`with_fresh`, carried onto its threads).
+pub(crate) fn fresh_asked() -> bool {
     FRESH.with(std::cell::Cell::get)
 }
 

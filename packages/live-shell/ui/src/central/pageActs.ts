@@ -35,8 +35,6 @@ export interface PageTrash {
   readonly recover: {readonly action: string; readonly expected_revision: string; readonly revision: string} | null
 }
 
-const text = (cause: unknown) => cause instanceof Error ? cause.message : String(cause)
-
 async function pageAct<T>(transport: KernelTransportStatus, request: PageRequest): Promise<T> {
   const result = await kernelOp(transport, {op: 'page', request})
   if (result.error || result.outcome?.result !== 'page_reading') throw new Error(result.error ?? 'The page owner did not answer')
@@ -75,10 +73,8 @@ export async function nameWorld(transport: KernelTransportStatus, world: Pick<Ce
   const named = answer.value as WorldNamed
   if (named?.schema !== 'central.world-name/v1') throw new Error('Central answered something other than the world\'s name.')
   if (named.outcome === 'conflict') throw new Error(`${world.name} moved since it was read: Central keeps another manifest now. Read the worlds again and name it on that.`)
-  // The kernel holds the world browse a few seconds (kernel/src/read_cache.rs WORLD_TTL): a fresh browse reads the named world, and every
-  // held reading is then retired so each view reads the name (the write's own notice may have arrived before the browse was fresh).
-  const browsed = await kernelOp(transport, {op: 'world_browse', fresh: true})
-  if (browsed.error) console.error('The worlds were not read again after a name:', text(browsed.error))
+  // The kernel reads its World Model's worlds again after the name, before it answers anyone from them (kernel world_model.rs
+  // `written`); every held reading is retired so each view reads the name.
   windowReadingsChanged.now()
   return named
 }

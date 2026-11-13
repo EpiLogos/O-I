@@ -289,6 +289,13 @@ pub enum KernelEvent {
         #[serde(default)]
         more: u64,
     },
+    /// A World Model slice's state changed (world_model.rs; O-I #1001):
+    /// `slice` names it and `version` is the version it now holds. It says
+    /// "ask again" (`model_subscribe`); the slice's state is the model's.
+    ModelChanged {
+        slice: String,
+        version: u64,
+    },
 }
 
 /// The most rows one `SharedFieldChanged` names; the rest are counted.
@@ -375,7 +382,8 @@ impl KernelEvent {
             | Self::FactoryRunChanged { .. }
             | Self::OwnerChanged { .. }
             | Self::ReadingsChanged { .. }
-            | Self::SharedFieldChanged { .. } => None,
+            | Self::SharedFieldChanged { .. }
+            | Self::ModelChanged { .. } => None,
             Self::FocusChanged { focus } => focus.subject_ref(),
             Self::SurfaceChanged { surface_ref, .. } => surface_ref.as_ref(),
             Self::SourceOpened { source, .. }
@@ -412,6 +420,7 @@ impl KernelEvent {
             Self::OwnerChanged { .. } => "owner_changed",
             Self::ReadingsChanged { .. } => "readings_changed",
             Self::SharedFieldChanged { .. } => "shared_field_changed",
+            Self::ModelChanged { .. } => "model_changed",
         }
     }
 
@@ -633,6 +642,15 @@ impl KernelEvent {
                     if !named {
                         return Err(format!("ReadingsChanged names an unknown scope ({scope})"));
                     }
+                }
+                Ok(())
+            }
+            Self::ModelChanged { slice, version } => {
+                if crate::world_model::Slice::from_name(slice).is_none() {
+                    return Err(format!("ModelChanged names an unknown slice ({slice})"));
+                }
+                if *version == 0 {
+                    return Err("ModelChanged.version must be at least 1".into());
                 }
                 Ok(())
             }

@@ -39,6 +39,44 @@ pub struct KernelProtocol {
     /// The always-on slow-op record (slow_ops.rs): where it is kept, the
     /// limits it enforces, and how many of its lines could not be written.
     pub slow_ops: SlowOpsContract,
+    /// The World Model this kernel holds (world_model.rs): the schema of a
+    /// slice's answer, and each slice `model_subscribe` takes, with the
+    /// product that owns its state and the watch scopes that move it.
+    pub world_model: WorldModelContract,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct WorldModelContract {
+    pub schema: String,
+    pub slices: Vec<WorldModelSliceContract>,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct WorldModelSliceContract {
+    pub name: String,
+    pub owner: String,
+    pub scopes: Vec<String>,
+}
+
+impl WorldModelContract {
+    /// The model's slices as world_model.rs defines them.
+    pub fn current() -> Self {
+        Self {
+            schema: crate::world_model::SCHEMA.to_owned(),
+            slices: crate::world_model::Slice::ALL
+                .into_iter()
+                .map(|slice| WorldModelSliceContract {
+                    name: slice.name().to_owned(),
+                    owner: slice.owner().to_owned(),
+                    scopes: slice
+                        .scopes()
+                        .iter()
+                        .map(|scope| (*scope).to_owned())
+                        .collect(),
+                })
+                .collect(),
+        }
+    }
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -119,6 +157,7 @@ impl KernelProtocol {
                 error: ERROR_SCHEMA.to_owned(),
             },
             slow_ops: SlowOpsContract::current(),
+            world_model: WorldModelContract::current(),
         }
     }
 }
@@ -173,6 +212,58 @@ mod tests {
         assert_eq!(document.configuration.resolution, "oi.config-resolution/v1");
         assert_eq!(document.configuration.changeset, "oi.config-changeset/v1");
         assert_eq!(document.configuration.error, "oi.config-error/v1");
+    }
+
+    /// Advertised is enforced: every slice the document names is one
+    /// `model_subscribe` takes and one a `model_changed` notice may name; a
+    /// name it does not advertise is refused by both.
+    #[test]
+    fn the_advertised_world_model_is_exactly_what_the_subscription_and_its_notice_take() {
+        let document = KernelProtocol::for_event_log("g");
+        assert_eq!(document.world_model.schema, "oi.world-model-slice/v1");
+        let names: Vec<&str> = document
+            .world_model
+            .slices
+            .iter()
+            .map(|slice| slice.name.as_str())
+            .collect();
+        assert_eq!(
+            names,
+            [
+                "worlds",
+                "day",
+                "agents",
+                "sessions",
+                "models",
+                "factory",
+                "workcells",
+                "sky"
+            ]
+        );
+        for slice in &document.world_model.slices {
+            let op: crate::KernelOp = serde_json::from_value(
+                serde_json::json!({"op": "model_subscribe", "slice": slice.name}),
+            )
+            .expect("an advertised slice is subscribed to");
+            assert!(matches!(op, crate::KernelOp::ModelSubscribe { .. }));
+            assert!(crate::events::KernelEvent::ModelChanged {
+                slice: slice.name.clone(),
+                version: 1
+            }
+            .validate()
+            .is_ok());
+            assert!(!slice.owner.is_empty() && !slice.scopes.is_empty());
+        }
+        assert!(serde_json::from_value::<crate::KernelOp>(
+            serde_json::json!({"op": "model_subscribe", "slice": "weather"})
+        )
+        .is_err());
+        assert!(crate::events::KernelEvent::ModelChanged {
+            slice: "weather".into(),
+            version: 1
+        }
+        .validate()
+        .is_err());
     }
 
     #[test]

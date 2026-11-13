@@ -78,8 +78,8 @@ import {USER_FLOWS_DIR} from '../../../../../desktop/cradle/src/flow/flowsDir'
 // its own, never with the shell's first frame (O-I #740).
 const readFlowInstance = async (...args: Parameters<typeof import('../../../../../desktop/cradle/src/flow/instances').readFlowInstance>) =>
   (await import('../../../../../desktop/cradle/src/flow/instances')).readFlowInstance(...args)
-import {listWorldPages, type PageForm, type PageListing} from '../../../../../desktop/cradle/src/personal/pageOwner'
-import {readWorlds, type CentralWorld, type CentralWorldsReading} from '../central/centralWorlds'
+import type {PageForm, PageListing} from '../../../../../desktop/cradle/src/personal/pageOwner'
+import {readWorldPages, readWorlds, type CentralWorld, type CentralWorldsReading} from '../central/centralWorlds'
 import {CENTRAL_WORLD_DRAG} from '../timeline/centralTrackAdapter'
 import {DOCUMENT_FORMS, type DocumentForm} from '../../../../../desktop/cradle/src/flow/documentForms'
 import {useCentralDocumentOpener} from '../central/documents/useOpenCentralDocument'
@@ -394,6 +394,13 @@ export function NowSection({rows}: {rows: readonly NowRow[]}) {
   </section>
 }
 
+/** Your world's pages, as the World Model holds them (central/centralWorlds.ts readWorldPages); a refusal throws, in its words. */
+async function yourWorldPages(transport: KernelTransportStatus): Promise<PageListing> {
+  const pages = await readWorldPages(transport, {folder: USER_FLOWS_DIR})
+  if (pages.state === 'read') return pages.listing
+  throw new Error(pages.state === 'unavailable' ? pages.reason : 'Your world\'s pages are still being read.')
+}
+
 /** The Flows rows: the page owner's listing of your world's folder (`page` list at Control/user/flows, its entries kept whole so
  * the open gesture has the owner's own entry) and each Flow's title, agents and revision — the words the owner's listing already
  * carries for a Flow it placed by its island (`flowReadingsOfListing`), so a Flow is read once, to be listed. A Flow whose words the
@@ -405,7 +412,7 @@ function FlowsRows({needle, onSelectSubject, selectedSubject}: {
   selectedSubject: CentralSubjectSelection | null
 }) {
   const {transport} = useWorkspace()
-  const listed = useListing<PageListing>('page_list', transport, USER_FLOWS_DIR, () => listWorldPages(transport, USER_FLOWS_DIR), reason => notYet(reason) ? NO_PAGES : null)
+  const listed = useListing<PageListing>('page_list', transport, USER_FLOWS_DIR, () => yourWorldPages(transport), reason => notYet(reason) ? NO_PAGES : null)
   // The page owner places each file by its island: only a Flow lists here (a Being or a Thing in the same folder is no Flow).
   const listing = useMemo(() => listed.status === 'answered' && listed.value ? entriesOfForm(listed.value, 'flow') : null, [listed])
   const fault = listed.status === 'refused' ? listed.error : null
@@ -422,7 +429,7 @@ function FlowsRows({needle, onSelectSubject, selectedSubject}: {
   if (transport.kind === 'unavailable') {
     return <DesignedRead absence="The kernel carrier is unavailable" reason={transport.reason} affordance={`The Flows list at ${USER_FLOWS_DIR} when the carrier answers.`} />
   }
-  if (fault) return <DesignedRead absence="The Flow listing refused" reason={fault} affordance={`op files_list at ${USER_FLOWS_DIR} — the route the Flow pane reads through.`} />
+  if (fault) return <DesignedRead absence="The Flow listing refused" reason={fault} affordance={`The World Model's worlds slice, which the kernel reads from the page owner at ${USER_FLOWS_DIR}.`} />
   if (!listing) return <p className="native-empty" role="status">Reading the Flows…</p>
   const needleText = needle.trim().toLocaleLowerCase()
   const shown = flows.filter(entry => !needleText || `${entry.name} ${flowRowWords(entry.name, readings.get(entry.location.ref)).name}`.toLocaleLowerCase().includes(needleText))
@@ -533,12 +540,12 @@ function PageRows({form, label, needle, onSelectSubject, selectedSubject}: {
   selectedSubject: CentralSubjectSelection | null
 }) {
   const {transport} = useWorkspace()
-  const listed = useListing<PageListing>('page_list', transport, USER_FLOWS_DIR, () => listWorldPages(transport, USER_FLOWS_DIR), reason => notYet(reason) ? NO_PAGES : null)
+  const listed = useListing<PageListing>('page_list', transport, USER_FLOWS_DIR, () => yourWorldPages(transport), reason => notYet(reason) ? NO_PAGES : null)
   const listing = listed.status === 'answered' ? listed.value : null
   const fault = listed.status === 'refused' ? listed.error : null
   const {openPage, openFault} = useOpening()
   if (transport.kind === 'unavailable') return <DesignedRead absence="The kernel carrier is unavailable" reason={transport.reason} affordance={`The ${label} of your world list when the carrier answers.`} />
-  if (fault) return <DesignedRead absence={`The ${label} listing refused`} reason={fault} affordance={`op page {operation: list} at ${USER_FLOWS_DIR}.`} />
+  if (fault) return <DesignedRead absence={`The ${label} listing refused`} reason={fault} affordance={`The World Model's worlds slice, which the kernel reads from the page owner at ${USER_FLOWS_DIR}.`} />
   if (!listing) return <p className="native-empty" role="status">Reading the {label}…</p>
   const needleText = needle.trim().toLocaleLowerCase()
   const pages = listing.pages.filter(page => page.form === form && (!needleText || `${page.title ?? ''} ${page.name}`.toLocaleLowerCase().includes(needleText)))

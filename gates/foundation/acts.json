@@ -3,13 +3,13 @@
     "act": "open-a-world-and-save-a-page",
     "test": "act_1_open_a_world_and_save_a_page",
     "standing": "green",
-    "reason": "13 Nov 2026: a fresh World opens as the window reads it (world_read), and a page made and saved twice in its Flows home through file_operation reads back the same from the disk and from Central's own central.files.read"
+    "reason": "13 Nov 2026: a fresh World opens as the window reads it, from the World Model's worlds slice (model_subscribe), and a page made and saved twice in its Flows home through file_operation reads back the same from the disk and from Central's own central.files.read, and is listed in the model's worlds slice as soon as the save answers (#1001)"
   },
   {
     "act": "see-the-agents-that-start",
     "test": "act_2_see_the_agents_that_start",
-    "standing": "red",
-    "reason": "13 Nov 2026: the window's agent list (harnessSource.ts: encounter providers for project \"Central\") answers \"Project is outside Central's disclosed ground\" in a World with no project named Central, so a person sees none of the agents that start"
+    "standing": "green",
+    "reason": "13 Nov 2026: the World Model's agents slice (the census: Actuation's detection, a start of each detected harness, AIKit's detail; census.rs) lists exactly the agents on this machine that start (#1001)"
   },
   {
     "act": "send-a-passage-and-get-the-answer",
