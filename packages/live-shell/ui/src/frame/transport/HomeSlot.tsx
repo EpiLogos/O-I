@@ -21,9 +21,9 @@ export interface TransportHomeDoor {
 export const TransportHome = createContext<TransportHomeDoor | null>(null)
 
 /** What a press does, given the mode in front of you: switch to Technē unless it stands, then bring the Earth. Pure over its two acts. */
-export function pressHome(mode: SurfMode, acts: {chooseMode: (mode: SurfMode) => void; bring: () => void}): void {
+export function pressHome(mode: SurfMode, acts: {chooseMode: (mode: SurfMode) => void; bringEarth: () => void}): void {
   if (mode !== HOME.mode) acts.chooseMode(HOME.mode)
-  acts.bring()
+  acts.bringEarth()
 }
 
 export function HomeSlot() {
@@ -35,7 +35,7 @@ export function HomeSlot() {
   const title = refused ? `Home — the Earth did not open: ${refused}` : 'Home — your body in the field, Earth at its root: opens the Earth in Technē.'
   return <button type="button" className="native-control transport-home" data-transport-home aria-label="Home" data-i={refused ? `Home|The Earth did not open: ${refused}` : HOME_WORDS}
     title={title} disabled={!door} aria-disabled={!door}
-    onClick={() => { if (door) pressHome(door.mode, {chooseMode: door.chooseMode, bring}) }}>
+    onClick={() => { if (door) pressHome(door.mode, {chooseMode: door.chooseMode, bringEarth: bring}) }}>
     <CutIcon name="earth" size={13} />
   </button>
 }

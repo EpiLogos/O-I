@@ -76,10 +76,10 @@ test('Home stands between the playing keys and the map in every mode, live, wear
 
 test('Home switches to Technē, then brings the Earth into Technē\'s panes; in Technē it only brings the Earth', () => {
   const calls = []
-  pressHome('live', {chooseMode: mode => calls.push(['mode', mode]), bring: () => calls.push(['bring'])})
+  pressHome('live', {chooseMode: mode => calls.push(['mode', mode]), bringEarth: () => calls.push(['bring'])})
   assert.deepEqual(calls, [['mode', HOME.mode], ['bring']], 'the switch first, then the Earth: one queue on the book, so it lands in Technē')
   calls.length = 0
-  pressHome('techne', {chooseMode: mode => calls.push(['mode', mode]), bring: () => calls.push(['bring'])})
+  pressHome('techne', {chooseMode: mode => calls.push(['mode', mode]), bringEarth: () => calls.push(['bring'])})
   assert.deepEqual(calls, [['bring']])
   assert.equal(HOME.kind, 'projection.earth', 'the Earth the browser\'s Instruments open')
   // the door it presses is the pane tree's own: bringInstrumentIntoView asks the published opener for the Earth, in view
