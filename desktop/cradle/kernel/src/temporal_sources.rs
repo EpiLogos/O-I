@@ -2692,6 +2692,7 @@ mod read_field_tests {
 
     #[test]
     fn a_ground_with_no_returns_folder_has_no_returns_and_another_refusal_is_named() {
+        let _env = owner_env();
         let owner = FakeOwner::new("wiki-returns-absent", &nowlist(&["ref-a"]), THOUGHTS_REPLY);
         let files = owner.directory.join("files.json");
         std::fs::write(&files, r#"{"ok":false,"status":"invalid_input","action":"central.files.list","error":{"code":"invalid_input","message":"No such file or directory (os error 2)"}}"#).unwrap();
