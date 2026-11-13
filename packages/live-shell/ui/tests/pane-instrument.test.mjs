@@ -136,7 +136,7 @@ test('the focused rack for the Timeline expands the faces it holds', () => {
 test('without a focus the Technē rack folds its six instruments; the QL faces none holds stand after them', () => {
   const out = html(createElement(TechneInstrumentsDetail, {transport}))
   assert.doesNotMatch(out, /data-focus-instrument/)
-  assert.equal(expandedOf(out, 'torus'), 'false')
+  assert.doesNotMatch(out, /data-face-id="torus"/, 'the torus is Live\'s and the Studio\'s, never a stand-in on the rack (parity D-06)')
   assert.equal(expandedOf(out, 'ql-instrument'), 'true')
   assert.doesNotMatch(out, /data-face-id="graph-tools"/, 'the atlas faces are not drawn while their instrument folds')
 })

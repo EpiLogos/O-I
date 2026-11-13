@@ -138,7 +138,7 @@ test('code reading: the keyboard, each note device and each set device publish t
   assert.match(await read('live/noteDevices/NoteDeviceChain.tsx'), /usePublishedDevice\(instance\.id, instance, picture, binding\)/, 'a Scale plate publishes its design\'s binding with it')
   assert.match(await read('live/SetDeviceOnChain.tsx'), /usePublishedDevice\(id, device, picture\)/)
   const torus = await read('live/TorusOnChain.tsx')
-  assert.match(torus, /publishDevice\(TORUS_DEVICE_ID, \{device, binding, picture: .*, full: \{draw: \(\) => <TorusFull \/>\}\}\)/)
+  assert.match(torus, /publishDevice\(TORUS_DEVICE_ID, \{device, binding, picture: .*, full: \{draw: \(\) => <TorusFull binding={binding} \/>\}\}\)/)
   // Lane BL2 (inverting lane BL's hold-back): the design now draws the four determinants and its See and hear, and the chain's wrap
   // reaches a design's kit controls by value key (sdk/panel.tsx ControlWrapContext), so hosting it takes no MIDI-mappable control off
   // the chain. The chain passes the binding and keeps its wrap (proved by render in live-torus-binding.test.mjs).

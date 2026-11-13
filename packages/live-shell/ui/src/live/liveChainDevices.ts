@@ -12,7 +12,7 @@ import type {DeviceInstance, ParamValue} from '../frame/devices/deviceRuntime'
 import type {SetParameter} from '../shell/document'
 import type {ParamDescJson} from '../panels/devices/api'
 import type {ModeInForce} from './modes'
-import {NOTE_DEVICE_LABEL, TIE_RULES, TIE_RULE_LABEL, scalePlan, type NoteDevice, type TieRule} from './noteDevices/noteDevices'
+import {EXACT_RATIO_PASSES, NOTE_DEVICE_LABEL, TIE_RULES, TIE_RULE_LABEL, scalePlan, type NoteDevice, type TieRule} from './noteDevices/noteDevices'
 
 const row = (family: string, deviceInstance: string, fields: Omit<SdkParamRow, 'family' | 'deviceInstance'>): SdkParamRow =>
   ({family, deviceInstance, ...fields}) as SdkParamRow
@@ -39,6 +39,7 @@ export interface NoteDeviceHold {
 /** What the device does to the notes now, in one word, and the whole line behind it (the face's reading of scalePlan). */
 export function noteDeviceReading(device: NoteDevice, mode: ModeInForce): {state: 'bypassed' | 'fold' | 'pass'; word: string; line: string} {
   if (!device.enabled) return {state: 'bypassed', word: 'bypassed', line: 'Bypassed: notes pass through unchanged.'}
+  if (device.kind === 'exact-ratio') return {state: 'pass', word: 'pass through', line: EXACT_RATIO_PASSES}
   const plan = scalePlan(mode)
   if (plan.state === 'pass') return {state: 'pass', word: 'pass through', line: plan.line}
   return {state: 'fold', word: mode.state === 'in-force' ? `onto ${mode.selection.scale.label}` : 'fold', line: plan.line}
@@ -62,7 +63,7 @@ export function noteDevice(device: NoteDevice, mode: ModeInForce, hold: NoteDevi
       row(family, id, {key: 'enabled', type: 'boolean', title: 'On', writePath: NOTE_DEVICE_WRITE, group: name}),
       row(family, id, {key: 'kept', type: 'string', title: 'Kept', group: name, disclosure: NOTE_DEVICE_KEPT}),
     ],
-    values: {tie: TIE_RULE_LABEL[device.params.tie], notes: reading.word, enabled: device.enabled, kept: 'this session'},
+    values: {...(device.kind === 'scale' ? {tie: TIE_RULE_LABEL[device.params.tie]} : {}), notes: reading.word, enabled: device.enabled, kept: 'this session'},
     submit: async changes => {
       for (const change of changes) {
         if (change.key === 'enabled' && typeof change.value === 'boolean') hold.setPower(device.id, change.value)

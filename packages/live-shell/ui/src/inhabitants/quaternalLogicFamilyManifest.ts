@@ -63,9 +63,13 @@ const QUATERNAL_LOGIC_MANIFEST: InhabitantManifest = {
         id: 'torus',
         presentations: statePresentations('quaternal-logic:torus'),
         liveSemantic: 'device-instrument',
-        admission: 'waiting',
+        // The torus writes through the frame's hosted stage channel (its `instrument` command: live/torusDevice.ts TORUS_DEVICE, qlDevices.ts
+        // QL_WRITE_PATH), which is no native-owner tool the family gate knows; named here as what the face's own declaration lacks.
+        invariant: {generatesAbsent: 'The torus writes through the frame\'s hosted stage channel (its `instrument` command), as Live\'s torus device does; no native-owner tool or kernel op of its own carries the write.'},
+        // It plays in Live and stands in the Expressions Studio's Body chain, never on a Technē instrument (parity D-06).
+        modes: ['expressions', 'live'],
         heldBy: ['studio:body'],
-        note: 'The M1 torus/field as an instrument device face. The presentation exists in the retained M4 body (INSTRUMENT_PRESENTATION ±25/9 m → ±333 engine units, sky epochs); §18\'s rack docking ("the field/PCM owner docks as an instrument device") is law, not landed. Waits for the QL instrument owner.',
+        note: 'The M1 torus, Live\'s one instrument, held in the Expressions Studio\'s Body chain (§20.3 "Physics, Resonance, Torus"): the same device Live plays (live/torusDevice.ts), drawn by the catalogue\'s Torus design on the binding Live\'s chain builds (TorusOnChain.tsx useTorusChainBinding).',
       },
       {
         id: 'm3-clock',

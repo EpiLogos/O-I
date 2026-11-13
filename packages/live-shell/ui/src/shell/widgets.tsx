@@ -1,8 +1,9 @@
 // The world's widgets (FOUNDATION F8), one registration: every tile of the two old docks — the mode dock's (the agent of the
 // mode in front of you, the packet, the trail, the field, the NOWs, results, the sky) and the agent dock's (sessions,
-// agents, terminal, files, web, graph, frames, ledger, approvals; its Diff is Files' Diff page) — as widgets of the one rail. The agent, the packet
-// and the trail are their own bodies (src/widgets/, shell/TrailWidget.tsx): the real conversation, the owner's prepared
-// context and THE selection's stops. Every other body is the old tile's body, unchanged; where both docks had a tile of
+// agents, terminal, files, web, graph, frames, ledger, approvals; its Diff is Files' Diff page) — as widgets of the one rail. The agent and
+// the trail are their own bodies (src/widgets/, shell/TrailWidget.tsx): the real conversation and THE selection's stops. The packet and
+// the graph are their devices' widgets (widgets/railDeviceIds.ts claims them: Central's Packet, the Knowledge graph), so no body of theirs
+// stands here. Every other body is the old tile's body, unchanged; where both docks had a tile of
 // the same id, the agent dock's reads its owner and stands. The bodies read what the App hands them (widgets/widgetReading).
 import type {ComponentType} from 'react'
 import type {SurfMode} from './modeGrammar'
@@ -28,7 +29,6 @@ const TileBody = loadWhenDrawn('The mode dock\'s tiles', () => import('./ModeCon
 const TrailWidget = loadWhenDrawn('Trail', () => import('./TrailWidget').then(module => module.TrailWidget))
 const AgentDockTileBody = loadWhenDrawn('The agent dock\'s tiles', () => import('../agent/AgentDockTileBody').then(module => module.AgentDockTileBody))
 const AgentWidget = loadWhenDrawn('Agent', () => import('../widgets/AgentWidget').then(module => module.AgentWidget))
-const PacketWidget = loadWhenDrawn('Packet', () => import('../widgets/PacketWidget').then(module => module.PacketWidget))
 const TerminalRailWidget = loadWhenDrawn('Terminal', () => import('../widgets/TerminalRailWidget').then(module => module.TerminalRailWidget))
 const ResultsTile = loadWhenDrawn('Results', () => import('../agent/AgentDockTileBody').then(module => module.ResultsTile))
 
@@ -64,8 +64,10 @@ const NO_CARRIER = {kind: 'unavailable', reason: 'no carrier'} as const
 const MODE_TILES = ['packet', 'trail', 'field', 'nows', 'sky', 'agents', 'results'] as const
 // The Diff tile was retired in the 22 Oct manual rewrite: reading what changed is the Diff page of Files (§23.4, §23.2).
 const AGENT_TILES: readonly AgentTileId[] = ['terminal', 'files', 'web', 'graph', 'frames', 'ledger', 'approvals']
-/** The tiles that are their own widget bodies now, by id. */
-const OWN_BODIES: Partial<Record<string, ComponentType<WidgetBodyProps>>> = {packet: PacketWidget, trail: TrailWidget}
+/** A tile its device's widget draws (widgets/railDeviceIds.ts claimRailWidget): the rail never draws this body. */
+const CLAIMED: ComponentType<WidgetBodyProps> = () => null
+/** The tiles that are their own widget bodies now, by id; the Packet is Central's Packet device's widget. */
+const OWN_BODIES: Partial<Record<string, ComponentType<WidgetBodyProps>>> = {packet: CLAIMED, trail: TrailWidget}
 /** Results draws its own body too, over the selected session's takes (BD round 25). */
 const RAIL_BODIES: Partial<Record<string, ComponentType<WidgetBodyProps>>> = {...OWN_BODIES, results: ResultsWidget}
 /** What each holds, for its launcher cell (the mockup's WID hints, world-shell-mockup.html 1624–1626). */
@@ -96,7 +98,8 @@ export const WIDGETS: readonly WidgetDeclaration[] = [
   ...MODE_TILES.map((id): WidgetDeclaration => ({id, name: TILES[id].name, mark: TILES[id].mark, hint: HINTS[id], Body: RAIL_BODIES[id] ?? modeTile(id)})),
   // The Terminal is its device's own tile (DLW §17.9, widgets/TerminalRailWidget.tsx): bare, as a device's widget is.
   ...AGENT_TILES.map((id): WidgetDeclaration => (id === 'terminal' ? {id, name: tileTitle(id), mark: TILE_ICONS[id], hint: HINTS[id], bare: true, Body: TerminalRailWidget}
-    : {id, name: tileTitle(id), mark: TILE_ICONS[id], hint: HINTS[id], Body: agentTile(id)})),
+    // The Graph is the Knowledge graph device's widget (widgets/railDeviceIds.ts claims it).
+    : {id, name: tileTitle(id), mark: TILE_ICONS[id], hint: HINTS[id], Body: id === 'graph' ? CLAIMED : agentTile(id)})),
   ...RAIL_BORN,
   // The Workcells tile after the old tiles (it lists the gateways: §19.3).
   ...DEVICE_BORN.filter(widget => widget.id !== 'messages'),

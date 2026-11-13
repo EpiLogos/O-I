@@ -242,3 +242,25 @@ test('#747: Physics shows its lanes and its held values on its own keys, in its 
   const markup = renderToStaticMarkup(h(HostedDevice, {designed: (await import(src('inhabitants/catalogue/panels/physics.tsx'))).physics, binding: held, view: 'whole', nav: {}}))
   assert.match(markup, /data-automated="overridden"/, 'the Physics design lights the hand-back on Radius')
 })
+
+// Pointer's and Relational's designs work in stage units and draw their own 400 px to the unit (expressions__pointer.tsx,
+// expressions__relational.tsx `WORLD`): the binding hands them the device's stage-unit value as it stands and writes theirs back unscaled
+// (parity D-04: scaled twice, the disc read 72000 px and a 0.45 dial wrote 0.001125).
+test('Pointer and Relational read and write their radii in stage units; the design draws the engine\'s px', async () => {
+  const r = reading({params: {[nativeKey('interaction.radius')]: 0.45, [nativeKey('relational.gravitySoftening')]: 0.1125, [nativeKey('relational.swirlRadius')]: 1.25}})
+  for (const [family, keys] of [['pointer', {'interaction.radius': 0.45}], ['relational', {'relational.gravitySoftening': 0.1125, 'relational.swirlRadius': 1.25}]]) {
+    const sent = []
+    const device = {...model.expressionsFieldDevice(r, family, null), submit: async changes => {sent.push(changes)}}
+    const binding = fieldBinding.fieldDesignBinding(family, device, r, null)
+    for (const [key, value] of Object.entries(keys)) {
+      assert.equal(binding.values[key], value, `${family} ${key}: the stage-unit value the design reads`)
+      await binding.write([{key, value: 0.5}])
+      assert.deepEqual(sent.at(-1), [{key, value: 0.5}], `${family} ${key}: the design's stage units go to the device unscaled`)
+    }
+    if (family === 'pointer') {
+      const html = renderToStaticMarkup(h(HostedDevice, {designed: await designOf('pointer'), binding, view: 'whole', nav: {}}))
+      assert.match(html, /180 px/, 'the disc draws 0.45 stage units as 180 px')
+      assert.doesNotMatch(html, /72000 px/)
+    }
+  }
+})

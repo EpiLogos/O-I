@@ -205,10 +205,10 @@ test('a refused or absent reading draws the outline unlit and names the refusal'
 
 // ── 6 — the torus face declares the full presentation, admission unchanged ──
 
-test('the quaternal-logic torus face declares the full presentation too, and stays waiting (no admission change)', () => {
+test('the quaternal-logic torus face declares the full presentation too, and is admitted as Live\'s torus device (parity D-06)', () => {
   const face = manifest.quaternalLogicFamilyManifest().faces.find(row => row.id === 'torus')
   assert.deepEqual([...face.presentations], ['compact', 'expanded', 'full'])
-  assert.equal(face.admission, 'waiting')
+  assert.notEqual(face.admission, 'waiting')
   assert.deepEqual(face.heldBy, ['studio:body'])
 })
 

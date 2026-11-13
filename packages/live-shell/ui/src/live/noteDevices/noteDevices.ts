@@ -12,7 +12,7 @@
 
 import {pitchMask, type ModeInForce, type PitchClass} from '../modes'
 
-export type NoteDeviceKind = 'scale'
+export type NoteDeviceKind = 'scale' | 'exact-ratio'
 
 /** The Scale device's tie rule: where a class lies equally far from an in-mode class above and below. */
 export type TieRule = 'up' | 'down'
@@ -28,7 +28,19 @@ export interface ScaleNoteDevice {
   readonly params: {readonly tie: TieRule}
 }
 
-export type NoteDevice = ScaleNoteDevice
+/** Exact-ratio tuning (manual §21.4; the catalogue's live__exact-ratio.tsx): it stands before the torus and draws each note's ratio and
+ * its error from the equal scale. No owner takes a tuning (designBindings/exactRatioBinding.ts), so it hands every act on as it came. */
+export interface ExactRatioNoteDevice {
+  readonly id: string
+  readonly kind: 'exact-ratio'
+  readonly enabled: boolean
+  readonly params: Readonly<Record<string, never>>
+}
+
+export type NoteDevice = ScaleNoteDevice | ExactRatioNoteDevice
+
+/** Why Exact-ratio tuning hands every act on unchanged: what sounds takes no tuning from the shell. */
+export const EXACT_RATIO_PASSES = 'Passes notes through: no owner takes a tuning (QL composes the torus\'s voices from the map\'s just ratios on its own root), so the ratios are shown, not sounded.'
 
 export interface NoteDeviceEnv {
   readonly mode: ModeInForce
@@ -88,6 +100,8 @@ export function runStage(device: NoteDevice, pitchClasses: readonly PitchClass[]
   switch (device.kind) {
     case 'scale':
       return scaleStage(device, pitchClasses, env)
+    case 'exact-ratio':
+      return {pitchClasses, passed: EXACT_RATIO_PASSES}
   }
 }
 
@@ -125,13 +139,14 @@ export function newNoteDevice(kind: NoteDeviceKind, id: string): NoteDevice {
   switch (kind) {
     case 'scale':
       return {id, kind: 'scale', enabled: true, params: {tie: DEFAULT_TIE_RULE}}
+    case 'exact-ratio':
+      return {id, kind: 'exact-ratio', enabled: true, params: {}}
   }
 }
 
-export const NOTE_DEVICE_LABEL: Readonly<Record<NoteDeviceKind, string>> = Object.freeze({scale: 'Scale'})
+export const NOTE_DEVICE_LABEL: Readonly<Record<NoteDeviceKind, string>> = Object.freeze({scale: 'Scale', 'exact-ratio': 'Exact-ratio tuning'})
 
 /** The devices the add control names but does not offer: their owners have not served them. Named, never faked. */
 export const NOTE_DEVICES_WAITING: readonly {readonly label: string; readonly waiting: string}[] = Object.freeze([
-  {label: 'Exact-ratio tuning', waiting: 'waiting on its owner (exact-ratio tuning)'},
   {label: 'Sky', waiting: 'waiting on its owner (planetary modulation sources)'},
 ])

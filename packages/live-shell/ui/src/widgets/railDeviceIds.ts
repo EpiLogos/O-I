@@ -32,6 +32,19 @@ for (const spec of RAIL_DEVICES) claimRailWidget(spec.id, railDeviceId(spec.id))
 export const RAIL_SKY_DEVICE_ID = 'quaternal-logic:sky'
 claimRailWidget('sky', RAIL_SKY_DEVICE_ID)
 
+/** The rail's Packet is Central's Packet device's widget (manual §23.1 "Its tile is the device's widget view"; central__packet.tsx `widget`):
+ * its id as the door holds it (central/devices/agentChainDevices.ts PACKET_DEVICE_ID), named here so the shell's first frame loads none of
+ * Central. Central's chain publishes it while the chain stands; the rail's own publisher (widgets/railChainDevices.tsx) publishes it while
+ * its tile is open and no chain holds it. */
+export const RAIL_PACKET_DEVICE_ID = 'central:packet'
+claimRailWidget('packet', RAIL_PACKET_DEVICE_ID)
+
+/** The rail's Graph is the Knowledge graph device's widget (manual §23.1 "the graph around your selection"; knowledge-graph__graph.tsx
+ * `widget`): its id as the door holds it (techne/devices/designDevices.ts GRAPH_DESIGN). Technē's rack publishes it while the Knowledge
+ * graph stands there; the rail publishes its own while the tile is open and no chain holds it (widgets/railChainDevices.tsx). */
+export const RAIL_GRAPH_DEVICE_ID = 'knowledge-graph:graph'
+claimRailWidget('graph', RAIL_GRAPH_DEVICE_ID)
+
 /** A rail-born device as the runtime holds it: no rows of its own (its design draws on the binding's keys). */
 export function railDevice(id: RailDeviceId): DeviceInstance {
   const spec = RAIL_DEVICES.find(item => item.id === id)!

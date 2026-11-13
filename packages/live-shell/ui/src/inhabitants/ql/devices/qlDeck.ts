@@ -374,7 +374,7 @@ export function qlDeckValues(deck: QlDeckState): Record<string, Value> {
   if (values.spread === undefined && last && (SPREAD_IDS as readonly string[]).includes(last.kind.kind)) values.spread = last.kind.kind
   const hexagram = reading.iching.at(-1)
   if (hexagram && Array.isArray(hexagram.lines) && hexagram.lines.length === 6) values.iching = JSON.stringify({lines: hexagram.lines, nuclear: hexagram.nuclear})
-  if (!placements.length && !hexagram) values.reason = reading.status === 'closed' ? 'The journey is closed.' : 'Nothing is drawn yet: press Play to draw, with your consent to chance.'
+  if (!placements.length && !hexagram) values.reason = reading.status === 'closed' ? 'The journey is closed.' : 'Nothing is drawn yet: turn Consent on, then press Draw (or Cast, for the I Ching).'
   return values
 }
 

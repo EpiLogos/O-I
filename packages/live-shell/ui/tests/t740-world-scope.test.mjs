@@ -174,7 +174,7 @@ test('CODE-READING — the readings the walk named carry no literal project; the
     'agent/devices/EncounterObserver.tsx', 'agent/devices/useAgentChainReading.ts', 'agent/devices/useRackReading.ts', 'central/devices/groundDevices.ts',
     'components/NativeContextPanel.tsx', 'inhabitants/CentralHygieneDevice.tsx', 'native/expressionOwners.ts', 'inhabitants/ql/devices/skyPresences.ts',
     'inhabitants/ql/devices/qlM3Clock.ts', 'panels/expressions.tsx', 'owners/readers.ts', 'projections/useWorldTemporalReading.ts', 'widgets/agentConversation.ts',
-    'widgets/railDevices.tsx', 'projections/atlas/palaces/palaceOwners.ts', 'widgets/AgentWidget.tsx', 'widgets/PacketWidget.tsx', 'shell/transports/useCentralTransport.tsx',
+    'widgets/railDevices.tsx', 'projections/atlas/palaces/palaceOwners.ts', 'widgets/AgentWidget.tsx', 'widgets/railChainDevices.tsx', 'shell/transports/useCentralTransport.tsx',
     'frame/tracks/useFactoryTracks.ts']
   for (const site of sites) assert.doesNotMatch(read(site), /(project|PROJECT)\b[^\n]{0,24}['"]O-I['"]/, `${site}: no literal project`)
   assert.match(read('agent/AgentSessionsProvider.tsx'), /useWorldAgencyEntries\(transport\)/, 'the provider reads the world\'s agency')

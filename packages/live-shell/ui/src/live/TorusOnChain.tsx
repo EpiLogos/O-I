@@ -2,8 +2,8 @@
 // in a pane — one device, its live settings the same in all three, and its picture drawn at each size (manual §10.4: a small
 // live picture on the rack, the device at full size in a pane). The picture is the torus's outline, tinted by the owner's
 // standing; the oscillation itself is only ever the simulation's own render on the stage (lock §0.2.2), never redrawn here.
-// Its own Full is the torus at the pane's size with the Jankó keyboard under it (manual §16.15 Full; DLW §21.2 Full): the pane is
-// the instrument you play.
+// Its own Full is the design's Full (the torus in its figure, the Comma at its edge, the band and rate, the sounding notes lit) with
+// the playable Jankó keyboard under it (manual §16.15 Full; DLW §21.2 Full): the pane is the instrument you play.
 //
 // The plate is the catalogue's design of the Torus (inhabitants/catalogue/panels/torus.tsx, `quaternal-logic:torus`), drawn on the
 // owner's readings and writes (torusDevice.ts torusDesignBinding), published with the device so the pool, a pane and the rail draw it
@@ -21,13 +21,16 @@ import {publishDevice, selectDevice} from '../frame/devices/deviceDoor'
 import {DEVICE_PANE_KIND} from '../frame/devices/devicePane'
 import {openInstrument} from '../frame/instrumentDoor'
 import {followSetTempoOnTorus, torusTempoEdit, TORUS_DESIGN_ID, TORUS_HEAD_ACTS, TORUS_DEVICE, TORUS_DEVICE_ID, torusBodyEdits, torusBodySourceOf, torusDesignBinding, torusDevice, torusFigure, torusTone, torusSessionOf,
-  torusFollowed, torusFollowEdits, torusFollowMoved, torusLaneStanding, torusMaqamFollow, torusStageRead, torusViewOf, TORUS_FOLLOW, type TorusFigureSize, type TorusFollow, type TorusMaqamKept,
+  torusFollowed, torusFollowEdits, torusFollowMoved, torusLaneStanding, torusMaqamFollow, torusSounding, torusStageRead, torusViewOf, TORUS_FOLLOW, type TorusFigureSize, type TorusFollow, type TorusMaqamKept,
   type TorusView} from './torusDevice'
 import {liveClipActs, type ClipLaneStanding} from './clipPlayer'
 import {refusalWords} from '../../../../../desktop/cradle/src/shared/Refusal.tsx'
 import {commitLiveInstrumentEdit, LIVE_TORUS_ABSENT_REASON, liveInstrumentWritable, subscribeAcceptedLiveWrites, useLiveTorusReading, type LiveTorusState} from './torusInstrument'
 import {JankoDevice} from './janko/JankoDevice'
-import {useKeyboardLayout} from './keyboardLayout'
+import {useKeyboardLayout, useLivePlaying} from './keyboardLayout'
+import {HostedDevice} from '../frame/devices/deviceHost'
+import {useDesign} from '../frame/devices/designs'
+import type {DesignBinding} from '../frame/devices/designed'
 import {MidiMapTarget} from './midiMap/midiMapControls'
 import {skyHeldTorusKeys, skyTargets, useSkyModulationPlan} from './designBindings/skyModulation'
 import {useHostedChrome} from '../projections/expressionsPaneHost'
@@ -67,17 +70,22 @@ export function TorusPicture({state, size = 'compact', view = 'surface'}: {state
   </div>
 }
 
-/** The torus's own Full: the outline at the pane's size, tinted by the owner's standing, and under it the keyboard — the same
- * keyboard as the chain's (its layout held in the shell, keyboardLayout.ts), deaf to MIDI, which the chain's plate hears. A key
- * strikes the torus through the one input path; where on the ring it lands is the kernel's derivation (packet K), not drawn here. */
-export function TorusFull() {
+/** The torus's own Full: the catalogue design's Full on the chain's binding (the torus in its figure, the Comma, the band and rate,
+ * the sounding notes lit), and under it the keyboard — the same keyboard as the chain's (its layout held in the shell, keyboardLayout.ts),
+ * deaf to MIDI, which the chain's plate hears. A key strikes the torus through the one input path. Without a binding, or while the design
+ * loads, the outline stands in its place. */
+export function TorusFull({binding}: {binding?: DesignBinding} = {}) {
   const state = useLiveTorusReading()
   const layout = useKeyboardLayout()
   // The pane draws the View you keep on the device (manual §21.2 View: "What the pane draws").
   const view = torusViewOf(useHolds()[TORUS_DESIGN_ID])
+  const design = useDesign(TORUS_DESIGN_ID, !!binding)
   return <div className="torus-full" data-torus-full={state === null ? 'absent' : state.ok ? state.value.standing : 'refused'}>
     <div className="torus-full-ring">
-      {state === null ? <p className="torus-full-absent">{LIVE_TORUS_ABSENT_REASON}</p> : <TorusPicture state={state} size="full" view={view} />}
+      {state === null ? <p className="torus-full-absent">{LIVE_TORUS_ABSENT_REASON}</p>
+        // The design's pane body fills the room it is given (panels.css .ref-pane-body): this box is that room.
+        : design && binding ? <div style={{position: 'relative', flex: '1 1 auto', minHeight: 0}}><HostedDevice designed={design} binding={binding} view="full" nav={{}} /></div>
+        : <TorusPicture state={state} size="full" view={view} />}
     </div>
     <div className="torus-full-keys"><JankoDevice plate layout={layout} midi={false} /></div>
   </div>
@@ -167,9 +175,11 @@ export function useTorusChainBinding(state: LiveTorusState | null, device: Devic
       (cause: unknown) => refuse(refusalWords(NOT_REENABLED, cause)))
   }, [])
   const laneStanding = useMemo(() => torusLaneStanding(lanes, reenable, laneRefused?.lanes === lanes ? laneRefused.words : undefined), [lanes, reenable, laneRefused])
-  return useMemo(() => torusDesignBinding(state, device, skyHeldTorusKeys(plan, skyTargets(state)), stage, rack, run, held ?? {}, condition, tattvaName, table,
-    undefined, undefined, follow, laneStanding),
-    [state, device, plan, stage, rack, run, held, condition, tattvaName, table, follow, laneStanding])
+  // The keys sounding now on the part's one playing path: the design lights them on the ring and its keyboard.
+  const sounding = useLivePlaying().held
+  return useMemo(() => torusSounding(torusDesignBinding(state, device, skyHeldTorusKeys(plan, skyTargets(state)), stage, rack, run, held ?? {}, condition, tattvaName, table,
+    undefined, undefined, follow, laneStanding), sounding),
+    [state, device, plan, stage, rack, run, held, condition, tattvaName, table, follow, laneStanding, sounding])
 }
 
 /** The torus on the chain. `tempoBpm` is the set's tempo (the transport's reading): the owner's session is kept on it, so a tempo
@@ -205,7 +215,7 @@ export function TorusOnChain({state, tempoBpm = null, selection = null, setPath 
     followSetTempoOnTorus(state, tempoBpm).catch(() => { /* named on the owner's reading */ })
   }, [state, tempoBpm])
   useEffect(() => {
-    publishDevice(TORUS_DEVICE_ID, {device, binding, picture: size => <TorusPicture state={state} size={size} view={view} />, acts: TORUS_HEAD_ACTS, full: {draw: () => <TorusFull />}})
+    publishDevice(TORUS_DEVICE_ID, {device, binding, picture: size => <TorusPicture state={state} size={size} view={view} />, acts: TORUS_HEAD_ACTS, full: {draw: () => <TorusFull binding={binding} />}})
   }, [device, binding, state, view])
   useEffect(() => () => publishDevice(TORUS_DEVICE_ID, null), [])
   return <div className="chain-side" data-chain-instrument={TORUS_DEVICE_ID} data-live-torus={state.ok ? state.value.standing : 'refused'}>

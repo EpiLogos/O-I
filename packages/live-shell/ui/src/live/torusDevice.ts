@@ -225,7 +225,9 @@ export const TORUS_ABSENT: Readonly<Record<string, string>> = {
   chain: RACK_CHAIN_NONE,
   // mode.followed: the lens and mode Follow takes (torusFollowed), read where the host reads the clip and the set's mode (TorusOnChain.tsx).
   'mode.followed': 'No clip or set reading reaches the Torus in this host, so Follow has nothing to read: the lens and mode are the ones you choose.',
-  sounding: 'No key is lit from the owner here: the keyboard strikes each key through QL\'s torus-play, which counts it as a note at its moving point, and the sounding notes stand in Notes (each key and the arc it struck); this picture lights pitch classes, which that reading does not name.',
+  // sounding: the pitch classes the part's one playing path holds (keyboardLayout.ts useLivePlaying), lit on the ring and the keyboard
+  // where the chain hosts the Torus (TorusOnChain.tsx useTorusChainBinding, torusSounding); absent where no playing path is read.
+  sounding: 'No key is lit here: the keys held on the part\'s playing path are read only where the chain hosts the Torus.',
   // body.source: the hand's choice over M2's body constants (QL's table, `ql kernel body-constants`; qlCoordinateName.ts BodyTable), written
   // as the body's Damping through the stage channel (torusBody); absent with its reason until the table is read and the owner takes edits.
   'body.source': 'Reading M2\'s body constants…',
@@ -898,6 +900,15 @@ export function torusDesignBinding(state: LiveTorusState | null, device: DeviceI
     // value now.
     ...(Object.keys(skyHeld).length ? {modulatedBy: skyHeld} : {}),
   }
+}
+
+/** The binding with the keys sounding now: the pitch classes the part's one playing path holds (keyboardLayout.ts useLivePlaying
+ * `held`), which the design lights on the ring and on its keyboard (manual §21.2 Full: "A sounding note lights its key and its point on
+ * the ring"). Pure. */
+export function torusSounding(binding: DesignBinding, held: readonly number[]): DesignBinding {
+  const standing = {...binding.standing}
+  delete standing.sounding
+  return {...binding, values: {...binding.values, sounding: JSON.stringify([...held])}, standing}
 }
 
 // ── the device's picture ─────────────────────────────────────────────────────

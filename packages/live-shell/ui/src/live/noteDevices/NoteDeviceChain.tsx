@@ -6,8 +6,10 @@
 // It is added from the browser's Chain devices (components/BrowserPane.tsx). Faces read; the pitch set is the owner's (the mode in force).
 // A Scale device wears its catalogue design, Scale mapping (live__scale-mapping.tsx), on its owners — this device's power and tie and
 // the transport's mode with the owner's catalogue (designBindings/scaleMappingBinding.ts) — where the chain is given the catalogue.
+// An Exact-ratio device wears its catalogue design, Exact-ratio tuning (live__exact-ratio.tsx), on what its owners state: the bases'
+// generators from the owner's catalogue, the view's Readout and Error in its own hand (designBindings/exactRatioBinding.ts).
 
-import {useCallback, useEffect, useMemo, useRef, type CSSProperties, type DragEvent, type KeyboardEvent} from 'react'
+import {useCallback, useEffect, useMemo, useReducer, useRef, type CSSProperties, type DragEvent, type KeyboardEvent} from 'react'
 import type {ModeInForce} from '../modes'
 import {setLiveModeHold, useLiveModeInForce, type LiveModeCatalogueState, type LiveModeHold} from '../../native/liveModeCatalogue'
 import {moveNoteDevice, removeNoteDevice, setNoteDevicePower, setScaleTie, useNoteDeviceChain} from './noteDeviceHold'
@@ -20,6 +22,7 @@ import {usePublishedDevice} from '../usePublishedDevice'
 import {noteDevice, noteDeviceReading, type NoteDeviceHold} from '../liveChainDevices'
 import {NoteFoldPicture} from './NoteFoldPicture'
 import {asScaleMappingDevice, scaleMappingBinding, type ScaleMappingWriters} from '../designBindings/scaleMappingBinding'
+import {exactRatioBinding, exactRatioDevice} from '../designBindings/exactRatioBinding'
 import {useQlSkyState} from '../../inhabitants/ql/devices/qlSky'
 import {MOTION} from '../../inhabitants/sdk/panel'
 import './noteDevices.css'
@@ -94,11 +97,17 @@ function moveTo(devices: readonly NoteDevice[], id: string, target: number): voi
 
 function NoteDevicePlate({device, index, devices, mode, catalogue}: {device: NoteDevice; index: number; devices: readonly NoteDevice[]; mode: ModeInForce; catalogue?: NoteDeviceCatalogue}) {
   const designed = device.kind === 'scale' && catalogue !== undefined
-  const instance = useMemo(() => { const plain = noteDevice(device, mode, HOLD); return designed ? asScaleMappingDevice(plain) : plain }, [device, mode, designed])
+  const instance = useMemo(() => {
+    if (device.kind === 'exact-ratio') return exactRatioDevice(device, HOLD)
+    const plain = noteDevice(device, mode, HOLD); return designed ? asScaleMappingDevice(plain) : plain
+  }, [device, mode, designed])
   // The hour of now as the Sky counts it at its place (QL's `ql nara hours`): Scale mapping reads its planet and the maqāmāt bound to it.
   const sky = useQlSkyState()
-  const binding = useMemo(() => (designed ? scaleMappingBinding(instance.id, device, catalogue!.reading, catalogue!.hold, WRITERS, sky) : undefined),
-    [designed, instance.id, device, catalogue, sky])
+  // Exact-ratio's Readout and Error are the view's own hand: a choice redraws the binding.
+  const [viewed, redraw] = useReducer((n: number) => n + 1, 0)
+  const binding = useMemo(() => (device.kind === 'exact-ratio' ? exactRatioBinding(instance.id, catalogue?.reading ?? {state: 'loading'}, redraw)
+    : designed ? scaleMappingBinding(instance.id, device, catalogue!.reading, catalogue!.hold, WRITERS, sky) : undefined),
+    [designed, instance.id, device, catalogue, sky, viewed])
   // Its live picture, in its well wherever it is drawn: the fold it makes of the twelve classes under the mode in force.
   const picture = useCallback(() => <NoteFoldPicture device={device} mode={mode}/>, [device, mode])
   usePublishedDevice(instance.id, instance, picture, binding)

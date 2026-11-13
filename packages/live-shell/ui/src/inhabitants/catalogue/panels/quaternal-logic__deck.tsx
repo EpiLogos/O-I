@@ -20,7 +20,9 @@
 //   matrix        'complementary' | 'moving-resting' | 'same-quality': the matrix whose generation cell shows, for the I Ching
 //   generation    {hexagram, lower, upper, positive, negative, nonDual} — the kernel's cell (ql_m3_generate) of the primary hexagram
 // Pairs, Lemniscate and Moving lines show or open parts of the reading; Agent reads is how an agent's reading arrives.
-import {Band, Chooser, Display, Folded, Handle, Panel, Radio, Readout, Section, TextField, Tile, Toggle, type LightState} from '../../sdk/panel'
+// Consent is your consent to chance, spent by the act it allows: Draw (a tarot spread, `act.draw`) or Cast (the I Ching lines,
+// `act.cast`); Close (`act.close`, held) ends the journey.
+import {Action, Band, Chooser, Display, Folded, Handle, Panel, Radio, Readout, Section, TextField, Tile, Toggle, type LightState} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, json, st, strOf, type DesignedDevice, type ViewProps} from './design'
 
 type V = ViewProps['v']
@@ -170,6 +172,11 @@ function controls(p: ViewProps) {
     journey: <Chooser {...st(p, 'journey')} wide label="Journey" does="The journey that the reading joins." value={strOf(v, 'journey') ?? ''}
       options={strOf(v, 'journey') ? [{value: strOf(v, 'journey')!, label: strOf(v, 'journey')!}] : []} onChange={x => p.set('journey', x)}
       disabled={st(p, 'journey').disabled ?? (strOf(v, 'journey') ? undefined : 'No journey is open.')} />,
+    consent: <Toggle {...st(p, 'consent')} label="Consent" does="Consent to chance for the next draw or cast. The act spends it." on={boolOf(v, 'consent') === true} onChange={x => p.set('consent', x)} />,
+    act: tarot
+      ? <Action {...st(p, 'act.draw')} label="Draw" does="Draw the spread, by the kernel's chance, with your consent." onPress={() => p.set('act.draw', true)} />
+      : <Action {...st(p, 'act.cast')} label="Cast" does="Cast the six lines with coins, by the kernel's chance, with your consent." onPress={() => p.set('act.cast', 'coins')} />,
+    close: <Action {...st(p, 'act.close')} hold label="Close" does="Hold to close the journey. No card or line comes after." onPress={() => p.set('act.close', 'closed')} />,
   }
 }
 
@@ -180,7 +187,7 @@ export const design: DesignedDevice = {
   title: 'Deck',
   kind: 'instrument',
   defaults: {
-    deck: 'tarot', spread: 'torus-day', draw: 'random', theme: 'What the work asks of me now', pairs: true, lemniscate: false, movingLines: true, agentReads: 'propose', journey: 'October journey',
+    deck: 'tarot', spread: 'torus-day', draw: 'random', theme: 'What the work asks of me now', pairs: true, lemniscate: false, movingLines: true, agentReads: 'propose', journey: 'October journey', consent: false,
     // Cards as the owner names them, each with its codon (`ql kernel m3`, the M3 state's `tarot` for each address).
     placements: day([['P0', 'Five of Cups', [7]], ['P1', 'Ten of Wands', [17]], ['P2', 'Page of Pentacles', [40], true], ['P3', 'Six of Swords', [51]], ['P4', 'Two of Cups', [3]],
       ['P5', 'Three of Wands', [22]]]),
@@ -221,21 +228,24 @@ export const design: DesignedDevice = {
       <Band>
         <Section label="Concern" width={170}>{c.theme}{c.journey}
           <Readout label="codon now" does="The card of the codon the M3 clock stands on now." value={strOf(p.v, 'm3.card')} tone="value" />
+          {c.close}
         </Section>
-        <Section label="Draw" width={76}>{c.draw}</Section>
+        <Section label="Draw" width={76}>{c.draw}{c.consent}{c.act}</Section>
         <Section label="Agent" grow>{c.agent}</Section>
       </Band>
     </Panel> },
 
-  full: p => <div className="ref-pane-body ref-pane-body--dark">
-    <svg viewBox="0 0 760 420" width="100%" height="100%" preserveAspectRatio="xMidYMid meet" className="ref-pane-svg" aria-label="The reading">
+  full: p => { const c = controls(p)
+    return <div className="ref-pane-body ref-pane-body--dark">
+    <svg viewBox="0 0 760 420" width="100%" height="100%" preserveAspectRatio="xMidYMid meet" className="ref-pane-svg" style={{flex: '1 1 auto', minHeight: 0}} aria-label="The reading">
       <g className="dp-display" style={{background: 'none', border: 'none'}}>
         <text x={20} y={24} className="dp-ink" style={{fontSize: 14}}>{strOf(p.v, 'theme') ?? NONE}</text>
         <text x={740} y={24} textAnchor="end" className="dp-ink-dim">{strOf(p.v, 'journey') ?? NONE}</text>
         <g transform="translate(60 36)"><Picture p={{...p, set: () => {}}} w={640} h={372} handles={false} big /></g>
       </g>
     </svg>
-  </div>,
+    <div style={{display: 'flex', gap: 14, justifyContent: 'center', alignItems: 'flex-end', padding: '6px 16px 10px', flex: 'none'}}>{c.consent}{c.act}{c.close}</div>
+  </div> },
 
   widget: p => <Tile title="Deck" light="unknown" span={2} onFull={p.nav.full}>
     <Display w={150} h={100} label="The last reading" does="The last reading. Press ▦ to open the Deck in the pane that has focus."><Picture p={p} w={150} h={100} handles={false} big={false} /></Display>
