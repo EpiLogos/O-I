@@ -28,7 +28,7 @@ test.before(async()=>{
   bundle:true,platform:'node',format:'esm',outfile:out,logLevel:'error',
   loader:{'.css':'empty'},
   plugins:[{name:'raw-text',setup(b){
-   // Vite-style `?raw` imports (the vendored geography pack) load as text.
+   // Vite-style `?raw` imports load as text.
    b.onResolve({filter:/\?raw$/},args=>({path:resolve(args.resolveDir,args.path.slice(0,-4)),namespace:'raw-text'}));
    b.onLoad({filter:/.*/,namespace:'raw-text'},async args=>({contents:`export default ${JSON.stringify(await readFile(args.path,'utf8'))};`,loader:'js'}));
   }}],

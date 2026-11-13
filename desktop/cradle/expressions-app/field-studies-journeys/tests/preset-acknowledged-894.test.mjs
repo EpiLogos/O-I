@@ -18,7 +18,7 @@ const require=createRequire(import.meta.url);
 const {build}=require(path.resolve(root,'../node_modules/esbuild'));
 const out=fs.mkdtempSync(path.join(os.tmpdir(),'oi-preset-ack-'));
 const rcRoot=path.resolve(root,'../vendor/research-canvas');
-const alias=Object.fromEntries(['schema','domain','desktop-api','geography','viewers','node-document'].map(name=>[`@research-canvas/${name}`,path.join(rcRoot,`packages/${name}/src/index.ts`)]));
+const alias=Object.fromEntries(['schema','domain','desktop-api','viewers','node-document'].map(name=>[`@research-canvas/${name}`,path.join(rcRoot,`packages/${name}/src/index.ts`)]));
 const entries={model:'src/model.ts',bridge:'src/kernelDocumentBridge.ts',composition:'src/kernelComposition.ts',presets:'../../../../packages/expressions-boundary/src/nativePresets.ts'};
 await build({absWorkingDir:root,nodePaths:[path.resolve(root,'../node_modules')],entryPoints:entries,bundle:true,alias,jsx:'automatic',format:'esm',platform:'node',target:'es2022',outdir:out,outExtension:{'.js':'.mjs'},logLevel:'silent',
  loader:{'.woff':'dataurl','.woff2':'dataurl','.ttf':'dataurl','.svg':'dataurl','.png':'dataurl','.jpg':'dataurl','.webp':'dataurl','.css':'empty'}});

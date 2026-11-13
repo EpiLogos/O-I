@@ -21,7 +21,6 @@
     "@vitejs/plugin-react": "^5.0.4",
     "@xyflow/react": "^12.11.6",
     "lucide-react": "^0.546.0",
-    "maplibre-gl": "^6.11.1",
     "perfect-freehand": "^1.2.3",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",

@@ -63,7 +63,7 @@ export const UNOPENED = [
 
 /** The frame's module aliases (expressions-app/vite.config.ts resolve.alias, tsconfig.json paths). */
 const FRAME_ALIASES = {
-  ...Object.fromEntries(['schema', 'domain', 'desktop-api', 'geography', 'viewers', 'node-document']
+  ...Object.fromEntries(['schema', 'domain', 'desktop-api', 'viewers', 'node-document']
     .map(name => [`@research-canvas/${name}`, join(FRAME, `vendor/research-canvas/packages/${name}/src/index.ts`)])),
   '@research-canvas/exporter': join(FRAME, 'vendor/research-canvas/browserExporter.ts'),
 }
