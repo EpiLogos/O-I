@@ -523,6 +523,14 @@ impl TemporalStreamSource for CentralThoughtsSource {
 // Wiki returns placement — `central.files.list`
 // ---------------------------------------------------------------------------
 
+/// Central's words for a listing of a folder that is not there
+/// (`ctrl` files.rs `list_files`: the path does not resolve, or is no
+/// directory).
+const NO_FOLDER: [&str; 2] = [
+    "No such file or directory",
+    "Central listing requires a directory",
+];
+
 /// The wiki-returns placement: files a knowledge return could not yet be
 /// included from. The directory listing carries no timestamps, so these
 /// events are instant-less placements — evidence-ref'd, never dated.
@@ -548,6 +556,26 @@ impl WikiReturnsPlacementSource {
                 json!({ "path": self.path, "project": Value::Null }),
             )
             .map_err(|error| unavailable(STREAM, error))?;
+        if envelope["ok"] != true {
+            // A ground no return has been placed in yet has no returns folder
+            // (a fresh world): that is no returns, not a broken record. Any other
+            // refusal is the stream unavailable, in Central's words.
+            let words = envelope
+                .pointer("/error/message")
+                .and_then(Value::as_str)
+                .unwrap_or_default();
+            if NO_FOLDER.iter().any(|phrase| words.contains(phrase)) {
+                return Ok(Vec::new());
+            }
+            return Err(TemporalEventsError::SourceUnavailable {
+                stream: STREAM.to_string(),
+                detail: if words.is_empty() {
+                    "Central refused the returns listing and gave no reason".into()
+                } else {
+                    words.to_string()
+                },
+            });
+        }
         if envelope.pointer("/data/automatic_agent_or_model_invocation") == Some(&Value::Bool(true))
         {
             return Err(refused_reading(STREAM));
@@ -2660,6 +2688,34 @@ mod read_field_tests {
             .events
             .iter()
             .all(|event| event.stream != FACTORY_STREAM));
+    }
+
+    #[test]
+    fn a_ground_with_no_returns_folder_has_no_returns_and_another_refusal_is_named() {
+        let owner = FakeOwner::new("wiki-returns-absent", &nowlist(&["ref-a"]), THOUGHTS_REPLY);
+        let files = owner.directory.join("files.json");
+        std::fs::write(&files, r#"{"ok":false,"status":"invalid_input","action":"central.files.list","error":{"code":"invalid_input","message":"No such file or directory (os error 2)"}}"#).unwrap();
+        assert_eq!(
+            WikiReturnsPlacementSource::new(owner.client())
+                .read()
+                .unwrap(),
+            Vec::new()
+        );
+        std::fs::write(&files, r#"{"ok":false,"status":"invalid_input","action":"central.files.list","error":{"code":"invalid_input","message":"Central listing requires a directory"}}"#).unwrap();
+        assert_eq!(
+            WikiReturnsPlacementSource::new(owner.client())
+                .read()
+                .unwrap(),
+            Vec::new()
+        );
+        std::fs::write(&files, r#"{"ok":false,"status":"forbidden","action":"central.files.list","error":{"code":"forbidden","message":"outside the agent aperture"}}"#).unwrap();
+        match WikiReturnsPlacementSource::new(owner.client()).read() {
+            Err(TemporalEventsError::SourceUnavailable { stream, detail }) => {
+                assert_eq!(stream, "wiki-returns");
+                assert_eq!(detail, "outside the agent aperture");
+            }
+            other => panic!("a refusal is the stream unavailable in Central's words: {other:?}"),
+        }
     }
 
     #[test]
