@@ -452,6 +452,11 @@ test('a device goes on the rail as a widget of the rail\'s own kind, stays in it
     assert.match(door.putOnRail('r:probe'), /rail is not open/, 'with no rail drawn, it says so')
   } finally { door.publishDevice('r:probe', null) }
   assert.match(html(createElement(rail.deviceWidget('device:r:gone').Body, {subject: null, pinned: false})), /on no chain now/, 'withdrawn with its chain, it says so and returns when the chain does')
+  // Walk 13 Nov: the rail's top line read "central:agent is on no chain now": a device never published is named by its title, not its id.
+  const away = html(createElement(rail.deviceWidget('device:central:never-published').Body, {subject: null, pinned: false}))
+  assert.match(away, /Never published is on no chain now/)
+  assert.doesNotMatch(away, /central:/)
+  assert.equal(rail.deviceWidget('device:central:agent').name, 'Agent')
 })
 
 test('the rail and the places bring no colour or scroller of their own', async () => {

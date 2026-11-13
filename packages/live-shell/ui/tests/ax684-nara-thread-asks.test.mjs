@@ -78,6 +78,8 @@ test('Central\'s chain asks AIKit for the dialogue\'s asks and the shown session
   const source = readFileSync(new URL('../src/central/devices/CentralDevices.tsx', import.meta.url), 'utf8')
   assert.match(source, /useAikitRead\(transport, nara\.session \? \{kind: 'decision-asks', agent_session: nara\.session\} : null\)/, 'the dialogue\'s session')
   assert.match(source, /useAikitRead\(transport, threadShown \? \{kind: 'decision-asks', agent_session: threadShown\} : null\)/, 'the session the Thread shows')
-  assert.match(source, /const answerInput = useMemo\(\(\) => \(\{nara:[\s\S]{0,400}?, asks: naraAsks\}\)/, 'the Agent\'s own thread')
+  // REPLACED (walk 13 Nov): a roster conversation open in Messages is the Agent while it stands open (r4-one-agent.test.mjs); else the
+  // dialogue's input carries its asks.
+  assert.match(source, /const answerInput = useMemo\(\(\): AnswerInput => \(openChat \? openConversationInput\(openChat, answerAgents\)\s*: \{nara:[\s\S]{0,400}?, asks: naraAsks\}\)/, 'the Agent\'s own thread')
   assert.match(source, /threadBinding\(\{selected: nara\.session, chainSession: nara\.session,[\s\S]{0,300}?, asks: shownAsks,/, 'the Thread page')
 })

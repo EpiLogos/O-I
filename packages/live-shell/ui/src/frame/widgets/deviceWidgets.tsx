@@ -15,6 +15,13 @@ export const isDeviceWidget = (id: string): boolean => id.startsWith(DEVICE_WIDG
  * face title), so a tile whose device is on no chain says which device is away by name (manual §16.3: a tile has a name), never by id. */
 const bodies = new Map<string, ComponentType<WidgetBodyProps>>()
 const names = new Map<string, string>()
+/** A device's name before it is published, from its id's last part (`central:agent` → "Agent"): what the rail calls a device it holds that
+ * stands on no chain yet, so its tile never names it by id. Pure. */
+export function nameOfDeviceId(deviceId: string): string {
+  const words = (deviceId.split(':').filter(Boolean).pop() ?? '').replace(/[-_]+/g, ' ').trim()
+  return words ? words[0].toLocaleUpperCase() + words.slice(1) : deviceId
+}
+const nameOf = (deviceId: string): string => names.get(deviceId) ?? nameOfDeviceId(deviceId)
 /** The words an away tile says, by the name the rail gives it. */
 export const awayWords = (name: string): string => `${name} is on no chain now. It returns here when its chain does.`
 function deviceBody(deviceId: string, name?: string): ComponentType<WidgetBodyProps> {
@@ -25,8 +32,8 @@ function deviceBody(deviceId: string, name?: string): ComponentType<WidgetBodyPr
     const door = useDeviceDoor()
     const entry = door.device(deviceId)
     if (!entry) {
-      const said = awayWords(names.get(deviceId) ?? deviceId)
-      return <p className="device-widget-away" data-i={`${names.get(deviceId) ?? deviceId}|${said}`}>{said}</p>
+      const said = awayWords(nameOf(deviceId))
+      return <p className="device-widget-away" data-i={`${nameOf(deviceId)}|${said}`}>{said}</p>
     }
     return <PlacedDevice device={entry.device} view="widget" picture={entry.picture} binding={entry.binding} onClose={close} />
   }
@@ -50,7 +57,7 @@ export function deviceWidget(widgetId: string): WidgetDeclaration {
   const deviceId = widgetId.slice(DEVICE_WIDGET_PREFIX.length)
   const entry = publishedDevices().find(published => published.device.id === deviceId)
   const name = entry?.device.face.title
-  return {id: widgetId, name: name ?? names.get(deviceId) ?? deviceId, mark: entry?.device.face.icon ?? 'form', hint: 'a device, kept at hand',
+  return {id: widgetId, name: name ?? nameOf(deviceId), mark: entry?.device.face.icon ?? 'form', hint: 'a device, kept at hand',
     bare: true, Body: deviceBody(deviceId, name)}
 }
 

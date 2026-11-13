@@ -26,6 +26,9 @@ export interface AnswerInput {
   /** AIKit's asks of the bound session to the decision helper (aikit_read decision-asks), absent while not asked for: the thread's Ask
    * rows (§19.4; threadBinding.ts askRowsOf), as on Factory's chain. */
   readonly asks?: AsksAnswer | null
+  /** The roster agent whose conversation is open in Messages (useAgentConversation.ts OpenConversation), when one is: the Agent is that
+   * agent, by its name, in that conversation's session — `nara` and `observed` then carry its session and its transcript view. */
+  readonly speaker?: {readonly agent: string; readonly name: string} | null
 }
 
 /** The role the Nara dialogue binds: the agent of that role answers on Central. */
@@ -75,13 +78,15 @@ export function centralAgentValues(id: string, input: AnswerInput): Values {
   const state = input.nara?.state
   if (state === 'bound') values.light = 'lit'
   else if (state === 'unbound' || state === 'refused') values.light = 'dark'
-  values.role = ROLE
-  const answering = (input.roster ?? []).filter(agent => agent.accepted).find(agent => agent.role === ROLE)
-  if (answering) values.agent = answering.name || answering.ref
+  const answering = input.speaker ? null : (input.roster ?? []).filter(agent => agent.accepted).find(agent => agent.role === ROLE)
+  const name = input.speaker?.name ?? (answering ? answering.name || answering.ref : null)
+  if (!input.speaker) values.role = ROLE
+  if (name) values.agent = name
   if (state === 'bound') {
     const status = input.observed?.status?.state
     if (status === 'TurnInFlight' || status === 'InterruptRequested') values.run = 'producing'
-    const thread = threadJson(input.observed, answering?.name ?? null, askRowsOf(input.asks, input.nara?.session ?? null, answering?.name ?? null))
+    const speaking = input.speaker?.name ?? answering?.name ?? null
+    const thread = threadJson(input.observed, speaking, askRowsOf(input.asks, input.nara?.session ?? null, speaking))
     if (thread !== undefined) values.thread = thread
   }
   // The packet the Send carries: the Packet's, when it is prepared for this very session (ported from the retired answerValues).
@@ -92,8 +97,18 @@ export function centralAgentValues(id: string, input: AnswerInput): Values {
   return values
 }
 
+/** The Agent's input while a roster agent's conversation stands open in Messages (useAgentConversation.ts OpenConversation): that agent, by
+ * its name, bound to the session AIKit opened it in — read directly, whether or not the agency reading lists that session — its turns the
+ * session's transcript view and its state the view's connection. Pure. */
+export function openConversationInput(open: {readonly agent: string; readonly name: string; readonly session: string; readonly view?: EncounterReading},
+  roster: AnswerInput['roster']): AnswerInput {
+  return {nara: {state: 'bound', session: open.session}, ...(open.view ? {observed: {reading: open.view, ...(open.view.connection ? {status: open.view.connection} : {})}} : {}),
+    roster, speaker: {agent: open.agent, name: open.name}}
+}
+
 /** The roster ref of the agent that answers on Central (the dialogue binding's role), for its Identity page. */
-export function centralAgentRef(input: Pick<AnswerInput, 'roster'>): string | null {
+export function centralAgentRef(input: Pick<AnswerInput, 'roster' | 'speaker'>): string | null {
+  if (input.speaker) return input.speaker.agent
   return (input.roster ?? []).filter(agent => agent.accepted).find(agent => agent.role === ROLE)?.ref ?? null
 }
 

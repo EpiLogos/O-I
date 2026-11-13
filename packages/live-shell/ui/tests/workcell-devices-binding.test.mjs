@@ -85,6 +85,13 @@ test('Git / landing reads the chain\'s git reading only; every policy and Land s
   const reading = {...model.INITIAL_READING, gitAdmitted: true, gitRepo: {branch: 'main', uncommitted: 3}}
   const binding = cell.gitBinding(reading, bind.chainHolds())
   assert.deepEqual(binding.values, {light: 'lit', branch: 'main', uncommitted: 3})
+  // The branch against main has no reading on a chain that stands for no workcell: named, never drawn as zero.
+  for (const key of ['ahead', 'behind']) assert.equal(binding.standing[key].disabled, cell.GIT_AHEAD_UNREAD, key)
+  // On a workcell's chain the seat instrument counts it (ahead_main, behind_main): the picture's dots and "N ahead · M behind".
+  const seated = cell.gitBinding({...reading, gitRepo: {branch: 'dlw/build', uncommitted: 3, ahead: 35, behind: 2}}, bind.chainHolds())
+  assert.deepEqual([seated.values.ahead, seated.values.behind, seated.standing.ahead], [35, 2, undefined])
+  const drawn = renderToStaticMarkup(createElement(host.HostedDevice, {designed: gitDesign, binding: seated, view: 'whole', nav: {}}))
+  assert.match(drawn, /35 ahead · 2 behind/, 'the branch picture reads the counts')
   assert.equal(cell.gitValues({...model.INITIAL_READING, gitAdmitted: false, gitRepo: {}}, bind.chainHolds()).light, 'dark')
   assert.deepEqual(cell.gitValues(model.INITIAL_READING, bind.chainHolds()), {}, 'unread: nothing, not even a light')
   for (const key of ['commit-policy', 'push-policy', 'landAs', 'land']) {

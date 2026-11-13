@@ -17,8 +17,13 @@
 //     (useConversationAnswer.ts): the Communiques to and from the open agent's Position — the open agent's conversation, as the Thread's rows
 //     (its own `thread`, which the design lays under `conv.`), and its last line;
 //   Central's agent-profile.review of the proposal Make wrote: its profile (role, purpose, world, sources, revision) and its content digest.
-// What nothing reads yet, each absent with the operation it waits for: an agent's model and type, the session's light and its last check-in
-// in the conversation, the types and skillsets the card offers.
+//   `aikit set list` (agent_definition {skillsets}, the Skillset rack's own set list, useRackReading.ts): the skillsets the card's Carries
+//     offers, by each set's name;
+//   the agency reading's tracks (AgentSessionsProvider): the session an agent works — its track (what it is for), in Factory, where the
+//     sessions stand as tracks — and Actuation's usage records over every session (`actuation usage list`, designBindings.ts
+//     lastUsageModels): the model that session last reported, as Factory's chain chips read it.
+// What nothing reads yet, each absent with the operation it waits for: an agent's type (its face's creature), the session's light and its
+// last check-in in the conversation, the types the card offers.
 //   Central's agent sets (`central.agent-set.list {scope}`, root and the project's, read through invoke_action as a reading; lane W7):
 //     records [{record {ref, members [{kind agent, agent_ref}], orchestrator_agent_ref?, proposal {reason}}, source_path}] — your groups,
 //     each by its ref, what it is for (the reason Central keeps with it), and its members as the Positions their agents occupy or are
@@ -102,7 +107,7 @@ export const MESSAGES_REFUSE = {
   conversation: missing('The conversation\'s session acts (Approve, Diff, Retry, Hard stop, Tell parent, a spawn\'s thread)', 'a session for the Position\'s conversation (`aikit gateway conversation` carries Communiques, not a session\'s turns)', 'AIKit'),
   session: unread('The session\'s light and its last check-in', 'a session for the Position\'s conversation (`aikit gateway conversation` carries Communiques, not a session)', 'AIKit'),
   types: unread('The agent types to choose from', 'a type on Central\'s agent profile (agent-profile.express takes none; the six families are the face rig\'s ontology, held by no owner)', 'Central'),
-  skillsets: unread('The skillsets it may carry', 'AIKit\'s sets for the card through the kernel', 'AIKit'),
+  skillsets: 'The skillsets it may carry: AIKit has not answered its set list yet (`aikit set list`, agent_definition {skillsets}).',
   worlds: unread('The worlds it may work in', 'the World refs AIKit\'s population names (`aikit gateway who`: local_world_ref, project_world_ref) — not read yet', 'AIKit'),
   noProposal: 'Nothing is proposed yet: say what it is for and press Make.',
   noCarrier: 'The kernel carrier is unavailable here, so Central cannot be asked.',
@@ -117,7 +122,7 @@ export const PERSON_ACTS = {express: 'agent-profile.express', review: 'agent-pro
 
 /** What each key no owner reports waits for. */
 export const MESSAGES_ABSENT: Readonly<Record<string, string>> = {
-  types: MESSAGES_REFUSE.types, skillsets: MESSAGES_REFUSE.skillsets,
+  types: MESSAGES_REFUSE.types,
   'conv.light': MESSAGES_REFUSE.session, 'conv.age': MESSAGES_REFUSE.session, 'conv.writes': MESSAGES_REFUSE.session,
 }
 
@@ -239,6 +244,46 @@ export const AGENT_PROPOSED = 'Proposed — Accept keeps it in your roster.'
 export const AGENT_UNSEATED = 'Not seated yet — it works where you seat it.'
 /** The first few words of what you made an agent for, as its name until Central keeps one. */
 const firstWords = (words: string) => { const line = firstLine(words); const cut = line.split(/\s+/).slice(0, 5).join(' '); return cut.length < line.length ? `${cut}…` : cut }
+
+/** Where an agent works, from the session it works (the agency reading's track of that agent): the mode its track stands in, the track,
+ * and the model the session last reported (Actuation's usage records). Each only where its owner reads it. */
+export interface AgentPlace {readonly mode?: string; readonly track?: string; readonly model?: string}
+
+/** The mode the agency's session tracks stand in: Factory's arrangement holds every agent session as a track (frame/tracks). */
+export const SESSION_MODE = 'Factory'
+
+/** Each agent's place, by its agent ref, from the agency reading's session tracks (a single session's, never a group's; the first that
+ * names the agent) and the model each session last reported (designBindings.ts lastUsageModels). Pure. */
+export function agentPlaces(tracks: readonly {readonly sessionRef: string; readonly agentRef: string | null; readonly purpose: string | null; readonly spaceLabel?: string | null; readonly group: boolean}[] | null,
+  models: ReadonlyMap<string, string> | null): ReadonlyMap<string, AgentPlace> {
+  const places = new Map<string, AgentPlace>()
+  for (const track of tracks ?? []) {
+    if (track.group || !track.agentRef || places.has(track.agentRef)) continue
+    const name = str(track.purpose) ?? str(track.spaceLabel ?? undefined), model = models?.get(track.sessionRef)
+    places.set(track.agentRef, {mode: SESSION_MODE, ...(name ? {track: firstLine(name)} : {}), ...(model ? {model} : {})})
+  }
+  return places
+}
+
+/** The track of the session a direct conversation is bound to (useAgentConversation.ts: the agent_session AIKit's agent_conversation
+ * answered): selected, it is the session the Agent widget and the chain's Agent read. Null until the agency reading lists it. Pure. */
+export function conversationTrack<T extends {readonly sessionRef: string; readonly group: boolean}>(tracks: readonly T[] | null, session: string | undefined): T | null {
+  return session ? (tracks ?? []).find(track => !track.group && track.sessionRef === session) ?? null : null
+}
+
+/** The name Messages gives the agent of a conversation (messagesAgents: its Position's label, else Central's label or your words for it),
+ * never its ref; null when the population does not name it. Pure. */
+export function conversationName(population: unknown, agent: string | null): string | null {
+  if (!agent) return null
+  const name = messagesAgents(population)?.find(row => row.id === agent)?.name
+  return typeof name === 'string' && name && name !== agent ? name : null
+}
+
+/** AIKit's set list (`aikit set list`: {sets [{name, members, …}]}) as the card's Carries: each set by its name. Null when not a set list. */
+export function skillsetsOf(list: unknown): string[] | null {
+  if (!isObj(list) || !Array.isArray(list.sets)) return null
+  return [...new Set(list.sets.flatMap(set => (isObj(set) && str(set.name) ? [String(set.name)] : [])))]
+}
 
 /** The Positions of the population, by ref: the other side of each pair the open agent's conversation is read with. */
 export function positionRefs(population: unknown): string[] {
@@ -430,6 +475,10 @@ export interface MessagesInput {
   readonly heard?: {readonly ref: string; readonly status: 'reading' | 'answered' | 'refused'; readonly value?: unknown; readonly error?: string}
   /** Central's agent-set listings (`central.agent-set.list {scope}`), root and the project's, as the window holds them. Absent: not read. */
   readonly agentSets?: readonly {readonly scope: 'root' | 'project'; readonly answer: {readonly status: 'reading'} | {readonly status: 'answered'; readonly value: unknown} | {readonly status: 'refused'; readonly error: string}}[]
+  /** AIKit's set list (`aikit set list`, agent_definition {skillsets}): the card's Carries. Absent: not read. */
+  readonly skillsets?: {readonly status: 'reading' | 'answered' | 'refused'; readonly value?: unknown; readonly error?: string | null}
+  /** Where each agent works, by its agent ref (agentPlaces over the agency reading's tracks and Actuation's usage records). */
+  readonly places?: ReadonlyMap<string, AgentPlace>
   readonly holds: ChainHolds
 }
 
@@ -480,10 +529,13 @@ export function messagesValues(input: MessagesInput): Values {
   if (isObj(known) && Array.isArray(known.positions)) for (const row of known.positions) {
     if (isObj(row) && str(row.position_ref) && isObj(row.occupancy) && row.occupancy.state === 'occupied' && str(row.occupancy.agent_ref)) occupants.set(String(row.position_ref), String(row.occupancy.agent_ref))
   }
-  const agents = listed?.map(agent => {
+  const agents = listed?.map((agent): Record<string, unknown> => {
     const occupant = occupants.get(String(agent.id))
     const state = occupant && input.runs ? messagesStateOf(input.runs.get(occupant) ?? null) : undefined
-    return state ? {...agent, state} : agent
+    // Where it works and on which model: the session of the agent occupying the Position, else (an agent of your roster) its own.
+    const place = input.places?.get(occupant ?? String(agent.id))
+    const where = {...(place?.mode ? {mode: place.mode} : {}), ...(place?.track ? {track: place.track} : {}), ...(isObj(agent.where) ? agent.where : {})}
+    return {...agent, ...(state ? {state} : {}), ...(Object.keys(where).length ? {where} : {}), ...(place?.model ? {model: place.model} : {})}
   }) ?? null
   // The open agent carries its conversation, as the design reads it (`thread` on the agent, laid under `conv.`), and its last line.
   const open = typeof values.open === 'string' ? values.open : undefined
@@ -509,7 +561,10 @@ export function messagesValues(input: MessagesInput): Values {
   // The groups: Central's agent sets read in each scope that answered, their members at the population's Positions.
   const answeredSets = (input.agentSets ?? []).flatMap(set => (set.answer.status === 'answered' ? [{scope: set.scope, ...(input.project ? {project: input.project} : {}), value: set.answer.value}] : []))
   if (answeredSets.length) values.groups = JSON.stringify(groupsOf(answeredSets, known))
-  // The card: the worlds AIKit names (Works in starts on the project's world, where the hand has not chosen), and the proposal Central wrote.
+  // The card: the skillsets AIKit keeps (Carries), the worlds AIKit names (Works in starts on the project's world, where the hand has not
+  // chosen), and the proposal Central wrote.
+  const sets = input.skillsets?.status === 'answered' ? skillsetsOf(input.skillsets.value) : null
+  if (sets) values.skillsets = JSON.stringify(sets)
   const worlds = known ? worldsOf(known) : []
   if (worlds.length) {
     values.worlds = JSON.stringify(worlds)
@@ -536,6 +591,8 @@ export function messagesBinding(input: MessagesInput, ports: MessagesPorts = {})
     : input.population.status === 'answered' ? unread('Your agents', 'the Positions in AIKit\'s population (the reading carries none)', 'AIKit') : 'AIKit\'s population has not answered yet (`aikit gateway who`).'}
   if (!('gateway' in values)) standing.gateway = {disabled: 'The Agency gateway has not answered yet (harness_agent_read through AIKit\'s gateway), and the population names no inbox.'}
   if (!('worlds' in values)) standing.worlds = {disabled: MESSAGES_REFUSE.worlds}
+  if (!('skillsets' in values)) standing.skillsets = {disabled: input.skillsets?.status === 'refused' && input.skillsets.error ? input.skillsets.error
+    : input.skillsets?.status === 'answered' ? 'The skillsets it may carry: AIKit answered something other than its set list (`aikit set list`).' : MESSAGES_REFUSE.skillsets}
   if (!('groups' in values)) {
     const refused = (input.agentSets ?? []).flatMap(set => (set.answer.status === 'refused' ? [set.answer.error] : []))
     standing.groups = {disabled: refused.length ? [...new Set(refused)].join(' ') : MESSAGES_REFUSE.team}

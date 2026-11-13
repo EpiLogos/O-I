@@ -40,6 +40,7 @@
 // from the view holds (designBindings.ts holdView).
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
+import type {AgentChainReading} from './agentChainDevices'
 import {chainHolds, holdView, viewHolds, type ChainHolds} from './designBindings'
 import {FRAME_RING, familyFaceDevice} from './mainTrackBindings'
 import {SEAT_UNREAD, seatReading, type WorkcellAnswer} from './workcellBindings'
@@ -125,16 +126,19 @@ export function workcellSeat(status: unknown, workcell: string, project: string)
 }
 
 /** Git / landing's reading on a workcell's chain (agentChainDevices.ts AgentChainReading's git fields, for workcellBindings.ts gitBinding):
- * the workcell's seat of the project — answered when the instrument lists it, its live branch, and its files with no commit (tracked
- * changes and untracked files) — refused when the instrument refused, unread while it reads. */
-export function workcellGitReading(seats: {readonly status: 'reading' | 'answered' | 'refused'; readonly value: unknown}, workcell: string, project: string): {gitAdmitted: boolean | null; gitRepo: {branch?: string; uncommitted?: number}} {
+ * the workcell's seat of the project — answered when the instrument lists it, its live branch, its files with no commit (tracked
+ * changes and untracked files) and its branch against main (`ahead_main`, `behind_main`) — refused when the instrument refused, unread
+ * while it reads. */
+export function workcellGitReading(seats: {readonly status: 'reading' | 'answered' | 'refused'; readonly value: unknown}, workcell: string, project: string): Pick<AgentChainReading, 'gitAdmitted' | 'gitRepo'> {
   if (seats.status === 'refused') return {gitAdmitted: false, gitRepo: {}}
   if (seats.status !== 'answered') return {gitAdmitted: null, gitRepo: {}}
   const seat = workcellSeat(seats.value, workcell, project)
   if (!seat) return {gitAdmitted: false, gitRepo: {}}
   const dirty = num(seat.dirty), untracked = num(seat.untracked)
+  const ahead = num(seat.ahead), behind = num(seat.behind)
   return {gitAdmitted: true, gitRepo: {...(str(seat.branch) && seat.state !== 'free' ? {branch: String(seat.branch)} : {}),
-    ...(dirty !== undefined && untracked !== undefined ? {uncommitted: dirty + untracked} : {})}}
+    ...(dirty !== undefined && untracked !== undefined ? {uncommitted: dirty + untracked} : {}),
+    ...(ahead !== undefined ? {ahead} : {}), ...(behind !== undefined ? {behind} : {})}}
 }
 
 export interface WorkcellRackInput {

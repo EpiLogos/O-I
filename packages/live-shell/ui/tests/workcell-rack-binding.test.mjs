@@ -183,12 +183,13 @@ test('(c) the instrument changes none of its connections\' settings; every act o
 
 test('the chain\'s own devices read the selected workcell: the Seat starts at its seat, Git / landing on its seat of the project', () => {
   bind.resetHolds()
-  assert.deepEqual(rack.workcellGitReading(answered(REAL.seatStatus), 'env-1', 'O-I'), {gitAdmitted: true, gitRepo: {branch: 'dlw/build', uncommitted: 38}})
-  assert.deepEqual(rack.workcellGitReading(answered(REAL.seatStatus), 'env-2', 'ai-kit'), {gitAdmitted: true, gitRepo: {uncommitted: 0}}, 'a free seat stands on no lane')
+  // The branch against main (batch 4, D-11): the seat instrument's ahead_main and behind_main reach the picture.
+  assert.deepEqual(rack.workcellGitReading(answered(REAL.seatStatus), 'env-1', 'O-I'), {gitAdmitted: true, gitRepo: {branch: 'dlw/build', uncommitted: 38, ahead: 35, behind: 0}})
+  assert.deepEqual(rack.workcellGitReading(answered(REAL.seatStatus), 'env-2', 'ai-kit'), {gitAdmitted: true, gitRepo: {uncommitted: 0, ahead: 0, behind: 1}}, 'a free seat stands on no lane')
   assert.deepEqual(rack.workcellGitReading({status: 'refused', value: null}, 'env-1', 'O-I'), {gitAdmitted: false, gitRepo: {}})
   assert.deepEqual(rack.workcellGitReading({status: 'reading', value: null}, 'env-1', 'O-I'), {gitAdmitted: null, gitRepo: {}})
   const git = cell.gitValues(rack.workcellGitReading(answered(REAL.seatStatus), 'env-3', 'O-I'), bind.chainHolds())
-  assert.deepEqual(git, {light: 'lit', branch: 'dlw/t1-theme', uncommitted: 0})
+  assert.deepEqual(git, {light: 'lit', branch: 'dlw/t1-theme', uncommitted: 0, ahead: 0, behind: 716})
   for (const name of ['env-1', 'env-2', 'env-3']) {
     assert.equal(cell.seatValues({status: REAL.seatStatus, project: 'O-I', branch: 'dlw/build', workcell: name, holds: bind.chainHolds()}).seat, name, `${name}: the Seat starts at its seat`)
   }

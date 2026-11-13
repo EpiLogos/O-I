@@ -90,23 +90,33 @@ export const GIT_REFUSE = {
   land: missing('Land', 'workcell-cli seat land (no such command; the seat instrument has no kernel op)', 'Workcell'),
 } as const
 
-/** Git / landing's values: the chain's git reading — its light, the checkout's branch and the files with no commit. The seat, the
- * branch against main, the commits, the diff's sums, the checks and the policies have no reading a kernel op reaches here. */
+/** Why the branch against main has no reading on a chain that stands for no workcell: the repository's reading counts a checkout against
+ * its own upstream, never against main; only the seat instrument counts against main (`ahead_main`, `behind_main`). */
+export const GIT_AHEAD_UNREAD = 'The branch against main: no reading reaches it yet — missing op: a count of the checkout\'s commits against main (git_repository_read counts a worktree against its own upstream; the seat instrument\'s `ahead_main` and `behind_main` stand only on a workcell\'s chain) (Central).'
+
+/** Git / landing's values: the chain's git reading — its light, the checkout's branch, the files with no commit, and the branch against
+ * main where the seat instrument reads it (the picture's dots and "N ahead · M behind"). The commits, the diff's sums, the checks and the
+ * policies have no reading a kernel op reaches here. */
 export function gitValues(reading: Pick<AgentChainReading, 'gitAdmitted' | 'gitRepo'>, holds: ChainHolds): Values {
   const values: Record<string, Value> = {}
   if (reading.gitAdmitted === true) values.light = 'lit'
   if (reading.gitAdmitted === false) values.light = 'dark'
   put(values, 'branch', reading.gitRepo.branch)
   put(values, 'uncommitted', reading.gitRepo.uncommitted)
+  put(values, 'ahead', reading.gitRepo.ahead)
+  put(values, 'behind', reading.gitRepo.behind)
   put(values, 'sel', viewHolds(holds, GIT_ID).sel)
   return values
 }
 
 export function gitBinding(git: Pick<AgentChainReading, 'gitAdmitted' | 'gitRepo'>, holds: ChainHolds): DesignBinding {
+  const values = gitValues(git, holds)
+  const absent: Record<string, string> = {}
+  for (const key of ['ahead', 'behind']) if (!(key in values)) absent[key] = GIT_AHEAD_UNREAD
   return {
     id: GIT_ID,
-    values: gitValues(git, holds),
-    standing: disabled(GIT_REFUSE),
+    values,
+    standing: {...disabled(absent), ...disabled(GIT_REFUSE)},
     local: held(GIT_ID, ['sel']),
     writes: key => key in GIT_REFUSE,
     write: async (changes: readonly ValueChange[]) => { for (const {key} of changes) throw Error(GIT_REFUSE[key as keyof typeof GIT_REFUSE] ?? reading(key)) },

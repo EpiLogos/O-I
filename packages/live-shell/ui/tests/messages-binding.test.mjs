@@ -67,6 +67,8 @@ const UNREACHABLE = {gatewayAdmitted: false, gatewayDoc: {refused: true, error: 
 const ANSWERED = {gatewayAdmitted: true, gatewayDoc: {state: 'ready'}}
 const GUARDIAN = 'central:position:project:O-I:central-guardian'
 const conversation = answered(conv.mergeConversations(GUARDIAN, [REAL.conversation]))
+// FIXTURE: AIKit's set list as `aikit set list --json` answers it ({sets [{name, members, projected, provenance, withheld}], count}).
+const SET_LIST = {count: 2, sets: [{members: 5, name: 'central:documentation', projected: 3, provenance: 'registry', withheld: 2}, {members: 2, name: 'aikit:project-author', projected: 2, provenance: 'registry', withheld: 0}]}
 
 test('Messages is keyed to its design: an instrument born on the rail, with its tile and its Full only', () => {
   const device = msg.messagesDevice()
@@ -210,23 +212,75 @@ test('(#757) each message of the conversation carries its drag onto a track: the
   bind.resetHolds()
 })
 
+test('the card carries AIKit\'s skillsets, and each agent reads where its session works and the model it last reported (batch 4, D-10)', () => {
+  bind.resetHolds()
+  const OCCUPANT = 'agent/central-guardian'
+  // The agency reading's tracks: the guardian's session, and a group track that names no place of its own.
+  const tracks = [{sessionRef: 'agent-session/g1', agentRef: OCCUPANT, purpose: 'Guards the landing\nand more', spaceLabel: 'guard-space', group: false},
+    {sessionRef: 'space/team', agentRef: OCCUPANT, purpose: 'The team', group: true}]
+  const places = msg.agentPlaces(tracks, new Map([['agent-session/g1', 'claude-opus-4']]))
+  assert.deepEqual(places.get(OCCUPANT), {mode: 'Factory', track: 'Guards the landing', model: 'claude-opus-4'})
+  const input = {population: answered(REAL.population), gateway: ANSWERED, skillsets: answered(SET_LIST), places, holds: bind.chainHolds()}
+  const binding = msg.messagesBinding(input)
+  assert.deepEqual(JSON.parse(binding.values.skillsets), ['central:documentation', 'aikit:project-author'], 'Carries offers AIKit\'s sets by name')
+  const guardian = JSON.parse(binding.values.agents).find(agent => agent.id === GUARDIAN)
+  assert.equal(guardian.model, 'claude-opus-4', 'the model its occupant\'s session last reported')
+  assert.deepEqual([guardian.where.mode, guardian.where.track], ['Factory', 'Guards the landing'])
+  // Drawn: the list row says where it works, and the card's Carries has the sets as options.
+  bind.holdView(msg.MESSAGES_ID, 'open', GUARDIAN)
+  const pane = draw(msg.messagesBinding({...input, holds: bind.chainHolds()}), 'full')
+  assert.match(pane, / · Factory · /, 'the row names the mode its agent works in')
+  assert.equal(msg.skillsetsOf({sets: []}).length, 0)
+  assert.equal(msg.skillsetsOf(null), null)
+  // Refused: AIKit's own words; unread: what it waits for.
+  assert.equal(msg.messagesBinding({...input, skillsets: {status: 'refused', error: 'aikit: no home'}}).standing.skillsets.disabled, 'aikit: no home')
+  assert.equal(msg.messagesBinding({...input, skillsets: undefined}).standing.skillsets.disabled, msg.MESSAGES_REFUSE.skillsets)
+  // The agent's type has no owner: its face stays the design's initial, and the card's Type names why.
+  assert.equal(guardian.pattern, undefined)
+  assert.match(binding.standing.types.disabled, /missing op: a type on Central's agent profile/)
+  bind.resetHolds()
+})
+
+test('a roster agent\'s direct conversation binds the session AIKit opened it in: its track, once the agency reading lists it', () => {
+  const tracks = [{sessionRef: 'agent-session/a', group: true}, {sessionRef: 'agent-session/a', group: false, agentRef: 'agent:x'}, {sessionRef: 'agent-session/b', group: false}]
+  assert.equal(msg.conversationTrack(tracks, 'agent-session/a'), tracks[1], 'the session\'s own track, never a group\'s')
+  assert.equal(msg.conversationTrack(tracks, 'agent-session/z'), null, 'not listed yet: nothing is selected')
+  assert.equal(msg.conversationTrack(tracks, undefined), null)
+  const source = readFileSync(new URL('../src/agent/devices/AgentRailDevices.tsx', import.meta.url), 'utf8')
+  assert.match(source, /conversationTrack\(tracks, chat\?\.session\)/, 'the publisher reads the conversation\'s session')
+  assert.match(source, /shell\.setSelectedTrackId\(trackKey\(chatTrack\), chatName \?\?/, 'and makes it THE selection, under the agent\'s name, that Factory\'s chain reads')
+})
+
+// Walk 13 Nov: the title line, the Trail and the Context's subject read "Your conversation with agent:expressed-…": the selection carried
+// the session's purpose, which names the agent by its ref.
+test('the conversation\'s agent is named as Messages names it, never by its ref', () => {
+  const population = {positions: [], agents: [{agent_ref: 'agent:expressed-0600', purpose: 'Keeps my practice and reads today\'s Flow with me',
+    source_relation: {intent_provenance: {intent_expression: 'Keeps my practice and reads today\'s Flow with me'}}}]}
+  const name = msg.conversationName(population, 'agent:expressed-0600')
+  assert.ok(name && !name.includes('agent:expressed'), name)
+  assert.match(name, /^Keeps my practice/)
+  assert.equal(msg.conversationName(population, 'agent:other'), null, 'an agent the population does not name has no name here')
+  assert.equal(msg.conversationName(null, null), null)
+})
+
 test('(b) every key the design reads is an owner reading, absent with its missing operation named, or a hold of the hand', () => {
   bind.resetHolds()
   // REPLACED (lane W7): the groups are Central's agent sets (central-agent-sets-2026-10-21.json, REAL), read as a reading.
   const SETS = JSON.parse(readFileSync(new URL('./fixtures/central-agent-sets-2026-10-21.json', import.meta.url), 'utf8'))
   const agentSets = [{scope: 'root', answer: {status: 'answered', value: SETS.root}}, {scope: 'project', answer: {status: 'answered', value: SETS.project}}]
-  const binding = msg.messagesBinding({population: answered(REAL.population), gateway: ANSWERED, conversation, project: 'O-I', agentSets, holds: bind.chainHolds()}, {act: async () => ({})})
+  const binding = msg.messagesBinding({population: answered(REAL.population), gateway: ANSWERED, conversation, project: 'O-I', agentSets, skillsets: answered(SET_LIST), holds: bind.chainHolds()}, {act: async () => ({})})
   const classes = Object.fromEntries(designKeys.map(key => [key, classify(binding, key)]))
   for (const [key, kind] of Object.entries(classes)) assert.ok(kind, `${key}: classified`)
   // Voice's value is the hand's listening (off until it is turned on), written through the kernel's dictation.
-  assert.deepEqual(Object.entries(classes).filter(([, kind]) => kind === 'reading').map(([key]) => key).sort(), ['agents', 'conv.voice', 'gateway', 'groups', 'worlds'])
+  // REPLACED (batch 4, D-10): the card's Carries reads AIKit's set list.
+  assert.deepEqual(Object.entries(classes).filter(([, kind]) => kind === 'reading').map(([key]) => key).sort(), ['agents', 'conv.voice', 'gateway', 'groups', 'skillsets', 'worlds'])
   // Voice is the kernel's dictation (no owner op missing): with no carrier it says the dictation cannot be asked.
   for (const [key, kind] of Object.entries(classes)) if (kind === 'absent') assert.match(binding.standing[key].disabled, /missing op:/, `${key}: names what it waits for`)
   assert.equal(binding.standing['conv.voice'].disabled, msg.MESSAGES_REFUSE.voice)
   // Absent: the readings no owner reports. REPLACED (lane A wiring): Voice is the kernel's dictation, no longer absent.
   // REPLACED (lane AC, Buzz): Input is the hand's — where Send lands, carried with the words as AIKit's handling.
   assert.deepEqual(Object.entries(classes).filter(([, kind]) => kind === 'absent').map(([key]) => key).sort(),
-    ['conv.age', 'conv.light', 'conv.writes', 'skillsets', 'types'])
+    ['conv.age', 'conv.light', 'conv.writes', 'types'])
   // The proposal is Central's reading once Make wrote one; Change is the hand's (it takes the card back to its fields).
   for (const key of ['open', 'show', 'order', 'search', 'conv.draft', 'conv.toolRows', 'conv.subagents', 'conv.messages', 'conv.input', 'new.for', 'new.type', 'new.world', 'proposal']) assert.equal(classes[key], 'local', key)
   assert.deepEqual(JSON.parse(binding.values.worlds), ['project:O-I', 'control:root'], 'the World refs AIKit\'s population names')

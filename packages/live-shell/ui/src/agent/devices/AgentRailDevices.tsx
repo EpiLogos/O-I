@@ -19,7 +19,7 @@
 // agencyBinding, framesBinding), receiptBindings.ts ledgerBinding, workcellRackBinding.ts — Workcell's instrument, which changes none of its
 // connections' settings (§19.23) and carries the seat instrument, Ground hygiene's census, the Remote carrier's plan and Central's machine
 // readings as its Seats and Machine pages (oneAgentBinding.ts carryPages).
-import {useCallback, useEffect, useMemo, useState, useSyncExternalStore} from 'react'
+import {useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore} from 'react'
 import {useOwnerOp} from '../../owners/ownerCall'
 import {publishDevice, publishedDevice, selectDevice, subscribeDeviceDoor} from '../../frame/devices/deviceDoor'
 import type {DesignBinding} from '../../frame/devices/designed'
@@ -38,7 +38,8 @@ import {chainDeviceId, slotRows} from './agentChainDevices'
 import {gatewayBinding, holdView, openRefinement, useChainHolds, viewHolds} from './designBindings'
 import {FRAMES_ID, FRAMES_VIEW, framesBinding, journalAsks, journalSessions, mainDevices, rackBinding} from './mainTrackBindings'
 import {CARRIER_PAGE, CHECKOUTS_PAGE, GATEWAYS_PAGE, LEFT_BEHIND_PAGE, MACHINE_PAGE, SEAT_PAGE, carryPages} from './oneAgentBinding'
-import {AGENT_ROSTER, MESSAGES_ID, PERSON_ACTS, acceptedProfilesOf, handlingAdvertisedOf, isRosterAgent, madeOf, messagesBinding, messagesDevice, positionRefs, sentOf, type MessagesPorts} from './messagesBinding'
+import {AGENT_ROSTER, MESSAGES_ID, PERSON_ACTS, acceptedProfilesOf, agentPlaces, conversationName, conversationTrack, handlingAdvertisedOf, isRosterAgent, madeOf, messagesBinding, messagesDevice, positionRefs, sentOf, type MessagesPorts} from './messagesBinding'
+import {lastUsageModels} from './designBindings'
 import {runStateOfSession} from './runFaces'
 import {hostState} from '../../frame/devices/deviceHost'
 import {kernelOp} from '../../../../../../desktop/cradle/src/kernel/bridge'
@@ -46,7 +47,7 @@ import type {GatewayWriteRequest, KernelTransportStatus} from '../../../../../..
 import {APPROVALS_ID, LEDGER_ID, approvalsBinding, ledgerBinding, ledgerReceiptSession, receiptDevices, withNoticeReasons} from './receiptBindings'
 import {useAgentChainReading} from './useAgentChainReading'
 import {useConversationAnswer} from './useConversationAnswer'
-import {useAgentConversation} from './useAgentConversation'
+import {holdOpenConversation, openConversationOf, useAgentConversation} from './useAgentConversation'
 import {ROUTE_WORDS, centralRevisionWrite, gatewayWriteOp, ownerRouteWrite, refinementWrite, refusalWords, workcellWriteOp} from './ownerRoutes'
 import {usePopulationAnswer} from './usePopulationAnswer'
 import {projectOfSession, registerOf, returnProjectOf, ROOT_REGISTER, useWorldReturns} from '../worldScope'
@@ -90,6 +91,10 @@ export const AGENT_SET_LIST = 'central.agent-set.list'
 const ROOT_SETS = {scope: 'root'} as const
 /** The running gateway's protocol answer (aikit_read {gateway-protocol}): the features it keeps. */
 const GATEWAY_PROTOCOL = {kind: 'gateway-protocol'} as const
+/** AIKit's set list (`aikit set list`) in your world's root register: the sets an agent may carry. */
+const SET_LIST_OP = {op: 'agent_definition', project: null, request: {action: 'skillsets'}} as const
+/** Actuation's usage records over every session (`actuation usage list`). */
+const USAGE_LIST = {kind: 'usage-list'} as const
 /** AIKit's proposed revisions (`aikit source refine list`), the one held reading the Skillset rack's Refining page reads too. */
 const REFINEMENT_LIST = {kind: 'refinement-list'} as const
 const NO_INPUT: Readonly<Record<string, unknown>> = Object.freeze({})
@@ -262,9 +267,31 @@ export function AgentRailDevices() {
   // A session of your world's root register has no project groups: only the root's are read.
   const agentSets = useMemo(() => [{scope: 'root' as const, answer: rootSets}, ...(railRegister === null ? [] : [{scope: 'project' as const, answer: projectSets}])],
     [rootSets, projectSets, railRegister])
+  // The card's Carries: AIKit's set list, the same held read the Skillset rack's chain asks (agent_definition {skillsets}).
+  const setList = useOwnerOp(transport, SET_LIST_OP, 'agent_definition_reading', 'AIKit did not answer its set list (`aikit set list`).').reading
+  const skillsets = useMemo(() => ({status: setList.status, value: setList.status === 'answered' ? setList.value?.data : undefined, error: setList.error}), [setList])
+  // Where each agent works and on which model: its session's track, and the model that session last reported (Actuation's usage records over
+  // every session, the read Factory's chain chips share).
+  const allUsage = useActuationRead(transport, USAGE_LIST)
+  const places = useMemo(() => agentPlaces(tracks, allUsage.status === 'answered' ? lastUsageModels(allUsage.value) : null), [tracks, allUsage])
   const messages = useMemo(() => messagesBinding({population, gateway: reading, conversation, chat, review, runs, accepted, ...(railRegister === null ? {} : {project: railRegister}), agentSets, holds,
-    ...(handlingAdvertised === undefined ? {} : {handlingAdvertised}), ...(heard ? {heard} : {})}, ports),
-    [population, reading, conversation, chat, review, runs, accepted, agentSets, holds, ports, railRegister, handlingAdvertised, heard])
+    skillsets, places, ...(handlingAdvertised === undefined ? {} : {handlingAdvertised}), ...(heard ? {heard} : {})}, ports),
+    [population, reading, conversation, chat, review, runs, accepted, agentSets, holds, ports, railRegister, handlingAdvertised, heard, skillsets, places])
+  // The roster agent open in Messages speaks in the session AIKit's agent_conversation bound it to. The Agent reads that conversation
+  // directly (useAgentConversation.ts holdOpenConversation: Central's Agent and the rail's Agent widget), by the name Messages gives the
+  // agent; once the agency reading lists the session, its track also becomes THE selection, under that name, so Factory's chain reads it
+  // (once per session opened, so a selection you make afterwards stands).
+  const chatName = useMemo(() => conversationName(population.status === 'answered' ? population.value : null, chat?.agent ?? null), [population, chat?.agent])
+  const openChat = useMemo(() => openConversationOf(chat, chatName, say), [chat, chatName, say])
+  useEffect(() => { holdOpenConversation(openChat) }, [openChat])
+  useEffect(() => () => holdOpenConversation(null), [])
+  const boundSession = useRef<string | null>(null)
+  const chatTrack = conversationTrack(tracks, chat?.session)
+  useEffect(() => {
+    if (!chatTrack || !shell || boundSession.current === chatTrack.sessionRef) return
+    boundSession.current = chatTrack.sessionRef
+    if (shell.selectedTrackId !== trackKey(chatTrack)) shell.setSelectedTrackId(trackKey(chatTrack), chatName ?? chatTrack.agentName ?? chatTrack.purpose ?? chatTrack.sessionRef)
+  }, [chatTrack, shell, chatName])
 
   // Workcell's instrument: the workcell whose return track is selected, its seats and the chain devices' own values; it sets none of them
   // (§19.23: each is set on its device).

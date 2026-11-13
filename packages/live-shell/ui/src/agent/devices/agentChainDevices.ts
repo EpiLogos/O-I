@@ -61,7 +61,9 @@ export interface AgentChainReading {
   git: OwnerReading
   /** The workcell seat answered. Null while reading. */
   gitAdmitted: boolean | null
-  gitRepo: {branch?: string; uncommitted?: number}
+  /** The checkout: its branch, its files with no commit, and — where the seat instrument reads them (`ahead_main`, `behind_main`) — the
+   * commits it holds that main does not, and the reverse. */
+  gitRepo: {branch?: string; uncommitted?: number; ahead?: number; behind?: number}
   /** Who each unlit lamp waits on (P0-R4): the owner of the refused reading, or null while reading / once admitted. */
   waitingOn: {gateway: string | null; skillset: string | null; git: string | null}
   /** The roster's skill chains. Null while the roster is being read. */
