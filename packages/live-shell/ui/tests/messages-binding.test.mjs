@@ -79,8 +79,11 @@ test('Messages is keyed to its design: an instrument born on the rail, with its 
 
 test('your agents from the real population: each Position by its label, what its agent is for, at rest while vacant, where it runs, what waits for it', () => {
   bind.resetHolds()
-  const agents = msg.messagesAgents(REAL.population)
-  assert.equal(agents.length, REAL.population.positions.length)
+  const listed = msg.messagesAgents(REAL.population)
+  // The Positions first; after them the rest of your roster, the agents no Position names (§19.24).
+  const agents = listed.slice(0, REAL.population.positions.length)
+  assert.ok(agents.every(agent => String(agent.id).startsWith('central:position:')))
+  assert.ok(listed.slice(agents.length).every(agent => !String(agent.id).startsWith('central:position:') && agent.state === 'rest'))
   const nara = agents.find(agent => agent.id === 'central:position:control:root:nara')
   assert.equal(nara.name, 'Nara (M4 domain agent)')
   assert.deepEqual(nara.where, {workcell: 'workcell:mac'})
@@ -455,4 +458,47 @@ test('a fresh world: the tile offers + Agent, and the card says where Make stand
   assert.match(waiting, /Central has not answered the review of the proposal yet/, 'and while it reads, the card says it waits')
   host.setHostPage(msg.MESSAGES_ID, '')
   bind.resetHolds()
+})
+
+test('your roster: an agent you made stands in Messages before any Position names it — proposed until you accept it (§19.24)', () => {
+  const made = {agent_ref: 'agent:expressed-3b1a', handle: '@expressed-3b1a', label: null, purpose: null, positions: [], registry: 'agent-profile.list',
+    source_relation: {kind: 'agent-profile', intent_provenance: {intent_expression: 'Keeps my practice and reads today\'s Flow with me', recognition: 'unrecognised'}}}
+  const kept = {agent_ref: 'agent:reviewer', label: 'reviewer', purpose: 'Reviews the essay.', positions: [], source_relation: {intent_provenance: {recognition: 'recognised'}}}
+  const rows = msg.messagesAgents({positions: [], agents: [made, kept]})
+  assert.deepEqual(rows.map(row => row.id), ['agent:expressed-3b1a', 'agent:reviewer'])
+  assert.equal(rows[0].name, 'Keeps my practice and reads…', 'named by your words until Central keeps a name')
+  assert.equal(rows[0].for, 'Keeps my practice and reads today\'s Flow with me')
+  assert.equal(rows[0].last, msg.AGENT_PROPOSED)
+  assert.equal(rows[1].last, msg.AGENT_UNSEATED)
+  // An agent a Position names stands once, at its Position.
+  const seated = msg.messagesAgents(REAL.population)
+  assert.equal(new Set(seated.map(row => row.id)).size, seated.length, 'no agent twice')
+  assert.ok(seated.slice(0, REAL.population.positions.length).every(row => String(row.id).startsWith('central:position:')), 'Positions first')
+})
+
+test('opening an agent you made opens Central\'s proposal of it, for Accept or Discard (§19.24)', () => {
+  bind.resetHolds()
+  host.setHostPage(msg.MESSAGES_ID, '')
+  const made = {agent_ref: 'agent:expressed-0e60f096', label: null, purpose: null, positions: [],
+    source_relation: {kind: 'agent-profile', profile_ref: 'agent-profile:expressed-0e60f096', revision: 'r1',
+      intent_provenance: {intent_expression: 'Watches the build and tells me when it breaks', recognition: 'unrecognised'}}}
+  const input = {population: answered({positions: [], agents: [made]}), gateway: ANSWERED, holds: bind.chainHolds()}
+  msg.messagesBinding(input, {act: centralStandIn().act}).local.open('agent:expressed-0e60f096')
+  const held = msg.madeOf(bind.viewHolds(bind.chainHolds(), msg.MESSAGES_ID).made)
+  assert.deepEqual(held, {kind: 'agent', scope: 'root', ref: 'agent-profile:expressed-0e60f096', revision: 'r1'}, 'its profile is the proposal under review')
+  const pane = draw(msg.messagesBinding({...input, holds: bind.chainHolds(), review: REVIEW}, {act: centralStandIn().act}), 'full')
+  assert.match(pane, /Central proposes this agent/)
+  assert.match(pane, />Accept</)
+  assert.doesNotMatch(pane, /No reading of the thread/, 'no conversation stands for an agent that is only proposed')
+  bind.resetHolds()
+})
+
+test('an agent Central has accepted is no longer proposed: it stands in your roster, not seated yet (agent-profile.roster)', async () => {
+  const {acceptedProfilesOf} = msg
+  const accepted = acceptedProfilesOf({profiles: [{accepted: true, profile: {ref: 'agent-profile:a'}}, {accepted: false, profile: {ref: 'agent-profile:b'}}]})
+  assert.deepEqual([...accepted], ['agent-profile:a'])
+  const made = ref => ({agent_ref: `agent:${ref}`, positions: [], source_relation: {profile_ref: `agent-profile:${ref}`, intent_provenance: {intent_expression: 'Reads with me', recognition: 'unrecognised'}}})
+  const rows = msg.messagesAgents({positions: [], agents: [made('a'), made('b')]}, accepted)
+  assert.deepEqual(rows.map(row => [row.id, row.last, row.proposed ?? null]),
+    [['agent:a', msg.AGENT_UNSEATED, null], ['agent:b', msg.AGENT_PROPOSED, 'agent-profile:b']])
 })

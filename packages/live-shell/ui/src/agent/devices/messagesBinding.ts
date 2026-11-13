@@ -184,10 +184,10 @@ const firstLine = (text: string): string => {
  * working, waiting or stalled is its occupant's run (messagesValues), not the population's — the workcell its occupant runs in, and the
  * messages that wait for it.
  * Null when the reading carries no Positions. */
-export function messagesAgents(population: unknown): Record<string, unknown>[] | null {
+export function messagesAgents(population: unknown, accepted?: ReadonlySet<string>): Record<string, unknown>[] | null {
   if (!isObj(population) || !Array.isArray(population.positions)) return null
   const agents = Array.isArray(population.agents) ? population.agents.filter(isObj) : []
-  return population.positions.flatMap(row => {
+  const placed: Record<string, unknown>[] = population.positions.flatMap(row => {
     if (!isObj(row) || !str(row.position_ref)) return []
     const ref = String(row.position_ref)
     const occupancy = isObj(row.occupancy) ? row.occupancy : {}
@@ -200,7 +200,44 @@ export function messagesAgents(population: unknown): Record<string, unknown>[] |
     return [{id: ref, name: str(row.label) ?? str(row.handle) ?? ref, ...(purpose ? {for: firstLine(purpose)} : {}),
       ...(occupancy.state === 'vacant' ? {state: 'rest'} : {}), ...(workcell ? {where: {workcell}} : {}), ...(unread !== undefined ? {unread} : {})}]
   })
+  // The rest of your roster (§19.24 "Until you accept, the agent stands proposed, in Messages"): every agent Central keeps that no
+  // Position names yet, by its AgentRef — at rest, its name and purpose as Central keeps them, else the words you made it with.
+  const seated = new Set(placed.flatMap(row => [String(row.id)]))
+  const named = new Set(agents.flatMap(agent => (Array.isArray(agent.positions) ? agent.positions.filter((ref): ref is string => typeof ref === 'string') : [])
+    .filter(ref => seated.has(ref)).length ? [String(agent.agent_ref)] : []))
+  const roster = agents.flatMap(agent => {
+    const ref = str(agent.agent_ref)
+    if (!ref || named.has(ref) || seated.has(ref)) return []
+    const provenance = isObj(agent.source_relation) && isObj(agent.source_relation.intent_provenance) ? agent.source_relation.intent_provenance : {}
+    const words = str(provenance.intent_expression)
+    const purpose = str(agent.purpose) ?? words
+    const profile = isObj(agent.source_relation) ? str(agent.source_relation.profile_ref) : undefined
+    // Proposed until Central accepts it (agent-profile.roster `accepted`); the provenance stays generated either way.
+    const proposed = provenance.recognition === 'unrecognised' && !(profile && accepted?.has(profile))
+    const revision = isObj(agent.source_relation) ? str(agent.source_relation.revision) : undefined
+    return [{id: ref, name: str(agent.label) ?? (words ? firstWords(words) : undefined) ?? str(agent.handle) ?? ref, ...(purpose ? {for: firstLine(purpose)} : {}),
+      state: 'rest', last: proposed ? AGENT_PROPOSED : AGENT_UNSEATED, ...(proposed && profile ? {proposed: profile, ...(revision ? {revision} : {})} : {})}]
+  })
+  return [...placed, ...roster]
 }
+
+/** Central's roster of agent profiles with their acceptance (ctrl agent_profile_acceptance.rs ROSTER): a reading. */
+export const AGENT_ROSTER = 'agent-profile.roster'
+/** The profile refs Central's roster answers as accepted. Pure. */
+export function acceptedProfilesOf(answer: unknown): ReadonlySet<string> {
+  const rows = typeof answer === 'object' && answer !== null && Array.isArray((answer as {profiles?: unknown}).profiles) ? (answer as {profiles: unknown[]}).profiles : []
+  return new Set(rows.flatMap(row => {
+    const r = row as {accepted?: unknown; profile?: {ref?: unknown}} | null
+    return r && r.accepted === true && typeof r.profile?.ref === 'string' ? [r.profile.ref] : []
+  }))
+}
+
+/** An agent you made and have not accepted: what it waits for (§19.24). */
+export const AGENT_PROPOSED = 'Proposed — Accept keeps it in your roster.'
+/** An agent Central keeps that stands at no Position yet: it works only where you seat it (§19.24). */
+export const AGENT_UNSEATED = 'Not seated yet — it works where you seat it.'
+/** The first few words of what you made an agent for, as its name until Central keeps one. */
+const firstWords = (words: string) => { const line = firstLine(words); const cut = line.split(/\s+/).slice(0, 5).join(' '); return cut.length < line.length ? `${cut}…` : cut }
 
 /** The Positions of the population, by ref: the other side of each pair the open agent's conversation is read with. */
 export function positionRefs(population: unknown): string[] {
@@ -364,6 +401,8 @@ export interface MessagesInput {
   readonly runs?: ReadonlyMap<string, RunState>
   /** The project a project-scoped agent belongs to (the shell's project). */
   readonly project?: string
+  /** The profiles Central has accepted, by profile ref (agent-profile.roster `accepted`): an agent you made stands proposed until then. */
+  readonly accepted?: ReadonlySet<string>
   /** Whether the running gateway advertises that it keeps a steer (handlingAdvertisedOf over `aikit gateway protocol`); undefined
    * while unread. Input starts by it. */
   readonly handlingAdvertised?: boolean
@@ -408,7 +447,7 @@ export function messagesValues(input: MessagesInput): Values {
   // Input starts where the running gateway can land the words, until the hand moves it.
   if (view['conv.input'] === undefined) values['conv.input'] = inputDefaultOf(input.handlingAdvertised)
   const known = input.population.status === 'answered' ? input.population.value : null
-  const listed = known ? messagesAgents(known) : null
+  const listed = known ? messagesAgents(known, input.accepted) : null
   // An occupied agent stands in the state of the session its occupant works (runFaces.ts): working, waiting on you, stalled; none read, absent.
   const occupants = new Map<string, string>()
   if (isObj(known) && Array.isArray(known.positions)) for (const row of known.positions) {
@@ -595,6 +634,14 @@ export function messagesBinding(input: MessagesInput, ports: MessagesPorts = {})
     standing,
     local: {
       ...Object.fromEntries(MESSAGES_LOCAL.map(key => [key, (value: Value | undefined) => holdView(MESSAGES_ID, key, value)])),
+      // Opening an agent you made and have not accepted opens Central's proposal of it (§19.24: it stands proposed, in Messages), for
+      // Accept or Discard; opening any other lets a proposal opened that way go.
+      open: (value: Value | undefined) => {
+        holdView(MESSAGES_ID, 'open', value)
+        const row = (known ? messagesAgents(known, input.accepted) ?? [] : []).find(agent => agent.id === value)
+        if (row && typeof row.proposed === 'string') hold({kind: 'agent', scope: 'root', ref: row.proposed, revision: typeof row.revision === 'string' ? row.revision : 'r1'})
+        else if (made?.kind === 'agent' && (known ? messagesAgents(known, input.accepted) ?? [] : []).some(agent => agent.proposed === made.ref)) hold(null)
+      },
       // Change: back to the card's fields, the proposal still held; Make then saves the change.
       proposal: value => { if (value === undefined && made) holdView(MESSAGES_ID, 'editing', true) },
     },
