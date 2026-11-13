@@ -18,8 +18,11 @@ export function gatewayMoved(): void {
   for (const listener of [...listeners]) listener()
 }
 
-/** The epoch a gateway reader keys on: the spine's, and the gateway's generation. Pure. */
-export function gatewayEpochKey(spine: string, at: number = generation): string { return `${spine}|gw${at}` }
+/** The epoch a gateway reader keys on: the spine's, and the gateway's generation. Pure. The generation joins the spine's access
+ * (before its first `|`), never its world: a started gateway is the same world asked again, so the last answer stands carried while
+ * it is re-read and a reader still on the other generation draws it (owners/ownerReading.ts sameWorld). Walk 22 keyed it after the
+ * world, and Start blanked Messages' agents. */
+export function gatewayEpochKey(spine: string, at: number = generation): string { return `gw${at}+${spine}` }
 
 /** The current generation, for a reader inside React. */
 export function useGatewayGeneration(): number { return useSyncExternalStore(subscribe, snapshot, snapshot) }

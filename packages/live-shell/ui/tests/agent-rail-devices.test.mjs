@@ -142,7 +142,7 @@ test('one publisher: the rail\'s own publisher draws it in every mode; Factory\'
     'usePopulationAnswer(transport, registerOf(ROOT_REGISTER))',
     'useSeatStatusAnswer(transport, asked)']) assert.ok(publisher.includes(shared), shared)
   assert.match(read('owners/ownerCall.ts'), /installKernelReadHolder\(/, 'a kernelRead from an effect is the same held answer')
-  assert.match(read('agent/devices/useAgentChainReading.ts'), /kernelRead\(transport, \{op: 'harness_agent_read', binding\}\)/)
+  assert.match(read('agent/devices/useAgentChainReading.ts'), /kernelRead\(transport, \{op: 'harness_agent_read', binding\}, gatewayAt \? \{fresh: true\} : \{\}\)/)
   assert.doesNotMatch(publisher, /APPROVALS_ID/, 'Approvals stays Factory\'s Main track effect')
 })
 

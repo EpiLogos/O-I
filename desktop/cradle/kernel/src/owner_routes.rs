@@ -3460,6 +3460,16 @@ fn gateway_service(on: bool) -> Result<Written, Error> {
         .stdin(std::process::Stdio::null())
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::null());
+    // The world this window reads and watches: left to itself the gateway's
+    // own `ctrl` falls back to a Central of its own and lists no Agents.
+    if let Some(roots) = crate::watch::Roots::resolve(None) {
+        command
+            .env("CENTRAL_ROOT", &roots.central)
+            .env("AIKIT_HOME", &roots.aikit);
+    }
+    command
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null());
     {
         use std::os::unix::process::CommandExt;
         // Its own process group: a signal to this window's group never reaches it.
