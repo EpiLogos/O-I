@@ -26,8 +26,8 @@
 //! The ordered arms in lib.rs `apply` run these same steps under the lock.
 use crate::{
     action, agency, agent_prepared::PreparedWorld, central, configuration, credentials,
-    events::KernelEvent, factory, files, flow::ReceivingRequest, owner_read, CentralClient, Kernel,
-    KernelOp, KernelOpOutcome, KernelOpResult,
+    events::KernelEvent, factory, files, flow::ReceivingRequest, owner_read, CentralClient,
+    HarnessAgentControl, Kernel, KernelOp, KernelOpOutcome, KernelOpResult,
 };
 use serde_json::Value;
 use std::path::PathBuf;
@@ -499,11 +499,25 @@ impl PreparedWrite {
             KernelOp::GroundAuthority { request } => KernelOpResult::GroundAuthorityReading {
                 data: crate::ground_authority::operate(&self.client, request)?,
             },
-            KernelOp::HarnessAgentControl { binding, control } => {
+            KernelOp::HarnessAgentControl {
+                binding,
+                control,
+                model,
+            } => {
+                // AIKit carries a value on `model` alone (`--model <ID>`).
+                let mut op = vec![control.as_cli_verb()];
+                match (control, model.as_deref()) {
+                    (HarnessAgentControl::Model, Some(id)) => op.extend(["--model", id]),
+                    (_, Some(_)) => {
+                        return Err(format!(
+                        "AIKit's gateway takes a model only on its `model` operation, not on `{}`",
+                        control.as_cli_verb()
+                    ))
+                    }
+                    (_, None) => {}
+                }
                 KernelOpResult::HarnessAgentOutcome {
-                    document: self
-                        .agency
-                        .gateway_agent(None, binding, control.as_cli_verb())?,
+                    document: self.agency.gateway_agent_with(None, binding, &op)?,
                     binding: binding.clone(),
                     control: control.clone(),
                 }

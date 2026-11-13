@@ -13,6 +13,7 @@ import {NATIVE_BINDINGS} from '@epilogos/expressions-boundary/parameters'
 import type {DesignBinding, Standing, Value, ValueChange} from '../../frame/devices/designed'
 import type {DeviceInstance, ParamValue} from '../../frame/devices/deviceRuntime'
 import {SETTING_PREFIX, expressionsSettingChoices} from './expressionsDevice'
+import {handsFor, heldFor} from '../../techne/devices/designDevices'
 
 /** The design's id (designs.ts designKey('expressions', 'physics')). */
 export const PHYSICS_DESIGN_ID = 'expressions:physics'
@@ -34,6 +35,10 @@ export type PhysicsAction = 'disperse' | 'reset'
 export const PHYSICS_PRESSES: Readonly<Record<string, {action: PhysicsAction; value: Value}>> = {
   disperse: {action: 'disperse', value: true}, reset: {action: 'reset', value: 'confirmed'},
 }
+
+/** The view's own keys (DesignBinding.local): the Reset ask. Reset… raises `resetAsk` and the panel's Reset / Cancel pair answers it
+ * (physics.tsx); nothing of it reaches the engine, so without this hold the host refused the ask as a reading and Reset could not be pressed. */
+export const PHYSICS_LOCAL = ['resetAsk'] as const
 
 /** Keys a change goes to the engine for. `paused` is a reading: the engine reports it, and exposes no pause to write. */
 export const PHYSICS_WRITES: ReadonlySet<string> = new Set([...Object.keys(PHYSICS_KEYS), PLANE, ...Object.keys(PHYSICS_PRESSES)])
@@ -103,10 +108,12 @@ export function physicsDesignBinding(device: DeviceInstance, reading: Pick<Nativ
   const submit = device.submit
   // Physics's light and its held-field reading say why they take no change (manual §16.12: "say which one").
   const standing: Record<string, Standing> = Object.fromEntries(Object.entries(PHYSICS_ABSENT).map(([key, why]) => [key, {disabled: why}]))
+  const held = heldFor(device.id)
   return {
     id: device.id,
-    values: physicsValuesOf(device, reading),
+    values: {...physicsValuesOf(device, reading), ...(held.resetAsk === true ? {resetAsk: true} : {})},
     standing,
+    local: handsFor(device.id, PHYSICS_LOCAL),
     writes: key => PHYSICS_WRITES.has(key),
     ...(submit ? {write: async (changes: readonly ValueChange[]) => {
       const {rows, presses} = physicsRowChanges(changes)

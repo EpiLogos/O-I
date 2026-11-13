@@ -846,8 +846,10 @@ export type KernelOp =
   | {op:"protocol_read"}
   /** The AIKit gateway's canonical session surface for one harness binding; the gateway's answer or named refusal passes through verbatim. */
   | {op:"harness_agent_read";binding:string}
-  /** Drive a conversation lifecycle control on the binding's gateway (the kernel owns no session state). */
-  | {op:"harness_agent_control";binding:string;control:"new"|"stop"|"restart"|"pause"|"resume"}
+  /** Drive a conversation control on the binding's gateway (the kernel owns no session state): AIKit's `gateway agent` lifecycle verbs,
+   * pause/resume of the binding's connector ingress, and `model` — the one that carries a value (`--model <ID>`; absent, it lists the
+   * harness's own selector). */
+  | {op:"harness_agent_control";binding:string;control:"new"|"stop"|"restart"|"pause"|"resume"|"model";model?:string}
   /** One sender kind's ingress rule on a harness binding (O-I manual §19.12, Scope's Calls to other agents): AIKit's `gateway ingress`,
    * deciding a sender by its own id, then its kind, then the binding's one default; no decision clears the kind's rule. */
   | {op:"harness_ingress_rule";binding:string;kind:"human"|"agent"|"bot"|"system"|"unknown";decision?:"allow"|"pair"|"deny"|null}
@@ -1163,7 +1165,7 @@ export type KernelOpResult =
   | {result:"recording_capability";document:unknown}
   | {result:"protocol";document:unknown}
   | {result:"harness_agent_reading";binding:string;document:unknown}
-  | {result:"harness_agent_outcome";binding:string;control:"new"|"stop"|"restart"|"pause"|"resume";document:unknown}
+  | {result:"harness_agent_outcome";binding:string;control:"new"|"stop"|"restart"|"pause"|"resume"|"model";document:unknown}
   | {result:"harness_ingress_outcome";binding:string;document:unknown}
   | { result: "agency_reading"; project_ref: string; spaces: unknown[]; harness_disclosure?: unknown; observed_at_unix_ms: number }
   | { result: "model_roster_reading"; reading: unknown }

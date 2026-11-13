@@ -34,7 +34,7 @@ import {fireWritePath} from '../agentNativeDispatch'
 import {trackKey} from '../agentRunModel'
 import {chainDeviceId, slotRows} from './agentChainDevices'
 import {gatewayBinding, useChainHolds, viewHolds} from './designBindings'
-import {AGENCY_GATEWAY_ID, FRAMES_ID, FRAMES_VIEW, framesBinding, journalAsks, journalSessions, mainDevices, rackBinding} from './mainTrackBindings'
+import {FRAMES_ID, FRAMES_VIEW, framesBinding, journalAsks, journalSessions, mainDevices, rackBinding} from './mainTrackBindings'
 import {CARRIER_PAGE, CHECKOUTS_PAGE, GATEWAYS_PAGE, LEFT_BEHIND_PAGE, MACHINE_PAGE, SEAT_PAGE, carryPages} from './oneAgentBinding'
 import {AGENT_ROSTER, MESSAGES_ID, PERSON_ACTS, acceptedProfilesOf, handlingAdvertisedOf, isRosterAgent, madeOf, messagesBinding, messagesDevice, positionRefs, sentOf, type MessagesPorts} from './messagesBinding'
 import {runStateOfSession} from './runFaces'
@@ -78,6 +78,13 @@ const ROOT_SETS = {scope: 'root'} as const
 const GATEWAY_PROTOCOL = {kind: 'gateway-protocol'} as const
 
 /** The rail's agent devices and their bindings, published on the door. */
+/** Messages' Voice port over the kernel's dictation (agent/useAgentVoice.ts agentVoicePort), its module loaded on the first press. */
+function lazyVoicePort(transport: KernelTransportStatus): NonNullable<MessagesPorts['voice']> {
+  let port: Promise<NonNullable<MessagesPorts['voice']>> | null = null
+  const loaded = () => (port ??= import('../useAgentVoice').then(module => module.agentVoicePort(transport)))
+  return {start: async () => (await loaded()).start(), stop: async () => (await loaded()).stop()}
+}
+
 export function AgentRailDevices() {
   const shell = useAgentShellOptional()
   const sessions = useAgentSessionsOptional()
@@ -93,8 +100,10 @@ export function AgentRailDevices() {
   const main = useMemo(() => mainDevices(), [])
   const workcellAnswer = useWorkcellAnswer(transport).reading
   const carrier = useMemo(() => carrierChainState(workcellAnswer), [workcellAnswer])
+  // The agency build stands on no chain and has no device of its own (§19.9: its mark stands in the head of Messages, and nothing publishes
+  // AGENCY_GATEWAY_ID: the placement tests keep it unpublished), so its row shows Messages, where the mark and its state are.
   const showChain = useCallback((chain: string) => {
-    const shown = chain === 'hermes' ? chainDeviceId('gateway') : chain === 'aikit-agency-gateway' ? AGENCY_GATEWAY_ID : chain === 'remote-carrier' ? CARRIER_ID : null
+    const shown = chain === 'hermes' ? chainDeviceId('gateway') : chain === 'aikit-agency-gateway' ? MESSAGES_ID : chain === 'remote-carrier' ? CARRIER_ID : null
     if (shown) selectDevice(shown)
   }, [])
   const gateways = useMemo(() => rackBinding({reading, holds, carrier}, {show: showChain}), [reading, holds, carrier, showChain])
@@ -154,7 +163,10 @@ export function AgentRailDevices() {
   // AIKit's gateway writes (lane W3): Send and a drop onto a track through the kernel's route to `aikit gateway send|delegate`.
   const ports = useMemo((): MessagesPorts => ({
     ...(transport.kind !== 'unavailable' ? {act: (action: string, input: Readonly<Record<string, unknown>>) => centralAct(transport, action, input),
-      gateway: (request: GatewayWriteRequest) => ownerRouteWrite(transport, gatewayWriteOp(request), ROUTE_WORDS[request.kind]), chat: say} : {}),
+      gateway: (request: GatewayWriteRequest) => ownerRouteWrite(transport, gatewayWriteOp(request), ROUTE_WORDS[request.kind]),
+      // Voice: the kernel's local dictation, its transcript into the Thread's composer (agent/useAgentVoice.ts, loaded when first pressed:
+      // the capture client stays out of the window's first load).
+      voice: lazyVoicePort(transport), chat: say} : {}),
     page: () => hostState(MESSAGES_ID).page,
     suffix: () => globalThis.crypto.randomUUID().slice(0, 8),
   }), [transport, say])

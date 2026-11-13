@@ -75,7 +75,9 @@ export const AGENT_SHELL_ADDRESS_TABLE: readonly AgentParamAddress[] = Object.fr
   reading('actuation', 'gateway', 'spend', 'number', {unit: 'USD', disclosure: 'spend_ledger has no writer in O-I — the meter discloses absence.'}),
 
   // — Agent device, ONE face composed of three families (the §14 point) —
-  reading('actuation', 'agent', 'model', 'string', {disclosure: 'No shell writer yet — the model arrives with harness disclosure.'}),
+  // Model: AIKit's gateway selects the binding's harness model (`aikit gateway agent --binding B model --model ID`).
+  agentParamAddress({family: 'actuation', deviceInstance: 'agent', key: 'model', type: 'string', writePath: KERNEL_HARNESS_CONTROL,
+    disclosure: 'The binding\'s harness model, selected through AIKit\'s own operation: `aikit gateway agent --binding B model --model ID` (the kernel\'s harness_agent_control model).'}),
   enumed('actuation', 'agent', 'effort', ['low', 'medium', 'high', 'max'], 'shell.setEffort'),
   reading('actuation', 'agent', 'budget-used', 'number', {unit: 'turns', disclosure: 'Reading only — used/cap come from the session task.'}),
   enumed('actuation', 'agent', 'input', ['steer', 'queue'], 'shell.setSteer'),

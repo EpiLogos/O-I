@@ -83,7 +83,8 @@ function factoryAgent() {
     reading: {attached: true, budget: {used: 3, cap: 12}, gatewayAdmitted: false, gatewayDoc: null},
     accepted: {effort: 'high'}, harness: {binding: 'claude-code', resolved: true}, holds: bind.chainHolds(),
     thread: thread.threadJson(ENCOUNTER, 'Flint'), models: ['model:claude-sonnet-4.6'], harnesses: ['claude-code'],
-  }, {effort: {family: 'actuation', deviceInstance: 'agent', key: 'effort', title: 'Effort', type: 'enumerated', writePath: 'shell.setEffort'}},
+  }, {effort: {family: 'actuation', deviceInstance: 'agent', key: 'effort', title: 'Effort', type: 'enumerated', writePath: 'shell.setEffort'},
+    model: {family: 'actuation', deviceInstance: 'agent', key: 'model', title: 'Model', type: 'string', writePath: 'kernel:harness_agent_control'}},
   async (row, value) => { written.push([row.key, value]); return {kind: 'fired', note: 'set'} }, () => true)
   const custody = session.custodyBinding({sessionRef: SESSION, agent: own.values}, null)
   const id = identity.identityBinding('factory:agent/identity', {roster: {agents: ROSTER}, extras: new Map(), talkingTo: 'agent/flint', card: null})
@@ -144,12 +145,14 @@ test('a page whose owner the chain does not hand stands absent: no prefix key, n
 
 test('a change goes to the owner of its key: the Agent\'s own row, a carried page\'s refusal in its words, a carried page\'s view hold', async () => {
   const {agent, written} = factoryAgent()
-  await agent.write([{key: 'effort', value: 'max'}])
-  assert.deepEqual(written, [['effort', 'max']], 'Effort through the Agent\'s own row')
+  // REPLACED (lane A wiring): Model is the Agent's own row AIKit's gateway carries (`gateway agent model --model`); Effort it has none for.
+  await agent.write([{key: 'model', value: 'gpt-5'}])
+  assert.deepEqual(written, [['model', 'gpt-5']], 'Model through the Agent\'s own row')
+  await assert.rejects(() => agent.write([{key: 'effort', value: 'max'}]), /Effort: AIKit's gateway has no operation/)
   assert.equal(agent.writes('custody.gate'), true)
   await assert.rejects(() => agent.write([{key: 'custody.gate', value: 'diffs'}]), /^Error: Review gate: set when Factory assigns custody/)
   await assert.rejects(() => agent.write([{key: 'autonomy', value: 'auto'}]), /^Error: Autonomy is retired: Scope's Tool calls, on its Asks page/, 'a press that still names the retired Autonomy is refused naming what took its place')
-  assert.deepEqual(written, [['effort', 'max']], 'and nothing is sent')
+  assert.deepEqual(written, [['model', 'gpt-5']], 'and nothing is sent')
   assert.equal(typeof agent.local['thread.pin'], 'function', 'the Thread page\'s pin is a view hold')
   assert.equal(typeof agent.local['id.agent'], 'function', 'the Identity page\'s choice is a view hold')
   agent.local['id.agent']('agent/nara')

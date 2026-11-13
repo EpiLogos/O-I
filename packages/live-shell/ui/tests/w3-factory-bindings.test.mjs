@@ -287,9 +287,33 @@ test('7 · the member\'s Trust records the review with AIKit (`aikit trust recor
   assert.equal(bind.memberBinding(bind.MEMBER_DEVICE_ID, rack, 'skill/aikit/wiki-inhabitation', bind.chainHolds()).standing.reviewed.disabled, bind.REFUSED_WRITES[bind.MEMBER_DESIGN].reviewed)
   // #757: the rack names the directory now (Into, `outDir`), and Export is AIKit's own set-package-export (factory-design-binding.test.mjs).
   assert.equal(bind.REFUSED_WRITES[bind.RACK_DESIGN].exported, undefined, 'Export is no longer refused by name')
-  // AIKit's capture and promote: the only design with those controls is ai-kit:capture-skill, which no agent device binds or places yet.
-  assert.doesNotMatch(read('agent/devices/FactoryDeviceChain.tsx') + read('agent/devices/AgentRailDevices.tsx'), /capture-skill/)
+  // REPLACED (lane A wiring): the old assertion (no /capture-skill/ in the chain) could never match — the chain imports
+  // captureSkillBinding, not the design's id — and its claim was false. AIKit's capture and promote are bound: the chain carries the
+  // Capture page on the Skillset rack, its Accept promoting through aikit_write promote and a clip captured through aikit_write capture.
+  const chain = read('agent/devices/FactoryDeviceChain.tsx')
+  assert.match(chain, /captureSkillBinding\(\{inbox:/, 'the chain binds the Capture page to AIKit\'s inbox')
+  assert.match(chain, /aikitWriteOp\(\{kind: 'promote', project: register, candidate/, 'Accept writes `aikit promote` through the kernel')
+  assert.match(chain, /aikitWriteOp\(\{kind: 'capture', project: register,[^)]*from_song: true\}\)/, 'a clip is captured with `aikit capture --from-song`')
+  assert.match(chain, /\{page: CAPTURE_PAGE, binding: captureDesignBinding\}/, 'the Skillset rack carries the Capture page')
   bind.resetHolds()
+})
+
+test('the family manifests say what is wired: Messages sends through gateway_write, the Run map retries through attempt-retry', async () => {
+  const {aiKitFamilyManifest} = await import('../src/inhabitants/aiKitFamilyManifest.ts')
+  const {softwareFactoryFamilyManifest} = await import('../src/inhabitants/softwareFactoryFamilyManifest.ts')
+  const face = (manifest, id) => manifest().faces.find(entry => entry.id === id).invariant.generatesAbsent
+  const messages = face(aiKitFamilyManifest, 'messages')
+  assert.doesNotMatch(messages, /waits for `aikit gateway send`/, 'Send is wired, not waiting')
+  assert.match(messages, /gateway_write/, 'it names the kernel route Send takes')
+  assert.match(read('agent/devices/AgentRailDevices.tsx'), /gateway: \(request: GatewayWriteRequest\) => ownerRouteWrite\(transport, gatewayWriteOp\(request\)/, 'and that route is the one the rail binds')
+  const runMap = face(softwareFactoryFamilyManifest, 'run-map')
+  assert.doesNotMatch(runMap, /attempt retry[^.]*no kernel route/, 'Retry has a kernel route')
+  assert.match(runMap, /attempt-retry/, 'it names the route Retry takes')
+  assert.match(read('agent/devices/runMapBinding.ts'), /owner\(\{kind: 'attempt-retry'/, 'and that route is the one the Run map writes')
+  // The reviewed registry snapshot carries the same words (tests/live-semantics.test.mjs locks it to the manifests).
+  const registry = JSON.parse(readFileSync(new URL('../src/inhabitants/sdk/semantic-registry.json', import.meta.url), 'utf8'))
+  assert.equal(registry.find(entry => entry.family === 'ai-kit' && entry.face === 'messages').invariant.generatesAbsent, messages)
+  assert.equal(registry.find(entry => entry.family === 'software-factory' && entry.face === 'run-map').invariant.generatesAbsent, runMap)
 })
 
 // ---- FAKE: the gateway journal's answers in the gateway's real shapes (kernel/tests/shell_owner_routes.rs, GatewayEcology and Replay) ----

@@ -1165,6 +1165,12 @@ export function bodyRefusal(reading: AtlasReading): string | null {
   return bodyWriteRefusal()
 }
 
+/** The World's Deep time: the design's four clock keys (Year, All time, Play, Cumulative), each written by the owner's own setter, the
+ * setters the time-control face's rows name above (shell.setAtlasCursor, AllTime, Play, Cumulative). The design draws these controls, so
+ * the World's binding carries the same reading (AtlasReading.clock) and the same writes: without them each drew "No reading from the owner
+ * yet" and its press was refused as a reading. */
+const CLOCK_WRITERS: Readonly<Record<string, string>> = {cursor: 'shell.setAtlasCursor', allTime: 'shell.setAtlasAllTime', playing: 'shell.setAtlasPlay', cumulative: 'shell.setAtlasCumulative'}
+
 /** The World design's binding (inhabitants/catalogue/panels/atlas-earth__globe-engine.tsx, the Body page and the globe's whole-field
  * choice): the owner's readings by the design's value keys, its writes through the owners' setters, and each value's standing. A body
  * change and a reroll go to the owner as one BodySet; the body choice is the view's own hand. Values no owner reads here (the places,
@@ -1193,6 +1199,13 @@ export function atlasGlobeBinding(reading: AtlasReading): DesignBinding {
   // the locations on your own body: a reading (the places stand on it through their owners' PlaceSet, the landings through each world's
   // own BodySet); the place kind is the view's own choice of what the next click places
   values.placeKind = reading.placeKind
+  // the clock the mounted atlas keeps: the year its window stands at, all time, play and cumulative (a stopped Earth has none)
+  if (reading.clock) {
+    values.cursor = reading.clock.cursorU
+    values.allTime = reading.clock.mode === 'all'
+    values.playing = reading.clock.playing
+    values.cumulative = reading.clock.cumulative
+  } else for (const key of Object.keys(CLOCK_WRITERS)) standing[key] = {disabled: NOT_MOUNTED}
   // the body the globe draws, for the design's pictures (the Compact, the Widget and the Body page draw the globe's own body, never a second one):
   // the record and the look it is drawn with; and, for a body built by an older generator, what its next change does (the ticket's rule: it draws
   // as it always did until it is changed, and the change rebuilds it)
@@ -1236,9 +1249,11 @@ export function atlasGlobeBinding(reading: AtlasReading): DesignBinding {
   else if (reading.globe?.scopeLabel == null) standing.wholeField = {disabled: NO_SCOPE}
   // [O-I #858 TO10] Space or Graph, at every scale the Field's too: the atlas's own View, through the Earth ⇄ Graph switch's setter, whose
   // choice stands whether or not the Earth has mounted yet (agent/shellSetterBridge.ts shell.setAtlasView)
-  const writable = (key: string) => key === 'view' || (key === 'wholeField' ? !standing.wholeField : isStarAct(key) || isWorkAct(key) || isYourAct(key) || isContributeAct(key) || isWatchAct(key) || isSearchAct(key) ? !!reading.field && !standing[key] : WORLD_BODY_KEYS.includes(key) && !refusal)
+  const writable = (key: string) => key === 'view' || (key === 'wholeField' ? !standing.wholeField : isStarAct(key) || isWorkAct(key) || isYourAct(key) || isContributeAct(key) || isWatchAct(key) || isSearchAct(key) ? !!reading.field && !standing[key] : key in CLOCK_WRITERS ? !!reading.clock : WORLD_BODY_KEYS.includes(key) && !refusal)
   return {
     id: techneDeviceId(ATLAS_FAMILY, 'globe-engine'), values, standing, enabledKey: 'mounted',
+    // The clock moves the cursor while it plays: the value shows what moves it, as the time-control face says it
+    ...(reading.clock?.playing ? {heldBy: {cursor: 'the clock, playing'}} : {}),
     writes: writable,
     write: async (changes: readonly ValueChange[]) => {
       const body: Record<string, unknown> = {}
@@ -1251,6 +1266,9 @@ export function atlasGlobeBinding(reading: AtlasReading): DesignBinding {
         else if (isContributeAct(change.key) && reading.field) await actContribution(change.key, reading.field)
         else if (isWatchAct(change.key) && reading.field) await actWatch(change.key, reading.field)
         else if (isSearchAct(change.key) && reading.field) actSearch(change.key)
+        // Leaving all time is the cursor's or Play's own act (the owner refuses a direct false), and the design says it with the same gesture
+        else if (change.key === 'allTime' && change.value === false && changes.some(other => other.key === 'cursor' || (other.key === 'playing' && other.value === true))) continue
+        else if (change.key in CLOCK_WRITERS) await writeThroughOwner(CLOCK_WRITERS[change.key]!, change.value)
         else if (WORLD_BODY_KEYS.includes(change.key)) body[change.key] = change.value
         else throw Error(`${change.key} is not written from the World's own controls`)
       }

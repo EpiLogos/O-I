@@ -355,7 +355,8 @@ test('one device in three sizes: the same live rows, a picture in each — no te
   assert.equal((agent.match(/role="radio" aria-checked/g) ?? []).length, 6, 'their choices are the owner\'s own: low · medium · high · max, steer · queue')
   // A radio names every choice; none is drawn as the value until the owner reads one.
   assert.doesNotMatch(agent, /aria-checked="true"|aria-pressed="true"/, 'no default is drawn as a value')
-  assert.match(agent, /data-param="model"[^>]*data-control="readout"/, 'the model is a reading until the harness discloses it')
+  // REPLACED (lane A wiring): the model is AIKit's `gateway agent model --model ID`, so the row is a field the owner writes.
+  assert.match(agent, /data-param="model"[^>]*data-control="field"/, 'the model is set through AIKit\'s gateway')
   assert.doesNotMatch(agent, /data-param="autonomy"|>Autonomy</, 'no Autonomy is drawn on the Agent')
 })
 
