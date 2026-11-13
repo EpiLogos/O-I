@@ -475,3 +475,20 @@ test('your roster: an agent you made stands in Messages before any Position name
   assert.equal(new Set(seated.map(row => row.id)).size, seated.length, 'no agent twice')
   assert.ok(seated.slice(0, REAL.population.positions.length).every(row => String(row.id).startsWith('central:position:')), 'Positions first')
 })
+
+test('opening an agent you made opens Central\'s proposal of it, for Accept or Discard (§19.24)', () => {
+  bind.resetHolds()
+  host.setHostPage(msg.MESSAGES_ID, '')
+  const made = {agent_ref: 'agent:expressed-0e60f096', label: null, purpose: null, positions: [],
+    source_relation: {kind: 'agent-profile', profile_ref: 'agent-profile:expressed-0e60f096', revision: 'r1',
+      intent_provenance: {intent_expression: 'Watches the build and tells me when it breaks', recognition: 'unrecognised'}}}
+  const input = {population: answered({positions: [], agents: [made]}), gateway: ANSWERED, holds: bind.chainHolds()}
+  msg.messagesBinding(input, {act: centralStandIn().act}).local.open('agent:expressed-0e60f096')
+  const held = msg.madeOf(bind.viewHolds(bind.chainHolds(), msg.MESSAGES_ID).made)
+  assert.deepEqual(held, {kind: 'agent', scope: 'root', ref: 'agent-profile:expressed-0e60f096', revision: 'r1'}, 'its profile is the proposal under review')
+  const pane = draw(msg.messagesBinding({...input, holds: bind.chainHolds(), review: REVIEW}, {act: centralStandIn().act}), 'full')
+  assert.match(pane, /Central proposes this agent/)
+  assert.match(pane, />Accept</)
+  assert.doesNotMatch(pane, /No reading of the thread/, 'no conversation stands for an agent that is only proposed')
+  bind.resetHolds()
+})

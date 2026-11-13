@@ -30,7 +30,9 @@ type V = ViewProps['v']
 type State = 'working' | 'waiting' | 'stalled' | 'rest'
 interface Where {readonly mode?: string; readonly track?: string; readonly workcell?: string}
 interface Agent {readonly id: string; readonly name: string; readonly for?: string; readonly pattern?: string; readonly state?: State; readonly where?: Where; readonly model?: string
-  readonly last?: string; readonly at?: string; readonly unread?: number; readonly used?: number; readonly cap?: number; readonly age?: number; readonly thread?: unknown[]}
+  readonly last?: string; readonly at?: string; readonly unread?: number; readonly used?: number; readonly cap?: number; readonly age?: number; readonly thread?: unknown[]
+  /** An agent you made and have not accepted: the profile Central proposes (§19.24). */
+  readonly proposed?: string}
 interface Group {readonly id: string; readonly name: string; readonly for?: string; readonly members: readonly string[]; readonly join?: string
   readonly last?: string; readonly at?: string; readonly unread?: number}
 
@@ -157,7 +159,8 @@ function Pane({p}: {p: ViewProps}) {
       <div className="ms-conv">
         {p.page === 'new-agent' || p.page === 'new-group' ? <Card p={p} group={p.page === 'new-group'} />
           : <>
-            {open ? <div className="ms-thread">{thread.full(conversation(p, open))}</div>
+            {open?.proposed ? <Card p={p} group={false} />
+              : open ? <div className="ms-thread">{thread.full(conversation(p, open))}</div>
               : <p className="ms-none">{agents === undefined ? 'No reading of your agents.' : 'Pick an agent in the list to open its conversation.'}</p>}
           </>}
       </div>

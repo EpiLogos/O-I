@@ -212,8 +212,10 @@ export function messagesAgents(population: unknown): Record<string, unknown>[] |
     const words = str(provenance.intent_expression)
     const purpose = str(agent.purpose) ?? words
     const proposed = provenance.recognition === 'unrecognised'
+    const profile = isObj(agent.source_relation) ? str(agent.source_relation.profile_ref) : undefined
+    const revision = isObj(agent.source_relation) ? str(agent.source_relation.revision) : undefined
     return [{id: ref, name: str(agent.label) ?? (words ? firstWords(words) : undefined) ?? str(agent.handle) ?? ref, ...(purpose ? {for: firstLine(purpose)} : {}),
-      state: 'rest', last: proposed ? AGENT_PROPOSED : AGENT_UNSEATED}]
+      state: 'rest', last: proposed ? AGENT_PROPOSED : AGENT_UNSEATED, ...(proposed && profile ? {proposed: profile, ...(revision ? {revision} : {})} : {})}]
   })
   return [...placed, ...roster]
 }
@@ -618,6 +620,14 @@ export function messagesBinding(input: MessagesInput, ports: MessagesPorts = {})
     standing,
     local: {
       ...Object.fromEntries(MESSAGES_LOCAL.map(key => [key, (value: Value | undefined) => holdView(MESSAGES_ID, key, value)])),
+      // Opening an agent you made and have not accepted opens Central's proposal of it (§19.24: it stands proposed, in Messages), for
+      // Accept or Discard; opening any other lets a proposal opened that way go.
+      open: (value: Value | undefined) => {
+        holdView(MESSAGES_ID, 'open', value)
+        const row = (known ? messagesAgents(known) ?? [] : []).find(agent => agent.id === value)
+        if (row && typeof row.proposed === 'string') hold({kind: 'agent', scope: 'root', ref: row.proposed, revision: typeof row.revision === 'string' ? row.revision : 'r1'})
+        else if (made?.kind === 'agent' && (known ? messagesAgents(known) ?? [] : []).some(agent => agent.proposed === made.ref)) hold(null)
+      },
       // Change: back to the card's fields, the proposal still held; Make then saves the change.
       proposal: value => { if (value === undefined && made) holdView(MESSAGES_ID, 'editing', true) },
     },
