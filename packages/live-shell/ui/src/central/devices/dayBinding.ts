@@ -48,7 +48,7 @@ import {CONTROL, DAY_ENTRY_CANDIDATE, INVISIBLE, proseFault, proseText, shownPro
 
 /** The value keys the Day design reads that an owner reports or takes (day.tsx `defaults`), and the three this binding adds for the
  * catalogue to draw (`refusal`, `canOpenToday`, `canClose`) and the two it takes (`openToday`, `closeNow`). */
-export const DAY_KEYS = ['light', 'date', 'face', 'dayStart', 'rollover', 'c0', 'c1', 'c2done', 'refusal', 'notice', 'canOpenToday', 'canClose', 'tomorrow', 'tomorrowOpen', 'fieldDay', 'fieldWhy',
+export const DAY_KEYS = ['light', 'date', 'face', 'dayStart', 'rollover', 'c0', 'c1', 'c2done', 'c2run', 'refusal', 'notice', 'canOpenToday', 'canClose', 'tomorrow', 'tomorrowOpen', 'fieldDay', 'fieldWhy',
   'fieldKept', 'fieldRefusal', 'fieldSkipped'] as const
 
 /** The held field beside the Day (SF06, SF08; DLW build ruling 2026-11-06): the field as the Day reads it (system/fieldModel.ts
@@ -116,7 +116,7 @@ export const DAY_ABSENT: Readonly<Record<string, string>> = {
   tomorrowOpen: 'Central names no tomorrow\'s Day yet, so none is open.',
   template: 'The Day keeps the template it opened with (meta.template), but the design\'s choices are not the owner\'s templates.',
   c1p: 'The Day document holds included contributions only; proposals that wait are no record of it.',
-  c2run: `Face 2 lists the sessions of ${NO_NOWS}; the sessions ledger records a session with no done, running or queued state.`,
+  c2run: 'Running is how many clearings of your register\'s NOW are active (central.now.list, read with Central\'s ground): the listing has not answered, or it is a Day you selected, whose running sessions no owner keeps.',
   c2queue: `Face 2 lists the sessions of ${NO_NOWS}; the sessions ledger records a session with no done, running or queued state.`,
   c3: 'Patterns are free text on face 3 (p3_patterns_noticed): the owner counts none.',
   c3p: 'The Day document holds included contributions only; proposals that wait are no record of it.',
@@ -586,6 +586,9 @@ export interface DayFacts {
   readonly automaticRollover: boolean | null
   /** Why the policy gives no boundary, in Central's words where it refused (null while it answers, or has not). */
   readonly boundaryRefusal?: string | null
+  /** How many clearings of your register's NOW are active now (central.now.list, the ground's `now` leg; widgets/railBindings.ts reads the
+   * same listing): the sessions running, for the Day Central names as current; null for a Day the person selected or an unanswered listing. */
+  readonly running?: number | null
   /** Tomorrow's Day as Central names it beside today's (central.day-reading/v1 `tomorrow`, set by central.day.rollover): its civil date. */
   readonly tomorrow?: string | null
 }
@@ -618,8 +621,10 @@ export function dayFactsOf({ground, groundError, selected}: DayFactsInput): DayF
   // Tomorrow's Day, where Central names one after the Day shown (a stale name, on or before today, is no tomorrow).
   const named = (ground.day.data as {tomorrow?: {civil_date?: unknown} | null} | null | undefined)?.tomorrow?.civil_date
   const tomorrow = typeof named === 'string' && civilDate && named > civilDate ? named : null
+  const listing = ground.now?.state === 'ready' ? ground.now.data ?? null : null
+  const running = listing && Array.isArray(listing.records) ? listing.records.filter(row => row.lifecycle === 'active').length : null
   return {civilDate, standing: current.standing, refusal: refusalOf(current.standing, current.pointer, time?.civil_date ?? null), canOpenToday,
-    canClose: canCloseDay(ground), offersEntries: offersEntries(ground), aperture: current.aperture, boundary, automaticRollover, boundaryRefusal, tomorrow}
+    canClose: canCloseDay(ground), offersEntries: offersEntries(ground), aperture: current.aperture, boundary, automaticRollover, boundaryRefusal, tomorrow, running}
 }
 
 function refusalOf(standing: DayDocumentStanding | null, pointer: string | null, today: string | null): string | null {
@@ -651,6 +656,8 @@ export function dayValuesOf(facts: DayFacts, document: {readonly face: number; r
   if (tomorrow) { values.tomorrow = tomorrow; values.tomorrowOpen = true }
   values.canOpenToday = facts.canOpenToday
   values.canClose = facts.canClose
+  // Running is the register's NOW, not the Day document's: it stands whether or not the document does.
+  if (typeof facts.running === 'number') values.c2run = facts.running
   // The face and the counts belong to the Day document: none stands, none is drawn.
   if (facts.aperture && document) {
     values.face = document.face

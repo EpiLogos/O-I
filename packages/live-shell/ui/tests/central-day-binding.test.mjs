@@ -216,6 +216,27 @@ test('REAL CAPTURE — the stale Day pointer: the date is Central\'s civil today
     'no value is the design\'s default (the defaults hold Wed 15 Oct, face 1, Propose, every source on)')
 })
 
+// D-27: the widget's "running" (c2run) is your register's active NOW clearings, as the rail's NOWs tile reads them (the ground's `now` leg,
+// central.now.list); drawn by the catalogue's own widget, it is the number, never "—".
+test('the Day widget\'s running count is your register\'s active NOW clearings, from Central\'s ground, drawn as the design draws it', () => {
+  const nowLeg = records => ({state: 'ready', action: 'central.now.list', data: {schema: 'central.now-listing/v1', automatic_agent_or_model_invocation: false, records}})
+  const row = (ref, lifecycle) => ({now_ref: ref, purpose: ref, lifecycle, participant_refs: [], created_at_unix_seconds: 1792110000})
+  const ground = {...READY, now: nowLeg([row('a', 'active'), row('b', 'active'), row('c', 'quiescent'), row('d', 'closed')])}
+  const facts = factsOf(ground)
+  assert.equal(facts.running, 2, 'two clearings are active')
+  const values = bind.dayValuesOf(facts, {face: 2, payload: PAYLOAD})
+  assert.equal(values.c2run, 2)
+  assert.ok(bind.DAY_KEYS.includes('c2run'))
+  assert.equal(bind.dayValuesOf(factsOf({...STALE, now: ground.now}), null).c2run, 2, 'the register\'s NOW, whether or not a Day document stands')
+  assert.equal('c2run' in bind.dayValuesOf(factsOf(READY), {face: 2, payload: PAYLOAD}), false, 'an unanswered listing gives no count')
+  assert.equal(factsOf(ground, {standing: null, aperture: null}).running, undefined, 'a Day you selected: no running sessions are kept for it')
+  const props = vals => ({v: vals, owner: vals, set: () => {}, nav: {}, page: '', setPage: () => {}, standing: {}})
+  const widget = html(createElement(() => catalogueDay.widget(props(values))))
+  assert.equal(widget, html(createElement(() => catalogueDay.widget(props({...values, c2run: 2})))), 'the design\'s own widget on the count')
+  assert.match(widget, /data-i="running\|2 — Opens face 2\."><button[^>]*><output class="dp-readout-value" data-tone="value">2<\/output>/, 'running: 2, never —')
+  assert.notEqual(widget, html(createElement(() => catalogueDay.widget(props(bind.dayValuesOf(factsOf(READY), {face: 2, payload: PAYLOAD}))))), 'the count changes what the widget draws')
+})
+
 test('a ready Day: its face and its records\' counts are the owner\'s; what the owner counts nothing for stays absent', () => {
   const facts = factsOf(READY)
   assert.deepEqual(facts.aperture, {project: null, sourceRef: SOURCE_16, documentId: DOC_16}, 'the aperture the die turns')
@@ -606,7 +627,8 @@ test('the moves: with Central\'s Day readings not read, every reading of a move 
     assert.equal(key in values, false, `${key}: no owner reading was handed in`)
     assert.match(why[key] ?? '', /central\.day\.(settings|moves)\.read/, `${key} names the reading it waits on`)
   }
-  assert.match(bind.DAY_ABSENT.c2run, /every machine's NOW and its child NOWs.*Workcell #72.*ai-kit #275/, 'face 2 waits on the machines\' NOWs')
+  // REPLACED (D-27): c2run waited on the machines' NOWs too; Running is now your register's active NOW clearings (the ground's `now` leg).
+  assert.match(bind.DAY_ABSENT.c2queue, /every machine's NOW and its child NOWs.*Workcell #72.*ai-kit #275/, 'face 2\'s queue waits on the machines\' NOWs')
   assert.match(bind.DAY_ABSENT.c4, /each entry with its author/, 'face 4 gathers what the sessions touched, each with its author')
 })
 
