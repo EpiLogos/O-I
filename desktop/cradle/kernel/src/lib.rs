@@ -289,9 +289,14 @@ pub struct Kernel {
 // receipts its state changes produced.
 // ---------------------------------------------------------------------------
 
-/// The conversation lifecycle controls the AIKit gateway exposes per
-/// harness binding. The `model`/`harness`/`skills` selectors are separate
-/// surfaces and deliberately absent here.
+/// The conversation controls the AIKit gateway exposes per harness binding
+/// that change it (`aikit gateway agent --binding <REF> <OP>`, aikit-cli
+/// gateway_ops.rs conversation_operation): the lifecycle verbs, `pause` and
+/// `resume` of the binding's connector ingress, and `model`, the harness's
+/// native model selector — the one operation that carries a value
+/// (`--model <ID>`). The reads (`status`, `sessions`, `harness`, `skills`)
+/// go through `HarnessAgentRead`. AIKit has no other value-carrying
+/// conversation operation, so none is declared here.
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum HarnessAgentControl {
@@ -300,6 +305,7 @@ pub enum HarnessAgentControl {
     Restart,
     Pause,
     Resume,
+    Model,
 }
 
 impl HarnessAgentControl {
@@ -310,6 +316,7 @@ impl HarnessAgentControl {
             Self::Restart => "restart",
             Self::Pause => "pause",
             Self::Resume => "resume",
+            Self::Model => "model",
         }
     }
 }
@@ -324,13 +331,18 @@ pub enum KernelOp {
     HarnessAgentRead {
         binding: String,
     },
-    /// Drive one conversation lifecycle control against the binding's
-    /// gateway (`new`, `stop`, `restart`, `pause`, `resume`). The gateway's
+    /// Drive one conversation control against the binding's gateway (`new`,
+    /// `stop`, `restart`, `pause`, `resume`, `model [--model <ID>]`). The gateway's
     /// answer — or its named refusal — comes back verbatim; the kernel owns
     /// no session state.
     HarnessAgentControl {
         binding: String,
         control: HarnessAgentControl,
+        /// The provider model id `model` selects (`--model <ID>`); absent,
+        /// `model` lists the harness's own selector. Refused on any other
+        /// control: AIKit gives none of them a value.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        model: Option<String>,
     },
     /// One sender kind's ingress rule on a harness binding (manual §19.12,
     /// Scope's Calls to other agents): AIKit's `gateway ingress`, whose

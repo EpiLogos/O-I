@@ -20,6 +20,7 @@ import type {DispatchReceipt} from '../../inhabitants/sdk/shellSetters'
 import type {Form, Member, Rung} from '../../inhabitants/catalogue/panels/practice'
 import type {ConfigRequestWire} from '../../../../../../desktop/cradle/src/kernel/types'
 import {CHAIN_ADMIT_WORDS} from '../agentChainDrag'
+import {harnessKeyUncarried} from '../aikitGatewayOps'
 import {chainDeviceId, type AgentChainReading} from './agentChainDevices'
 import {flipDevice, publishedDevice, selectDevice, subscribeDeviceDoor} from '../../frame/devices/deviceDoor'
 import {setHostPage} from '../../frame/devices/deviceHost'
@@ -287,17 +288,25 @@ export interface GatewayRows {
 
 const GATEWAY_KEYS: Readonly<Record<string, keyof GatewayRows>> = {transport: 'transport', connect: 'connect', stallAfter: 'stallAfter'}
 
-/** The Gateway's binding: each setting through its row's own write path (the harness control's value carrier); the two the carrier
- * does not carry are refused by name; a link reading the gateway's answer does not carry stands absent with why. */
+/** The Gateway's settings AIKit's gateway has no operation for, by the design's key and the row key its refusal names
+ * (aikitGatewayOps.ts): they stand disabled with AIKit's missing operation named, and a press is refused with the same words. Connect is
+ * AIKit's pause/resume of the binding's connector and stands. */
+const GATEWAY_UNCARRIED: Readonly<Record<string, string>> = {transport: 'transport', stallAfter: 'stall-after', autoContinue: 'auto-continue', fanOut: 'fan-out'}
+const uncarriedWhy = (rowKey: string): string => harnessKeyUncarried(rowKey)!.reason
+
+/** The Gateway's binding: Connect through its row's own write path (AIKit's pause/resume); the settings AIKit's gateway has no operation
+ * for stand disabled and are refused by name; a link reading the gateway's answer does not carry stands absent with why. */
 export function gatewayBinding(id: string, input: GatewayInput, rows: GatewayRows, write: RowWrite): DesignBinding {
   const values = gatewayValues(input)
   return {
     id,
     values,
-    standing: gatewayLinkStanding(input.reading, values),
+    standing: {...gatewayLinkStanding(input.reading, values),
+      ...Object.fromEntries(Object.entries(GATEWAY_UNCARRIED).map(([key, rowKey]) => [key, {disabled: uncarriedWhy(rowKey)}]))},
     writes: key => key in GATEWAY_KEYS || key === 'autoContinue' || key === 'fanOut',
     write: async changes => {
       for (const {key, value} of changes) {
+        if (key in GATEWAY_UNCARRIED) throw Error(uncarriedWhy(GATEWAY_UNCARRIED[key]!))
         const rowKey = GATEWAY_KEYS[key]
         if (rowKey) {
           const row = rows[rowKey]
@@ -306,8 +315,6 @@ export function gatewayBinding(id: string, input: GatewayInput, rows: GatewayRow
           if (receipt.kind === 'refused') throw Error(receipt.reason)
           continue
         }
-        if (key === 'autoContinue') throw Error(missing('Auto-continue', 'kernel:harness_agent_control configure {auto_continue}', 'Actuation'))
-        if (key === 'fanOut') throw Error(missing('Fan-out', 'kernel:harness_agent_control configure {fan_out}', 'Actuation'))
         throw Error(REFUSE.reading(key))
       }
     },
@@ -449,6 +456,8 @@ function agentOwnValues(input: AgentInput): Record<string, Value> {
 /** The rows an Agent change goes through: the address table's (agentParamAddresses.ts — effort, input, heartbeat) and the declared
  * P0 rows (AGENT_P0_ROWS below — interrupt-quantize, steer-line, new-task), each with its own write path. */
 export interface AgentRows {
+  /** The binding's harness model (AIKit's `gateway agent model --model ID`, the address table's model row). */
+  readonly model?: SdkParamRow
   readonly effort?: SdkParamRow
   readonly input?: SdkParamRow
   readonly heartbeat?: SdkParamRow
@@ -475,7 +484,13 @@ export const AGENT_P0_ROWS: Readonly<{quantize: SdkParamRow; steerLine: SdkParam
 export const AGENT_AUTONOMY_RETIRED = 'Autonomy is retired: Scope\'s Tool calls, on its Asks page, answers the harness\'s request to use a tool — Ask, Session or Always — and a task\'s Envelopes set it for that task.'
 
 // `autonomy` is taken only to be refused in words (AGENT_AUTONOMY_RETIRED): a preset or a hold from before may still name it.
-const AGENT_WRITES = new Set(['effort', 'input', 'heartbeat', 'quantize', 'draft', 'sent', 'light', 'cap', 'autonomy'])
+const AGENT_WRITES = new Set(['model', 'effort', 'input', 'heartbeat', 'quantize', 'draft', 'sent', 'light', 'cap', 'autonomy'])
+
+/** The Agent's settings AIKit's gateway has no operation for, by the design's key and the row key its refusal names (aikitGatewayOps.ts):
+ * Effort, Input and Interrupt timing, and the composer's words (a steer line into the running turn, or a queued task's words — AIKit's
+ * `new` carries none). They stand disabled with AIKit's missing operation named. */
+const AGENT_UNCARRIED: Readonly<Record<string, string>> = {effort: 'effort', input: 'input', quantize: 'interrupt-quantize'}
+export const AGENT_SEND_UNCARRIED = `Send: AIKit's gateway carries no words into a binding's conversation — ${harnessKeyUncarried('steer-line')!.reason} ${harnessKeyUncarried('new-task')!.reason}`
 
 /** The Agent's binding: its values, and each change through its row's own write path (or held, for the composer's text). */
 /** Why the Agent stands in no run state: no session is selected, or its task, needle and thread say none (runFaces.ts runStateOfSession). */
@@ -484,7 +499,9 @@ const AGENT_WRITES = new Set(['effort', 'input', 'heartbeat', 'quantize', 'draft
 export const AGENT_NO_SESSION = 'No agent is running in this world yet, so a message has nowhere to go. Start one first.'
 export const RUN_UNREAD = 'The run state is a reading: no session is selected, or its task, its needle and its thread (runFaces.ts) stand it in none yet.'
 
-export function agentBinding(id: string, input: AgentInput, rows: AgentRows, write: RowWrite, steering: () => boolean): DesignBinding {
+// `_steering` (whether the shell steers) chose the composer's route while AIKit's gateway was assumed to carry words; it carries none, so
+// nothing reads it now. The parameter stays for the chain's call.
+export function agentBinding(id: string, input: AgentInput, rows: AgentRows, write: RowWrite, _steering: () => boolean): DesignBinding {
   const values = agentValues(input)
   const through = async (row: SdkParamRow | undefined, name: string, value: unknown) => {
     if (!row?.writePath) throw Error(`${name}: the row is not adopted on this chain, so nothing carries it.`)
@@ -496,25 +513,24 @@ export function agentBinding(id: string, input: AgentInput, rows: AgentRows, wri
     id,
     values,
     standing: {...disabled(contextStanding(input.context, values)), ...disabled(REFUSED_WRITES[AGENT_DESIGN]!), ...('run' in values ? {} : {run: {disabled: RUN_UNREAD}}),
-      autonomy: {disabled: AGENT_AUTONOMY_RETIRED}, ...(input.sessionRef == null ? {sent: {disabled: AGENT_NO_SESSION}} : {})},
+      autonomy: {disabled: AGENT_AUTONOMY_RETIRED},
+      ...Object.fromEntries(Object.entries(AGENT_UNCARRIED).map(([key, rowKey]) => [key, {disabled: harnessKeyUncarried(rowKey)!.reason}])),
+      sent: {disabled: input.sessionRef == null ? AGENT_NO_SESSION : AGENT_SEND_UNCARRIED},
+      ...(rows.model?.writePath ? {} : {model: {disabled: 'Model: the row is not adopted on this chain, so nothing carries it.'}})},
     writes: key => AGENT_WRITES.has(key),
     write: async (changes: readonly ValueChange[]) => {
       for (const {key, value} of changes) {
+        // What AIKit's gateway has no operation for is refused here, in the words its control stands disabled with, and nothing is sent.
+        if (key in AGENT_UNCARRIED) throw Error(harnessKeyUncarried(AGENT_UNCARRIED[key]!)!.reason)
         switch (key) {
-          case 'effort': await through(rows.effort, 'Effort', value); break
-          // The shell's steer setter takes the boolean the transport gives it (agentChainDevices.ts carryValue).
-          case 'input': await through(rows.input, 'Input', value === 'steer'); break
+          case 'model': await through(rows.model, 'Model', value); break
           case 'heartbeat': await through(rows.heartbeat, 'Heartbeat', value); break
-          case 'quantize': await through(rows.quantize, 'Interrupt', value); break
           case 'draft': updateHolds(was => ({...was, composer: {...was.composer, draft: String(value)}})); break
           case 'sent': {
-            const text = String(value).trim()
-            if (!text) break
-            // Steer: the words reach the turn that runs (configure {steer}); Queue: they wait as the next task (configure {prompt}).
-            const steer = input.accepted.input ? input.accepted.input === 'steer' : steering()
-            await through(steer ? rows.steerLine : rows.newTask, steer ? 'Steer line' : 'New task', text)
-            updateHolds(was => ({...was, composer: {draft: '', sent: text}}))
-            break
+            // Steer would be a steer line into the turn that runs, Queue a new task's words: AIKit's gateway carries neither
+            // (AGENT_SEND_UNCARRIED), so the words stay in the draft and nothing is sent.
+            if (!String(value).trim()) break
+            throw Error(input.sessionRef == null ? AGENT_NO_SESSION : AGENT_SEND_UNCARRIED)
           }
           case 'light': throw Error(REFUSE.power)
           case 'cap': throw Error(REFUSE.budget)
@@ -1445,7 +1461,8 @@ export function memberBinding(id: string, rack: Values, chosen: string | null, h
 
 /** Scope's Tool calls on the chain (§19.12 Asks): the harness's approvals mode — ask · session · always — as the gateway's reading discloses
  * it (agentChainDevices.ts gatewayDisclosed `approvals`), and the Gateway slot's `approvals` row, whose write path is the kernel's
- * harness_agent_control configure {approvals}. Absent: the chain hands in neither. */
+ * harness_agent_control — which AIKit's gateway has no operation for (aikitGatewayOps.ts), so it stands disabled. Absent: the chain hands
+ * in neither. */
 export interface ScopeAsks {
   readonly toolCalls?: Value
   readonly toolCallsRow?: SdkParamRow
@@ -1501,14 +1518,16 @@ export function scopeValues(held: ChainHolds, asks: ScopeAsks = {}): Values {
 }
 
 /** Tool calls with no row to carry it. */
-const TOOL_CALLS_UNCARRIED = 'Tool calls: the Gateway\'s approvals row is not adopted on this chain, so nothing carries it (the kernel\'s harness_agent_control configure {approvals}).'
+const TOOL_CALLS_UNCARRIED = 'Tool calls: the Gateway\'s approvals row is not adopted on this chain, so nothing carries it.'
 
 const SCOPE_WRITES = (key: string) => ['reach', 'writeMode', 'toolCalls'].includes(key) || key in REFUSED_WRITES[SCOPE_DESIGN]! || key.startsWith('w:')
 
 /** Scope's refused settings, Tool calls where no row carries it, and Calls to other agents, Wait and On no answer where they are not
  * pressable. */
 function scopeStanding(asks: ScopeAsks): Record<string, Standing> {
-  const standing: Record<string, Standing> = {...disabled(REFUSED_WRITES[SCOPE_DESIGN]!), ...(asks.toolCallsRow?.writePath ? {} : {toolCalls: {disabled: TOOL_CALLS_UNCARRIED}})}
+  // Tool calls is the harness's approvals mode, which AIKit's gateway has no operation to set (aikitGatewayOps.ts).
+  const standing: Record<string, Standing> = {...disabled(REFUSED_WRITES[SCOPE_DESIGN]!),
+    toolCalls: {disabled: asks.toolCallsRow?.writePath ? harnessKeyUncarried('approvals')!.reason : TOOL_CALLS_UNCARRIED}}
   const why = callsWhy(asks)
   if (why) standing.calls = {disabled: why}
   else delete standing.calls
@@ -1550,10 +1569,8 @@ export function scopeBinding(id: string, held: ChainHolds, writeModeRow: SdkPara
           continue
         }
         if (key === 'toolCalls') {
-          if (!asks.toolCallsRow?.writePath) throw Error(TOOL_CALLS_UNCARRIED)
-          const receipt = await write(asks.toolCallsRow, value)
-          if (receipt.kind === 'refused') throw Error(receipt.reason)
-          continue
+          // AIKit's gateway has no operation that sets the harness's approvals mode: refused in the words it stands disabled with.
+          throw Error(asks.toolCallsRow?.writePath ? harnessKeyUncarried('approvals')!.reason : TOOL_CALLS_UNCARRIED)
         }
         if (key === 'calls') {
           const why = callsWhy(asks)

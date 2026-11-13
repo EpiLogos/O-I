@@ -3,7 +3,7 @@
 // starts with ('high', 'steer'); that state is a presentation of the press, not a reading of the harness, so the Factory devices
 // never read it. What they read instead is here: a value is recorded only when the owner answered the write with a receipt that
 // fired (shellSetterBridge.ts records it, after the owner accepts and not before). Interrupt timing is the harness carrier's
-// `quantize` (shellSetterBridge.ts:117 → configure {quantize}; agentNativeP0.ts:137 the row's three choices), read by the Agent
+// `quantize` (shellSetterBridge.ts; agentNativeP0.ts the row's three choices — AIKit's gateway carries none of them today, so nothing is recorded), read by the Agent
 // design's Interrupt. Heartbeat and the write arm have no entry: the dispatcher calls both presentation-state
 // (agentNativeDispatch.ts) and refuses them, so no owner has ever accepted one.
 //
@@ -19,7 +19,7 @@ export interface OwnerAcceptedValues {
   readonly quantize?: 'now' | 'next tool' | 'next turn'
 }
 
-/** Where a Stop or a Steer lands: the carrier's three choices (harnessAgentControl.ts HarnessAgentControlValue.quantize). */
+/** Where a Stop or a Steer lands: the Interrupt timing row's three choices (agentNativeP0.ts interrupt-quantize). */
 const QUANTIZE: readonly string[] = ['now', 'next tool', 'next turn']
 
 const NONE: OwnerAcceptedValues = Object.freeze({})

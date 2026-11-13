@@ -136,7 +136,7 @@ const P0_ROWS: AdoptedArtifacts[] = [
       {
         family: 'actuation', deviceInstance: 'agent', key: 'steer-line', title: 'Steer line', type: 'string',
         writePath: KERNEL_HARNESS_CONTROL,
-        disclosure: 'Mid-turn steer text rides the value-carrying harness control (configure {steer}); the kernel patch carrying it is the P0 ligament — until it lands the kernel refuses and the refusal names the carrier. Behaviour of record: the Buzz contract (steer-first, withheld-event ledger).',
+        disclosure: 'Mid-turn steer text: AIKit\'s gateway has no operation that carries words into a binding\'s running turn (`aikit gateway agent` takes status, stop, new, sessions, restart, pause, resume, model, harness, skills), so the dispatch refuses it before anything is sent, naming the missing operation. Behaviour of record: the Buzz contract (steer-first, withheld-event ledger).',
       },
       {
         family: 'actuation', deviceInstance: 'agent', key: 'interrupt-quantize', title: 'Interrupt timing', type: 'enumerated',
@@ -157,7 +157,7 @@ const P0_ROWS: AdoptedArtifacts[] = [
       {
         family: 'software-factory', deviceInstance: 'agent', key: 'new-task', title: 'New task', type: 'string',
         writePath: KERNEL_HARNESS_CONTROL,
-        disclosure: 'The bare \'new\' control fires today; the task TEXT rides the value carrier (configure {prompt}) — the act-clip grammar that composes it is WO-A4\'s remaining half.',
+        disclosure: 'The bare \'new\' control fires AIKit\'s `gateway agent new`; AIKit\'s `new` carries no words, so a task\'s text is refused before anything is sent, naming the missing operation.',
       },
     ],
   }),

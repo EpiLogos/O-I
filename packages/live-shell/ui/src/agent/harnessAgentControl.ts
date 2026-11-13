@@ -4,38 +4,11 @@ import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kern
 
 export type HarnessAgentControl = 'new' | 'stop' | 'restart' | 'pause' | 'resume'
 
-/** The value carrier the gateway rows' values ride (the P0 ligament's
- * kernel patch: new-shell/evidence/agent-native-p0-20261011/kernel-control-value-carriers.patch).
- * The patch extends `harness_agent_control` with a `configure` control
- * carrying these fields; every field is optional and the gateway judges
- * each. Against the UNPATCHED kernel this dispatch returns the kernel's own
- * unknown-variant refusal — named, verbatim, never faked. The fields are
- * the work order's exact list (WO-0.3) plus the two text carriers the
- * agent-chain rows need (steer text, the new-task prompt). */
-export interface HarnessAgentControlValue {
-  transport?: 'stdio' | 'ws' | 'remote'
-  approvals?: 'ask' | 'session' | 'always'
-  stall_after_seconds?: number
-  connect?: boolean
-  effort?: 'low' | 'medium' | 'high' | 'max'
-  model?: string
-  quantize?: 'now' | 'next tool' | 'next turn'
-  input_mode?: 'steer' | 'queue'
-  steer?: string
-  prompt?: string
-}
-
-/** The extended wire shape the patch introduces. Declared here (not
- * imported from kernel/types.ts) because the patch file, not this tree,
- * carries the kernel type — this module is the shell-side declaration
- * consuming it, and the cast at the dispatch boundary is the ONE place the
- * patch's landing is awaited. */
-export interface HarnessAgentConfigureCall {
-  op: 'harness_agent_control'
-  binding: string
-  control: 'configure'
-  value: HarnessAgentControlValue
-}
+/** The conversation operations AIKit's gateway takes that change a binding (`aikit gateway agent --binding <REF> <OP>`, aikit-cli
+ * cli.rs GatewayAgentArgs, gateway_ops.rs conversation_operation), as the kernel's harness_agent_control carries them: the lifecycle
+ * controls above, and `model`, the one that carries a value (`--model <ID>`). AIKit has no other value-carrying conversation operation —
+ * no effort, approvals, transport, stall, steer or prompt — so none is declared here. */
+export type HarnessAgentCall = {op: 'harness_agent_control'; binding: string; control: HarnessAgentControl | 'model'; model?: string}
 
 /** A one-line named summary of a control outcome document — the fields the
  * owner actually discloses, never a JSON dump (the receipt belongs to the
@@ -66,7 +39,7 @@ export type KernelInvoke = (
 
 async function controlOutcome(
   transport: KernelTransportStatus,
-  call: {op: 'harness_agent_control'; binding: string; control: string; value?: HarnessAgentControlValue},
+  call: HarnessAgentCall,
   invoke?: KernelInvoke,
 ): Promise<{ok: true; note: string; document: unknown} | {ok: false; error: string}> {
 
@@ -80,7 +53,7 @@ async function controlOutcome(
   if (outcome.outcome?.result !== 'harness_agent_outcome') {
     return {ok: false, error: `Unexpected harness control outcome: ${outcome.outcome?.result ?? 'no result named'}`}
   }
-  // The control changed the harness's sessions (new, stop, resume, restart, configure): on its receipt the agency readers are
+  // The control changed the harness's sessions (new, stop, resume, restart, model): on its receipt the agency readers are
   // told, rather than waiting for the agency floor (owners/notices.ts).
   tellOwnerChanged({topic: 'agency', cause: `a harness control: ${String(call.control)}`})
   return {ok: true, note: controlLine(String(call.control), outcome.outcome.document), document: outcome.outcome.document}
@@ -97,16 +70,15 @@ export async function harnessAgentControl(
   return outcome.ok ? {ok: true, note: outcome.note, document: outcome.document} : outcome
 }
 
-/** The value-carrying control (ligament 3's shell half): one configure
- * dispatch carrying the gateway/agent rows' values. The receipt is the
- * gateway's own answer or refusal, verbatim. */
-export async function harnessAgentConfigure(
+/** The binding's harness model, selected through AIKit's own operation (`aikit gateway agent --binding B model --model ID`, the
+ * kernel's harness_agent_control `model`). The receipt is the gateway's own answer or refusal, verbatim. */
+export async function harnessAgentModel(
   transport: KernelTransportStatus,
   binding: string,
-  value: HarnessAgentControlValue,
+  model: string,
   invoke?: KernelInvoke,
 ): Promise<{ok: true; note: string; document: unknown} | {ok: false; error: string}> {
-  return controlOutcome(transport, {op: 'harness_agent_control', binding, control: 'configure', value}, invoke)
+  return controlOutcome(transport, {op: 'harness_agent_control', binding, control: 'model', model}, invoke)
 }
 
 /** Fire a bare lifecycle control and return the owner's outcome document —

@@ -332,7 +332,9 @@ test('with no agent session the composer is closed, says why, and keeps the word
   const fresh = bind.agentBinding(bind.AGENT_DESIGN, input(null), {}, async () => ({kind: 'refused', reason: 'x'}), () => false)
   assert.equal(fresh.standing.sent?.disabled, bind.AGENT_NO_SESSION)
   const seated = bind.agentBinding(bind.AGENT_DESIGN, input('s'), {}, async () => ({kind: 'refused', reason: 'x'}), () => false)
-  assert.equal(seated.standing.sent, undefined, 'a seated session takes messages as before')
+  // REPLACED (lane A wiring): a seated session's words never reached it — they rode an invented `configure` control the kernel refused —
+  // and AIKit's gateway has no operation that carries words into a binding's conversation; the composer says so.
+  assert.equal(seated.standing.sent?.disabled, bind.AGENT_SEND_UNCARRIED, 'a seated session says AIKit\'s gateway carries no words')
   const composer = readFileSync(new URL('../src/inhabitants/catalogue/panels/actuation__harness-model.tsx', import.meta.url), 'utf8')
   assert.match(composer, /placeholder=\{send\.disabled \? String\(send\.disabled\)/, 'the reason stands where you type')
   assert.match(composer, /e\.key === 'Enter' && draft\.trim\(\) && !send\.disabled/, 'Enter sends nothing while it cannot be sent')
