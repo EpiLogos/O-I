@@ -117,7 +117,7 @@ function placeOf(at: LineRequest['at']): CSSProperties {
 
 export function SearchLine({request}: {request: LineRequest}) {
   const transport = useMemo(() => detectTransport(), [])
-  const [typed, setTyped] = useState('')
+  const [typed, setTyped] = useState(request.query ?? '')
   const [index, setIndex] = useState(0)
   const [problem, setProblem] = useState<string | null>(null)
   const [busy, setBusy] = useState<string | null>(null)

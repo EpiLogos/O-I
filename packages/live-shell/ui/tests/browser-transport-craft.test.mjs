@@ -61,7 +61,11 @@ test('the search row holds the back and forward cells, enabled only when a step 
   const Body = () => React.createElement('p', null, 'rows')
   const markup = renderToStaticMarkup(React.createElement(Browser, {sources: [{id: 's', categories: [{id: 'one', label: 'One', kind: 'material'}], Body}]}))
   const row = markup.match(/<div class="world-browser-searchrow">[\s\S]*?<\/div>/)?.[0] ?? ''
-  for (const label of ['Back', 'Forward']) assert.match(row, new RegExp(`<button[^>]*aria-label="${label}"[^>]*disabled=""`), `${label} waits for a step`)
+  // REPLACED (parity G11, 13 Nov): the cells were labelled Back and Forward, the words of the title line's trail (manual §10.7); they
+  // walk only the categories shown, so they say so, and the search is the mockup's "Search the field (⌘F)".
+  for (const label of ['Previous category', 'Next category']) assert.match(row, new RegExp(`<button[^>]*aria-label="${label}"[^>]*disabled=""`), `${label} waits for a step`)
+  assert.doesNotMatch(row, /aria-label="(Back|Forward)"/, 'Back and Forward are the title line\'s alone')
+  assert.match(row, /placeholder="Search the field \(⌘F\)"/)
   assert.equal((row.match(/type="search"/g) ?? []).length, 1)
   const src = await source('frame/browser/Browser.tsx')
   assert.match(src, /useEffect\(\(\) => \{ setTrail\(before => visitCategory\(before, shown\)\) \}, \[shown\]\)/, 'the trail follows the category shown, whoever chose it')

@@ -78,7 +78,11 @@ test('the chrome groups by kind, holds one search and one pool, and draws the ch
   assert.match(markup, /data-browser-kind="material".*data-browser-kind="devices"/s, 'kinds in the manual\'s order, empty kinds left out')
   assert.doesNotMatch(markup, /data-browser-kind="(instruments|running)"/)
   assert.match(markup, /rows of one/); assert.equal(seen[0].query, '')
-  assert.match(markup, /aria-label="Pool"/); assert.doesNotMatch(markup, /data-device-pool|aria-label="Aperture"/, 'the pool holds no device and no aperture (W1)')
+  // REPLACED (parity G5, 13 Nov): "the pool holds no device and no aperture" — the pool still holds neither, but the aperture slot is back
+  // under the list (world-shell-mockup .slot; frame/encounter/ApertureSlot.tsx), standing before the pool, never inside it.
+  const pool = markup.slice(markup.indexOf('aria-label="Pool"'))
+  assert.match(markup, /aria-label="Pool"/); assert.doesNotMatch(pool, /data-device-pool|aria-label="Aperture"/, 'the pool holds no device and no aperture (W1)')
+  assert.match(markup, /<section class="aperture-slot" aria-label="Aperture">[\s\S]*aria-label="Pool"/, 'the aperture slot stands under the list, above the pool')
   assert.match(markup, /class="one-browser-preview" aria-label="Preview"/, 'the selected row\'s preview stands at the foot of the list')
 })
 

@@ -213,10 +213,13 @@ test('a device held in its band stands whole there, drawn by the band host; lett
 
 // REPLACED (O-I #769): "the pool holds the workspaces" became "the pool holds QL frames and MEF lenses" (decision #709; manual §16.7):
 // the browser draws GroovePool, and the workspaces stand in the browser as templates (tests/pool-frames-lenses.test.mjs).
-test('the pool holds the frames and lenses and nothing else; Whole stands only as the band; the aperture slot and the device pools are gone (code-reading)', async () => {
+test('the pool holds the frames and lenses and nothing else; Whole stands only as the band; the device pools are gone, the aperture slot stands beside the pool (code-reading)', async () => {
   const browser = await source('frame/browser/Browser.tsx')
   assert.match(browser, /<GroovePool face=\{poolFace\} \/>/)
-  assert.doesNotMatch(browser, /DevicePool|ApertureSlot|poolHost/)
+  // REPLACED (parity G5, 13 Nov): the aperture slot is back under the browser's list, as the mockup draws it (.slot, renderSlot), with
+  // the four context rows that stood in the retired encounter bar; it stands beside the pool, never in it.
+  assert.doesNotMatch(browser, /DevicePool|poolHost/)
+  assert.match(browser, /<ApertureSlot \/>\n\s*\{pool && <section className="one-browser-pool"/, 'the slot stands above the pool, outside it')
   const view = await source('frame/devices/DeviceView.tsx')
   assert.match(view, /FRAME_OF_VIEW[^=]*= \{whole: 'flip'/)
   const design = await source('inhabitants/catalogue/panels/design.ts')

@@ -2,7 +2,7 @@
 // Workbench can open — a new tab, the sources, each hosted surface the suite registers, a terminal, a web browser — are listed
 // in the browser's Instruments kind, never as a toolbar inside the panes. The Workbench publishes what it can open while it is
 // mounted; the browser reads it. It also publishes the aperture its panes stand in, and the focused pane the browser's aperture
-// slot reads.
+// slot reads (frame/encounter/ApertureSlot.tsx).
 import {useSyncExternalStore} from 'react'
 
 export interface WorkbenchOpener {
