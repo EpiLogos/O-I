@@ -96,6 +96,16 @@ test('drawnSizes holds each chosen size inside the window as it stands; null kee
   assert.equal(railDefault.browserW, areas.clampBrowserWidth(2000, 1200, 300), 'the rail\'s default width counts while it shows')
 })
 
+test('the rail\'s default width is the mockup\'s 320 on its 1920 page, a sixth of the window, never under 210 — as the stylesheet draws it', async () => {
+  assert.equal(areas.railDefaultWidth(1920), 320)
+  assert.equal(areas.railDefaultWidth(2560), 320, 'never wider than the mockup draws it')
+  assert.equal(areas.railDefaultWidth(1440), 240)
+  assert.equal(areas.railDefaultWidth(1000), 210)
+  const {readFile} = await import('node:fs/promises')
+  const css = await readFile(new URL('../src/styles.css', import.meta.url), 'utf8')
+  assert.match(css, new RegExp(`--rail-default:clamp\\(${areas.RAIL_DEFAULT_MIN_W}px,calc\\(100vw / 6\\),${areas.RAIL_DEFAULT_MAX_W}px\\)`), 'the stylesheet\'s default is the same arithmetic')
+})
+
 test('each frame\'s detail expansion returns exactly the height it had, and only to the workspace and lease that made it', () => {
   const at = {frame: 'base', workspaceId: 'w1', accessEpoch: 3}
   let held = areas.expandDetail({}, at, 330)

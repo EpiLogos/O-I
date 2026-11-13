@@ -37,34 +37,17 @@ test('no raw hex literals remain outside the token block', () => {
   assert.deepEqual(hexes, [], `raw hex outside the token block: ${hexes.join(', ')}`)
 })
 
-test('frame grid templates equal the oracle geometry strings', () => {
+// REPLACED (shell parity B1, 13 Nov): two tests here held Factory's own grid templates to the agent oracle's strings (400 | 1fr | 300,
+// rows 64 | 1fr | 300 | 28, with the transport row swapped for var(--transport-h) before comparing, so it could not fail) and its
+// dock-open, no-browser, no-detail and no-dock variants. Factory drew a second frame: switching to it moved the browser's edge 30px
+// and the rail's 40px. There is one frame now (styles.css .frame, the world-shell mockup's), measured in every mode, Factory's
+// included, by tests/world-shell-geometry.browser.mjs against the numbers read out of the mockup. What the agent frame keeps is its
+// area names.
+test('the agent frame keeps the oracle\'s area names and draws no geometry of its own', () => {
   const decls = declarations(block)
-  const frame = fidelity.geometry.frame
-  for (const [prop, oracleValue] of [
-    ['grid-template-columns', frame.gridTemplateColumns],
-    ['grid-template-rows', frame.gridTemplateRows],
-    ['grid-template-areas', frame.gridTemplateAreas],
-  ]) {
-    assert.ok(decls.has(prop), `missing ${prop}`)
-    // The transport row is the shell's one bar in every mode (lane C, 14 Oct: the mockup's 46px, styles.css --transport-h); the
-    // rest of the geometry stays the oracle's.
-    const value = prop === 'grid-template-rows' ? collapse(decls.get(prop)).replace(/^var\(--transport-h\)/, collapse(oracleValue).split(' ')[0]) : decls.get(prop)
-    if (prop === 'grid-template-rows') assert.match(decls.get(prop), /^var\(--transport-h\) /, 'Factory\'s bar is the shell\'s one transport height')
-    assert.equal(collapse(value), collapse(oracleValue), `${prop} drifted from the oracle`)
+  assert.equal(collapse(decls.get('grid-template-areas') ?? ''), collapse(fidelity.geometry.frame.gridTemplateAreas), 'the areas are the oracle\'s')
+  for (const prop of ['grid-template-columns', 'grid-template-rows', '--browser-w', '--detail-h', '--dock-w']) {
+    assert.ok(!decls.has(prop), `the agent frame declares ${prop}: Factory would stand in a frame of its own`)
   }
-})
-
-test('frame variants keep the oracle fallback geometry', () => {
-  const rowDetail = /grid-template-rows:var\(--transport-h\) minmax\(0, ?1fr\) 0 28px/
-  const colBrowser = /grid-template-columns:0 minmax\(0, ?1fr\) var\(--dock-w\)/
-  const rule = pattern => {
-    const match = css.match(pattern)
-    assert.ok(match, `rule not found: ${pattern}`)
-    return match[0]
-  }
-  assert.ok(rowDetail.test(rule(/\.frame\.agent-shell-frame\.detail-hidden[^{]*\{[^}]*\}/)))
-  assert.ok(rowDetail.test(rule(/\.frame\.agent-shell-frame\.no-detail \{[^}]*\}/)))
-  assert.ok(colBrowser.test(rule(/\.frame\.agent-shell-frame\.browser-hidden,\n[^{]*\{[^}]*\}/)))
-  assert.ok(colBrowser.test(rule(/\.frame\.agent-shell-frame\.no-browser \{[^}]*\}/)))
-  assert.ok(/grid-template-columns:400px minmax\(0, ?1fr\) 0/.test(rule(/\.frame\.agent-shell-frame\.no-dock \{[^}]*\}/)))
+  assert.doesNotMatch(css, /\.frame\.agent-shell-frame[^{]*\{[^}]*grid-template-(columns|rows)/, 'no variant of the agent frame redraws the columns or rows')
 })

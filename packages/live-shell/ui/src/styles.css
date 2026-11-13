@@ -47,7 +47,7 @@ input { min-width:0; border:1px solid var(--line); background:var(--bg-1); paddi
    default width is the frame's (narrower below 1000px); the width its edge set (--dock-w, from the book) stands over it. A device's
    expanded view is a band across the detail area above the chain: the detail row grows by it, the panes above shrink, nothing is
    covered (manual §16.4; frame/devices/DeviceFlip.tsx). The detail row never takes more than the window between the bars. */
-.frame { --frame-browser:var(--browser-w); --frame-rail:0px; --rail-default:260px; --frame-detail:var(--detail-h); --frame-band:0px;
+.frame { --frame-browser:var(--browser-w); --frame-rail:0px; --rail-default:clamp(210px,calc(100vw / 6),320px); --frame-detail:var(--detail-h); --frame-band:0px;
   height:100%; display:grid; grid-template-columns:var(--frame-browser) minmax(0,1fr) var(--frame-rail);
   grid-template-rows:var(--transport-h) minmax(0,1fr) min(calc(var(--frame-detail) + var(--frame-band)), calc(100vh - var(--transport-h) - 28px)) 28px;
   grid-template-areas:'transport transport transport' 'browser center dock' 'chain chain dock' 'status status status' }
@@ -70,10 +70,8 @@ input { min-width:0; border:1px solid var(--line); background:var(--bg-1); paddi
 .device-flip-host > .device-flip { overflow-x:auto; overflow-y:hidden; scrollbar-width:thin }
 .device-flip-host > .device-flip .dp[data-view="whole"] { min-width:max-content }
 .frame:has(> .device-flip-host > *):not(.detail-hidden) .detail-head[data-detail-head="device"] { margin-bottom:var(--frame-band) }
-/* Factory's frame sets its chain row at 300px (agent/agentShell.css): the band grows it as the other modes' row grows. */
-.frame.agent-shell-frame:has(> .device-flip-host > *):not(.detail-hidden) { grid-template-rows:var(--transport-h) minmax(0, 1fr) calc(300px + var(--frame-band)) 28px }
 .transport { grid-area:transport; display:flex; flex-direction:column }
-.set-title { height:14px; line-height:14px; text-align:center; color:var(--text-dim); font-size:11px; font-weight:400; overflow:hidden; white-space:nowrap; text-overflow:ellipsis }
+.set-title { height:18px; line-height:18px; text-align:center; color:var(--text-dim); font-size:12px; font-weight:400; overflow:hidden; white-space:nowrap; text-overflow:ellipsis }
 .set-title b { color:var(--text); font-weight:500 }
 .set-title-absent { color:var(--text-faint) }
 .transport-controls { display:flex; align-items:center; flex:1 }
@@ -129,10 +127,14 @@ input { min-width:0; border:1px solid var(--line); background:var(--bg-1); paddi
 @media(max-width:1000px) { :root { --session-slot-w:80px} .frame { --rail-default:210px } .meter-field { display:none } }
 @media(max-width:760px) { :root { --session-slot-w:68px} .browser-search { padding:3px } .position-field { padding:3px 5px } .statusbar-counts { font-size:9px } }
 /* Second evidence pass: complete control geometry, reading values only from native contracts. */
-:root { --transport-h:46px; --session-slot-w:68px; --browser-w:clamp(176px,22.4vw,430px); --detail-h:clamp(180px,27.5vh,330px) }
+/* The frame's proportions are the mockup's (world-shell-mockup.html .frame: columns 400 | 1fr | 320, rows 64 | 1fr | 300 | 28 on its
+   1920x1200 page): the browser a 24th of the window times five, the rail a sixth, the detail row a quarter of its height, each at most
+   the mockup's own size, and the one frame in every mode (Factory's too: agent/agentShell.css draws no geometry of its own).
+   tests/world-shell-geometry.browser.mjs measures them against the numbers read out of the mockup (tests/world-shell-oracle.json). */
+:root { --transport-h:64px; --session-slot-w:68px; --browser-w:clamp(176px,calc(100vw * 5 / 24),400px); --detail-h:clamp(180px,25vh,300px) }
 .frame { position:relative; padding:0 6px 0; gap:0; background:var(--bg-1) }
-/* The transport at the mockup's floor (.tp): a 14px title line over one row of 19–22px controls — 46px with its 3px rule. */
-.transport { margin:0 -6px; padding:2px 10px 5px; background:var(--bg-1); border-bottom:3px solid var(--line) }
+/* The transport is the mockup's .tp: 3px above, an 18px title line, the controls row (32px), 8px below and the 3px rule: 64px. */
+.transport { margin:0 -6px; padding:3px 10px 8px; background:var(--bg-1); border-bottom:3px solid var(--line) }
 .transport .surface-icons button { width:24px; height:22px }
 .transport-controls { gap:7px }
 .transport-group { gap:2px; white-space:nowrap }
@@ -186,7 +188,8 @@ input { min-width:0; border:1px solid var(--line); background:var(--bg-1); paddi
 .device-title { padding:2px 5px; font-size:10px; height:22px; flex:none; background:var(--bg-0); gap:4px; white-space:nowrap }
 .device-title>span:last-child { margin-left:auto }
 .clip-section-title { height:20px; background:var(--bg-0); padding:2px 3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
-.statusbar { padding:0 4px; gap:8px; border:none; font-size:10px }
+/* The status bar is the mockup's .sb: across the whole window over the frame's padding, under its 1px rule, 11px words. */
+.statusbar { margin:0 -6px; padding:0 8px; gap:10px; font-size:11px }
 .statusbar-info { width:14px; height:14px; border-radius:50%; background:var(--bg-3); display:grid; place-items:center; font-weight:bold }
 /* The Info view (the mockup's .sb .info): what the pointer is over, read in the bar; idle, how to use it. */
 /* It has its room first (lane F; natively the run context's admission list crushed it to one letter, "C", "E", "L"…): it never
@@ -298,14 +301,23 @@ input { min-width:0; border:1px solid var(--line); background:var(--bg-1); paddi
 .detail-residence[hidden] { display: none; }
 /* The one browser and the one widget rail take their areas in both frames — never auto-placed. */
 .widget-rail { grid-area: dock; }
+/* The frame's gutters (world-shell-mockup.html .br, .dk margin-top 4px; .ct margin 4px 4px 4px 0; .dt padding 0 4px 4px 0): the
+   browser, the panes and the rail stand 4px under the transport's rule, the panes 4px clear of the rail and of the detail row, and the
+   detail row's content (and a device's band over it) 4px clear of the rail and the status bar: the mockup pads .dt, the shell sets
+   the host in by a margin, because DetailHost measures the host's own box for the room its sides share. */
+.frame .one-browser, .frame .widget-rail { margin-top:4px }
+.frame .widget-rail { height:auto }
+.frame > main.center { margin:4px 4px 4px 0 }
+.frame .detail-host { margin:0 4px 4px 0; height:auto }
+.frame > .device-flip-host { margin-right:4px }
 .frame.agent-shell-frame .one-browser { grid-area: br; }
 .frame.agent-shell-frame .widget-rail { grid-area: dk; }
 .native-foundation-fault { position: fixed; z-index: 90; bottom: 28px; left: 12px; max-width: min(640px, calc(100vw - 24px)); padding: 8px 12px; background: var(--fault-ground); color: var(--fault); border: 1px solid var(--fault-edge); font-size: 12px; }
 
 
 /* The native Mac window's traffic lights stand over the content's top-left (titleBarStyle "Overlay"): the transport's
-   controls row starts past them, the title line stays centred. Seen on screen 15 Oct: at the mockup's 46px bar the lights
-   covered the globe, Link and Tap. */
+   controls row starts past them, the title line stays centred. Seen on screen 15 Oct: at the bar's old 46px the lights
+   covered the globe, Link and Tap; the 64px bar keeps the inset. */
 :root[data-window-chrome="overlay"] .transport-controls { padding-left: 72px }
 /* The title line clears the lights too, on both sides so it stays centred: a long title ellipsizes before them and Back and
    Forward at its head never stand under them (walk of #821, 12 Nov). */

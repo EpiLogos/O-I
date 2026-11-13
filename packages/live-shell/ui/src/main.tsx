@@ -19,7 +19,7 @@ const App = lazy(() => import('./App').then(module => ({default: module.App})))
 const NativeDetached = lazy(() => import('./native/Detached').then(module => ({default: module.NativeDetached})))
 
 // The native window draws its traffic lights over the content (tauri.candidate.conf.json titleBarStyle "Overlay"); the
-// transport's controls row stands in that band at the mockup's 46px, so the frame insets it past them (styles.css).
+// transport's controls row stands in that band (the mockup's 64px bar), so the frame insets it past them (styles.css).
 if (nativeHost() && /Mac/i.test(navigator.platform || navigator.userAgent)) document.documentElement.dataset.windowChrome = 'overlay'
 
 createRoot(document.getElementById('root')!).render(
