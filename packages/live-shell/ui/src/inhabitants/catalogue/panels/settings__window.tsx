@@ -37,14 +37,15 @@
 //   result      {status, operations: [{ref, title, status, message?}]}  the owners' answer to Apply or Reset (config_apply_reviewed,
 //               config_reset).
 // Harnesses & models (HarnessSource, desktop/cradle/src/configuration/harnessSource.ts, over harness_status and model_catalogue):
-//   providers   [{id, label}]  configured providers; heldDefault the saved chat default (absent: the configured order);
-//               effectiveDefault {provider, rule: owner-choice | pi-row | first-configured}.
-//   harnesses   [{client, harness, installed, detection, reason?, capability, effect?, folder?, gap?, signIn?, signInNote?, signInUnread?,
-//               loginNow?}]  one per harness client: detected or why not, the owner's own effect words, the configuration folder, an
-//               adapter gap's missing contract; and its own login as AIKit declares it (`aikit harness auth <client>`): signIn [{key,
+//   harnesses   [{agent, harness, starts, version?, why?, client?, installed?, capability?, effect?, folder?, gap?, signIn?, signInNote?,
+//               signInUnread?, loginNow?}]  one per agent on this machine, the census (the World Model's agents, O-I #1003): whether it
+//               starts (its version, or why not); and AIKit's client facts on it when AIKit has a client for it: installed, the owner's own
+//               effect words, the configuration folder, an adapter gap's missing contract; and its own login as AIKit declares it
+//               (`aikit harness auth <client>`): signIn [{key,
 //               provider, command}] each one it can run, signInNote the harness's own words when it signs in only inside itself (no
 //               button), signInUnread why its logins could not be read (that harness's alone), loginNow what AIKit finds now
-//               (harness_status's credential leg). loginSaid the result read back after a login's terminal ended.
+//               (harness_status's credential leg). loginSaid the result read back after a login's terminal ended. aikitWhy why AIKit's
+//               facts on the agents could not be read (drawn on its column, the agents standing as the census read them).
 //   routes      [{model, name, routes: [{provider, key, standing?}]}]  the catalogue's declared routes (model_catalogue
 //               declared_routes: provider, credential_required as key); standing (unproven | observed | usable) is AIKit's model
 //               field; routesWhy says why it stands unread (AIKit's catalogue is identity only; availability is `aikit compose`).
@@ -611,36 +612,28 @@ function SetupPage({p}: {p: ViewProps}) {
 
 // ---------------------------------------------------------------- Harnesses & models
 
-const RULE: Readonly<Record<string, string>> = {'owner-choice': 'your saved choice', 'pi-row': 'the pi provider row', 'first-configured': 'the first configured provider'}
 function HarnessesPage({p}: {p: ViewProps}) {
-  const v = p.v, providers = list(v, 'providers'), harnesses = list(v, 'harnesses'), routes = list(v, 'routes')
-  const eff = json<Rec | null>(v, 'effectiveDefault', null)
-  const label = (id: string | undefined) => (id ? txt(providers?.find(r => r.id === id)?.label) ?? id : undefined)
+  const v = p.v, harnesses = list(v, 'harnesses'), routes = list(v, 'routes')
   const [shownRoutes, pager] = usePaged(routes ?? [], 2), routesOpen = strOf(v, 'focus') === 'routes'
   return <>
-    {/* The provider a new chat starts with is O:I's chat-default setting, one row like every owner's: change it there, and Review
-      changes… applies it; Reset on the row withdraws your saved choice (settings/chatDefaultSetting.ts; O-I #744). */}
-    <OwnerRows p={p} category="agents" size={3} title="New conversations">
-      <div className="st-line">
-        <Readout {...st(p, 'effectiveDefault')} label="in effect" does="The provider new chats use now, and the rule that chose it." value={eff ? `${label(txt(eff.provider)) ?? NONE} · ${RULE[txt(eff.rule) ?? ''] ?? NONE}` : undefined} />
-      </div>
-    </OwnerRows>
+    {/* Which agent a new chat talks to is chosen in the chat itself, among these agents (O-I #1003): there is no saved default here. */}
+    <OwnerRows p={p} category="agents" size={3} title="Agent settings" />
     <section className="st-sec">
-      <h4>Harnesses<small>{harnesses ? `${harnesses.filter(h => h.installed === true).length} of ${harnesses.length} installed` : 'no reading of the harnesses'}</small></h4>
+      <h4>Agents on this machine<small>{harnesses ? `${harnesses.filter(h => h.starts === true).length} of ${harnesses.length} start` : <Unread p={p} k="harnesses" what="the agents on this machine" />}</small></h4>
       {harnesses && <table className="st-tbl">
-        <Cols w={[118, 50, 128, 64, undefined, 150]} />
-        <thead><tr><th>Harness</th><th>Installed</th><th>Detected</th><th>Capability</th><th>After a change</th><th /></tr></thead>
+        <Cols w={[118, 150, 50, 64, undefined, 150]} />
+        <thead><tr><th>Agent</th><th>Starts</th><th>AIKit{strOf(v, 'aikitWhy') && <i className="st-why" data-i={`AIKit|${strOf(v, 'aikitWhy')}`}>!</i>}</th><th>Capability</th><th>After a change</th><th /></tr></thead>
         <tbody>{harnesses.map(h => {
           const client = txt(h.client) ?? '', gap = rec(h.gap) ? h.gap : undefined, logins = Array.isArray(h.signIn) ? h.signIn.filter(rec) : []
-          return <tr key={client} data-read={h.installed === true ? undefined : 'true'}>
-            <td><b>{txt(h.harness) ?? client}</b>{gap && <i className="st-why" data-i={`Adapter gap|${txt(gap.contract) ?? 'A contract is missing.'}${txt(gap.skill) ? ` Its authoring skill: ${gap.skill}.` : ''}`}>!</i>}</td>
-            <td>{h.installed === true ? 'yes' : h.installed === false ? 'no' : NONE}</td>
-            <td data-i={txt(h.reason) ? `Detection|${h.reason}` : undefined}>{h.detection === 'detected' ? 'yes' : txt(h.reason) ?? txt(h.detection) ?? NONE}</td>
+          return <tr key={txt(h.agent) ?? client} data-census-agent={txt(h.agent)} data-read={h.starts === true ? undefined : 'true'}>
+            <td><b>{txt(h.harness) ?? txt(h.agent) ?? NONE}</b>{gap && <i className="st-why" data-i={`Adapter gap|${txt(gap.contract) ?? 'A contract is missing.'}${txt(gap.skill) ? ` Its authoring skill: ${gap.skill}.` : ''}`}>!</i>}</td>
+            <td data-i={txt(h.why) ? `Doesn't start|${h.why}` : undefined}>{h.starts === true ? txt(h.version) ?? 'yes' : txt(h.why) ?? 'no'}</td>
+            <td>{h.installed === true ? 'installed' : h.installed === false ? 'not installed' : NONE}</td>
             <td>{txt(h.capability) ?? NONE}</td>
             <td className="st-dim" data-i={txt(h.effect) ? `After a change|${h.effect}` : undefined}>{txt(h.effect) ?? NONE}</td>
             <td className="st-acts">
-              {h.installed === false && <Action {...st(p, 'install')} label="Install" does="The native owner installs this harness client. Read detection again before you start work." onPress={() => p.set('install', client)} />}
-              {txt(h.folder) && <Action {...st(p, 'reveal')} label="Folder" does={`Shows its configuration folder in Finder: ${h.folder}.`} onPress={() => p.set('reveal', client)} />}
+              {client && h.installed === false && <Action {...st(p, 'install')} label="Install" does="The native owner installs this harness client. Read detection again before you start work." onPress={() => p.set('install', client)} />}
+              {client && txt(h.folder) && <Action {...st(p, 'reveal')} label="Folder" does={`Shows its configuration folder in Finder: ${h.folder}.`} onPress={() => p.set('reveal', client)} />}
               {/* Sign in runs the harness's own login in a terminal, where you answer it, and the page reads the result back; one that signs in
                 only inside itself says so, in its own words when you point at it, and offers no button (manual §10.10 Rules). */}
               {logins.map(l => <Action key={txt(l.key) ?? ''} {...st(p, 'signIn')} label={logins.length > 1 ? `Sign in · ${txt(l.provider) ?? NONE}…` : 'Sign in…'}
@@ -656,7 +649,7 @@ function HarnessesPage({p}: {p: ViewProps}) {
     </section>
     <section className="st-sec">
       <h4><button type="button" className="st-link st-open" aria-expanded={routesOpen} onClick={() => p.set('focus', routesOpen ? undefined : 'routes')}>Model routes {routesOpen ? '▾' : '▸'}</button>
-        <small>{routes ? `${routes.length} models in the catalogue` : 'no reading of the catalogue'}</small>{routesOpen && pager}</h4>
+        <small>{routes ? `${routes.length} models in the catalogue` : <Unread p={p} k="routes" what="the catalogue" />}</small>{routesOpen && pager}</h4>
       {routes && routesOpen && <table className="st-tbl">
         <Cols w={[200, undefined, 150]} />
         <thead><tr><th>Model</th><th>Routes</th><th>Standing</th></tr></thead>
@@ -1263,10 +1256,6 @@ const SETTINGS = [
   {ref: 'central:policy:civil-time.day-boundary-minutes', category: 'inspection', owner: 'central', section: 'policy', title: 'Day boundary offset', kind: 'number', writable: false, from: 'inherited', timing: 'none', effective: 240},
   {ref: 'quaternal-logic:kernel:kernel.version', category: 'inspection', owner: 'quaternal-logic', section: 'kernel', title: 'Kernel version', kind: 'text', writable: false, from: 'inherited', timing: 'none', effective: '0.9.4'},
   {ref: 'actuation:return:return.modes', category: 'inspection', owner: 'actuation', section: 'return', title: 'Return policy modes', kind: 'list', writable: false, from: 'inherited', timing: 'none', rows: [{item: 'propose'}, {item: 'draft'}, {item: 'write'}]},
-  // O:I's chat default (settings/chatDefaultSetting.ts): one row, changed through Review changes…; Reset withdraws the saved choice.
-  {ref: 'oi:harness:chat.default', category: 'agents', owner: 'oi', section: 'harness', title: 'Default provider', kind: 'choice', writable: true, from: 'here', timing: 'session-restart-required',
-    effective: 'claude', at: 'This machine', effect: 'New chats start with this provider; a conversation keeps its own once it starts.',
-    options: [{value: 'claude', title: 'Claude'}, {value: 'pi', title: 'Pi'}, {value: 'codex', title: 'Codex'}]},
   // The presentation owner's theme (settings/presentationSetting.ts): one row, changed as every owner's setting is, through Review changes….
   {ref: 'oi:presentation:theme', category: 'appearance', owner: 'oi', section: 'presentation', title: 'Theme', kind: 'choice', writable: true, from: 'here', timing: 'value-change', effective: 'system', at: 'This machine',
     effect: 'The presentation owner saves the appearance, and the window redraws in it.',
@@ -1335,18 +1324,16 @@ const DEFAULTS = {
   scopes: dump([{kind: 'machine', ref: null, title: 'This machine'}, {kind: 'world', ref: null, title: 'World'}, {kind: 'project', ref: 'O-I', title: 'Project · O-I'}, {kind: 'workcell', ref: 'env-1', title: 'Workcell · env-1'}]),
   settings: dump(SETTINGS), conflicts: dump([]),
   elsewhere: dump([{ref: 'live:delay:time', title: 'Delay time', where: 'the Delay on its chain'}, {ref: 'techne:timeline:zoom', title: 'Timeline zoom', where: 'the Timeline'}]),
-  providers: dump([{id: 'anthropic', label: 'Anthropic'}, {id: 'openai', label: 'OpenAI'}, {id: 'pi', label: 'pi (local)'}]),
-  effectiveDefault: dump({provider: 'anthropic', rule: 'first-configured'}),
   harnesses: dump([
-    {client: 'claude-code', harness: 'Claude Code', installed: true, detection: 'detected', capability: 'agent', effect: 'Restart Claude to read new settings.', folder: '~/.claude',
+    {agent: 'claude-code', harness: 'Claude Code', starts: true, version: '2.1.323 (Claude Code)', client: 'claude-code', installed: true, capability: 'agent', effect: 'Restart Claude to read new settings.', folder: '~/.claude',
       signIn: [{key: 'claude-code|provider:anthropic', provider: 'anthropic', command: 'claude auth login'}], loginNow: 'AIKit finds what claude-code needs to sign in.'},
-    {client: 'codex', harness: 'Codex', installed: true, detection: 'detected', capability: 'agent', effect: 'Next session only.', folder: '~/.codex',
+    {agent: 'codex', harness: 'Codex', starts: true, version: 'codex-cli 0.155.1', client: 'codex', installed: true, capability: 'agent', effect: 'Next session only.', folder: '~/.codex',
       signIn: [{key: 'codex|provider:openai', provider: 'openai', command: 'codex login'}], loginNow: 'AIKit finds what codex needs to sign in.'},
-    {client: 'gemini', harness: 'Gemini CLI', installed: true, detection: 'detected', capability: 'agent', effect: 'Next session only.', folder: '~/.gemini',
+    {agent: 'gemini', harness: 'Gemini CLI', starts: false, why: 'gemini did not start: its node runtime could not load a library.', client: 'gemini', installed: true, capability: 'agent', effect: 'Next session only.', folder: '~/.gemini',
       signInNote: 'Login with Google (OAuth) is Gemini CLI\'s default auth; the API key delivers only when credential:gemini is bound'},
-    {client: 'pi', harness: 'pi', installed: true, detection: 'detected', capability: 'agent', folder: '~/.pi'},
-    {client: 'hermes', harness: 'Hermes', installed: true, detection: 'stale', reason: 'The gateway answered once and then went quiet.', capability: 'gateway', gap: {contract: 'No session-settings contract for Hermes yet.', skill: 'aikit:harness-adapter-authoring'}},
-    {client: 'opencode', harness: 'OpenCode', installed: false, detection: 'absent', reason: 'Not on PATH.', capability: 'agent'},
+    {agent: 'pi', harness: 'Pi', starts: true, version: '1.5.0', client: 'pi', installed: true, capability: 'agent', folder: '~/.pi'},
+    {agent: 'hermes', harness: 'Hermes', starts: false, why: 'hermes did not answer its version.', client: 'hermes', installed: true, capability: 'gateway', gap: {contract: 'No session-settings contract for Hermes yet.', skill: 'aikit:harness-adapter-authoring'}},
+    {agent: 'opencode', harness: 'OpenCode', starts: false, why: 'Actuation detects opencode but found no executable to start', client: 'opencode', installed: false, capability: 'agent'},
   ]),
   routes: dump([
     {model: 'claude-opus-5-5', name: 'Claude Opus 5.5', routes: [{provider: 'anthropic', key: true, standing: 'usable'}, {provider: 'claude-code', key: false, standing: 'usable'}]},
@@ -1422,7 +1409,7 @@ export const design: DesignedDevice = {
     'Changes to review': {
       'draft:software-factory:telemetry:watch-interval-seconds': 10, 'draft:ai-kit:resolution:resolution.profiles': 'documentation',
       'draft:ai-kit:models:models.default': dump([{harness: 'claude-code', model: 'claude-opus-5-5'}, {harness: 'pi', model: 'claude-sonnet-5'}, {harness: 'codex', model: 'gpt-5.5-codex'}]),
-      conflicts: dump(['ai-kit:resolution:resolution.profiles']), focus: 'ai-kit:models:models.default', 'draft:oi:harness:chat.default': 'pi',
+      conflicts: dump(['ai-kit:resolution:resolution.profiles']), focus: 'ai-kit:models:models.default',
       plans: dump([
         {ref: 'ai-kit:models:models.default', title: 'Default model per harness', scope: 'This machine', changes: ['codex → gpt-5.5-codex'], effect: 'session-restart-required'},
         {ref: 'ai-kit:resolution:resolution.profiles', title: 'Native profile selection', scope: 'This machine', changes: ['core-development → documentation'], effect: 'session-restart-required'},

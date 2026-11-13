@@ -7,8 +7,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {spawnSync} from 'node:child_process';
 const {
-  shapeHarnessClients, shapeProviders, shapeCatalogue, shapeHeldDefault,
-  effectiveChatDefault, createLiveHarnessSource,
+  shapeHarnessClients, shapeProviders, shapeCatalogue, createLiveHarnessSource,
 } = await import('../src/configuration/harnessSource.ts');
 
 /** One live read of the installed suite. A missing `aikit` is a FAILED test,

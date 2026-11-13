@@ -7,16 +7,15 @@ import {setContextCues,getContextCues} from "../context/selectionPresentation";
 import {useKernel} from "../kernel/KernelProvider";
 import type {SurfaceBinding} from "../surface/types";
 import {readFlowInstance,writeFlowInstance,type FlowInstance} from "./instances";
-import {appendEntry,embedDocument,textToHtml,type QlDoc,type QlDocParticipant} from "./instance";
+import {appendEntry,embedDocument,type QlDoc,type QlDocParticipant} from "./instance";
 import {activeParticipants,isCurrentFormat,withSession,type PluralParticipant,type Relation} from "./plural";
-import {conversationReconcile,conversationSend,flowParticipantProvision,mintConversationRef,useFlowConversations} from "./conversation";
-import {FlowConversations} from "./FlowConversations";
 import {FlowThreads} from "./FlowThreads";
 import {FlowParticipants} from "./FlowParticipants";
 import {FlowEntryBody,FlowRichBody} from "./FlowEntryBody";
 import {FlowCognition} from "./contemplate";
 import {EncounterList,type EncounterRow} from "../encounter/EncounterList";
-import {useEncounterSession} from "../encounter/session";
+import {encounterSessionOf} from "../encounter/session";
+import {encounterProvision} from "../encounter/client";
 import {useChosenAgent} from "../agency/selection";
 import {useAgentRoster} from "../agency/roster";
 import {useScope,scopeProject} from "../workspace/scope";
@@ -37,10 +36,15 @@ import "./flow.css";
  * machinery, and the answer that actually comes back is appended to the
  * file as the agent's declared entry — initial and name from the live
  * agent, the session ref as provenance. Nothing is invented on the agent's
- * behalf: no session, no answer, no attribution. */
+ * behalf: no session, no answer, no attribution. Every ask is the one send
+ * (encounter/session.ts `ask`, O-I #1003): the words go through the agent's
+ * own conversation, and its answer is read there when the turn ends. */
 interface AnswerBinding {ref:string;space:string;title:string;initial:string;name:string}
 const answerKey=(surfaceId:string)=>`oi-flow-answer:${surfaceId}`;
 const initialOf=(name:string):string=>{const m=name.toUpperCase().match(/[A-Z]/);return m?m[0]:"A";};
+/** How long an addressed agent is waited for. */
+const ANSWER_WAIT_MS=10*60_000;
+const lateWords=(who:string)=>`${who} has not finished answering yet: the question stands in ${who}'s conversation, and nothing more was added to this flow.`;
 export function FlowSurface({binding}:{binding:SurfaceBinding}){
  const kernel=useKernel();const scope=useScope();const input=useRef<EditorHandle>(null);const [text,setText]=useState("");
  const [instance,setInstance]=useState<FlowInstance>();const [error,setError]=useState<string|{said:string;cause:unknown}>();const [busy,setBusy]=useState(false);const [loaded,setLoaded]=useState(false);
@@ -75,7 +79,6 @@ export function FlowSurface({binding}:{binding:SurfaceBinding}){
  };
  const unbindAnswer=()=>{setAnswerWith(undefined);try{localStorage.removeItem(answerKey(binding.id));}catch{/* in-window binding still applies */}};
  const encounterBinding=answerWith&&binding.project!==undefined?{project:binding.project,ref:answerWith.ref,space:answerWith.space||undefined}:answerWith?{project:"",ref:answerWith.ref,space:answerWith.space||undefined}:undefined;
- const encounterSession=useEncounterSession(encounterBinding);
  useEffect(()=>{window.dispatchEvent(new CustomEvent("oi:file-draft-changed",{detail:{ref:binding.ref??binding.location?.ref}}));},[text,instance?.revision,binding.ref]);
  const key=`oi-flow-instance-draft:${binding.id}`;
  useEffect(()=>{let live=true;setLoaded(false);setError(undefined);
@@ -92,14 +95,6 @@ export function FlowSurface({binding}:{binding:SurfaceBinding}){
  },[binding.id]);
  const change=(value:string)=>{setText(value);try{localStorage.setItem(key,JSON.stringify({text:value}));}catch{setError("Draft recovery storage is unavailable; save your writing to Central.");}};
  const flowRef=binding.ref??binding.location?.ref;
- const conversations=useFlowConversations(kernel.transport,project||undefined,flowRef,requests=>{
-  // An answer the owner included while this view was closed (or open) is in the
-  // file, not in this view yet: reread once and show it, never re-ask.
-  const current=liveSelection.current.instance;
-  if(!current||!binding.location)return;
-  const landed=requests.flatMap(request=>request.recipients).some(recipient=>recipient.inclusion.entry_id&&!current.doc.entries.some(entry=>entry.id===recipient.inclusion.entry_id));
-  if(landed)void readFlowInstance(kernel.transport,binding.location).then(next=>{if(next.revision!==liveSelection.current.instance?.revision)setInstance(next);}).catch(()=>{/* the next poll retries */});
- });
  const writeEntries=async(nextInstance:FlowInstance,html:string)=>writeFlowInstance(kernel.transport,nextInstance.location,nextInstance.revision,html);
  /** A membership or upgrade change to the document, through the same
   * revision-checked write as an entry: a stale revision keeps both sides. */
@@ -120,37 +115,26 @@ export function FlowSurface({binding}:{binding:SurfaceBinding}){
   const people=((doc.meta.participants??[]) as PluralParticipant[]).filter(p=>p.kind==="person"&&!p.left);
   return people.find(p=>p.initial===identity.initial)??people[0];
  };
- /** The agent's returned words are appended as the agent's own declared
-  * entry. A conflict is retried once on the current bytes; a second conflict
-  * keeps the answer visible in the error — the words are never dropped. */
- const appendAgentResponse=async(answerText:string)=>{
-  if(!instance||!answerWith)return;
-  const participant:QlDocParticipant={initial:/^[A-Z]$/.test(answerWith.initial)?answerWith.initial:initialOf(answerWith.name||"A"),name:answerWith.name||undefined,kind:"agent",ref:answerWith.ref};
-  let basis=instance;
-  for(let attempt=0;attempt<2;attempt++){
-   const {html}=appendEntry(basis.html,answerText,{participant});
-   const result=await writeEntries(basis,html);
-   if(result.outcome!=="conflict"){const next=await readFlowInstance(kernel.transport,basis.location);setInstance(next);return;}
-   basis=await readFlowInstance(kernel.transport,basis.location);setInstance(basis);
-  }
-  setError(`The agent answered, but the document moved twice under this surface. The answer, unlost:\n\n${answerText}`);
+ /** An agent's returned words, appended as that agent's own declared entry on
+  * the current bytes. A conflict is retried once on the bytes then current; a
+  * second conflict keeps the answer in the error: the words are never dropped.
+  * Appends are taken one at a time, so answers arriving together never race. */
+ const appending=useRef<Promise<unknown>>(Promise.resolve());
+ const appendAgentResponse=(answerText:string,participant:QlDocParticipant,relations?:Relation[])=>{
+  const run=appending.current.catch(()=>undefined).then(async()=>{
+   if(!binding.location)throw new Error("This flow surface has no document location to write.");
+   let basis=await readFlowInstance(kernel.transport,binding.location);
+   for(let attempt=0;attempt<2;attempt++){
+    const {html}=appendEntry(basis.html,answerText,{participant,...(relations?{relations}:{})});
+    const result=await writeEntries(basis,html);
+    if(result.outcome!=="conflict"){const next=await readFlowInstance(kernel.transport,basis.location);setInstance(next);return;}
+    basis=await readFlowInstance(kernel.transport,basis.location);setInstance(basis);
+   }
+   throw new Error(`${participant.name||participant.initial} answered, but the document moved twice under this surface. The answer, unlost:\n\n${answerText}`);
+  });
+  appending.current=run;
+  return run;
  };
- // Baseline the seen-block marker per bound session; mirror only turns this
- // surface sent.
- const seenBaseline=useRef<{ref:string;top:number}>();
- const awaitingAnswer=useRef(false);
- useEffect(()=>{
-  const reading=encounterSession?.state.reading;
-  if(!reading||!answerWith)return;
-  const top=reading.blocks.length?reading.blocks[reading.blocks.length-1].id:-1;
-  if(seenBaseline.current?.ref!==answerWith.ref){seenBaseline.current={ref:answerWith.ref,top};awaitingAnswer.current=false;return;}
-  if(!awaitingAnswer.current)return;
-  const answer=reading.blocks.filter(block=>block.kind==="assistant"&&block.id>seenBaseline.current!.top).slice(-1)[0];
-  if(!answer)return;
-  seenBaseline.current={ref:answerWith.ref,top};
-  awaitingAnswer.current=false;
-  if(answer.text.trim())void appendAgentResponse(answer.text);
- },[encounterSession?.state.reading,answerWith?.ref]);
  const save=async()=>{
   if(!loaded||!instance||busy||!text.trim())return;
   setBusy(true);setError(undefined);
@@ -169,8 +153,8 @@ export function FlowSurface({binding}:{binding:SurfaceBinding}){
   }catch(reason){setError({said:"Couldn't save the entry. Your writing is still here.",cause:reason});}finally{setBusy(false);}
  };
  /** Send the entry to the bound live session: the person's words land in
-  * the file as their entry, then drive the session through its own
-  * draft/send law. The answer returns through the watcher above. */
+  * the file as their entry, then go to the session as its next turn (the one
+  * send); the answer that turn ends with is appended as the agent's entry. */
  const sendToAgent=async()=>{
   if(!loaded||!instance||busy||answerBusy||!text.trim())return;
   if(!answerWith){setError("Bind a live session first — the answer must come from an actual agent.");return;}
@@ -186,17 +170,18 @@ export function FlowSurface({binding}:{binding:SurfaceBinding}){
    const next=await readFlowInstance(kernel.transport,instance.location);
    setInstance(next);setText("");
    try{localStorage.removeItem(key);}catch{/* the ground holds the writing now */}
-   const handle=encounterSession;
-   if(!handle)throw new Error("The live session is not attached yet — try again in a moment.");
-   awaitingAnswer.current=true;
-   handle.actions.change(asked);
-   await handle.actions.send();
-  }catch(reason){awaitingAnswer.current=false;setError({said:"Couldn't send the entry to the session.",cause:reason});}finally{setAnswerBusy(false);}
+   if(!encounterBinding)throw new Error("The live session is not bound yet.");
+   const who=answerWith.name||answerWith.title||"The agent";
+   const answer=await encounterSessionOf(kernel.transport,encounterBinding).ask(asked,who,ANSWER_WAIT_MS,lateWords(who));
+   await appendAgentResponse(answer.text,{initial:/^[A-Z]$/.test(answerWith.initial)?answerWith.initial:initialOf(answerWith.name||"A"),name:answerWith.name||undefined,kind:"agent",ref:answerWith.ref});
+  }catch(reason){setError({said:"Couldn't get the session's answer into this flow.",cause:reason});}finally{setAnswerBusy(false);}
  };
- /** Put the composed entry to the addressed agents. The owner records the
-  * request, commits the entry, asks each agent as its own delivery and — with
-  * no view needed — appends each answer to this flow. Asking is the act that
-  * starts an agent's session, and only for an agent the person addressed. */
+ /** Put the composed entry to the addressed agents. The entry lands in the
+  * file first, addressed; then each agent is asked through its own
+  * conversation (the one send; an agent with no conversation yet is started
+  * for exactly that roster Agent), and each answer is appended as that
+  * agent's entry, replying to the one asked. Asking is the act that starts an
+  * agent's session, and only for an agent the person addressed. */
  const askForResponse=async()=>{
   if(!loaded||!instance||busy||asking||!text.trim()||!flowRef||!binding.location)return;
   if(!project){setError("Choose the project the agents should work in, then ask again.");return;}
@@ -208,33 +193,38 @@ export function FlowSurface({binding}:{binding:SurfaceBinding}){
    if(!writer?.key)throw new Error("This flow has no person to ask as.");
    const targets=addressees.map(key=>(basis.doc.meta.participants as PluralParticipant[]).find(p=>p.key===key)).filter((p):p is PluralParticipant=>!!p&&p.kind==="agent");
    if(!targets.length)throw new Error("Choose the agents you want to hear from.");
-   const sessions:{participant_key:string;agent_session:string}[]=[];
+   const asked=text;
+   const relations:Relation[]=replyTarget?[{type:relationType,entryId:replyTarget,revision:basis.doc.meta.revision,anchor:null}]:[];
+   const {html,entry}=appendEntry(basis.html,asked,{participant:writer,relations,addressees,intent:"response",basisRevision:basis.doc.meta.revision});
+   const written=await writeEntries(basis,html);
+   if(written.outcome==="conflict"){setConflict({current:await readFlowInstance(kernel.transport,basis.location)});return;}
+   basis=await readFlowInstance(kernel.transport,basis.location);setInstance(basis);
+   setText("");setReplyTarget("");setRelationType("reply");setAddressees([]);
+   try{localStorage.removeItem(key);}catch{/* the ground holds the entry now */}
+   const sessions:{target:PluralParticipant;session:string}[]=[];
    for(const target of targets){
     let session=target.ref;
     if(!session){
      const agentRef=target.binding?.ref;
      if(!agentRef)throw new Error(`${target.name||target.initial} has no registered agent to start; bring them in from the roster.`);
-     const provisioned=await flowParticipantProvision(kernel.transport,project,{agent_ref:agentRef,flow_ref:flowRef,sender:`human:${writer.key}`});
-     session=provisioned.agent_session;
-     // Remember the body this agent now answers from, through the ordinary CAS.
+     session=(await encounterProvision(kernel.transport,project,{agentRef})).agent_session;
+     // Remember the conversation this agent now answers from, through the ordinary CAS.
      const bound=withSession(basis.doc,target.key as string,session);
-     const written=await writeEntries(basis,embedDocument(basis.html,bound));
-     if(written.outcome==="conflict"){setConflict({current:await readFlowInstance(kernel.transport,basis.location)});return;}
+     const kept=await writeEntries(basis,embedDocument(basis.html,bound));
+     if(kept.outcome==="conflict")throw new Error(`${target.name||target.initial}'s conversation was started, but the flow moved before it could be remembered; ask again to use it.`);
      basis=await readFlowInstance(kernel.transport,basis.location);setInstance(basis);
     }
-    sessions.push({participant_key:target.key as string,agent_session:session});
+    sessions.push({target,session});
    }
-   const relations:Relation[]=replyTarget?[{type:relationType,entryId:replyTarget,revision:basis.doc.meta.revision,anchor:null}]:[];
-   await conversationSend(kernel.transport,project,{
-    request_ref:mintConversationRef(),flow_location:basis.location as never,sender:`human:${writer.key}`,actor:`human:${writer.key}`,
-    entry:{author_key:writer.key as string,html:textToHtml(text),at:new Date().toISOString(),relations,addressees,basis_revision:basis.doc.meta.revision},
-    recipients:sessions,
-   });
-   setInstance(await readFlowInstance(kernel.transport,basis.location));
-   setText("");setReplyTarget("");setRelationType("reply");setAddressees([]);
-   try{localStorage.removeItem(key);}catch{/* the owner holds the entry now */}
-   void conversations.refresh();
-  }catch(reason){setError({said:"Couldn't ask the agents.",cause:reason});}finally{setAsking(false);}
+   const answering:Relation[]=[{type:"reply",entryId:entry.id,revision:basis.doc.meta.revision,anchor:null}];
+   const outcomes=await Promise.allSettled(sessions.map(async({target,session})=>{
+    const who=target.name||target.initial;
+    const answer=await encounterSessionOf(kernel.transport,{project,ref:session}).ask(asked,who,ANSWER_WAIT_MS,lateWords(who));
+    await appendAgentResponse(answer.text,target,answering);
+   }));
+   const failed=outcomes.flatMap((outcome,index)=>outcome.status==="rejected"?[`${sessions[index].target.name||sessions[index].target.initial}: ${outcome.reason instanceof Error?outcome.reason.message:String(outcome.reason)}`]:[]);
+   if(failed.length)throw new Error(failed.join("\n"));
+  }catch(reason){setError({said:"Not every addressed agent's answer is in the flow.",cause:reason});}finally{setAsking(false);}
  };
  const rebase=async()=>{
   if(!instance)return;
@@ -276,7 +266,6 @@ export function FlowSurface({binding}:{binding:SurfaceBinding}){
   {typeof error==="string"&&<p role="alert" className="flow-error">{error}</p>}
   {error&&typeof error!=="string"&&<Refusal className="flow-error" said={error.said} error={error.cause}/>}
   {loaded&&doc&&<FlowParticipants doc={doc} project={project} disabled={!!conflict||busy||asking} onChange={commitDocument}/>}
-  {loaded&&doc&&isCurrentFormat(doc)&&<FlowConversations doc={doc} requests={conversations.requests} onOpenEntry={openEntry} onReconcile={async requestRef=>{try{await conversationReconcile(kernel.transport,project,requestRef);await conversations.refresh();}catch(reason){setError({said:"Couldn't reconcile that conversation.",cause:reason});}}}/>}
   {loaded&&doc&&(view==="threads"&&isCurrentFormat(doc)
    ?<FlowThreads doc={doc} focusId={focusId} onOpenEntry={openEntry}/>
    :<ol className="flow-thread" aria-label="Document thread">

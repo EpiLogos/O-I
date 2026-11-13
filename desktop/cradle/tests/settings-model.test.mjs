@@ -20,7 +20,7 @@ const clients = shapeHarnessClients({clients: [
   {client: "aider", harness: "aider", detection: "not-installed", capability: "unavailable", dispatch: "adapter-only"},
   {client: "broker", harness: null, detection: "self", capability: "self", dispatch: "self", installed: true},
 ]});
-const reading = {harness: {harnesses: {state: "ok", rows: clients}, catalogue: {state: "ok", rows: {count: 0, entries: []}}, providers: {state: "ok", rows: []}, heldDefault: null}, disclosure: {state: "absent", reason: "x"}};
+const reading = {harness: {harnesses: {state: "ok", rows: clients}, catalogue: {state: "ok", rows: {count: 0, entries: []}}, providers: {state: "ok", rows: []}}, disclosure: {state: "absent", reason: "x"}};
 
 test("harnesses group as the owner reports them, and the broker is never a harness", () => {
   assert.deepEqual(clients.map((row) => row.client), ["claude", "pi", "zcode", "hermes", "aider"], "the broker (AIKit itself) is dropped");
@@ -94,7 +94,7 @@ test("S4/S9: staged is held intent not yet applied — an applied ChangeSet's re
   assert.equal(change.isStaged(resolution({value: 1}, "satisfied")), false);
   assert.equal(change.isStaged(resolution(null, "drifted")), false);
   const data = {
-    stagedDefault: null, suite: {state: "ok", value: {...reading, disclosure: {state: "ok", rows: {skills: [{id: "skill/a/x", name: "X"}, {id: "skill/a/y", name: "Y"}]}}}},
+    suite: {state: "ok", value: {...reading, disclosure: {state: "ok", rows: {skills: [{id: "skill/a/x", name: "X"}, {id: "skill/a/y", name: "Y"}]}}}},
     registry: {state: "ok", value: {index: {"ai-kit:skills:skills.capabilities": {owner: {owner_ref: "ai-kit"}, setting: {title: "Capability toggles", effect: {kind: "session-restart-required"}, value_schema: {type: "table"}}}}}},
     resolutions: {k: resolution({value: {"skill/a/x": true, "skill/a/y": false}}, "drifted", ["skill/a/y"])},
   };
@@ -150,7 +150,6 @@ test("model-default review names the actual harness and model while retaining th
   const before = {"transport-pi-42": {model_id: "old-native-model", model_name: "Previous model", native_provider: "native-provider"}};
   const after = {"transport-pi-42": {model_id: "glm-5.3-flash", model_name: "GLM-5.3-Flash", native_provider: "zai"}};
   const data = {
-    stagedDefault: null,
     suite: {state: "ok", value: {...reading, harness: {...reading.harness, providers: {state: "ok", rows: [{id: "transport-pi-42", label: "Native proof", protocol: "pi-rpc", command: "pi"}]}}}},
     registry: {state: "ok", value: {index: {[setting]: {owner: {owner_ref: "ai-kit"}, setting: {title: "Default model per harness", effect: {kind: "session-restart-required"}, value_schema: {type: "table"}}}}}},
     resolutions: {k: {...resolution({value: after}, "drifted"), setting_ref: setting, native: {effective: {value: before}}}},
@@ -172,7 +171,6 @@ test("model-default review distinguishes matching harnesses and never substitute
   const setting = "ai-kit:models:models.default";
   const value = {"native-first": {model_id: "opaque-first", model_name: "Alpha"}, "native-second": {model_id: "opaque-second", model_name: "Beta"}, "provider/absent": {model_id: "opaque-absent", model_name: "model://internal"}};
   const data = {
-    stagedDefault: null,
     suite: {state: "ok", value: {...reading, harness: {...reading.harness, providers: {state: "ok", rows: [{id: "native-first", label: "Epi Prime", protocol: "prime-rpc"}, {id: "native-second", label: "Epi Prime", protocol: "prime-rpc"}]}}}},
     registry: {state: "reading"},
     resolutions: {k: {...resolution({value}, "drifted"), setting_ref: setting, native: {}}},

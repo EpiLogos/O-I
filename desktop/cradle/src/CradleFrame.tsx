@@ -1798,12 +1798,12 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       onMessage={message=>setWindowError(message)}
       onNewChat={()=>setState(s=>({...s,accompanying:undefined}))}
       onChoose={row=>factoryChoose(row)}
-      onProvision={async provisionProject=>{
+      onProvision={async (provisionProject,agent)=>{
         // New-chat first Send: the kernel provisions the conversation (the
         // owner's own SessionSpace sequence, one op) and this binds it — the
         // parked draft is applied and sent by the chat face once the shared
         // observer is live. No chooser.
-        const provisioned=await encounterProvision(kernel.transport,provisionProject);
+        const provisioned=await encounterProvision(kernel.transport,provisionProject,{agent});
         setState(s=>({...s,accompanying:{ref:provisioned.agent_session,project:provisionProject,space:provisioned.space}}));
       }}/>;
   // Sidebar C6: the chat row for the encounter that is the active surface

@@ -24,7 +24,6 @@
  */
 import {settingsWorld} from "../lib/settings-world.mjs";
 import {enterSettings, openProduct, openSection, settled, shotMatrix} from "../lib/settings-walk.mjs";
-import {readFileSync, existsSync} from "node:fs";
 
 /** An apply plans, executes and reads back through the owners' real CLIs;
  * on a loaded machine riding slower (debug-build) owner binaries this
@@ -43,7 +42,6 @@ export default async function run({page, baseUrl, check, shot, provision: world,
     const status = world.aikit("status");
     return new Set((status.data?.active ?? []).map((row) => typeof row === "string" ? row : row.id ?? row.capability ?? row.resource));
   };
-  const heldConnection = () => existsSync(world.env.OI_CRADLE_STATE) ? JSON.parse(readFileSync(world.env.OI_CRADLE_STATE, "utf8")).value : null;
   const listing = JSON.parse(world.oi("config", "list", "--json"));
   const capabilities = listing.settings.find((setting) => setting.setting_ref === "ai-kit:skills:skills.capabilities");
   const strip = page.locator("[data-settings-pending]");
@@ -99,17 +97,10 @@ export default async function run({page, baseUrl, check, shot, provision: world,
     && await skill("walk-beta").getByRole("button", {name: "Undo"}).count() === 1,
     "S4 the switched skill shows its staged value, marked changed, with Undo on the row");
   check(!active().has("skill/walkskills/walk-beta"), "S4 nothing is written before Apply — AIKit still reports walk-beta off");
-  await openSection(page, "harnesses");
-  const connectionCards = page.locator("[data-harness-connection]");
-  await connectionCards.first().waitFor({timeout: 240000});
-  const before = await page.locator("[data-harness-connection]:has([data-harness-default])").getAttribute("data-harness-connection");
-  const target = before === "walk-pi" ? "walk-hermes" : "walk-pi";
-  await page.locator(`[data-harness-connection="${target}"] [data-harness-set-default]`).click();
-  await page.waitForFunction(() => document.querySelector("[data-settings-pending-count]")?.textContent?.startsWith("2 changes pending"), null, {timeout: 60000});
-  check((await strip.innerText()).includes("2 changes pending") && (await strip.innerText()).includes("Review changes") && (await strip.innerText()).includes("Discard"),
-    "S4 the strip reads \"2 changes pending · Review changes · Discard\"");
-  check(heldConnection() === null, "S4 the connection is staged only — the desktop's state file is untouched before Apply");
-  check((await page.locator('[data-settings-row="setting:default-connection"]').getAttribute("data-changed")) === "true", "S4 the connection row is marked changed");
+  // Which agent a new chat talks to is the census's, chosen in the chat itself (O-I #1003): Settings stages no connection default.
+  await page.waitForFunction(() => document.querySelector("[data-settings-pending-count]")?.textContent?.startsWith("1 change pending"), null, {timeout: 60000});
+  check((await strip.innerText()).includes("1 change pending") && (await strip.innerText()).includes("Review changes") && (await strip.innerText()).includes("Discard"),
+    "S4 the strip reads \"1 change pending · Review changes · Discard\"");
   await shotMatrix({page, shot}, "staged");
 
   // --- S5 · review -------------------------------------------------------------
@@ -118,14 +109,12 @@ export default async function run({page, baseUrl, check, shot, provision: world,
   await page.waitForFunction(() => document.querySelector("[data-settings-review-sheet]")?.getAttribute("data-phase") === "ready", null, {timeout: 240000});
   const rows = await sheet.locator("[data-review-row]").evaluateAll((nodes) => nodes.map((node) => ({key: node.getAttribute("data-review-row"), text: node.innerText, effect: node.querySelector("[data-review-effect]")?.getAttribute("data-review-effect"), words: node.querySelector("[data-review-effect]")?.textContent})));
   const skillRow = rows.find((row) => row.key.includes("walk-beta"));
-  const connectionRow = rows.find((row) => row.key === "chat-default");
-  check(rows.length === 2 && skillRow && connectionRow, "S5 one sheet lists both staged changes", {rows});
-  check(skillRow?.text.includes("This machine") && skillRow.text.includes("off → on") && connectionRow?.text.includes("→"),
-    "S5 each change shows its scope and from → to", {skillRow, connectionRow});
+  check(rows.length === 1 && skillRow, "S5 one sheet lists the staged change", {rows});
+  check(skillRow?.text.includes("This machine") && skillRow.text.includes("off → on"),
+    "S5 the change shows its scope and from → to", {skillRow});
   check(skillRow?.effect === capabilities.effect.kind && skillRow.words === WORDS[capabilities.effect.kind],
     `S5 the skill's effect is the owner's effect kind (${capabilities.effect.kind}) in plain words ("${WORDS[capabilities.effect.kind]}")`, {skillRow});
-  check(connectionRow?.words === "New chats only", "S5 the connection's effect reads \"New chats only\"");
-  check(!active().has("skill/walkskills/walk-beta") && heldConnection() === null, "S5 reviewing writes nothing");
+  check(!active().has("skill/walkskills/walk-beta"), "S5 reviewing writes nothing");
   await shotMatrix({page, shot}, "review");
 
   // --- S6 · apply and read back ----------------------------------------------------
@@ -135,8 +124,7 @@ export default async function run({page, baseUrl, check, shot, provision: world,
   const receipt = (await sheet.locator("[data-review-receipt]").textContent()) ?? "";
   check(results.every((row) => row.result === "applied" && row.text === "Applied ✓"), "S6 every row reads \"Applied ✓\"", {results});
   check(active().has("skill/walkskills/walk-beta"), "S6 the readback is true: AIKit now reports walk-beta active");
-  check(heldConnection() === target, `S6 the readback is true: the desktop holds ${target} for new chats`);
-  check(/^Applied 2 changes · read back \d{1,2}:\d{2}/.test(receipt.trim()), "S6 the receipt line reads \"Applied 2 changes · read back HH:MM\"", {receipt});
+  check(/^Applied 1 change · read back \d{1,2}:\d{2}/.test(receipt.trim()), "S6 the receipt line reads \"Applied 1 change · read back HH:MM\"", {receipt});
   await shot("applied");
   await sheet.getByRole("button", {name: "Done"}).click();
   await strip.waitFor({state: "detached", timeout: 60000});

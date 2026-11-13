@@ -132,7 +132,8 @@ test('one publisher: the rail\'s own publisher draws it in every mode; Factory\'
   // Workcell's instrument nowhere, so it watches no published entry of it.
   assert.doesNotMatch(chain, /publishedDevice\(WORKCELL_RACK_ID\)/, 'the chain draws no entry of Workcell\'s instrument')
   // REPLACED (lane W11): the chain reads the same held population answer for Custody's Positions (one keyed read for the window).
-  for (const reader of ['useConversationAnswer', 'useCentralGroundAnswer', 'ledgerBinding', 'messagesBinding']) {
+  // REPLACED (O-I ticket 1003, the one send): Messages' conversation is the session its occupant works, which the rail observes itself.
+  for (const reader of ['useCentralGroundAnswer', 'ledgerBinding', 'messagesBinding']) {
     assert.doesNotMatch(chain, new RegExp(`\\b${reader}\\(`), `${reader}: read once, by the rail's publisher`)
   }
   // The reads are the window's shared ones: the chain's gateway read goes through the kernel's held-read holder, the rest are held answers.
@@ -144,6 +145,7 @@ test('one publisher: the rail\'s own publisher draws it in every mode; Factory\'
   assert.match(read('owners/ownerCall.ts'), /installKernelReadHolder\(/, 'a kernelRead from an effect is the same held answer')
   assert.match(read('agent/devices/useAgentChainReading.ts'), /kernelRead\(transport, \{op: 'harness_agent_read', binding\}, gatewayAt \? \{fresh: true\} : \{\}\)/)
   assert.doesNotMatch(publisher, /APPROVALS_ID/, 'Approvals stays Factory\'s Main track effect')
+  assert.ok(publisher.includes('useEncounterSessions(observed)'), 'the open agent\'s conversation: the one encounter session, observed by the rail')
 })
 
 const HARNESS_CAPTURE = JSON.parse(readFileSync(new URL('./fixtures/aikit-harness-binding-2026-11-13.json', import.meta.url), 'utf8'))

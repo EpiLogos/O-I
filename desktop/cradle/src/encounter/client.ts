@@ -2,19 +2,7 @@ import type {ContextOperation,ContextExpectation} from "../context/nativeContext
 import {kernelOp} from "../kernel/bridge";
 import type {KernelTransportStatus} from "../kernel/types";
 export {EPI_PRIME_QL_BODY_REF} from "../workspace/agentBody";
-export type EncounterRequest = import("./nativeModel").NativeModelRequest | import("./nativeMode").NativeModeRequest | {action:"context";agent_session?:string;request:ContextOperation} | {action:"prompt-context";agent_session:string;draft_revision:number;context:ContextExpectation} | {action:"start"|"providers"|"health"} | {action:"open";space:string;agent_session:string;provider:string} | {action:"read";agent_session:string;after:number;limit:number} | {action:"view";agent_session:string;before?:number} | {action:"draft";agent_session:string;basis:number;text:string} | {action:"prompt";agent_session:string;draft_revision:number} | {action:"cancel";agent_session:string;reason?:string} | {action:"status";agent_session:string} | {action:"permission";agent_session:string;request_id:string;decision:PermissionDecision} | {action:"send";agent_session:string;turn:AddressedTurn} | {action:"send-group";delivery_ref:string;sender:string;packet:AddressedPacket;recipients:GroupRecipient[]} | {action:"delivery";agent_session:string;delivery_ref:string} | {action:"reconnect";space:string;agent_session:string;provider:string} | import("../flow/conversation").ConversationRequestWire;
-/** Owner wire contract (bound ai-kit revision, `encounter_agency.rs`); field names verbatim. */
-export interface AddressedPacket {text:string;source_refs:string[];audience:string[]}
-/** `expected_task` is the owner's EncounterTaskBasis, validated owner-side
- * against the stored task and the session's agency binding before transport.
- * The kernel carries it verbatim; the desktop composes none of its own. */
-export interface AddressedTurn {delivery_ref:string;sender:string;expected_binding_revision:string;expected_task?:unknown;packet:AddressedPacket}
-export interface GroupRecipient {agent_session:string;expected_binding_revision:string;expected_task?:unknown}
-/** One durable owner receipt. `submitted` is a transport ACK; `returned` means the
- * native host observed a completed provider turn — neither is task success. */
-export interface DeliveryRecord {sender:string;phase:"dispatching"|"submitted"|"uncertain"|"returned"|"failed"|"cancelled"|"reconciled-no-replay"|string;first_cursor:number;terminal_cursor?:number|null;detail?:string|null}
-export interface SendReceipt {duplicate:boolean;transport_accepted?:boolean;delivery:DeliveryRecord;task_completion?:string;recognition?:string}
-export interface GroupReceipt {delivery_ref:string;recipients:{agent_session:string;result?:SendReceipt;error?:{code:string;message:string}}[];atomic_fanout:false;standing:string}
+export type EncounterRequest = import("./nativeModel").NativeModelRequest | import("./nativeMode").NativeModeRequest | {action:"context";agent_session?:string;request:ContextOperation} | {action:"prompt-context";agent_session:string;draft_revision:number;context:ContextExpectation} | {action:"start"|"providers"|"health"} | {action:"open";space:string;agent_session:string;provider:string} | {action:"read";agent_session:string;after:number;limit:number} | {action:"view";agent_session:string;before?:number} | {action:"draft";agent_session:string;basis:number;text:string} | {action:"prompt";agent_session:string;draft_revision:number} | {action:"cancel";agent_session:string;reason?:string} | {action:"status";agent_session:string} | {action:"permission";agent_session:string;request_id:string;decision:PermissionDecision} | {action:"reconnect";space:string;agent_session:string;provider:string};
 export interface Draft {revision:number;text:string}
 export type PermissionDecision={outcome:"selected";option_id:string}|{outcome:"cancelled"};
 export interface NativePermission {native_request_id:string;native_session_id:string;tool_call_id?:string;tool_call:unknown;raw:unknown;choices:{option_id:string;label:string;kind?:string}[];provenance:string[]}
@@ -29,13 +17,6 @@ export interface A2aPeerFields {peerAgent:string;peerEndpoint:string;peerCard:st
  * behind the transcript view, on the owner's own cursor. */
 export interface JournalEvent {cursor:number;event:unknown}
 export interface JournalPage {agent_session:string;events:JournalEvent[];next_cursor:number;more:boolean}
-/** Fresh sender-side delivery identity. The owner binds it durably; reuse with
- * different content is a conflict, and a repeat of the exact delivery is a
- * receipt read, never a resend. */
-export function mintDeliveryRef():string {
-  const bytes=new Uint8Array(8);crypto.getRandomValues(bytes);
-  return `delivery/desktop-${Array.from(bytes,b=>b.toString(16).padStart(2,"0")).join("")}`;
-}
 export async function encounter<T>(transport:KernelTransportStatus,project:string,request:EncounterRequest,sourceWorldRef?:string):Promise<T> {
   const op={op:"encounter" as const,project,request};
   const result=await kernelOp(transport,sourceWorldRef?{op:"hosted_native",source_world_ref:sourceWorldRef,request:op}:op);
@@ -43,15 +24,20 @@ export async function encounter<T>(transport:KernelTransportStatus,project:strin
   return result.outcome.data as T;
 }
 /** One freshly provisioned chat conversation (new-chat first Send): the minted
- * refs, the owner's own project spelling and the default provider the kernel
- * opened. The transcript, draft and every later action stay the ordinary
+ * refs, the owner's own project spelling and the provider the kernel opened:
+ * the census agent's (`provider_default` "census-agent") or a mode's body. The transcript, draft and every later action stay the ordinary
  * encounter actions — provision creates the plumbing once, nothing else. */
 export interface EncounterProvisioning {project:string;space:string;agent_session:string;provider:string;provider_default?:string;resolved_body?:{body_ref:string;body_revision:string;standing:string}|null}
 /** Ask the kernel to provision a new conversation for a project (create the
  * SessionSpace, bind the project context, attach a fresh agent session,
- * configure its agency binding and open the provider) and return the refs. */
-export async function encounterProvision(transport:KernelTransportStatus,project:string,preferredBodyRef?:string):Promise<EncounterProvisioning> {
-  const result=await kernelOp(transport,{op:"encounter_provision",project,preferred_body_ref:preferredBodyRef});
+ * configure its agency binding and open the provider) and return the refs.
+ * `agent` is the census agent the person picked (a slug of the World Model's
+ * agents, O-I #1003); none, the census's first agent that starts. `agentRef`
+ * mints the conversation's Agency for a roster Agent (a Flow participant
+ * answers as itself); `preferredBodyRef` opens a mode's body instead. */
+export interface ProvisionChoice {agent?:string;agentRef?:string;preferredBodyRef?:string}
+export async function encounterProvision(transport:KernelTransportStatus,project:string,choice:ProvisionChoice={}):Promise<EncounterProvisioning> {
+  const result=await kernelOp(transport,{op:"encounter_provision",project,...(choice.agent?{agent:choice.agent}:{}),...(choice.agentRef?{agent_ref:choice.agentRef}:{}),...(choice.preferredBodyRef?{preferred_body_ref:choice.preferredBodyRef}:{})});
   if(result.error || result.outcome?.result!=="encounter_provisioned")throw new Error(result.error??"AIKit did not provision a chat conversation");
   return result.outcome.data as EncounterProvisioning;
 }

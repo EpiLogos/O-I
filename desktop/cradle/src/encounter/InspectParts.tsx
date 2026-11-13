@@ -22,12 +22,6 @@ export function SessionFacts({reading,status,space}:{reading?:EncounterReading;s
 }
 
 /** Delivery identities minted in this window with the owner's settled phases. */
-export function DeliveryRegistrations({deliveries}:{deliveries?:{ref:string;phase:string}[]}) {
- return deliveries?.length
-  ?<ul className="encounter-deliveries">{deliveries.map(d=><li key={d.ref}><code>{d.ref}</code><span>{d.phase}</span></li>)}</ul>
-  :<p>No addressed delivery has been dispatched while this surface is open. Delivery identities are minted here, bound durably by the owner, and re-dispatched never — repeat sends return the owner&apos;s held receipt.</p>;
-}
-
 /** NOW records this session's own records name, each read through the owner. */
 export function NowRecords({nowRefs,taskBasisWithoutNow}:{nowRefs?:{ref:string;register:string|null}[];taskBasisWithoutNow?:boolean}) {
  return nowRefs?.length

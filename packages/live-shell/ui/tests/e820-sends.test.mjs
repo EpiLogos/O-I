@@ -8,8 +8,8 @@ import {register} from 'node:module'
 //  2. #820 — the Flow pane's Re-read asks the owner fresh (`readFlowInstance`'s fresh flag).
 //  3. #745 (lane AA's proposal) — the document's packet put into AIKit's prepared context before the Send, so the Send carries what the
 //     Packet shows: op encounter context edit, remove what the packet does not hold and add what it holds.
-//  4. #741 (lane AC's open item) — Heard on the line you sent in Messages: AIKit's desk read of that one Communique by its ref; and Input
-//     starts on Steer where the gateway advertises `communique-handling`, on Queue otherwise.
+//  4. REPLACED (O-I ticket 1003, the one send): #741's Heard and the gateway's Steer retired with Messages' gateway send. Send is the next
+//     turn in the conversation the open agent's occupant works; the line you sent stands queued until that conversation holds it.
 // Channels: PURE (the plans, the selections); BINDING (the sends and the packet's edits through the kernel bridge, its fetch answered here
 // as the kernel answers: each op asserted as it would reach the kernel); SCRIPTED (Messages' Full rendered to static markup);
 // CODE-READING (the Flow face's Re-read and its provider). The kernel's own routes are proven in desktop/cradle/kernel (page.rs,
@@ -258,72 +258,14 @@ test('BINDING — Answer this sends the document\'s packet with the question: th
 })
 
 // ---------------------------------------------------------------------------------------------------------------------
-// 4 · Heard in Messages, and where Input starts
-
-test('PURE — Input starts on Steer where the gateway advertises communique-handling, on Queue otherwise and while unread', async () => {
-  const heardHook = await import('../src/agent/devices/useHeardAnswer.ts')
-  const protocol = features => ({type: 'protocol', gateway_version: '0.71.0', ...(features ? {features} : {})})
-  assert.equal(msg.handlingAdvertisedOf(protocol(['communique-exact-instance', 'communique-handling'])), true)
-  assert.equal(msg.handlingAdvertisedOf(protocol(['communique-exact-instance'])), false)
-  assert.equal(msg.handlingAdvertisedOf(protocol()), false, 'a gateway that predates advertisement keeps none')
-  assert.equal(msg.handlingAdvertisedOf({type: 'ecology'}), undefined)
-  assert.equal(msg.inputDefaultOf(true), 'steer')
-  assert.equal(msg.inputDefaultOf(false), 'queue')
-  assert.equal(msg.inputDefaultOf(undefined), 'queue')
-  assert.equal(msg.communiqueRefOf({route: 'aikit gateway send', data: {communique: {communique_ref: 'aikit:communique:01x'}}}), 'aikit:communique:01x')
-  assert.equal(msg.communiqueRefOf({data: {}}), undefined)
-  assert.equal(heardHook.heardOf({heard: true}), true)
-  assert.equal(heardHook.heardOf({state: 'pending'}), undefined)
-})
+// 4 · REPLACED (O-I ticket 1003, the one send): Heard and the gateway's Steer retired. Send is the next turn in the conversation the
+// open agent's occupant works (messages-binding.test.mjs pins it); the line you sent stands queued until that conversation's rows hold it.
 
 const ANSWERED = {gatewayAdmitted: true, gatewayDoc: {state: 'ready'}}
 const ANIMA = 'central:position:project:O-I:anima-4'
 const POPULATION = {status: 'answered', value: {schema: 'aikit.population-reading/v1', positions: [{position_ref: ANIMA, label: 'Anima', occupancy: {state: 'occupied', agent_ref: 'agent/anima'}}], agents: []}, error: null}
 
-test('BINDING — Send keeps the Communique AIKit answered; Heard is AIKit\'s reading of that one Communique, and Input follows the gateway', async () => {
-  bind.resetHolds()
-  const requests = []
-  const gateway = async request => { requests.push(request); return {route: 'aikit gateway send', data: {communique: {schema: 'aikit.communique/v1', communique_ref: 'aikit:communique:01heard'}}} }
-  const input = {population: POPULATION, gateway: ANSWERED, project: 'O-I', holds: bind.chainHolds(), handlingAdvertised: true}
-  msg.messagesBinding(input, {gateway}).local.open(ANIMA)
-  let binding = msg.messagesBinding({...input, holds: bind.chainHolds()}, {gateway})
-  assert.equal(binding.values['conv.input'], 'steer', 'the gateway keeps a steer: Input starts on Steer')
-  await binding.write([{key: 'conv.sent', value: 'Skip the root.'}])
-  assert.deepEqual(requests[0], {kind: 'send', project: 'O-I', to: ANIMA, body: 'Skip the root.', handling: 'steer'})
-  assert.deepEqual(msg.sentOf(bind.viewHolds(bind.chainHolds(), msg.MESSAGES_ID).sent), {to: ANIMA, words: 'Skip the root.', ref: 'aikit:communique:01heard'},
-    'the line holds the Communique its send answered')
-  // Not read yet: Heard waits for AIKit, and says so.
-  binding = msg.messagesBinding({...input, holds: bind.chainHolds()}, {gateway})
-  assert.equal(binding.values['conv.heard'], undefined)
-  assert.match(binding.standing['conv.heard'].disabled, /has not answered its read of the Communique yet/)
-  // AIKit's reading: pending, then delivered.
-  const heardOf = heard => ({ref: 'aikit:communique:01heard', status: 'answered', value: {schema: 'aikit.communique-heard/v1', communique_ref: 'aikit:communique:01heard', state: heard ? 'delivered' : 'pending', heard}})
-  binding = msg.messagesBinding({...input, holds: bind.chainHolds(), heard: heardOf(false)}, {gateway})
-  assert.equal(binding.values['conv.heard'], false)
-  binding = msg.messagesBinding({...input, holds: bind.chainHolds(), heard: heardOf(true)}, {gateway})
-  assert.equal(binding.values['conv.heard'], true)
-  assert.equal(binding.standing['conv.heard'], undefined)
-  // A reading of another Communique is not this line's.
-  binding = msg.messagesBinding({...input, holds: bind.chainHolds(), heard: {...heardOf(true), ref: 'aikit:communique:other'}}, {gateway})
-  assert.equal(binding.values['conv.heard'], undefined)
-  // AIKit's refusal is its words.
-  binding = msg.messagesBinding({...input, holds: bind.chainHolds(), heard: {ref: 'aikit:communique:01heard', status: 'refused', error: 'aikit gateway heard: unknown command'}}, {gateway})
-  assert.equal(binding.standing['conv.heard'].disabled, 'aikit gateway heard: unknown command')
-  // The hand's own choice of Input stands over the gateway's.
-  binding.local['conv.input']('queue')
-  assert.equal(msg.messagesValues({...input, holds: bind.chainHolds()})['conv.input'], 'queue')
-  bind.resetHolds()
-  // A gateway that does not advertise it: Queue, and no handling named.
-  const older = {...input, holds: bind.chainHolds(), handlingAdvertised: false}
-  msg.messagesBinding(older, {gateway}).local.open(ANIMA)
-  binding = msg.messagesBinding({...older, holds: bind.chainHolds()}, {gateway})
-  assert.equal(binding.values['conv.input'], 'queue')
-  await binding.write([{key: 'conv.sent', value: 'Next.'}])
-  assert.deepEqual(requests[1], {kind: 'send', project: 'O-I', to: ANIMA, body: 'Next.'})
-  bind.resetHolds()
-})
-
-test('SCRIPTED — the line you sent says whether the agent heard it, steer or queued', async () => {
+test('SCRIPTED — the line you sent stands queued until the conversation holds it; no Heard reading and no Steer stand beside it', async () => {
   const {createElement} = await import('react')
   const {renderToStaticMarkup} = await import('react-dom/server')
   const family = await import('../src/inhabitants/familyManifest.ts')
@@ -334,18 +276,19 @@ test('SCRIPTED — the line you sent says whether the agent heard it, steer or q
   loadAgentShellFamilies()
   const draw = binding => renderToStaticMarkup(createElement(host.HostedDevice, {designed: messages, binding, view: 'full', nav: {}}))
   bind.resetHolds()
-  const gateway = async () => ({data: {communique: {communique_ref: 'aikit:communique:01heard'}}})
-  // The open agent's conversation as AIKit's journal reads it: nothing yet but the line you send.
-  const conversation = {status: 'answered', value: {position_ref: ANIMA, communiques: []}, error: null}
-  const input = {population: POPULATION, gateway: ANSWERED, conversation, project: 'O-I', holds: bind.chainHolds(), handlingAdvertised: true}
-  msg.messagesBinding(input, {gateway}).local.open(ANIMA)
-  await msg.messagesBinding({...input, holds: bind.chainHolds()}, {gateway}).write([{key: 'conv.sent', value: 'Skip the root.'}])
-  const heard = value => ({ref: 'aikit:communique:01heard', status: 'answered', value: {heard: value}})
-  assert.match(draw(msg.messagesBinding({...input, holds: bind.chainHolds(), heard: heard(false)})), /Skip the root\.[\s\S]*steer · not heard yet/)
-  assert.match(draw(msg.messagesBinding({...input, holds: bind.chainHolds(), heard: heard(true)})), /data-heard="true"[^>]*>[\s\S]*Skip the root\.[\s\S]*steer · heard/)
-  msg.messagesBinding({...input, holds: bind.chainHolds()}).local['conv.input']('queue')
-  assert.match(draw(msg.messagesBinding({...input, holds: bind.chainHolds(), heard: heard(true)})), /Skip the root\.[\s\S]*queued · heard/)
-  assert.match(draw(msg.messagesBinding({...input, holds: bind.chainHolds(), heard: heard(false)})), /queued · runs as the next task/)
+  const sent = []
+  const send = async (position, words) => { sent.push([position, words]) }
+  // The open agent's conversation: the session Anima's occupant works, nothing in it yet but the line you send.
+  const conversation = {agent: 'Anima', reading: {schema: 'aikit.encounter-view/v1', agent_session: 'agent-session/anima', more: false, draft: {text: '', revision: 0}, blocks: []}, status: {state: 'Resident'}}
+  const input = {population: POPULATION, gateway: ANSWERED, conversation, project: 'O-I', holds: bind.chainHolds()}
+  msg.messagesBinding(input, {send}).local.open(ANIMA)
+  await msg.messagesBinding({...input, holds: bind.chainHolds()}, {send}).write([{key: 'conv.sent', value: 'Skip the root.'}])
+  assert.deepEqual(sent, [[ANIMA, 'Skip the root.']], 'your words, to the conversation of the agent open')
+  const full = draw(msg.messagesBinding({...input, holds: bind.chainHolds()}, {send}))
+  assert.match(full, /Skip the root\.[\s\S]*queued · runs as the next task/)
+  assert.doesNotMatch(full, /not heard yet|· heard|steer ·/, 'no Heard reading and no Steer: the conversation itself shows when it is taken')
+  for (const gone of ['handlingAdvertisedOf', 'inputDefaultOf', 'communiqueRefOf']) assert.equal(msg[gone], undefined, `${gone}: retired with the gateway send`)
+  await assert.rejects(() => read('../src/agent/devices/useHeardAnswer.ts'), /ENOENT/, 'Heard\'s reader is deleted')
   bind.resetHolds()
   host.resetHost()
 })

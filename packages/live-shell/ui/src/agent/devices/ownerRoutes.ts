@@ -75,6 +75,15 @@ export function gatewayWriteOp(request: GatewayWriteRequest): KernelOp {
   }
 }
 
+/** The Communique AIKit's send answered with (`aikit gateway send --json`: the route's reading carries `communique`, the record it
+ * accepted), by its ref: what a delegation names. Undefined when the answer names none. Pure. */
+export function communiqueRefOf(answer: unknown): string | undefined {
+  const data = typeof answer === 'object' && answer !== null && 'data' in answer ? (answer as {data: unknown}).data : answer
+  const record = typeof data === 'object' && data !== null ? (data as {communique?: unknown}).communique : undefined
+  const ref = typeof record === 'object' && record !== null ? (record as {communique_ref?: unknown}).communique_ref : undefined
+  return typeof ref === 'string' && ref.trim() ? ref : undefined
+}
+
 /** A seat's Join and Release: the seat instrument's own Actions (`workcell.seat.join`, `workcell.seat.release`). */
 export function seatWriteOp(request: SeatWriteRequest): KernelOp {
   if (request.kind === 'join') {

@@ -418,18 +418,18 @@ test('0R-authority.8: a subject\'s Action pressed in the shell runs a person act
   assert.match(read('desktop/cradle/src/expression/ExpressionView.tsx'), /onInvokeAction=\{\(entityRef,actionRef\)=>void run\(\{operation:"invoke",/)
   assert.match(read('desktop/cradle/src/expression/parts.tsx'), /onClick=\{\(\)=>void run\(\{operation:"invoke",/)
   assert.match(read('desktop/cradle/src/nara/NaraSurface.tsx'), /const returned = await pressSubjectAction\(kernel\.transport, \{operation: 'invoke',/)
-  // No other sender of the owner's invoke stands in the shell. The Being encounter's "invoke" is AIKit's encounter (op being_encounter):
-  // it runs no Action and carries no token, so it is not one.
+  // No other sender of the owner's invoke stands in the shell. The Being encounter's invocation is a turn in the Agent's conversation
+  // (the one send, O-I #1003): it runs no Action and carries no token, so it is not one.
   const invokers = {}
   for (const root of ['packages', 'desktop/cradle/src', 'desktop/cradle/expressions-app']) {
     for (const file of sources(join(repo, root))) {
       if (/operation:\s*["']invoke["']/.test(readFileSync(file, 'utf8'))) invokers[relative(repo, file)] = true
     }
   }
-  assert.deepEqual(Object.keys(invokers).sort(), ['desktop/cradle/src/explore/BeingEncounter.tsx', 'desktop/cradle/src/expression/ExpressionView.tsx',
+  assert.deepEqual(Object.keys(invokers).sort(), ['desktop/cradle/src/expression/ExpressionView.tsx',
     'desktop/cradle/src/expression/parts.tsx', 'desktop/cradle/src/expression/types.ts', 'desktop/cradle/src/expression/useExpressionApplication.ts',
     'desktop/cradle/src/nara/NaraSurface.tsx'])
-  assert.match(read('desktop/cradle/src/explore/BeingEncounter.tsx'), /kernelOp\(kernel\.transport,\{op:"being_encounter",request:\{operation:"invoke",agent_ref:/)
+  assert.match(read('desktop/cradle/src/explore/BeingEncounter.tsx'), /encounterSessionOf\(kernel\.transport,\{project:"",ref:target\.agent_session,space:target\.space\}\)\.ask\(JSON\.stringify\(packet\),/)
 })
 
 // ---- Round 896 item 4: Factory's acts on the person's grant go by the shell window's channel ----

@@ -1,5 +1,4 @@
 import {reviewedContext,nativeContext,announceContext,clearSnapshotApprovals} from "../context/nativeContext";
-import {unknownDispatch,failedDispatch,admissionRefusal,settledPhase,mayStartDispatch} from "./deliveryOutcome";
 /**
  * One observer per encounter session.
  *
@@ -13,8 +12,11 @@ import {unknownDispatch,failedDispatch,admissionRefusal,settledPhase,mayStartDis
  *     cadence and the hidden-document pause are unchanged);
  *   - one canonical draft / compare-and-swap state machine, so typing in
  *     either place is the same AIKit-owned draft and is never lost;
- *   - one shared reading / status / providers / task / dispatch / group /
- *     resume / A2A state, and one set of action functions.
+ *   - one shared reading / status / providers / task / resume / A2A state,
+ *     and one set of action functions;
+ *   - the one send (O-I #1003): the chat, Messages, the Flow, Nara and Beings
+ *     all put their words in the draft and prompt it here (`submit`), and wait
+ *     on the answer through this observation (`until`).
  *
  * Nothing here is a desktop session store: the transcript, the draft and every
  * accepted edit stay AIKit-owned. This holds only the ephemeral input buffer
@@ -33,9 +35,8 @@ import {useEffect,useMemo,useSyncExternalStore} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import {kernelOp,hasReadingsNoticeSource,onReadingsMoved} from "../kernel/bridge";
 import type {KernelTransportStatus} from "../kernel/types";
-import {encounter,mintDeliveryRef,taskRead,type A2aDifference,type A2aPeerFields,type AddressedPacket,type AddressedTurn,type DeliveryRecord,type Draft,type EncounterReading,type EncounterRequest,type EncounterStatus,type EncounterTaskReading,type GroupReceipt,type GroupRecipient,type JournalPage,type PermissionDecision,type SendReceipt} from "./client";
+import {encounter,taskRead,type A2aDifference,type A2aPeerFields,type Draft,type EncounterReading,type EncounterRequest,type EncounterStatus,type EncounterTaskReading,type JournalPage,type PermissionDecision} from "./client";
 import {createA2aBinding,createA2aPresence} from "../../../../shared-field/a2a.mjs";
-import {ACTIVE_PHASES,type AddressedFields,type DeliveryHistoryEntry,type DispatchState,type GroupState} from "./AddressedComposer";
 
 /** Baked by vite.config.ts: true under `vite serve` and `WALK=1` bundles only. */
 declare const __CRADLE_WALK__: boolean;
@@ -60,7 +61,6 @@ export function sendRefusalOf(message:string):SendRefusal|null {
 export const encounterSessionKey=(binding:{project:string;ref:string;sourceWorldRef?:string})=>binding.sourceWorldRef?JSON.stringify([binding.sourceWorldRef,binding.project,binding.ref]):`${binding.project}:${binding.ref}`;
 
 export interface EncounterA2aState {seed?:string;busy:boolean;difference?:A2aDifference;error?:string}
-export interface EncounterServiceState {running:boolean;pid?:number;detail?:string}
 
 /** The shared observation of one session. Every field is the owner's answer or
  * the ephemeral input buffer; nothing is derived into a claim of its own. */
@@ -86,10 +86,6 @@ export interface EncounterSessionState {
  before?:number;
  /** `undefined` = not read (or the read was refused); `null` = honest absence. */
  task?:EncounterTaskReading|null;
- dispatch:DispatchState;
- deliveries:DeliveryHistoryEntry[];
- group?:GroupState;
- service?:EncounterServiceState;
  resume?:{provider:string};
  reconnected?:string;
  a2a:EncounterA2aState;
@@ -107,6 +103,18 @@ export interface EncounterSessionActions {
  allowed(name:string):boolean;
  change(text:string):void;
  send():Promise<void>;
+ /** The one send (O-I #1003): `text` put in the draft and prompted. Resolves when the owner took the turn; throws its refusal in
+  *  its own words, and an outcome it could not confirm as uncertain. Unsent typing of the person's own is never replaced. */
+ submit(text:string):Promise<void>;
+ /** Watch the session until `settled` answers from a reading (the answer to a turn just sent); throws `settled`'s refusal, and
+  *  `late` when `timeoutMs` passes first. */
+ until<T>(settled:(reading:EncounterReading)=>T|null,timeoutMs:number,late:string):Promise<T>;
+ /** Send `text` as the next turn and wait for that turn's answer: `submit`, then `until` the one turn reader (`turnAnswer`) says the
+  *  turn ended. Resolves the answer's block and words; throws a refusal, a turn that ended without words (naming `who`), or `late`. */
+ ask(text:string,who:string,timeoutMs:number,late:string):Promise<{id:number;text:string}>;
+ /** Add `text` to the draft, after what it holds, for the person to send from the conversation (a selection carried in, an
+  *  invocation composed elsewhere). Nothing is sent. */
+ compose(text:string):Promise<void>;
  /** Retry a Send the owner confirmed was not sent (P8). */
  retrySend():Promise<void>;
  /** After a failed save: re-read the canonical draft and apply the held typing to it. */
@@ -123,9 +131,6 @@ export interface EncounterSessionActions {
  earlier():void;
  latest():void;
  readJournal(after:number):Promise<JournalPage>;
- sendAddressed(turn:AddressedTurn,fields:AddressedFields):Promise<void>;
- reconcileAddressed():Promise<void>;
- sendGroup(sender:string,recipients:GroupRecipient[],packet:AddressedPacket):Promise<void>;
  seedA2a(seed:string):void;
  sendA2a(seed:string,fields:A2aPeerFields):Promise<void>;
 }
@@ -171,7 +176,7 @@ class EncounterSession implements EncounterSessionActions {
  private reconcilingSend=false;
 
  constructor(private transport:KernelTransportStatus,binding:EncounterSessionBinding) {
-  this.state={key:encounterSessionKey(binding),project:binding.project,agentSession:binding.ref,space:binding.space,sourceWorldRef:binding.sourceWorldRef,providers:[],model:{phase:"unread"},mode:{phase:"unread"},draft:"",pending:false,busy:false,draftFailed:false,dispatch:{kind:"idle"},deliveries:[],a2a:{busy:false}};
+  this.state={key:encounterSessionKey(binding),project:binding.project,agentSession:binding.ref,space:binding.space,sourceWorldRef:binding.sourceWorldRef,providers:[],model:{phase:"unread"},mode:{phase:"unread"},draft:"",pending:false,busy:false,draftFailed:false,a2a:{busy:false}};
   this.models=new NativeModelController(binding.ref,request=>this.call(request),model=>this.set({model}));
   this.modes=new NativeModeController(binding.ref,request=>this.call(request),mode=>{this.set({mode});this.rememberModes(mode);});
  }
@@ -221,7 +226,6 @@ class EncounterSession implements EncounterSessionActions {
   // honest absence. The last observed task stays visible while a later run
   // re-reads it, and is dropped only when that read is refused.
   taskRead(this.transport,this.state.project,this.state.agentSession,this.state.sourceWorldRef).then(value=>{if(run===this.run)this.set({task:value});}).catch(()=>{if(run===this.run)this.set({task:undefined});});
-  if(!this.state.sourceWorldRef)void this.probe();
  }
  private stop() {
   this.run++;this.chain++;this.observing=false;this.restingOnNotice=false;this.stopMoved?.();this.stopMoved=undefined;clearTimeout(this.timer);
@@ -375,6 +379,51 @@ class EncounterSession implements EncounterSessionActions {
  }
  /** P8 Retry: send the kept draft again, only after a confirmed failure. */
  retrySend=async()=>{if(this.state.send?.phase!=="failed")return;this.set({send:undefined});await this.send();};
+ submit=async(text:string)=>{
+  if(!text.trim())throw new Error("There is nothing to send.");
+  if(this.operations>0||this.dirty||this.saving||this.sending||this.failed||this.uncertainSend)throw new Error("This conversation is still busy with an earlier send or unsaved typing. Wait for it, then send again.");
+  const reading=await this.read();
+  this.set({reading});
+  for(const name of ["draft","prompt"]){
+   const action=reading.actions?.find(row=>row.ref===`aikit.encounter.${name}`);
+   if(!action?.enabled)throw new Error(action?.reason??`The conversation's owner has not enabled ${name} here.`);
+  }
+  if(reading.draft.text.trim()&&reading.draft.text!==text)throw new Error("This conversation holds an unsent draft. Send or clear it in the conversation first: nothing was sent.");
+  this.canonical=reading.draft;this.input=text;this.dirty=reading.draft.text!==text;this.set({draft:text,send:undefined});
+  await this.save();
+  if(this.failed||this.dirty)throw new Error(this.state.error??"The owner did not take the draft: nothing was sent.");
+  await this.send();
+  const outcome=this.state.send;
+  if(outcome?.phase==="failed")throw new Error(outcome.error??"The owner refused the send.");
+  if(outcome)throw new Error(outcome.error??"Whether the send landed could not be confirmed. Read the conversation before sending again.");
+ };
+ ask=async(text:string,who:string,timeoutMs:number,late:string)=>{
+  const before=await this.read();
+  const after=before.blocks.length?before.blocks[before.blocks.length-1].id:-1;
+  await this.submit(text);
+  return this.until(reading=>turnAnswer(reading.blocks,after,who),timeoutMs,late);
+ };
+ compose=async(text:string)=>{
+  const reading=await this.read();
+  if(!this.dirty&&!this.saving&&!this.failed&&reading.draft.revision>=this.canonical.revision){this.canonical=reading.draft;this.input=reading.draft.text;}
+  this.set({reading,draft:this.input});
+  if(!this.allowed("draft"))throw new Error(reading.actions?.find(row=>row.ref==="aikit.encounter.draft")?.reason??"The conversation's owner has not enabled its draft here.");
+  this.change([this.input.trimEnd(),text].filter(Boolean).join("\n\n"));
+ };
+ until=<T,>(settled:(reading:EncounterReading)=>T|null,timeoutMs:number,late:string)=>new Promise<T>((resolve,reject)=>{
+  let done=false;
+  const finish=(end:()=>void)=>{if(done)return;done=true;clearTimeout(timer);stop();this.release();end();};
+  const check=()=>{
+   const reading=this.state.reading;
+   if(!reading||done)return;
+   let value:T|null;
+   try{value=settled(reading);}catch(error){finish(()=>reject(error));return;}
+   if(value!==null)finish(()=>resolve(value));
+  };
+  const stop=this.subscribe(check);
+  const timer=setTimeout(()=>finish(()=>reject(new Error(late))),timeoutMs);
+  this.retain();this.latest();check();
+ });
  recover=async()=>{
   try{const next=await this.read();this.canonical=next.draft;this.failed=false;this.dirty=this.input!==next.draft.text;this.set({error:undefined});await this.save();}
   catch(error){this.set({error:String(error)});}
@@ -437,102 +486,6 @@ class EncounterSession implements EncounterSessionActions {
  latest=()=>{if(this.state.before===undefined)return;this.set({before:undefined});if(this.observing)this.restartChain();};
  readJournal=(after:number)=>this.call<JournalPage>({action:"read",agent_session:this.state.agentSession,after,limit:32});
 
- // --- addressed dispatch: explicit machine turns, never the human draft ---
- private probe=async()=>{
-  try{const health=await this.call<{protocol:string;pid:number}>({action:"health"});this.set({service:{running:true,pid:health.pid}});}
-  catch(error){this.set({service:{running:false,detail:String(error)}});}
- };
- private settle(entry:DeliveryHistoryEntry){this.set({dispatch:{kind:"settled",ref:entry.ref,record:entry.record,duplicate:entry.duplicate},deliveries:[entry,...this.state.deliveries]});}
- private async track(ref:string,packet:AddressedPacket) {
-  const deadline=Date.now()+20000;
-  while(Date.now()<deadline){
-   await new Promise(resolve=>setTimeout(resolve,900));
-   if(hidden())continue;
-   let record:DeliveryRecord|undefined;
-   try{record=await this.call<DeliveryRecord>({action:"delivery",agent_session:this.state.agentSession,delivery_ref:ref});}catch{continue;}
-   if(!record)return;
-   this.set({dispatch:{kind:"running",ref,phase:record.phase}});
-   if(settledPhase(record.phase)){this.settle({ref,record,duplicate:false,packet});return;}
-  }
- }
- sendAddressed=async(turn:AddressedTurn,_fields:AddressedFields)=>{
-  if(!mayStartDispatch(this.state.dispatch,this.state.group))return;
-  const ref=mintDeliveryRef();
-  this.set({dispatch:{kind:"running",ref,phase:"preparing"}});
-  try{
-   const receipt=await this.call<SendReceipt>({action:"send",agent_session:this.state.agentSession,turn:{...turn,delivery_ref:ref}});
-   const record=receipt.delivery;
-   if(settledPhase(record.phase)){this.settle({ref,record,duplicate:receipt.duplicate,packet:turn.packet});return;}
-   this.set({dispatch:{kind:"running",ref,phase:record.phase}});
-   await this.track(ref,turn.packet);
-  }catch(error){this.set({dispatch:failedDispatch(ref,error)});void this.probe();}
- };
- // Explicitly reconcile existing native delivery identities. No send is
- // called here; absence, refusal and unreadable results stay unknown.
- reconcileAddressed=async()=>{
-  const dispatch=this.state.dispatch;
-  if(dispatch.kind==="unknown"||dispatch.kind==="running"){
-   try{
-    const record=await this.call<DeliveryRecord>({action:"delivery",agent_session:this.state.agentSession,delivery_ref:dispatch.ref});
-    if(this.state.dispatch.kind!=="idle"&&this.state.dispatch.ref===dispatch.ref){
-     if(!record||typeof record.phase!=="string")this.set({dispatch:unknownDispatch(dispatch.ref,"No native receipt yet")});
-     else if(settledPhase(record.phase))this.settle({ref:dispatch.ref,record,duplicate:false});
-     else this.set({dispatch:{kind:"running",ref:dispatch.ref,phase:record.phase}});
-    }
-   }catch(error){this.set({dispatch:unknownDispatch(dispatch.ref,error)});}
-  }
-  const group=this.state.group;
-  if(group){
-   const rows=await Promise.all(group.rows.map(async row=>{
-    if(row.phase===undefined||settledPhase(row.phase))return row;
-    try{const record=await this.call<DeliveryRecord>({action:"delivery",agent_session:row.agentSession,delivery_ref:group.ref});
-     return record&&typeof record.phase==="string"?{...row,phase:record.phase,error:undefined}:{...row,phase:"unknown",error:"No native receipt yet"};
-    }catch(error){return {...row,phase:"unknown",error:String(error)};}
-   }));
-   if(this.state.group?.ref===group.ref)this.set({group:{ref:group.ref,rows}});
-  }
- };
- // Addressed group: one packet, explicit recipients, whole-group admission
- // owner-side, per-recipient durable results, non-atomic fanout.
- private async trackRecipient(ref:string,session:string,apply:(row:{phase?:string;duplicate?:boolean})=>void) {
-  const deadline=Date.now()+20000;
-  while(Date.now()<deadline){
-   await new Promise(resolve=>setTimeout(resolve,900));
-   if(hidden())continue;
-   let record:DeliveryRecord|undefined;
-   try{record=await this.call<DeliveryRecord>({action:"delivery",agent_session:session,delivery_ref:ref});}catch{continue;}
-   if(!record)return;
-   apply({phase:record.phase});
-   if(!ACTIVE_PHASES.includes(record.phase))return;
-  }
- }
- sendGroup=async(sender:string,recipients:GroupRecipient[],packet:AddressedPacket)=>{
-  if(!mayStartDispatch(this.state.dispatch,this.state.group))return;
-  const ref=mintDeliveryRef();
-  this.set({group:{ref,rows:recipients.map(recipient=>({agentSession:recipient.agent_session,phase:"preparing"}))}});
-  try{
-   const receipt=await this.call<GroupReceipt>({action:"send-group",delivery_ref:ref,sender,packet,recipients});
-   const bySession=new Map(receipt.recipients.map(entry=>[entry.agent_session,entry]));
-   const rows=recipients.map(recipient=>{
-    const entry=bySession.get(recipient.agent_session);
-    if(!entry)return {agentSession:recipient.agent_session,phase:"unknown",error:"Missing recipient acknowledgement; inspect without replay"};
-    if(entry.error){const error=`${entry.error.message} [${entry.error.code}]`;return admissionRefusal(error)?{agentSession:recipient.agent_session,error}:{agentSession:recipient.agent_session,phase:"unknown",error};}
-    return {agentSession:recipient.agent_session,phase:entry.result!.delivery.phase,duplicate:entry.result!.duplicate};
-   });
-   this.set({group:{ref,rows}});
-   // Still-active recipients are tracked through their own durable delivery
-   // receipts — each recipient settles on its own, never as a group.
-   await Promise.all(recipients.map(async(recipient,index)=>{
-    const entry=bySession.get(recipient.agent_session);
-    if(!entry?.result||!ACTIVE_PHASES.includes(entry.result.delivery.phase))return;
-    await this.trackRecipient(ref,recipient.agent_session,row=>{
-     const current=this.state.group;
-     if(current)this.set({group:{...current,rows:current.rows.map((existing,existingIndex)=>existingIndex===index?{...existing,...row}:existing)}});
-    });
-   }));
-  }catch(error){const refused=admissionRefusal(error);this.set({group:{ref,rows:recipients.map(recipient=>refused?{agentSession:recipient.agent_session,error:String(error)}:{agentSession:recipient.agent_session,phase:"unknown",error:String(error)})}});void this.probe();}
- };
-
  // --- A2A exchange: the resident's own reply is the bounded passage.
  // Binding, presence, exchange authority and the returned difference are the
  // owner floor's contracts, composed per send — nothing reaches the network
@@ -589,11 +542,46 @@ function acquire(transport:KernelTransportStatus,binding:EncounterSessionBinding
  session.bind(transport,binding.space);
  return session;
 }
+/** The state of a session this window holds, if it holds one: read without starting one. */
+export function encounterSessionStateOf(binding:{project:string;ref:string;sourceWorldRef?:string}):EncounterSessionState|undefined {return sessions.get(encounterSessionKey(binding))?.snapshot();}
+/** A session as a caller outside React holds it: its acts, and its state now. */
+export interface SharedEncounterSession extends EncounterSessionActions {snapshot():EncounterSessionState}
+/** The one shared session of a binding, for a caller outside React (a device's write, Nara, a Being, the Flow): the same store
+ * entry every presenter of that session shares, so a send from anywhere is the conversation's own (O-I #1003). */
+export function encounterSessionOf(transport:KernelTransportStatus,binding:EncounterSessionBinding):SharedEncounterSession {return acquire(transport,binding);}
+const TURN_END=new Set(["completed","cancelled","error"]);
+/** The one turn reader (O-I #1003): the answer to the first question asked after block `after`, once its turn has ended; null while the
+ * turn runs. The question is its run of user blocks; the answer is the turn's last run of assistant text, consecutive assistant blocks
+ * being one streamed text (as nara/nativeTranscript.ts `nativeTextRuns` joins them), named by the run's first block. Throws, naming
+ * `who`, when the turn ended without one. Pure. */
+export function turnAnswer(blocks:readonly {id:number;kind:string;text:string}[],after:number,who:string):{id:number;text:string}|null {
+ let at=blocks.findIndex(block=>block.id>after&&block.kind==="user");
+ if(at<0)return null;
+ while(at<blocks.length&&blocks[at].kind==="user")at++;
+ let answer:{id:number;text:string}|null=null,run:{id:number;text:string}|null=null;
+ for(const block of blocks.slice(at)){
+  if(block.kind==="user")break;
+  if(block.kind==="assistant"){
+   run=run?{id:run.id,text:run.text+block.text}:{id:block.id,text:block.text};
+   if(run.text.trim())answer=run;
+   continue;
+  }
+  run=null;
+  if(TURN_END.has(block.kind)){
+   if(block.kind!=="completed")throw new Error(`${who}'s turn ended ${block.kind==="error"?"in an error":"cancelled"}: nothing was kept. The question stays in the conversation.`);
+   if(!answer)throw new Error(`${who}'s turn completed with no answer: nothing was kept.`);
+   return answer;
+  }
+ }
+ return null;
+}
 /** The single-observer census, for the walk harness only: per session key, how
  * many presenters subscribe, how many poll loops run (0 or 1) and how many
  * view reads that loop has issued. Mounted only in dev/walk bundles — a plain
- * production build drops this branch with the rest of the walk channel. */
-if(__CRADLE_WALK__){
+ * production build drops this branch with the rest of the walk channel. Where
+ * no build defines the flag (a module loaded as it is written, as the shell's
+ * suites load it) there is no walk, and nothing is mounted. */
+if(typeof __CRADLE_WALK__!=="undefined"&&__CRADLE_WALK__){
  const host=window as unknown as {__cradle?:Record<string,unknown>};
  host.__cradle={...(host.__cradle??{}),encounterObservers:()=>Object.fromEntries([...sessions].map(([key,session])=>[key,{subscribers:session.subscriberCount,loops:session.loops,polls:session.polls}]))};
 }
@@ -626,16 +614,9 @@ export function expressionReadingOf(state:EncounterSessionState|undefined):Encou
 }
 /** The owner's connection state as the one label every head shows. */
 export function sessionStateLabel(status:EncounterStatus|undefined):string {return connectionLabel(status);}
-/** Delivery identities dispatched from this window, with their settled phases. */
-export function deliveriesOf(state:EncounterSessionState):{ref:string;phase:string}[] {
- return [...state.deliveries.map(entry=>({ref:entry.ref,phase:entry.record.phase})),...(state.group?[{ref:state.group.ref,phase:`group — ${state.group.rows.map(row=>row.error?"refused":row.phase??"in flight").join(", ")}`}]:[])];
-}
-/** NOW refs this session's own records name — an addressed dispatch receipt,
- * a task basis. Nothing is inferred from transcripts or bindings. */
+/** NOW refs this session's own records name — its task basis. Nothing is inferred from transcripts or bindings. */
 export function nowRefsOf(state:EncounterSessionState):{ref:string;register:string|null}[] {
- const refs:{ref:string;register:string|null}[]=state.deliveries.flatMap(entry=>{const nowRef=(entry.record as {now_ref?:unknown}).now_ref;return typeof nowRef==="string"&&nowRef?[{ref:nowRef,register:null}]:[];});
  const allocated=state.task?.allocation?.allocation?.now_ref;
- if(allocated&&!refs.some(entry=>entry.ref===allocated))refs.push({ref:allocated,register:state.task?.request?.central?.project??null});
- return refs;
+ return allocated?[{ref:allocated,register:state.task?.request?.central?.project??null}]:[];
 }
 export const taskBasisWithoutNow=(state:EncounterSessionState)=>!!state.task&&!state.task.allocation?.allocation?.now_ref;

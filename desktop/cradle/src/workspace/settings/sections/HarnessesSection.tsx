@@ -1,7 +1,9 @@
-/** Harness capability first; installation and detection are secondary facts. */
+/** The agents on this machine are the census (the World Model's agents, O-I #1003): one card per agent, whether it starts, with
+ * AIKit's client facts (installed, its folder, sign-in) as that card's detail, never as rows of their own. */
 import {Refusal, refusalWords} from "../../../shared/Refusal";
 import {useEffect,useState} from "react";
-import type {HarnessRow,ProviderRow} from "../../../configuration/harnessSource";
+import {shapeHarnessClients,type HarnessRow,type ProviderRow} from "../../../configuration/harnessSource";
+import {agentName,censusConnections,useCensus,type CensusAgent} from "../../../agency/census";
 import {ModelChip} from "../../../agent/chat/ComposerChips";
 import {encounter,encounterProvision,type EncounterStatus} from "../../../encounter/client";
 import {useEncounterSession,type EncounterSessionHandle} from "../../../encounter/session";
@@ -11,9 +13,9 @@ import {useScope,scopeProject} from "../../scope";
 import {chatProvisionTarget} from "../../../agent/chat/firstSend";
 import {modelChoices} from "../../../agent/chat/modelPresentation";
 import {useActiveEncounter} from "../../activeEncounter";
-import {adapterNeeded,adapterNeededReason,harnessEffect,harnessItems,harnessName,notFound,readyHarnesses} from "../sectionModel";
-import {expect,loadSuite,plain,refreshAll,stageDefaultConnection,defaultScope,resolutionKey,watchPair,type SettingsSnapshot} from "../settingsData";
-import {currentConnection,DEFAULT_CONNECTION_ROW,settingRowId,stageSetting,stagedChanges,undoChange} from "../changeModel";
+import {harnessEffect,harnessItems} from "../sectionModel";
+import {expect,loadSuite,plain,refreshAll,defaultScope,resolutionKey,watchPair,type SettingsSnapshot} from "../settingsData";
+import {settingRowId,stageSetting,stagedChanges,undoChange} from "../changeModel";
 import {connectionVerification,connectionNames,providerName,MODEL_DEFAULT_SETTING,modelDefaults,modelDefaultChoice} from "../harnessCapabilities";
 import {Group,Missing,Reading,Row,Unreadable} from "../rows";
 import {HarnessAuth} from "../AuthLogin";
@@ -24,13 +26,9 @@ export function folderOf(row:HarnessRow):string|null {
  const first=row.config_dir?.split(" (")[0]?.split(" and ")[0]?.trim();
  return first&&first.startsWith("/")?first:null;
 }
-export function connectionFor(data:SettingsSnapshot,row:HarnessRow):string|null {
- const providers=data.suite.state==="ok"&&data.suite.value.harness.providers.state==="ok"?data.suite.value.harness.providers.rows:[];
- const names=[row.client,row.harness].filter(Boolean);
- return providers.find(provider=>names.includes(provider.id))?.id??providers.find(provider=>names.some(name=>provider.id.startsWith(`${name}-`)))?.id??null;
-}
 
-function DetectionCard({row}:{row:HarnessRow}) {
+/** AIKit's facts on one agent, as detail on its census card: whether AIKit's client is installed into it, its folder, sign-in. */
+function AikitClientDetail({row}:{row:HarnessRow}) {
  const [busy,setBusy]=useState(false),[note,setNote]=useState<string|null>(null);
  const folder=folderOf(row);
  const install=async()=>{
@@ -38,18 +36,16 @@ function DetectionCard({row}:{row:HarnessRow}) {
   try{await expect({op:"client_install",client:row.client},"client_installed");await loadSuite();setNote("Installed. "+(harnessEffect(row)??""));}
   catch(cause){setNote(refusalWords("Not installed.",cause));}finally{setBusy(false);}
  };
- return <section className="settings-card settings-harness" data-settings-row={`harness-install:${row.client}`} data-harness-card={row.client} data-installed={row.installed?"true":"false"}>
-  <h3>{harnessName(row.harness)}</h3>
-  <p>{row.installed?"Installed · detected":"Detected · not installed"}</p>
-  {harnessItems(row)&&<p>{harnessItems(row)}</p>}
+ return <div className="settings-harness-aikit" data-settings-row={`harness-install:${row.client}`} data-harness-card={row.client} data-installed={row.installed?"true":"false"}>
+  <p className="settings-muted">AIKit: {row.installed?"installed":"not installed"}{harnessItems(row)?` · ${harnessItems(row)}`:""}</p>
   {harnessEffect(row)&&<p className="settings-card-strong" data-harness-effect>{harnessEffect(row)}</p>}
   <div className="settings-card-actions">
-   {!row.installed&&<button type="button" className="settings-button" disabled={busy} data-harness-install onClick={()=>void install()}>{busy?"Installing…":"Install"}</button>}
+   {!row.installed&&<button type="button" className="settings-button" disabled={busy} data-harness-install onClick={()=>void install()}>{busy?"Installing…":"Install AIKit"}</button>}
    {folder&&<button type="button" className="settings-button" onClick={()=>void expect({op:"settings_reveal",path:folder},"settings_revealed").catch(cause=>setNote(refusalWords("Couldn't open the folder.",cause)))}>Open folder</button>}
   </div>
   {note&&<p className="settings-card-note" role="status">{note}</p>}
   <HarnessAuth harness={row.client}/>
- </section>;
+ </div>;
 }
 
 function CurrentChat({session}:{session:EncounterSessionHandle|undefined}) {
@@ -82,29 +78,27 @@ function CurrentChat({session}:{session:EncounterSessionHandle|undefined}) {
     <ModelChip project={session.state.project||undefined} model={session.state.model} actions={{refresh:session.actions.readModel,select:session.actions.selectModel}} disabled={session.state.pending||status?.state==="TurnInFlight"||status?.state==="InterruptRequested"}/>
    </Row>
    {state?.error&&<Refusal className="settings-inline-error" said="The chat connection reported a problem." error={state.error}/>}
-  </>:<p className="settings-muted">No chat is selected. The default below decides which harness a new chat starts with.</p>}
+  </>:<p className="settings-muted">No chat is selected. A new chat talks to the agent chosen in its composer.</p>}
  </section>;
 }
 
-function CapabilityCard({provider,data,session,name}:{provider:ProviderRow;data:SettingsSnapshot;session?:EncounterSessionHandle;name:string}) {
- const facts={...provider,...session?.state.providers.find(row=>row.id===provider.id)};
- const current=session?.state.status?.provider?.id===provider.id;
- const applied=currentConnection(data)===provider.id,staged=data.stagedDefault===provider.id;
+/** One census agent: whether it starts on this machine (its version, or why not), using it in the current chat, and AIKit's detail. */
+function AgentCard({agent,session}:{agent:CensusAgent;session?:EncounterSessionHandle}) {
+ const name=agentName(agent);
+ const client=agent.aikit?shapeHarnessClients({clients:[agent.aikit]})[0]:undefined;
+ const current=session?.state.status?.provider?.id===agent.slug;
  const openAction=session?.state.reading?.actions?.find(action=>action.ref==="aikit.encounter.open");
  const canConnect=!!session&&!session.state.pending&&openAction?.enabled===true;
- return <section className="settings-card settings-harness" data-settings-row={`harness:${provider.id}`} data-harness-connection={provider.id}>
+ return <section className="settings-card settings-harness" data-settings-row={`agent:${agent.slug}`} data-census-agent={agent.slug} data-starts={agent.starts?"true":"false"}>
   <h3>{name}</h3>
-  {name!==providerName(provider)&&<details><summary>Connection details</summary><p>{provider.label}</p><p>Configured connection: <code>{provider.id}</code></p></details>}
-  <p>{current?"Selected for this chat":applied?"Default for new chats":"Available for chats"}{facts.sandboxed&&<span className="settings-chip">Sandboxed</span>}</p>
-  {provider.label&&provider.label!==provider.id&&provider.label!==name&&<p className="settings-muted">{provider.label}</p>}
-  <div className="settings-card-actions">
-   {applied&&!data.stagedDefault?<span className="settings-chip" data-harness-default>Default for new chats</span>
-    :staged?<span className="settings-chip">Default change ready to review</span>
-    :<button type="button" className="settings-button" data-harness-set-default onClick={()=>stageDefaultConnection(applied?null:provider.id)}>Set as default</button>}
-   {!current&&session&&<button type="button" className="settings-button" disabled={!canConnect} title={openAction?.reason??undefined} onClick={()=>void session.actions.connect(provider.id)}>Use in this chat</button>}
-  </div>
-  {!current&&session&&!canConnect&&<p className="settings-muted">{openAction?.reason??"The owner has not enabled changing this chat's harness."}</p>}
-  {!current&&<p className="settings-muted">Connection verification is available when a chat is running on this harness.</p>}
+  <p>{current?"Selected for this chat":agent.starts?`Starts on this machine${agent.version?` · ${agent.version}`:""}`:"Doesn't start on this machine"}</p>
+  {!agent.starts&&agent.why&&<p className="settings-muted" data-census-why>{agent.why}</p>}
+  {agent.executable&&<p className="settings-muted"><code>{agent.executable}</code></p>}
+  {agent.starts&&!current&&session&&<div className="settings-card-actions">
+   <button type="button" className="settings-button" disabled={!canConnect} title={openAction?.reason??undefined} onClick={()=>void session.actions.connect(agent.slug)}>Use in this chat</button>
+  </div>}
+  {agent.starts&&!current&&session&&!canConnect&&<p className="settings-muted">{openAction?.reason??"The owner has not enabled changing this chat's agent."}</p>}
+  {client&&<AikitClientDetail row={client}/>}
  </section>;
 }
 
@@ -162,40 +156,27 @@ export function HarnessesSection({data}:{data:SettingsSnapshot}) {
    window.dispatchEvent(new CustomEvent("oi:agent-session-prepared",{detail:{...binding,title:"New conversation"}}));
   }catch(cause){setStartError(plain(cause));}finally{setStarting(false);}
  };
+ const census=useCensus(kernel.transport);
  if(data.suite.state==="reading")return <Reading/>;
  if(data.suite.state==="failed")return <Unreadable error={data.suite.error} onRetry={()=>void refreshAll()}/>;
- const reading=data.suite.value,providers=reading.harness.providers;
- const ready=readyHarnesses(reading),needing=adapterNeeded(reading),missing=notFound(reading);
- const current=currentConnection(data);
- const defaultChange=stagedChanges(data).find(change=>change.kind==="chat-default");
- const names=connectionNames(providers.state==="ok"?providers.rows:[]);
- const defaultProvider=providers.state==="ok"?providers.rows.find(provider=>provider.id===current):undefined;
+ const providers=data.suite.value.harness.providers;
+ // The model defaults are kept per census agent, each with AIKit's provider facts for it when AIKit has some.
+ const agents=censusConnections(census,providers.state==="ok"?providers.rows:[]).map(row=>({id:row.id,label:row.label,...(row.protocol?{protocol:row.protocol}:{})}));
  return <div className="settings-harnesses" data-harness-panel>
   <CurrentChat key={`${session?.state.key??"none"}:${session?.state.status?.native_session_id??"none"}`} session={session}/>
+  <Group title="Agents on this machine" id="agents" reveal={nav.focusRow?.startsWith("agent:")||nav.focusRow?.startsWith("harness-install:")?nav.focusSeq:undefined}>
+   {census.state==="reading"?<Reading/>
+    :census.state==="unavailable"?<Unreadable error={census.why} onRetry={()=>void refreshAll()}/>
+    :census.agents.length?<div className="settings-cards">{census.agents.map(agent=><AgentCard key={agent.slug} agent={agent} session={session}/>)}</div>
+    :<p className="settings-muted">Actuation detects no agent harness on this machine.</p>}
+  </Group>
   <Group title="New chats" id="new-chats">
-   <Row id={DEFAULT_CONNECTION_ROW} title="Default harness for new chats" description={providers.state==="ok"&&providers.rows.length?"Existing chats keep their own harness. Review and apply a change below.":"Existing chats keep their own harness."} changed={!!defaultChange} onUndo={defaultChange?()=>void undoChange(defaultChange):undefined}>
-    <span>{data.stagedDefault?`${names.get(data.stagedDefault)??"Configured harness"} · ready to review`:providers.state==="ok"?defaultProvider?names.get(defaultProvider.id):"No harness is configured for new chats":"Reads when the harness list answers"}</span>
-   </Row>
-   {providers.state==="failed"?<Unreadable error={providers.error} onRetry={()=>void loadSuite()}/>:providers.rows.length?<div className="settings-cards">{providers.rows.map(provider=><CapabilityCard key={provider.id} name={names.get(provider.id)!} provider={provider} data={data} session={session}/>)}</div>:<p className="settings-muted">No encounter harness is configured.</p>}
-   <DefaultModels data={data} session={session} providers={providers.state==="ok"?providers.rows:[]}/>
-   <button type="button" className="settings-button" disabled={starting||!!data.stagedDefault||stagedChanges(data).some(row=>row.requestKey.startsWith(MODEL_DEFAULT_SETTING))} onClick={()=>void start()}>{starting?"Starting chat…":session?"Start a new chat to verify defaults":"Start a chat to read models"}</button>
-   {/* The helper speaks for the control above it; when the harness list didn't answer, it stays silent with it. */}
-   {providers.state==="ok"&&providers.rows.length>0&&<p className="settings-muted">Opens the default harness without sending a message.</p>}
+   <DefaultModels data={data} session={session} providers={agents}/>
+   <button type="button" className="settings-button" disabled={starting||stagedChanges(data).some(row=>row.requestKey.startsWith(MODEL_DEFAULT_SETTING))} onClick={()=>void start()}>{starting?"Starting chat…":session?"Start a new chat to verify defaults":"Start a chat to read models"}</button>
+   {agents.length>0&&<p className="settings-muted">Opens a chat with the first agent on this machine that starts, without sending a message.</p>}
    {startError&&<Refusal className="settings-inline-error" said="Couldn't start a chat." error={startError}/>}
   </Group>
   <ModelCatalogue data={data}/>
-  <Group title="Sign-in, installation and detection" count={ready.length+needing.length+missing.length} collapsible defaultOpen={false} reveal={nav.focusRow?.startsWith("harness-install:")?nav.focusSeq:undefined} id="detection">
-   {reading.harness.harnesses.state==="failed"?<Unreadable error={reading.harness.harnesses.error} onRetry={()=>void loadSuite()}/>:<>
-    <div className="settings-cards">{ready.map(row=><DetectionCard key={row.client} row={row}/>)}</div>
-    {needing.length>0&&<details className="settings-name-details" data-harness-adapter-needed>
-     <summary>{needing.length} detected outside the ready set</summary>
-     <ul className="settings-name-list">{needing.map(row=><li key={row.client} data-harness-client={row.client} data-adapter-reason={adapterNeededReason(row)}><strong>{harnessName(row.harness)}</strong> <span className="settings-muted">{adapterNeededReason(row)==="census-pending"?"Detected · adapter ready, capability census pending":"Detected · adapter needed"}</span></li>)}</ul>
-    </details>}
-    {missing.length>0&&<details className="settings-name-details" data-harness-not-found>
-     <summary>{missing.length} not on this machine</summary>
-     <ul className="settings-name-list">{missing.map(row=><li key={row.client} data-harness-client={row.client}><strong>{harnessName(row.harness)}</strong> <span className="settings-muted">Not on this machine</span></li>)}</ul>
-    </details>}
-   </>}
-  </Group>
  </div>;
 }
+

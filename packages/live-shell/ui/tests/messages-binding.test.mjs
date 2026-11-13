@@ -1,12 +1,13 @@
-// Lane W1-Factory: Messages on its owners (src/agent/devices/messagesBinding.ts, useConversationAnswer.ts; ai-kit:messages, DLW §19.24 —
-// "Kind: instrument · Rail: born on the widget rail, and opens full in a pane, in every mode"): your agents from AIKit's population, the
-// open agent's conversation from the Gateway journal, the Agency gateway's mark in its head (§19.10), and every write no kernel op carries
+// Lane W1-Factory: Messages on its owners (src/agent/devices/messagesBinding.ts; ai-kit:messages, DLW §19.24 — "Kind: instrument · Rail:
+// born on the widget rail, and opens full in a pane, in every mode"): your agents from AIKit's population, the open agent's conversation
+// (the session its occupant works, O-I #1003), the Agency gateway's mark in its head (§19.10), and every write no kernel op carries
 // disabled with its command — Make and Accept naming the kernel route that carries the person's authority (T-COVERAGE §1.1).
 //
 // Channels:
-// - REAL (tests/fixtures/workcell-readings-2026-10-21.json): `aikit gateway who --project-world project:O-I --json` and one `aikit gateway
-//   conversation` (central-guardian with oi-root-agency), read on workcell:mac on 21 Oct, read-only.
-// - FIXTURE: the Agency gateway's answers to harness_agent_read (answered; unreachable in its owner's 16 Oct words).
+// - REAL (tests/fixtures/workcell-readings-2026-10-21.json): `aikit gateway who --project-world project:O-I --json`, read on workcell:mac
+//   on 21 Oct, read-only.
+// - FIXTURE: the Agency gateway's answers to harness_agent_read (answered; unreachable in its owner's 16 Oct words); the open agent's
+//   conversation as AIKit's encounter view gives a session (threadBinding.ts records its kinds: user · assistant · completed).
 // - SCRIPTED: the catalogue design rendered through the runtime's host (deviceHost.HostedDevice) to static markup.
 // No owner state is written: every write here is refused by the binding before any port is reached.
 import test from 'node:test'
@@ -47,7 +48,6 @@ const host = await import('../src/frame/devices/deviceHost.tsx')
 const model = await import('../src/agent/devices/agentChainDevices.ts')
 const bind = await import('../src/agent/devices/designBindings.ts')
 const msg = await import('../src/agent/devices/messagesBinding.ts')
-const conv = await import('../src/agent/devices/useConversationAnswer.ts')
 const {design} = await import('../src/inhabitants/catalogue/panels/ai-kit__messages.tsx')
 const threadPanel = await import('../src/inhabitants/catalogue/panels/thread.tsx')
 
@@ -66,7 +66,12 @@ const SOCKET = 'connect gateway socket /Users/admin/.aikit/state/gateway.sock: N
 const UNREACHABLE = {gatewayAdmitted: false, gatewayDoc: {refused: true, error: {code: 'cli.gateway_unreachable', message: SOCKET}, message: SOCKET}}
 const ANSWERED = {gatewayAdmitted: true, gatewayDoc: {state: 'ready'}}
 const GUARDIAN = 'central:position:project:O-I:central-guardian'
-const conversation = answered(conv.mergeConversations(GUARDIAN, [REAL.conversation]))
+// The open agent's conversation (O-I #1003): the session the Guardian's occupant works, as the one encounter session observes it.
+const GUARDIAN_AGENT = 'Central Product Guardian'
+const VIEW = {schema: 'aikit.encounter-view/v1', agent_session: 'agent-session/guardian', more: false, draft: {text: '', revision: 3},
+  blocks: [{id: 1, kind: 'user', text: 'Check the landing.'}, {id: 2, kind: 'assistant', text: 'Packet V verifier finding, urgent for the landing: '},
+    {id: 3, kind: 'assistant', text: 'the gate is red on act 3.'}, {id: 4, kind: 'completed', text: ''}]}
+const conversation = {agent: GUARDIAN_AGENT, reading: VIEW, status: {state: 'Resident'}, age: 42}
 
 test('Messages is keyed to its design: an instrument born on the rail, with its tile and its Full only', () => {
   const device = msg.messagesDevice()
@@ -145,68 +150,35 @@ test('the Agency gateway\'s mark starts the gateway while it is off (§19.10 Ser
   assert.match(carrierless.standing.service.disabled, /carrier/)
 })
 
-test('the open agent\'s conversation from the Gateway journal: its Communiques as the Thread\'s rows, the agent\'s own under its name, the last line', () => {
+test('the open agent\'s conversation is the session its occupant works (O-I #1003): its turns as the Thread\'s rows, yours and the agent\'s, and its last line', () => {
   bind.resetHolds()
   assert.deepEqual(msg.positionRefs(REAL.population).length, REAL.population.positions.length)
-  const merged = conv.mergeConversations(GUARDIAN, [REAL.conversation, REAL.conversation, {communiques: []}])
-  assert.equal(merged.communiques.length, 2, 'a record in two journals is one record')
-  assert.deepEqual(merged.communiques.map(record => record.sequence), [18, ...merged.communiques.slice(1).map(record => record.sequence)])
   const binding = msg.messagesBinding({population: answered(REAL.population), gateway: ANSWERED, conversation, holds: bind.chainHolds()})
   assert.equal(JSON.parse(binding.values.agents).find(agent => agent.id === GUARDIAN).thread, undefined, 'no agent open: no conversation laid on it')
   binding.local.open(GUARDIAN)
   const open = JSON.parse(msg.messagesValues({population: answered(REAL.population), gateway: ANSWERED, conversation, holds: bind.chainHolds()}).agents).find(agent => agent.id === GUARDIAN)
-  assert.equal(open.thread.length, 2)
-  assert.deepEqual(open.thread.map(row => [row.who, row.kind]), [['Central Product Guardian', 'agent'], ['Central Product Guardian', 'agent']], 'what its Position sent is the agent\'s')
-  assert.match(open.thread[0].text, /^Packet V verifier finding/)
-  assert.ok(open.last && open.thread[1].text.startsWith(open.last.replace(/…$/, '')), 'its last line: the newest record\'s first line')
-  // A record another Position sent stands under that Position's name; no row is yours, since no Position stands for you.
-  const rows = msg.conversationRows({position_ref: GUARDIAN, communiques: [{body: 'hello', from_position_ref: 'central:position:control:root:nara', to_position_ref: GUARDIAN}]},
-    new Map([['central:position:control:root:nara', 'Nara (M4 domain agent)']]))
-  assert.deepEqual(rows, [{who: 'Nara (M4 domain agent)', kind: 'text', text: 'hello'}])
-  const refused = msg.messagesBinding({population: answered(REAL.population), gateway: ANSWERED, conversation: {status: 'refused', value: null, error: 'aikit gateway conversation: x'}, holds: bind.chainHolds()})
-  assert.equal(refused.standing.thread.disabled, 'aikit gateway conversation: x')
-  bind.resetHolds()
-})
-
-test('(#757) each message of the conversation carries its drag onto a track: the Communique, the Position it went to and its agent, and the words the task it becomes is for', async () => {
-  bind.resetHolds()
-  const ids = await import('../src/agent/devices/railTileIds.ts')
-  const ROOT = 'central:position:project:O-I:oi-root-agency'
-  const names = new Map([[GUARDIAN, 'Central Product Guardian'], [ROOT, 'O:I Root Agency']])
-  // The real journal: two records the Guardian sent to the Root Agency, whose Position is vacant (its agent placed there). REPLACED (DLW
-  // build ruling 2026-11-05: a dropped message becomes a new task): the drag named the work AIKit read that Position standing on, or why it
-  // had none; the drop makes the work now, so the drag names the message's words instead, the purpose of the task it becomes.
-  const real = msg.conversationRows(REAL.conversation, names, REAL.population)
-  assert.equal(real.length, 2)
-  const first = JSON.parse(real[0].drag)
-  assert.deepEqual(Object.keys(first).sort(), ['agent', 'communique', 'concern', 'name', 'schema', 'to'])
-  assert.deepEqual({...first, concern: undefined}, {schema: ids.COMMUNIQUE_DRAG_SCHEMA, communique: 'aikit:communique:01m3csbdf5q56fhh0hx6wsq5qv', to: ROOT,
-    name: 'O:I Root Agency', agent: 'agent/oi-field-guardian', concern: undefined})
-  assert.match(first.concern, /^Packet V verifier finding, urgent for the landing/, 'the message\'s first line')
-  assert.ok(first.concern.length <= 160, 'clipped as a list row is')
-  // A Position AIKit reads standing on work changes nothing the drag says: the drop makes its own.
-  const working = {...REAL.population, positions: REAL.population.positions.map(row => row.position_ref === ROOT
-    ? {...row, current_work: {outcome: 'one', work_ref: 'work:dlw/757', run_ref: 'run:4', custody_ref: null, candidates: 1}} : row)}
-  assert.equal(msg.conversationRows(REAL.conversation, names, working)[1].drag, real[1].drag)
-  // A record that already crossed into work carries no drag (AIKit refuses a second custody), nor does one the journal gives no ref.
-  const escalated = msg.conversationRows({...REAL.conversation, communiques: REAL.conversation.communiques.map(record => ({...record, state: 'escalated'}))}, names, REAL.population)
-  assert.equal(escalated.some(row => 'drag' in row), false)
-  assert.equal('drag' in msg.conversationRows({position_ref: GUARDIAN, communiques: [{body: 'hello', from_position_ref: ROOT, to_position_ref: GUARDIAN}]}, names, REAL.population)[0], false)
-  // The parse takes back what the drag names, and nothing that is not a dragged message.
-  assert.deepEqual(ids.communiqueDragOf(real[0].drag), first)
-  assert.equal(ids.communiqueDragOf(JSON.stringify({...first, concern: ' '})), null, 'a message with no words makes no task')
-  assert.equal(ids.communiqueDragOf('central:constellation:x'), null)
-  // The open agent's thread carries them, and the Thread draws each such message as a row the hand can drag.
-  const binding = msg.messagesBinding({population: answered(REAL.population), gateway: ANSWERED, conversation, holds: bind.chainHolds()})
-  binding.local.open(GUARDIAN)
-  const opened = msg.messagesBinding({population: answered(REAL.population), gateway: ANSWERED, conversation, holds: bind.chainHolds()})
-  assert.ok(JSON.parse(opened.values.agents).find(agent => agent.id === GUARDIAN).thread.every(row => JSON.parse(row.drag).to === ROOT))
-  const pane = draw(opened, 'full')
-  assert.equal(pane.match(/class="th-row" draggable="true"/g)?.length, 2, 'each message drags')
-  // REPLACED (DLW build ruling 2026-11-05): "it becomes the work the agent stands on" — it becomes a new task now.
-  assert.match(pane, /data-i="Message\|Drag it onto its agent&#x27;s track, and the agent takes it as a new task\."/)
-  const source = readFileSync(new URL('../src/inhabitants/catalogue/panels/thread.tsx', import.meta.url), 'utf8')
-  assert.match(source, /event\.dataTransfer\.setData\(COMMUNIQUE_DRAG, drag\)/, 'the drag carries the message under its own type')
+  assert.deepEqual(open.thread.map(row => [row.who, row.kind]), [['you', 'you'], [GUARDIAN_AGENT, 'agent'], [GUARDIAN_AGENT, 'agent']], 'your turn, and the agent\'s under its name')
+  assert.match(open.thread[1].text, /^Packet V verifier finding/)
+  assert.equal(open.last, 'the gate is red on act 3.', 'its last line: the newest row\'s first line')
+  assert.ok(open.thread.every(row => !('drag' in row)), 'a turn names no Communique: nothing drags onto a track from here')
+  // Its light is the owner's connection state (a resident provider is lit), its age the session's last check-in: readings, not turned here.
+  const lit = msg.messagesBinding({population: answered(REAL.population), gateway: ANSWERED, conversation, holds: bind.chainHolds()})
+  assert.equal(lit.values['conv.light'], 'lit')
+  assert.equal(lit.values['conv.age'], 42)
+  assert.equal(lit.writes('conv.light'), false, 'the light is a reading')
+  const dark = msg.messagesValues({population: answered(REAL.population), gateway: ANSWERED, conversation: {...conversation, status: {state: 'Released'}, age: undefined}, holds: bind.chainHolds()})
+  assert.equal(dark['conv.light'], 'dark')
+  assert.equal(dark['conv.age'], undefined)
+  assert.equal(msg.messagesBinding({population: answered(REAL.population), gateway: ANSWERED, conversation: {agent: GUARDIAN_AGENT}, holds: bind.chainHolds()}).standing['conv.light'].disabled, msg.MESSAGES_REFUSE.opening)
+  // The agent that occupies a Position is the one whose session is its conversation; a vacant Position has none.
+  const occupied = REAL.population.positions.find(row => row.occupancy?.state === 'occupied')
+  assert.equal(msg.occupantOf(REAL.population, occupied.position_ref), occupied.occupancy.agent_ref)
+  assert.equal(msg.occupantOf(REAL.population, 'central:position:control:root:anuttara'), undefined, 'vacant: no conversation works there')
+  assert.equal(msg.occupantOf(null, GUARDIAN), undefined)
+  // None to observe: why, in words, on the conversation and on Send.
+  const none = msg.messagesBinding({population: answered(REAL.population), gateway: ANSWERED, conversation: {agent: null, why: msg.MESSAGES_REFUSE.unseated}, holds: bind.chainHolds()})
+  assert.equal(none.standing.thread.disabled, msg.MESSAGES_REFUSE.unseated)
+  assert.equal(none.standing['conv.sent'].disabled, msg.MESSAGES_REFUSE.unseated, 'Send says why there is nowhere to send')
   bind.resetHolds()
 })
 
@@ -218,17 +190,18 @@ test('(b) every key the design reads is an owner reading, absent with its missin
   const binding = msg.messagesBinding({population: answered(REAL.population), gateway: ANSWERED, conversation, project: 'O-I', agentSets, holds: bind.chainHolds()}, {act: async () => ({})})
   const classes = Object.fromEntries(designKeys.map(key => [key, classify(binding, key)]))
   for (const [key, kind] of Object.entries(classes)) assert.ok(kind, `${key}: classified`)
-  // Voice's value is the hand's listening (off until it is turned on), written through the kernel's dictation.
-  assert.deepEqual(Object.entries(classes).filter(([, kind]) => kind === 'reading').map(([key]) => key).sort(), ['agents', 'conv.voice', 'gateway', 'groups', 'worlds'])
+  // Voice's value is the hand's listening (off until it is turned on), written through the kernel's dictation. Input stands at Queue:
+  // the one send is the conversation's next turn (O-I #1003).
+  assert.deepEqual(Object.entries(classes).filter(([, kind]) => kind === 'reading').map(([key]) => key).sort(), ['agents', 'conv.input', 'conv.voice', 'gateway', 'groups', 'worlds'])
   // Voice is the kernel's dictation (no owner op missing): with no carrier it says the dictation cannot be asked.
-  for (const [key, kind] of Object.entries(classes)) if (kind === 'absent') assert.match(binding.standing[key].disabled, /missing op:/, `${key}: names what it waits for`)
+  // The conversation's light and age wait for the hand (an agent open); the others name the operation they wait for.
+  for (const [key, kind] of Object.entries(classes)) if (kind === 'absent') assert.match(binding.standing[key].disabled, key === 'conv.light' || key === 'conv.age' ? /open an agent in the list first/ : /missing op:/, `${key}: names what it waits for`)
   assert.equal(binding.standing['conv.voice'].disabled, msg.MESSAGES_REFUSE.voice)
   // Absent: the readings no owner reports. REPLACED (lane A wiring): Voice is the kernel's dictation, no longer absent.
-  // REPLACED (lane AC, Buzz): Input is the hand's — where Send lands, carried with the words as AIKit's handling.
   assert.deepEqual(Object.entries(classes).filter(([, kind]) => kind === 'absent').map(([key]) => key).sort(),
     ['conv.age', 'conv.light', 'conv.writes', 'skillsets', 'types'])
   // The proposal is Central's reading once Make wrote one; Change is the hand's (it takes the card back to its fields).
-  for (const key of ['open', 'show', 'order', 'search', 'conv.draft', 'conv.toolRows', 'conv.subagents', 'conv.messages', 'conv.input', 'new.for', 'new.type', 'new.world', 'proposal']) assert.equal(classes[key], 'local', key)
+  for (const key of ['open', 'show', 'order', 'search', 'conv.draft', 'conv.toolRows', 'conv.subagents', 'conv.messages', 'new.for', 'new.type', 'new.world', 'proposal']) assert.equal(classes[key], 'local', key)
   assert.deepEqual(JSON.parse(binding.values.worlds), ['project:O-I', 'control:root'], 'the World refs AIKit\'s population names')
   assert.equal(binding.values['new.world'], 'project:O-I', 'Works in starts on the project\'s world')
   assert.match(msg.messagesBinding({population: answered(REAL.population), gateway: ANSWERED, holds: bind.chainHolds()}).standing.groups.disabled, /central\.agent-set\.list/,
@@ -238,23 +211,25 @@ test('(b) every key the design reads is an owner reading, absent with its missin
 test('(c) without a carrier Voice and the session acts are refused with what they lack; with no carrier Send, a drop, Make, Accept and Discard say so', async () => {
   bind.resetHolds()
   const binding = msg.messagesBinding({population: answered(REAL.population), gateway: ANSWERED, conversation, holds: bind.chainHolds()})
-  // REPLACED (lane W3): Send and a drop onto a track write through AIKit's gateway (w3-factory-bindings.test.mjs); with no carrier they say so.
-  // REPLACED (lane AC, Buzz): Input stands, starting on Queue — where AIKit lands words that name no handling.
-  assert.equal(binding.standing['conv.input'], undefined)
+  // REPLACED (O-I #1003): Send is the open agent's conversation's next turn; a drop onto a track writes through AIKit's gateway. Input
+  // stands at Queue, refused in words: no steer into a running turn is carried in the conversation.
+  assert.equal(binding.standing['conv.input'].disabled, msg.MESSAGES_REFUSE.input)
   assert.equal(binding.values['conv.input'], 'queue')
   // REPLACED (lane A wiring): Voice is the kernel's dictation (dictation_probe → dictation_transcribe), not an AIKit op; with no carrier
   // it says the dictation cannot be asked.
   for (const [key, op] of [['conv.voice', /dictation_probe/],
-    ['conv.approve', /a session for the Position's conversation/], ['conv.retry', /a session for the Position's conversation/], ['conv.hardStop', /a session/]]) {
+    ['conv.approve', /are the Agent's: open its Thread/], ['conv.retry', /are the Agent's: open its Thread/], ['conv.hardStop', /are the Agent's/],
+    ['conv.input', /no steer into a running turn/]]) {
     assert.match(binding.standing[key].disabled, op, key)
     assert.equal(binding.writes(key), true)
     await assert.rejects(() => binding.write([{key, value: true}]), op)
   }
-  for (const key of ['conv.sent', 'delegate']) {
-    assert.equal(binding.standing[key].disabled, msg.MESSAGES_REFUSE.noCarrier, key)
-    assert.equal(binding.writes(key), true)
-    await assert.rejects(() => binding.write([{key, value: 'hello'}]), /kernel carrier is unavailable/)
-  }
+  // No agent open: Send says to open one. A drop with no carrier says so.
+  assert.equal(binding.standing['conv.sent'].disabled, msg.MESSAGES_REFUSE.send)
+  await assert.rejects(() => binding.write([{key: 'conv.sent', value: 'hello'}]), /open an agent in the list first/)
+  assert.equal(binding.standing.delegate.disabled, msg.MESSAGES_REFUSE.noCarrier)
+  assert.equal(binding.writes('delegate'), true)
+  await assert.rejects(() => binding.write([{key: 'delegate', value: 'hello'}]), /kernel carrier is unavailable/)
   for (const key of ['make', 'accept', 'discard']) {
     assert.equal(binding.standing[key].disabled, msg.MESSAGES_REFUSE.noCarrier, key)
     await assert.rejects(() => binding.write([{key, value: 'Watches the build'}]), /kernel carrier is unavailable/)
@@ -434,7 +409,7 @@ test('the design draws on its binding in its tile and its Full — no NaN, no un
   const opened = msg.messagesBinding({population: answered(REAL.population), gateway: ANSWERED, conversation, holds: bind.chainHolds()})
   const pane = draw(opened, 'full'), tile = draw(opened, 'widget')
   assert.ok(pane.includes('Packet V verifier finding'), 'the open agent\'s conversation fills the pane')
-  assert.ok(tile.includes('Packet V'), 'the tile\'s last lines of the conversation you chose')
+  assert.ok(tile.includes('the gate is red on act 3.'), 'the tile\'s last lines of the conversation you chose')
   assert.match(tile, /aria-label="Message"[^>]*disabled=""/, 'the tile\'s composer stands disabled: no send route')
   // An occupied agent's face in the posture of its session (lane W5): its run, mapped to Messages' words.
   const stalled = msg.messagesBinding({population: answered(REAL.population), gateway: ANSWERED, runs: new Map([['agent/central-guardian', 'stalled']]), holds: bind.chainHolds()})
@@ -443,38 +418,38 @@ test('the design draws on its binding in its tile and its Full — no NaN, no un
   bind.resetHolds()
 })
 
-// ---- Buzz into Messages (lane AC; O-I campaign-evidence/2026-10-07-buzz-grok-agent-messaging-re/CONTRACT.md Behaviours 2, 3 and 5) ------
-test('Input says where your words land, Send carries it as AIKit\'s handling, and the line you sent stands in the conversation as it landed', async () => {
+// ---- Send: the one send (O-I #1003) --------------------------------------------------------------------------------------------------
+test('Send is the next turn in the open agent\'s conversation (the one send, O-I #1003): the line stands queued until its rows hold it, and Input stands at Queue', async () => {
   bind.resetHolds()
   const sent = []
-  const gateway = async request => { sent.push(request); return {communique: {schema: 'aikit.communique/v1', communique_ref: 'communique:9', handling: request.handling}} }
+  const send = async (position, words) => { sent.push([position, words]) }
   const input = {population: answered(REAL.population), gateway: ANSWERED, conversation, project: 'O-I', holds: bind.chainHolds()}
-  msg.messagesBinding(input, {gateway}).local.open(GUARDIAN)
-  let binding = msg.messagesBinding({...input, holds: bind.chainHolds()}, {gateway})
+  msg.messagesBinding(input, {send}).local.open(GUARDIAN)
+  let binding = msg.messagesBinding({...input, holds: bind.chainHolds()}, {send})
+  assert.equal(binding.standing['conv.sent'], undefined, 'an open agent whose conversation is observed: Send stands')
   await binding.write([{key: 'conv.sent', value: 'Run the tests next.'}])
-  assert.deepEqual(sent[0], {kind: 'send', project: 'O-I', to: GUARDIAN, body: 'Run the tests next.'}, 'Queue: AIKit\'s default, so no handling is named')
-  binding = msg.messagesBinding({...input, holds: bind.chainHolds()}, {gateway})
+  assert.deepEqual(sent[0], [GUARDIAN, 'Run the tests next.'], 'your words, to the conversation of the agent open when you pressed')
+  binding = msg.messagesBinding({...input, holds: bind.chainHolds()}, {send})
   assert.equal(binding.values['conv.sent'], 'Run the tests next.', 'the line you sent stands under the open agent')
   const full = draw(binding, 'full')
-  assert.ok(full.includes('Run the tests next.') && full.includes('queued · runs as the next task'), 'drawn as queued for the next task')
-  binding.local['conv.input']('steer')
-  binding = msg.messagesBinding({...input, holds: bind.chainHolds()}, {gateway})
-  assert.equal(binding.values['conv.input'], 'steer')
-  await binding.write([{key: 'conv.sent', value: 'Skip the cradle root.'}])
-  assert.deepEqual(sent[1], {kind: 'send', project: 'O-I', to: GUARDIAN, body: 'Skip the cradle root.', handling: 'steer'}, 'Steer rides the send')
-  binding = msg.messagesBinding({...input, holds: bind.chainHolds()}, {gateway})
-  assert.match(draw(binding, 'full'), /Skip the cradle root\.[\s\S]*steer · /, 'drawn as a steer line into the turn that runs')
+  assert.ok(full.includes('Run the tests next.') && full.includes('queued · runs as the next task'), 'drawn queued until the conversation holds it')
+  // Once the session's rows hold your words, the line is theirs: no queued line stands beside it.
+  const held = {...conversation, reading: {...VIEW, blocks: [...VIEW.blocks, {id: 5, kind: 'user', text: 'Run the tests next.'}]}}
+  assert.doesNotMatch(draw(msg.messagesBinding({...input, conversation: held, holds: bind.chainHolds()}, {send}), 'full'), /queued · runs as the next task/)
+  // Input stands at Queue: no steer into a running turn is carried in the conversation.
+  assert.equal(binding.values['conv.input'], 'queue')
+  assert.equal(binding.standing['conv.input'].disabled, msg.MESSAGES_REFUSE.input)
+  await assert.rejects(() => binding.write([{key: 'conv.input', value: 'steer'}]), /no steer into a running turn/)
   // The line belongs to the agent it went to: another agent's conversation does not carry it.
   binding.local.open('central:position:project:O-I:oi-root-agency')
   assert.equal(msg.messagesValues({...input, holds: bind.chainHolds()})['conv.sent'], undefined)
-  // A refused send holds no line.
+  // A refused send holds no line, and says the owner's words; empty words are no message.
   bind.resetHolds()
-  msg.messagesBinding(input, {gateway}).local.open(GUARDIAN)
-  const refusing = async () => { throw Error('aikit gateway send: The gateway on this Workcell does not advertise `communique-handling`') }
-  await assert.rejects(() => msg.messagesBinding({...input, holds: bind.chainHolds()}, {gateway: refusing}).write([{key: 'conv.sent', value: 'x'}]), /communique-handling/)
+  msg.messagesBinding(input, {send}).local.open(GUARDIAN)
+  const refusing = async () => { throw Error('A ready resident provider is required') }
+  await assert.rejects(() => msg.messagesBinding({...input, holds: bind.chainHolds()}, {send: refusing}).write([{key: 'conv.sent', value: 'x'}]), /ready resident provider/)
   assert.equal(msg.messagesValues({...input, holds: bind.chainHolds()})['conv.sent'], undefined)
-  assert.equal(msg.handlingOf('queue'), undefined)
-  assert.equal(msg.handlingOf('steer'), 'steer')
+  await assert.rejects(() => msg.messagesBinding({...input, holds: bind.chainHolds()}, {send}).write([{key: 'conv.sent', value: '  '}]), /write the message first/)
   bind.resetHolds()
   host.resetHost()
 })
@@ -488,15 +463,15 @@ test('Return in the conversation\'s composer: Enter sends, Shift+Enter breaks th
   assert.equal(threadPanel.returnKey(closed, closed.length, false), 'send', 'a closed fence sends')
   assert.equal(threadPanel.returnKey(closed, 'Use this:'.length, false), 'send', 'the caret before the fence sends')
   bind.resetHolds()
-  msg.messagesBinding({population: answered(REAL.population), gateway: ANSWERED, conversation, holds: bind.chainHolds()}, {gateway: async () => ({})}).local.open(GUARDIAN)
-  const pane = draw(msg.messagesBinding({population: answered(REAL.population), gateway: ANSWERED, conversation, holds: bind.chainHolds()}, {gateway: async () => ({})}), 'full')
+  msg.messagesBinding({population: answered(REAL.population), gateway: ANSWERED, conversation, holds: bind.chainHolds()}, {send: async () => {}}).local.open(GUARDIAN)
+  const pane = draw(msg.messagesBinding({population: answered(REAL.population), gateway: ANSWERED, conversation, holds: bind.chainHolds()}, {send: async () => {}}), 'full')
   assert.match(pane, /<textarea[^>]*aria-label="Message"[^>]*rows="1"/, 'the Full\'s composer takes lines')
   bind.resetHolds()
   host.resetHost()
 })
 
 test('the bindings read no design default or fixture, and write no raw colour', () => {
-  for (const file of ['messagesBinding.ts', 'useConversationAnswer.ts']) {
+  for (const file of ['messagesBinding.ts']) {
     const source = readFileSync(new URL(`../src/agent/devices/${file}`, import.meta.url), 'utf8')
     assert.doesNotMatch(source, /\.defaults\[|\.fixtures|catalogue\/panels\//, file)
     assert.deepEqual(source.match(/#[0-9a-fA-F]{3,8}\b/g) ?? [], [], file)

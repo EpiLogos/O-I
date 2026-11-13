@@ -20,6 +20,7 @@
  *   Arm on    the answer is written into the Flow on the revision read, and the write's receipt is read back from Central (the Flow read
  *             again holds exactly the entry kept). A proposal already waiting on the entry is the answer kept: Nara is not asked again. */
 import {encounter, type EncounterReading} from "../encounter/client";
+import {encounterSessionOf, turnAnswer} from "../encounter/session";
 import {htmlToText} from "../flow/instance";
 import {readFlowInstance} from "../flow/instances";
 import type {CentralLocation, KernelTransportStatus} from "../kernel/types";
@@ -132,37 +133,27 @@ export interface AnswerThisSteps {
   readonly read: typeof readNativeAnswer;
   readonly flow: typeof readFlowInstance;
   readonly retain: typeof retainAnswerInFlow;
-  readonly sleep: (ms: number) => Promise<void>;
-  /** How long Nara is waited for, and how often she is looked at. */
-  readonly waitMs: number;
-  readonly everyMs: number;
+  /** Nara's answer to the question asked after block `after`: its block, once her turn has ended, watched through her conversation's
+   * one session (session.ts `until`; O-I #1003). */
+  readonly answer: (transport: KernelTransportStatus, dialogue: NativeDialogue, after: number) => Promise<number>;
 }
+
+/** How long Nara is waited for. */
+const WAIT_MS = 5 * 60_000;
 
 const STEPS: AnswerThisSteps = {
   lookup: lookupNativeDialogue, ask: answerFromPages,
   view: (transport, dialogue) => encounter<EncounterReading>(transport, dialogue.project, {action: "view", agent_session: dialogue.provisioning.agent_session}),
   read: readNativeAnswer, flow: readFlowInstance, retain: retainAnswerInFlow,
-  sleep: ms => new Promise(resolve => setTimeout(resolve, ms)), waitMs: 5 * 60_000, everyMs: 1500,
+  answer: (transport, dialogue, after) => encounterSessionOf(transport, {project: dialogue.project, ref: dialogue.provisioning.agent_session, space: dialogue.provisioning.space})
+    .until(reading => answeredBlock(reading.blocks, after), WAIT_MS, "Nara has not finished answering yet: the question stands in the conversation, and its answer can be kept from the Nara instrument when it arrives. Nothing was written in the page."),
 };
 
-const TERMINAL = new Set(["completed", "cancelled", "error"]);
-
-/** The assistant block that answers the first question asked after `after`, once its turn has ended; null while it runs. Throws in words
- * when the turn ended without an answer. Pure. */
+/** The block naming Nara's answer to the first question asked after `after` (the first block of her answer's run of text, which
+ * readNativeAnswer reads whole), once her turn has ended; null while it runs. Throws in words when the turn ended without an answer.
+ * Pure: the one turn reader (session.ts `turnAnswer`), named for Nara. */
 export function answeredBlock(blocks: readonly {id: number; kind: string; text: string}[], after: number): number | null {
-  const asked = blocks.findIndex(block => block.id > after && block.kind === "user");
-  if (asked < 0) return null;
-  let answer: number | null = null;
-  for (const block of blocks.slice(asked + 1)) {
-    if (block.kind === "user") break;
-    if (block.kind === "assistant" && answer === null && block.text.trim()) answer = block.id;
-    if (TERMINAL.has(block.kind)) {
-      if (block.kind !== "completed") throw new Error(`Nara's turn ended ${block.kind === "error" ? "in an error" : "cancelled"}: nothing was kept in the page. The question stays in the conversation.`);
-      if (answer === null) throw new Error("Nara's turn completed with no answer: nothing was kept in the page.");
-      return answer;
-    }
-  }
-  return null;
+  return turnAnswer(blocks, after, "Nara")?.id ?? null;
 }
 
 /** Write an answer read back from Nara into its Flow, and read the receipt back from Central. */
@@ -194,12 +185,7 @@ export async function answerThis(input: AnswerThisInput, steps: Partial<AnswerTh
   const journey = journeyOf(input.location, input.island);
   const {lived} = await s.ask(input.transport, {dialogue, identity: input.identity, expression_ref: input.expressionRef,
     answering: {location: input.location, entryId: input.entryId, passage}, practice: practiceOfFlow(meta), ...(journey ? {journey} : {})});
-  let block: number | null = null;
-  for (let waited = 0; block === null; waited += s.everyMs) {
-    if (waited > s.waitMs) throw new Error("Nara has not finished answering yet: the question stands in the conversation, and its answer can be kept from the Nara instrument when it arrives. Nothing was written in the page.");
-    await s.sleep(s.everyMs);
-    block = answeredBlock((await s.view(input.transport, dialogue)).blocks, after);
-  }
+  const block = await s.answer(input.transport, dialogue, after);
   const passages = lived.context.passages.length;
   if (input.arm) return keep(input, s, dialogue, block, passages);
   // Arm off: the answer is read back from Nara's conversation (its turn completed, its basis this passage) and waits on its page.

@@ -347,7 +347,7 @@ test('Answer this finds the bound conversation, asks from the page, waits for Na
     read: async (_t, dialogue, block) => ({dialogue, blockId: block}),
     flow: async () => ({location}),
     retain: async (_t, _flow, nara) => { kept.push(nara); return {revision: 'r2', entryId: 'nara-answer-1', already: false} },
-    sleep: async () => {}, everyMs: 1, waitMs: 100,
+    answer: async (_t, _dialogue, after) => { for (;;) { const block = answer.answeredBlock((views.shift() ?? views.at(-1)).blocks, after); if (block !== null) return block } },
   })
   assert.equal(asked[0].practice.kind, 'journal', 'the page\'s practice places the turn')
   assert.equal(asked[0].answering.passage, 'Why does the morning feel so wide?')
@@ -355,6 +355,15 @@ test('Answer this finds the bound conversation, asks from the page, waits for Na
   assert.deepEqual(done, {kind: 'written', receipt: {page: 'ref:journal', entryId: 'nara-answer-1', revision: 'r2', already: false, agent: 'Nara', agentSession: 'agent-session/1', answering: 'e1', passages: 2}})
   assert.throws(() => answer.answeredBlock([{id: 9, kind: 'user', text: 'q'}, {id: 10, kind: 'error', text: ''}], 8), /in an error/)
   assert.equal(answer.answeredBlock([{id: 9, kind: 'user', text: 'q'}, {id: 10, kind: 'assistant', text: 'part'}], 8), null, 'still answering')
+  // The one turn reader every sender waits on (session.ts turnAnswer, O-I #1003): a question in two blocks is one question; the answer is
+  // the turn's last run of text, its streamed blocks joined and named by the first, after whatever came between (a tool's call).
+  const {turnAnswer} = await import(`${cradle}encounter/session.ts`)
+  const turn = [{id: 9, kind: 'user', text: '{"q":'}, {id: 10, kind: 'user', text: '1}'}, {id: 11, kind: 'assistant', text: 'Looking.'},
+    {id: 12, kind: 'tool_call', text: ''}, {id: 13, kind: 'assistant', text: 'It is '}, {id: 14, kind: 'assistant', text: 'wide.'}, {id: 15, kind: 'completed', text: ''}]
+  assert.deepEqual(turnAnswer(turn, 8, 'Ada'), {id: 13, text: 'It is wide.'})
+  assert.equal(turnAnswer(turn.slice(0, 6), 8, 'Ada'), null, 'the turn has not ended')
+  assert.throws(() => turnAnswer([...turn.slice(0, 3), {id: 12, kind: 'cancelled', text: ''}], 8, 'Ada'), /^Error: Ada's turn ended cancelled/)
+  assert.throws(() => turnAnswer([turn[0], {id: 11, kind: 'assistant', text: '  '}, {id: 12, kind: 'completed', text: ''}], 8, 'Ada'), /^Error: Ada's turn completed with no answer/)
 })
 
 // ── identity and your sky ─────────────────────────────────────────────────────────────────────────────────────────────────────────────

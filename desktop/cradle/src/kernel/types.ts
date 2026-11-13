@@ -769,7 +769,6 @@ export type KernelOp =
    * item 1): preview — whether Central keeps it, with the digest of what it shows — and keep, on Setup's held Ground Accept of that
    * digest (round 54b item 9), registering it (metadata only, Central never writes inside it, Live's backups and packs left out). */
   | {op: "ground_music"; request: {operation: "preview"} | {operation: "keep"; acceptance_ref: string; expected_digest: string}}
-  | {op:"being_encounter";request:Record<string,unknown>}
   | {op:"hosted_native";source_world_ref:string;request:KernelOp}
   | {op:"expression";request:import("../expression/types").ExpressionRequest}
   | {op:"expression_recovery";request:import("../expressions/recoveryTypes").ExpressionRecoveryRequest}
@@ -891,12 +890,10 @@ export type KernelOp =
    * `central.files.write`, `central.files.restore`; O-I #1002), which files/client.ts `fileOperation` sends. */
   | {op:"file_operation";location:CentralLocation;request:import("../files/client").FileRead}
   | {op:"encounter";project:string;request:import("../encounter/client").EncounterRequest}
-  /** Provision one fresh chat conversation (new-chat first Send): the kernel
-   * replays the owner's own SessionSpace CLI sequence and opens the result. */
-  | {op:"encounter_provision";project:string;preferred_body_ref?:string}
-  /** Bring a named roster Agent into a shared Flow: a fresh Agency session for exactly that Agent, its resident opened, and this one sender and Flow source admitted. */
-  | {op:"flow_participant_provision";project:string;agent_ref:string;flow_ref:string;sender:string;preferred_body_ref?:string}
-  | { op: "encounter_join"; session: string; request_ref: string; reply?: { answer: "grant" } | { answer: "refuse"; reason: string } | null }
+  /** Provision one fresh conversation (new-chat first Send, a Flow's agent): the kernel replays the owner's own SessionSpace CLI
+   * sequence and opens the result with `agent`, a census agent (O-I #1003; none, the census's first that starts), minting for the
+   * roster Agent `agent_ref` when named, or a mode's body (`preferred_body_ref`). */
+  | {op:"encounter_provision";project:string;agent?:string;agent_ref?:string;preferred_body_ref?:string}
   | { op: "material_read"; target: { receipt: string; state_root: string; endpoint?: string | null; expected_world_ref?: string | null } }
   | { op: "a2a_exchange"; request: Record<string, unknown> }
   | {op:"encounter_task_read";project:string;agent_session:string}
@@ -1000,12 +997,6 @@ export type KernelOp =
    * `team_space.rs`): QL-MEF's `ql.vak-team-space/v2` verbatim — the
    * instruments the Decision helper may be asked. Pull read, machine-level. */
   | {op:"team_space"}
-  /** The desktop-held default provider for NEW chats (kernel
-   * `chat_defaults.rs`, `oi:cradle:chat.default-provider`): a desired-entry
-   * shaped document when held, null when the owner's rows decide. */
-  | {op:"chat_default_read"}
-  | {op:"chat_default_hold";provider:string}
-  | {op:"chat_default_discard"}
   /** Settings · Credentials (12-SETTINGS §3.4): the owner's `aikit credential`
    * verbs. `material` is a pasted key: it crosses to the kernel once and is
    * handed to AIKit on STDIN; nothing ever returns it. */
@@ -1103,7 +1094,6 @@ export type KernelOpResult =
   | {result: "ground_authority_reading"; data: unknown}
   | {result: "ground_form_reading"; data: unknown}
   | {result: "ground_music_reading"; data: unknown}
-  | {result:"being_encounter";data:unknown}
   | {result:"expression";data:import("../expression/types").ExpressionResult}
   | {result:"expression_recovery";data:import("../expressions/recoveryTypes").ExpressionRecoveryResult}
   | {result:"graph_reading";reading:import("../knowledge/graph").GraphReading}
@@ -1164,7 +1154,6 @@ export type KernelOpResult =
   | { result:"encounter_task_attempts_list_reading";data:EncounterTaskAttemptsList }
   /** An encounter act's receipt (O-I #743): a task removed or copied, a session taken off the set; its schema names which. */
   | { result:"encounter_owner_act";data:unknown }
-  | { result:"encounter_joined";reading:unknown }
   | { result:"native_owner_reading";owner:string;data:unknown;failure:unknown }
   | { result:"a2a_exchange_difference";data:unknown }
   | { result:"factory_development_reading";data:unknown }
@@ -1185,9 +1174,6 @@ export type KernelOpResult =
   | { result:"model_catalogue_reading";data:unknown }
   | { result:"decision_status_reading";data:unknown }
   | { result:"team_space_reading";data:unknown }
-  | { result:"chat_default_reading";document:unknown }
-  | { result:"chat_default_held";document:unknown }
-  | { result:"chat_default_discarded";document:unknown }
   | { result:"credential_reading";data:unknown }
   | { result:"credential_changed";data:unknown }
   | { result:"credential_verified";data:unknown }

@@ -6,7 +6,7 @@
  */
 import {credentialCards, harnessName, readyHarnesses, adapterNeeded, skillParts, titleCase, permissionModeEntries, trustEntries} from "./sectionModel";
 import type {SettingsSnapshot} from "./settingsData";
-import {DEFAULT_CONNECTION_ROW, settingRowId, skillRowId} from "./changeModel";
+import {settingRowId, skillRowId} from "./changeModel";
 import type {SettingsPlace} from "./settingsNav";
 import {settingsProducts} from "./settingsProducts";
 import {connectionNames, MODEL_DEFAULT_SETTING} from "./harnessCapabilities";
@@ -27,7 +27,6 @@ export function searchIndex(data: SettingsSnapshot): SearchEntry[] {
   const section = (id: Extract<SettingsPlace, {kind: "section"}>["id"]): SettingsPlace => ({kind: "section", id});
   const hasModelDefaults = data.registry.state === "ok" && !!data.registry.value.index[MODEL_DEFAULT_SETTING];
   for (const [label, row] of [["Suite version", "card:suite"], ["Secret stores", "card:secret-stores"], ["Capability changes", "card:changes"], ["Drift", null]] as const) add(label, "Status", section("status"), row);
-  add("Default harness for new chats", "Harnesses", section("harnesses"), DEFAULT_CONNECTION_ROW, "provider new chat connection default");
   if (hasModelDefaults) add("Default models for new chats", "Harnesses", section("harnesses"), settingRowId(MODEL_DEFAULT_SETTING), "model choice new chat");
   add("About model policies", "Harnesses", section("harnesses"), "model:ranking-policy", "ranking auto balanced cheapest");
   add("Catalogue", "Harnesses", section("harnesses"), "model:catalogue", "models browse refresh");

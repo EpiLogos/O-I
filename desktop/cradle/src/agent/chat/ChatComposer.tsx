@@ -56,6 +56,11 @@ export interface ComposerConnection {
    *  its chooser (the approved model-first composer; A1). */
   modelIntent?:ModelIntent;
   onModelIntent?:(intent:ModelIntent)=>void;
+  /** A new conversation's agent (O-I #1003): the census's agents that start, the one chosen, its chooser, and why none is listed. */
+  agents?:{slug:string;name:string;version?:string}[];
+  agent?:string;
+  onAgent?:(slug:string)=>void;
+  agentsWhy?:string;
 }
 
 export function ChatComposer({reading,draft,pending,busy,error,editable,promptAllowed,promptReason,cancelAllowed,onDraft,onSend,onCancel,connection,tools,draftFailed,onRecover,paged,onLatest,focusToken,drafting,provisionProject,agentName="World",sendState,onRetry,unreachable}:{
@@ -126,6 +131,9 @@ export function ChatComposer({reading,draft,pending,busy,error,editable,promptAl
     {drafting
       ?<div className="chat-connect" data-fact="new-chat">
         <span className="chat-connect-label"><Glyph name="link" size={11}/> New conversation</span>
+        {connection.agents&&<label className="chat-connect-agent">with <select aria-label="Agent" value={connection.agent??""} disabled={pending||busy||!connection.agents.length} title={connection.agentsWhy} onChange={event=>connection.onAgent?.(event.target.value)}>
+          {connection.agents.length?connection.agents.map(agent=><option key={agent.slug} value={agent.slug}>{agent.name}{agent.version?` · ${agent.version}`:""}</option>):<option value="">{connection.agentsWhy??"No agent on this machine starts."}</option>}
+        </select></label>}
         {provisionProject&&<span className="oi-note">First send opens it in {provisionProject}.</span>}
       </div>
       :null}

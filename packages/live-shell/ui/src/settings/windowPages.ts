@@ -9,8 +9,9 @@
 import {useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore} from 'react'
 import type {Value} from '../frame/devices/designed'
 import type {ChangeRequest, ScopeAddress, SettingsAdapter, SetupSource} from './adapter'
-import type {KernelOp, PresentationDocument} from '../../../../../desktop/cradle/src/kernel/types'
+import type {KernelOp, ModelSliceAnswer, PresentationDocument} from '../../../../../desktop/cradle/src/kernel/types'
 import type {HarnessReading} from '../../../../../desktop/cradle/src/configuration/harnessSource'
+import {censusOf, type CensusReading} from '../../../../../desktop/cradle/src/agency/census'
 import type {ProfileDocument} from '../../../../../desktop/cradle/src/configuration/contracts'
 import type {DisclosedAction, SystemCompositionReading} from '../../../../../desktop/cradle/src/workspace/settings/types'
 import {actionMessage, object, routineList, type Invocation, type MethodRow, type RoutineDetail, type RoutineList, type RoutineRequest} from '../../../../../desktop/cradle/src/contributions/automations/client'
@@ -126,17 +127,19 @@ export function pickFile(accept: string): Promise<File | null> {
 
 // ---------------------------------------------------------------------------------------------------------------- Harnesses & models
 
-/** Harnesses & models (HarnessPreferences.tsx): the providers and the chat default through the adapter's HarnessSource, each harness client's
- * install and folder through the kernel channel, and its Sign in from AIKit's reading of its own login (useSignIn's `logins`). The provider a
- * new chat starts with is a local change of O:I's chat-default setting (chatDefaultSetting.ts), which Review changes… plans and applies
- * through its owner, and Reset on its row withdraws (O-I #744): this page reads the owner for the engine (`reading`) and takes its new
- * reading after (`set`). */
-export function useHarnessPage(adapter: SettingsAdapter, enabled: boolean, logins: HarnessLoginReading | null = null): PagePart & {reading: HarnessReading | null; set(reading: HarnessReading): void} {
+/** Harnesses & models (HarnessPreferences.tsx): the agents on this machine, which are the census (the World Model's agents, O-I #1003),
+ * each with AIKit's client facts through the adapter's HarnessSource; a client's install and folder through the kernel channel, and its Sign
+ * in from AIKit's reading of its own login (useSignIn's `logins`). Which agent a new chat talks to is chosen in the chat itself. */
+export function useHarnessPage(adapter: SettingsAdapter, enabled: boolean, logins: HarnessLoginReading | null = null): PagePart {
   const read = useRead<HarnessReading>(enabled, adapter, !!adapter.harnesses, async source => {
     const answer = await source.harnesses!.read()
     if (answer.kind === 'fixture' && !import.meta.env?.DEV) throw new Error('Fixture harness readings cannot qualify production settings.')
     return answer
   })
+  const census = useRead<CensusReading>(enabled, adapter, !!adapter.invoke, async source => {
+    const outcome = await operation(source, {op: 'model_subscribe', slice: 'agents'}, 'model_slice') as {data: ModelSliceAnswer}
+    return censusOf({state: 'held', answer: outcome.data})
+  }, 'census')
   const rows = read.value?.harnesses.state === 'ok' ? read.value.harnesses.rows : []
   const run = useCallback(async (client: Value, install: boolean): Promise<string> => {
     const row = rows.find(item => item.client === client)
@@ -151,17 +154,19 @@ export function useHarnessPage(adapter: SettingsAdapter, enabled: boolean, login
   return useMemo(() => {
     const why: Record<string, string> = {}
     if (!adapter.invoke) { why.install = NO_INVOKE('Install and Folder'); why.reveal = NO_INVOKE('Install and Folder') }
-    const refused: Record<string, string> = {}
-    if (!adapter.harnesses) refused.effectiveDefault = NO_HARNESS
-    if (read.error) refused.effectiveDefault = read.error
-    else if (read.value) for (const [section, state] of [['providers', read.value.providers], ['harnesses', read.value.harnesses], ['catalogue', read.value.catalogue], ['saved default', read.value.defaultState]] as const)
-      if (state.state === 'failed') refused.effectiveDefault = `${section}: ${state.error}`
-    return {values: harnessValues(read.value, logins), why, refused, reading: read.value, set: read.set, reread: read.refresh,
+    // The agents stand by the census, read over the kernel channel; AIKit's facts on them and the catalogue by the HarnessSource. A reading
+    // asked and not answered is drawn waiting (O-I #758); AIKit's failure stands on its own column (harnessValues' aikitWhy), not on the agents.
+    const standing = joined(readStanding(['harnesses'], census, adapter.invoke ? null : NO_INVOKE('The agents on this machine')),
+      readStanding(['routes'], read, adapter.harnesses ? null : NO_HARNESS))
+    const refused: Record<string, string> = {...standing.refused}
+    if (census.value?.state === 'unavailable') refused.harnesses = census.value.why
+    if (read.value?.catalogue.state === 'failed') refused.routes = `catalogue: ${read.value.catalogue.error}`
+    return {values: harnessValues(read.value, logins, census.value), why, refused, waiting: standing.waiting, reread: async () => { await Promise.all([read.refresh(), census.refresh()]) },
       acts: {
         install: async client => run(client, true),
         reveal: async client => run(client, false),
       }}
-  }, [adapter, read.value, read.error, read.refresh, read.set, run, logins])
+  }, [adapter, read, run, logins, census])
 }
 
 // ---------------------------------------------------------------------------------------------------------------- Sign in

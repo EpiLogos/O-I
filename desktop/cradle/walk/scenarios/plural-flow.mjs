@@ -241,39 +241,33 @@ export default async function run({page, baseUrl, check, shot, channel, provisio
   await box.click();
   await page.keyboard.type("Please read docs/passage.md in your working directory. Ada: recover the argument and state its premises and conclusion exactly as the passage gives them. Ash: test the claim on one concrete example with numbers and say whether it supports step 3. Under 120 words each.");
   await page.getByRole("button", {name: "Ask for a response"}).click();
-  await page.locator('[data-recipient][data-recipient-state]').first().waitFor({timeout: 240000});
+  // 4 — Each agent is asked in its own conversation (the one send, O-I #1003); each answer is added as that agent's entry, answering
+  // the asked one, when its turn ends.
+  const deadline = Date.now() + 600000;
+  let replies = [], question;
+  while (Date.now() < deadline) {
+    const doc = p.readFlow(flowName);
+    question = doc.entries.find(e => e.html.includes("recover the argument"));
+    const keys = new Set(["Ada", "Ash"].map(n => doc.meta.participants.find(x => x.name === n)?.key));
+    replies = question ? doc.entries.filter(e => keys.has(e.authorKey) && (e.relations ?? []).some(r => r.type === "reply" && r.entryId === question.id)) : [];
+    if (replies.length >= 2) break;
+    await sleep(2000);
+  }
   const asked = p.readFlow(flowName);
   check("each addressed agent now answers from a session of its own", (() => { const m = asked.meta.participants; return ["Ada", "Ash"].every(n => /^agent-session\//.test(m.find(x => x.name === n)?.ref ?? "")); })());
   check("the asked entry is in the flow once, authored by the person, addressed to both", (() => { const e = asked.entries.filter(x => x.html.includes("recover the argument")); return e.length === 1 && e[0].addressees.length === 2 && e[0].intent === "response"; })());
+  check("each answer is authored by its own agent and answers the asked entry", replies.length === 2 && new Set(replies.map(r => r.authorKey)).size === 2);
   await shot("plural-flow-asked");
 
-  // 4 — CLOSE the view before the answers arrive. The owner carries them in.
-  await page.goto("about:blank");
-  const deadline = Date.now() + 300000;
-  let included = 0;
-  while (Date.now() < deadline) {
-    const doc = p.readFlow(flowName);
-    included = doc.entries.filter(e => e.request?.ref?.startsWith("conv-reply:")).length;
-    if (included >= 2) break;
-    await sleep(2000);
-  }
-  check("both answers reached the flow while no view was open", included === 2);
-  const closedDoc = p.readFlow(flowName);
-  const replies = closedDoc.entries.filter(e => e.request?.ref?.startsWith("conv-reply:"));
-  const question = closedDoc.entries.find(e => e.html.includes("recover the argument"));
-  check("each reply is authored by its own agent, answers the asked entry, and is attributed to a session", replies.length === 2 && new Set(replies.map(r => r.authorKey)).size === 2 && replies.every(r => r.replyTo.entryId === question.id && r.attribution?.session?.startsWith("agent-session/")));
-
-  // 5 — Reopen: each answer is there once, the recipients read as answered, nobody is asked again.
+  // 5 — Reopen: each answer is there once, and nobody is asked again.
   await page.goto(baseUrl); await channel("info");
   await page.locator('[data-project-path="Work/Flowlab"]').click().catch(() => {});
   const flowsSection = page.getByRole("complementary", {name: "World navigator"}).locator('[data-section="flows"]');
   await flowsSection.locator("button, a, [role='treeitem'], li").first().click({timeout: 30000}).catch(() => {});
-  await page.locator("[data-flow-conversations]").waitFor({timeout: 60000});
-  await page.locator('[data-recipient-state="included"]').first().waitFor({timeout: 60000});
-  check("reopening shows each recipient as answered, with the reply in the flow", await page.locator('[data-recipient-state="included"]').count() === 2);
+  await page.locator(".flow-thread-who", {hasText: "Ash"}).first().waitFor({timeout: 60000});
   check("each reply appears once in the reopened thread", await page.locator(".flow-thread-entry", {hasText: /premise|Premise|conclusion/i}).count() >= 1 && (await page.locator(".flow-thread-who", {hasText: "Ada"}).count()) >= 1 && (await page.locator(".flow-thread-who", {hasText: "Ash"}).count()) >= 1);
   const after = p.readFlow(flowName);
-  check("reopening asked no one again: the flow is unchanged by the view", after.entries.length === closedDoc.entries.length && after.meta.revision === closedDoc.meta.revision);
+  check("reopening asked no one again: the flow is unchanged by the view", after.entries.length === asked.entries.length && after.meta.revision === asked.meta.revision);
   await shot("plural-flow-reopened");
   // Cleanup failures must fail the scenario before a passing receipt is made.
   // The registered disposer retries only the same retained cleanup result.

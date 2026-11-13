@@ -4,7 +4,7 @@
   "operations": [
     {
       "op": "a2a_exchange",
-      "native_owner": "kernel/src/encounter.rs",
+      "native_owner": "kernel/src/dispatch.rs",
       "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
@@ -93,15 +93,6 @@
       "reason": "Kernel-direct only: tests/shell_owner_routes.rs against fake owners (AIKit's capture, promote, trust record, praxis method run|prove, set package export, wiki-shape declare (and its change of roles on --expected-revision, O-I #742), knowledge forget (and forget here, one item in one world's ground: O-I #741), procedure run|undo, bypass revoke|issue (issue: lane K0, its answers captured in an isolated home), source sync|promote|rollback, adopt --yes [--expect-digest] and compose --session --realise (Launch's first reading, O-I #842)); no directly attributable executed native walk is recorded here for aikit_write; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
-      "op": "being_encounter",
-      "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
-      "status": "unverified",
-      "scenarios": [],
-      "owner_lane": "A/native verification",
-      "reason": "No directly attributable executed native walk is recorded here for being_encounter; retain explicit operation-specific coverage debt until its owner supplies a receipt."
-    },
-    {
       "op": "central",
       "native_owner": "kernel/src/lib.rs",
       "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
@@ -109,33 +100,6 @@
       "scenarios": [],
       "owner_lane": "A/native verification",
       "reason": "No directly attributable executed native walk is recorded here for central; retain explicit operation-specific coverage debt until its owner supplies a receipt."
-    },
-    {
-      "op": "chat_default_discard",
-      "native_owner": "kernel/src/chat_defaults.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
-      "status": "unverified",
-      "scenarios": [],
-      "owner_lane": "A/native verification",
-      "reason": "No directly attributable executed native walk is recorded here for chat_default_discard; retain explicit operation-specific coverage debt until its owner supplies a receipt."
-    },
-    {
-      "op": "chat_default_hold",
-      "native_owner": "kernel/src/chat_defaults.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
-      "status": "unverified",
-      "scenarios": [],
-      "owner_lane": "A/native verification",
-      "reason": "No directly attributable executed native walk is recorded here for chat_default_hold; retain explicit operation-specific coverage debt until its owner supplies a receipt."
-    },
-    {
-      "op": "chat_default_read",
-      "native_owner": "kernel/src/chat_defaults.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
-      "status": "unverified",
-      "scenarios": [],
-      "owner_lane": "A/native verification",
-      "reason": "No directly attributable executed native walk is recorded here for chat_default_read; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
       "op": "client_install",
@@ -409,7 +373,7 @@
     },
     {
       "op": "encounter",
-      "native_owner": "kernel/src/encounter.rs",
+      "native_owner": "kernel/src/agent_prepared.rs",
       "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "referenced",
       "scenarios": [
@@ -419,17 +383,8 @@
       "reason": "encounter is directly named in these existing scenario sources; no run is claimed by this register."
     },
     {
-      "op": "encounter_join",
-      "native_owner": "kernel/src/encounter.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
-      "status": "unverified",
-      "scenarios": [],
-      "owner_lane": "A/native verification",
-      "reason": "No directly attributable executed native walk is recorded here for encounter_join; retain explicit operation-specific coverage debt until its owner supplies a receipt."
-    },
-    {
       "op": "encounter_provision",
-      "native_owner": "kernel/src/encounter.rs",
+      "native_owner": "kernel/src/owner_write.rs",
       "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
@@ -564,7 +519,7 @@
     },
     {
       "op": "encounter_task_read",
-      "native_owner": "kernel/src/encounter.rs",
+      "native_owner": "kernel/src/agent_prepared.rs",
       "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "referenced",
       "scenarios": [
@@ -741,17 +696,6 @@
       "reason": "No directly attributable executed native walk is recorded here for flow_changed_since; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
-      "op": "flow_participant_provision",
-      "native_owner": "kernel/src/agency.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
-      "status": "referenced",
-      "scenarios": [
-        "walk/scenarios/plural-flow.mjs"
-      ],
-      "owner_lane": "A/native verification",
-      "reason": "The plural-flow walk brings two registered agents into a flow through this operation over the real kernel and a candidate AIKit owner, then reads their answers back."
-    },
-    {
       "op": "gateway_remotes_read",
       "native_owner": "kernel/src/owner_read.rs",
       "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; lane K1 (17 Oct 2026, BF3's proposal of 16 Oct)",
@@ -770,13 +714,13 @@
       "reason": "Kernel-direct only: tests/shell_owner_routes.rs against fake owners (AIKit's team operation (aikit gateway team --request-json): read, or prepare|delegate|cancel|release); no directly attributable executed native walk is recorded here for gateway_team; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
-      "op": "gateway_write",
+      "op": "gateway_service",
       "native_owner": "kernel/src/owner_routes.rs",
       "spec_ref": "docs/world-shell/wayfinder/tickets/T-COVERAGE-the-deep-features-device-by-device.md \u00a71.2; lane W3 (21 Oct 2026)",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
-      "reason": "Kernel-direct only: tests/shell_owner_routes.rs against fake owners (AIKit's gateway send and delegate); no directly attributable executed native walk is recorded here for gateway_write; retain explicit operation-specific coverage debt until its owner supplies a receipt."
+      "reason": "Kernel-direct only: the window's own held gateway (aikit gateway serve --unix, started when none answers and stopped only when this window started it; AIKit's send, delegate and a harness's conversation controls are its Actions through act, O-I #1002); no directly attributable executed native walk is recorded here for gateway_service; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
       "op": "git_diff_read",
@@ -842,15 +786,6 @@
       "scenarios": [],
       "owner_lane": "BB/native verification",
       "reason": "Its Central answers are replayed from ctrl built from central-47 on fixture roots (kernel ground_music.rs tests), and the walk world's Music was registered with that ctrl; no native walk of the Ground step's Music row yet (#857). Named here as explicit debt, not as coverage."
-    },
-    {
-      "op": "harness_agent_control",
-      "native_owner": "kernel/src/agency.rs",
-      "spec_ref": "gateway-parity convergence r2; Hermes session lifecycle parity routed through the owner's own gateway",
-      "status": "unverified",
-      "owner_lane": "gateway-parity-convergence",
-      "reason": "Implementation added; canonical verb routing proven at the kernel crate level. Native UX acceptance evidence still required before verification.",
-      "scenarios": []
     },
     {
       "op": "harness_ingress_rule",
@@ -1141,15 +1076,6 @@
       "scenarios": [],
       "owner_lane": "A/native verification",
       "reason": "Kernel-direct only: tests/shell_owner_routes.rs against fake owners (Quaternal Logic's kernel m1, scene compose|world, kernel ledger|coverage|apply, techne reading, shape bind (O-I #742: a drafted constellation's shape binding), mef lenses, context-frame list|read (read: QL-MEF#344), wiki living-plan (QL-MEF#346), wiki refract (QL-MEF#350), service capabilities, vak locate|context, nara hours and kernel body-constants (O-I #745: the Sky's rulers at a place, M2's body constants by fibre), kernel m3-binding (O-I #684: Binding's engine over a cell); with real QL answers as fixtures); no directly attributable executed native walk is recorded here for ql_read; retain explicit operation-specific coverage debt until its owner supplies a receipt."
-    },
-    {
-      "op": "seat_write",
-      "native_owner": "kernel/src/owner_routes.rs",
-      "spec_ref": "docs/world-shell/wayfinder/tickets/T-COVERAGE-the-deep-features-device-by-device.md \u00a71.2; lane W3 (21 Oct 2026)",
-      "status": "unverified",
-      "scenarios": [],
-      "owner_lane": "A/native verification",
-      "reason": "Kernel-direct only: tests/shell_owner_routes.rs against fake owners (the seat instrument's join and release); no directly attributable executed native walk is recorded here for seat_write; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
       "op": "team_space",

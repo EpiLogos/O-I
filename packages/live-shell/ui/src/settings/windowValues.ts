@@ -9,7 +9,8 @@ import type {ChangeSetDocument, ConfigResolution, ContributionMount, PlanBundle,
 import {basisChanged, categoryOf, displayValue, draftOwnerChanged, editableValue, isSensitiveSetting, rawValue, settingHelp, settingKey, settingWords, tableRepresentation,
   type Draft, type SettingEntry} from './model'
 import type {HarnessReading} from '../../../../../desktop/cradle/src/configuration/harnessSource'
-import {effectiveChatDefault, shapeHarnessClients} from '../../../../../desktop/cradle/src/configuration/harnessSource'
+import {shapeHarnessClients} from '../../../../../desktop/cradle/src/configuration/harnessSource'
+import {agentName, type CensusReading} from '../../../../../desktop/cradle/src/agency/census'
 import type {ProfileDocument} from '../../../../../desktop/cradle/src/configuration/contracts'
 import type {SystemCompositionReading} from '../../../../../desktop/cradle/src/workspace/settings/types'
 import type {PresentationDocument} from '../../../../../desktop/cradle/src/kernel/types'
@@ -297,24 +298,21 @@ export function searchStep(count: number, hit: number, key: string): {hit: numbe
 
 // ---------------------------------------------------------------------------------------------------------------- Harnesses & models
 
-/** Harnesses & models (the adapter's HarnessSource over harness_status, model_catalogue and the providers): the providers, the saved
- * default and the one in effect, each harness client, and the catalogue's routes. A section the owner refused stays absent. Pure. */
-export function harnessValues(reading: HarnessReading | null, logins: HarnessLoginReading | null = null): Record<string, Value> {
+/** Harnesses & models: the agents on this machine, which are the census (the World Model's agents, O-I #1003), one row per agent with
+ * whether it starts (its version, or why not) and AIKit's client facts on it (harness_status) as detail, never rows of their own; and the
+ * catalogue's routes (model_catalogue). A section the owner refused stays absent. Pure. */
+export function harnessValues(reading: HarnessReading | null, logins: HarnessLoginReading | null = null, census: CensusReading | null = null): Record<string, Value> {
   const values: Record<string, Value> = {}
+  const clients = reading?.harnesses.state === 'ok' ? reading.harnesses.rows : []
+  if (census?.state === 'read') values.harnesses = json(census.agents.map(agent => {
+    const row = clients.find(client => client.harness === agent.slug || client.client === agent.slug)
+    return {agent: agent.slug, harness: agentName(agent), starts: agent.starts, ...(agent.version ? {version: agent.version} : {}), ...(agent.why ? {why: agent.why} : {}),
+      ...(row ? {client: row.client, installed: row.installed, capability: row.capability, ...(row.effect ? {effect: row.effect} : {}),
+        ...(folderOf(row.config_dir) ? {folder: folderOf(row.config_dir)} : {}),
+        ...(row.adapter_gap ? {gap: {contract: row.adapter_gap.missing_contract, skill: row.adapter_gap.authoring_skill_ref}} : {}), ...harnessSignIn(logins, row.client)} : {})}
+  }))
   if (!reading) return values
-  if (reading.providers.state === 'ok') {
-    values.providers = json(reading.providers.rows.map(row => ({id: row.id, label: row.label})))
-    if (reading.defaultState.state === 'ok') {
-      const held = reading.heldDefault?.value ?? null
-      if (held) values.heldDefault = held
-      const effective = effectiveChatDefault(reading.providers.rows, held)
-      if (effective) values.effectiveDefault = json(effective)
-    }
-  }
-  if (reading.harnesses.state === 'ok') values.harnesses = json(reading.harnesses.rows.map(row => ({client: row.client, harness: row.harness, installed: row.installed,
-    detection: row.detected ? 'detected' : row.detection, ...(row.detection_reason ? {reason: row.detection_reason} : {}), capability: row.capability,
-    ...(row.effect ? {effect: row.effect} : {}), ...(folderOf(row.config_dir) ? {folder: folderOf(row.config_dir)} : {}),
-    ...(row.adapter_gap ? {gap: {contract: row.adapter_gap.missing_contract, skill: row.adapter_gap.authoring_skill_ref}} : {}), ...harnessSignIn(logins, row.client)})))
+  if (reading.harnesses.state === 'failed') values.aikitWhy = `AIKit's facts on these agents could not be read: ${reading.harnesses.error}`
   if (reading.catalogue.state === 'ok') {
     values.routes = json(reading.catalogue.rows.entries.map(entry => ({model: entry.model, name: entry.name,
       routes: entry.routes.map(route => ({provider: route.provider, key: route.credential_required}))})))
@@ -1132,8 +1130,7 @@ export const SETTINGS_WINDOW_WIRING = {
     planErrors: 'what the owners refused instead of planning (config_plan_reviewed errors)',
     result: 'the owners\' answer to Apply or Reset (config_apply_reviewed, config_reset)',
     back: 'the name of the work Settings returns to: a contextual entry\'s own (SettingsRequest.returnLabel), else the mode the frame stands in (settings/host.ts setSettingsReturnLabel)',
-    providers: 'the configured providers (HarnessSource.read: the encounter providers)', heldDefault: 'the saved chat default (HarnessSource.read)',
-    effectiveDefault: 'the provider new chats use, and its rule (harnessSource.ts effectiveChatDefault)', harnesses: 'each harness client (harness_status: aikit client status)',
+    harnesses: 'the agents on this machine: the census (the World Model\'s agents, O-I #1003), each with AIKit\'s client facts (harness_status) as detail',
     routes: 'the catalogue\'s declared routes (model_catalogue)', credentials: 'AIKit\'s credential binding metadata (credential_list), each Verify\'s verdict (credential_verify)',
     found: 'keys discovery found (credential_discover, presence only)',
     secretRefs: 'the credential references Workcell records, each with where it is observed (workcell_read secret-list: `workcell secret list`, workcell.secret-reference-inventory/v1)',

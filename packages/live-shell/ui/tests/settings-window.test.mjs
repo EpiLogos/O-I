@@ -414,12 +414,17 @@ test('Products, Profiles, Appearance: an owner\'s about, every operation of the 
 // ── the readings each page's owner gives ─────────────────────────────────────────────────────────────────────────────────────────────
 
 test('CODE-DERIVED — each page\'s owner reading becomes the design\'s keys: harnesses and routes, credentials by reference, profiles, machines, routines and timers, the theme, products and the four axes', () => {
-  const reading = {kind: 'live', label: 'live', observed_at_unix_ms: 1, heldDefault: {value: 'pi', set_at_unix_ms: 1}, defaultState: {state: 'ok'},
-    providers: {state: 'ok', rows: [{id: 'pi', label: 'Pi'}, {id: 'claude', label: 'Claude'}]},
+  const reading = {kind: 'live', label: 'live', observed_at_unix_ms: 1, providers: {state: 'ok', rows: [{id: 'pi', label: 'Pi'}, {id: 'claude', label: 'Claude'}]},
     harnesses: {state: 'ok', rows: [{harness: 'Claude Code', client: 'claude-code', detection: 'binary', detected: true, detection_reason: null, installed: true, config_dir: '/Users/x/.claude (settings)', dispatch: 'acp', capability: 'descriptor', effect: 'restart Claude', items: 3, adapter_gap: null}]},
     catalogue: {state: 'ok', rows: {count: 1, entries: [{model: 'm1', name: 'Model one', source: 'aikit', routes: [{kind: 'api', provider: 'anthropic', credential_required: true}]}]}}}
-  const h = win.harnessValues(reading)
-  assert.deepEqual([h.heldDefault, JSON.parse(h.effectiveDefault).rule, JSON.parse(h.harnesses)[0].folder, JSON.parse(h.routes)[0].routes[0]], ['pi', 'owner-choice', '/Users/x/.claude', {provider: 'anthropic', key: true}])
+  // The rows are the census's agents (O-I #1003); AIKit's client row is detail on the agent it names, and no row of its own.
+  const census = {state: 'read', agents: [{slug: 'claude-code', harnessRef: 'harness/claude-code', executable: '/x/claude', starts: true, version: '2.1.323', aikit: null},
+    {slug: 'gemini', harnessRef: 'harness/gemini', executable: '/x/gemini', starts: false, why: 'gemini did not start', aikit: null}]}
+  const h = win.harnessValues(reading, null, census)
+  const rows = JSON.parse(h.harnesses)
+  assert.deepEqual([rows.length, rows[0].folder, rows[0].version, rows[1].why, rows[1].installed, JSON.parse(h.routes)[0].routes[0]],
+    [2, '/Users/x/.claude', '2.1.323', 'gemini did not start', undefined, {provider: 'anthropic', key: true}])
+  assert.equal(h.providers, undefined, 'no provider rows and no chat default stand in the values')
   const c = win.credentialValues([{credential: 'ai-kit:credential:anthropic', provider: 'anthropic', reference: 'keychain://aikit/anthropic', revoked: false, verifiedAt: 1792500000}], {'ai-kit:credential:anthropic': 'working'}, 2)
   assert.deepEqual([JSON.parse(c.credentials)[0].verdict, c.found], ['working', 2])
   assert.doesNotMatch(c.credentials, /material|secret_value/, 'no material enters the values')
@@ -470,7 +475,7 @@ test('SCRIPTED — the Settings window (SettingsWorkspace) draws the design\'s F
   assert.match(markup, /class="ref-pane-body st-window"/, 'the catalogue design draws the window')
   assert.match(markup, /aria-label="Harnesses &amp; models"/, 'a window opened over a world with its ground opens on Harnesses & models')
   // O-I #758: the registry asked and not answered yet is drawn waiting, never as a reading that is absent, and never a sample.
-  assert.match(markup, /<h4>New conversations<small><span class="dp-no-reading" data-standing="awaiting"/, 'the registry being read: drawn waiting')
+  assert.match(markup, /<h4>Agent settings<small><span class="dp-no-reading" data-standing="awaiting"/, 'the registry being read: drawn waiting')
   assert.doesNotMatch(markup, /No reading of the owners&#x27; settings/, 'the registry being read is not said to be absent')
   assert.match(markup, />← Back to work</, 'the way back')
   assert.doesNotMatch(markup, SETTINGS_FIXTURE)
@@ -1807,17 +1812,20 @@ const loginAdapter = (status = LOGIN_STATUS, asked = []) => ({invoke: async op =
   if (op.op === 'harness_auth_describe' && op.harness === 'pi') return {error: '[harness_auth.unknown_harness] `pi` is not a harness AIKit carries a profile for'}
   return {error: `aikit harness auth ${op.harness} did not answer within 10s`}
 }})
-const HARNESS_READING = {kind: 'live', label: 'live', observed_at_unix_ms: 1, heldDefault: null, defaultState: {state: 'ok'}, providers: {state: 'ok', rows: []},
+const HARNESS_READING = {kind: 'live', label: 'live', observed_at_unix_ms: 1, providers: {state: 'ok', rows: []},
   harnesses: {state: 'ok', rows: ['codex', 'claude-code', 'gemini', 'hermes', 'opencode', 'pi'].map(client => ({harness: client, client, detection: client === 'opencode' ? 'unavailable' : 'detected',
     detected: client !== 'opencode', detection_reason: null, installed: client !== 'opencode', config_dir: null, dispatch: 'acp', capability: 'descriptor', effect: null, items: null, adapter_gap: null}))},
   catalogue: {state: 'ok', rows: {count: 0, entries: []}}}
+/** The census of those six (the World Model's agents, O-I #1003): the rows the page draws, AIKit's client facts joined on each. */
+const HARNESS_CENSUS = {state: 'read', agents: ['codex', 'claude-code', 'gemini', 'hermes', 'opencode', 'pi'].map(slug => ({slug, harnessRef: `harness/${slug}`,
+  executable: slug === 'opencode' ? null : `/x/${slug}`, starts: slug !== 'opencode' && slug !== 'hermes', aikit: null}))}
 
 test('CODE-DERIVED — Sign in is each harness\'s own login as AIKit declares it: a runnable one runs its command (Claude Code\'s claude auth login as Codex\'s codex login), one that signs in inside itself says so in its own words and offers no button, a login that cannot be read affects that harness alone', async () => {
   const asked = []
   const logins = await settingsPages.harnessLogins(loginAdapter(LOGIN_STATUS, asked)).read()
   assert.deepEqual(asked.map(op => op.op === 'harness_auth_describe' ? op.harness : op.op), ['harness_status', 'codex', 'claude-code', 'gemini', 'hermes', 'pi'],
     'AIKit\'s client status, then the declared logins of each client it detects')
-  const rows = Object.fromEntries(JSON.parse(win.harnessValues(HARNESS_READING, logins).harnesses).map(row => [row.client, row]))
+  const rows = Object.fromEntries(JSON.parse(win.harnessValues(HARNESS_READING, logins, HARNESS_CENSUS).harnesses).map(row => [row.client, row]))
   assert.deepEqual(rows.codex.signIn, [{key: 'codex|provider:openai', provider: 'openai', command: 'codex login'}], 'a runnable login: its command, as AIKit declares it')
   assert.match(rows.codex.loginNow, /^AIKit does not find what codex needs to sign in yet: credential:openai is unbound/, 'what AIKit finds now, in its words')
   assert.deepEqual(rows['claude-code'].signIn, [{key: 'claude-code|provider:anthropic', provider: 'anthropic', command: 'claude auth login'}], 'Claude Code: its one-shot login, as Codex\'s')

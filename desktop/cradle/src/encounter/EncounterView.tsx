@@ -2,10 +2,10 @@ import {Refusal} from "../shared/Refusal";
 import {IconTabStrip} from "../workspace/primitives/IconTabStrip";
 import {planeIcon} from "../workspace/planeRegistry";
 import {PermissionCard} from "../agent/chat/PermissionCard";
-import {useEffect,useLayoutEffect,useMemo,useRef,useState,type ReactNode} from "react";
+import {useEffect,useLayoutEffect,useMemo,useRef,useState} from "react";
 import type {A2aDifference,A2aPeerFields,EncounterReading,EncounterStatus,JournalPage,PermissionDecision} from "./client";
 import {Glyph} from "../workspace/Glyph";
-import {ContextFacts,DeliveryRegistrations,NowRecords,OwnerActions,RawDisclosure,SessionFacts} from "./InspectParts";
+import {ContextFacts,NowRecords,OwnerActions,RawDisclosure,SessionFacts} from "./InspectParts";
 import {sessionStateLabel} from "./session";
 import {parseContextItems,removeContextItem,type ContextItem} from "../context/contextItems";
 import {DictationSession,type DictationOutcome,type DictationRefusal} from "../dictation/client";
@@ -18,7 +18,7 @@ import "./encounter.css";
  * "side"/"full" are the accompanying-agent-layer shapes, where the layer
  * renders its own header, plane nav and Activity / Context / Inspect planes
  * (FND-02) and this view supplies only the transcript + composer. */
-export function EncounterView({title,plane,onPlane,reading,status,draft,pending,error,providers,onProvider,onDraft,onSend,onCancel,onEarlier,onLatest,paged=false,onPermission,presentation,concealed=false,addressed,resume,onReconnect,readJournal,deliveries,nowRefs,taskBasisWithoutNow,space,a2a,onA2aSeed,onA2aSend}:{title:string;plane:string;onPlane:(plane:"Conversation"|"Activity"|"Context"|"Inspect")=>void;reading?:EncounterReading;status?:EncounterStatus;draft:string;pending:boolean;error?:string;providers:{id:string;label:string}[];onProvider:(id:string)=>void;onDraft:(text:string)=>void;onSend:()=>void;onCancel:()=>void;onEarlier:()=>void;onLatest:()=>void;/** The visible page is an earlier one, not the latest. */paged?:boolean;onPermission:(id:string,decision:PermissionDecision)=>void;presentation:"tab"|"side"|"full";concealed?:boolean;addressed?:ReactNode;resume?:{provider:string};onReconnect:(provider:string)=>void;readJournal?:(after:number)=>Promise<JournalPage>;deliveries?:{ref:string;phase:string}[];nowRefs?:{ref:string;register:string|null}[];taskBasisWithoutNow?:boolean;space?:string;a2a?:{seed?:string;busy:boolean;difference?:A2aDifference;error?:string};onA2aSeed?:(seed:string)=>void;onA2aSend?:(seed:string,fields:A2aPeerFields)=>void}) {
+export function EncounterView({title,plane,onPlane,reading,status,draft,pending,error,providers,onProvider,onDraft,onSend,onCancel,onEarlier,onLatest,paged=false,onPermission,presentation,concealed=false,resume,onReconnect,readJournal,nowRefs,taskBasisWithoutNow,space,a2a,onA2aSeed,onA2aSend}:{title:string;plane:string;onPlane:(plane:"Conversation"|"Activity"|"Context"|"Inspect")=>void;reading?:EncounterReading;status?:EncounterStatus;draft:string;pending:boolean;error?:string;providers:{id:string;label:string}[];onProvider:(id:string)=>void;onDraft:(text:string)=>void;onSend:()=>void;onCancel:()=>void;onEarlier:()=>void;onLatest:()=>void;/** The visible page is an earlier one, not the latest. */paged?:boolean;onPermission:(id:string,decision:PermissionDecision)=>void;presentation:"tab"|"side"|"full";concealed?:boolean;resume?:{provider:string};onReconnect:(provider:string)=>void;readJournal?:(after:number)=>Promise<JournalPage>;nowRefs?:{ref:string;register:string|null}[];taskBasisWithoutNow?:boolean;space?:string;a2a?:{seed?:string;busy:boolean;difference?:A2aDifference;error?:string};onA2aSeed?:(seed:string)=>void;onA2aSend?:(seed:string,fields:A2aPeerFields)=>void}) {
   const transcript=useRef<HTMLDivElement>(null);const following=useRef(true);
   const composerInput=useRef<HTMLTextAreaElement>(null);
   // Voice dictation parity with the agent-panel composer: the same webview
@@ -132,8 +132,6 @@ export function EncounterView({title,plane,onPlane,reading,status,draft,pending,
       </div>
       :plane==="Inspect"?<div className="encounter-inspect">
         <SessionFacts reading={reading} status={status} space={space}/>
-        <h3>Addressed deliveries dispatched from this surface</h3>
-        <DeliveryRegistrations deliveries={deliveries}/>
         <h3>NOW records reached this surface</h3>
         <NowRecords nowRefs={nowRefs} taskBasisWithoutNow={taskBasisWithoutNow}/>
         <OwnerActions reading={reading}/>
@@ -195,7 +193,6 @@ export function EncounterView({title,plane,onPlane,reading,status,draft,pending,
           ? <button className="encounter-stop" disabled={pending||!allowed("cancel",status?.state!=="InterruptRequested")} title={action("cancel")?.reason??undefined} onClick={onCancel}>Stop</button>
           : <button className="encounter-send" disabled={!allowed("prompt",connected)||pending||!draft.trim()} title={action("prompt")?.reason??undefined} onClick={onSend}><Glyph name="arrow" size={13}/><span className="sr-only">Send</span></button>}
       </div>
-      {addressed}
     </div>}
   </section>;
 }

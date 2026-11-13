@@ -50,7 +50,6 @@ const model = await import('../src/agent/devices/agentChainDevices.ts')
 const bind = await import('../src/agent/devices/designBindings.ts')
 const routes = await import('../src/agent/devices/ownerRoutes.ts')
 const msg = await import('../src/agent/devices/messagesBinding.ts')
-const conv = await import('../src/agent/devices/useConversationAnswer.ts')
 const rec = await import('../src/agent/devices/receiptBindings.ts')
 const main = await import('../src/agent/devices/mainTrackBindings.ts')
 const session = await import('../src/agent/devices/sessionChainBindings.ts')
@@ -126,34 +125,36 @@ test('the owner routes: a write through kernelOp carries the owner\'s request as
   assert.equal(routes.deskActorOf(null), 'oi-desktop-user', 'the desktop\'s own actor, as files.rs attributes the person\'s writes')
 })
 
-test('1 · Messages: Send writes `aikit gateway send` to the open agent\'s Position; a drop onto a track writes `aikit gateway delegate` with the three AIKit takes', async () => {
+test('1 · Messages: Send is the next turn in the open agent\'s conversation (O-I ticket 1003, the one send); a drop onto a track writes `aikit gateway delegate` with the three AIKit takes', async () => {
   bind.resetHolds()
-  const sent = []
-  const gateway = async request => { sent.push(request); if (request.body === 'refuse me') throw Error('aikit gateway send: the gateway is down'); return {} }
-  const conversation = answered(conv.mergeConversations(GUARDIAN, [READ21.conversation]))
+  const sent = [], delegated = []
+  const send = async (position, words) => { if (words === 'refuse me') throw Error('A ready resident provider is required'); sent.push([position, words]) }
+  const gateway = async request => { delegated.push(request); return {} }
+  // The open agent's conversation: the session its occupant works, as the one encounter session observes it.
+  const conversation = {agent: 'Central Product Guardian', reading: {schema: 'aikit.encounter-view/v1', agent_session: 'agent-session/guardian', more: false, draft: {text: '', revision: 0}, blocks: []}, status: {state: 'Resident'}}
   const input = {population: answered(READ21.population), gateway: ANSWERED, conversation, project: 'O-I', holds: bind.chainHolds()}
-  const closed = msg.messagesBinding(input, {gateway})
+  const closed = msg.messagesBinding(input, {send, gateway})
   assert.equal(closed.standing['conv.sent'].disabled, msg.MESSAGES_REFUSE.send, 'no agent open: Send says to open one')
   await assert.rejects(() => closed.write([{key: 'conv.sent', value: 'hello'}]), /open an agent in the list first/)
   closed.local.open(GUARDIAN)
-  const open = msg.messagesBinding({...input, holds: bind.chainHolds()}, {gateway})
+  const open = msg.messagesBinding({...input, holds: bind.chainHolds()}, {send, gateway})
   assert.equal(open.standing['conv.sent'], undefined, 'an agent of the population is open: Send stands')
   await open.write([{key: 'conv.sent', value: 'Please check the build.'}])
-  assert.deepEqual(sent[0], {kind: 'send', project: 'O-I', to: GUARDIAN, body: 'Please check the build.'}, 'AIKit\'s own request: the Position and your words')
-  await assert.rejects(() => open.write([{key: 'conv.sent', value: 'refuse me'}]), /the gateway is down/, 'AIKit\'s refusal, in its words')
+  assert.deepEqual(sent[0], [GUARDIAN, 'Please check the build.'], 'your words, as the next turn in the conversation of the agent open')
+  await assert.rejects(() => open.write([{key: 'conv.sent', value: 'refuse me'}]), /ready resident provider/, 'the owner\'s refusal, in its words')
   await assert.rejects(() => open.write([{key: 'conv.sent', value: '  '}]), /write the message first/)
   // A drop onto a track: the Communique, the work and why; the run where the track names one.
   await open.write([{key: 'delegate', value: JSON.stringify({communique: 'communique:7', work: 'work:dlw/w3', reason: 'Take this on.', run: 'run:4'})}])
-  assert.deepEqual(sent.at(-1), {kind: 'delegate', project: 'O-I', communique: 'communique:7', work: 'work:dlw/w3', reason: 'Take this on.', run: 'run:4'})
-  const before = sent.length
+  assert.deepEqual(delegated.at(-1), {kind: 'delegate', project: 'O-I', communique: 'communique:7', work: 'work:dlw/w3', reason: 'Take this on.', run: 'run:4'})
+  const before = delegated.length
   await assert.rejects(() => open.write([{key: 'delegate', value: JSON.stringify({communique: 'communique:7', work: 'work:dlw/w3'})}]), /takes the Communique, the work it becomes and why/)
-  assert.equal(sent.length, before, 'a drop that names less than AIKit takes is never sent')
+  assert.equal(delegated.length, before, 'a drop that names less than AIKit takes is never sent')
   assert.equal(msg.delegationOf('not json'), null)
   // Team: no control of the design writes one; the groups say why they are not read.
   // REPLACED (lane W7): the groups are Central's agent sets; unread, they name the listing they wait for (w7-factory-designs.test.mjs).
   assert.match(open.standing.groups.disabled, /central\.agent-set\.list/)
-  // REPLACED (lane AC, Buzz): Input is the hand's choice of where Send lands (messages-binding.test.mjs), no longer refused.
-  assert.equal(open.standing['conv.input'], undefined)
+  // REPLACED (O-I ticket 1003): Input stands at Queue, refused in words: the one send is the conversation's next turn.
+  assert.equal(open.standing['conv.input'].disabled, msg.MESSAGES_REFUSE.input)
   assert.ok(!('team' in open.values) && !open.writes('team'), 'no team key: nothing in the design writes a team operation')
   bind.resetHolds()
 })

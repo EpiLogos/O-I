@@ -7,7 +7,6 @@
  *   OI_HOME      the O:I desired store / profiles / receipts (empty)
  *   AIKIT_HOME   a fresh AIKit home with one local skill source of three
  *                walk skills, promoted and trusted, bound at the root
- *   OI_CRADLE_STATE  the desktop-held new-chat connection
  *   vault        a varlock-readable .env holding ONE dummy key under a name
  *                no real environment carries — a stored secret for the
  *                credential walks (the owner's keychain is never touched)
@@ -59,7 +58,6 @@ export function settingsWorld() {
       OI_CENTRAL_PROJECT_QUERY: "Central",
       OI_HOME: home,
       AIKIT_HOME: aikitHome,
-      OI_CRADLE_STATE: join(scratch, "chat-defaults.json"),
     };
     if (process.env.OI_AIKIT_BIN) {
       const bin = join(scratch, "bin");

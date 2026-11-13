@@ -7,8 +7,9 @@
  *    `model_catalogue` (the installed `aikit` reads, kernel `agency.rs`),
  *    the resident's configured encounter providers (the ordinary
  *    `encounter` op's `providers` action — the resident is machine-level,
- *    so the panel reads it through the standing Central project), and the
- *    desktop-held chat default (`chat_default_*`, kernel `chat_defaults.rs`).
+ *    so the panel reads it through the standing Central project). Which
+ *    agent a new chat talks to is the census's (the World Model's agents,
+ *    O-I #1003); there is no second, desktop-held default.
  *  - `createUnboundHarnessSource` — the honest absence when no kernel
  *    transport is reachable.
  *
@@ -65,9 +66,6 @@ export interface CatalogueRoute {kind: string; provider: string; credential_requ
 
 export interface CatalogueEntry {model: string; name: string; source: string; routes: CatalogueRoute[]}
 
-/** The rule that picks a new chat's default provider, in precedence order. */
-export type ChatDefaultRule = "owner-choice" | "pi-row" | "first-configured";
-
 /** One section that could not be read carries the owner's own refusal —
  * the other sections still render. Nothing is faked empty. */
 export type Section<T> = {state: "ok"; rows: T} | {state: "failed"; error: string};
@@ -79,9 +77,6 @@ export interface HarnessReading {
   harnesses: Section<HarnessRow[]>;
   providers: Section<ProviderRow[]>;
   catalogue: Section<{count: number; entries: CatalogueEntry[]}>;
-  /** The owner's held choice (desktop state), when one is held. */
-  heldDefault: {value: string; set_at_unix_ms: number} | null;
-  defaultState: {state: "ok"} | {state: "failed"; error: string};
 }
 
 // ---------------------------------------------------------------------------
@@ -159,25 +154,6 @@ export function shapeCatalogue(data: unknown): {count: number; entries: Catalogu
   return {count, entries: shaped};
 }
 
-/** The desktop-held chat default document → the held value, when readable. */
-export function shapeHeldDefault(document: unknown): {value: string; set_at_unix_ms: number} | null {
-  const record = document as {value?: unknown; set_at_unix_ms?: unknown} | null;
-  if (!record || typeof record.value !== "string" || record.value.trim() === "") return null;
-  return {value: record.value, set_at_unix_ms: typeof record.set_at_unix_ms === "number" ? record.set_at_unix_ms : 0};
-}
-
-/** The default-provider law (mirrors kernel `agency.rs`):
- * owner-chosen default → the `pi` row → the first configured row.
- * `null` when nothing is configured; a held choice that no longer names a
- * configured row falls through honestly. */
-export function effectiveChatDefault(rows: ProviderRow[], held: string | null): {provider: string; rule: ChatDefaultRule} | null {
-  if (rows.length === 0) return null;
-  const choice = held?.trim();
-  if (choice && rows.some((row) => row.id === choice)) return {provider: choice, rule: "owner-choice"};
-  if (rows.some((row) => row.id === "pi")) return {provider: "pi", rule: "pi-row"};
-  return {provider: rows[0].id, rule: "first-configured"};
-}
-
 // ---------------------------------------------------------------------------
 
 /** The one seam the "Chat & harnesses" panel renders. */
@@ -186,10 +162,6 @@ export interface HarnessSource {
   readonly label: string;
   /** Read everything the panel shows. Independent sections fail alone. */
   read(): Promise<HarnessReading>;
-  /** Hold (or replace) the default provider for NEW chats. */
-  holdDefault(provider: string): Promise<void>;
-  /** Withdraw the held default — an explicit operation. */
-  discardDefault(): Promise<void>;
 }
 
 function unwrap<T extends KernelOutcome>(sent: {outcome: KernelOutcome | null; error?: string}, expected: T["result"], what: string): T {
@@ -222,15 +194,13 @@ export function createLiveHarnessSource(call: OpCall): HarnessSource {
     label: "live — read through the installed suite (aikit client status, model catalogue, encounter providers)",
 
     async read() {
-      const [harnesses, catalogue, providers, held] = await Promise.all([
+      const [harnesses, catalogue, providers] = await Promise.all([
         section(async () => shapeHarnessClients((unwrap(await call({op: "harness_status"}), "harness_status_reading", "the harness status") as {data: unknown}).data)),
         section(async () => shapeCatalogue((unwrap(await call({op: "model_catalogue"}), "model_catalogue_reading", "the model catalogue") as {data: unknown}).data)),
         section(async () => shapeProviders((unwrap(
           await call({op: "encounter", project: "Central", request: {action: "providers"}}),
           "encounter_reading", "the encounter providers") as {data: unknown}).data)),
-        section(async () => shapeHeldDefault((unwrap(await call({op: "chat_default_read"}), "chat_default_reading", "the held chat default") as {document: unknown}).document)),
       ]);
-      const heldDefault = held.state === "ok" ? held.rows : null;
       return {
         kind: "live",
         label: "live — read through the installed suite (aikit client status, model catalogue, encounter providers)",
@@ -238,17 +208,7 @@ export function createLiveHarnessSource(call: OpCall): HarnessSource {
         harnesses,
         providers,
         catalogue,
-        heldDefault,
-        defaultState: held.state === "failed" ? {state: "failed", error: held.error} : {state: "ok"},
       };
-    },
-
-    async holdDefault(provider) {
-      unwrap(await call({op: "chat_default_hold", provider}), "chat_default_held", "holding the chat default");
-    },
-
-    async discardDefault() {
-      unwrap(await call({op: "chat_default_discard"}), "chat_default_discarded", "withdrawing the chat default");
     },
   };
 }
@@ -258,12 +218,6 @@ export function createUnboundHarnessSource(reason: string): HarnessSource {
   return {
     kind: "unbound",
     label: reason,
-    read: async () => ({kind: "unbound", label: reason, observed_at_unix_ms: 0, harnesses: {state: "failed", error: reason}, providers: {state: "failed", error: reason}, catalogue: {state: "failed", error: reason}, heldDefault: null, defaultState: {state: "failed", error: reason}}),
-    holdDefault: async () => unbound(reason),
-    discardDefault: async () => unbound(reason),
+    read: async () => ({kind: "unbound", label: reason, observed_at_unix_ms: 0, harnesses: {state: "failed", error: reason}, providers: {state: "failed", error: reason}, catalogue: {state: "failed", error: reason}}),
   };
-}
-
-function unbound(reason: string): never {
-  throw new Error(reason);
 }
