@@ -73,7 +73,8 @@ function reading({selection = ['e-stone'], shared = ['field.turbulence'], dirty 
     selection: {entity_ids: selection, step_id: null}, history: {canUndo: true, canRedo: false}, standing: {dirty, pending: false, notice: null},
   }
 }
-const QL = [{id: 'torus', admission: 'waiting'}, {id: 'ql-instrument', admission: 'admitted'}]
+// Parity D-06: the torus is admitted, Live's own device in the Body chain; the field/PCM owner beside it (qlMusicalExtension.ts).
+const QL = [{id: 'torus'}, {id: 'ql-instrument', admission: 'admitted'}]
 const chains = Model.studioChains(QL, id => (id === 'torus' ? 'Torus' : 'QL field / PCM owner'))
 const input = (r = reading(), nara = {pressed: false}) => ({reading: r, chains, nara})
 function ports() {
@@ -87,7 +88,7 @@ test('the chains are the holder table\'s four, in the design\'s order, Body hold
   assert.deepEqual(chains.map(holding => holding.chain), ['material', 'motion', 'body', 'nara'])
   assert.deepEqual(chains.map(holding => holding.field.map(device => device.family)), [
     ['colour', 'ink', 'depth', 'medium'], ['pointer', 'relational', 'contacts', 'morph', 'focus'], ['physics', 'resonance'], []])
-  assert.deepEqual(chains[2].ql, [{id: 'torus', title: 'Torus', waiting: true}, {id: 'ql-instrument', title: 'QL field / PCM owner', waiting: false}])
+  assert.deepEqual(chains[2].ql, [{id: 'torus', title: 'Torus', waiting: false}, {id: 'ql-instrument', title: 'QL field / PCM owner', waiting: false}])
   assert.deepEqual(Semantics.STUDIO_SECTIONS.map(holder => holder.id), ['studio:material', 'studio:motion', 'studio:body', 'studio:nara'])
 })
 
@@ -127,7 +128,11 @@ test('the chains\' rows: each device in order with its owner\'s summary; on:<fam
   assert.equal(v['on:medium'], true)
   assert.equal(v['on:resonance'], false)
   assert.ok(byFamily.colour.says && byFamily.colour.says.length > 0, 'the owner\'s summary')
-  assert.match(byFamily.torus.why, /waits for its owner/)
+  assert.equal(byFamily.torus.why, null, 'the torus stands as its device, never a waiting stand-in')
+  assert.ok(rows.every(row => !/undefined|NaN/.test(row.says ?? '')), 'no summary says "undefined" (parity D-35)')
+  assert.equal(Binding.saidOf('Palette on · 2 stops · undefined · cycle 0'), 'Palette on · 2 stops · cycle 0')
+  assert.equal(Binding.saidOf('undefined · r 0.45'), 'r 0.45')
+  assert.equal(Binding.saidOf('undefined'), null)
   assert.equal(byFamily.torus.toggle, false)
   assert.deepEqual([byFamily.nara.says, v['on:nara']], ['Closed', false], 'Nara is the frame\'s instrument, closed')
   const none = Binding.studioValues(input(null, {why: 'The frame publishes no Nara control here.'}))

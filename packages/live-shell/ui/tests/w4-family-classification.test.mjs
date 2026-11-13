@@ -166,7 +166,7 @@ async function bindingsByDesign() {
   out['expressions:physics'] = physics.physicsDesignBinding(fieldDevice(r, 'physics'), r, noop)
   out['expressions:field'] = field.fieldBinding({reading: r, devices: Object.fromEntries(['resonance', 'physics', 'morph', 'ink'].map(f => [f, fieldDevice(r, f)])),
     sound: {muted: false, mute: async () => ({ok: true})}, apply: sendOk})
-  out['expressions:studio'] = studioB.studioBinding({reading: r, chains: studioM.studioChains([{id: 'torus', admission: 'waiting'}, {id: 'ql-instrument'}], id => id), nara: {pressed: false}},
+  out['expressions:studio'] = studioB.studioBinding({reading: r, chains: studioM.studioChains([{id: 'torus'}, {id: 'ql-instrument'}], id => id), nara: {pressed: false}},
     {request: sendOk, browse: noop, show: noop, pane: noop, nara: noop})
   for (const effect of effects.TORUS_EFFECTS) out[`live:${effect}`] = effects.torusEffectBinding(effect, torusState)
   out['live:exact-ratio'] = exact.exactRatioBinding('live:exact-ratio', ready)
@@ -195,10 +195,9 @@ const keysOf = design => [...new Set([...Object.keys(design.defaults), ...Object
  * binding (design.ts scoped). REPLACED (#725): the M3 clock's Binding skin (`binding.`) was classified on Binding's own binding — the clock's
  * binding carries it now (bindingsByDesign), so none is left here. */
 const CARRIED = {}
-/** Keys the manual added that the design's binding does not carry yet, each named: the Chakra's Rack page, M4′'s rack (§22.5; the M3 clock's
- * binding reads its own through qlRack.ts rackPage). REPLACED (#725): the M3 clock's Skin (Wheel or Binding, §22.3) waited too — it is the
- * clock's own choice now (qlM3Clock.ts QL_M3_LOCAL). */
-const WAITING = {'quaternal-logic:chakra': ['rack', 'rack.part']}
+/** Keys the manual added that the design's binding does not carry yet, each named. REPLACED (parity D-20): the Chakra's Rack page, M4′'s
+ * rack (§22.5), waited here — the Chakra's binding reads it through qlRack.ts rackPage(4) now, as the M3 clock reads its own. */
+const WAITING = {}
 const keepIn = (design, keep) => ({...design, defaults: Object.fromEntries(Object.entries(design.defaults).filter(([k]) => keep(k))),
   fixtures: Object.fromEntries(Object.entries(design.fixtures ?? {}).map(([n, f]) => [n, Object.fromEntries(Object.entries(f).filter(([k]) => keep(k)))]))})
 /** The keys a design holds as its own: neither carried from another device nor waiting. */

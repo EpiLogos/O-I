@@ -12,7 +12,7 @@
 //   • `devices`, `on:<family>` — the field devices in four chains, the holder table's (inhabitants/sdk/semantics.ts STUDIO_SECTIONS), each
 //     with its owner's summary and, where the owner has an on/off (components/nativeFieldFaceModel.ts StripToggle), its light and its
 //     switch (components/nativeDeviceStripModel.ts stripToggleChanges — Physics, Ink, Pointer and Focus have none, so their `on:` is
-//     absent); the torus row says its owner waits (quaternalLogicFamilyManifest.ts admission);
+//     absent); a Quaternal Logic face the family has not admitted says its owner waits (quaternalLogicFamilyManifest.ts admission);
 //   • `on:nara` — the frame's own Nara control (its chrome's `nara` home, frameChrome.tsx), pressed through the frame's one runner;
 //   • `save`, `undo`, `redo` — the editor's own `save`, `undo`, `redo` requests; `open`, `scene`, `dirty`, `pending`, `canUndo`, `canRedo`
 //     its reading (basis, standing, history);
@@ -64,7 +64,6 @@ export interface StudioInput {
   readonly nara: StudioNara
 }
 
-const TORUS_WAITS = 'The torus waits for its owner in Expressions: the Quaternal Logic torus face is not admitted yet.'
 const NO_NARA = 'The frame publishes no Nara control here.'
 
 /** A chosen control's design row from the owner's resolution (NativeChosenControls.tsx ChosenDial: the label without its entity prefix,
@@ -84,6 +83,15 @@ export function controlRow(entry: {id: string; key: string; scope: 'field' | 'se
   }
 }
 
+/** An owner's summary as a row says it: a clause whose value the engine has not set (the face's template reads `undefined` or `NaN` for
+ * a field the scene keeps none of: Colour's mode, Pointer's mode on an empty engine) is left out, never drawn as "undefined" (parity
+ * D-35); nothing left, the row says nothing. */
+export function saidOf(summary: string | null | undefined): string | null {
+  if (!summary) return null
+  const clauses = summary.split(' · ').filter(clause => !/\b(undefined|NaN|null)\b/.test(clause))
+  return clauses.length ? clauses.join(' · ') : null
+}
+
 /** The four chains' rows, in the holder table's order (the design's `devices`). */
 export function studioDeviceRows(input: StudioInput): StudioDeviceRow[] {
   const {reading, nara} = input
@@ -92,9 +100,9 @@ export function studioDeviceRows(input: StudioInput): StudioDeviceRow[] {
       return [{family: 'nara', name: 'Nara', chain: 'nara' as const, toggle: nara.why === undefined, says: nara.pressed === undefined ? null : nara.pressed ? 'Open' : 'Closed', why: nara.why ?? null}]
     }
     const field = holding.field.map((device): StudioDeviceRow => ({family: device.family, name: device.name, chain: holding.chain, toggle: device.toggle !== null,
-      says: reading ? device.summary(reading) : null, why: reading ? null : 'Open a native Expression to read it.'}))
+      says: reading ? saidOf(device.summary(reading)) : null, why: reading ? null : 'Open a native Expression to read it.'}))
     const ql = holding.ql.map((face): StudioDeviceRow => ({family: face.id, name: face.title, chain: holding.chain, toggle: false, says: null,
-      why: face.waiting ? (face.id === 'torus' ? TORUS_WAITS : `${face.title} waits for its owner.`) : null}))
+      why: face.waiting ? `${face.title} waits for its owner.` : null}))
     return [...field, ...ql]
   })
 }

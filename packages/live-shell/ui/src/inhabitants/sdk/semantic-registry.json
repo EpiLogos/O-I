@@ -518,10 +518,13 @@
     "kind": "parameter",
     "liveSemantic": "device-instrument",
     "modes": [
-      "techne"
+      "expressions",
+      "live"
     ],
     "formats": {},
-    "invariant": null,
+    "invariant": {
+      "generatesAbsent": "The torus writes through the frame's hosted stage channel (its `instrument` command), as Live's torus device does; no native-owner tool or kernel op of its own carries the write."
+    },
     "writePaths": [],
     "heldBy": [
       "studio:body"
