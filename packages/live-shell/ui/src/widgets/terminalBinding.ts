@@ -380,6 +380,8 @@ export function terminalValues(input: TerminalInput): {values: Values; standing:
   standing.command = {disabled: ROOM_REFUSE.command}
   standing.folder = {disabled: ROOM_REFUSE.folder}
   if (screen?.input?.accepts === false) standing.watch = {disabled: `Input: ${screen.input.reason}`}
+  // Type waits for the room's first capture: until its owner has read the room, nothing says whether it takes keys (screen.input.accepts).
+  else if (!screen) standing.watch = {disabled: `Type waits for the room's first capture: ${providerName(room.provider)} has not read this room yet, so nothing says whether it takes keys.`}
   if (screen?.refused !== undefined) {
     values.answers = false
     values.light = 'dark'

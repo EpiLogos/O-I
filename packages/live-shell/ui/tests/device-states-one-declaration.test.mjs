@@ -72,7 +72,9 @@ test('the manual\'s states stand where the manifests and the designs disagreed; 
   const before = JSON.parse(readFileSync(new URL('./fixtures/device-states-before-744.json', import.meta.url), 'utf8'))
   // REPLACED (§16.3 "On the rail and in a pane only: a monitor, or an instrument born there | Widget and Full. Its window holds its Full";
   // §19.23 Full "it has two views, Full and Widget"): Workcell's instrument had Folded, Compact and Whole; it keeps its Widget and its Full.
-  const paneBorn = {'workcell:workcell': ['widget', 'full']}
+  // REPLACED (parity audit D-29; §16.3, §17.9): the Terminal is an instrument born on the rail and stands on no chain (widgets/railDevices.tsx),
+  // so Folded, Compact, Whole and Pop-out never stood; it keeps its Widget and its Full.
+  const paneBorn = {'workcell:workcell': ['widget', 'full'], 'widgets:terminal': ['widget', 'full']}
   for (const [id, had] of Object.entries(before)) for (const view of had) if (!(id in paneBorn)) assert.ok(views.deviceStates(id).includes(view), `${id} keeps ${view}`)
   for (const [id, states] of Object.entries(paneBorn)) assert.deepEqual([...views.deviceStates(id)], states, `${id}: an instrument born in a pane, its Widget and its Full`)
 })
