@@ -117,14 +117,16 @@ test('the Physics design draws on the binding: the swirl from the engine\'s valu
   assert.match(compact, /aria-label="The swirl"|The swirl/)
 })
 
-test('the Field\'s design is not bound: its picture is the module\'s own symbols, and the shell has no Field device to publish it on; every other field family is', async () => {
+test('every field family publishes its design\'s binding; the Field\'s picture draws the scene\'s symbols, never module constants', async () => {
   const views = await readFile(new URL('../src/components/devices/ExpressionsDeviceView.tsx', import.meta.url), 'utf8')
   assert.match(views, /if \(family === 'physics'\) return physicsDesignBinding\(device, reading, enginePress\)/, 'Physics publishes its own binding')
   assert.match(views, /isFieldDesignFamily\(family\) \? familyDesignBinding\(family, device, reading, send, tattva\) : undefined/, 'the other field families publish theirs (fieldDesignBinding.ts); the Field, none')
   assert.match(views, /claims\.current\.get\(entry\.family\)\?\.publish\(\{device: entry\.device, picture: entry\.picture, \.\.\.\(entry\.binding \? \{binding: entry\.binding\} : \{\}\)\}\)/,
     'the binding is published with the device, so every place draws the design')
   const field = await readFile(new URL('../src/inhabitants/catalogue/panels/expressions__field.tsx', import.meta.url), 'utf8')
-  assert.match(field, /^const SYMBOLS = \[/m, 'the Field\'s picture draws module constants: bound, it would draw the Seven centres over any work')
+  // Parity D-05: the Field (fieldInstrument.ts, published by the Studio) draws the scene's `symbols`; no module list stands in for them.
+  assert.doesNotMatch(field, /^const SYMBOLS = \[/m, 'the Field\'s picture draws no module constants')
+  assert.match(field, /symbolsOf\(/, 'the Stage and Full draw the symbols the device reads')
 })
 
 test('the summoned editors: Acts, Nara and Find open whole in the pool while the frame holds them open; the Library\'s summon opens its page', () => {

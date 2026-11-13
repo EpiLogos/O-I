@@ -190,7 +190,12 @@ test('the Field reads its owners: the frame\'s object sound, Resonance\'s plate,
   assert.equal(binding.id, designKey('expressions', 'field'))
   // O-I #747 round 886: the Level is the scene's own (Scene.composition.fieldLevel, dB), −12 dB where it keeps none — this scene keeps none.
   assert.deepEqual(binding.values, {sound: true, plate: true, medium: 'chamber', resonance: 512, dominance: 0.75, baseFrequency: 32, tempo: 1.5, hold: 0.4,
-    particles: 120000, keySource: 'sky', symbolVoices: false, collisionsStrike: false, pulse: false, voices: 2, level: -12})
+    particles: 120000, keySource: 'sky', symbolVoices: false, collisionsStrike: false, pulse: false, voices: 2, level: -12,
+    // Parity D-05: the scene's own symbols, never the catalogue's Seven centres.
+    symbols: '[{"name":"Root","voiced":true},{"name":"Heart","voiced":true},{"name":"Crown","voiced":false}]'})
+  const full = renderToStaticMarkup(h(host.HostedDevice, {designed: DESIGNS.field, binding, view: 'full', nav: {}}))
+  assert.match(full, />Heart</, 'Full lists the scene\'s symbols')
+  assert.doesNotMatch(full, />Sacral<|>Throat</, 'never the Seven centres the scene does not hold')
   const keys = classify(DESIGNS.field, binding)
   assert.deepEqual(keys.absent, [], 'every key has its owner (the level since round 886)')
   assert.equal(binding.standing.level, undefined)

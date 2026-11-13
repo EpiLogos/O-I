@@ -8,7 +8,7 @@
 // owner has not reported draws unread (the dial's ring alone, the meter empty and marked unread), never NaN (manual §16.11).
 import {useMemo, type CSSProperties} from 'react'
 import {Action, Band, Dial, Display, Folded, Handle, Panel, Radio, Readout, Section, Tile, Toggle, type LightState} from '../../sdk/panel'
-import {NONE, boolOf, clampTo, num, numOf, on, st, str, strOf, type DesignedDevice, type ViewProps} from './design'
+import {NONE, boolOf, clampTo, json, num, numOf, on, st, str, strOf, type DesignedDevice, type ViewProps} from './design'
 
 type V = ViewProps['v']
 type SetFn = ViewProps['set']
@@ -17,13 +17,21 @@ const HZ = {min: 20, max: 4000, log: true}, LEVEL = {min: -60, max: 0}, TEMPO = 
 /** A voice's own gain unless the symbol sets one (DEFAULT_ENTITY_SOUND.gain, native-field/entitySound.ts). */
 const VOICE_GAIN = .2
 
-// ---------------------------------------------------------------- the symbols: the Seven centres scene (model.ts:172)
+// ---------------------------------------------------------------- the symbols: the scene's own, from `symbols`
 
-const SYMBOLS = [
-  {name: 'Root', glyph: '△', tint: '#a94138'}, {name: 'Sacral', glyph: '◯', tint: '#c67c46'}, {name: 'Solar', glyph: '△', tint: '#c2a852'},
-  {name: 'Heart', glyph: '✧', tint: '#638c69'}, {name: 'Throat', glyph: '◯', tint: '#5898a4'}, {name: 'Brow', glyph: '∞', tint: '#737599'},
-  {name: 'Crown', glyph: '✧', tint: '#a590b0'},
-].map((s, i) => ({...s, u: .18 / 2, v: (-.82 + i * .274) / 2}))
+/** One symbol of the scene as the device reads it (`symbols`, a JSON list): its name, glyph and tint, where it stands in stage units
+ * (x, y over ±1) and whether it has a voice. */
+interface SymbolIn {readonly name?: unknown; readonly glyph?: unknown; readonly tint?: unknown; readonly x?: unknown; readonly y?: unknown; readonly voiced?: unknown}
+interface FieldSymbol {readonly name: string; readonly glyph: string; readonly tint: string; readonly u: number; readonly v: number; readonly voiced: boolean}
+/** The scene's symbols, placed on the plate's ±½ square; none while the device has not read them. */
+const symbolsOf = (v: V): FieldSymbol[] => json<SymbolIn[]>(v, 'symbols', []).filter(s => s && typeof s.name === 'string').map(s => ({
+  name: s.name as string, glyph: typeof s.glyph === 'string' && s.glyph ? s.glyph : (s.name as string).slice(0, 1), tint: typeof s.tint === 'string' ? s.tint : 'currentColor',
+  u: clampTo(-.5, .5, (typeof s.x === 'number' ? s.x : 0) / 2), v: clampTo(-.5, .5, (typeof s.y === 'number' ? s.y : 0) / 2), voiced: s.voiced === true,
+}))
+/** The Seven centres scene's symbols (model.ts chakraEntities), the design's own fixture: three voiced where `voiced` says so. */
+const SEVEN = (voiced: number) => JSON.stringify(['Root', 'Sacral', 'Solar', 'Heart', 'Throat', 'Brow', 'Crown'].map((name, i) => ({
+  name, glyph: ['△', '◯', '△', '✧', '◯', '∞', '✧'][i], tint: ['#a94138', '#c67c46', '#c2a852', '#638c69', '#5898a4', '#737599', '#a590b0'][i], x: .18, y: -.82 + i * .274, voiced: i < voiced,
+})))
 
 // ---------------------------------------------------------------- the resonator's law
 
@@ -49,8 +57,8 @@ const lcg = (seed: number) => { let s = seed >>> 0; return () => (s = (Math.imul
 interface Dot {readonly u: number; readonly v: number; readonly w: number; readonly gx: number; readonly gy: number; readonly gz: number}
 
 /** Particles on the plate's still lines: the share the plate rules (dominance) goes where the figure is quiet, the rest stays on the symbols. */
-function plateDots(m: number, n: number, dominance: number, count: number): Dot[] {
-  const rnd = lcg(m * 97 + n * 31 + 7), out: Dot[] = [], springs = Math.round(count * (1 - dominance))
+function plateDots(m: number, n: number, dominance: number, count: number, symbols: readonly FieldSymbol[]): Dot[] {
+  const rnd = lcg(m * 97 + n * 31 + 7), out: Dot[] = [], springs = symbols.length ? Math.round(count * (1 - dominance)) : 0
   for (let tries = 0; out.length < count - springs && tries < count * 70; tries++) {
     const u = rnd() - .5, v = rnd() - .5, f = plateShape(m, n, u, v)
     if (rnd() > Math.exp(-sq(Math.abs(f) / 2 / .06))) continue
@@ -58,7 +66,7 @@ function plateDots(m: number, n: number, dominance: number, count: number): Dot[
     out.push({u, v, w: 0, gx: sg * gx / g, gy: sg * gy / g, gz: 0})
   }
   for (let i = 0; i < springs; i++) {
-    const s = SYMBOLS[Math.floor(rnd() * SYMBOLS.length)]!, r = Math.sqrt(-2 * Math.log(rnd() + 1e-9)) * .03, t = rnd() * Math.PI * 2
+    const s = symbols[Math.floor(rnd() * symbols.length)]!, r = Math.sqrt(-2 * Math.log(rnd() + 1e-9)) * .03, t = rnd() * Math.PI * 2
     out.push({u: s.u + r * Math.cos(t), v: s.v + r * Math.sin(t), w: 0, gx: 0, gy: 0, gz: 0})
   }
   return out
@@ -102,9 +110,10 @@ const meter = (v: V): number | undefined => { const voices = numOf(v, 'voices'),
 
 function Stage({v, ox, oy, s, dots}: {v: V; ox: number; oy: number; s: number; dots: number}) {
   const chamber = str(v, 'medium') === 'chamber', mode = modeOf(v), plate = on(v, 'plate')
-  const k = s * .24, c = s - k, voices = numOf(v, 'voices') ?? 0, sounding = on(v, 'sound')
-  const pts = useMemo(() => (chamber ? cavityDots(mode.m, mode.n, mode.p ?? 1, dots) : plateDots(mode.m, mode.n, num(v, 'dominance'), dots)),
-    [chamber, mode.m, mode.n, mode.p, num(v, 'dominance'), dots])
+  const k = s * .24, c = s - k, sounding = on(v, 'sound'), said = strOf(v, 'symbols') ?? ''
+  const symbols = useMemo(() => symbolsOf(v), [said])
+  const pts = useMemo(() => (chamber ? cavityDots(mode.m, mode.n, mode.p ?? 1, dots) : plateDots(mode.m, mode.n, num(v, 'dominance'), dots, symbols)),
+    [chamber, mode.m, mode.n, mode.p, num(v, 'dominance'), dots, symbols])
   const pos = (u: number, w: number, y: number) => (chamber ? [ox + (u + .5) * c + (w + .5) * k, oy + k + (.5 - y) * c - (w + .5) * k] as const : [ox + (u + .5) * s, oy + (.5 - y) * s] as const)
   // The trail of a particle lies behind its slide toward the still line, as long as the time scale: none at 0.
   const reach = (numOf(v, 'tempo') ?? 0) * s / 120
@@ -124,9 +133,9 @@ function Stage({v, ox, oy, s, dots}: {v: V; ox: number; oy: number; s: number; d
       <rect x={ox} y={oy} width={s} height={s} className="dp-faint" />
       <path d={paths(() => true)} className="dp-curve" opacity={.85} style={{strokeWidth: 1.2, strokeLinecap: 'round'}} />
     </>}
-    {SYMBOLS.map((sym, i) => {
-      const [x, y] = pos(sym.u, 0, sym.v), voiced = i < voices
-      return <g key={sym.name}>
+    {symbols.map((sym, i) => {
+      const [x, y] = pos(sym.u, 0, sym.v), voiced = sym.voiced
+      return <g key={`${i}:${sym.name}`}>
         {voiced && <circle cx={x} cy={y} r={ring} fill="none" stroke={sym.tint} strokeWidth={1.2} opacity={sounding ? .95 : .35} strokeDasharray={sounding ? undefined : '2 2'} />}
         <text x={x} y={y} textAnchor="middle" dominantBaseline="central" fill={sym.tint} style={{fontSize: size}}>{sym.glyph}</text>
       </g>
@@ -212,13 +221,13 @@ export const design: DesignedDevice = {
   // 200 000 particles (fieldDefaults.ts:102). The level is the scene's Field Level, −12 dB where it keeps none (§20.2; round 886).
   defaults: {
     sound: true, level: -12, plate: true, medium: 'plate', keySource: 'torus', symbolVoices: true, collisionsStrike: false, pulse: false, resonance: 396, tempo: 1, hold: 0,
-    voices: 0, particles: 200000, dominance: 1, baseFrequency: 40,
+    voices: 0, particles: 200000, dominance: 1, baseFrequency: 40, symbols: SEVEN(0),
   },
   fixtures: {
-    'Seven centres': {voices: 3, particles: 42000},
-    'Springs and plate': {voices: 3, particles: 42000, dominance: .5, hold: .625},
-    'Chamber': {voices: 3, particles: 42000, medium: 'chamber'},
-    'Plate off': {voices: 0, particles: 42000, plate: false, sound: false},
+    'Seven centres': {voices: 3, particles: 42000, symbols: SEVEN(3)},
+    'Springs and plate': {voices: 3, particles: 42000, dominance: .5, hold: .625, symbols: SEVEN(3)},
+    'Chamber': {voices: 3, particles: 42000, medium: 'chamber', symbols: SEVEN(3)},
+    'Plate off': {voices: 0, particles: 42000, plate: false, sound: false, symbols: SEVEN(0)},
   },
 
   folded: p => <Folded title="Field" light={light(p.v)} readings={[numOf(p.v, 'resonance') === undefined ? NONE : hertz(numOf(p.v, 'resonance')!), numOf(p.v, 'tempo') === undefined ? NONE : times(numOf(p.v, 'tempo')!)]} onUnfold={p.nav.unfold} />,
@@ -276,7 +285,7 @@ export const design: DesignedDevice = {
 
   full: p => {
     if (!tuned(p.v)) return <div className="ref-pane-body ref-pane-body--dark"><p className="ref-pane-none">No reading of the plate: Resonance has not reported its tone and f0.</p></div>
-    const w = 760, h = 420, mode = modeOf(p.v), chamber = str(p.v, 'medium') === 'chamber', voices = numOf(p.v, 'voices') ?? 0
+    const w = 760, h = 420, mode = modeOf(p.v), chamber = str(p.v, 'medium') === 'chamber', symbols = symbolsOf(p.v), listed = symbols.slice(0, 8)
     const said = (key: string, format: (x: number) => string) => (numOf(p.v, key) === undefined ? NONE : format(numOf(p.v, key)!))
     return <div className="ref-pane-body ref-pane-body--dark">
       <svg viewBox={`0 0 ${w} ${h}`} width="100%" height="100%" preserveAspectRatio="xMidYMid meet" className="ref-pane-svg" aria-label="The field">
@@ -285,15 +294,17 @@ export const design: DesignedDevice = {
           <text x={480} y={52} className="dp-ink" style={{fontSize: 14}}>{chamber ? 'Chamber' : 'Plate'} · mode {modeText(mode)}</text>
           <text x={480} y={72} className="dp-ink-dim" style={{fontSize: 12}}>{hertz(mode.hz)} · tuned to {hertz(num(p.v, 'resonance'))}</text>
           <text x={480} y={90} className="dp-ink-dim" style={{fontSize: 12}}>{said('particles', count)} particles · pace {said('tempo', times)} · holds {said('hold', ratio)}</text>
-          {SYMBOLS.slice().reverse().map((sym, i) => {
-            const at = SYMBOLS.length - 1 - i, y = 134 + i * 34, voiced = at < voices
-            return <g key={sym.name} opacity={voiced ? 1 : .6}>
+          {listed.slice().reverse().map((sym, i) => {
+            const y = 134 + i * 34, voiced = sym.voiced
+            return <g key={`${i}:${sym.name}`} opacity={voiced ? 1 : .6}>
               {voiced && <circle cx={492} cy={y} r={11} fill="none" stroke={sym.tint} strokeWidth={1.4} />}
               <text x={492} y={y} textAnchor="middle" dominantBaseline="central" fill={sym.tint} style={{fontSize: 15}}>{sym.glyph}</text>
               <text x={516} y={y} dominantBaseline="central" className="dp-ink" style={{fontSize: 13}}>{sym.name}</text>
               <text x={600} y={y} dominantBaseline="central" className="dp-ink-dim" style={{fontSize: 12}}>{voiced ? 'voice' : 'no voice'}</text>
             </g>
           })}
+          {symbols.length > listed.length && <text x={516} y={134 + listed.length * 34} dominantBaseline="central" className="dp-ink-dim" style={{fontSize: 12}}>and {symbols.length - listed.length} more</text>}
+          {!symbols.length && <text x={480} y={134} dominantBaseline="central" className="dp-ink-dim" style={{fontSize: 12}}>{strOf(p.v, 'symbols') === undefined ? 'No reading of the symbols' : 'No symbols in this scene'}</text>}
         </g>
       </svg>
     </div>
