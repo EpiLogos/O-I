@@ -1583,3 +1583,23 @@ The agent's reading of these words, for the owner to correct:
 - Live's own behaviour answers the two open questions:
   - Rate syncs to the set's tempo, as Live's synced rates do.
   - Each note of a chord takes its own voice, so each note strikes its own eight voices, and Polyphony counts notes.
+
+### R35 — The foundation: devices over one operative state, through Actions (owner, 13 Nov 2026)
+
+Spoken in a session that audited the DLW build. The quotations are the owner's own messages, with their typing slips corrected and nothing else changed. The first gives the reason, the second rules the foundation, and the third adopts the agent's reading below and asks for it to be charted.
+
+> this class of issue is literally "AI coding", just reams of dumbness where a simple feature is planned and clearly defined, ending up with multiple things trying to do the same shit all doing it incorrectly ... plan -> ticket -> build -> check against plan... things like "don't build parallel or duplicate features or tickets" and "test real functionality, BASED ON experiential needs" also shouldn't have to be said ... what are we even managing? a system that doesn't work in the first place?
+
+> the devices and all their functionality should be layers over business logic in kernel and interstices with UI elements which are agent native via the actions framework, and they should be using the business logic that ensures that all the capabilities across the ai-kit, ctrl, actuation, factory, workcell, QL all are live and in their given set state as such, the devices work through and with this already operative state... this means foundationally the ui shell is united with the functionalities, and thus all the issues we see now which are based in the app trying to load everything at point of use actually gets its main issues - i wanna see how we can scale down and precisely define the foundational functional needs across each of the 5 modes of the app, which include the device, clip, session and arrangement and pane views and browser setup plus the transport options so we have a real sense of how a given mode actually works in place, and define this relative to the kernel and the devices... if we don't do this then we'll keep building spaghetti code and crap
+
+> Yes, fold and ticket
+
+The agent's reading, which the owner adopted. The full text is `docs/architecture/world-shell.md` §9.
+
+- The owners stay the authority. The kernel holds a World Model: a typed, held projection of their present state, loaded at launch and kept current by the watch and by receipts. Devices and agents subscribe to it, and nothing reads an owner at the point of use.
+- §10's old rule "no parallel World models" becomes "no second authority". A held projection is required, and a second authority stays forbidden.
+- One Action registry (`oi act`, every owner's Actions) is the only write path for the window and for agents alike. Availability comes from the model.
+- Each mode's Set (tracks, clips, rows, takes, the Main track) is built in the kernel. Devices and views are declarations over it.
+- Each mode is scaled down to its core (§9.3). Nothing outside the core is built until the core passes the gate.
+- The gate is scripts that drive the real owners on a fresh home and read the effect back (§9.5). A ticket closes only when they pass, run by a session that is not the builder's. A refusal or a dimmed control is never a pass.
+- One job has one implementation. A ticket names the code that already does its job and deletes the rest.

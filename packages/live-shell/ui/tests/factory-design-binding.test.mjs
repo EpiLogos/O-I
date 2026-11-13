@@ -173,12 +173,17 @@ test('the Gateway reads the harness\'s own answer and writes through the address
     stallAfter: {...agentAddress('gateway', 'stall-after'), title: 'Stall after'},
   }, async (row, value) => { calls.push([row.key, row.writePath, value]); return fired(row) })
   await assert.rejects(() => binding.write([{key: 'approvals', value: 'ask'}]), /approvals is a reading/, 'Tool calls are set on Scope')
-  await binding.write([{key: 'transport', value: 'stdio'}, {key: 'connect', value: false}, {key: 'stallAfter', value: 90}])
-  assert.deepEqual(calls, [['transport', 'kernel:harness_agent_control', 'stdio'], ['connect', 'kernel:harness_agent_control', false], ['stall-after', 'kernel:harness_agent_control', 90]])
-  await assert.rejects(() => binding.write([{key: 'fanOut', value: 3}]), /missing op: kernel:harness_agent_control configure \{fan_out\}/)
-  await assert.rejects(() => binding.write([{key: 'autoContinue', value: false}]), /configure \{auto_continue\}/)
+  // REPLACED (lane A wiring): Connect is AIKit's pause/resume of the binding's connector and goes through its row; Transport, Stall after,
+  // Fan-out and Auto-continue have no operation in AIKit's gateway (`aikit gateway agent`), so they stand disabled and send nothing.
+  await binding.write([{key: 'connect', value: false}])
+  assert.deepEqual(calls, [['connect', 'kernel:harness_agent_control', false]])
+  for (const key of ['transport', 'stallAfter', 'fanOut', 'autoContinue']) {
+    assert.match(binding.standing[key].disabled, /AIKit's gateway has no operation/, `${key} stands disabled`)
+    await assert.rejects(() => binding.write([{key, value: 1}]), /`aikit gateway agent` takes status, stop, new/, key)
+  }
+  assert.equal(binding.standing.connect, undefined, 'Connect stands')
   await assert.rejects(() => binding.write([{key: 'epoch', value: 'x'}]), /epoch is a reading/)
-  assert.equal(calls.length, 3)
+  assert.equal(calls.length, 1)
 })
 
 test('the catalogue\'s Gateway draws on the binding in all five views: the owner\'s refusal across the well, "—" for what is unread, never its fixture', async t => {
@@ -253,7 +258,7 @@ test('the Agent writes through its rows\' own write paths; a reading is refused 
   bind.resetHolds()
   const calls = []
   const rows = model.slotRows('agent')
-  const agentRows = {effort: rows.find(row => row.key === 'effort'), input: rows.find(row => row.key === 'input'), heartbeat: rows.find(row => row.key === 'heartbeat'), ...bind.AGENT_P0_ROWS}
+  const agentRows = {model: rows.find(row => row.key === 'model'), effort: rows.find(row => row.key === 'effort'), input: rows.find(row => row.key === 'input'), heartbeat: rows.find(row => row.key === 'heartbeat'), ...bind.AGENT_P0_ROWS}
   const write = async (row, value) => {
     calls.push([row.key, row.writePath, value])
     return row.key === 'heartbeat'
@@ -262,34 +267,37 @@ test('the Agent writes through its rows\' own write paths; a reading is refused 
   }
   const make = (accepted = {}) => bind.agentBinding('factory:agent', agentInput({accepted}), agentRows, write, () => true)
   const binding = make()
-  await binding.write([{key: 'effort', value: 'max'}])
-  await binding.write([{key: 'input', value: 'queue'}])
-  await binding.write([{key: 'quantize', value: 'next turn'}])
+  // REPLACED (lane A wiring): Model is AIKit's `gateway agent model --model ID`, through the address table's model row.
+  await binding.write([{key: 'model', value: 'gpt-5'}])
   await assert.rejects(() => binding.write([{key: 'heartbeat', value: false}]), /cron-stratum cadence/, 'the dispatcher\'s own refusal, verbatim')
-  assert.deepEqual(calls, [
-    ['effort', 'shell.setEffort', 'max'], ['input', 'shell.setSteer', false], ['interrupt-quantize', 'shell.setQuantize', 'next turn'], ['heartbeat', 'shell.setHeartbeat', false],
-  ])
+  assert.deepEqual(calls, [['model', 'kernel:harness_agent_control', 'gpt-5'], ['heartbeat', 'shell.setHeartbeat', false]])
   calls.length = 0
+  // Effort, Input and Interrupt timing have no operation in AIKit's gateway: disabled, and refused with nothing sent.
+  for (const key of ['effort', 'input', 'quantize']) {
+    assert.match(binding.standing[key].disabled, /AIKit's gateway has no operation/, key)
+    await assert.rejects(() => binding.write([{key, value: 'max'}]), /`aikit gateway agent` takes/, key)
+  }
   // Typing is held by the shell; nothing reaches an owner.
   await binding.write([{key: 'draft', value: 'Skip the cradle root'}])
   assert.deepEqual(calls, [])
   assert.equal(bind.chainHolds().composer.draft, 'Skip the cradle root')
-  // Enter: the words go to the turn that runs (steer) — or wait as the next task (queue), as the owner accepted Input.
-  await make({input: 'steer'}).write([{key: 'sent', value: 'Skip the cradle root'}, {key: 'draft', value: ''}])
-  await make({input: 'queue'}).write([{key: 'sent', value: 'Then land it'}])
-  assert.deepEqual(calls, [['steer-line', 'kernel:harness_agent_control', 'Skip the cradle root'], ['new-task', 'kernel:harness_agent_control', 'Then land it']])
-  assert.deepEqual(bind.chainHolds().composer, {draft: '', sent: 'Then land it'}, 'the sent line is the one the owner accepted')
+  // Enter: AIKit's gateway carries no words into a binding's conversation (no steer line, and `new` takes none): the composer stands
+  // disabled saying so, a press is refused, and the words stay in the draft.
+  assert.equal(make({input: 'steer'}).standing.sent.disabled, bind.AGENT_SEND_UNCARRIED)
+  await assert.rejects(() => make({input: 'steer'}).write([{key: 'sent', value: 'Skip the cradle root'}]), {message: bind.AGENT_SEND_UNCARRIED})
+  await assert.rejects(() => make({input: 'queue'}).write([{key: 'sent', value: 'Then land it'}]), {message: bind.AGENT_SEND_UNCARRIED})
+  assert.deepEqual(calls, [], 'no words were sent')
+  assert.equal(bind.chainHolds().composer.draft, 'Skip the cradle root', 'the words stay in the draft')
   // Readings refuse in words that say whose they are.
   await assert.rejects(() => binding.write([{key: 'light', value: 'dark'}]), /Power is a reading/)
   await assert.rejects(() => binding.write([{key: 'cap', value: 20}]), /used and cap come from the session's task record/)
-  await assert.rejects(() => binding.write([{key: 'model', value: 'x'}]), /model is a reading/)
-  assert.equal(calls.length, 2, 'no reading dispatched anything')
-  assert.deepEqual(['effort', 'input', 'quantize', 'heartbeat', 'draft', 'sent'].map(binding.writes), [true, true, true, true, true, true])
-  assert.deepEqual(['agent', 'model', 'harness', 'used', 'age', 'effortHeld'].map(binding.writes), [false, false, false, false, false, false])
+  assert.equal(calls.length, 0, 'no reading dispatched anything')
+  assert.deepEqual(['model', 'effort', 'input', 'quantize', 'heartbeat', 'draft', 'sent'].map(binding.writes), [true, true, true, true, true, true, true])
+  assert.deepEqual(['agent', 'harness', 'used', 'age', 'effortHeld'].map(binding.writes), [false, false, false, false, false])
   // The retired Autonomy (§19.4, §19.12): the Agent takes a press that still names it only to refuse it, naming what took its place.
   assert.equal(binding.standing.autonomy.disabled, bind.AGENT_AUTONOMY_RETIRED)
   await assert.rejects(() => binding.write([{key: 'autonomy', value: 'auto'}]), {message: bind.AGENT_AUTONOMY_RETIRED})
-  assert.equal(calls.length, 2, 'nothing sent for it')
+  assert.equal(calls.length, 0, 'nothing sent for it')
   bind.resetHolds()
 })
 
@@ -297,15 +305,17 @@ test('a change goes to the owner on release through the runtime\'s own path, and
   bind.resetHolds()
   host.resetHost()
   const calls = []
-  const binding = bind.agentBinding('factory:agent', agentInput(), {effort: model.slotRows('agent').find(row => row.key === 'effort')},
-    async (row, value) => { calls.push([row.writePath, value]); return {kind: 'refused', channel: 'shell', writePath: row.writePath, reason: 'the harness refused the effort'} }, () => true)
-  host.setDraft('factory:agent', 'effort', 'low')
-  assert.equal(await host.flushDrafts(binding, 0), 'the harness refused the effort')
-  assert.deepEqual(calls, [['shell.setEffort', 'low']])
-  assert.equal(host.hostState('factory:agent').refused.effort.reason, 'the harness refused the effort')
+  // REPLACED (lane A wiring): the Model goes to AIKit's gateway through its row; Effort, which AIKit's gateway has no operation for, is not
+  // the example any more.
+  const binding = bind.agentBinding('factory:agent', agentInput(), {model: model.slotRows('agent').find(row => row.key === 'model')},
+    async (row, value) => { calls.push([row.writePath, value]); return {kind: 'refused', channel: 'kernel', writePath: row.writePath, reason: 'AIKit\'s gateway: this conversation has no agent backing'} }, () => true)
+  host.setDraft('factory:agent', 'model', 'gpt-5')
+  assert.equal(await host.flushDrafts(binding, 0), 'AIKit\'s gateway: this conversation has no agent backing')
+  assert.deepEqual(calls, [['kernel:harness_agent_control', 'gpt-5']])
+  assert.equal(host.hostState('factory:agent').refused.model.reason, 'AIKit\'s gateway: this conversation has no agent backing')
   host.setDraft('factory:agent', 'cap', 30)
   assert.match(await host.flushDrafts(binding, 0), /used and cap come from the session's task record/, 'Budget has no owner write: refused in words that say whose it is, nothing sent')
-  host.setDraft('factory:agent', 'model', 'x')
+  host.setDraft('factory:agent', 'harness', 'x')
   assert.match(await host.flushDrafts(binding, 0), /A reading/, 'a pure reading is refused by the host before anything is sent')
   host.setDraft('factory:agent', 'autonomy', 'auto')
   assert.equal(await host.flushDrafts(binding, 0), bind.AGENT_AUTONOMY_RETIRED, 'the retired Autonomy is refused in the words that name Scope\'s Tool calls')
@@ -346,15 +356,21 @@ test('as the shell boots (families admitted, no kit rows adopted), the Agent\'s 
       shell: {setEffort() {}, setSteer() {}, setHeartbeat() {}, setWriteArm() {}, setQuantize() {}, quantize: 'next tool'},
       invoke: async (_t, op) => { captured.push(op); return {outcome: {result: 'harness_agent_outcome', document: {}}, error: undefined} },
     })
-    assert.equal((await sdkSetters.shellSetter('shell.setEffort')('max')).kind, 'fired', 'Effort reaches the harness carrier')
-    assert.equal((await sdkSetters.shellSetter('shell.setQuantize')('next turn')).kind, 'fired', 'and Interrupt')
-    assert.deepEqual(captured.map(op => op.value), [{effort: 'max'}, {quantize: 'next turn'}])
+    // REPLACED (lane A wiring): AIKit's gateway has no operation for Effort or Interrupt timing, so the setters refuse naming it and
+    // nothing reaches the kernel; an accepted value is still what the Agent draws (the record the owner's acceptance writes).
+    for (const [path, value] of [['shell.setEffort', 'max'], ['shell.setQuantize', 'next turn']]) {
+      const receipt = await sdkSetters.shellSetter(path)(value)
+      assert.equal(receipt.kind, 'refused', path)
+      assert.match(receipt.missingOp ?? '', /aikit gateway agent/, path)
+    }
+    assert.deepEqual(captured, [], 'nothing reached the kernel')
     const heartbeat = await sdkSetters.shellSetter('shell.setHeartbeat')(false)
     assert.equal(heartbeat.kind, 'refused')
     assert.match(heartbeat.reason, /cron-stratum/, 'a declared row the dispatcher refuses is still refused in its own words')
-    assert.deepEqual(accepted.ownerAccepted('harness:fixture'), {effort: 'max', quantize: 'next turn'}, 'what the owner accepted is recorded')
+    assert.deepEqual(accepted.ownerAccepted('harness:fixture'), {}, 'nothing refused is recorded as accepted')
+    accepted.recordOwnerAccepted('harness:fixture', 'interrupt-quantize', 'next turn')
     const values = bind.agentValues(agentInput({accepted: accepted.ownerAccepted('harness:fixture')}))
-    assert.deepEqual([values.effort, values.quantize], ['max', 'next turn'], 'and the Agent draws it')
+    assert.equal(values.quantize, 'next turn', 'what the owner accepted is what the Agent draws')
   } finally {
     accepted.resetOwnerAccepted()
     family.resetFamilyManifestsForTest()
@@ -632,9 +648,10 @@ test('Scope: no owner reports a reach, a write mode, places or receipts, so none
   const approvals = model.slotRows('gateway').find(row => row.key === 'approvals')
   const asked = bind.scopeBinding('factory:world', bind.chainHolds(), writeMode, write, {toolCalls: 'ask', toolCallsRow: approvals})
   assert.equal(asked.values.toolCalls, 'ask', 'the harness\'s own answer to a tool request')
-  assert.equal(asked.standing.toolCalls, undefined, 'carried: it stands')
-  await assert.rejects(() => asked.write([{key: 'toolCalls', value: 'session'}]), /WO-SF2/, 'the row\'s write, refused here by the stub owner')
-  assert.deepEqual(calls.at(-1), ['kernel:harness_agent_control', 'session'])
+  // REPLACED (lane A wiring): AIKit's gateway has no operation that sets the approvals mode, so Tool calls stands disabled and sends nothing.
+  assert.match(asked.standing.toolCalls.disabled, /Tool calls \(approvals\): AIKit's gateway has no operation/)
+  await assert.rejects(() => asked.write([{key: 'toolCalls', value: 'session'}]), /AIKit's gateway has no operation/)
+  assert.equal(calls.length, 1, 'nothing sent for Tool calls')
   host.resetHost()
   bind.resetHolds()
 })

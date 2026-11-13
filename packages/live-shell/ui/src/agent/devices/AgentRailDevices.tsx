@@ -94,6 +94,13 @@ const REFINEMENT_LIST = {kind: 'refinement-list'} as const
 const NO_INPUT: Readonly<Record<string, unknown>> = Object.freeze({})
 
 /** The rail's agent devices and their bindings, published on the door. */
+/** Messages' Voice port over the kernel's dictation (agent/useAgentVoice.ts agentVoicePort), its module loaded on the first press. */
+function lazyVoicePort(transport: KernelTransportStatus): NonNullable<MessagesPorts['voice']> {
+  let port: Promise<NonNullable<MessagesPorts['voice']>> | null = null
+  const loaded = () => (port ??= import('../useAgentVoice').then(module => module.agentVoicePort(transport)))
+  return {start: async () => (await loaded()).start(), stop: async () => (await loaded()).stop()}
+}
+
 export function AgentRailDevices() {
   const shell = useAgentShellOptional()
   const sessions = useAgentSessionsOptional()
@@ -232,7 +239,10 @@ export function AgentRailDevices() {
   // AIKit's gateway writes (lane W3): Send and a drop onto a track through the kernel's route to `aikit gateway send|delegate`.
   const ports = useMemo((): MessagesPorts => ({
     ...(transport.kind !== 'unavailable' ? {act: (action: string, input: Readonly<Record<string, unknown>>) => centralAct(transport, action, input),
-      gateway: (request: GatewayWriteRequest) => ownerRouteWrite(transport, gatewayWriteOp(request), ROUTE_WORDS[request.kind])} : {}),
+      gateway: (request: GatewayWriteRequest) => ownerRouteWrite(transport, gatewayWriteOp(request), ROUTE_WORDS[request.kind]),
+      // Voice: the kernel's local dictation, its transcript into the Thread's composer (agent/useAgentVoice.ts, loaded when first pressed:
+      // the capture client stays out of the window's first load).
+      voice: lazyVoicePort(transport)} : {}),
     page: () => hostState(MESSAGES_ID).page,
     suffix: () => globalThis.crypto.randomUUID().slice(0, 8),
   }), [transport])

@@ -12,9 +12,10 @@
 // the messages it carries — the surfaces on the left, the gateway, the agents on the right — with its own parameters, and its Full is
 // the messages that passed and the refusals with their reasons.
 //
-// Value keys of the harness builds. The owner writes (kernel harness_agent_control, `configure`, harnessAgentControl.ts:14-25):
-//   connect (bool), transport (stdio · ws · remote: Local · Network · Remote), stallAfter (seconds: 30, 90, 300, 1800), autoContinue
-//   (bool), fanOut (0 to 8 observers). The harness's answer to a request to use a tool is Scope's Tool calls (§19.12), not the Gateway's.
+// Value keys of the harness builds. The owner writes (kernel harness_agent_control, AIKit's `gateway agent`): connect (bool: `resume` on,
+//   `pause` off, the binding's connector ingress). AIKit's gateway has no operation for transport (stdio · ws · remote: Local · Network ·
+//   Remote), stallAfter (seconds: 30, 90, 300, 1800), autoContinue (bool) or fanOut (0 to 8 observers): they stand disabled, the missing
+//   operation named (agent/aikitGatewayOps.ts). The harness's answer to a request to use a tool is Scope's Tool calls (§19.12), not the Gateway's.
 // The shell holds the Frames page's own settings (nothing here is written to the harness):
 //   session (all · lead · a session's name), direction (both · out · in), kinds (a comma list of messages · tools · heartbeat ·
 //   approvals · errors, or none), follow (bool), pause (bool), keep (100 to 5000 frames), frame (the frame opened, by its place in the

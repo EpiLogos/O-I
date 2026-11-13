@@ -263,7 +263,8 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const agentRows = useMemo((): AgentRows => {
     const rows = chain.find(entry => entry.slot.id === 'agent')?.device.rows ?? []
     return {
-      effort: rows.find(row => row.key === 'effort'), input: rows.find(row => row.key === 'input'), heartbeat: rows.find(row => row.key === 'heartbeat'),
+      model: rows.find(row => row.key === 'model'), effort: rows.find(row => row.key === 'effort'), input: rows.find(row => row.key === 'input'),
+      heartbeat: rows.find(row => row.key === 'heartbeat'),
       ...AGENT_P0_ROWS,
     }
   }, [chain])

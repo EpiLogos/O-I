@@ -25,7 +25,7 @@
 // Approvals neither reads nor sets the answer to a tool call (§19.14: which acts wait for you "are set on the Scope of the agent that asks
 // (§19.12): its Asks, Wait and On no answer. Approvals shows them and never sets them"; the design draws no `approvals`): it is Scope's
 // Tool calls, the Gateway slot's own `approvals` row read and set on Scope (agentChainDevices.ts gatewayDisclosed, kernel
-// harness_agent_control configure {approvals}; designBindings.ts ScopeAsks), and Approvals is handed no Gateway (ticket 788). Its queue
+// harness_agent_control, which AIKit's gateway has no operation for; designBindings.ts ScopeAsks), and Approvals is handed no Gateway (ticket 788). Its queue
 // is the shown session's pending consent requests (AIKit's encounter view `permissions`, the Thread's own reading, threadBinding.ts
 // pendingPermissions), each answered with the harness's own choice (allow once, allow always, reject) through the encounter's `permission`
 // verb. Wait and On no answer are the asking agent's Scope's (§19.12), and Approvals "shows them and never sets them" (§19.14): two

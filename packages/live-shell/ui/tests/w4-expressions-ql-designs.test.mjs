@@ -687,7 +687,9 @@ test('the Torus on Live\'s chain reads the stage the frame announces as a depend
   // argument and a dependency beside the rest, and the chain hands it in.
   // REPLACED (lane BA, round 868, O-I #853 on the face; DLW build ruling 2026-11-05): a playing take's lanes, as the clip player publishes
   // them, are the binding's last argument (torusDevice.ts torusLaneStanding) and a dependency beside the rest.
-  assert.match(source, /return useMemo\(\(\) => torusDesignBinding\(state, device, skyHeldTorusKeys\(plan, skyTargets\(state\)\), stage, rack, run, held \?\? \{\}, condition, tattvaName, table,\n\s*undefined, undefined, follow, laneStanding\),\n\s*\[state, device, plan, stage, rack, run, held, condition, tattvaName, table, follow, laneStanding\]\)/,
+  // REPLACED (parity D-21/D-34, 13 Nov): the notes the playing path holds light the design's Full (torusSounding over the binding), so
+  // they are a dependency beside the rest.
+  assert.match(source, /const sounding = useLivePlaying\(\)\.held\n\s*return useMemo\(\(\) => torusSounding\(torusDesignBinding\(state, device, skyHeldTorusKeys\(plan, skyTargets\(state\)\), stage, rack, run, held \?\? \{\}, condition, tattvaName, table,\n\s*undefined, undefined, follow, laneStanding\), sounding\),\n\s*\[state, device, plan, stage, rack, run, held, condition, tattvaName, table, follow, laneStanding, sounding\]\)/,
     'the stage, the frame\'s runner, M1′\'s rack, the Stage page\'s holds, the announced condition with its map name, M2\'s body constants and the mode it follows are dependencies of the binding')
   assert.match(source, /const binding = useTorusChainBinding\(state, device, follow\)/)
   const stage = slots => readFrameStage({subject: 'ql:subject:live', generation: 7, stale: false, slots, bindings: []})

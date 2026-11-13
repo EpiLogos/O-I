@@ -1,6 +1,6 @@
 # World shell: builder contracts
 
-**Standing:** the shell's builder contracts, carried from `WORLD-SHELL-DESIGN.md` and `DEVICE-SEMANTICS-LOCK.md` on 27 Oct 2026; the manual ([`../dlw/DLW.md`](../../ProjectCentral/docs/1-vision/dlw/DLW.md)) is the spec, and PROGRAMME ([`../../ProjectCentral/docs/0-ground/PROGRAMME.md`](../../ProjectCentral/docs/0-ground/PROGRAMME.md)) holds the owner's rulings.
+**Standing:** the shell's builder contracts, carried from `WORLD-SHELL-DESIGN.md` and `DEVICE-SEMANTICS-LOCK.md` on 27 Oct 2026; §9, the foundation, is the owner's 13 Nov 2026 ruling (R35); the manual ([`../dlw/DLW.md`](../../ProjectCentral/docs/1-vision/dlw/DLW.md)) is the spec, and PROGRAMME ([`../../ProjectCentral/docs/0-ground/PROGRAMME.md`](../../ProjectCentral/docs/0-ground/PROGRAMME.md)) holds the owner's rulings.
 
 ## 1. The device face, its parameters, and the faces with bodies
 
@@ -1012,45 +1012,114 @@ the whole Bimba graph from the audio callback" (§2.2). When the owner is
 not installed, the kernel's compose refuses with the exact repair named;
 "the refusal is itself the gate datum."
 
-## 9. The smallest seam set
+## 9. The foundation: one World Model, one Action registry, Sets in the kernel, devices as declarations
 
-*From WORLD-SHELL-DESIGN §10.*
+*Owner, 13 Nov 2026 (PROGRAMME R35). This section replaces the smallest seam set carried from WORLD-SHELL-DESIGN §10, which can be read at `ab44d7e57`. Everything a device, a view or an agent does in the DLW stands on these five layers, and each layer uses only the one below it.*
 
-The smallest set of architectural seams between today's code and this
-design:
+### 9.1 What stood before (read 13 Nov 2026)
 
-1. **Projection pane kinds** — the pane engine's body kinds carry the
-   projection kinds (`projection.earth`, `projection.timeline`,
-   `projection.constellation`, `projection.expressions`); the engine composes
-   the main area per mode (`modeLayouts`). Hidden retention carries over.
-2. **Projection module boundary** — each projection is a module with
-   mount/unmount + encounter subscription (the Atlas's vanilla-TS
-   controller mounts the way the retained app's controller does; no React
-   rewrite of the Atlas).
-3. **Encounter bridge** — encounter.subject/occasion/trail drive each
-   projection's state machine; Atlas World·Focus·Manifestation·Thread·Deep
-   ↔ spine mapping (§5). No second selection store.
-4. **Inhabitant manifest** — generalise the registries (panels slots,
-   FIELD_FAMILIES, browser categories, detached kinds) into one declared
-   inhabitant manifest admitted through `inhabitants.rs`; document and
-   conversation devices become face kinds with bodies.
-5. **Timeline generalisation** — Session/Arrangement present any World
-   track set (§6); the set model (`useSet.ts`, `document.ts`) gains World
-   track adapters (day tracks, run tracks, conversation clips).
-6. **Occurrence binding contract** — the generalised `Occurrence`
-   (subject_ref + place + time + image + basis) as the Earth projection's
-   data seam; QL sky binds as the M2 layer; no separate map subsystem.
-7. **Time spine** — Now/Occasion/Transport controls over the two-clock
-   bridge; Atlas non-linear scale adopted for deep time.
-8. **Pop-out** — device pop-out rides the pane engine's existing
-   detach/redock; no new windowing mechanism.
+- **Pull by device.** The kernel held no model of the world (§10's old first rule; `owner_routes.rs` "no assembled state"). It cached answers per question (`read_cache.rs`, `watch.rs`). Every reading came from one of about 250 one-shot owner spawns that re-derived the world from disk on each call: oi 68, aikit 68, factory 35, workcell 27, ql 23, actuation 21, ctrl 6.
+- **Sets assembled in React.** Each mode's tracks were built in hooks from several readings at the point of use. `useFactoryTracks.ts` reads sessions, harness binding, seat status, settings and attempts.
+- **Two doors.** The window called 224 distinct kernel ops, and only 19 call sites went through Actions (`invoke_action`, `product_action_run`). `oi act` listed Central's 264 Actions alone. AIKit's half refused ("39 Central agent profiles match this scope"), and Factory, Workcell, Actuation and QL were absent. A person and an agent did not act through the same door.
+- **One job, several implementations:**
+  - four agent censuses, so the chat offered test-written provider rows and no Claude Code or Codex;
+  - six send paths;
+  - seven model deciders;
+  - about nine Flow writers;
+  - two field engines;
+  - a Rust torus cut from the shipped build (`k8` is not in `native_shell`).
+
+### 9.2 The five layers
+
+1. **Owners are the authority.**
+   - Central: worlds, pages, the Day, NOW.
+   - AIKit: agents, sessions, models, skills, the wiki.
+   - Actuation: harness detection, processes.
+   - Factory: runs, tasks, attempts.
+   - Workcell: machines, seats, checkouts.
+   - QL: the sky, the clock, the map.
+
+   Nothing above this layer decides what a thing is.
+2. **The World Model, in the kernel.**
+   - It is a typed, held projection of every owner's present state. It is loaded once at launch and kept current by the watch's scopes (`root`, `project:<Name>`, `aikit`, `seats`) and by Action receipts.
+   - The window and agents subscribe to slices of it. No device and no hook reads an owner itself.
+   - The projection is never an authority. An owner's refusal leaves it as it was, and a slice whose owner cannot be read says so where it would stand (manual §16, "Rules for every device and view").
+3. **One Action registry, the only write path.**
+   - `oi act` holds every owner's Actions with their descriptors: inputs, mutation class, availability.
+   - A control that writes invokes an Action, and an agent invokes the same Action id.
+   - Availability is computed from the World Model before a control is pressed.
+   - Every receipt moves the model and lays an entry in the Day.
+4. **One Set per mode, built in the kernel.** Tracks, clips, rows (stops), takes and the Main track, in one shape for all five modes: manual §16.2 and §16.6 as data. The shell draws the Set and assembles none of it.
+5. **Devices and views are declarations.**
+   - A device declares four things: its kind and Live meaning (manual §16), the model slice it reads, the field each parameter reads, and the Action each control invokes. The SDK's `writePath` is an Action id.
+   - Session view, Arrangement view, Pane view, Clip view, Device view, the browser and the transport are one renderer each over the Set and the declarations. A mode is a row in a table.
+
+Two rules are checked mechanically on every landing:
+- no device or view code calls an owner or a kernel read op directly;
+- no control writes except by an Action.
+
+### 9.3 Each mode's core
+
+Each mode's core is the minimum that makes the mode work. It is drawn from the manual's tables §10.3, §10.5, §16.2, §16.5 and §16.6. Nothing outside the core is built until the core passes its gate (§9.5).
+
+| | Central | Factory | Expressions | Technē | Live |
+|---|---|---|---|---|---|
+| Model slice | Worlds, pages, today's Day, page revisions | Agents that start (one census), sessions, tasks and attempts, workcells | Expressions, scenes, Studio values, playback | Sources (the wiki), places, events, walks | The set, parts, clips, notes, the mixer |
+| Track / clip | World / page | Agent session / task | Expression / scene | Reading / event | Part / clip |
+| Row / take | Pages opened together / revisions | Batch / attempts | A moment / captured takes | A walk's stop / readings | Row / take lanes |
+| Main track | Day, Approvals | Run map, Approvals | — | — | The main mix |
+| Browser leads with | Worlds → pages; earlier Days | Projects → sessions; Agents | Expressions → scenes | Sources; places | Sets; the Torus's saved sounds |
+| Clip view | The page editor | The task's instruction and log; Launch: Trigger, Next task | Sequence, Sound | Material, Source | Notes, Envelopes |
+| Chain | Packet → Agent → Scope | Gateway → Agent (model, effort) → Scope → Git / landing | Studio: the field and its devices | The instrument → Lens | Note devices → Torus → effects |
+| Pane | Document | The task's log or terminal | Field | World (globe), the ruler | Torus |
+| Transport | Play sends the packet; Stop; Overdub (new entry or replace); Arm (direct or proposal); Capture (selection → packet); Load (saved) | Play runs; Stop pauses, twice cancels; Overdub steers; Arm; Tap; Tempo (effort); Load (context) | Play and Stop scenes; Record a take; Tempo; Arm; Capture | Play walks; Stop; Record a walk; Tempo (pace); Key (how far, as whom) | Live's own |
+| Actions | Page open and save; Day open and close; send; approve, reject | Session start, send, stop; commission; attempt read; seat join, release; approve | Scene save and launch; keep a take | Place; record a walk | Clip edit; part; mixer |
+| First repair | A Day on a ground Setup makes (#739) | One census and one send path; Factory in any world, not only O-I (#739) | One field engine | Earth mounts on the bound world | One sound engine in the build |
+
+Across every mode, one each of:
+- the constellation in focus;
+- the selection;
+- Approvals;
+- the agent spine (one census, one send path);
+- the Day that every receipt writes into.
+
+The planet, sky modulation, the shared field, the Palace, nested Agent racks and Nara wait until the core passes.
+
+### 9.4 Order
+
+The gate, §9.5, is #1000. It is built first, and every step after it passes it.
+
+1. The World Model: #1001.
+2. The Action registry: #1002.
+3. The agent spine: #1003.
+4. Sets in the kernel: #1004.
+5. Central's core: #1005. Factory's core: #1006.
+6. Receipts into the Day: #1007.
+7. Expressions: #1008. Technē: #1009. Live: #1010. One engine each.
+
+The tickets are on map #706. Their blocking edges carry this order.
+
+### 9.5 The gate
+
+Each mode's core acts are scripts that drive the real owners on a fresh, isolated home and read each effect back from its owner. They never use a fixture, a stub provider or the person's own `~/.aikit`, `~/.central` or `Control/`.
+
+The spine's five acts come first:
+1. Open a world and save a page.
+2. See the agents on this machine that start.
+3. Send a passage to one and get the answer in the page.
+4. Run a Factory task to its end.
+5. See the Day hold all of it and close.
+
+A ticket closes only when its acts' scripts pass and a session other than the builder's has run them. A refusal or a dimmed control never counts as a pass.
 
 ## 10. Kernel rules for builders
 
 *From WORLD-SHELL-DESIGN §11 and §11.1.*
 
-- No parallel World models, event stores, selection systems, graph stores,
-  Factory/Expression state stores, agent registries, or filesystem models.
+- No second authority: no parallel event stores, selection systems, graph
+  stores, Factory/Expression state stores, agent registries or filesystem
+  models. The kernel's World Model (§9.2) is a held projection of the owners'
+  state, not an authority, and is required (owner, 13 Nov 2026, R35).
 - No claims beyond native owners: Factory and Central entry points stay
   reserved for their native owners; the source-by-source licence gate
   governs all reference adoption (the Atlas is owned source — acquisition B; its NASA
