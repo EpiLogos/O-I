@@ -18,11 +18,12 @@
 .one-browser .world-browser-count { padding: 0 4px; font-size: 10px; color: var(--text-faint) }
 .one-browser .world-browser-count:empty { display: none }
 
-/* ——— categories (.bcats): the mockup's 112px, widened only as far as the longest label needs; the ellipsis is the last
-   resort. The four kinds are the headings (h6: 10.5px, faint); a row is 2px/3px with its mark, its name and a count where
-   the source discloses one. ——— */
-.one-browser .world-browser-main { display: grid; grid-template-columns: fit-content(156px) minmax(0, 1fr); min-height: 0; flex: 1 }
-.one-browser .world-category-list { min-width: 112px; padding: 0 3px 6px; overflow: auto; scrollbar-width: none; background: var(--bg-1); border-right: 1px solid var(--line); font-size: 11px }
+/* ——— categories (.bcats): the mockup's 112px column, the rest the list's (.bres, flex: 1), which never narrows below 176px
+   so its rows and its empty words read on a line rather than a word at a time (the column's own floor, --browser-w and
+   workspaceAreas.ts MIN_BROWSER_W, holds both). A long label ends in an ellipsis, whole in its title. The four kinds are the
+   headings (h6: 10.5px, faint); a row is 2px/3px with its mark, its name and a count where the source discloses one. ——— */
+.one-browser .world-browser-main { display: grid; grid-template-columns: 112px minmax(min(176px, 100%), 1fr); min-height: 0; flex: 1 }
+.one-browser .world-category-list { box-sizing: border-box; min-width: 0; padding: 0 3px 6px; overflow: auto; scrollbar-width: none; background: var(--bg-1); border-right: 1px solid var(--line); font-size: 11px }
 .one-browser .world-category-list h3 { margin: 0; padding: 6px 3px 2px; font-size: 10.5px; font-weight: 400; color: var(--text-faint); white-space: nowrap }
 .one-browser .world-category-list button { display: flex; align-items: center; gap: 6px; width: 100%; min-height: 0; padding: 2px 3px; border-radius: 2px; background: transparent; color: var(--text-dim); font-size: 11px; line-height: 1.4; text-align: left; white-space: nowrap }
 .one-browser .world-category-list button:hover { color: var(--text) }
@@ -82,7 +83,8 @@
 .one-browser .world-browser-results .mode-browser-empty-mark svg { width: 12px; height: 12px }
 .one-browser .world-browser-results .mode-browser-empty-head strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; font-weight: 400 }
 .one-browser .world-browser-results .mode-browser-empty-state { flex: none; margin-left: auto; padding: 0 0 0 6px; border: 0; font-size: 9.5px; letter-spacing: 0; color: var(--text-faint) }
-.one-browser .world-browser-results :is(.mode-browser-empty-owner, .mode-browser-empty-read) { margin: 1px 6px 0 23px; font-size: 10px; line-height: 1.4; color: var(--text-faint) }
+/* The owner's words under it read as the mockup's prose lines (.bsep): the list's whole width, 9.5px, faint. */
+.one-browser .world-browser-results :is(.mode-browser-empty-owner, .mode-browser-empty-read) { margin: 0; padding: 2px 6px 0; font-size: 9.5px; line-height: 1.45; color: var(--text-faint) }
 .one-browser .world-browser-results .world-files-heading h3 { font-size: 9.5px; font-weight: 400 }
 .one-browser .world-browser-results :is(.browser-sets, .browser-instruments) { padding: 0; border: 0; background: transparent }
 

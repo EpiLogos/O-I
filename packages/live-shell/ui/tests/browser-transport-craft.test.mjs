@@ -79,13 +79,20 @@ test('a category draws a count only when its source discloses one', () => {
   assert.doesNotMatch(button('Quiet'), /one-browser-category-count/, 'no count is guessed')
 })
 
-test('the browser stylesheet holds the floor: 25px search, a 112px column that widens only to fit, 23px rows, the 46% pool', async () => {
+test('the browser stylesheet holds the floor: 25px search, the 112px column beside a list of at least 176px, 23px rows, the 46% pool', async () => {
   const css = await source('frame/browser/browser.css')
   const rule = selector => css.match(new RegExp(`${selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\{([^}]*)\\}`))?.[1] ?? ''
   assert.match(rule('.one-browser .world-browser-searchrow'), /height: 25px/)
   assert.match(rule('.one-browser .world-browser-search input'), /background: var\(--bg-0\)/)
-  assert.match(rule('.one-browser .world-browser-main'), /grid-template-columns: fit-content\(156px\) minmax\(0, 1fr\)/, 'the column fits its longest label')
-  assert.match(rule('.one-browser .world-category-list'), /min-width: 112px/, 'and is never narrower than the mockup\'s 112px')
+  // Seen on the built candidate (~1135 px): categories ~115 px, the list ~105 px, its words wrapping one at a time.
+  assert.match(rule('.one-browser .world-browser-main'), /grid-template-columns: 112px minmax\(min\(176px, 100%\), 1fr\)/,
+    'the mockup\'s 112px category column; the list takes the rest and never narrows below 176px')
+  assert.match(rule('.one-browser .world-category-list'), /box-sizing: border-box; min-width: 0/, 'the column\'s padding stays inside its 112px')
+  const root = await source('styles.css')
+  assert.match(root, /--browser-w:clamp\(300px,22\.4vw,430px\)/, 'the browser opens at least 300px wide: 112 + the list\'s 176 and the edges')
+  assert.match(await source('shell/workspaceAreas.ts'), /export const MIN_BROWSER_W = 300\n/, 'and is never dragged narrower')
+  assert.match(rule('.one-browser .world-browser-results :is(.mode-browser-empty-owner, .mode-browser-empty-read)'), /margin: 0; padding: 2px 6px 0; font-size: 9\.5px/,
+    'an empty category\'s words are the mockup\'s .bsep prose: the list\'s whole width, 9.5px')
   assert.match(rule('.one-browser .world-category-list h3'), /font-size: 10\.5px;[^}]*color: var\(--text-faint\)/)
   assert.match(rule('.one-browser .world-category-list button[aria-pressed=true]'), /background: var\(--bg-3\)/, 'the chosen category is bg-3, as .bcat.on')
   assert.match(css, /min-height: 23px; padding: 2px 5px[^}]*font-size: 11px/, 'rows are the 23px .bitem at 11px')

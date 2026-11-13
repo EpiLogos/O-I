@@ -7,8 +7,9 @@
 export const FRAME_PAD = 6
 /** The least the panes keep across the window while the browser or the rail is dragged wider. */
 export const MIN_CENTRE_W = 240
-/** The browser's narrowest (App.tsx's resizer bound, as it stood). */
-export const MIN_BROWSER_W = 120
+/** The browser's narrowest: the mockup's 112px category column beside a list that still reads its rows and its empty words
+ * (world-shell-mockup.html .bcats, .bres; browser.css .world-browser-main). Below it the list wrapped word by word. */
+export const MIN_BROWSER_W = 300
 /** The rail's bounds (desktop/cradle/src/workspace/store.ts setWidgetRailWidth: "bounded as the docks were (260–900)"). */
 export const RAIL_MIN_W = 260
 export const RAIL_MAX_W = 900

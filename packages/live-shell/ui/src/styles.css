@@ -129,7 +129,7 @@ input { min-width:0; border:1px solid var(--line); background:var(--bg-1); paddi
 @media(max-width:1000px) { :root { --session-slot-w:80px} .frame { --rail-default:210px } .meter-field { display:none } }
 @media(max-width:760px) { :root { --session-slot-w:68px} .browser-search { padding:3px } .position-field { padding:3px 5px } .statusbar-counts { font-size:9px } }
 /* Second evidence pass: complete control geometry, reading values only from native contracts. */
-:root { --transport-h:46px; --session-slot-w:68px; --browser-w:clamp(176px,22.4vw,430px); --detail-h:clamp(180px,27.5vh,330px) }
+:root { --transport-h:46px; --session-slot-w:68px; --browser-w:clamp(300px,22.4vw,430px); --detail-h:clamp(180px,27.5vh,330px) }
 .frame { position:relative; padding:0 6px 0; gap:0; background:var(--bg-1) }
 /* The transport at the mockup's floor (.tp): a 14px title line over one row of 19–22px controls — 46px with its 3px rule. */
 .transport { margin:0 -6px; padding:2px 10px 5px; background:var(--bg-1); border-bottom:3px solid var(--line) }
