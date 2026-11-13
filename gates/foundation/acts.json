@@ -9,7 +9,7 @@
     "act": "see-the-agents-that-start",
     "test": "act_2_see_the_agents_that_start",
     "standing": "green",
-    "reason": "13 Nov 2026: the World Model's agents slice (the census: Actuation's detection, a start of each detected harness, AIKit's detail; census.rs) lists exactly the agents on this machine that start (#1001)"
+    "reason": "13 Nov 2026: the World Model's agents slice (the census: Actuation's detection, a start of each detected harness, AIKit's detail; census.rs) lists exactly the agents on this machine that start (#1001), and each that starts carries the model default and the Skill Sets AIKit gives it, made by AIKit itself in the fresh home and read from the census asked afresh (#1003)"
   },
   {
     "act": "send-a-passage-and-get-the-answer",
