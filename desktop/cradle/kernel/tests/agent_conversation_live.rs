@@ -105,4 +105,108 @@ fn one_op_opens_an_agent_conversation_that_answers() {
             break;
         }
     }
+
+    // An app relaunch restarts the encounter owner. The same agent must still
+    // answer: pi cannot resume, so the conversation continues in a new session.
+    let root = std::env::var("OI_CENTRAL_ROOT").expect("OI_CENTRAL_ROOT names the World");
+    stop_encounter_owner(&root);
+    let reopened = kernel
+        .apply(KernelOp::AgentConversation {
+            project: String::new(),
+            agent_ref: agent_ref.clone(),
+        })
+        .expect("reopen after the owner restarted");
+    let KernelOpResult::EncounterProvisioned { data: reopened } = reopened.result else {
+        panic!("reopen returned the wrong result variant");
+    };
+    println!("reopened {reopened}");
+    let first = session.clone();
+    let session = reopened["agent_session"]
+        .as_str()
+        .expect("session")
+        .to_owned();
+    let all = reopened["sessions"]
+        .as_array()
+        .expect("the conversation's sessions");
+    assert!(
+        all.iter().any(|s| s == first.as_str())
+            && all.last().is_some_and(|s| s == session.as_str()),
+        "{reopened}"
+    );
+    ask(
+        &mut kernel,
+        &session,
+        "Reply with exactly: still here.",
+        "still here",
+    );
+}
+
+fn ask(kernel: &mut Kernel, session: &str, words: &str, expect: &str) {
+    let view = reading(
+        kernel,
+        EncounterRequest::View {
+            agent_session: session.into(),
+            before: None,
+        },
+    );
+    let basis = view["draft"]["revision"].as_u64().unwrap_or(0);
+    let draft = reading(
+        kernel,
+        EncounterRequest::Draft {
+            agent_session: session.into(),
+            basis,
+            text: words.into(),
+        },
+    );
+    let revision = draft["revision"].as_u64().expect("draft revision");
+    reading(
+        kernel,
+        EncounterRequest::Prompt {
+            agent_session: session.into(),
+            draft_revision: revision,
+        },
+    );
+    let deadline = Instant::now() + Duration::from_secs(240);
+    loop {
+        assert!(Instant::now() < deadline, "no assistant answer within 240s");
+        std::thread::sleep(Duration::from_secs(2));
+        let view = reading(
+            kernel,
+            EncounterRequest::View {
+                agent_session: session.into(),
+                before: None,
+            },
+        );
+        if let Some(answer) = view["blocks"].as_array().and_then(|blocks| {
+            blocks.iter().find(|b| {
+                b["kind"] == "assistant"
+                    && b["text"]
+                        .as_str()
+                        .is_some_and(|t| t.to_lowercase().contains(expect))
+            })
+        }) {
+            println!("LANDPROOF session={session} text={}", answer["text"]);
+            return;
+        }
+    }
+}
+
+/// Stop the encounter owner serving exactly this World, by its pid.
+fn stop_encounter_owner(root: &str) {
+    let listing = std::process::Command::new("ps")
+        .args(["-axo", "pid=,command="])
+        .output()
+        .unwrap();
+    let wanted = format!("-C {root} session-space encounter-serve");
+    for line in String::from_utf8_lossy(&listing.stdout).lines() {
+        let line = line.trim();
+        if line.ends_with(&wanted) {
+            let pid = line.split_whitespace().next().unwrap();
+            std::process::Command::new("kill")
+                .arg(pid)
+                .status()
+                .unwrap();
+            std::thread::sleep(Duration::from_secs(2));
+        }
+    }
 }
