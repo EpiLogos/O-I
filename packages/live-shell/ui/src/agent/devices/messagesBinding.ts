@@ -576,7 +576,7 @@ export function messagesBinding(input: MessagesInput, ports: MessagesPorts = {})
       return
     }
     const scope = scopeOf()
-    const data = await act(PERSON_ACTS.express, {...scopeInput(scope), world_ref: world, intent_expression: words, ratified_world_refs: [world], ...(carries ? {skill_set_refs: carries} : {})})
+    const data = await act(PERSON_ACTS.express, {...scopeInput(scope), world_ref: world, intent_expression: words, purpose: words, ratified_world_refs: [world], ...(carries ? {skill_set_refs: carries} : {})})
     const allocation = isObj(data) && isObj(data.allocation) ? data.allocation : null
     if (!allocation || !str(allocation.profile_ref)) throw Error('Central answered Make without the profile it allocated.')
     hold({kind: 'agent', ...scope, ref: String(allocation.profile_ref), revision: str(allocation.revision) ?? 'r1'})
