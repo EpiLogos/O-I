@@ -8,6 +8,11 @@
 //! an agent here. An agent a person can talk to (`talks`) starts and is one AIKit opens a conversation with; one that starts but
 //! that AIKit would refuse is listed with AIKit's words as its why.
 //!
+//! Each agent also says what it carries (world-shell.md §9.3: "Agents that start, with the skill set and the law each
+//! carries"): the model AIKit asks for when a chat opens with it and the skill set it gets, from AIKit's client row, and the law
+//! statements its floor carries, from Central's reading (`control.floor.read`) of the instruction file AIKit names for it at the
+//! world's root.
+//!
 //! The World Model holds the census as its `agents` slice (world_model.rs); nothing else lists agents.
 use crate::{KernelOp, KernelOpOutcome};
 use serde_json::{json, Map, Value};
@@ -38,15 +43,140 @@ pub fn read(via: &dyn Fn(KernelOp) -> Result<KernelOpOutcome, String>) -> Result
         ),
         Err(why) => (Vec::new(), Some(why)),
     };
-    Ok(census_of(&detection, &clients, aikit_why, probe))
+    let floor = floor_reading(via, &detection, &clients);
+    Ok(census_of(&detection, &clients, aikit_why, &floor, probe))
 }
 
-/// The census from Actuation's detection and AIKit's client rows, each detected harness started through `start`. Pure but for
-/// `start`; the probes run side by side.
+/// Central's reading of the floors the detected agents read (O-I #1003): the instruction files AIKit names for them (each client
+/// row's `guidance`), by file name at the world's root, read once for all; or why Central gave none.
+fn floor_reading(
+    via: &dyn Fn(KernelOp) -> Result<KernelOpOutcome, String>,
+    detection: &Value,
+    clients: &[Value],
+) -> Result<Value, String> {
+    let detected: Vec<&str> = detection["harnesses"]
+        .as_array()
+        .map(|rows| {
+            rows.iter()
+                .filter(|row| row["native_kind"] == "harness" && row["state"] == "detected")
+                .filter_map(|row| row["slug"].as_str())
+                .collect()
+        })
+        .unwrap_or_default();
+    let mut files: Vec<String> = clients
+        .iter()
+        .filter(|client| detected.iter().any(|slug| client_names(client, slug)))
+        .flat_map(floor_files)
+        .collect();
+    files.sort();
+    files.dedup();
+    if files.is_empty() {
+        return Err("AIKit names no instruction file any agent on this machine reads".into());
+    }
+    let outcome = via(op(
+        json!({"op": "central", "project": null, "request": {"kind": "floor", "files": files}}),
+    )?)?;
+    let value = serde_json::to_value(&outcome.result).map_err(|error| error.to_string())?;
+    if value["result"] != "central_reading" {
+        return Err(format!(
+            "the kernel answered {}, not Central's floor reading",
+            value["result"]
+        ));
+    }
+    Ok(value["data"].clone())
+}
+
+/// The files at a world's root that an AIKit client row says its harness reads: its guidance layer's files by name
+/// (`~/.claude/CLAUDE.md` → `CLAUDE.md`), Markdown only.
+fn floor_files(client: &Value) -> Vec<String> {
+    client["guidance"]
+        .as_array()
+        .map(|names| {
+            names
+                .iter()
+                .filter_map(Value::as_str)
+                .filter_map(|path| path.rsplit('/').next())
+                .filter(|name| name.ends_with(".md"))
+                .map(str::to_owned)
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+/// What an agent carries (O-I #1003): its model and the skill set it gets, from AIKit's client row, and the law its floor carries,
+/// from Central's floor reading. Each part says why where its owner does not answer.
+fn carries_of(
+    slug: &str,
+    aikit: &Value,
+    unavailable: Option<&str>,
+    floor: &Result<Value, String>,
+) -> Value {
+    let silent = unavailable
+        .map(|why| format!("AIKit could not be read: {why}"))
+        .or_else(|| {
+            aikit
+                .is_null()
+                .then(|| format!("AIKit names no client for {slug}"))
+        });
+    let model = match (&silent, aikit.get("model_default")) {
+        (Some(why), _) => json!({"why": why}),
+        (None, Some(Value::Object(default))) => {
+            let mut model = Map::new();
+            for key in ["model_id", "model_name", "native_provider"] {
+                if let Some(value) = default.get(key).filter(|value| !value.is_null()) {
+                    model.insert(key.into(), value.clone());
+                }
+            }
+            Value::Object(model)
+        }
+        (None, Some(Value::Null)) => json!({"own": true, "why": format!(
+            "AIKit holds no model default for {slug}: a new chat opens with its own model"
+        )}),
+        (None, _) => json!({"why": aikit["carries_reason"].as_str().map_or_else(
+            || format!("AIKit's client status names no model default for {slug}"),
+            str::to_owned,
+        )}),
+    };
+    let skills = match (&silent, aikit.get("skill_sets")) {
+        (Some(why), _) => json!({"why": why}),
+        (None, Some(Value::Array(sets))) => {
+            json!({"sets": sets, "skills": aikit.get("skills").cloned().unwrap_or_else(|| json!([]))})
+        }
+        (None, _) => json!({"why": aikit["carries_reason"].as_str().map_or_else(
+            || format!("AIKit's client status names no Skill Sets for {slug}"),
+            str::to_owned,
+        )}),
+    };
+    let law = match (&silent, floor_files(aikit).into_iter().next()) {
+        (Some(why), _) => json!({"why": why}),
+        (None, None) => json!({"why": format!(
+            "AIKit names no instruction file {slug} reads, so no floor reaches it"
+        )}),
+        (None, Some(file)) => match floor {
+            Err(why) => {
+                json!({"file": file, "why": format!("Central did not read the floor: {why}")})
+            }
+            Ok(reading) => match reading["floors"]
+                .as_array()
+                .and_then(|floors| floors.iter().find(|row| row["file"] == file.as_str()))
+            {
+                Some(row) => row.clone(),
+                None => {
+                    json!({"file": file, "why": format!("Central's floor reading names no {file}")})
+                }
+            },
+        },
+    };
+    json!({"model": model, "skills": skills, "law": law})
+}
+
+/// The census from Actuation's detection, AIKit's client rows and Central's floor reading, each detected harness started through
+/// `start`. Pure but for `start`; the probes run side by side.
 pub fn census_of(
     detection: &Value,
     clients: &[Value],
     aikit_why: Option<String>,
+    floor: &Result<Value, String>,
     start: fn(&Path) -> Started,
 ) -> Value {
     let rows = detection["harnesses"]
@@ -92,6 +222,10 @@ pub fn census_of(
             executable.clone().map_or(Value::Null, Value::from),
         );
         entry.insert("aikit".into(), detail.unwrap_or(Value::Null));
+        if started.is_some() {
+            let carries = carries_of(&slug, &entry["aikit"], aikit_why.as_deref(), floor);
+            entry.insert("carries".into(), carries);
+        }
         match started {
             Some(Started::Answered { words, seconds }) => {
                 entry.insert("starts".into(), true.into());
@@ -333,6 +467,10 @@ mod tests {
         ]})
     }
 
+    fn no_floor() -> Result<Value, String> {
+        Err("Central has no Action control.floor.read".into())
+    }
+
     fn fake(program: &Path) -> Started {
         if program.ends_with("claude") {
             Started::Answered {
@@ -353,7 +491,7 @@ mod tests {
                    "conversation": {"opens": true, "protocol": "acp"}}),
             json!({"client": "only-aikit"}),
         ];
-        let census = census_of(&detection(), &clients, None, fake);
+        let census = census_of(&detection(), &clients, None, &no_floor(), fake);
         let starting: Vec<_> = talking(&census)
             .iter()
             .map(|row| row["slug"].as_str().unwrap().to_owned())
@@ -400,7 +538,7 @@ mod tests {
             words: format!("{} 1.0", program.display()),
             seconds: 0.1,
         };
-        let census = census_of(&detection(), &clients, None, answers);
+        let census = census_of(&detection(), &clients, None, &no_floor(), answers);
         let slugs = |rows: Vec<&Value>| -> Vec<String> {
             rows.iter()
                 .map(|row| row["slug"].as_str().unwrap().to_owned())
@@ -428,6 +566,7 @@ mod tests {
             &detection(),
             &[json!({"client": "claude", "harness": "claude-code"})],
             None,
+            &no_floor(),
             answers,
         );
         assert_eq!(silent["agents"][0]["talks"], false);
@@ -438,11 +577,63 @@ mod tests {
     }
 
     #[test]
+    fn an_agent_carries_its_model_its_skill_set_and_the_law_its_floor_carries() {
+        let clients = [
+            json!({"client": "claude", "harness": "claude-code", "conversation": {"opens": true, "protocol": "acp"},
+                   "model_default": {"model_id": "claude-opus-5-5", "model_name": null}, "skill_sets": ["foundation"],
+                   "skills": ["wayfinder"], "guidance": ["~/.claude/CLAUDE.md"]}),
+            json!({"client": "codex", "harness": "codex", "conversation": {"opens": true, "protocol": "acp"},
+                   "model_default": null, "skill_sets": [], "skills": [], "guidance": ["~/.codex/AGENTS.md"]}),
+        ];
+        let floor = Ok(
+            json!({"schema": "central.floor-reading/v1", "root": "/w/Central", "floors": [
+                {"file": "CLAUDE.md", "state": "rendered", "statements": [
+                    {"file": "communicate-and-engage/smallest-sufficient.md", "topic": "Smallest sufficient", "standing": "durable"}]},
+                {"file": "AGENTS.md", "state": "absent", "statements": []}
+            ]}),
+        );
+        let answers = |program: &Path| Started::Answered {
+            words: format!("{} 1.0", program.display()),
+            seconds: 0.1,
+        };
+        let census = census_of(&detection(), &clients, None, &floor, answers);
+        let claude = &census["agents"][0]["carries"];
+        assert_eq!(claude["model"], json!({"model_id": "claude-opus-5-5"}));
+        assert_eq!(
+            claude["skills"],
+            json!({"sets": ["foundation"], "skills": ["wayfinder"]})
+        );
+        assert_eq!(claude["law"]["file"], "CLAUDE.md");
+        assert_eq!(
+            claude["law"]["statements"][0]["topic"],
+            "Smallest sufficient"
+        );
+        let codex = &census["agents"][1]["carries"];
+        assert_eq!(codex["model"]["own"], true, "no default: its own model");
+        assert_eq!(codex["law"]["state"], "absent");
+        // Central unread: each floor says why, in Central's words; the model and skill set stand.
+        let unread = census_of(&detection(), &clients, None, &no_floor(), answers);
+        let law = &unread["agents"][0]["carries"]["law"];
+        assert_eq!(law["file"], "CLAUDE.md");
+        assert!(law["why"]
+            .as_str()
+            .unwrap()
+            .contains("Central has no Action control.floor.read"));
+        assert_eq!(
+            unread["agents"][0]["carries"]["model"]["model_id"],
+            "claude-opus-5-5"
+        );
+        // A detected harness that is not an agent carries nothing.
+        assert!(census["not_agents"][0].get("carries").is_none());
+    }
+
+    #[test]
     fn aikit_unavailable_leaves_the_rows_and_says_why() {
         let census = census_of(
             &detection(),
             &[],
             Some("AIKit client status is unavailable".into()),
+            &no_floor(),
             fake,
         );
         assert!(

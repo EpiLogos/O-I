@@ -244,6 +244,13 @@ export function nativeSetup(transport: KernelTransportStatus, groundChanged?: ()
       if (answer.outcome?.result !== 'owner_route_reading') throw new Error('AIKit did not answer aikit harness disclose.')
       return answer.outcome.data
     },
+    // The agents on this machine: the census (kernel census.rs), the World Model's agents slice, through its door (O-I #1003).
+    async agents(fresh) {
+      const answer = await call({op: 'model_subscribe', slice: 'agents', ...(fresh ? {fresh: true} : {})})
+      if (answer.error) throw new Error(answer.error)
+      if (answer.outcome?.result !== 'model_slice') throw new Error('The World Model did not answer the agents on this machine.')
+      return answer.outcome.data
+    },
     // The Day's form in a new world (kernel ground_form.rs): the application's own form kept in the ground through Central.
     async groundForm(request) {
       const answer = await call({op: 'ground_form', request})

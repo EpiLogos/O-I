@@ -11,7 +11,8 @@ export type CentralRequest =
  | {kind:"source-location";source_ref:string}
  | {kind:"open-day";day_ref?:string}
  | {kind:"initialise-day";day_ref:string;document_id:string;expected_revision:string;expected_policy_revision:string;form:CentralLocation;expected_form_revision:string}
- | {kind:"agent-set";agent_set_ref:string};
+ | {kind:"agent-set";agent_set_ref:string}
+ | {kind:"floor";files:string[]};
 /** Open today: Central's `central.day.ensure` on the civil-time policy's revision, through the kernel's `act` (O-I #1002), the person's
  * press (action.rs PERSON_ACTS). `project` rides in the input as the kernel's own builder put it (central.rs, before the Action): null
  * names the root register, so no configured project is filled in for it. */

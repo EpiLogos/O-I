@@ -39,7 +39,10 @@
 // Harnesses & models (HarnessSource, desktop/cradle/src/configuration/harnessSource.ts, over harness_status and model_catalogue):
 //   harnesses   [{agent, harness, starts, talks, version?, why?, client?, folderPresent?, capability?, effect?, folder?, gap?, signIn?, signInNote?,
 //               signInUnread?, loginNow?}]  one per agent on this machine, the census (the World Model's agents, O-I #1003): whether it
-//               starts (its version) and whether you can talk to it (it starts and AIKit opens a conversation with it), or why not; and AIKit's client facts on it when AIKit has a client for it: whether its folder exists, the owner's own
+//               starts (its version) and whether you can talk to it (it starts and AIKit opens a conversation with it), or why not; what
+//               an agent that starts carries (settings/windowValues.ts carriesValues): model (modelId, modelProvider) or modelWhy, the
+//               Skill Sets it gets (sets) and their skills (skills) or skillsWhy, and the law its floor carries — lawFile, lawState
+//               (rendered | foreign | absent), law [{topic, file, standing}] — or lawWhy; and AIKit's client facts on it when AIKit has a client for it: whether its folder exists, the owner's own
 //               effect words, the configuration folder, an adapter gap's missing contract; and its own login as AIKit declares it
 //               (`aikit harness auth <client>`): signIn [{key,
 //               provider, command}] each one it can run, signInNote the harness's own words when it signs in only inside itself (no
@@ -68,7 +71,10 @@
 // Setup (manual §10.11; the kernel's `setup` op over native oi's adoption: discover, plan, apply with the plan's review token):
 //               setup [{step: ground | harnesses | credentials | machines | projects, state: found | accepted, items: [{name, where?,
 //               change?, why?, credential?, bound?}]}]  what each step found, the change Accept would make, or why setup leaves it alone
-//               (a Credentials row names the credential it binds, and whether it is bound); setupStep the step shown; setupPlan [text]
+//               (a Credentials row names the credential it binds, and whether it is bound); the Harnesses and skills step adds agents
+//               [{agent, harness, starts, talks, version?, why?, …what it carries, as harnesses}], exactly the census (O-I #1003), or
+//               agentsWhy why it is not read, and tools [{harness, instructions, settings, models}] what AIKit discloses of each agent's
+//               settings (or disclosure, why it did not); setupStep the step shown; setupPlan [text]
 //               the steps the owner would take, in order, once you press Preview. credential (the key the Credentials step binds) and
 //               reference (where it lies in your secure store: a reference, never the key) are your choices there.
 //               folders [{path, title, place: work | elsewhere, finds: none | one | many | unreadable | ground, wikis: [path],
@@ -554,6 +560,41 @@ function BirthForm({p}: {p: ViewProps}) {
   </div>
 }
 
+/** What an agent carries (O-I #1003), under its row: its model, the skill set it gets and the law statements its floor carries, each as
+ * its owner reads it (AIKit, Central), or why not. */
+function Carries({h, span}: {h: Rec; span: number}) {
+  const sets = strs(h.sets), skills = strs(h.skills), law = Array.isArray(h.law) ? h.law.filter(rec) : undefined, file = txt(h.lawFile)
+  const name = txt(h.harness) ?? txt(h.agent) ?? 'This agent'
+  return <tr className="st-sub" data-carries={txt(h.agent)}><td colSpan={span}>
+    <dl className="st-details" aria-label={`${name}: what it carries`}>
+      <div><dt>Model</dt><dd className={txt(h.model) ? undefined : 'st-dim'} data-i={`Model|${txt(h.modelWhy) ?? `${txt(h.modelId) ?? NONE}${txt(h.modelProvider) ? ` · ${h.modelProvider}` : ''}: AIKit asks for it when a chat opens with ${name}.`}`}>
+        {txt(h.model) ?? txt(h.modelWhy) ?? NONE}</dd></div>
+      <div><dt>Skill set</dt><dd className={h.sets === undefined ? 'st-dim' : undefined}
+        data-i={`Skill set|${h.sets === undefined ? txt(h.skillsWhy) ?? NONE : `${sets.length ? `Skill Sets ${sets.join(', ')}` : 'No Skill Set is selected'}${skills.length ? `: ${skills.join(', ')}` : ''}.`}`}>
+        {h.sets === undefined ? txt(h.skillsWhy) ?? NONE : sets.length ? sets.join(', ') : 'none selected'}{skills.length > 0 && <small>{skills.length} skill{skills.length === 1 ? '' : 's'}</small>}</dd></div>
+      <div><dt>Law</dt><dd className={law?.length ? undefined : 'st-dim'}
+        data-i={`Law${file ? ` · ${file}` : ''}|${law?.length ? law.map(s => `${txt(s.topic) ?? NONE} (${txt(s.file) ?? NONE}, ${txt(s.standing) ?? NONE})`).join('; ') : txt(h.lawWhy) ?? 'Its floor carries no statement.'}`}>
+        {law?.length ? law.map(s => txt(s.topic) ?? txt(s.file)).join(' · ') : txt(h.lawWhy) ?? 'no statement'}{file && <small>{file}{txt(h.lawState) && h.lawState !== 'rendered' ? ` · ${h.lawState}` : ''}</small>}</dd></div>
+    </dl>
+  </td></tr>
+}
+
+/** The agents on this machine in Setup's Harnesses and skills step: exactly the census (O-I #1003), each with whether it starts and what
+ * it carries. */
+function SetupAgents({reading}: {reading: Rec | undefined}) {
+  const agents = Array.isArray(reading?.agents) ? reading!.agents.filter(rec) : undefined
+  return <table className="st-tbl" aria-label="The agents on this machine">
+    <Cols w={[150, undefined]} />
+    <thead><tr><th>Agent</th><th>Starts</th></tr></thead>
+    <tbody>{agents === undefined ? <tr><td colSpan={2} className="st-none">{txt(reading?.agentsWhy) ?? NONE}</td></tr>
+      : agents.length === 0 ? <tr><td colSpan={2} className="st-none">There is no agent on this computer.</td></tr>
+      : agents.flatMap(h => [<tr key={txt(h.agent)} data-census-agent={txt(h.agent)} data-read={h.starts === true ? undefined : 'true'}>
+        <td><b>{txt(h.harness) ?? txt(h.agent) ?? NONE}</b></td>
+        <td data-i={h.starts !== true && txt(h.why) ? `Doesn't start|${h.why}` : undefined}>{h.starts === true ? txt(h.version) ?? 'yes' : txt(h.why) ?? 'no'}</td>
+      </tr>, ...(h.starts === true ? [<Carries key={`${txt(h.agent)}:carries`} h={h} span={2} />] : [])])}</tbody>
+  </table>
+}
+
 /** What AIKit reads of each tool besides its skills (its disclosure): where its instructions and settings lie and the providers its
  * models reach; what it does not read is named and left alone. */
 function HarnessTools({reading}: {reading: Rec | undefined}) {
@@ -587,6 +628,7 @@ function SetupPage({p}: {p: ViewProps}) {
         <Lamp state={steps ? STEP_LIGHT[txt(r?.state) ?? ''] ?? 'unknown' : 'unknown'} tone="green" /><i>{i + 1}</i>{s.label}</button>
     })}</nav>
     {at === 'projects' ? <ProjectsStep p={p} /> : at === 'credentials' ? <CredentialsStep p={p} reading={reading} /> : <>
+      {at === 'harnesses' && reading && <SetupAgents reading={reading} />}
       <table className="st-tbl">
         <Cols w={[150, 210, undefined]} />
         <thead><tr><th>Found {pager}</th><th>Where</th><th>The change Accept makes</th></tr></thead>
@@ -623,9 +665,9 @@ function HarnessesPage({p}: {p: ViewProps}) {
       {harnesses && <table className="st-tbl">
         <Cols w={[118, 150, 50, 64, undefined, 150]} />
         <thead><tr><th>Agent</th><th>Starts</th><th>AIKit{strOf(v, 'aikitWhy') && <i className="st-why" data-i={`AIKit|${strOf(v, 'aikitWhy')}`}>!</i>}</th><th>Capability</th><th>After a change</th><th /></tr></thead>
-        <tbody>{harnesses.map(h => {
+        <tbody>{harnesses.flatMap(h => {
           const client = txt(h.client) ?? '', gap = rec(h.gap) ? h.gap : undefined, logins = Array.isArray(h.signIn) ? h.signIn.filter(rec) : []
-          return <tr key={txt(h.agent) ?? client} data-census-agent={txt(h.agent)} data-read={h.talks === true ? undefined : 'true'}>
+          return [<tr key={txt(h.agent) ?? client} data-census-agent={txt(h.agent)} data-read={h.talks === true ? undefined : 'true'}>
             <td><b>{txt(h.harness) ?? txt(h.agent) ?? NONE}</b>{gap && <i className="st-why" data-i={`Adapter gap|${txt(gap.contract) ?? 'A contract is missing.'}${txt(gap.skill) ? ` Its authoring skill: ${gap.skill}.` : ''}`}>!</i>}</td>
             <td data-i={h.starts !== true && txt(h.why) ? `Doesn't start|${h.why}` : undefined}>{h.starts === true ? txt(h.version) ?? 'yes' : txt(h.why) ?? 'no'}{h.starts === true && h.talks !== true && <i className="st-why" data-i={`You cannot talk to it here|${txt(h.why) ?? 'AIKit opens no conversation with it.'}`}>!</i>}</td>
             <td data-i={h.folderPresent === false ? 'AIKit|No configuration folder for it yet: Install makes it and puts AIKit\'s skills there.' : undefined}>{h.folderPresent === true ? 'its folder' : h.folderPresent === false ? 'no folder' : NONE}</td>
@@ -642,7 +684,7 @@ function HarnessesPage({p}: {p: ViewProps}) {
               {txt(h.signInNote) && <small className="st-dim" data-i={`Sign in|${h.signInNote}`}>Signs in inside itself</small>}
               {txt(h.signInUnread) && <i className="st-why" data-i={`Sign in|${h.signInUnread}`}>!</i>}
             </td>
-          </tr>
+          </tr>, ...(h.starts === true ? [<Carries key={`${txt(h.agent) ?? client}:carries`} h={h} span={6} />] : [])]
         })}</tbody>
       </table>}
       <LoginSaid v={v} />
@@ -1296,7 +1338,14 @@ const SYSTEM = [
 // Setup on this Mac: four steps accepted, and the Projects step reading the folders of work it found (§10.11).
 const SETUP_DONE = [
   {step: 'ground', state: 'accepted', items: [{name: 'Your ground', where: '~/Central', change: 'adopted where it is'}]},
-  {step: 'harnesses', state: 'accepted', items: [
+  {step: 'harnesses', state: 'accepted', agents: [
+    {agent: 'claude-code', harness: 'Claude Code', starts: true, talks: true, version: '2.1.323 (Claude Code)', model: 'claude-opus-5-5', modelId: 'claude-opus-5-5',
+      sets: ['foundation'], skills: ['engineering-methodology', 'wayfinder'], lawFile: 'CLAUDE.md', lawState: 'rendered',
+      law: [{topic: 'Authorship', file: 'authorship-and-return/propose-not-write.md', standing: 'adopted'}]},
+    {agent: 'codex', harness: 'Codex', starts: true, talks: true, version: 'codex-cli 0.155.1', modelWhy: 'AIKit holds no model default for codex: a new chat opens with its own model',
+      sets: ['foundation'], skills: [], lawFile: 'AGENTS.md', lawState: 'rendered', law: [{topic: 'Authorship', file: 'authorship-and-return/propose-not-write.md', standing: 'adopted'}]},
+    {agent: 'gemini', harness: 'Gemini CLI', starts: false, talks: false, why: 'gemini did not start: its node runtime could not load a library.'}],
+  items: [
     {name: 'Claude Code', where: '~/.claude', change: 'connected through its adapter · its skills keep working'},
     {name: 'Codex', where: '~/.codex', change: 'connected through its adapter'},
     {name: 'pi', where: '~/.pi', change: 'connected through its adapter'},
@@ -1326,12 +1375,18 @@ const DEFAULTS = {
   elsewhere: dump([{ref: 'live:delay:time', title: 'Delay time', where: 'the Delay on its chain'}, {ref: 'techne:timeline:zoom', title: 'Timeline zoom', where: 'the Timeline'}]),
   harnesses: dump([
     {agent: 'claude-code', harness: 'Claude Code', starts: true, talks: true, version: '2.1.323 (Claude Code)', client: 'claude-code', folderPresent: true, capability: 'agent', effect: 'Restart Claude to read new settings.', folder: '~/.claude',
+      model: 'claude-opus-5-5', modelId: 'claude-opus-5-5', sets: ['foundation'], skills: ['engineering-methodology', 'wayfinder'], lawFile: 'CLAUDE.md', lawState: 'rendered',
+      law: [{topic: 'Authorship', file: 'authorship-and-return/propose-not-write.md', standing: 'adopted'}, {topic: 'Shape of the world', file: 'world/shape-of-the-world.md', standing: 'adopted'}],
       signIn: [{key: 'claude-code|provider:anthropic', provider: 'anthropic', command: 'claude auth login'}], loginNow: 'AIKit finds what claude-code needs to sign in.'},
     {agent: 'codex', harness: 'Codex', starts: true, talks: true, version: 'codex-cli 0.155.1', client: 'codex', folderPresent: true, capability: 'agent', effect: 'Next session only.', folder: '~/.codex',
+      modelWhy: 'AIKit holds no model default for codex: a new chat opens with its own model', sets: ['foundation'], skills: [], lawFile: 'AGENTS.md', lawState: 'rendered',
+      law: [{topic: 'Authorship', file: 'authorship-and-return/propose-not-write.md', standing: 'adopted'}, {topic: 'Shape of the world', file: 'world/shape-of-the-world.md', standing: 'adopted'}],
       signIn: [{key: 'codex|provider:openai', provider: 'openai', command: 'codex login'}], loginNow: 'AIKit finds what codex needs to sign in.'},
     {agent: 'gemini', harness: 'Gemini CLI', starts: false, talks: false, why: 'gemini did not start: its node runtime could not load a library.', client: 'gemini', folderPresent: true, capability: 'agent', effect: 'Next session only.', folder: '~/.gemini',
       signInNote: 'Login with Google (OAuth) is Gemini CLI\'s default auth; the API key delivers only when credential:gemini is bound'},
-    {agent: 'pi', harness: 'Pi', starts: true, talks: true, version: '1.5.0', client: 'pi', folderPresent: true, capability: 'agent', folder: '~/.pi'},
+    {agent: 'pi', harness: 'Pi', starts: true, talks: true, version: '1.5.0', client: 'pi', folderPresent: true, capability: 'agent', folder: '~/.pi',
+      modelWhy: 'AIKit holds no model default for pi: a new chat opens with its own model', sets: ['foundation'], skills: [], lawFile: 'AGENTS.md', lawState: 'rendered',
+      law: [{topic: 'Authorship', file: 'authorship-and-return/propose-not-write.md', standing: 'adopted'}, {topic: 'Shape of the world', file: 'world/shape-of-the-world.md', standing: 'adopted'}]},
     {agent: 'hermes', harness: 'Hermes', starts: false, talks: false, why: 'hermes did not answer its version.', client: 'hermes', folderPresent: true, capability: 'gateway', gap: {contract: 'No session-settings contract for Hermes yet.', skill: 'aikit:harness-adapter-authoring'}},
     {agent: 'opencode', harness: 'OpenCode', starts: false, talks: false, why: 'Actuation detects opencode but found no executable to start', client: 'opencode', folderPresent: false, capability: 'agent'},
   ]),

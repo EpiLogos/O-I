@@ -29,6 +29,11 @@ pub enum Request {
     AgentSet {
         agent_set_ref: String,
     },
+    /// The floors the agents read at the root world (O-I #1003): Central's reading of the instruction files named
+    /// (`control.floor.read`), each rendered by Central, written by another hand or absent, with the law statements it carries.
+    Floor {
+        files: Vec<String>,
+    },
 }
 
 fn reading(client: &CentralClient, project: Option<&str>, action: &str, schema: &str) -> Value {
@@ -224,6 +229,15 @@ pub fn operate(
                 json!({"scope":"root","ref":agent_set_ref}),
             )
             .map_err(|e| e.to_string()),
+        Request::Floor { files } => {
+            let value = client
+                .run("control.floor.read", json!({"files": files}))
+                .map_err(|e| e.to_string())?;
+            if value["schema"] != "central.floor-reading/v1" {
+                return Err("Central answered control.floor.read in a form the kernel does not read (central.floor-reading/v1 expected)".into());
+            }
+            Ok(value)
+        }
         Request::InitialiseDay {
             day_ref,
             document_id,

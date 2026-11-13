@@ -682,7 +682,140 @@ fn window_agents(world: &World) -> Result<Vec<String>, String> {
         .collect())
 }
 
-/// Act 2: see the agents on this machine that start, read back from the census.
+/// What each agent that starts carries (O-I #1003; world-shell.md §9.3), made by its owner and read back from the census as the
+/// window reads it (Settings › Harnesses & models, Setup's Harnesses step): a model default for one agent and a Skill Set made
+/// by AIKit itself, as a person makes them in AIKit's own tools; the census asked afresh, as the window's Read again asks it
+/// (the census is not re-read on AIKit's churn); and each agent's model and Skill Sets checked against AIKit's own client status.
+fn carries_hold(world: &World, starting: &[(String, String)]) -> Act {
+    let aikit = |args: &[&str]| owner(world, "OI_AIKIT_BIN", "aikit", args);
+    let (first, _) = starting
+        .first()
+        .ok_or("no agent harness on this machine starts")?;
+    let model = if first == "codex" {
+        "gpt-5.5"
+    } else {
+        "claude-opus-5-5"
+    };
+    let value = json!({first.as_str(): {"model_id": model}}).to_string();
+    let plan = aikit(&[
+        "--json",
+        "config",
+        "plan",
+        "--setting",
+        "ai-kit:models:models.default",
+        "--scope",
+        "machine",
+        "--value",
+        &value,
+    ])?;
+    let plan_file = world.root.join("model-default.plan.json");
+    std::fs::write(&plan_file, plan.to_string())
+        .map_err(|e| format!("AIKit's plan could not be kept: {e}"))?;
+    aikit(&[
+        "--json",
+        "config",
+        "apply",
+        "--plan-file",
+        &plan_file.to_string_lossy(),
+    ])?;
+    aikit(&["--json", "set", "create", "foundation"])?;
+    aikit(&[
+        "--json",
+        "compose",
+        "repertoire",
+        "--set",
+        "foundation",
+        "--scope",
+        "global",
+        "--apply",
+    ])?;
+
+    let answer = world.send(json!({"op": "model_subscribe", "slice": "agents", "fresh": true}))?;
+    let census = result_of(&answer, "model_slice")
+        .map_err(|e| format!("model_subscribe agents {e}"))?["data"]["value"]
+        .clone();
+    let rows = census["agents"].as_array().cloned().unwrap_or_default();
+    let status = aikit(&["--json", "client", "status"])?;
+    let clients = status["clients"].as_array().cloned().unwrap_or_default();
+    for (slug, _) in starting {
+        let row = rows
+            .iter()
+            .find(|row| row["slug"] == slug.as_str())
+            .ok_or_else(|| format!("the census does not list {slug}, which starts"))?;
+        let carries = &row["carries"];
+        let client = clients
+            .iter()
+            .find(|client| match client["harness"].as_str() {
+                Some(harness) => harness == slug,
+                None => client["client"] == slug.as_str(),
+            });
+        let Some(client) = client else {
+            if carries["model"]["why"].is_string() && carries["skills"]["why"].is_string() {
+                println!(
+                    "{slug} carries nothing of AIKit's: {}",
+                    carries["model"]["why"]
+                );
+                continue;
+            }
+            return Err(format!(
+                "AIKit has no client for {slug}, yet the census carries AIKit's facts for it: {}",
+                clip(carries)
+            ));
+        };
+        match client["model_default"]["model_id"].as_str() {
+            Some(id) if carries["model"]["model_id"] == id => {}
+            Some(id) => {
+                return Err(format!(
+                    "AIKit gives {slug} the model {id}; the census carries {}",
+                    clip(&carries["model"])
+                ))
+            }
+            None if carries["model"]["own"] == true => {}
+            None => {
+                return Err(format!(
+                    "AIKit holds no model default for {slug}; the census carries {}",
+                    clip(&carries["model"])
+                ))
+            }
+        }
+        if carries["skills"]["sets"] != client["skill_sets"]
+            || carries["skills"]["skills"] != client["skills"]
+        {
+            return Err(format!(
+                "AIKit gives {slug} the Skill Sets {} and skills {}; the census carries {}",
+                client["skill_sets"],
+                client["skills"],
+                clip(&carries["skills"])
+            ));
+        }
+        if !carries["skills"]["sets"]
+            .as_array()
+            .is_some_and(|sets| sets.iter().any(|set| set == "foundation"))
+        {
+            return Err(format!(
+                "{slug} does not get the Skill Set AIKit selected: {}",
+                clip(&carries["skills"])
+            ));
+        }
+        println!(
+            "{slug} carries the model {} and the Skill Sets {} (as AIKit gives them)",
+            carries["model"]["model_id"]
+                .as_str()
+                .unwrap_or("of its own"),
+            carries["skills"]["sets"]
+        );
+    }
+    let carried = rows
+        .iter()
+        .find(|row| row["slug"] == first.as_str())
+        .map(|row| row["carries"]["model"]["model_id"].clone());
+    if carried != Some(json!(model)) {
+        return Err(format!("the model default AIKit made for {first} ({model}) is not what the census carries: {carried:?}"));
+    }
+    Ok(())
+}
+
+/// Act 2: see the agents on this machine that start, read back from the census, and what each carries.
 #[test]
 #[ignore = "foundation act: runs the installed owners in a fresh home"]
 fn act_2_see_the_agents_that_start() {
@@ -707,7 +840,7 @@ fn act_2_see_the_agents_that_start() {
                 "the window's agents are not the ones that start: missing {missing:?}, listed but not starting {extra:?}"
             ));
         }
-        Ok(())
+        carries_hold(world, &starting)
     });
 }
 

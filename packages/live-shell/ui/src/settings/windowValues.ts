@@ -10,7 +10,7 @@ import {basisChanged, categoryOf, displayValue, draftOwnerChanged, editableValue
   type Draft, type SettingEntry} from './model'
 import type {HarnessReading} from '../../../../../desktop/cradle/src/configuration/harnessSource'
 import {shapeHarnessClients} from '../../../../../desktop/cradle/src/configuration/harnessSource'
-import {agentName, type CensusReading} from '../../../../../desktop/cradle/src/agency/census'
+import {agentName, type AgentCarries, type CensusAgent, type CensusReading} from '../../../../../desktop/cradle/src/agency/census'
 import type {ProfileDocument} from '../../../../../desktop/cradle/src/configuration/contracts'
 import type {SystemCompositionReading} from '../../../../../desktop/cradle/src/workspace/settings/types'
 import type {PresentationDocument} from '../../../../../desktop/cradle/src/kernel/types'
@@ -298,15 +298,41 @@ export function searchStep(count: number, hit: number, key: string): {hit: numbe
 
 // ---------------------------------------------------------------------------------------------------------------- Harnesses & models
 
+/** What an agent carries as the pages draw it (census.ts AgentCarries; O-I #1003): `model` its model (`modelId`, `modelProvider`), or
+ * `modelWhy`; `sets` and `skills` the skill set it gets, or `skillsWhy`; `lawFile` the instruction file its floor is, `law` [{topic, file,
+ * standing}] the statements that floor carries with `lawState` (rendered, foreign or absent), and `lawWhy` why it carries none. Pure. */
+export function carriesValues(carries: AgentCarries | undefined): Record<string, unknown> {
+  if (!carries) return {}
+  const {model, skills, law} = carries
+  return {
+    ...('id' in model ? {model: model.name ?? model.id, modelId: model.id, ...(model.provider ? {modelProvider: model.provider} : {})} : {modelWhy: model.why}),
+    ...('sets' in skills ? {sets: skills.sets, skills: skills.skills} : {skillsWhy: skills.why}),
+    ...(law.file ? {lawFile: law.file} : {}),
+    ...('state' in law ? {lawState: law.state, ...(law.renderer ? {lawRenderer: law.renderer} : {}), law: law.statements.map(row => ({topic: row.topic, file: row.file, standing: row.standing}))} : {}),
+    ...(law.why ? {lawWhy: law.why} : 'state' in law && law.state === 'absent' ? {lawWhy: `There is no ${law.file} at your world's root: no law reaches it.`} : {}),
+  }
+}
+
+/** An agent's folder: the configuration folder AIKit's client row names for it, when AIKit has one. */
+export const agentFolder = (agent: CensusAgent): string | undefined => folderOf(txt(agent.aikit?.config_dir) ?? null)
+
+/** One agent of the census as the pages list it (O-I #1003): its name, whether it starts (its version) and whether you can talk to it,
+ * or why not, and what it carries. Pure. */
+export function censusRow(agent: CensusAgent): Record<string, unknown> {
+  return {agent: agent.slug, harness: agentName(agent), starts: agent.starts, talks: agent.talks, ...(agent.version ? {version: agent.version} : {}), ...(agent.why ? {why: agent.why} : {}),
+    ...carriesValues(agent.carries)}
+}
+
 /** Harnesses & models: the agents on this machine, which are the census (the World Model's agents, O-I #1003), one row per agent with
- * whether it starts (its version) and whether you can talk to it, or why not and AIKit's client facts on it (harness_status) as detail, never rows of their own; and the
- * catalogue's routes (model_catalogue). A section the owner refused stays absent. Pure. */
+ * whether it starts (its version) and whether you can talk to it, or why not, what it carries (its model, its skill set and its floor's
+ * law), and AIKit's client facts on it (harness_status) as detail, never rows of their own; and the catalogue's routes (model_catalogue).
+ * A section the owner refused stays absent. Pure. */
 export function harnessValues(reading: HarnessReading | null, logins: HarnessLoginReading | null = null, census: CensusReading | null = null): Record<string, Value> {
   const values: Record<string, Value> = {}
   const clients = reading?.harnesses.state === 'ok' ? reading.harnesses.rows : []
   if (census?.state === 'read') values.harnesses = json(census.agents.map(agent => {
     const row = clients.find(client => client.harness === agent.slug || client.client === agent.slug)
-    return {agent: agent.slug, harness: agentName(agent), starts: agent.starts, talks: agent.talks, ...(agent.version ? {version: agent.version} : {}), ...(agent.why ? {why: agent.why} : {}),
+    return {...censusRow(agent),
       ...(row ? {client: row.client, ...(row.config_dir_present !== null ? {folderPresent: row.config_dir_present} : {}), capability: row.capability, ...(row.effect ? {effect: row.effect} : {}),
         ...(folderOf(row.config_dir) ? {folder: folderOf(row.config_dir)} : {}),
         ...(row.adapter_gap ? {gap: {contract: row.adapter_gap.missing_contract, skill: row.adapter_gap.authoring_skill_ref}} : {}), ...harnessSignIn(logins, row.client)} : {})}
@@ -640,15 +666,16 @@ export function setupExtensionLine(name: string, extension: SetupExtension, brin
  * health, or Workcell's refusal) and the Workcells Central's current machine is bound to (machine.declaration's workcell bindings;
  * none until it is adopted). */
 export interface SetupMachine {readonly state: 'read'; readonly workcell: {readonly workcell_ref?: unknown; readonly workcell_ref_source?: unknown; readonly health?: unknown} | {readonly error: string}; readonly bound: readonly string[]}
-/** A detected agent tool as the Harnesses and skills step reads it (`aikit client status`): AIKit's client and harness names and its
- * folder. Only the tools AIKit detects on this computer; one that is not installed is not a tool you use. */
+/** An agent of the census AIKit has a client for, as Setup asks AIKit about it (setupAgentTools): AIKit's client and harness names and
+ * its folder. */
 export interface SetupHarness {readonly client: string; readonly harness: string; readonly folder?: string}
 /** A skill root AIKit discovers (`aikit init`: its label, path, valid skills and problems, and who owns it — foreign, adopted with the
  * procedure that adopted it, or generated with its generation), and the skills `aikit collate --all` names in it. */
 export interface SetupSkillRoot {readonly label: string; readonly path: string; readonly skills: number; readonly problems: number; readonly names: readonly string[]
   readonly standing: string; readonly procedure?: string; readonly generation?: string}
-/** The Harnesses and skills step: the tools and the skill roots, or AIKit's refusal to read them, in its words. */
-export type SetupHarnesses = {readonly state: 'read'; readonly harnesses: readonly SetupHarness[]; readonly roots: readonly SetupSkillRoot[]} | {readonly state: 'refused'; readonly error: string}
+/** The Harnesses and skills step's skill roots, or AIKit's refusal to read them, in its words. Its agents are the census (SetupSnapshot
+ * `agents`). */
+export type SetupHarnesses = {readonly state: 'read'; readonly roots: readonly SetupSkillRoot[]} | {readonly state: 'refused'; readonly error: string}
 /** A key AIKit's discovery finds (`aikit credential discover`, presence only): where it lies and its name, never its value; the credential
  * a binding of it satisfies (AIKit's proposal; none for a name AIKit knows no provider for) and whether that is bound. */
 export interface SetupKeyFinding {readonly source: string; readonly location: string; readonly name: string; readonly credential?: string; readonly bound: boolean}
@@ -729,6 +756,8 @@ export interface SetupSnapshot {
   readonly plan: SetupPreview | null
   readonly machine?: SetupMachine
   readonly brought?: string | null
+  /** The agents on this machine: the census (the World Model's agents slice; O-I #1003), once the ground stands. */
+  readonly agents?: CensusReading
   readonly harnesses?: SetupHarnesses
   readonly credentials?: SetupCredentials
 }
@@ -935,10 +964,17 @@ export function setupMachineStep(machine: SetupMachine | undefined): Record<stri
   return {step: 'machines', state: 'found', items: [item]}
 }
 
-/** The tools AIKit detects on this computer, from its client status (harnessSource.ts shapeHarnessClients): each one's client, harness and
- * folder. A tool AIKit does not detect is not one you use. Pure. */
-export function setupHarnessClients(status: unknown): SetupHarness[] {
-  return shapeHarnessClients(status).filter(row => row.detected).map(row => ({client: row.client, harness: row.harness, ...(folderOf(row.config_dir) ? {folder: folderOf(row.config_dir)} : {})}))
+/** The agents Setup asks AIKit about: the census's agents (the one list of agents, O-I #1003) that AIKit has a client for, each with
+ * AIKit's client and harness names and its folder. An agent AIKit has no client for has nothing of AIKit's to read. Pure. */
+export function setupAgentTools(census: CensusReading | undefined): SetupHarness[] {
+  return census?.state === 'read' ? census.agents.flatMap((agent): SetupHarness[] => {
+    const client = txt(agent.aikit?.client), folder = agentFolder(agent)
+    return client ? [{client, harness: txt(agent.aikit?.harness) ?? agent.slug, ...(folder ? {folder} : {})}] : []
+  }) : []
+}
+/** The census agent whose folder holds a skill root, if any. Pure. */
+export function setupRootAgent(census: CensusReading | undefined, path: string): CensusAgent | undefined {
+  return census?.state === 'read' ? census.agents.find(agent => { const folder = agentFolder(agent); return !!folder && (path === folder || path.startsWith(`${folder}/`)) }) : undefined
 }
 
 /** The skill roots AIKit discovers (`aikit init`'s roots), each with who owns it as init names it (`ownership`: foreign, adopted with its
@@ -961,16 +997,19 @@ export const setupNamespace = (root: Pick<SetupSkillRoot, 'label'>): string => r
 const SETUP_HELD = new Set(['adopted', 'generated'])
 const skillsWord = (n: number) => `${n} skill${n === 1 ? '' : 's'}`
 
-/** The Harnesses and skills step (manual §10.11: "Each agent tool you use, with its settings, its instructions and its skills"): each skill
- * root under the tool whose folder holds it (else under AIKit's label for it), the change Accept makes — AIKit adopts its skills, and the
- * tool reads them where they were, its settings and instructions as they are — or, once AIKit holds the root, that it does. A tool with
- * no skills, and a root AIKit cannot place, are named and left alone. Accepted once AIKit holds every root that keeps skills. Pure. */
-export function setupHarnessStep(reading: SetupHarnesses | undefined, disclosure?: SetupDisclosure): Record<string, unknown> | undefined {
+/** The Harnesses and skills step (manual §10.11: "Each agent tool you use that starts, with its settings, its instructions, its skills and
+ * the law it carries"): `agents`, exactly the census (O-I #1003), each with whether it starts and what it carries (its model, its skill
+ * set and its floor's law), or `agentsWhy` where the census is not read; and each skill root under the agent whose folder holds it (else
+ * under AIKit's label for it), with the change Accept makes — AIKit adopts its skills, and the agent reads them where they were, its
+ * settings and instructions as they are — or, once AIKit holds the root, that it does. A root AIKit cannot place is named and left alone.
+ * Accepted once AIKit holds every root that keeps skills. Pure. */
+export function setupHarnessStep(reading: SetupHarnesses | undefined, census?: CensusReading, disclosure?: SetupDisclosure): Record<string, unknown> | undefined {
   if (!reading) return undefined
-  if (reading.state === 'refused') return {step: 'harnesses', state: 'found', items: [{name: 'Your agent tools', why: reading.error}]}
-  const ownerOf = (root: SetupSkillRoot) => reading.harnesses.find(tool => tool.folder && (root.path === tool.folder || root.path.startsWith(`${tool.folder}/`)))
+  const agents = census?.state === 'read' ? census.agents : []
+  const listed = census?.state === 'read' ? {agents: agents.map(censusRow)} : {agentsWhy: census?.state === 'unavailable' ? census.why : 'The agents on this machine are not read yet.'}
+  if (reading.state === 'refused') return {step: 'harnesses', state: 'found', ...listed, items: [{name: 'Your agents\' skills', why: reading.error}]}
   const items: Record<string, unknown>[] = reading.roots.map(root => {
-    const tool = ownerOf(root), name = tool?.harness ?? root.label, by = tool?.harness ?? 'The tool'
+    const agent = setupRootAgent(census, root.path), name = agent ? agentName(agent) : root.label, by = agent ? agentName(agent) : 'The agent'
     const listed = root.names.length ? ` (${root.names.join(', ')})` : ''
     if (!root.skills) return {name, where: root.path, why: 'It keeps no skills AIKit can read: nothing to adopt.'}
     if (SETUP_HELD.has(root.standing)) return {name, where: root.path,
@@ -978,15 +1017,14 @@ export function setupHarnessStep(reading: SetupHarnesses | undefined, disclosure
     if (root.standing !== 'foreign') return {name, where: root.path, why: `AIKit does not say whether it holds these skills (aikit init names no ownership for ${root.label}): they are left as they are.`}
     return {name, where: root.path, change: `AIKit adopts its ${skillsWord(root.skills)}${listed} as skill/${setupNamespace(root)}/… · ${by} reads them where they were · its settings and instructions stay as they are${root.problems ? ` · AIKit names ${root.problems} entr${root.problems === 1 ? 'y' : 'ies'} it cannot read` : ''}`}
   })
-  for (const tool of reading.harnesses) if (!reading.roots.some(root => ownerOf(root) === tool)) items.push({name: tool.harness, where: tool.folder ?? tool.client, why: 'It keeps no skills here: nothing to adopt. Its settings stay as they are.'})
   const keeping = reading.roots.filter(root => root.skills > 0)
-  // What AIKit reads of each tool besides its skills (its disclosure): its instructions, settings and models; or why it said nothing.
-  const tools = disclosure?.state === 'read' ? reading.harnesses.flatMap(tool => { const row = setupToolDisclosure(disclosure.reading, tool); return row ? [row] : [] }) : []
-  const said = disclosure?.state === 'refused' ? {disclosure: `AIKit did not say what it reads of each tool's settings and instructions: ${disclosure.error}`} : {}
+  // What AIKit reads of each agent besides its skills (its disclosure): its instructions, settings and models; or why it said nothing.
+  const tools = disclosure?.state === 'read' ? setupAgentTools(census).flatMap(tool => { const row = setupToolDisclosure(disclosure.reading, tool); return row ? [row] : [] }) : []
+  const said = disclosure?.state === 'refused' ? {disclosure: `AIKit did not say what it reads of each agent's settings and instructions: ${disclosure.error}`} : {}
   // Nothing to bring in is done (manual §10.11: what you leave out is not shown as missing), and says so.
-  if (!keeping.length) return {step: 'harnesses', state: 'accepted', items, tools, ...said,
-    said: `Nothing to bring in: ${reading.harnesses.length ? 'no agent tool here keeps skills AIKit can adopt' : 'AIKit finds no agent tool on this computer'}. Each tool stays as it is.`}
-  return {step: 'harnesses', state: keeping.every(root => SETUP_HELD.has(root.standing)) ? 'accepted' : 'found', items, tools, ...said}
+  if (!keeping.length) return {step: 'harnesses', state: 'accepted', ...listed, items, tools, ...said,
+    said: `Nothing to bring in: ${agents.length ? 'no agent here keeps skills AIKit can adopt' : 'there is no agent on this computer'}. Each agent stays as it is.`}
+  return {step: 'harnesses', state: keeping.every(root => SETUP_HELD.has(root.standing)) ? 'accepted' : 'found', ...listed, items, tools, ...said}
 }
 /** What AIKit's disclosure says of one detected tool (aikit.harness-disclosure/v1, its profile by the tool's harness name): where its
  * instructions lie (the guidance layer), where its settings lie, the providers its models reach. AIKit names where these lie, not what they
@@ -1093,7 +1131,7 @@ export function setupValues(snapshot: SetupSnapshot, held: (key: string) => Valu
       if (!txt(held('birthDate')) && birth.kept.date) values.birthDate = birth.kept.date
     }
   }
-  const harnesses = setupHarnessStep(snapshot.harnesses, snapshot.disclosure)
+  const harnesses = setupHarnessStep(snapshot.harnesses, snapshot.agents, snapshot.disclosure)
   if (harnesses) steps.push(harnesses)
   const credentials = setupCredentialStep(snapshot.credentials, held)
   if (credentials) steps.push(credentials)
@@ -1149,7 +1187,7 @@ export const SETTINGS_WINDOW_WIRING = {
     planErrors: 'what the owners refused instead of planning (config_plan_reviewed errors)',
     result: 'the owners\' answer to Apply or Reset (config_apply_reviewed, config_reset)',
     back: 'the name of the work Settings returns to: a contextual entry\'s own (SettingsRequest.returnLabel), else the mode the frame stands in (settings/host.ts setSettingsReturnLabel)',
-    harnesses: 'the agents on this machine: the census (the World Model\'s agents, O-I #1003), each with AIKit\'s client facts (harness_status) as detail',
+    harnesses: 'the agents on this machine: the census (the World Model\'s agents, O-I #1003), each with what it carries (its model and skill set from AIKit\'s client status, the law its floor carries from Central\'s control.floor.read) and AIKit\'s client facts (harness_status) as detail',
     routes: 'the catalogue\'s declared routes (model_catalogue)', credentials: 'AIKit\'s credential binding metadata (credential_list), each Verify\'s verdict (credential_verify)',
     found: 'keys discovery found (credential_discover, presence only)',
     secretRefs: 'the credential references Workcell records, each with where it is observed (workcell_read secret-list: `workcell secret list`, workcell.secret-reference-inventory/v1)',
@@ -1169,7 +1207,7 @@ export const SETTINGS_WINDOW_WIRING = {
     visualLayer: 'the renderer\'s visual layer (SettingsAdapter.visualPreferences)', welcome: 'the renderer\'s welcome scene (SettingsAdapter.visualPreferences)',
     products: 'each product\'s mount and operations (system_composition_read)', ran: 'the last operation\'s answer (product_action_run)',
     system: 'each owner\'s System disclosure on its four axes (system_composition_read)',
-    setup: 'Setup\'s steps (manual §10.11): Ground from native oi\'s adoption (the kernel op `setup`: status and discover) and Central\'s civil-time preview (central.time.policy.preview: how your days are kept), its bounds (central.ground.placement.preview), its Day\'s form (SetupSource.groundForm: the kernel\'s ground_form preview, carried by the ground\'s O-I project or kept in Control/forms) and the person\'s key (SetupSource.groundAuthority: the kernel\'s ground_authority preview, never the key), once the ground stands the world\'s Music folder (SetupSource.groundMusic: the kernel\'s ground_music preview, whether Central\'s file map keeps it as a folder scope), whether the person\'s grant holds the root acts Setup grants today (central.ground.agreement.preview: the acts an older grant lacks, or a grant kept by hand named and left as it is), and the World\'s standing authority in Actuation (SetupSource.act: actuation.authority.list, granted by Accept through actuation.authority.grant-world, held by the person and rooted at the World\'s root, renewed as each project becomes theirs), accepted once the ground is bound and recognised, Central keeps its days, bounds, Day form and key, the grant agrees or is kept by hand, and Actuation keeps the World\'s standing authority; Harnesses and skills also show what AIKit discloses of each tool (SetupSource.harnessDisclosure: aikit harness disclose), and a step with nothing to adopt or bind is accepted and says so; Machines from Workcell\'s status (op workcell_status_read) and Central\'s machine.declaration of role current, accepted once that binds the Workcell this computer answers as; Projects from Central\'s Work, accepted once a project stands with its ground. Harnesses and skills from AIKit: the tools its client status detects (op harness_status), the skill roots aikit init discovers (aikit_read init) with who owns each (its ownership: foreign, adopted, generated), and the skills aikit collate --all names in each, accepted once AIKit holds every root that keeps skills. Credentials from AIKit: where aikit credential discover finds each key (presence only), the providers aikit harness auth names for each detected tool (op harness_auth_describe) and the bindings aikit credential list keeps (metadata only), accepted once a key is bound and none found waits; items carry the credential a row binds, and bound',
+    setup: 'Setup\'s steps (manual §10.11): Ground from native oi\'s adoption (the kernel op `setup`: status and discover) and Central\'s civil-time preview (central.time.policy.preview: how your days are kept), its bounds (central.ground.placement.preview), its Day\'s form (SetupSource.groundForm: the kernel\'s ground_form preview, carried by the ground\'s O-I project or kept in Control/forms) and the person\'s key (SetupSource.groundAuthority: the kernel\'s ground_authority preview, never the key), once the ground stands the world\'s Music folder (SetupSource.groundMusic: the kernel\'s ground_music preview, whether Central\'s file map keeps it as a folder scope), whether the person\'s grant holds the root acts Setup grants today (central.ground.agreement.preview: the acts an older grant lacks, or a grant kept by hand named and left as it is), and the World\'s standing authority in Actuation (SetupSource.act: actuation.authority.list, granted by Accept through actuation.authority.grant-world, held by the person and rooted at the World\'s root, renewed as each project becomes theirs), accepted once the ground is bound and recognised, Central keeps its days, bounds, Day form and key, the grant agrees or is kept by hand, and Actuation keeps the World\'s standing authority; Harnesses and skills also show what AIKit discloses of each tool (SetupSource.harnessDisclosure: aikit harness disclose), and a step with nothing to adopt or bind is accepted and says so; Machines from Workcell\'s status (op workcell_status_read) and Central\'s machine.declaration of role current, accepted once that binds the Workcell this computer answers as; Projects from Central\'s Work, accepted once a project stands with its ground. Harnesses and skills: the agents, exactly the census (the World Model\'s agents slice through model_subscribe, O-I #1003), each with its model, its skill set and the law its floor carries; from AIKit, the skill roots aikit init discovers (aikit_read init) with who owns each (its ownership: foreign, adopted, generated), and the skills aikit collate --all names in each, accepted once AIKit holds every root that keeps skills. Credentials from AIKit: where aikit credential discover finds each key (presence only), the providers aikit harness auth names for each agent of the census AIKit has a client for (op harness_auth_describe) and the bindings aikit credential list keeps (metadata only), accepted once a key is bound and none found waits; items carry the credential a row binds, and bound',
     folders: 'the folders of the ground\'s Work (Central work.list), each with Central\'s projectcentral.inspect, its material and its ProjectCentral parts (central.files.list); then the folders of work that stand elsewhere under the world\'s folder (Central work.candidates)',
     groundFolder: 'the folder the Ground step would make your ground in: the one chosen (the system\'s chooser, then native oi\'s discover with it), else the folder native oi reads the world\'s ground in',
     birth: 'your name and date of birth as the identity owner keeps them (SetupSource.identity: the kernel\'s nara_identity list and open), once the ground is made; absent until you give them, never shown as missing',
@@ -1196,7 +1234,7 @@ export const SETTINGS_WINDOW_WIRING = {
     previewStep: 'Central\'s projectcentral.adopt.preview or migrate.preview for the folder and wiki chosen; Create previews from Central\'s inspection (it has no preview of projectcentral.init); a folder elsewhere previews Central\'s work.bring.preview',
     chooseGroundFolder: 'the system\'s folder chooser (the native host\'s choose_folder, purpose ground), then native oi\'s discover of the ground there under the name shown',
     keepBirth: 'the identity owner\'s save (SetupSource.identity: the kernel\'s nara_identity save — QL checks it, Central keeps it in the ground) of your name and date of birth, read back by its list and open; a correction is a new revision of the same identity',
-    rereadSetup: 'native oi\'s status and discover, then AIKit\'s tools, skill roots, keys and bindings, Workcell\'s status and Central\'s machine declaration, Central\'s Work and the folders of work elsewhere, read again',
+    rereadSetup: 'native oi\'s status and discover, then the census asked afresh (model_subscribe agents, fresh), AIKit\'s skill roots, keys and bindings, Workcell\'s status and Central\'s machine declaration, Central\'s Work and the folders of work elsewhere, read again',
   },
   local: {
     search: 'what you search for', hit: 'the search result ↑/↓ marked', scope: 'the scope a page\'s settings are read and changed at', focus: 'the setting a press or a request opened',

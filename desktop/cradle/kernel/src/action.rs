@@ -120,7 +120,13 @@ pub(crate) fn registry_takes(action: &str, input: &str) -> bool {
 /// and what its receipt moves. `None` for an id no owner prefix names.
 pub fn owner_slices(action: &str) -> Option<Vec<crate::world_model::Slice>> {
     use crate::world_model::Slice;
-    let slices = if central_action(action) {
+    let slices = if matches!(
+        action,
+        "control.floor.render" | "control.law.adopt" | "control.apply-proposal"
+    ) {
+        // The floor each agent reads: the census says which law statements it carries (census.rs, O-I #1003).
+        vec![Slice::Worlds, Slice::Day, Slice::Agents]
+    } else if central_action(action) {
         vec![Slice::Worlds, Slice::Day]
     } else if action.starts_with("aikit.") {
         vec![Slice::Sessions, Slice::Models]

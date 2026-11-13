@@ -760,6 +760,19 @@ function scriptedSetup() {
     return {schema: 'oi.ground-form/v1', name: 'ql-daily-die.html', kept: true, state: 'present', source_path: 'Control/forms/ql-daily-die.html'}
   }
   const harnessDisclosure = async () => { calls.push(['disclosure']); if (!world.disclosure) throw new Error('aikit harness disclose did not answer'); return world.disclosure }
+  // The census as the World Model answers it (`model_subscribe` agents; kernel census.rs census_of's row shape, O-I #1003): each tool
+  // Actuation detects, started, with AIKit's client row on it and what it carries; `censusRefusal`: a World Model that does not answer.
+  const agents = async fresh => {
+    calls.push(['agents', !!fresh])
+    if (world.censusRefusal) throw new Error(world.censusRefusal)
+    const rows = [...world.tools.values()].map(tool => ({slug: tool.harness, harness_ref: `harness/${tool.harness}`, native_kind: 'harness', state: 'detected',
+      executable: `/usr/local/bin/${tool.client}`, aikit: {client: tool.client, harness: tool.harness, detection: 'detected', config_dir_present: true, config_dir: tool.folder},
+      carries: {model: {model_id: 'claude-opus-5-5'}, skills: {sets: ['foundation'], skills: ['wayfinder']},
+        law: {file: 'CLAUDE.md', state: 'rendered', renderer: 'control.floor.render', statements: [{file: 'world/shape-of-the-world.md', topic: 'Shape of the world', standing: 'adopted'}]}},
+      starts: true, version: '2.1.323 (Claude Code)', start_seconds: 0.4, talks: true}))
+    return {schema: 'oi.world-model-slice/v1', slice: 'agents', owner: 'kernel', scopes: ['machine'], version: 1, state: 'read', error: null, read_at_unix_ms: 1,
+      value: {schema: 'oi.agents-census/v1', detection_ref: 'd1', observed_at: 'now', agents: rows, not_agents: [], aikit_detail: {state: 'read'}}}
+  }
   // The kernel's factory_owner for a project (desktop/cradle/kernel/src/factory.rs; shapes as the walk-bridge answered on a scratch world,
   // 29 Oct): locate (oi.factory-source-discovery/v1) and project-setup (Factory's factory.project-location/v1). A Work member that is no
   // project is outside Central's disclosed ground.
@@ -794,7 +807,7 @@ function scriptedSetup() {
     }
     throw new Error(`Unknown action: ${action}`)
   }
-  return {source: {adoption, central, act, workcell, aikit, identity, harnessDisclosure, groundAuthority, groundForm, factory, groundChanged: () => calls.push(['groundChanged'])}, calls, world, GROUND, HOME}
+  return {source: {adoption, central, act, workcell, aikit, identity, harnessDisclosure, agents, groundAuthority, groundForm, factory, groundChanged: () => calls.push(['groundChanged'])}, calls, world, GROUND, HOME}
 }
 /** AIKit's answers on a scratch Arriving world (REAL; the kernel's owner-route fixture, the world's folder written /w/Arriving). */
 const REAL = JSON.parse(readFileSync(new URL('../../../../desktop/cradle/kernel/tests/fixtures/owner-routes/aikit-setup-harnesses-credentials-2026-10-28.json', import.meta.url), 'utf8'))
@@ -1198,19 +1211,27 @@ test('SCRIPTED — Machines: Accept binds Central\'s current machine to the Work
   await assert.rejects(walk.accept('machines', held({})), /already binds a different Workcell: workcell:mac/)
 })
 
-test('CODE-DERIVED — Setup\'s Harnesses and skills step is AIKit\'s reading of each agent tool and its skills: found until AIKit holds every skill root, its settings and instructions left as they are', () => {
-  const base = {adoption: {}, folders: {state: 'unread'}, plan: null}
-  // AIKit's own answers on a scratch Arriving world (REAL): Claude Code detected, its two skills foreign, then adopted.
-  const harnesses = win.setupHarnessClients(REAL.client_status.data)
-  assert.deepEqual(harnesses, [{client: 'claude', harness: 'claude-code', folder: '/w/Arriving/.claude'}], 'the detected tools only: Codex is not installed')
+test('CODE-DERIVED — Setup\'s Harnesses and skills step lists exactly the census, each agent with what it carries, and AIKit\'s reading of each agent\'s skills: found until AIKit holds every skill root, its settings and instructions left as they are', () => {
+  // The agents are the census (the World Model's agents slice, O-I #1003): Actuation detects Claude Code, which started; AIKit's client row
+  // on it is detail (REAL: AIKit's client status on a scratch Arriving world, where Codex is not installed and so no agent here).
+  const claude = REAL.client_status.data.clients.find(row => row.client === 'claude')
+  const census = {state: 'read', agents: [{slug: 'claude-code', harnessRef: 'harness/claude-code', executable: '/x/claude', starts: true, talks: true, version: '2.1.323', aikit: claude,
+    carries: {model: {id: 'claude-opus-5-5'}, skills: {sets: ['foundation'], skills: ['wayfinder']}, law: {file: 'CLAUDE.md', state: 'rendered', statements: [{file: 'world/shape-of-the-world.md', topic: 'Shape of the world', standing: 'adopted'}]}}},
+    {slug: 'gemini', harnessRef: 'harness/gemini', executable: '/x/gemini', starts: false, talks: false, why: 'gemini did not start', aikit: null}]}
+  const base = {adoption: {}, folders: {state: 'unread'}, plan: null, agents: census}
+  assert.deepEqual(win.setupAgentTools(census), [{client: 'claude', harness: 'claude-code', folder: '/w/Arriving/.claude'}], 'AIKit is asked about the census\'s agents it has a client for')
   assert.equal(win.setupSkillRoots.length, 2, 'init and collate: who owns each root is init\'s answer, no tree is read')
   const foreign = win.setupSkillRoots(REAL.init_foreign.data, REAL.collate_all.data)
   assert.deepEqual(foreign, [{label: '@claude', path: '/w/Arriving/.claude/skills', skills: 2, problems: 0, names: ['field-recording-log', 'weekly-review'], standing: 'foreign'}])
-  const found = stepOf(win.setupValues({...base, harnesses: {state: 'read', harnesses, roots: foreign}}, held({})), 'harnesses')
+  const found = stepOf(win.setupValues({...base, harnesses: {state: 'read', roots: foreign}}, held({})), 'harnesses')
   assert.equal(found.state, 'found')
-  assert.deepEqual([found.items[0].name, found.items[0].where], ['claude-code', '/w/Arriving/.claude/skills'])
+  assert.deepEqual(found.agents.map(row => [row.agent, row.starts]), [['claude-code', true], ['gemini', false]], 'exactly the census: every agent, whether it starts')
+  assert.deepEqual([found.agents[0].model, found.agents[0].sets, found.agents[0].skills, found.agents[0].lawFile, found.agents[0].law.map(row => row.topic)],
+    ['claude-opus-5-5', ['foundation'], ['wayfinder'], 'CLAUDE.md', ['Shape of the world']], 'what it carries: its model, its skill set and its floor\'s law')
+  assert.equal(found.agents[1].model, undefined, 'an agent that does not start carries nothing')
+  assert.deepEqual([found.items[0].name, found.items[0].where], ['Claude Code', '/w/Arriving/.claude/skills'])
   assert.match(found.items[0].change, /AIKit adopts its 2 skills \(field-recording-log, weekly-review\) as skill\/claude\//)
-  assert.match(found.items[0].change, /claude-code reads them where they were/)
+  assert.match(found.items[0].change, /Claude Code reads them where they were/)
   assert.match(found.items[0].change, /settings and instructions stay as they are/)
   const adopted = win.setupSkillRoots(REAL.init_adopted.data, REAL.collate_all.data)
   assert.equal(adopted[0].standing, 'adopted')
@@ -1220,17 +1241,20 @@ test('CODE-DERIVED — Setup\'s Harnesses and skills step is AIKit\'s reading of
   assert.deepEqual([generated[0].standing, generated[0].generation, generated[0].procedure], ['generated', 'gen_01', undefined])
   // A root init names no ownership for (an AIKit older than init's ownership) is not taken as foreign: nothing is adopted on a guess.
   assert.equal(win.setupSkillRoots({roots: [{...REAL.init_foreign.data.roots[0], ownership: undefined}]}, REAL.collate_all.data)[0].standing, 'unknown')
-  const accepted = stepOf(win.setupValues({...base, harnesses: {state: 'read', harnesses, roots: adopted}}, held({})), 'harnesses')
+  const accepted = stepOf(win.setupValues({...base, harnesses: {state: 'read', roots: adopted}}, held({})), 'harnesses')
   assert.equal(accepted.state, 'accepted', 'read back from AIKit: the root is adopted')
   assert.match(accepted.items[0].change, /AIKit holds its 2 skills .*adopted · procedure prc_/)
-  // A detected tool with no skills is named and left alone, and with nothing to adopt the step is done (#740 D); AIKit's refusal stands in
-  // its words; not read yet is absent.
-  const bare = stepOf(win.setupValues({...base, harnesses: {state: 'read', harnesses, roots: []}}, held({})), 'harnesses')
+  // With nothing to adopt the step is done (#740 D), every agent still listed; AIKit's refusal stands in its words beside the agents; a
+  // census not read says why; not read yet is absent.
+  const bare = stepOf(win.setupValues({...base, harnesses: {state: 'read', roots: []}}, held({})), 'harnesses')
   assert.equal(bare.state, 'accepted')
-  assert.match(bare.said, /^Nothing to bring in/)
-  assert.match(bare.items[0].why, /keeps no skills/)
-  const refused = stepOf(win.setupValues({...base, harnesses: {state: 'refused', error: 'AIKit\'s client status did not finish'}}, held({})), 'harnesses')
+  assert.match(bare.said, /^Nothing to bring in: no agent here keeps skills AIKit can adopt/)
+  assert.deepEqual([bare.items, bare.agents.map(row => row.agent)], [[], ['claude-code', 'gemini']])
+  const refused = stepOf(win.setupValues({...base, harnesses: {state: 'refused', error: 'AIKit\'s init did not finish'}}, held({})), 'harnesses')
   assert.match(refused.items[0].why, /did not finish/)
+  assert.equal(refused.agents.length, 2, 'the agents stand by the census, not by AIKit')
+  const unread = stepOf(win.setupValues({...base, agents: {state: 'unavailable', why: 'Actuation\'s detection did not answer'}, harnesses: {state: 'read', roots: foreign}}, held({})), 'harnesses')
+  assert.deepEqual([unread.agents, unread.agentsWhy, unread.items[0].name], [undefined, 'Actuation\'s detection did not answer', '@claude'], 'no census: no agent is listed from anywhere else')
   assert.equal(win.setupValues(base, held({})).setup, undefined, 'not read yet: absent, never a sample')
 })
 
@@ -1286,8 +1310,12 @@ test('SCRIPTED — Harnesses and skills: Accept adopts each agent tool\'s skill 
   world.tools.get('claude').names.pop()
   await walk.read()
   const said = await walk.accept('harnesses', held({}))
-  assert.match(said, /AIKit adopted 2 skills from claude-code/)
+  assert.match(said, /AIKit adopted 2 skills from Claude Code/)
   assert.match(said, /reads them where they were/)
+  assert.ok(calls.some(([kind]) => kind === 'agents'), 'the agents are read from the census')
+  await walk.read({fresh: true})
+  assert.deepEqual(calls.filter(([kind]) => kind === 'agents').at(-1), ['agents', true], 'Read again asks the census afresh')
+  assert.ok(!calls.some(([kind, op]) => kind === 'aikit' && op === 'harness_status'), 'AIKit\'s own client list names no agent of Setup\'s')
   const plan = calls.find(([, kind]) => kind === 'aikit_read adopt-plan')[2].request
   assert.deepEqual(plan, {kind: 'adopt-plan', root: `${HOME}/.claude/skills`, namespace: 'claude'})
   const adopt = calls.find(([, kind]) => kind === 'aikit_write adopt')[2].request
@@ -1341,7 +1369,8 @@ test('SCRIPTED — the design draws Harnesses and skills and Credentials from AI
   await walk.read()
   await walk.accept('ground', held({}))
   const harnesses = drawn({...win.setupValues(walk.snapshot(), held({})), setupStep: 'harnesses'}, 'setup')
-  assert.ok(harnesses.includes('claude-code'), 'the tool, by AIKit\'s name for it')
+  assert.ok(harnesses.includes('data-census-agent="claude-code"') && harnesses.includes('Claude Code'), 'the agent, as the census lists it')
+  for (const carried of ['claude-opus-5-5', 'foundation', 'Shape of the world', 'CLAUDE.md']) assert.ok(harnesses.includes(carried), `what it carries: ${carried}`)
   assert.ok(harnesses.includes(escaped('AIKit adopts its 2 skills (field-recording-log, weekly-review)')), 'the change Accept makes')
   const choice = {credential: 'credential:anthropic', reference: 'op://Scratch/anthropic/credential'}
   const credentials = drawn({...win.setupValues(walk.snapshot(), held(choice)), setupStep: 'credentials', ...choice}, 'setup')
@@ -1494,8 +1523,9 @@ test('SCRIPTED — once the ground is made, Setup asks for your name and date of
 })
 
 test('CODE-DERIVED — Harnesses and skills and Credentials with nothing to adopt or bind are done, and say so in words', () => {
-  const tools = [{client: 'claude', harness: 'claude-code', folder: '/w/Bare/.claude'}, {client: 'gemini', harness: 'gemini', folder: '/w/Bare/.gemini'}]
-  const none = win.setupHarnessStep({state: 'read', harnesses: tools, roots: []})
+  const tools = {state: 'read', agents: [{slug: 'claude-code', harnessRef: 'harness/claude-code', executable: '/x/claude', starts: true, talks: true, aikit: {client: 'claude', harness: 'claude-code', config_dir: '/w/Bare/.claude'}},
+    {slug: 'gemini', harnessRef: 'harness/gemini', executable: '/x/gemini', starts: true, talks: true, aikit: {client: 'gemini', harness: 'gemini', config_dir: '/w/Bare/.gemini'}}]}
+  const none = win.setupHarnessStep({state: 'read', roots: []}, tools)
   assert.equal(none.state, 'accepted')
   assert.match(none.said, /Nothing to bring in/)
   const empty = win.setupCredentialStep({state: 'read', findings: [], providers: [], bindings: []}, held({}))
@@ -1503,7 +1533,7 @@ test('CODE-DERIVED — Harnesses and skills and Credentials with nothing to adop
   assert.match(empty.said, /Nothing to bind/)
   const waiting = win.setupCredentialStep({state: 'read', findings: [{source: 'project-env', location: '/w/.env', name: 'ANTHROPIC_API_KEY', credential: 'credential:anthropic', bound: false}], providers: [], bindings: []}, held({}))
   assert.equal(waiting.state, 'found', 'a key that waits to be bound keeps the step found')
-  const foreign = win.setupHarnessStep({state: 'read', harnesses: tools, roots: [{label: '@claude', path: '/w/Bare/.claude/skills', skills: 2, problems: 0, names: ['a', 'b'], standing: 'foreign'}]})
+  const foreign = win.setupHarnessStep({state: 'read', roots: [{label: '@claude', path: '/w/Bare/.claude/skills', skills: 2, problems: 0, names: ['a', 'b'], standing: 'foreign'}]}, tools)
   assert.equal(foreign.state, 'found')
   const drawnNone = drawn({setup: json([{step: 'harnesses', state: 'accepted', said: none.said, items: none.items}]), setupStep: 'harnesses'}, 'setup')
   assert.ok(drawnNone.includes(escaped(none.said)), 'the step says it in words')
@@ -1894,6 +1924,34 @@ const HARNESS_READING = {kind: 'live', label: 'live', observed_at_unix_ms: 1, pr
 /** The census of those six (the World Model's agents, O-I #1003): the rows the page draws, AIKit's client facts joined on each. */
 const HARNESS_CENSUS = {state: 'read', agents: ['codex', 'claude-code', 'gemini', 'hermes', 'opencode', 'pi'].map(slug => ({slug, harnessRef: `harness/${slug}`,
   executable: slug === 'opencode' ? null : `/x/${slug}`, starts: slug !== 'opencode' && slug !== 'hermes', aikit: null}))}
+
+test('CODE-DERIVED — Harnesses & models shows what each agent that starts carries, as the census reads it from its owners: its model and skill set from AIKit, the law statements of its floor from Central, or why not', async () => {
+  const {censusOf} = await import('../../../../desktop/cradle/src/agency/census.ts')
+  // The agents slice as the kernel answers it (census.rs carries_of): Claude Code carries a model default, the foundation set and a rendered
+  // floor's two statements; Codex has no model default and Central did not read its floor; gemini did not start and carries nothing.
+  const answer = {schema: 'oi.world-model-slice/v1', slice: 'agents', owner: 'kernel', scopes: ['machine'], version: 3, state: 'read', error: null, read_at_unix_ms: 1, value: {agents: [
+    {slug: 'claude-code', harness_ref: 'harness/claude-code', executable: '/x/claude', starts: true, talks: true, version: '2.1.323', aikit: {client: 'claude', harness: 'claude-code'},
+      carries: {model: {model_id: 'claude-opus-5-5', model_name: 'Claude Opus 5.5'}, skills: {sets: ['foundation'], skills: ['engineering-methodology', 'wayfinder']},
+        law: {file: 'CLAUDE.md', state: 'rendered', renderer: 'control.floor.render', statements: [{file: 'authorship-and-return/propose-not-write.md', topic: 'Authorship', standing: 'adopted'},
+          {file: 'world/shape-of-the-world.md', topic: 'Shape of the world', standing: 'adopted'}]}}},
+    {slug: 'codex', harness_ref: 'harness/codex', executable: '/x/codex', starts: true, talks: true, version: 'codex-cli 0.155.1', aikit: {client: 'codex', harness: 'codex'},
+      carries: {model: {own: true, why: 'AIKit holds no model default for codex: a new chat opens with its own model'}, skills: {sets: [], skills: []},
+        law: {file: 'AGENTS.md', why: 'Central did not read the floor: no control.floor.read here'}}},
+    {slug: 'gemini', harness_ref: 'harness/gemini', executable: '/x/gemini', starts: false, talks: false, why: 'gemini did not start', aikit: null}]}}
+  const census = censusOf({state: 'held', answer})
+  assert.deepEqual(census.agents[0].carries, {model: {id: 'claude-opus-5-5', name: 'Claude Opus 5.5'}, skills: {sets: ['foundation'], skills: ['engineering-methodology', 'wayfinder']},
+    law: {file: 'CLAUDE.md', state: 'rendered', renderer: 'control.floor.render', statements: [{file: 'authorship-and-return/propose-not-write.md', topic: 'Authorship', standing: 'adopted'},
+      {file: 'world/shape-of-the-world.md', topic: 'Shape of the world', standing: 'adopted'}]}})
+  assert.equal(census.agents[2].carries, undefined, 'an agent that did not start carries nothing')
+  const rows = Object.fromEntries(JSON.parse(win.harnessValues(null, null, census).harnesses).map(row => [row.agent, row]))
+  assert.deepEqual([rows['claude-code'].model, rows['claude-code'].sets, rows['claude-code'].law.map(row => row.topic), rows['claude-code'].lawFile],
+    ['Claude Opus 5.5', ['foundation'], ['Authorship', 'Shape of the world'], 'CLAUDE.md'])
+  assert.deepEqual([rows.codex.model, rows.codex.modelWhy, rows.codex.sets, rows.codex.law, rows.codex.lawWhy],
+    [undefined, 'AIKit holds no model default for codex: a new chat opens with its own model', [], undefined, 'Central did not read the floor: no control.floor.read here'])
+  const page = drawn({harnesses: win.harnessValues(null, null, census).harnesses}, 'harnesses')
+  for (const shown of ['Claude Opus 5.5', 'foundation', 'Authorship · Shape of the world', 'CLAUDE.md', escaped('AIKit holds no model default for codex')]) assert.ok(page.includes(shown), `drawn: ${shown}`)
+  assert.ok(!page.includes('data-carries="gemini"'), 'nothing carried is drawn for an agent that does not start')
+})
 
 test('CODE-DERIVED — Sign in is each harness\'s own login as AIKit declares it: a runnable one runs its command (Claude Code\'s claude auth login as Codex\'s codex login), one that signs in inside itself says so in its own words and offers no button, a login that cannot be read affects that harness alone', async () => {
   const asked = []

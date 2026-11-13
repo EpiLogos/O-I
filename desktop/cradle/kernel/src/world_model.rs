@@ -7,7 +7,8 @@
 //! |-------------|-----------|-------------------------------------------------------------------------|---------------|
 //! | `worlds`    | Central   | the root's disclosure (`world_browse`), and each world's pages (`page`) | root, work    |
 //! | `day`       | Central   | today's Day of the root register (`day_read`)                           | root, clock   |
-//! | `agents`    | Actuation | the census (census.rs): detection, a start of each, AIKit's detail      | clock (a day) |
+//! | `agents`    | Actuation | the census (census.rs): detection, a start of each, AIKit's detail and  | clock (a day) |
+//! |             |           | what each carries (its model, skill set, and its floor's law: Central)  |               |
 //! | `sessions`  | AIKit     | the root register's Agent sessions (`agency_read`)                      | aikit, root   |
 //! | `models`    | AIKit     | the resolved model catalogue (`model_catalogue`)                        | aikit         |
 //! | `factory`   | Factory   | runs, tasks and attempts: the sources in scope (`factory_owner` locate),  | root, work    |
@@ -445,7 +446,8 @@ fn answer(slice: Slice, held: &Held) -> Value {
 // ---------------------------------------------------------------------------
 
 /// The slices whose owners an op writes to when it succeeds; empty for an op that only reads. The census is moved only by what
-/// changes an agent's standing: an Actuation write, a client install, a credential.
+/// changes an agent's standing or what it carries: an Actuation write, a client install, a credential, AIKit's configuration
+/// (its model defaults), an adoption of skills and a render of the floor or a law adopted (action.rs `owner_slices`).
 pub fn written_by(op: &KernelOp) -> Vec<Slice> {
     let name = crate::dispatch::op_name(op);
     let central = vec![Slice::Worlds, Slice::Day];
@@ -489,9 +491,24 @@ pub fn written_by(op: &KernelOp) -> Vec<Slice> {
         | "encounter_session_group"
         | "encounter_session_hot_swap"
         | "encounter_session_drag_out"
-        | "agent_definition"
-        | "aikit_write" => {
+        | "agent_definition" => {
             vec![Slice::Sessions, Slice::Models, Slice::Factory]
+        }
+        // A skill root adopted, or a Procedure applied or undone, moves the skills an agent carries (census.rs); a capture or a
+        // wiki write does not, and is never a reason to start every agent again.
+        "aikit_write" => {
+            use crate::owner_routes::AikitWrite;
+            let mut slices = vec![Slice::Sessions, Slice::Models, Slice::Factory];
+            if let KernelOp::AikitWrite {
+                request:
+                    AikitWrite::Adopt { .. }
+                    | AikitWrite::ProcedureRun { .. }
+                    | AikitWrite::ProcedureUndo { .. },
+            } = op
+            {
+                slices.push(Slice::Agents);
+            }
+            slices
         }
         "client_install"
         | "credential_setup"
@@ -1079,6 +1096,20 @@ mod tests {
         assert!(written_by(&KernelOp::ModelCatalogue).is_empty());
         assert!(written_by(&KernelOp::WorldBrowse { fresh: None }).is_empty());
         assert_eq!(written_by(&KernelOp::SeatStatusRead), Vec::<Slice>::new());
+    }
+
+    #[test]
+    fn an_adoption_of_skills_moves_the_census_and_a_capture_does_not() {
+        let write = |request: Value| -> KernelOp {
+            serde_json::from_value(json!({"op": "aikit_write", "request": request}))
+                .expect("an aikit_write op")
+        };
+        let adopt =
+            write(json!({"kind": "adopt", "root": "/x/.claude/skills", "expect_digest": "d"}));
+        let capture = write(json!({"kind": "capture", "title": "t", "body": "b"}));
+        assert!(written_by(&adopt).contains(&Slice::Agents));
+        assert!(!written_by(&capture).contains(&Slice::Agents));
+        assert!(written_by(&capture).contains(&Slice::Sessions));
     }
 
     #[test]

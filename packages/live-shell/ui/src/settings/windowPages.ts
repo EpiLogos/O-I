@@ -11,7 +11,7 @@ import type {Value} from '../frame/devices/designed'
 import type {ChangeRequest, ScopeAddress, SettingsAdapter, SetupSource} from './adapter'
 import type {KernelOp, ModelSliceAnswer, PresentationDocument} from '../../../../../desktop/cradle/src/kernel/types'
 import type {HarnessReading} from '../../../../../desktop/cradle/src/configuration/harnessSource'
-import {censusOf, type CensusReading} from '../../../../../desktop/cradle/src/agency/census'
+import {agentName, censusOf, type CensusReading} from '../../../../../desktop/cradle/src/agency/census'
 import type {ProfileDocument} from '../../../../../desktop/cradle/src/configuration/contracts'
 import type {DisclosedAction, SystemCompositionReading} from '../../../../../desktop/cradle/src/workspace/settings/types'
 import {actionMessage, object, routineList, type Invocation, type MethodRow, type RoutineDetail, type RoutineList, type RoutineRequest} from '../../../../../desktop/cradle/src/contributions/automations/client'
@@ -21,7 +21,7 @@ import {refusalLine, scalarEntries} from '../agent/RefusalCard'
 import {connectionBasis, machineBasis, validateMachine, type MachineConnection, type RemoteMachineDeclaration, type RemoteMachinesSource} from './machines'
 import {authorityAllowsTrigger, eligibleProofs, routineBasis, scheduleFromInput, type RoutineAuthoringOptions, type RoutineAuthoringResult, type ScheduleShape} from './routines'
 import {appearanceValues, automationValues, credentialValues, NEW_SCHEDULE, ROUTINE_FORM, scanWords, workcellSecretValues, folderOf, harnessValues, machineValues, NO_AUTHORING, NO_HARNESS, NO_INVOKE, NO_MACHINES, NO_NAVIGATE, NO_PRODUCTS,
-  NO_PROFILES, NO_SETUP_AIKIT, NO_SETUP_SOURCE, NO_VISUALS, groundBound, productValues, profileValues, SECRET_REFERENCE, setupFolder, setupHarnessClients, setupHarnessProviders,
+  NO_PROFILES, NO_SETUP_AIKIT, NO_SETUP_SOURCE, NO_VISUALS, groundBound, productValues, profileValues, SECRET_REFERENCE, setupFolder, setupAgentTools, setupRootAgent, setupHarnessProviders,
   setupKeyFindings, setupNamespace, setupSkillRoots, setupValues, systemValues, type CredentialRow, type SetupCredentials, type SetupHarnesses, type SetupMachine, type SetupPreview,
   harnessLoginClients, harnessLoginsOf, loginCheckOf, loginReadBack, commandWords, type HarnessLoginClient, type HarnessLoginReading,
   setupExtensionLine, setupPlacementLine, possessive, type SetupExtension, type SetupLeft, type SetupPlacement, type SetupSnapshot, type SetupWorkFolder, type SetupFounding, type SetupKey, type SetupAgreement, type SetupForm, type SetupMusic, type SetupAuthority, type CivilTimePreview, type SetupBirth, type SetupCivilTime, type SetupDisclosure, groundNameRefusal, groundParts, groundPath} from './windowValues'
@@ -136,8 +136,13 @@ export function useHarnessPage(adapter: SettingsAdapter, enabled: boolean, login
     if (answer.kind === 'fixture' && !import.meta.env?.DEV) throw new Error('Fixture harness readings cannot qualify production settings.')
     return answer
   })
+  // Read again asks the census afresh, past what the kernel holds: a model default or Skill Set changed in AIKit's own tools moves no
+  // slice (world_model.rs: the census is not re-read on AIKit's churn), and is read then.
+  const fresh = useRef(false)
   const census = useRead<CensusReading>(enabled, adapter, !!adapter.invoke, async source => {
-    const outcome = await operation(source, {op: 'model_subscribe', slice: 'agents'}, 'model_slice') as {data: ModelSliceAnswer}
+    const asked = fresh.current
+    fresh.current = false
+    const outcome = await operation(source, {op: 'model_subscribe', slice: 'agents', ...(asked ? {fresh: true} : {})}, 'model_slice') as {data: ModelSliceAnswer}
     return censusOf({state: 'held', answer: outcome.data})
   }, 'census')
   const rows = read.value?.harnesses.state === 'ok' ? read.value.harnesses.rows : []
@@ -161,7 +166,7 @@ export function useHarnessPage(adapter: SettingsAdapter, enabled: boolean, login
     const refused: Record<string, string> = {...standing.refused}
     if (census.value?.state === 'unavailable') refused.harnesses = census.value.why
     if (read.value?.catalogue.state === 'failed') refused.routes = `catalogue: ${read.value.catalogue.error}`
-    return {values: harnessValues(read.value, logins, census.value), why, refused, waiting: standing.waiting, reread: async () => { await Promise.all([read.refresh(), census.refresh()]) },
+    return {values: harnessValues(read.value, logins, census.value), why, refused, waiting: standing.waiting, reread: async () => { fresh.current = true; await Promise.all([read.refresh(), census.refresh()]) },
       acts: {
         install: async client => run(client, true),
         reveal: async client => run(client, false),
@@ -845,6 +850,7 @@ export class SetupWalk {
   private folders: SetupSnapshot['folders'] = {state: 'unread'}
   private plan: SetupPreview | null = null
   private machine: SetupMachine | undefined = undefined
+  private agents: CensusReading | undefined = undefined
   private harnesses: SetupHarnesses | undefined = undefined
   private credentials: SetupCredentials | undefined = undefined
   private civilTime: SetupCivilTime | undefined = undefined
@@ -872,7 +878,7 @@ export class SetupWalk {
   snapshot = (): SetupSnapshot => this.current
   subscribe = (listener: () => void): (() => void) => { this.listeners.add(listener); return () => { this.listeners.delete(listener) } }
   private compose(): SetupSnapshot {
-    return {adoption: this.controller.getSnapshot(), folders: this.folders, plan: this.plan, machine: this.machine, brought: this.brought, harnesses: this.harnesses, credentials: this.credentials,
+    return {adoption: this.controller.getSnapshot(), folders: this.folders, plan: this.plan, machine: this.machine, brought: this.brought, ...(this.agents ? {agents: this.agents} : {}), harnesses: this.harnesses, credentials: this.credentials,
       ...(this.civilTime ? {civilTime: this.civilTime} : {}), ...(this.groundChoice ? {groundAt: this.groundChoice} : {}), ...(this.birth ? {birth: this.birth} : {}),
       ...(this.disclosure ? {disclosure: this.disclosure} : {}), ...(this.placement ? {placement: this.placement} : {}), ...(this.key ? {key: this.key} : {}), ...(this.agreement ? {agreement: this.agreement} : {}), ...(this.authority ? {authority: this.authority} : {}), ...(this.form ? {form: this.form} : {}),
       ...(this.music ? {music: this.music} : {})}
@@ -882,7 +888,7 @@ export class SetupWalk {
   /** Read every step again: native oi's ground, then, once there is a ground, AIKit's tools, skill roots and keys, this computer's
    * Workcell and Central's machine, Central's Work and the folders of work elsewhere. A refusal stands in the reading, in its owner's
    * words; nothing is retried. */
-  async read(): Promise<void> {
+  async read(options: {readonly fresh?: boolean} = {}): Promise<void> {
     await this.controller.refresh()
     await this.readCivilTime()
     await this.readPlacement()
@@ -890,7 +896,7 @@ export class SetupWalk {
     await this.readAgreement()
     await this.readAuthority()
     await this.readForm()
-    await this.readHarnesses()
+    await this.readHarnesses(options.fresh)
     await this.readCredentials()
     await this.readMachine()
     await this.readMusic()
@@ -1001,23 +1007,31 @@ export class SetupWalk {
     await this.controller.refresh()
     this.publish()
   }
-  /** AIKit's tools and skill roots (SetupHarnesses): its client status, `aikit init` (each root and who owns it) and `aikit collate --all`.
-   * AIKit's routes run from the world's ground (the kernel's route_ground), so they are read once there is one. */
-  private async readHarnesses(): Promise<void> {
+  /** The agents and their skill roots: the census (the World Model's agents slice, SetupSource.agents; O-I #1003), the one list of agents,
+   * each with what it carries; and AIKit's skill roots (SetupHarnesses): `aikit init` (each root and who owns it) and `aikit collate
+   * --all`. AIKit's routes run from the world's ground (the kernel's route_ground), so they are read once there is one. */
+  private async readHarnesses(fresh = false): Promise<void> {
     const aikit = this.source.aikit
-    if (!groundBound(this.controller.getSnapshot().discovery)) { this.harnesses = undefined; this.publish(); return }
+    if (!groundBound(this.controller.getSnapshot().discovery)) { this.agents = undefined; this.harnesses = undefined; this.publish(); return }
+    this.agents = await this.readAgents(fresh)
     if (!aikit) { this.harnesses = {state: 'refused', error: NO_SETUP_AIKIT}; this.publish(); return }
     const disclose = this.source.harnessDisclosure
     try {
-      const [status, init, collate, disclosure] = await Promise.all([aikit({op: 'harness_status'}), aikit({op: 'aikit_read', request: {kind: 'init'}}),
-        aikit({op: 'aikit_read', request: {kind: 'collate', all: true}}),
-        // What AIKit reads of each tool besides its skills: a refusal of it leaves the tools and their skills read, and is said.
+      const [init, collate, disclosure] = await Promise.all([aikit({op: 'aikit_read', request: {kind: 'init'}}), aikit({op: 'aikit_read', request: {kind: 'collate', all: true}}),
+        // What AIKit reads of each agent besides its skills: a refusal of it leaves the agents and their skills read, and is said.
         disclose ? disclose().then((reading): SetupDisclosure => ({state: 'read', reading}), (cause: unknown): SetupDisclosure => ({state: 'refused', error: words(cause)}))
           : Promise.resolve<SetupDisclosure>({state: 'refused', error: NO_SETUP_DISCLOSURE})])
-      this.harnesses = {state: 'read', harnesses: setupHarnessClients(status), roots: setupSkillRoots(init, collate)}
+      this.harnesses = {state: 'read', roots: setupSkillRoots(init, collate)}
       this.disclosure = disclosure
     } catch (cause) { this.harnesses = {state: 'refused', error: words(cause)} }
     this.publish()
+  }
+  /** The census as the World Model answers it (`fresh`: read from its owners past what the kernel holds, as Read again asks it), or why
+   * it is not read, in its words. */
+  private async readAgents(fresh = false): Promise<CensusReading> {
+    const agents = this.source.agents
+    if (!agents) return {state: 'unavailable', why: NO_SETUP_AGENTS}
+    return agents(fresh).then(answer => censusOf({state: 'held', answer}), (cause: unknown): CensusReading => ({state: 'unavailable', why: words(cause)}))
   }
   /** AIKit's keys and bindings (SetupCredentials): `aikit credential discover` (presence only), the providers `aikit harness auth` names
    * for each detected tool (a refusal named on its tool), and `aikit credential list` (metadata only). */
@@ -1026,7 +1040,7 @@ export class SetupWalk {
     if (!groundBound(this.controller.getSnapshot().discovery)) { this.credentials = undefined; this.publish(); return }
     if (!aikit) { this.credentials = {state: 'refused', error: NO_SETUP_AIKIT}; this.publish(); return }
     try {
-      const tools = this.harnesses?.state === 'read' ? this.harnesses.harnesses : setupHarnessClients(await aikit({op: 'harness_status'}))
+      const tools = setupAgentTools(this.agents ??= await this.readAgents())
       const [discover, list, providers] = await Promise.all([aikit({op: 'credential_discover'}), aikit({op: 'credential_list'}),
         Promise.all(tools.map(tool => aikit({op: 'harness_auth_describe', harness: tool.harness}).then(auth => setupHarnessProviders(tool, auth),
           (cause: unknown) => [{harness: tool.harness, ...(tool.folder ? {folder: tool.folder} : {}), provider: '', unread: `AIKit did not say which providers ${tool.harness} reaches: ${words(cause)}`}])))])
@@ -1124,7 +1138,7 @@ export class SetupWalk {
     const keeping = reading.roots.filter(root => root.skills > 0), pending = keeping.filter(root => root.standing === 'foreign')
     if (!keeping.length) throw new Error('Nothing found to bring in: AIKit finds no agent tool\'s skills on this computer.')
     if (!pending.length) throw new Error('Accepted: AIKit holds every skill root here already. Nothing is made twice.')
-    const toolOf = (path: string) => reading.harnesses.find(tool => tool.folder && path.startsWith(`${tool.folder}/`))?.harness
+    const toolOf = (path: string) => { const agent = setupRootAgent(this.agents, path); return agent ? agentName(agent) : undefined }
     const said: string[] = []
     for (const root of pending) {
       const namespace = setupNamespace(root)
@@ -1632,6 +1646,8 @@ const NO_SETUP_FORM = 'Setup reaches no form route here (SetupSource.groundForm,
 const NO_SETUP_KEY = 'Setup reaches no key route here (SetupSource.groundAuthority, the kernel\'s ground_authority).'
 /** Why Setup keeps no date of birth where the host hands it no identity owner. */
 export const NO_SETUP_IDENTITY = 'Setup reaches no identity owner here (SetupSource.identity, the kernel\'s nara_identity): your date of birth is kept from the identity of the Studio\'s Nara chain (§24.7) until it does.'
+/** Why the Harnesses and skills step lists no agent where the host hands Setup no census. */
+const NO_SETUP_AGENTS = 'Setup reaches no census of the agents here (SetupSource.agents, the World Model\'s agents slice)'
 /** Why the Harnesses and skills step shows no tool's settings where the host hands Setup no disclosure. */
 const NO_SETUP_DISCLOSURE = 'Setup reaches no AIKit disclosure here (SetupSource.harnessDisclosure, `aikit harness disclose`)'
 /** A reference that names no store: refused before anything is sent, and the field is cleared (it may hold the key itself). */
@@ -1649,10 +1665,10 @@ export function useSetupPage(adapter: SettingsAdapter, enabled: boolean, held: H
   const snapshot = useSyncExternalStore(walk?.subscribe ?? noSubscription, walk?.snapshot ?? noSetupSnapshot, walk?.snapshot ?? noSetupSnapshot)
   // Setup reads its owners one after another (SetupWalk.read): while it reads, a step not read yet is drawn waiting, never as absent.
   const [reading, setReading] = useState(0)
-  const readAll = useCallback(async () => {
+  const readAll = useCallback(async (fresh = false) => {
     if (!walk) return
     setReading(n => n + 1)
-    try { await walk.read() } finally { setReading(n => n - 1) }
+    try { await walk.read({fresh}) } finally { setReading(n => n - 1) }
   }, [walk])
   useEffect(() => { if (enabled && walk) void readAll() }, [enabled, walk, readAll])
   // A folder the Projects step was opened for (Add folder…) stands among its folders, whether or not Central found it.
@@ -1692,7 +1708,8 @@ export function useSetupPage(adapter: SettingsAdapter, enabled: boolean, held: H
           }
         },
         previewStep: async () => { await walk.preview(held) },
-        rereadSetup: async () => { await readAll() },
+        // Read again reads the census afresh: an agent installed or changed outside the window shows then.
+        rereadSetup: async () => { await readAll(true) },
         // The system's folder chooser (folderChooser.ts), then native oi reads the ground there under the name shown.
         chooseGroundFolder: async () => {
           const folder = await chooseFolder('ground')
