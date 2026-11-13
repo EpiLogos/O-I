@@ -159,8 +159,12 @@ export function Browser({sources, category, onCategory, poolFace = null, pool = 
         <div ref={setPreviewHost} className="one-browser-preview" aria-label="Preview" />
       </div>
     </div>
-    <ApertureSlot />
-    {pool && <section className="one-browser-pool" aria-label="Pool"><GroovePool face={poolFace} /></section>}
+    {/* The mockup's one .slot: 46% of the column under its 5px rule, the browser's list keeping the rest. The aperture slot heads it and
+        the pool fills what is left of it, scrolling there, so the list above never gives up its share. */}
+    <div className="one-browser-lower">
+      <ApertureSlot />
+      {pool && <section className="one-browser-pool" aria-label="Pool"><GroovePool face={poolFace} /></section>}
+    </div>
     {sources.map(source => source.Keeper ? <source.Keeper key={source.id} /> : null)}
   </aside>
 }

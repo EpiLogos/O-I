@@ -95,7 +95,8 @@ test('the browser stylesheet holds the floor: 25px search, a 112px column that w
   assert.match(css, /min-height: 23px; padding: 2px 5px[^}]*font-size: 11px/, 'rows are the 23px .bitem at 11px')
   assert.match(css, /box-shadow: inset 2px 0 0 var\(--accent\)/, 'a selected row carries the inset accent bar')
   assert.match(css, /height: 20px; flex: none;\s*margin: 0; padding: 2px 5px; border: 0; background: var\(--bg-0\)/, 'every body\'s head is the 20px .bhead on bg-0')
-  assert.match(rule('.one-browser .one-browser-pool'), /flex: 0 0 46%; min-height: 120px[^}]*border-top: 5px solid var\(--line\)/)
+  // REPLACED (13 Nov, walked on screen): the mockup's .slot (46%, its 5px rule) holds the aperture slot and the pool together.
+  assert.match(rule('.one-browser .one-browser-lower'), /flex: 0 0 46%; min-height: 120px[^}]*border-top: 5px solid var\(--line\)/)
   assert.doesNotMatch(css.replace(/\/\*[\s\S]*?\*\//g, ''), /#[0-9a-f]{3,8}\b/i, 'shell tokens only')
 })
 

@@ -94,7 +94,7 @@ test('with no pane in front the slot says so, and its rows still read the World 
 
 test('the browser draws the slot under its list; its search is the field\'s, and the whole field opens on the search line with the same words', async () => {
   const markup = renderToStaticMarkup(React.createElement(Browser, {sources: [{id: 's', categories: [{id: 'one', label: 'One', kind: 'material'}], Body: () => null}]}))
-  assert.match(markup, /class="one-browser-preview" aria-label="Preview"><\/div><\/div><\/div><section class="aperture-slot" aria-label="Aperture">/, 'after the list and its preview')
+  assert.match(markup, /class="one-browser-preview" aria-label="Preview"><\/div><\/div><\/div><div class="one-browser-lower"><section class="aperture-slot" aria-label="Aperture">/, 'after the list and its preview, heading the lower 46%')
   assert.match(markup, /placeholder="Search the field \(⌘F\)"/)
   const browser = await read('../src/frame/browser/Browser.tsx')
   assert.match(browser, /openSearchLine\(\{door: 'frame', query: query\.trim\(\), restore: captureFocus\(\)\}\)/)

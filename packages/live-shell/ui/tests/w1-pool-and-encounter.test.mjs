@@ -219,7 +219,8 @@ test('the pool holds the frames and lenses and nothing else; Whole stands only a
   // REPLACED (parity G5, 13 Nov): the aperture slot is back under the browser's list, as the mockup draws it (.slot, renderSlot), with
   // the four context rows that stood in the retired encounter bar; it stands beside the pool, never in it.
   assert.doesNotMatch(browser, /DevicePool|poolHost/)
-  assert.match(browser, /<ApertureSlot \/>\n\s*\{pool && <section className="one-browser-pool"/, 'the slot stands above the pool, outside it')
+  // REPLACED (13 Nov, walked on screen): the slot and the pool share the mockup's one 46% .slot, so the browser's list keeps the rest.
+  assert.match(browser, /<div className="one-browser-lower">\n\s*<ApertureSlot \/>\n\s*\{pool && <section className="one-browser-pool"/, 'the slot stands above the pool, outside it, both in the lower 46%')
   const view = await source('frame/devices/DeviceView.tsx')
   assert.match(view, /FRAME_OF_VIEW[^=]*= \{whole: 'flip'/)
   const design = await source('inhabitants/catalogue/panels/design.ts')
