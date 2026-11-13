@@ -299,14 +299,14 @@ export function searchStep(count: number, hit: number, key: string): {hit: numbe
 // ---------------------------------------------------------------------------------------------------------------- Harnesses & models
 
 /** Harnesses & models: the agents on this machine, which are the census (the World Model's agents, O-I #1003), one row per agent with
- * whether it starts (its version, or why not) and AIKit's client facts on it (harness_status) as detail, never rows of their own; and the
+ * whether it starts (its version) and whether you can talk to it, or why not and AIKit's client facts on it (harness_status) as detail, never rows of their own; and the
  * catalogue's routes (model_catalogue). A section the owner refused stays absent. Pure. */
 export function harnessValues(reading: HarnessReading | null, logins: HarnessLoginReading | null = null, census: CensusReading | null = null): Record<string, Value> {
   const values: Record<string, Value> = {}
   const clients = reading?.harnesses.state === 'ok' ? reading.harnesses.rows : []
   if (census?.state === 'read') values.harnesses = json(census.agents.map(agent => {
     const row = clients.find(client => client.harness === agent.slug || client.client === agent.slug)
-    return {agent: agent.slug, harness: agentName(agent), starts: agent.starts, ...(agent.version ? {version: agent.version} : {}), ...(agent.why ? {why: agent.why} : {}),
+    return {agent: agent.slug, harness: agentName(agent), starts: agent.starts, talks: agent.talks, ...(agent.version ? {version: agent.version} : {}), ...(agent.why ? {why: agent.why} : {}),
       ...(row ? {client: row.client, ...(row.config_dir_present !== null ? {folderPresent: row.config_dir_present} : {}), capability: row.capability, ...(row.effect ? {effect: row.effect} : {}),
         ...(folderOf(row.config_dir) ? {folder: folderOf(row.config_dir)} : {}),
         ...(row.adapter_gap ? {gap: {contract: row.adapter_gap.missing_contract, skill: row.adapter_gap.authoring_skill_ref}} : {}), ...harnessSignIn(logins, row.client)} : {})}

@@ -132,7 +132,7 @@ export function ChatComposer({reading,draft,pending,busy,error,editable,promptAl
       ?<div className="chat-connect" data-fact="new-chat">
         <span className="chat-connect-label"><Glyph name="link" size={11}/> New conversation</span>
         {connection.agents&&<label className="chat-connect-agent">with <select aria-label="Agent" value={connection.agent??""} disabled={pending||busy||!connection.agents.length} title={connection.agentsWhy} onChange={event=>connection.onAgent?.(event.target.value)}>
-          {connection.agents.length?connection.agents.map(agent=><option key={agent.slug} value={agent.slug}>{agent.name}{agent.version?` · ${agent.version}`:""}</option>):<option value="">{connection.agentsWhy??"No agent on this machine starts."}</option>}
+          {connection.agents.length?connection.agents.map(agent=><option key={agent.slug} value={agent.slug}>{agent.name}{agent.version?` · ${agent.version}`:""}</option>):<option value="">{connection.agentsWhy??"No agent on this machine can be talked to."}</option>}
         </select></label>}
         {provisionProject&&<span className="oi-note">First send opens it in {provisionProject}.</span>}
       </div>

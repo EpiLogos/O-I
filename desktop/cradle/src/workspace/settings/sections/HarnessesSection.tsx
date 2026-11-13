@@ -82,22 +82,23 @@ function CurrentChat({session}:{session:EncounterSessionHandle|undefined}) {
  </section>;
 }
 
-/** One census agent: whether it starts on this machine (its version, or why not), using it in the current chat, and AIKit's detail. */
+/** One census agent: whether it starts on this machine (its version) and whether you can talk to it (or why not), using it in the
+ * current chat, and AIKit's detail. */
 function AgentCard({agent,session}:{agent:CensusAgent;session?:EncounterSessionHandle}) {
  const name=agentName(agent);
  const client=agent.aikit?shapeHarnessClients({clients:[agent.aikit]})[0]:undefined;
  const current=session?.state.status?.provider?.id===agent.slug;
  const openAction=session?.state.reading?.actions?.find(action=>action.ref==="aikit.encounter.open");
  const canConnect=!!session&&!session.state.pending&&openAction?.enabled===true;
- return <section className="settings-card settings-harness" data-settings-row={`agent:${agent.slug}`} data-census-agent={agent.slug} data-starts={agent.starts?"true":"false"}>
+ return <section className="settings-card settings-harness" data-settings-row={`agent:${agent.slug}`} data-census-agent={agent.slug} data-starts={agent.starts?"true":"false"} data-talks={agent.talks?"true":"false"}>
   <h3>{name}</h3>
   <p>{current?"Selected for this chat":agent.starts?`Starts on this machine${agent.version?` · ${agent.version}`:""}`:"Doesn't start on this machine"}</p>
-  {!agent.starts&&agent.why&&<p className="settings-muted" data-census-why>{agent.why}</p>}
+  {!agent.talks&&agent.why&&<p className="settings-muted" data-census-why>{agent.why}</p>}
   {agent.executable&&<p className="settings-muted"><code>{agent.executable}</code></p>}
-  {agent.starts&&!current&&session&&<div className="settings-card-actions">
+  {agent.talks&&!current&&session&&<div className="settings-card-actions">
    <button type="button" className="settings-button" disabled={!canConnect} title={openAction?.reason??undefined} onClick={()=>void session.actions.connect(agent.slug)}>Use in this chat</button>
   </div>}
-  {agent.starts&&!current&&session&&!canConnect&&<p className="settings-muted">{openAction?.reason??"The owner has not enabled changing this chat's agent."}</p>}
+  {agent.talks&&!current&&session&&!canConnect&&<p className="settings-muted">{openAction?.reason??"The owner has not enabled changing this chat's agent."}</p>}
   {client&&<AikitClientDetail row={client}/>}
  </section>;
 }

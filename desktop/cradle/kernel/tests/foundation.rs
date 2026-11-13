@@ -657,7 +657,7 @@ fn agents_that_start(world: &World) -> Result<Vec<(String, String)>, String> {
     Ok(starting)
 }
 
-/// The agents the window offers a person to talk to: the World Model's agents slice (the census), the rows that started.
+/// The agents the window offers a person to talk to: the World Model's agents slice (the census), the rows a person can talk to.
 fn window_agents(world: &World) -> Result<Vec<String>, String> {
     let agents = world.model("agents")?;
     let rows = agents["value"]["agents"].as_array().ok_or_else(|| {
@@ -666,16 +666,18 @@ fn window_agents(world: &World) -> Result<Vec<String>, String> {
             clip(&agents["value"])
         )
     })?;
-    for row in rows.iter().filter(|row| row["starts"] != true) {
+    // The agents a person can talk to, as the chat's chooser offers them (census.rs `talks`: it starts, and AIKit opens a
+    // conversation with it); the rest are listed with why.
+    for row in rows.iter().filter(|row| row["talks"] != true) {
         println!(
-            "listed as not starting: {} ({})",
+            "listed as one you cannot talk to: {} ({})",
             row["slug"],
             row["why"].as_str().unwrap_or("")
         );
     }
     Ok(rows
         .iter()
-        .filter(|row| row["starts"] == true)
+        .filter(|row| row["talks"] == true)
         .filter_map(|row| row["slug"].as_str().map(str::to_owned))
         .collect())
 }
@@ -830,7 +832,8 @@ fn keep_the_answer(
 
 /// A passage of a page sent to an agent the way the window sends one: a conversation provisioned with the census agent
 /// (`encounter_provision` `agent`), the passage put in its draft and prompted (session.ts `EncounterSession.submit`), the answer
-/// read back from AIKit's transcript, and kept in the page. Answers the session.
+/// read back from the conversation's view (AIKit's encounter owner, as the window reads it), and kept in the page. Answers the
+/// session.
 fn send_a_passage(world: &World, page: &SavedPage, agent: &str) -> Result<String, String> {
     let marker = format!("foundation answer {} {agent}", std::process::id() % 100_000);
     let provisioned = world
@@ -907,32 +910,12 @@ fn send_a_passage(world: &World, page: &SavedPage, agent: &str) -> Result<String
             ));
         }
     };
-    // AIKit's own transcript of the conversation holds the answer.
-    let transcript = owner(
-        world,
-        "OI_AIKIT_BIN",
-        "aikit",
-        &["--json", "session", "transcript", &session],
-    )
-    .or_else(|_| {
-        owner(
-            world,
-            "OI_AIKIT_BIN",
-            "aikit",
-            &["session", "transcript", &session, "--json"],
-        )
-    })?;
-    if !transcript.to_string().to_lowercase().contains(&marker) {
-        return Err(format!(
-            "AIKit's transcript of {session} does not hold the answer `{marker}`"
-        ));
-    }
     keep_the_answer(world, page, agent, &session, &answer)?;
     Ok(session)
 }
 
-/// Act 3: send a passage to each agent that starts and get each answer in the page, read back from AIKit's transcript and
-/// from Central.
+/// Act 3: send a passage to each agent that starts and get each answer in the page, read back from the conversation's view
+/// and from Central.
 #[test]
 #[ignore = "foundation act: runs the installed owners in a fresh home and spends a provider prompt per agent"]
 fn act_3_send_a_passage_and_get_the_answer() {

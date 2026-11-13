@@ -468,8 +468,8 @@ impl PreparedWrite {
                 // canonical ProjectRef is the owners', never the caller's. The
                 // root World (no project named) converses at its root (O-I #1003).
                 let place = self.place(project)?;
-                // The agent is the census's (census.rs `agent_for`, from the World Model's agents): the one named when it starts,
-                // else the first that starts. A mode that needs one acting body names its body instead.
+                // The agent is the census's (census.rs `agent_for`, from the World Model's agents): the one named when a person
+                // can talk to it, else the first such. A mode that needs one acting body names its body instead.
                 let body = preferred_body_ref
                     .as_deref()
                     .map(str::trim)

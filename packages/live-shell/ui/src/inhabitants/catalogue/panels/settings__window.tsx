@@ -37,9 +37,9 @@
 //   result      {status, operations: [{ref, title, status, message?}]}  the owners' answer to Apply or Reset (config_apply_reviewed,
 //               config_reset).
 // Harnesses & models (HarnessSource, desktop/cradle/src/configuration/harnessSource.ts, over harness_status and model_catalogue):
-//   harnesses   [{agent, harness, starts, version?, why?, client?, folderPresent?, capability?, effect?, folder?, gap?, signIn?, signInNote?,
+//   harnesses   [{agent, harness, starts, talks, version?, why?, client?, folderPresent?, capability?, effect?, folder?, gap?, signIn?, signInNote?,
 //               signInUnread?, loginNow?}]  one per agent on this machine, the census (the World Model's agents, O-I #1003): whether it
-//               starts (its version, or why not); and AIKit's client facts on it when AIKit has a client for it: whether its folder exists, the owner's own
+//               starts (its version) and whether you can talk to it (it starts and AIKit opens a conversation with it), or why not; and AIKit's client facts on it when AIKit has a client for it: whether its folder exists, the owner's own
 //               effect words, the configuration folder, an adapter gap's missing contract; and its own login as AIKit declares it
 //               (`aikit harness auth <client>`): signIn [{key,
 //               provider, command}] each one it can run, signInNote the harness's own words when it signs in only inside itself (no
@@ -619,15 +619,15 @@ function HarnessesPage({p}: {p: ViewProps}) {
     {/* Which agent a new chat talks to is chosen in the chat itself, among these agents (O-I #1003): there is no saved default here. */}
     <OwnerRows p={p} category="agents" size={3} title="Agent settings" />
     <section className="st-sec">
-      <h4>Agents on this machine<small>{harnesses ? `${harnesses.filter(h => h.starts === true).length} of ${harnesses.length} start` : <Unread p={p} k="harnesses" what="the agents on this machine" />}</small></h4>
+      <h4>Agents on this machine<small>{harnesses ? `${harnesses.filter(h => h.talks === true).length} of ${harnesses.length} you can talk to` : <Unread p={p} k="harnesses" what="the agents on this machine" />}</small></h4>
       {harnesses && <table className="st-tbl">
         <Cols w={[118, 150, 50, 64, undefined, 150]} />
         <thead><tr><th>Agent</th><th>Starts</th><th>AIKit{strOf(v, 'aikitWhy') && <i className="st-why" data-i={`AIKit|${strOf(v, 'aikitWhy')}`}>!</i>}</th><th>Capability</th><th>After a change</th><th /></tr></thead>
         <tbody>{harnesses.map(h => {
           const client = txt(h.client) ?? '', gap = rec(h.gap) ? h.gap : undefined, logins = Array.isArray(h.signIn) ? h.signIn.filter(rec) : []
-          return <tr key={txt(h.agent) ?? client} data-census-agent={txt(h.agent)} data-read={h.starts === true ? undefined : 'true'}>
+          return <tr key={txt(h.agent) ?? client} data-census-agent={txt(h.agent)} data-read={h.talks === true ? undefined : 'true'}>
             <td><b>{txt(h.harness) ?? txt(h.agent) ?? NONE}</b>{gap && <i className="st-why" data-i={`Adapter gap|${txt(gap.contract) ?? 'A contract is missing.'}${txt(gap.skill) ? ` Its authoring skill: ${gap.skill}.` : ''}`}>!</i>}</td>
-            <td data-i={txt(h.why) ? `Doesn't start|${h.why}` : undefined}>{h.starts === true ? txt(h.version) ?? 'yes' : txt(h.why) ?? 'no'}</td>
+            <td data-i={h.starts !== true && txt(h.why) ? `Doesn't start|${h.why}` : undefined}>{h.starts === true ? txt(h.version) ?? 'yes' : txt(h.why) ?? 'no'}{h.starts === true && h.talks !== true && <i className="st-why" data-i={`You cannot talk to it here|${txt(h.why) ?? 'AIKit opens no conversation with it.'}`}>!</i>}</td>
             <td data-i={h.folderPresent === false ? 'AIKit|No configuration folder for it yet: Install makes it and puts AIKit\'s skills there.' : undefined}>{h.folderPresent === true ? 'its folder' : h.folderPresent === false ? 'no folder' : NONE}</td>
             <td>{txt(h.capability) ?? NONE}</td>
             <td className="st-dim" data-i={txt(h.effect) ? `After a change|${h.effect}` : undefined}>{txt(h.effect) ?? NONE}</td>
@@ -1325,15 +1325,15 @@ const DEFAULTS = {
   settings: dump(SETTINGS), conflicts: dump([]),
   elsewhere: dump([{ref: 'live:delay:time', title: 'Delay time', where: 'the Delay on its chain'}, {ref: 'techne:timeline:zoom', title: 'Timeline zoom', where: 'the Timeline'}]),
   harnesses: dump([
-    {agent: 'claude-code', harness: 'Claude Code', starts: true, version: '2.1.323 (Claude Code)', client: 'claude-code', folderPresent: true, capability: 'agent', effect: 'Restart Claude to read new settings.', folder: '~/.claude',
+    {agent: 'claude-code', harness: 'Claude Code', starts: true, talks: true, version: '2.1.323 (Claude Code)', client: 'claude-code', folderPresent: true, capability: 'agent', effect: 'Restart Claude to read new settings.', folder: '~/.claude',
       signIn: [{key: 'claude-code|provider:anthropic', provider: 'anthropic', command: 'claude auth login'}], loginNow: 'AIKit finds what claude-code needs to sign in.'},
-    {agent: 'codex', harness: 'Codex', starts: true, version: 'codex-cli 0.155.1', client: 'codex', folderPresent: true, capability: 'agent', effect: 'Next session only.', folder: '~/.codex',
+    {agent: 'codex', harness: 'Codex', starts: true, talks: true, version: 'codex-cli 0.155.1', client: 'codex', folderPresent: true, capability: 'agent', effect: 'Next session only.', folder: '~/.codex',
       signIn: [{key: 'codex|provider:openai', provider: 'openai', command: 'codex login'}], loginNow: 'AIKit finds what codex needs to sign in.'},
-    {agent: 'gemini', harness: 'Gemini CLI', starts: false, why: 'gemini did not start: its node runtime could not load a library.', client: 'gemini', folderPresent: true, capability: 'agent', effect: 'Next session only.', folder: '~/.gemini',
+    {agent: 'gemini', harness: 'Gemini CLI', starts: false, talks: false, why: 'gemini did not start: its node runtime could not load a library.', client: 'gemini', folderPresent: true, capability: 'agent', effect: 'Next session only.', folder: '~/.gemini',
       signInNote: 'Login with Google (OAuth) is Gemini CLI\'s default auth; the API key delivers only when credential:gemini is bound'},
-    {agent: 'pi', harness: 'Pi', starts: true, version: '1.5.0', client: 'pi', folderPresent: true, capability: 'agent', folder: '~/.pi'},
-    {agent: 'hermes', harness: 'Hermes', starts: false, why: 'hermes did not answer its version.', client: 'hermes', folderPresent: true, capability: 'gateway', gap: {contract: 'No session-settings contract for Hermes yet.', skill: 'aikit:harness-adapter-authoring'}},
-    {agent: 'opencode', harness: 'OpenCode', starts: false, why: 'Actuation detects opencode but found no executable to start', client: 'opencode', folderPresent: false, capability: 'agent'},
+    {agent: 'pi', harness: 'Pi', starts: true, talks: true, version: '1.5.0', client: 'pi', folderPresent: true, capability: 'agent', folder: '~/.pi'},
+    {agent: 'hermes', harness: 'Hermes', starts: false, talks: false, why: 'hermes did not answer its version.', client: 'hermes', folderPresent: true, capability: 'gateway', gap: {contract: 'No session-settings contract for Hermes yet.', skill: 'aikit:harness-adapter-authoring'}},
+    {agent: 'opencode', harness: 'OpenCode', starts: false, talks: false, why: 'Actuation detects opencode but found no executable to start', client: 'opencode', folderPresent: false, capability: 'agent'},
   ]),
   routes: dump([
     {model: 'claude-opus-5-5', name: 'Claude Opus 5.5', routes: [{provider: 'anthropic', key: true, standing: 'usable'}, {provider: 'claude-code', key: false, standing: 'usable'}]},

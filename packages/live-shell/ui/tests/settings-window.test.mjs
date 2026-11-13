@@ -418,13 +418,17 @@ test('CODE-DERIVED — each page\'s owner reading becomes the design\'s keys: ha
     harnesses: {state: 'ok', rows: [{harness: 'Claude Code', client: 'claude-code', detection: 'binary', detected: true, detection_reason: null, config_dir_present: true, config_dir: '/Users/x/.claude (settings)', dispatch: 'acp', capability: 'descriptor', effect: 'restart Claude', items: 3, adapter_gap: null}]},
     catalogue: {state: 'ok', rows: {count: 1, entries: [{model: 'm1', name: 'Model one', source: 'aikit', routes: [{kind: 'api', provider: 'anthropic', credential_required: true}]}]}}}
   // The rows are the census's agents (O-I #1003); AIKit's client row is detail on the agent it names, and no row of its own.
-  const census = {state: 'read', agents: [{slug: 'claude-code', harnessRef: 'harness/claude-code', executable: '/x/claude', starts: true, version: '2.1.323', aikit: null},
-    {slug: 'gemini', harnessRef: 'harness/gemini', executable: '/x/gemini', starts: false, why: 'gemini did not start', aikit: null}]}
+  const census = {state: 'read', agents: [{slug: 'claude-code', harnessRef: 'harness/claude-code', executable: '/x/claude', starts: true, talks: true, version: '2.1.323', aikit: null},
+    {slug: 'gemini', harnessRef: 'harness/gemini', executable: '/x/gemini', starts: false, talks: false, why: 'gemini did not start', aikit: null},
+    {slug: 'opencode', harnessRef: 'harness/opencode', executable: '/x/opencode', starts: true, talks: false, version: '1.18.29', why: 'AIKit opens no conversation with opencode', aikit: null}]}
   const h = win.harnessValues(reading, null, census)
   const rows = JSON.parse(h.harnesses)
   // AIKit's client row says whether the harness's folder exists (`config_dir_present`), which is all its old `installed` checked.
   assert.deepEqual([rows.length, rows[0].folder, rows[0].folderPresent, rows[0].version, rows[1].why, rows[1].folderPresent, JSON.parse(h.routes)[0].routes[0]],
-    [2, '/Users/x/.claude', true, '2.1.323', 'gemini did not start', undefined, {provider: 'anthropic', key: true}])
+    [3, '/Users/x/.claude', true, '2.1.323', 'gemini did not start', undefined, {provider: 'anthropic', key: true}])
+  // An agent that starts but that AIKit opens no conversation with is listed, starting, as one you cannot talk to, in AIKit's words.
+  assert.deepEqual(rows.map(row => [row.agent, row.starts, row.talks]), [['claude-code', true, true], ['gemini', false, false], ['opencode', true, false]])
+  assert.equal(rows[2].why, 'AIKit opens no conversation with opencode')
   assert.equal(h.providers, undefined, 'no provider rows and no chat default stand in the values')
   const c = win.credentialValues([{credential: 'ai-kit:credential:anthropic', provider: 'anthropic', reference: 'keychain://aikit/anthropic', revoked: false, verifiedAt: 1792500000}], {'ai-kit:credential:anthropic': 'working'}, 2)
   assert.deepEqual([JSON.parse(c.credentials)[0].verdict, c.found], ['working', 2])

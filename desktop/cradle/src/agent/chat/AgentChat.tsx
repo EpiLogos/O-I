@@ -20,7 +20,7 @@ import {CHAT_PREVIEW_EVENT} from "./previewGate";
 import {PermissionCard} from "./PermissionCard";
 import {StatusLine} from "./StatusLine";
 import type {ConnectionFacts} from "./harness";
-import {agentName as censusAgentName,censusConnections,startingAgents,useCensus} from "../../agency/census";
+import {agentName as censusAgentName,censusConnections,talkingAgents,useCensus} from "../../agency/census";
 import {editedPaths,inFlightRow,turnStopFromEnd,workMarksOf,type Tape} from "../tape/model";
 import "./chat.css";
 
@@ -140,12 +140,12 @@ export function AgentChat({session,accompanying,project,agentName="World",situat
   const flushed=useRef<string>();
   const heldModel=useRef<{intent?:ModelIntent;stage:"draft"|"model"|"select"|"send";issued?:boolean;retries?:number;failed?:boolean}>({stage:"draft"});
   const [provisioning,setProvisioning]=useState(false);
-  // --- which agent a new conversation is with: the census's agents that start (O-I #1003); the person's choice, else the first.
+  // --- which agent a new conversation is with: the census's agents a person can talk to (O-I #1003); the person's choice, else the first.
   const census=useCensus(kernel.transport);
-  const starting=startingAgents(census);
+  const starting=talkingAgents(census);
   const [chosenAgent,setChosenAgent]=useState<string>();
   const newChatAgent=starting.find(agent=>agent.slug===chosenAgent)?.slug??starting[0]?.slug;
-  const agentsWhy=census.state==="reading"?"Reading the agents on this machine…":census.state==="unavailable"?census.why:starting.length?undefined:"No agent on this machine starts.";
+  const agentsWhy=census.state==="reading"?"Reading the agents on this machine…":census.state==="unavailable"?census.why:starting.length?undefined:"No agent on this machine can be talked to: none starts that AIKit opens a conversation with.";
   const [composerFocusToken,setComposerFocusToken]=useState(0);
   /** The held model choice for the NEXT conversation — persisted, shown by
    * the fresh composer's model chip. */

@@ -3,7 +3,10 @@
 //! One list, made one way. Its rows are Actuation's detection (`actuation harness detect --json`, read through
 //! `ActuationRead::HarnessDetect`): every harness the catalogue finds detected, with the executable its probe found. Each such
 //! harness is started once (`<executable> --version`, bounded) and its row says whether it started and what it answered, or why
-//! not. AIKit adds detail to a row (`aikit --json client status`: its config directory and whether it exists, its gaps) and never a row of its own: a harness AIKit names that Actuation does not detect is not an agent here.
+//! not. AIKit adds detail to a row (`aikit --json client status`: its config directory and whether it exists, its gaps, and
+//! whether a conversation opens with it) and never a row of its own: a harness AIKit names that Actuation does not detect is not
+//! an agent here. An agent a person can talk to (`talks`) starts and is one AIKit opens a conversation with; one that starts but
+//! that AIKit would refuse is listed with AIKit's words as its why.
 //!
 //! The World Model holds the census as its `agents` slice (world_model.rs); nothing else lists agents.
 use crate::{KernelOp, KernelOpOutcome};
@@ -94,10 +97,16 @@ pub fn census_of(
                 entry.insert("starts".into(), true.into());
                 entry.insert("version".into(), words.into());
                 entry.insert("start_seconds".into(), seconds.into());
+                let refused = talk_refusal(&slug, &entry["aikit"], aikit_why.as_deref());
+                entry.insert("talks".into(), refused.is_none().into());
+                if let Some(why) = refused {
+                    entry.insert("why".into(), why.into());
+                }
                 agents.push(Value::Object(entry));
             }
             Some(Started::Refused { why }) => {
                 entry.insert("starts".into(), false.into());
+                entry.insert("talks".into(), false.into());
                 entry.insert("why".into(), why.into());
                 agents.push(Value::Object(entry));
             }
@@ -116,6 +125,7 @@ pub fn census_of(
                     format!("Actuation detects {slug} but found no executable to start")
                 };
                 entry.insert("starts".into(), false.into());
+                entry.insert("talks".into(), false.into());
                 entry.insert("why".into(), why.into());
                 not_agents.push(Value::Object(entry));
             }
@@ -131,16 +141,41 @@ pub fn census_of(
     })
 }
 
-/// The agents a person can talk to: the census rows that started.
-pub fn starting(census: &Value) -> Vec<&Value> {
+/// The agents a person can talk to: the census rows that started and that AIKit opens a conversation with (`talks`).
+pub fn talking(census: &Value) -> Vec<&Value> {
     census["agents"]
         .as_array()
-        .map(|rows| rows.iter().filter(|row| row["starts"] == true).collect())
+        .map(|rows| rows.iter().filter(|row| row["talks"] == true).collect())
         .unwrap_or_default()
 }
 
-/// The agent a conversation opens with (O-I #1003): the one named, when the census lists it as an agent that starts; with none
-/// named, the census's first agent that starts. Nothing else chooses. With no census held (a kernel whose World Model has not
+/// Why a person cannot talk to an agent that starts, in AIKit's words, or `None` when they can. AIKit opens every conversation,
+/// and its client status says whether one opens with each harness (`conversation`, decided as an open decides it, before anything
+/// launches): an agent it would refuse is listed, starting, with AIKit's refusal as its why.
+fn talk_refusal(slug: &str, aikit: &Value, unavailable: Option<&str>) -> Option<String> {
+    if let Some(why) = unavailable {
+        return Some(format!(
+            "AIKit, which opens every conversation, could not be read: {why}"
+        ));
+    }
+    match aikit.get("conversation") {
+        Some(conversation) if conversation["opens"] == true => None,
+        Some(conversation) => Some(
+            conversation["why"]
+                .as_str()
+                .map_or_else(|| format!("AIKit opens no conversation with {slug}"), str::to_owned),
+        ),
+        None if aikit.is_null() => Some(format!(
+            "AIKit names no client for {slug}, so it opens no conversation with it"
+        )),
+        None => Some(format!(
+            "AIKit does not say whether a conversation opens with {slug} (its client status names no `conversation`)"
+        )),
+    }
+}
+
+/// The agent a conversation opens with (O-I #1003): the one named, when the census lists it as an agent a person can talk to;
+/// with none named, the census's first such agent. Nothing else chooses. With no census held (a kernel whose World Model has not
 /// started), a named agent is left to its owner, which refuses one it cannot open, and an unnamed one is refused in words.
 pub fn agent_for(census: Option<&Value>, named: Option<&str>) -> Result<String, String> {
     let named = named.map(str::trim).filter(|slug| !slug.is_empty());
@@ -150,12 +185,13 @@ pub fn agent_for(census: Option<&Value>, named: Option<&str>) -> Result<String, 
         });
     };
     let Some(slug) = named else {
-        return starting(census)
+        return talking(census)
             .first()
             .and_then(|row| row["slug"].as_str())
             .map(str::to_owned)
             .ok_or_else(|| {
-                "No agent on this machine starts: the census lists none that answered".to_owned()
+                "No agent on this machine can be talked to: the census lists none that starts and that AIKit opens a conversation with"
+                    .to_owned()
             });
     };
     let row_of = |list: &str| {
@@ -164,9 +200,9 @@ pub fn agent_for(census: Option<&Value>, named: Option<&str>) -> Result<String, 
             .and_then(|rows| rows.iter().find(|row| row["slug"] == slug))
     };
     match row_of("agents").or_else(|| row_of("not_agents")) {
-        Some(row) if row["starts"] == true => Ok(slug.to_owned()),
+        Some(row) if row["talks"] == true => Ok(slug.to_owned()),
         Some(row) => Err(format!(
-            "{slug} does not start on this machine: {}",
+            "{slug} is not an agent you can talk to on this machine: {}",
             row["why"].as_str().unwrap_or("it did not answer its start")
         )),
         None => Err(format!(
@@ -313,11 +349,12 @@ mod tests {
     #[test]
     fn a_row_is_an_agent_only_when_actuation_detects_its_harness_and_it_starts() {
         let clients = [
-            json!({"client": "claude", "harness": "claude-code", "config_dir_present": true}),
+            json!({"client": "claude", "harness": "claude-code", "config_dir_present": true,
+                   "conversation": {"opens": true, "protocol": "acp"}}),
             json!({"client": "only-aikit"}),
         ];
         let census = census_of(&detection(), &clients, None, fake);
-        let starting: Vec<_> = starting(&census)
+        let starting: Vec<_> = talking(&census)
             .iter()
             .map(|row| row["slug"].as_str().unwrap().to_owned())
             .collect();
@@ -353,6 +390,54 @@ mod tests {
     }
 
     #[test]
+    fn an_agent_that_starts_is_one_to_talk_to_only_where_aikit_opens_a_conversation() {
+        let clients = [
+            json!({"client": "claude", "harness": "claude-code", "conversation": {"opens": true, "protocol": "acp"}}),
+            json!({"client": "codex", "harness": "codex",
+                   "conversation": {"opens": false, "why": "AIKit opens no conversation with codex: no face"}}),
+        ];
+        let answers = |program: &Path| Started::Answered {
+            words: format!("{} 1.0", program.display()),
+            seconds: 0.1,
+        };
+        let census = census_of(&detection(), &clients, None, answers);
+        let slugs = |rows: Vec<&Value>| -> Vec<String> {
+            rows.iter()
+                .map(|row| row["slug"].as_str().unwrap().to_owned())
+                .collect()
+        };
+        assert_eq!(slugs(talking(&census)), ["claude-code"]);
+        let codex = &census["agents"][1];
+        assert_eq!(
+            (&codex["slug"], &codex["starts"], &codex["talks"]),
+            (&json!("codex"), &json!(true), &json!(false)),
+            "the row stays, starting, and says it is no agent to talk to: {codex}"
+        );
+        assert_eq!(
+            codex["why"],
+            "AIKit opens no conversation with codex: no face"
+        );
+        assert_eq!(agent_for(Some(&census), None).unwrap(), "claude-code");
+        let refused = agent_for(Some(&census), Some("codex")).unwrap_err();
+        assert!(
+            refused.contains("AIKit opens no conversation with codex"),
+            "{refused}"
+        );
+        // A client row that does not say is no conversation either, and says so.
+        let silent = census_of(
+            &detection(),
+            &[json!({"client": "claude", "harness": "claude-code"})],
+            None,
+            answers,
+        );
+        assert_eq!(silent["agents"][0]["talks"], false);
+        assert!(silent["agents"][0]["why"]
+            .as_str()
+            .unwrap()
+            .contains("does not say"));
+    }
+
+    #[test]
     fn aikit_unavailable_leaves_the_rows_and_says_why() {
         let census = census_of(
             &detection(),
@@ -360,7 +445,15 @@ mod tests {
             Some("AIKit client status is unavailable".into()),
             fake,
         );
-        assert_eq!(starting(&census).len(), 1);
+        assert!(
+            talking(&census).is_empty(),
+            "AIKit opens every conversation: unread, none opens"
+        );
+        assert_eq!(census["agents"][0]["starts"], true);
+        assert!(census["agents"][0]["why"]
+            .as_str()
+            .unwrap()
+            .contains("AIKit client status is unavailable"));
         assert_eq!(
             census["aikit_detail"],
             json!({"state": "unavailable", "why": "AIKit client status is unavailable"})
