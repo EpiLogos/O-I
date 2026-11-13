@@ -175,7 +175,7 @@ test('CODE-READING — the readings the walk named carry no literal project; the
     'agent/devices/EncounterObserver.tsx', 'agent/devices/useAgentChainReading.ts', 'agent/devices/useRackReading.ts', 'central/devices/groundDevices.ts',
     'components/NativeContextPanel.tsx', 'inhabitants/CentralHygieneDevice.tsx', 'native/expressionOwners.ts', 'inhabitants/ql/devices/skyPresences.ts',
     'inhabitants/ql/devices/qlM3Clock.ts', 'panels/expressions.tsx', 'owners/readers.ts', 'projections/useWorldTemporalReading.ts', 'widgets/agentConversation.ts',
-    'widgets/railDevices.tsx', 'projections/atlas/palaces/palaceOwners.ts', 'widgets/AgentWidget.tsx', 'widgets/PacketWidget.tsx', 'shell/transports/useCentralTransport.tsx',
+    'widgets/railDevices.tsx', 'projections/atlas/palaces/palaceOwners.ts', 'widgets/AgentWidget.tsx', 'widgets/railChainDevices.tsx', 'shell/transports/useCentralTransport.tsx',
     // REPLACED (O-I #1004): frame/tracks/useFactoryTracks.ts, gone; Factory's Set is the kernel's, drawn through the one projection.
     'frame/tracks/kernelSet.ts', 'owners/modeSets.ts']
   for (const site of sites) assert.doesNotMatch(read(site), /(project|PROJECT)\b[^\n]{0,24}['"]O-I['"]/, `${site}: no literal project`)
@@ -329,12 +329,16 @@ test('CODE-READING — Central\'s Approvals read the world\'s returns and act in
 // ---- round four: Factory's Approvals, on the Main track, read the world's returned work ---------------------------------------------
 
 test('CODE-READING — Factory\'s Approvals read every project\'s returns (§19.14 "one place"), act in each row\'s project, and say why when none stand', () => {
-  const chain = read('agent/devices/FactoryDeviceChain.tsx')
+  // REPLACED (parity D-09): Factory's chain composed Approvals and published it only while it stood; the rail claims Approvals' tile in every
+  // mode, so the rail's publisher (AgentRailDevices.tsx) composes it in every mode, reading the same world returns, and the Main track draws
+  // that door entry.
+  const chain = read('agent/devices/AgentRailDevices.tsx')
   assert.doesNotMatch(chain, /useSourceReturnsAnswer\(transport, register\)/, 'not the shown chain\'s register alone (a root chain asked nothing)')
-  assert.match(chain, /const approvalsReturns = useWorldReturns\(transport, null\)/)
+  assert.match(chain, /const worldReturns = useWorldReturns\(transport, null\)/)
   assert.match(chain, /approve: row => acceptSourceReturn\(transport, returnProjectOf\(row, null\), row, person\)/)
   assert.match(chain, /reject: row => rejectSourceReturn\(transport, returnProjectOf\(row, null\), row\)/)
   assert.match(chain, /send: \(row, words\) => commentSourceReturn\(transport, returnProjectOf\(row, null\), row, words, person\)/)
-  assert.match(chain, /returnsAbsent: approvalsReturns\.absent, returnsRefused: approvalsReturns\.refusals/)
-  assert.match(chain, /withReturnComments\(binding, \{returns: returned, comment: agentDraft, absent: approvalsReturns\.absent\}/)
+  assert.match(chain, /returnsAbsent: worldReturns\.absent, returnsRefused: worldReturns\.refusals/)
+  assert.match(chain, /withReturnComments\(binding, \{returns: worldReturns\.returns, comment: agentDraft, absent: worldReturns\.absent\}/)
+  assert.doesNotMatch(read('agent/devices/FactoryDeviceChain.tsx'), /useWorldReturns\(|approvalsBinding\(/, 'composed once, by the rail\'s publisher')
 })

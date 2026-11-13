@@ -1835,6 +1835,93 @@ impl Client {
         self.provision_inner(cwd, project_ref, agent, preferred_body_ref, None, agent_ref)
     }
 
+    /// The conversation you hold with one roster Agent (Messages, §19.24), made by the one provision (O-I #1003): its own
+    /// SessionSpace and AgentSession, named from the Agent so the same conversation reopens every time; its context composed for
+    /// that Agent alone (`project-context --agent`, so a ground with several profiles is never guessed at); its Agency minted for
+    /// exactly that Agent. `agent` is the census agent it is with (census.rs `agent_for`); a conversation that has a recorded
+    /// body reopens with the harness it was started with. A recorded body is resumed, and a harness that cannot resume continues
+    /// the conversation in the next session, the earlier ones staying readable. Answers the provision's reading with the
+    /// conversation's `sessions` (oldest first) and how its body stood (`opened`, `resumed` or `renewed`).
+    pub fn provision_agent_conversation(
+        &self,
+        cwd: &Path,
+        project_ref: &str,
+        agent_ref: &str,
+        agent: &str,
+    ) -> Result<Value, String> {
+        let conversation = AgentConversation::new(agent_ref)?;
+        let listed: Value = serde_json::from_str(&self.session_space(cwd, &["list"])?)
+            .map_err(|e| format!("Unreadable AIKit SessionSpace list: {e}"))?;
+        let held = listed
+            .as_array()
+            .and_then(|rows| {
+                rows.iter()
+                    .find(|row| row["definition"]["id"] == conversation.space.as_str())
+            })
+            .and_then(|row| row["agent_sessions"].as_object())
+            .map(|held| held.keys().cloned().collect())
+            .unwrap_or_default();
+        // The conversation's sessions, oldest first: the first, then each one opened because the one before could not resume.
+        let mut sessions = agent_conversation_sessions(&conversation.first, held);
+        let latest = conversation.at(sessions
+            .last()
+            .cloned()
+            .unwrap_or_else(|| conversation.first.clone()));
+        if sessions.is_empty() {
+            sessions.push(latest.agent_session.clone());
+        }
+        let recorded = self.recorded_encounter_binding(cwd, project_ref, &latest.agent_session)?;
+        let harness = recorded
+            .as_ref()
+            .and_then(|binding| binding["provider"].as_str())
+            .filter(|provider| !provider.is_empty())
+            .unwrap_or(agent)
+            .to_owned();
+        let mut data =
+            self.provision_inner(cwd, project_ref, Some(&harness), None, Some(&latest), None)?;
+        let mut body = "opened";
+        if data["resume_required"] == true {
+            let reconnect = EncounterRequest::Reconnect {
+                space: latest.space.clone(),
+                agent_session: latest.agent_session.clone(),
+                provider: harness.clone(),
+            };
+            match self.encounter(cwd, project_ref, &reconnect) {
+                Ok(value) => {
+                    data["open"] = value;
+                    data["resume_required"] = Value::Bool(false);
+                    body = "resumed";
+                }
+                // A harness that cannot resume (pi) leaves the recorded session closed for good once its owner restarted.
+                // AIKit's own answer is a new canonical session: the conversation continues in the next one.
+                Err(error)
+                    if error.ends_with("[encounter.reconnect_unsupported]")
+                        || error.ends_with("[encounter.resume_unsupported]") =>
+                {
+                    let next = conversation.at(next_agent_conversation_session(
+                        &conversation.first,
+                        &sessions,
+                    ));
+                    data = self.provision_inner(
+                        cwd,
+                        project_ref,
+                        Some(&harness),
+                        None,
+                        Some(&next),
+                        None,
+                    )?;
+                    sessions.push(next.agent_session.clone());
+                    body = "renewed";
+                }
+                Err(error) => return Err(error),
+            }
+        }
+        data["agent_ref"] = Value::String(conversation.agent_ref.clone());
+        data["sessions"] = serde_json::json!(sessions);
+        data["body"] = Value::String(body.into());
+        Ok(data)
+    }
+
     /// Exact native attachment identity lets a personal dialogue reopen without
     /// a renderer-owned session registry. Existing owner admission still applies.
     pub(crate) fn provision_named(
@@ -1842,7 +1929,7 @@ impl Client {
         cwd: &Path,
         project_ref: &str,
         preferred_body_ref: Option<&str>,
-        named: Option<&crate::nara_dialogue::Binding>,
+        named: Option<&dyn NamedConversation>,
     ) -> Result<Value, String> {
         self.provision_inner(cwd, project_ref, None, preferred_body_ref, named, None)
     }
@@ -1859,11 +1946,14 @@ impl Client {
         project_ref: &str,
         agent: Option<&str>,
         preferred_body_ref: Option<&str>,
-        named: Option<&crate::nara_dialogue::Binding>,
+        named: Option<&dyn NamedConversation>,
         agent_ref_override: Option<&str>,
     ) -> Result<Value, String> {
         let for_task = named.is_none() && agent_ref_override.is_none();
-        let context = self.session_space(cwd, &["project-context"])?;
+        // A named conversation composes its context for whom it is with (`project-context --agent`); any other, the ground's.
+        let mut context_args = vec!["project-context"];
+        context_args.extend(named.map(|n| n.context_args()).unwrap_or_default());
+        let context = self.session_space(cwd, &context_args)?;
         let binding: Value = serde_json::from_str(&context)
             .map_err(|error| format!("Unreadable AIKit project-context reading: {error}"))?;
         let project = binding["project"]
@@ -1872,7 +1962,7 @@ impl Client {
             .ok_or("AIKit project-context disclosed no Project")?
             .to_owned();
         let (space, agent_session) = named
-            .map(|n| (n.space.clone(), n.agent_session.clone()))
+            .map(|n| (n.space().to_owned(), n.agent_session().to_owned()))
             .unwrap_or_else(|| mint_chat_refs(&project));
         let label = named
             .map(|n| n.label())
@@ -1926,7 +2016,7 @@ impl Client {
                 Some(binding) => self.mint_agency_as(
                     cwd,
                     &agent_session,
-                    Some(&binding.expected_agent_ref),
+                    Some(binding.expected_agent_ref()),
                     false,
                 ),
                 None if for_task => {
@@ -2344,6 +2434,115 @@ impl Client {
                 ],
             )
         })
+    }
+}
+
+/// A conversation whose SessionSpace and AgentSession are named by whom it is with, so the same one reopens: made by the one
+/// provision (`provision_inner`, O-I #1003) like every other. Nara's personal dialogue (nara_dialogue.rs `Binding`) and your
+/// conversation with a roster Agent in Messages (`AgentConversation`, §19.24) are the two.
+pub(crate) trait NamedConversation {
+    fn space(&self) -> &str;
+    fn agent_session(&self) -> &str;
+    /// The Agent its Agency is minted for, exactly: a mint for any other is refused, never replaced.
+    fn expected_agent_ref(&self) -> &str;
+    fn label(&self) -> String;
+    fn attachment(&self) -> Value;
+    /// A reserved identity resumes an interrupted create/bind/attach, but absorbs no other session, project or purpose.
+    fn validate_state(&self, state: &Value, project: &str) -> Result<(), String>;
+    /// `project-context`'s arguments past the verb: whom its context is composed for. None: the ground's own.
+    fn context_args(&self) -> Vec<&str> {
+        Vec::new()
+    }
+}
+
+/// Your conversation with one roster Agent (Messages, §19.24): its own SessionSpace, named from the Agent; each of its sessions
+/// (`first`, then `first-2`, … as a harness that cannot resume renews it) attached for that Agent.
+#[derive(Clone)]
+pub(crate) struct AgentConversation {
+    agent_ref: String,
+    space: String,
+    first: String,
+    agent_session: String,
+}
+
+impl AgentConversation {
+    pub(crate) fn new(agent_ref: &str) -> Result<Self, String> {
+        let agent = agent_ref.trim();
+        if !agent.starts_with("agent:") && !agent.starts_with("agent/") {
+            return Err(format!("{agent_ref} is not an Agent ref"));
+        }
+        let slug = chat_slug(
+            agent
+                .trim_start_matches("agent:")
+                .trim_start_matches("agent/"),
+        );
+        let first = format!("agent-session/agent-{slug}");
+        Ok(Self {
+            agent_ref: agent.to_owned(),
+            space: format!("session-space/agent-{slug}"),
+            agent_session: first.clone(),
+            first,
+        })
+    }
+
+    /// The same conversation at another of its sessions.
+    fn at(&self, agent_session: String) -> Self {
+        Self {
+            agent_session,
+            ..self.clone()
+        }
+    }
+}
+
+impl NamedConversation for AgentConversation {
+    fn space(&self) -> &str {
+        &self.space
+    }
+    fn agent_session(&self) -> &str {
+        &self.agent_session
+    }
+    fn expected_agent_ref(&self) -> &str {
+        &self.agent_ref
+    }
+    fn label(&self) -> String {
+        format!("Conversation with {}", self.agent_ref)
+    }
+    fn attachment(&self) -> Value {
+        serde_json::json!({"agent_session":self.agent_session,
+            "purpose":format!("Your conversation with {}", self.agent_ref),"provenance":[]})
+    }
+    fn validate_state(&self, state: &Value, project: &str) -> Result<(), String> {
+        if state["definition"]["id"] != self.space.as_str() || state["label"] != self.label() {
+            return Err(format!(
+                "The SessionSpace {} holds another conversation than yours with {}",
+                self.space, self.agent_ref
+            ));
+        }
+        let projects = state["definition"]["projects"]
+            .as_array()
+            .ok_or("Stored SessionSpace has no project membership reading")?;
+        if projects.iter().any(|p| p.as_str() != Some(project)) {
+            return Err(format!(
+                "Your conversation with {} belongs to another project",
+                self.agent_ref
+            ));
+        }
+        let sessions = state["agent_sessions"]
+            .as_object()
+            .ok_or("Stored SessionSpace has no attachment reading")?;
+        if let Some(foreign) = sessions
+            .keys()
+            .find(|key| agent_conversation_sessions(&self.first, vec![(*key).clone()]).is_empty())
+        {
+            return Err(format!(
+                "The SessionSpace {} holds {foreign}, which is not a session of your conversation with {}",
+                self.space, self.agent_ref
+            ));
+        }
+        Ok(())
+    }
+    fn context_args(&self) -> Vec<&str> {
+        vec!["--agent", &self.agent_ref]
     }
 }
 
@@ -2951,5 +3150,113 @@ mod gateway_agent_tests {
         let refused = super::tests::retry_busy(|| client.decision_status())
             .expect_err("another schema is refused");
         assert!(refused.contains("aikit.decision-status/v1"), "{refused}");
+    }
+}
+
+/// A roster Agent's conversation sessions, oldest first: `first`, then
+/// `first-2`, `first-3`, … as each was opened. Sessions of other names are
+/// not this conversation's.
+pub(crate) fn agent_conversation_sessions(first: &str, held: Vec<String>) -> Vec<String> {
+    let mut sessions: Vec<(u32, String)> = held
+        .into_iter()
+        .filter_map(|session| {
+            if session == first {
+                return Some((1, session));
+            }
+            let generation = session
+                .strip_prefix(first)?
+                .strip_prefix('-')?
+                .parse::<u32>()
+                .ok()
+                .filter(|n| *n >= 2)?;
+            Some((generation, session))
+        })
+        .collect();
+    sessions.sort();
+    sessions.into_iter().map(|(_, session)| session).collect()
+}
+
+/// The session a conversation continues in when its latest cannot resume.
+pub(crate) fn next_agent_conversation_session(first: &str, sessions: &[String]) -> String {
+    format!("{first}-{}", sessions.len().max(1) + 1)
+}
+
+#[cfg(test)]
+mod agent_conversation_session_tests {
+    use super::*;
+
+    #[test]
+    fn sessions_are_ordered_by_generation_and_foreign_ones_dropped() {
+        let first = "agent-session/agent-a";
+        let held = vec![
+            "agent-session/agent-a-10".to_owned(),
+            "agent-session/agent-a".to_owned(),
+            "agent-session/agent-a-2".to_owned(),
+            "agent-session/agent-ab".to_owned(),
+            "agent-session/agent-a-x".to_owned(),
+        ];
+        assert_eq!(
+            agent_conversation_sessions(first, held),
+            [
+                "agent-session/agent-a",
+                "agent-session/agent-a-2",
+                "agent-session/agent-a-10"
+            ]
+        );
+    }
+
+    #[test]
+    fn the_next_session_follows_the_last() {
+        let first = "agent-session/agent-a";
+        assert_eq!(
+            next_agent_conversation_session(first, &[first.to_owned()]),
+            "agent-session/agent-a-2"
+        );
+        let two = [first.to_owned(), format!("{first}-2")];
+        assert_eq!(
+            next_agent_conversation_session(first, &two),
+            "agent-session/agent-a-3"
+        );
+    }
+
+    #[test]
+    fn a_roster_conversation_is_named_from_its_agent_and_its_space_holds_only_its_own_sessions() {
+        let conversation = AgentConversation::new(" agent:a ").unwrap();
+        assert_eq!(conversation.space(), "session-space/agent-a");
+        assert_eq!(conversation.agent_session(), "agent-session/agent-a");
+        assert_eq!(conversation.expected_agent_ref(), "agent:a");
+        assert_eq!(conversation.context_args(), ["--agent", "agent:a"]);
+        assert!(AgentConversation::new("pi")
+            .err()
+            .is_some_and(|why| why.contains("not an Agent ref")));
+        let renewed = conversation.at("agent-session/agent-a-2".into());
+        assert_eq!(renewed.space(), conversation.space());
+        assert_eq!(
+            renewed.attachment()["agent_session"],
+            "agent-session/agent-a-2"
+        );
+        let state = |project: &str, sessions: Value| {
+            serde_json::json!({"definition": {"id": "session-space/agent-a", "projects": [project]},
+                "label": "Conversation with agent:a", "agent_sessions": sessions})
+        };
+        let own = serde_json::json!({"agent-session/agent-a": {}, "agent-session/agent-a-2": {}});
+        renewed
+            .validate_state(&state("P", own.clone()), "P")
+            .unwrap();
+        let foreign = serde_json::json!({"agent-session/agent-ab": {}});
+        assert!(conversation
+            .validate_state(&state("P", foreign), "P")
+            .unwrap_err()
+            .contains("not a session of your conversation"));
+        assert!(conversation
+            .validate_state(&state("Q", own.clone()), "P")
+            .unwrap_err()
+            .contains("another project"));
+        let mut relabelled = state("P", own);
+        relabelled["label"] = Value::String("Desktop chat".into());
+        assert!(conversation
+            .validate_state(&relabelled, "P")
+            .unwrap_err()
+            .contains("another conversation"));
     }
 }

@@ -900,6 +900,16 @@ pub enum KernelOp {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         preferred_body_ref: Option<String>,
     },
+    /// Your conversation with one roster Agent (Messages, §19.24): opened, or reopened, on its own session, its Agency minted
+    /// for exactly that Agent, by the one provision (O-I #1003). `project` empty is the root World.
+    AgentConversation {
+        #[serde(default)]
+        project: String,
+        agent_ref: String,
+        /// The census agent it is with (census.rs `agent_for`): absent, the census's first you can talk to.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        agent: Option<String>,
+    },
     MaterialRead {
         target: material::Target,
     },
@@ -3822,6 +3832,7 @@ impl Kernel {
             | KernelOp::ProfileEdit { .. }
             | KernelOp::InstanceCommission { .. }
             | KernelOp::EncounterProvision { .. }
+            | KernelOp::AgentConversation { .. }
             | KernelOp::HarnessIngressRule { .. }
             | KernelOp::GroundForm { .. }
             | KernelOp::GroundMusic { .. }

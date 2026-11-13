@@ -133,12 +133,13 @@ function TorusDisplay({v, set, w, h, notes}: {v: V; set?: ViewProps['set']; w: n
   </Display>
 }
 
-/** The Jankó keyboard under the full torus: rows alternate the two whole-tone families, each row offset by half a key. */
+/** The Jankó keyboard under the full torus: rows alternate the two whole-tone families, each row offset by half a key. A key lights when
+ * its pitch class sounds: the even classes on the first family's rows, the odd on the second's. */
 function Janko({w, y, sounding}: {w: number; y: number; sounding: readonly number[]}) {
   const keys = 14, kw = (w - 40) / keys, kh = 22, names = ['C', 'D', 'E', 'F♯', 'G♯', 'A♯', 'C♯', 'D♯', 'F', 'G', 'A', 'B']
   return <g aria-label="Jankó keyboard">
     {[0, 1, 2, 3].map(row => Array.from({length: keys - (row % 2)}, (_, i) => {
-      const family = row % 2, x = 20 + i * kw + (family ? kw / 2 : 0), note = family * 6 + (i % 6), hot = sounding.includes(i * 2 + family)
+      const family = row % 2, x = 20 + i * kw + (family ? kw / 2 : 0), note = family * 6 + (i % 6), hot = sounding.includes(2 * (i % 6) + family)
       return <g key={`${row}-${i}`}>
         <rect x={x + 1} y={y + row * (kh + 2)} width={kw - 2} height={kh} rx={3}
           fill={hot ? 'var(--dp-on)' : family ? '#2a3036' : '#59606a'} stroke="var(--shade)" strokeOpacity={.4} />
@@ -733,7 +734,7 @@ export const torus: DesignedDevice = {
         {/* the Comma at the torus's edge (manual §21.2 Full): a reading, never set here */}
         <text x={748} y={22} textAnchor="end" className="dp-axis" aria-label="Comma">{has(p.v, 'comma') ? `Comma ${cents(num(p.v, 'comma'))}` : `Comma ${NONE}`}</text>
         {has(p.v, 'band') && <text x={12} y={22} className="dp-axis">{`${strOf(p.v, 'band')}${has(p.v, 'rate') ? ` · ${rateWords(num(p.v, 'rate'))}` : ''}`}</text>}
-        <Janko w={760} y={300} sounding={json<number[]>(p.v, 'sounding', []).map(n => n * 2)} />
+        <Janko w={760} y={300} sounding={json<number[]>(p.v, 'sounding', [])} />
       </g>
     </svg>
   </div>,

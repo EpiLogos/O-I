@@ -13,6 +13,7 @@ import {Icon as CutIcon, type IconName} from '../../inhabitants/sdk/Icon'
 import type {SlotBinding, SlotWords, TransportBindings, TransportSlotId} from './slots'
 import {nextFold, type FoldState} from './fold'
 import {loadWhenDrawn} from '../../shell/loadWhenDrawn'
+import {HomeSlot} from './HomeSlot'
 import './transport.css'
 
 /** Link (§19.19) draws at once, standing disabled until its owners answer; its binding (Workcell's status, AIKit's population and
@@ -99,7 +100,8 @@ export function Transport({bindings, words}: {bindings: TransportBindings; words
     <div className="transport-group transport-playback">{slot('follow')}{slot('position')}{slot('play')}{slot('stop')}{slot('record')}{slot('overdub')}{slot('arm')}{slot('re-enable')}{slot('capture')}</div>
     <div className="transport-loop transport-group">{slot('punch-in')}{slot('loop')}{slot('punch-out')}{slot('loop-length')}</div>
     <div className="transport-spacer" />
-    <div className="transport-system">{slot('draw')}{slot('keys')}{slot('key-map')}{slot('midi-map')}{slot('rate')}{slot('cpu')}<span className="cpu-meter" /></div>
+    {/* Home stands between the playing keys and the map in every mode (the mockup's #home): the Earth, in Technē. */}
+    <div className="transport-system">{slot('draw')}{slot('keys')}<HomeSlot />{slot('key-map')}{slot('midi-map')}{slot('rate')}{slot('cpu')}<span className="cpu-meter" /></div>
   </div>
 }
 

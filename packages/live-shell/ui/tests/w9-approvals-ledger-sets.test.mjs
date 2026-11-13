@@ -175,7 +175,9 @@ test('3 · the chain reads the Runs the shown session\'s takes name, Factory\'s 
   assert.deepEqual(kernel.ops[1], {op: 'factory_owner', request: {kind: 'attempt-decision-read', state_path: STATE, run_ref: RUN, human_request_ref: 'hr:asked', receiving_ref: QUESTION_REF}})
   assert.equal(got.standings['hr:asked'].standing.revision, 'rev:7')
   assert.equal(got.standings['hr:unasked'], undefined, 'no question in Central: nothing to read')
-  const view = read('agent/devices/FactoryDeviceChain.tsx')
+  // REPLACED (parity D-09): Approvals was composed by Factory's chain, published only while it stood; the rail claims its tile in every mode, so
+  // the rail's publisher (AgentRailDevices.tsx) composes and publishes it in every mode, and the Main track draws that door entry.
+  const view = read('agent/devices/AgentRailDevices.tsx')
   assert.match(view, /answerUnit: \(project, review\) => receiving\(transport, project, review\)/)
   assert.match(view, /const unitsRead = useUnitDecisions\(transport, unitRuns\)/)
   // REPLACED (O-I #740 lane B): SETTINGS_PROJECT ('O-I'); the shown session's own register (agent/worldScope.ts).
@@ -199,14 +201,18 @@ test('4 · Changes: a comment on the waiting return in the words written in the 
   await written.write([{key: 'changes', value: PENDING.return_ref}])
   assert.deepEqual(sent, [[PENDING.return_ref, 'Name the second source too.']])
   assert.deepEqual(cleared, [true])
-  const view = read('agent/devices/FactoryDeviceChain.tsx')
+  // REPLACED (parity D-09): Approvals was composed by Factory's chain, published only while it stood; the rail claims its tile in every mode, so
+  // the rail's publisher (AgentRailDevices.tsx) composes and publishes it in every mode, and the Main track draws that door entry.
+  const view = read('agent/devices/AgentRailDevices.tsx')
   // REPLACED (#725): the comment hand was the binding returned — it is laid under Notifications' readings now (§23.9: what an owner raises
   // waits in Approvals, under Requests; railBindings.ts withOwnerRequests), so the comment-wrapped binding is what that carry receives.
   // REPLACED (O-I #740 lane B, round four): `{returns, comment}` and the chain's register; the comment hand carries why none stand, and acts
   // in the row's own project.
-  assert.match(view, /const commented = withReturnComments\(binding, \{returns: returned, comment: agentDraft, absent: approvalsReturns\.absent\}, \{\n\s*send: \(row, words\) => commentSourceReturn\(transport, returnProjectOf\(row, null\), row, words, person\),\n\s*after: \(\) => \{ void agentWrite\?\.\(\[\{key: 'draft', value: ''\}\]\) \},/)
-  assert.match(view, /return withOwnerRequests\(commented, /)
-  assert.match(view, /const agentDraft = typeof oneAgent\?\.values\.draft === 'string' \? oneAgent\.values\.draft : null/)
+  assert.match(view, /const commented = withReturnComments\(binding, \{returns: worldReturns\.returns, comment: agentDraft, absent: worldReturns\.absent\}, \{\n\s*send: \(row, words\) => commentSourceReturn\(transport, returnProjectOf\(row, null\), row, words, person\),\n\s*after: \(\) => \{ void agentWrite\?\.\(\[\{key: 'draft', value: ''\}\]\) \},/)
+  assert.match(view, /withOwnerRequests\(commented, /)
+  // The composer is the Agent's as the door holds it, where a session's chain stands its Agent.
+  assert.match(view, /publishedDevice\(chainDeviceId\('agent'\)\)\?\.binding/)
+  assert.match(view, /const agentDraft = typeof agentEntry\?\.values\.draft === 'string' \? agentEntry\.values\.draft : null/)
 })
 
 // ------------------------------------------------------------------------------------------------------------------ the Ledger
@@ -609,8 +615,11 @@ test('15 · Approvals: a proposed revision waits as a proposal with its Result f
   const galleryAll = galleryDrawn.map(([, markup]) => markup).join('\n')
   assert.match(galleryAll, />Accept</)
   assert.match(galleryAll, /aria-label="Result"/)
-  const chain = read('agent/devices/FactoryDeviceChain.tsx')
-  assert.match(chain, /refinements: rackRefinements/)
+  // REPLACED (parity D-09): Approvals was composed by Factory's chain, published only while it stood; the rail claims its tile in every mode, so
+  // the rail's publisher (AgentRailDevices.tsx) composes and publishes it in every mode, and the Main track draws that door entry.
+  const chain = read('agent/devices/AgentRailDevices.tsx')
+  assert.match(chain, /useAikitRead\(transport, REFINEMENT_LIST\)/)
+  assert.match(chain, /\n\s+refinements, settings: shownSettings\}/)
   // Approvals is one device (§19.14): Central's Main track answers a refinement too, with the same AIKit read and the one write
   // (ownerRoutes.ts refinementWrite) the Refining page presses.
   const centralChain = read('central/devices/CentralDevices.tsx')
@@ -688,10 +697,12 @@ test('17 · a Control skill\'s revision: Accept hands it to Central, where the p
   const routes = read('agent/devices/ownerRoutes.ts')
   assert.match(routes, /accept: 'control\.skills\.revision\.accept', discard: 'control\.skills\.revision\.discard'/)
   assert.match(routes, /centralAct\(transport, CENTRAL_REVISION_ACTS\[verb\], \{scope: handed\.scope, name: handed\.name, expected_proposed_digest: handed\.proposedDigest\}\)/)
+  // REPLACED (parity D-09): Approvals was composed by Factory's chain, published only while it stood; the rail claims its tile in every mode, so
+  // the rail's publisher (AgentRailDevices.tsx) composes and publishes it in every mode, and the Main track draws that door entry.
   const chain = read('agent/devices/FactoryDeviceChain.tsx')
   const centralChain = read('central/devices/CentralDevices.tsx')
   assert.match(chain, /central: centralRevision/)
-  for (const source of [chain, centralChain]) assert.match(source, /refineCentral: centralRevision/)
+  for (const source of [read('agent/devices/AgentRailDevices.tsx'), centralChain]) assert.match(source, /refineCentral: centralRevision/)
   // The Refining page says where it waits.
   host.resetHost()
   const rack = bind.rackBinding(RACK, {profile: null, sets: {}, setList: null, skills: null, capabilities: null, profiles: null, holds: bind.chainHolds()}, null, {project: 'O-I', sessionRef: null})
@@ -751,7 +762,9 @@ test('16 · Open on a refinement goes to the Skillset rack\'s Refining page with
   assert.deepEqual(held.opened, ['central:return:project:O-I:1'])
   assert.deepEqual(opened, [ALPHA], 'nothing else opens the Refining page')
   // Both chains hand it: Factory's opens it in place, Central's turns to Factory; the Day's Patterns pad takes the same hand.
-  const chain = read('agent/devices/FactoryDeviceChain.tsx')
+  // REPLACED (parity D-09): Approvals was composed by Factory's chain, published only while it stood; the rail claims its tile in every mode, so
+  // the rail's publisher (AgentRailDevices.tsx) composes and publishes it in every mode, and the Main track draws that door entry.
+  const chain = read('agent/devices/AgentRailDevices.tsx')
   const centralChain = read('central/devices/CentralDevices.tsx')
   assert.match(chain, /openRefinement: member => openRefinement\(member\)/)
   assert.match(centralChain, /openRefinement: member => openRefinement\(member, \{toFactory\}\)/)

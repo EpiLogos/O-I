@@ -24,7 +24,7 @@ import {OwnerValueBox, PlateRadio, PlateReading} from '../../../frame/devices/pl
 import {DeviceView} from '../../../frame/devices/DeviceView'
 import type {DeviceInstance} from '../../../frame/devices/deviceRuntime'
 import {Action} from '../../../inhabitants/sdk/panel'
-import {flipDevice, holdInBand, publishDevice, selectDevice} from '../../../frame/devices/deviceDoor'
+import {flipDevice, holdInBand, publishDevice, publishedDevice, selectDevice, type PublishedDevice} from '../../../frame/devices/deviceDoor'
 import {DEVICE_PANE_KIND} from '../../../frame/devices/devicePane'
 import {openInstrument} from '../../../frame/instrumentDoor'
 import {Icon} from '../../../inhabitants/sdk/Icon'
@@ -32,8 +32,11 @@ import type {PlateMark} from '../../../inhabitants/sdk/controls'
 import type {IconName} from '../../../inhabitants/sdk/icons'
 import {inhabitantManifest} from '../../../inhabitants/manifest'
 import {QUATERNAL_LOGIC_FAMILY_ID} from '../../../inhabitants/worldShellFamilies'
-import {qlFaceEntry} from '../../../inhabitants/ql/devices/TechneDevices'
+import {qlFaceEntry, type QlTorusHosting} from '../../../inhabitants/ql/devices/TechneDevices'
 import {useLiveTorusReading, useQlInstrumentFeed} from '../../../live/torusInstrument'
+import {torusDevice, torusViewOf, TORUS_DESIGN_ID, TORUS_DEVICE_ID, TORUS_HEAD_ACTS} from '../../../live/torusDevice'
+import {TorusPicture, useTorusChainBinding} from '../../../live/TorusOnChain'
+import {useHolds} from '../../../techne/devices/designDevices'
 import {expressionsDeviceId} from '../../devices/expressionsDevice'
 import {ACTS_EDITOR, editorDevice} from '../../devices/summonedEditors'
 import {openFieldDeviceFull, useEditorApply, useFieldDevices} from '../../devices/ExpressionsDeviceView'
@@ -99,6 +102,21 @@ function Mark({icon, label, onPress}: {icon: IconName; label: string; onPress: (
   </button>
 }
 
+/** The torus on the door while the Studio stands, so its Full draws the Body chain's Torus in its place (the rack's members are found on
+ * the door by their design): published only where no other host (Live's chain, TorusOnChain.tsx) holds it, and taken down only if it is
+ * still the Studio's own. */
+function useStudioTorus(hosting: QlTorusHosting): void {
+  const mine = useRef<PublishedDevice | null>(null)
+  useEffect(() => {
+    const there = publishedDevice(TORUS_DEVICE_ID)
+    if (there && there !== mine.current) return
+    const entry: PublishedDevice = {device: hosting.device, binding: hosting.binding, picture: hosting.picture, acts: TORUS_HEAD_ACTS}
+    mine.current = entry
+    publishDevice(TORUS_DEVICE_ID, entry)
+  }, [hosting])
+  useEffect(() => () => { if (mine.current && publishedDevice(TORUS_DEVICE_ID) === mine.current) publishDevice(TORUS_DEVICE_ID, null) }, [])
+}
+
 export function ExpressionsStudio(props: ExpressionsStudioProps) {
   // The selected symbol and its glyph clip (selectEntity, onExpandGlyph, drafts, glyphPresented) are the scene's Clip view's now.
   const {reading, request, configure, onConfigure, settings, own, deep, refresh, fault} = props
@@ -110,9 +128,18 @@ export function ExpressionsStudio(props: ExpressionsStudioProps) {
   const [paneFault, setPaneFault] = useState<string | null>(null)
   const torus = useLiveTorusReading()
   const instrumentReading = useQlInstrumentFeed()
+  // The Body chain's Torus (§20.3 "Physics, Resonance, Torus"; parity D-06): Live's own torus device, drawn by its catalogue design on the
+  // binding Live's chain builds over the same reading (TorusOnChain.tsx), never a waiting stand-in.
+  const torusDev = useMemo(() => torusDevice(torus), [torus])
+  const torusBinding = useTorusChainBinding(torus, torusDev)
+  const torusView = torusViewOf(useHolds()[TORUS_DESIGN_ID])
+  const torusHosting: QlTorusHosting = useMemo(() => ({device: torusDev, binding: torusBinding,
+    picture: size => (torus ? <TorusPicture state={torus} size={size} view={torusView} /> : null)}), [torusDev, torusBinding, torus, torusView])
+  useStudioTorus(torusHosting)
   const qlFaces = inhabitantManifest(QUATERNAL_LOGIC_FAMILY_ID)?.faces ?? []
-  const qlEntries = useMemo(() => BODY_QL.flatMap(id => { const face = qlFaces.find(item => item.id === id); return face ? [qlFaceEntry(face, torus, instrumentReading)] : [] }),
-    [qlFaces, torus, instrumentReading])
+  const qlEntries = useMemo(() => BODY_QL.flatMap(id => { const face = qlFaces.find(item => item.id === id)
+    return face ? [qlFaceEntry(face, torus, instrumentReading, undefined, undefined, undefined, undefined, {torus: torusHosting})] : [] }),
+  [qlFaces, torus, instrumentReading, torusHosting])
   // The stage's controls read the frame's chrome by value and send through its one runner.
   const chrome = useHostedChrome()
   const stage = useStageSender(chrome?.state ?? null, chrome?.run ?? null)

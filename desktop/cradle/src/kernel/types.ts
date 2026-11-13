@@ -1002,6 +1002,9 @@ export type KernelOp =
    * sequence and opens the result with `agent`, a census agent (O-I #1003; none, the census's first that starts), minting for the
    * roster Agent `agent_ref` when named, or a mode's body (`preferred_body_ref`). */
   | {op:"encounter_provision";project:string;agent?:string;agent_ref?:string;preferred_body_ref?:string}
+  /** Your conversation with one roster Agent (Messages, §19.24): opened or reopened on its own session, its Agency minted for exactly
+   * that Agent, by the one provision (O-I #1003); `agent` is the census agent it is with (none: the census's first you can talk to). */
+  | {op:"agent_conversation";project?:string;agent_ref:string;agent?:string}
   | { op: "material_read"; target: { receipt: string; state_root: string; endpoint?: string | null; expected_world_ref?: string | null } }
   | { op: "a2a_exchange"; request: Record<string, unknown> }
   | {op:"encounter_task_read";project:string;agent_session:string}

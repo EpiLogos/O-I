@@ -1,7 +1,17 @@
 // The tracks the Session · Arrangement pane draws, published for the parts that show the same material (the clip box): the
 // mode's tracks hook runs once, in the pane, never a second reader of the same owner (R2 objection 1). Pure TypeScript.
-import {useSyncExternalStore} from 'react'
+import {createContext, useSyncExternalStore} from 'react'
 import type {WorldTrackSet} from '../../timeline/worldTrackAdapter'
+
+/** The live material a tracks device draws in its Full (parity D-25, D-26): the set the pane shows, with its owner's actions, the pane's
+ * selection and why it is empty. The pane hands it to the device it draws (ModeTracksView.tsx); a place with none — the gallery — draws the
+ * design on the set its keys carry. A selection's shape as frame/tracks/SessionGrid.tsx TracksSelection names it. */
+export interface TracksMaterialValue {
+  readonly set: WorldTrackSet
+  readonly selection: {ref?: string; select(target: {kind: 'clip' | 'track'; ref: string; title: string; track?: string}): void}
+  readonly empty?: string
+}
+export const TracksMaterial = createContext<TracksMaterialValue | null>(null)
 
 let shown: WorldTrackSet | null = null
 const listeners = new Set<() => void>()

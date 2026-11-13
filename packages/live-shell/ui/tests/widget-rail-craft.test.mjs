@@ -45,7 +45,9 @@ const {WidgetRail} = await import('../src/frame/widgets/WidgetRail.tsx')
 const {sameGlance} = await import('../src/frame/widgets/widgets.ts')
 const {conversationOf, conversationAbsence, conversationGlance, CONVERSATION_PLACE} = await import('../src/widgets/agentConversation.ts')
 const {TrailStops, trailGlance, stopTime} = await import('../src/shell/TrailWidget.tsx')
-const {PacketView, packetRows, packetGlance, answerRefusal} = await import('../src/widgets/PacketWidget.tsx')
+// REPLACED (parity audit D-01; manual §23.1 "Its tile is the device's widget view"): the rail's Packet is Central's Packet device's widget
+// (widgets/railChainDevices.tsx publishes it on packetBinding.ts); the old PacketWidget body is gone.
+const {answerRefusal, packetBinding} = await import('../src/central/devices/packetBinding.ts')
 
 const bookOf = rail => ({rail, toggle: noop, pin: noop, savePreset: noop, applyPreset: noop, widen: noop})
 const track = (space, session, extra = {}) => ({sessionRef: `agent-session/${session}`, spaceRef: `session-space/${space}`, purpose: session, agentRef: null, agentName: null, agentAccepted: null,
@@ -109,7 +111,8 @@ test('the agent widget mounts the one conversation surface, never a second chat 
   assert.match(widget, /preferredBodyRef=\{body\?\.ref\}/, 'a new conversation is provisioned on the companion\'s own body when the roster holds it')
   const registry = await source('shell/widgets.tsx')
   assert.match(registry, /\{id: 'agent', name: 'Agent', Name: AgentWidgetName, [^}]*Body: AgentWidget\}/)
-  assert.match(registry, /OWN_BODIES[^=]*= \{packet: PacketWidget, trail: TrailWidget\}/)
+  assert.match(registry, /OWN_BODIES[^=]*= \{packet: CLAIMED, trail: TrailWidget\}/, 'the Packet is its device\'s widget: no body of its own')
+  assert.match(await source('widgets/railDeviceIds.ts'), /claimRailWidget\('packet', RAIL_PACKET_DEVICE_ID\)/)
 })
 
 test('the conversation glance is the owner\'s last turns, the person\'s and the agent\'s only', () => {
@@ -122,20 +125,16 @@ const item = (id, title, text, anchor = {kind: 'text', start: 0, end: text.lengt
   selection: {source_ref: `central:path:${id}`, title, owner: 'central', binding_id: 'b', text, working_copy: false, captured_at: '', anchor}})
 const context = items => ({schema: 'aikit.prepared-context/v1', scope: {project: 'O-I', agent_session: 'agent-session/x'}, revision: 1, digest: 'blake3:x', items})
 
-test('the packet shows each prepared selection as its owner holds it, sized in characters, and names the undisclosed tokens (headless SSR)', () => {
+test('the packet hands its design each prepared selection as its owner holds it, sized in characters and bytes; no token count', () => {
   const held = context([item('i1', 'Flow · Fz2', 'the vessel is the stone’s other face'), item('i2', 'Page', 'x', {kind: 'observation', document_id: 'd', key: 'k', selector: 's', role: 'r'})])
-  assert.deepEqual(packetRows(held).map(row => [row.title, row.size]), [['Flow · Fz2', '36'], ['Page', 'page']])
-  const markup = html(React.createElement(PacketView, {companion: 'Fizz', scope: 'agent-session/x', context: held, reading: false, refusal: null, onAnswer: noop}))
-  assert.equal((markup.match(/data-packet-item=/g) ?? []).length, 2)
-  assert.match(markup, /tokens not disclosed/, 'no token count is drawn: the owner discloses none')
-  assert.doesNotMatch(markup, /\d+ tokens/)
-  assert.match(markup, /data-action="answer-this"(?![^>]*disabled)/, 'Answer this presses when nothing refuses it')
-  const refused = html(React.createElement(PacketView, {companion: 'Fizz', scope: null, context: context([]), reading: false, refusal: 'No Fizz conversation stands, so nothing receives the packet yet.', onAnswer: noop}))
-  assert.match(refused, /data-action="answer-this" disabled=""/)
-  assert.match(refused, /The packet is empty/)
-  // REPLACED (O-I #740 lane B): "Prepared for O-I"; with no conversation the packet stands in your world's root register.
-  assert.match(refused, /Prepared for your world; no conversation receives it until Fizz has one/)
-  assert.deepEqual(packetGlance(held)?.count, 2)
+  const conversation = {draft: 'why?', busy: false, reading: {actions: ['aikit.encounter.prompt', 'aikit.encounter.context'].map(ref => ({ref, enabled: true, reason: null}))}}
+  const binding = packetBinding('central:packet', {reading: {context: held}, companion: 'Fizz', bound: true, conversation}, {edit: null, send: async () => {}})
+  assert.deepEqual(JSON.parse(binding.values.packet).map(row => [row.label, row.scope, row.chars]), [['Flow · Fz2', 'selection', 36], ['Page', 'observed element', 1]])
+  assert.equal(binding.values.light, 'lit')
+  assert.ok(!Object.keys(binding.values).some(key => /token/i.test(key)), 'no token count: the owner discloses none')
+  assert.equal(binding.standing?.answer?.disabled, undefined, 'Answer this presses when nothing refuses it')
+  const refused = packetBinding('central:packet', {reading: {context: context([])}, companion: 'Fizz', bound: false}, {edit: null, send: null})
+  assert.match(refused.standing.answer.disabled, /No Fizz conversation stands/)
 })
 
 test('Answer this is the conversation\'s own Send, and says which owner condition is missing', async () => {
@@ -147,9 +146,10 @@ test('Answer this is the conversation\'s own Send, and says which owner conditio
   assert.match(answerRefusal({...base, reading: actions()}), /takes no prompt now/)
   assert.match(answerRefusal({...base, draft: '  '}), /Write the question in Anima's composer/)
   assert.match(answerRefusal({...base, items: 0}), /packet is empty/)
-  const widget = await source('widgets/PacketWidget.tsx')
-  assert.match(widget, /onAnswer=\{\(\) => void encounter\?\.actions\.send\(\)\}/, 'the press is the shared encounter session\'s Send')
-  assert.match(widget, /nativeContext\(transport, project, session, \{operation: 'read'\}\)/, 'the packet is read from its owner')
+  const widget = await source('widgets/railChainDevices.tsx')
+  assert.match(widget, /usePacketDevice\(transport, packetReading, \{companion, bound: !!track, handle: session \? handles\[session\] : undefined\}, document\)/,
+    'the press is the shared encounter session\'s Send, through Central\'s Packet binding')
+  assert.match(widget, /nativeContext\(transport, project, session \?\? undefined, \{operation: 'read'\}\)/, 'the packet is read from its owner')
   assert.match(widget, /const project = track\?\.project \?\? ROOT_REGISTER/, 'in the conversation\'s session\'s register, else the root (agent/worldScope.ts)')
 })
 
@@ -169,7 +169,7 @@ test('the trail draws the book\'s stops newest first as lines, the stop you stan
 })
 
 test('the widget files name no mode; the frame stays mode-blind (code-reading)', async () => {
-  for (const file of ['frame/widgets/WidgetRail.tsx', 'frame/widgets/widgets.ts', 'frame/widgets/useGlance.ts', 'widgets/AgentWidget.tsx', 'widgets/PacketWidget.tsx', 'widgets/agentConversation.ts', 'widgets/widgetReading.tsx']) {
+  for (const file of ['frame/widgets/WidgetRail.tsx', 'frame/widgets/widgets.ts', 'frame/widgets/useGlance.ts', 'widgets/AgentWidget.tsx', 'widgets/railChainDevices.tsx', 'widgets/agentConversation.ts', 'widgets/widgetReading.tsx']) {
     assert.doesNotMatch(await source(file), /[!=]==\s*'(live|base|central|factory|expressions|techne|audio)'/, `${file} branches on no mode`)
   }
 })

@@ -1736,6 +1736,7 @@ else:
             json!({"op": "encounter_provision", "project": "p"}),
             json!({"op": "act", "action": "aikit.gateway.agent", "input": {"binding": "b", "operation": "stop"}}),
             json!({"op": "gateway_service", "on": false}),
+            json!({"op": "agent_conversation", "agent_ref": "agent:a"}),
             json!({"op": "harness_ingress_rule", "binding": "b", "kind": "agent", "decision": "pair"}),
             // Beside the table (lane W3): a file write and a routine's act.
             json!({"op": "act", "action": "central.files.write", "input": {"location": location, "expected_revision": "v", "content": "c"}}),
@@ -1785,7 +1786,7 @@ else:
     /// serves, by its wire name. The ordered ops are the census's own
     /// (`an_owner_runs_under_the_lock_only_for_an_ordering_invariant`).
     const SERVED_BY_A_FORM: &str = "
-        a2a_exchange act act_describe actuation_read actuation_write agency_read agent_card agent_definition
+        a2a_exchange act act_describe actuation_read actuation_write agency_read agent_card agent_conversation agent_definition
         aikit_read aikit_write central client_install
         composition_read config_apply config_apply_reviewed config_capabilities_read
         config_desired_discard config_desired_hold config_diff config_plan config_plan_reviewed

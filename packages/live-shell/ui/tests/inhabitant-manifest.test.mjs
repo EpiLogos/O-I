@@ -119,6 +119,8 @@ test('quaternal-logic: every face but the sky, the M3 clock, the Deck, the Chakr
     if (face.id === 'resonator-bank') { assert.notEqual(face.admission, 'waiting', 'resonator-bank: admitted on its owners'); assert.equal(face.liveSemantic, 'device-audio-fx'); assert.ok(face.invariant.transforms); continue }
     // Lane W4: the M′ matrices read the mode catalogue, the mode in force and the M3 form, and move the form through m3_reception.
     if (face.id === 'm-prime-matrices') { assert.notEqual(face.admission, 'waiting', 'm-prime-matrices: admitted on its owners'); assert.equal(face.invariant.generates, 'kernel:m3_reception'); continue }
+    // Parity D-06: the torus is Live's own torus device on Live's binding, held by the Studio's Body chain — admitted, no stub.
+    if (face.id === 'torus') { assert.notEqual(face.admission, 'waiting', 'torus: admitted as Live\'s device'); assert.deepEqual(face.heldBy, ['studio:body']); continue }
     assert.equal(face.admission, 'waiting', `${face.id}: declared, waiting`)
     assert.ok(face.note && face.note.length > 40, `${face.id}: the note names what it waits for`)
     assert.equal(schema.faceKind(face), 'parameter', `${face.id}: declared faces carry no body until an owner lands`)

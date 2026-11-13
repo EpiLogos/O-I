@@ -285,7 +285,7 @@ test('the mixer row and a track\'s Stop are the kernel\'s Set: what waits says s
   assert.equal(set.actions.waiting['track.stop'], stop, 'a track\'s Stop waits in the Set\'s words')
   // The write a Telemetry press will make: the track's own setting, no task in it.
   assert.deepEqual(settings.trackSettingChange('telemetry', false), {track: {telemetry: false}})
-  const source = await (await import('node:fs/promises')).readFile(new URL('../src/frame/tracks/SessionGrid.tsx', import.meta.url), 'utf8')
+  const source = await (await import('node:fs/promises')).readFile(new URL('../src/inhabitants/catalogue/panels/dlw__session-grid.tsx', import.meta.url), 'utf8')
   assert.match(source, /trackStop\.grain !== undefined \? \(trackStop\.grain \?/, 'the grid says a stop\'s own grain, or none')
 })
 

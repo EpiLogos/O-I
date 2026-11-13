@@ -43,6 +43,7 @@ const {createElement} = await import('react')
 const {renderToStaticMarkup} = await import('react-dom/server')
 const host = await import('../src/frame/devices/deviceHost.tsx')
 const tb = await import('../src/widgets/terminalBinding.ts')
+const views = await import('../src/inhabitants/sdk/views.ts')
 const terminalPanel = await import('../src/inhabitants/catalogue/panels/widgets__terminal.tsx')
 const terminalDesign = terminalPanel.design
 const read = path => readFileSync(new URL(`../src/${path}`, import.meta.url), 'utf8')
@@ -198,10 +199,14 @@ test('this computer\'s own terminal stays a room of its own: the Workbench\'s su
   assert.equal(tb.terminalBinding(input({rooms: [], locals: []})), null, 'no room and no terminal: no binding, the rail says where one comes from')
 })
 
-test('the Terminal draws on its rooms in all five views, never its fixture\'s screens', () => {
+// REPLACED (parity audit D-29; §16.3, §17.9): the Terminal stands on no chain, so its views are an instrument born on the rail's: Widget and
+// Full. Folded, Compact, Whole and Pop-out never stood (inhabitants/sdk/views.ts).
+test('the Terminal draws on its rooms in its two views, never its fixture\'s screens', () => {
   host.resetHost()
+  assert.deepEqual([...views.deviceStates('widgets:terminal')], ['widget', 'full'])
+  assert.deepEqual([...host.viewsOf({...terminalDesign, views: views.deviceStates(terminalDesign.id)})], ['widget', 'full'], 'the registry hands the design these (catalogue/panels/index.ts stated)')
   const binding = tb.terminalBinding(input())
-  for (const view of ['folded', 'compact', 'whole', 'full', 'widget']) {
+  for (const view of ['full', 'widget']) {
     const markup = renderToStaticMarkup(createElement(host.HostedDevice, {designed: terminalDesign, binding, view, nav: {}}))
     assert.match(markup, new RegExp(`data-device-view="${view}"`))
     assert.doesNotMatch(markup, /\bNaN\b|undefined/, `${view}: no absent key drawn as text`)
@@ -210,5 +215,17 @@ test('the Terminal draws on its rooms in all five views, never its fixture\'s sc
   const full = renderToStaticMarkup(createElement(host.HostedDevice, {designed: terminalDesign, binding, view: 'full', nav: {}}))
   assert.match(full, /follows.*b749-room.*Fizz.*tmux/s, 'the bar: follows, the room, the agent, the provider')
   assert.match(full, /hello-from-the-room/)
+  const tile = renderToStaticMarkup(createElement(host.HostedDevice, {designed: terminalDesign, binding, view: 'widget', nav: {}}))
+  assert.match(tile, /following.*Fizz/s, 'the tile says it follows, and whose room it shows')
+  assert.match(tile, /hello-from-the-room/, 'and its last line')
   host.resetHost()
+})
+
+test('before the room\'s first capture, Type says it waits for it, and choosing it holds nothing', () => {
+  const h = hands()
+  const unread = tb.terminalBinding(input({hands: h, screen: null}))
+  assert.match(unread.standing.watch.disabled, /^Type waits for the room's first capture/)
+  unread.local.watch(false)
+  assert.deepEqual(h.calls, [], 'no hold: the press is refused in words')
+  assert.equal(tb.terminalBinding(input()).standing.watch, undefined, 'once captured, Type stands')
 })

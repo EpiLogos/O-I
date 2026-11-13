@@ -36,6 +36,7 @@ import {
   splitQuad,
   dropOnEdge,
   pinSubject,
+  reconcileLayout,
   togglePin,
 } from "./engine";
 import {clampTabListWidth, type TabPresentation} from "../workspace/mode";
@@ -221,6 +222,25 @@ function executeBaseAction(
       return openSourcesIndex(state);
     case "surface.close-empty-pane":
       return closeEmptyPane(state, arg?.groupId ?? state.focusedGroupId);
+    // Close pane (world-shell-mockup.html renderPmenu "Close pane", closePane): the pane goes with every tab it holds, each into the
+    // closed stack as a tab's close puts it (⇧⌘T reopens). The last pane stays, and a pane holding a pinned tab is not closed.
+    case "surface.close-pane": {
+      const groups = groupsOf(state.root);
+      const group = groups.find(g => g.id === (arg?.groupId ?? state.focusedGroupId));
+      if (!group || groups.length < 2 || group.pinned.length) return state;
+      // Emptied and no longer a destination, the pane is pruned by the layout's own invariants and its split collapses; the other
+      // panes stand even when they are empty slots (a tab's own close would retire them all with the last content).
+      const blank = group.tabs.filter(id => state.surfaces[id]?.kind === "blank");
+      const kept = group.tabs.filter(id => !blank.includes(id));
+      const surfaces = { ...state.surfaces };
+      for (const id of blank) delete surfaces[id];
+      const emptied = (pane: Pane): Pane => pane.type === "group"
+        ? (pane.id === group.id ? { ...pane, tabs: [], pinned: [], active: null, emptySlot: undefined } : pane)
+        : { ...pane, children: pane.children.map(emptied) };
+      return reconcileLayout({ ...state, surfaces, root: emptied(state.root!),
+        closedStack: [...state.closedStack.filter(id => !kept.includes(id)), ...kept],
+        focusedGroupId: state.focusedGroupId === group.id ? null : state.focusedGroupId });
+    }
     case "surface.close":
       return active() ? closeSurface(state, active()) : closeEmptyPane(state, state.focusedGroupId);
     case "surface.reopen":

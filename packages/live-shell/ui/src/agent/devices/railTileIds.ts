@@ -9,6 +9,8 @@ export const FRAMES_ID = 'factory:frames'
 export const WORKCELL_RACK_ID = 'factory:workcell'
 /** Messages on the door: one device for the rail's tile and its Full (messagesBinding.ts). */
 export const MESSAGES_ID = 'ai-kit:messages'
+/** AIKit's instrument on the door: one device, born in a pane, whose widget is the rail's AIKit tile (§19.26; aikitInstrumentBinding.ts). */
+export const AIKIT_ID = 'ai-kit:ai-kit'
 /** The Main track's Ledger and Approvals on the door (receiptBindings.ts). */
 export const LEDGER_ID = 'factory:main:ledger'
 export const APPROVALS_ID = 'factory:main:approvals'

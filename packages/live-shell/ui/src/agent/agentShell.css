@@ -1,8 +1,11 @@
-/* Agent-shell fidelity floor. The token block and frame geometry are
-   transcribed from the shell oracle (agent-shell-fidelity.json) and scoped
-   to the agent frame so the shared :root tokens of styles.css stay
-   untouched for the classic shell. Colours without an oracle token are
-   declared here as proposed additions and flagged in the lane report. */
+/* Agent-shell fidelity floor. The token block is transcribed from the shell
+   oracle (agent-shell-fidelity.json) and scoped to the agent frame so the
+   shared :root tokens of styles.css stay untouched for the classic shell.
+   Colours without an oracle token are declared here as proposed additions
+   and flagged in the lane report. The frame's geometry is the one frame's
+   (styles.css .frame, the world-shell mockup's 400 | 1fr | 320 and
+   64 | 1fr | 300 | 28): switching to Factory moves no edge. Only the area
+   names below are Factory's. */
 .frame.agent-shell-frame {
   --bg-0:#26292d;
   --bg-1:#33363b;
@@ -41,11 +44,6 @@
   --warn-border:#6a4630;
   --ink-on-rec:#ffffff;
   --mask-ink:#000000;
-  --browser-w:400px;
-  --detail-h:300px;
-  --dock-w:300px;
-  grid-template-columns:400px minmax(0, 1fr) var(--dock-w);
-  grid-template-rows:var(--transport-h) minmax(0, 1fr) 300px 28px;
   grid-template-areas:"tp tp tp" "br ct dk" "ch ch dk" "sb sb sb";
 }
 
@@ -182,18 +180,10 @@
 .frame.agent-shell-frame .chain { grid-area:ch }
 .frame.agent-shell-frame .agent-device-chain { grid-area:ch; min-height:0; overflow:auto }
 .frame.agent-shell-frame .statusbar { grid-area:sb }
-.frame.agent-shell-frame.dock-open { grid-template-columns:400px minmax(0, 1fr) var(--dock-w) }
-.frame.agent-shell-frame.browser-hidden,
-.frame.agent-shell-frame.no-browser { grid-template-columns:0 minmax(0, 1fr) var(--dock-w) }
-.frame.agent-shell-frame.browser-hidden.dock-open,
-.frame.agent-shell-frame.no-browser.dock-open { grid-template-columns:0 minmax(0, 1fr) var(--dock-w) }
-.frame.agent-shell-frame.detail-hidden,
-.frame.agent-shell-frame.no-detail { grid-template-rows:var(--transport-h) minmax(0, 1fr) 0 28px }
-.frame.agent-shell-frame.no-dock { grid-template-columns:400px minmax(0, 1fr) 0 }
-.frame.agent-shell-frame.browser-hidden.no-dock,
-.frame.agent-shell-frame.no-browser.no-dock { grid-template-columns:0 minmax(0, 1fr) 0 }
+/* REPLACED (shell parity B1, 13 Nov): Factory's own column and row templates (400 | 1fr | 300, the detail row 300, and their
+   dock-open, no-browser, no-detail and no-dock variants) left: they redrew the frame on every switch to Factory. The one frame's
+   variables (styles.css --frame-browser, --frame-rail, --frame-detail) hide and show the parts here as in every mode. */
 @media (max-width:760px) {
-  .frame.agent-shell-frame.dock-open { grid-template-columns:0 minmax(0, 1fr) var(--dock-w) }
   .frame.agent-shell-frame .agent-shell-browser { display:none }
 }
 @media (prefers-reduced-motion:reduce) {

@@ -117,6 +117,7 @@ export const KERNEL_OPS = [
   'file_operation',
   'encounter',
   'encounter_provision',
+  'agent_conversation',
   'material_read',
   'a2a_exchange',
   'encounter_task_read',

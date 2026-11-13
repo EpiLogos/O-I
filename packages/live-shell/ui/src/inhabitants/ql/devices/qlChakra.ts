@@ -26,6 +26,7 @@ import type {DeviceInstance, ParamValue} from '../../../frame/devices/deviceRunt
 import {techneDeviceId, techneFaceDeclaration} from './faces'
 import {qlSkyState, type QlSkyState} from './qlSky'
 import {centresValue, qlCentresState, type QlCentresState} from './qlCentres'
+import {qlRackState, rackPage, type QlRackState} from './qlRack'
 
 export const QL_CHAKRA_FAMILY = 'quaternal-logic'
 export const QL_CHAKRA_FACE = 'chakra'
@@ -137,17 +138,20 @@ const READINGS: Readonly<Record<string, string>> = {
   elements: 'A reading of your saved identity: correct the identity, never the reading.',
 }
 
-/** The binding the runtime hosts the Chakra design on: your elements and natal distribution, the view's own keys in its own hand, and
- * no write — a reading of your identity changes nothing. */
-export function qlChakraBinding(chakra: QlChakraState, sky?: QlSkyState, centres: QlCentresState = qlCentresState()): DesignBinding {
+/** The binding the runtime hosts the Chakra design on: your elements and natal distribution, the view's own keys in its own hand, its
+ * Rack page M4′'s rack from the map's ledger (qlRack.ts; §22.5), and no write — a reading of your identity changes nothing. */
+export function qlChakraBinding(chakra: QlChakraState, sky?: QlSkyState, centres: QlCentresState = qlCentresState(), rack: QlRackState = qlRackState(4)): DesignBinding {
   const standing: Record<string, Standing> = {}
   for (const [key, why] of Object.entries(READINGS)) standing[key] = {disabled: why}
   standing.centres = {disabled: centres.reading.ok ? CENTRES_READ : centres.reading.reason}
   if (!chakra.result?.natal_counts) standing.natal = {disabled: chakra.result ? 'Your identity carries no natal distribution (its natal composition is absent).' : chakra.reason ?? NO_IDENTITY}
   const local: Record<string, (value: Value | undefined) => void> = {}
   for (const key of QL_CHAKRA_LOCAL) local[key] = value => setQlChakraView({[key]: value})
-  return {id: QL_CHAKRA_DEVICE_ID, values: qlChakraValues(chakra, sky, centres), writes: () => false, standing, local,
-    waiting: (chakra.busy && !chakra.result) || (centres.busy && !centres.reading.ok)}
+  const page = rackPage(4, rack)
+  Object.assign(standing, page.standing); Object.assign(local, page.local)
+  const busy = (chakra.busy && !chakra.result) || (centres.busy && !centres.reading.ok)
+  return {id: QL_CHAKRA_DEVICE_ID, values: {...qlChakraValues(chakra, sky, centres), ...page.values}, writes: () => false, standing, local,
+    waiting: busy ? true : page.waiting ? ['rack'] : false}
 }
 
 // ── the device, for the generic plate that stands in for a view ─────────────

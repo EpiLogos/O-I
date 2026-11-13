@@ -33,7 +33,7 @@ import {driveStageLens, openInstrument, reportInstrumentFault} from '../../../fr
 import {InstrumentPlate, SectionNote, type PlateSection, type SectionDevice} from '../../../frame/devices/InstrumentPlate'
 import {sameSet} from '../../../frame/devices/plateFit'
 import {HOSTED_INSTRUMENT, instrumentOfPane, type HostedLens} from '../../../shell/paneInstrument'
-import {HOLDERS, TECHNE_INSTRUMENTS, type HolderDeclaration} from '../../sdk/semantics'
+import {HOLDERS, LAYER_RACKS, TECHNE_INSTRUMENTS, type HolderDeclaration} from '../../sdk/semantics'
 import type {IconName} from '../../sdk/icons'
 import {lightOf, type DeviceInstance, type DeviceSize} from '../../../frame/devices/deviceRuntime'
 import {commitLiveInstrumentEdit, liveInstrumentWritable, useLiveTorusReading, type LiveTorusState} from '../../../live/torusInstrument'
@@ -110,8 +110,8 @@ export interface TechneReadings {
   readonly centres?: QlCentresState
   /** The Deck's cast hexagram's cell, QL's generation law asked of the person's M3 state (qlDeck.ts). */
   readonly cast?: DeckCastState
-  /** M2′'s and M3′'s racks from the map's ledger, for the Sky's and the M3 clock's Rack pages (qlRack.ts). */
-  readonly racks?: {readonly 2: QlRackState; readonly 3: QlRackState}
+  /** M2′'s, M3′'s and M4′'s racks from the map's ledger, for the Sky's, the M3 clock's and the Chakra's Rack pages (qlRack.ts). */
+  readonly racks?: {readonly 2: QlRackState; readonly 3: QlRackState; readonly 4?: QlRackState}
   /** The Sky's Share page: the presence consents SharedField lists, split by the person's Participants (skyPresences.ts). */
   readonly presences?: SkyPresences
 }
@@ -170,7 +170,10 @@ function WaitingPicture({size, face}: {size: DeviceSize; face: InhabitantFaceDec
 /** The devices of the given manifests' faces, over the owners' readings. Pure: the chain, the tests and the door all read this. */
 export function techneEntries(manifests: readonly InhabitantManifest[], readings: TechneReadings): TechneEntry[] {
   // A Technē chain device is an instrument, never an effect (lock §5.2): a family's effects (the Resonator bank) stand on Live's chain.
-  return manifests.flatMap(manifest => manifest.faces.filter(face => face.liveSemantic !== 'device-audio-fx')
+  // The torus is Live's one instrument, which the Expressions Studio's Body chain holds too (parity D-06), never the rack's: drawn here it
+  // stood as a waiting stand-in, and on the door it answered the Studio's look-up of the Torus design in place of the real device.
+  const livesTorus = (manifest: InhabitantManifest, face: InhabitantFaceDeclaration) => manifest.id === QL_FAMILY && face.id === QL_TORUS_FACE
+  return manifests.flatMap(manifest => manifest.faces.filter(face => face.liveSemantic !== 'device-audio-fx' && !livesTorus(manifest, face))
     .filter(face => !(manifest.id === KNOWLEDGE_FAMILY && KNOWLEDGE_FACES_CARRIED.includes(face.id))).map((face): TechneEntry => {
     const waiting = face.admission === 'waiting'
     if (manifest.id === QL_FAMILY) return qlFaceEntry(face, readings.torus, readings.instrumentReading, readings.sky, readings.m3, readings.deck, readings.chakra,
@@ -209,10 +212,23 @@ export function chainOf(holder: string, designs: readonly TechneEntry[]): {head:
 /** The M3 clock's Binding skin (catalogue quaternal-logic__m3-clock.tsx `binding.` keys): Binding's own keys under `binding.`, sharing none. */
 const BINDING_SKIN: CarriedPage = {prefix: 'binding.', shared: []}
 
+/** The torus face's id (quaternalLogicFamilyManifest.ts): the M1 torus, Live's one instrument, which the Studio's Body chain holds too. */
+export const QL_TORUS_FACE = 'torus'
+
+/** The torus as the Studio's Body chain holds it: the binding and picture its host builds over the same reading Live plays
+ * (torusDevice.ts torusDevice, TorusOnChain.tsx useTorusChainBinding and TorusPicture), handed in because they are hooks of the host. */
+export interface QlTorusHosting {
+  readonly device: DeviceInstance
+  readonly binding: DesignBinding
+  readonly picture: (size: DeviceSize) => ReactNode
+}
+
 /** One Quaternal Logic face as a device: the field/PCM owner over its reading, any other face as the waiting device it is declared.
- * The Expressions Studio's Body · 3:3 holds two of them (sdk/semantics.ts STUDIO_SECTIONS) and draws them from here. */
+ * The Expressions Studio's Body chain holds the torus (sdk/semantics.ts STUDIO_SECTIONS) and draws it from here: Live's own torus device on
+ * the binding its host builds (parity D-06), never a waiting stand-in. */
 export function qlFaceEntry(face: InhabitantFaceDeclaration, torus: LiveTorusState | null, instrumentReading: unknown, sky?: QlSkyState, m3?: QlM3State,
-  deck?: QlDeckState, chakra?: QlChakraState, more: {modes?: QlModes; held?: TechneReadings['held']; m1?: QlM1State; centres?: QlCentresState; cast?: DeckCastState; racks?: TechneReadings['racks']; kernel?: KernelApplyState; presences?: SkyPresences; bindingEngine?: BindingEngineState} = {}): TechneEntry {
+  deck?: QlDeckState, chakra?: QlChakraState, more: {modes?: QlModes; held?: TechneReadings['held']; m1?: QlM1State; centres?: QlCentresState; cast?: DeckCastState; racks?: TechneReadings['racks']; kernel?: KernelApplyState; presences?: SkyPresences; bindingEngine?: BindingEngineState; torus?: QlTorusHosting} = {}): TechneEntry {
+  if (face.id === QL_TORUS_FACE && more.torus) return {family: QL_FAMILY, face, device: more.torus.device, binding: more.torus.binding, picture: more.torus.picture}
   // The Sky draws its catalogue design on the dated sky the kernel reads (qlSky.ts); its picture is the design's own ring.
   if (face.id === QL_SKY_FACE && sky) return {family: QL_FAMILY, face, device: qlSkyDevice(face, sky), binding: qlSkyBinding(sky, more.racks?.[2], more.presences), picture: () => null}
   const held = (id: string) => more.held?.[id] ?? heldFor(id)
@@ -225,7 +241,7 @@ export function qlFaceEntry(face: InhabitantFaceDeclaration, torus: LiveTorusSta
   }
   // The Deck draws its catalogue design on the open journey (qlDeck.ts); the Chakra on your elements (qlChakra.ts).
   if (face.id === QL_DECK_FACE && deck) return {family: QL_FAMILY, face, device: qlDeckDevice(face, deck), binding: qlDeckBinding(deck, m3, more.cast), picture: () => null}
-  if (face.id === QL_CHAKRA_FACE && chakra) return {family: QL_FAMILY, face, device: qlChakraDevice(face, chakra), binding: qlChakraBinding(chakra, sky, more.centres), picture: () => null}
+  if (face.id === QL_CHAKRA_FACE && chakra) return {family: QL_FAMILY, face, device: qlChakraDevice(face, chakra), binding: qlChakraBinding(chakra, sky, more.centres, more.racks?.[4]), picture: () => null}
   // The M′ matrices draw on the mode catalogue, the mode in force and the M3 form (qlMatrices.ts), keeping their own settings in the view's
   // holds. (The Sitting and Binding were retired as faces of their own in the 22 Oct manual rewrite: a sitting is a clip of the practice
   // world's track, §24.3; Binding is the M3 clock's skin, above.)
@@ -357,6 +373,11 @@ export function focusAfterOpening(id: string, current: string | null): string | 
 
 const holderTitle = (holder: HolderDeclaration) => holder.title
 const holds = (entry: TechneEntry, holder: string) => (entry.face.heldBy ?? []).includes(holder)
+/** The faces an app layer's rack holds (`rack:<face>`, sdk/semantics.ts LAYER_RACKS) whose rack's device the open instrument holds. */
+export function beside(entries: readonly TechneEntry[], open: string): TechneEntry[] {
+  const racks = LAYER_RACKS.map(rack => rack.id).filter(id => entries.some(entry => entry.face.id === id.slice('rack:'.length) && holds(entry, open)))
+  return entries.filter(entry => !holds(entry, open) && racks.some(rack => holds(entry, rack)))
+}
 
 /** One device standing open on the chain, compact through the runtime, with the marks its place gives it. */
 function OpenDevice({entry, place}: {entry: TechneEntry; place?: 'head' | 'effect'}) {
@@ -530,9 +551,9 @@ export function TechneDevices({manifests, focusInstrument = null, instrumentRead
   const centres = useQlCentres(sky)
   // The Deck's cast hexagram's cell: QL's generation law at the cast, asked of the person's M3 state (qlDeck.ts).
   const cast = useQlDeckCast(deck, m3)
-  // M2′'s and M3′'s racks, read once from the map's ledger for the Sky's and the M3 clock's Rack pages (qlRack.ts).
-  const rack2 = useQlRack(2), rack3 = useQlRack(3)
-  const racks = useMemo(() => ({2: rack2, 3: rack3}) as const, [rack2, rack3])
+  // M2′'s, M3′'s and M4′'s racks, read once from the map's ledger for the Sky's, the M3 clock's and the Chakra's Rack pages (qlRack.ts).
+  const rack2 = useQlRack(2), rack3 = useQlRack(3), rack4 = useQlRack(4)
+  const racks = useMemo(() => ({2: rack2, 3: rack3, 4: rack4}) as const, [rack2, rack3, rack4])
   const instruments = rackInstruments(focusInstrument)
   const holderKey = instruments.map(holder => holder.id).join('|')
   // The catalogue designs on their owners; the kernel's graph is read only while the Knowledge graph stands on this rack.
@@ -571,7 +592,10 @@ export function TechneDevices({manifests, focusInstrument = null, instrumentRead
   const [folds, setFolds] = useState<{focus: string | null; open: Readonly<Record<string, boolean>>}>({focus: focusInstrument, open: {}})
   const unfolded = folds.focus === focusInstrument ? folds.open : {}
   // (With an instrument focused and every one folded by its ▾, the row is the instruments' alone: their Compacts take the room.)
-  const unheld = open || focusInstrument ? [] : entries.filter(entry => !instruments.some(holder => holds(entry, holder.id)))
+  // With an instrument open, a face an app layer's rack holds stands beside it where that rack's device stands in it (the M′ matrices
+  // beside the Sky, the M3 clock or the Chakra: §22.6 "Open a layer from the rack of its instrument"; parity D-37), so its card never
+  // vanishes while its instrument is in front of you.
+  const unheld = open ? beside(entries, open) : focusInstrument ? [] : entries.filter(entry => !instruments.some(holder => holds(entry, holder.id)))
   // The instruments not open stand Compact where the row has room (nearest the open plate first), folded to their titles elsewhere.
   const compacts = instruments.filter(holder => holder.id !== open && hasCompact(holder.id)).map(holder => holder.id)
   const openAt = instruments.findIndex(holder => holder.id === open)

@@ -79,8 +79,8 @@ export function messagesDevice(): DeviceInstance | null {
 const unread = (what: string, op: string, owner: string) => `${what}: no reading reaches it yet — missing op: ${op} (${owner}).`
 
 export const MESSAGES_REFUSE = {
-  /** Send with no agent of the population open: your words go to the conversation its occupant works. */
-  send: 'Send: open an agent in the list first — your words are the next turn in the conversation its occupant works.',
+  /** Send with no agent open: your words go to the conversation its occupant works, or to your own with an unseated agent. */
+  send: 'Send: open an agent in the list first — your words are the next turn in the conversation it works.',
   /** The open Position has no occupant: no session works there, so there is no conversation to send in. */
   unseated: 'No agent occupies this Position, so no conversation works here to send in: seat an agent at it first.',
   /** The occupant's session is not among the agency's sessions read. */
@@ -224,6 +224,10 @@ export function positionRefs(population: unknown): string[] {
   if (!isObj(population) || !Array.isArray(population.positions)) return []
   return population.positions.flatMap(row => (isObj(row) && str(row.position_ref) ? [String(row.position_ref)] : []))
 }
+
+/** An agent of your roster that stands at no Position (§19.24): its conversation is its own (the kernel's agent_conversation, made by
+ * the one provision), observed and sent in through the one encounter session like an occupant's (O-I ticket 1003). */
+export const isRosterAgent = (id: unknown): id is string => typeof id === 'string' && id.startsWith('agent:')
 
 /** The agent that occupies a Position, by its agent ref (the population's occupancy): the agent whose session is the Position's
  * conversation. Undefined where the Position is vacant or not in the reading. Pure. */
@@ -374,6 +378,8 @@ export interface MessagesPorts {
   /** AIKit's gateway writes, its Actions through the kernel's act (ownerRoutes.ts gatewayWriteOp): resolves with AIKit's reading or rejects
    * with its words. Absent: no carrier stands. */
   readonly gateway?: (request: GatewayWriteRequest) => Promise<unknown>
+  /** Your words to the open roster agent's direct conversation (AIKit's encounter draft, then its prompt). Absent: no carrier stands. */
+  readonly chat?: (words: string) => Promise<void>
   /** The kernel's local dictation (agent/useAgentVoice.ts agentVoicePort): start arms the capture, stop resolves with the transcript or
    * rejects with the dictation's named refusal. Absent: no carrier stands. */
   readonly voice?: {readonly start: () => Promise<void>; readonly stop: () => Promise<string>}
@@ -419,7 +425,9 @@ export function messagesValues(input: MessagesInput): Values {
   const sent = sentOf(view.sent)
   if (open && sent?.to === open) values['conv.sent'] = sent.words
   // The open agent's conversation: the session its occupant works, as the Thread's rows.
-  const said = open && input.conversation?.reading ? threadRowsOf(input.conversation.reading, input.conversation.status, input.conversation.agent) : null
+  // Who answers: the occupant's name, else the open agent's own (an agent of your roster at no Position).
+  const who = input.conversation?.agent ?? (open ? (agents ?? []).find(agent => agent.id === open)?.name : undefined)
+  const said = open && input.conversation?.reading ? threadRowsOf(input.conversation.reading, input.conversation.status, typeof who === 'string' ? who : null) : null
   // Its light (the owner's connection state, as the Thread reads it) and its last check-in (its track's needle), while one is observed.
   if (open && input.conversation?.status) values['conv.light'] = threadLight(input.conversation.status)
   if (open && typeof input.conversation?.age === 'number') values['conv.age'] = input.conversation.age
@@ -479,7 +487,7 @@ export function messagesBinding(input: MessagesInput, ports: MessagesPorts = {})
   // gates it.
   const positions = positionRefs(known)
   if (!ports.voice) standing['conv.voice'] = {disabled: MESSAGES_REFUSE.voice}
-  const unopened = typeof values.open !== 'string' || !positions.includes(values.open)
+  const unopened = typeof values.open !== 'string' || !(positions.includes(values.open) || isRosterAgent(values.open))
   if (unopened) standing['conv.sent'] = {disabled: MESSAGES_REFUSE.send}
   else if (!ports.send) standing['conv.sent'] = {disabled: input.conversation?.why ?? (ports.gateway ? MESSAGES_REFUSE.opening : MESSAGES_REFUSE.noCarrier)}
   // The conversation's light and last check-in: the session its occupant works, or why it is not read.
@@ -567,7 +575,7 @@ export function messagesBinding(input: MessagesInput, ports: MessagesPorts = {})
   const send = async (words: Value | undefined) => {
     if (typeof words !== 'string' || !words.trim()) throw Error('Send: write the message first.')
     const open = pressed().open
-    if (typeof open !== 'string' || !positions.includes(open)) throw Error(MESSAGES_REFUSE.send)
+    if (typeof open !== 'string' || !(positions.includes(open) || isRosterAgent(open))) throw Error(MESSAGES_REFUSE.send)
     if (!ports.send) throw Error(input.conversation?.why ?? MESSAGES_REFUSE.noCarrier)
     await ports.send(open, words)
     holdView(MESSAGES_ID, 'sent', JSON.stringify({to: open, words: words.trim()}))

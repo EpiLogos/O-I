@@ -13,7 +13,7 @@ import {transportBindingForSlot, transportBindingRow} from '../inhabitants/sdk/d
 import type {SdkModeName} from '../inhabitants/sdk/modes'
 import type {TimeSpine} from '../timeline/timeSpine'
 import type {PaneInstrumentId} from './paneInstrument'
-import type {ModeTransportReadouts} from './ModeTransportBar'
+import type {ModeTransportReadouts} from './transports/spineControls'
 import {Transport} from '../frame/transport/Transport'
 import type {SlotWords, TransportBindings} from '../frame/transport/slots'
 import type {NativeCompositionViewSource} from './compositionViews'

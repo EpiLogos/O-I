@@ -37,7 +37,7 @@ export async function load(u, c, n) {
 globalThis.document = {getElementById: () => null, createElement: () => ({}), head: {appendChild: () => {}}}
 const {NOT_FACTORY_WORK} = await import('../src/timeline/factoryTrackAdapter.ts')
 const {taskLaunchPort} = await import('../src/agent/factoryTaskActs.ts')
-const {clipLaunchPress} = await import('../src/frame/tracks/SessionGrid.tsx')
+const {clipLaunchPress} = await import('../src/inhabitants/catalogue/panels/dlw__session-grid.tsx')
 const settings = await import('../src/agent/sessionSettings.ts')
 const factory = await import('../src/agent/clipBinding.ts')
 const {settingsReadingEntry} = await import('../src/owners/readers.ts')

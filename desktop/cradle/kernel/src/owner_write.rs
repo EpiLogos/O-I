@@ -136,6 +136,7 @@ impl PreparedWrite {
             | KernelOp::ProfileEdit { .. }
             | KernelOp::InstanceCommission { .. }
             | KernelOp::EncounterProvision { .. }
+            | KernelOp::AgentConversation { .. }
             | KernelOp::HarnessIngressRule { .. }
             | KernelOp::Routine { .. } => true,
             // Lane W3 (T-COVERAGE §1.2): the owner routes that write
@@ -493,6 +494,29 @@ impl PreparedWrite {
                             .map(str::trim)
                             .filter(|r| !r.is_empty()),
                         body,
+                    )?,
+                }
+            }
+            KernelOp::AgentConversation {
+                project,
+                agent_ref,
+                agent,
+            } => {
+                // The root World, or a named Project inside Central's ground: the same place every provision converses in.
+                let place = self.place(project)?;
+                // The harness is the census's (census.rs `agent_for`): the one named when you can talk to it, else the first such.
+                let agent = crate::census::agent_for(
+                    crate::world_model::Model::global()
+                        .value_now(crate::world_model::Slice::Agents)
+                        .as_ref(),
+                    agent.as_deref(),
+                )?;
+                KernelOpResult::EncounterProvisioned {
+                    data: self.agency.provision_agent_conversation(
+                        &place.cwd,
+                        &place.project_ref,
+                        agent_ref,
+                        &agent,
                     )?,
                 }
             }

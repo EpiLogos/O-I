@@ -29,7 +29,11 @@ export const FIELD_DESIGN_FAMILIES = ['pointer', 'relational', 'medium', 'contac
 export type FieldDesignFamily = typeof FIELD_DESIGN_FAMILIES[number]
 export const isFieldDesignFamily = (family: string): family is FieldDesignFamily => (FIELD_DESIGN_FAMILIES as readonly string[]).includes(family)
 
-const factorOf = (path: string): number => NATIVE_BINDINGS.find(binding => binding.path === path)?.factor ?? 1
+/** The engine paths whose designs work in stage units, as the device's rows hold them (expressions__pointer.tsx, expressions__relational.tsx
+ * `WORLD`: each design applies the 400 px of a stage unit itself when it draws). Their value goes to the design unscaled; every other row
+ * is the design's value in the binding's display units (the path's factor). */
+export const STAGE_UNIT_PATHS: ReadonlySet<string> = new Set(['interaction.radius', 'interaction.clickRadius', 'relational.gravitySoftening', 'relational.swirlRadius'])
+const factorOf = (path: string): number => (STAGE_UNIT_PATHS.has(path) ? 1 : NATIVE_BINDINGS.find(binding => binding.path === path)?.factor ?? 1)
 const finite = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value)
 const record = (value: unknown): Record<string, unknown> => (value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {})
 
@@ -341,7 +345,7 @@ export interface FieldLanes {
 /** The live target (`field.<key>`) and the units factor of a device row that is a native parameter; null for a switch or a setting. */
 function laneTargetOf(key: string): {target: string; factor: number} | null {
   const found = NATIVE_BINDINGS.find(binding => binding.path === key)
-  return found ? {target: 'field.' + found.key, factor: found.factor || 1} : null
+  return found ? {target: 'field.' + found.key, factor: STAGE_UNIT_PATHS.has(key) ? 1 : found.factor || 1} : null
 }
 
 /** A field device's binding with its lanes: a value an enabled lane plays stands automated; one the hand holds off its lane stands

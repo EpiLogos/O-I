@@ -44,7 +44,7 @@ const takes = await import('../src/agent/factoryTakes.ts')
 const sets = await import('../src/frame/tracks/kernelSet.ts')
 const fixture = await import('./support/modeSetFixture.mjs')
 const owner = await import('../src/owners/attemptTakes.ts')
-const {ArrangementRulerView} = await import('../src/frame/tracks/ArrangementRuler.tsx')
+const {ArrangementRulerView} = {...await import('../src/frame/tracks/ArrangementRuler.tsx'), ...await import('../src/inhabitants/catalogue/panels/dlw__arrangement-ruler.tsx')}
 const lanes = await import('../src/frame/tracks/trackLanes.ts')
 
 const noop = () => {}

@@ -39,7 +39,7 @@ globalThis.document ??= {getElementById: () => null, createElement: () => ({styl
 globalThis.window ??= globalThis
 globalThis.addEventListener ??= noop; globalThis.removeEventListener ??= noop
 
-const GRID = await import('../src/frame/tracks/SessionGrid.tsx')
+const GRID = {...await import('../src/frame/tracks/SessionGrid.tsx'), ...await import('../src/inhabitants/catalogue/panels/dlw__session-grid.tsx')}
 const {projectExpressionsWork} = await import('../src/timeline/expressionsTrackAdapter.ts')
 // Each set as the presented Expression's: its own two lanes, and the one Main track every Expression's set shows (XS15) — the walk's case
 // (r893 walk captures-893a 60: "Launch Noon" stood under Of Central, found only through the Main track both sets show).

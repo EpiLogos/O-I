@@ -542,3 +542,30 @@ test('an agent Central has accepted is no longer proposed: it stands in your ros
   assert.deepEqual(rows.map(row => [row.id, row.last, row.proposed ?? null]),
     [['agent:a', msg.AGENT_UNSEATED, null], ['agent:b', msg.AGENT_PROPOSED, 'agent-profile:b']])
 })
+
+test('an agent of your roster at no Position: its own conversation fills the thread through the one encounter session, and Send is its next turn, never a Position journal (§19.24, O-I #1003)', async () => {
+  bind.resetHolds()
+  const ROSTER = 'agent:expressed-0e60f096b906445fa9d013cda3391e39'
+  const reading = {schema: 'aikit.encounter-view/v1', agent_session: 'agent-session/agent-expressed-0e60f096b906445f', draft: {revision: 2, text: ''},
+    blocks: [{id: 1, kind: 'user', text: 'What are you for?'}, {id: 2, kind: 'assistant', text: 'I keep the ground in order.'}, {id: 3, kind: 'completed', text: 'done'}], permissions: []}
+  const chat = {agent: 'Ground keeper', reading, status: {state: 'Resident'}}
+  let said = null, routed = null
+  const ports = {send: async (to, words) => { said = [to, words] }, gateway: async request => { routed = request; return {} }}
+  assert.ok(msg.isRosterAgent(ROSTER) && !msg.isRosterAgent(GUARDIAN), 'a roster agent is an agent ref, a Position is not')
+  msg.messagesBinding({population: answered(REAL.population), gateway: ANSWERED, conversation: chat, holds: bind.chainHolds()}, ports).local.open(ROSTER)
+  const opened = msg.messagesBinding({population: answered(REAL.population), gateway: ANSWERED, conversation: chat, holds: bind.chainHolds()}, ports)
+  const row = JSON.parse(opened.values.agents).find(agent => agent.id === ROSTER)
+  assert.deepEqual(row.thread.map(item => [item.kind, item.text]), [['you', 'What are you for?'], ['agent', 'I keep the ground in order.']])
+  assert.equal(row.last, 'I keep the ground in order.')
+  assert.equal(opened.standing['conv.sent'], undefined, 'Send stands while its conversation is observed')
+  await opened.write([{key: 'conv.sent', value: '  Hello  '}])
+  assert.deepEqual(said, [ROSTER, '  Hello  '], 'the words go to the open roster agent\'s conversation')
+  assert.equal(routed, null, 'no Position journal is written for an unseated agent')
+  // Its conversation not observed yet: Send says so.
+  const bare = msg.messagesBinding({population: answered(REAL.population), gateway: ANSWERED, conversation: {agent: 'Ground keeper'}, holds: bind.chainHolds()}, {gateway: ports.gateway})
+  assert.equal(bare.standing['conv.sent'].disabled, msg.MESSAGES_REFUSE.opening)
+  // AIKit refused opening it: the thread says so in AIKit's words.
+  const refused = msg.messagesBinding({population: answered(REAL.population), gateway: ANSWERED, conversation: {agent: 'Ground keeper', why: 'aikit: no provider'}, holds: bind.chainHolds()}, ports)
+  assert.equal(refused.standing.thread.disabled, 'aikit: no provider')
+  bind.resetHolds()
+})

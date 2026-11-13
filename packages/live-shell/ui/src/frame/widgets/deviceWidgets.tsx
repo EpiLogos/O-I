@@ -11,16 +11,23 @@ import './deviceWidgets.css'
 
 export const isDeviceWidget = (id: string): boolean => id.startsWith(DEVICE_WIDGET_PREFIX)
 
-/** One body per device id, kept, so a render never remounts it. */
+/** One body per device id, kept, so a render never remounts it. `name`: what the rail calls it (the registration's name, or the device's
+ * face title), so a tile whose device is on no chain says which device is away by name (manual §16.3: a tile has a name), never by id. */
 const bodies = new Map<string, ComponentType<WidgetBodyProps>>()
-function deviceBody(deviceId: string): ComponentType<WidgetBodyProps> {
+const names = new Map<string, string>()
+/** The words an away tile says, by the name the rail gives it. */
+export const awayWords = (name: string): string => `${name} is on no chain now. It returns here when its chain does.`
+function deviceBody(deviceId: string, name?: string): ComponentType<WidgetBodyProps> {
+  if (name) names.set(deviceId, name)
   const held = bodies.get(deviceId)
   if (held) return held
   const Body = function DeviceWidget({close}: WidgetBodyProps) {
     const door = useDeviceDoor()
     const entry = door.device(deviceId)
-    if (!entry) return <p className="device-widget-away" data-i={`${deviceId}|This device is on no chain now. It returns here when its chain does.`}>
-      {deviceId} is on no chain now. It returns when its chain does.</p>
+    if (!entry) {
+      const said = awayWords(names.get(deviceId) ?? deviceId)
+      return <p className="device-widget-away" data-i={`${names.get(deviceId) ?? deviceId}|${said}`}>{said}</p>
+    }
     return <PlacedDevice device={entry.device} view="widget" picture={entry.picture} binding={entry.binding} onClose={close} />
   }
   bodies.set(deviceId, Body)
@@ -35,15 +42,16 @@ export function claimRailWidget(widgetId: string, deviceId: string): void { clai
 /** The registered widget as the rail draws it: the claiming device's widget, else itself. */
 export function claimedWidget(widget: WidgetDeclaration): WidgetDeclaration {
   const deviceId = claims.get(widget.id)
-  return deviceId ? {...widget, bare: true, Body: deviceBody(deviceId)} : widget
+  return deviceId ? {...widget, bare: true, Body: deviceBody(deviceId, widget.name)} : widget
 }
 
 /** The device widget for a rail id `device:<id>`: named and marked from the device the door holds now. */
 export function deviceWidget(widgetId: string): WidgetDeclaration {
   const deviceId = widgetId.slice(DEVICE_WIDGET_PREFIX.length)
   const entry = publishedDevices().find(published => published.device.id === deviceId)
-  return {id: widgetId, name: entry?.device.face.title ?? deviceId, mark: entry?.device.face.icon ?? 'form', hint: 'a device, kept at hand',
-    bare: true, Body: deviceBody(deviceId)}
+  const name = entry?.device.face.title
+  return {id: widgetId, name: name ?? names.get(deviceId) ?? deviceId, mark: entry?.device.face.icon ?? 'form', hint: 'a device, kept at hand',
+    bare: true, Body: deviceBody(deviceId, name)}
 }
 
 /** The device widgets the rail holds open, then — for a search in the launcher — every published device whose name matches. */

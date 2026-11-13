@@ -1,5 +1,5 @@
 import {refusalWords} from '../../../../../desktop/cradle/src/shared/Refusal.tsx'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useSyncExternalStore, type CSSProperties } from 'react'
 import type { SetSummary, UseSet } from '../shell/useSet'
 import type { HostedAppState } from '@epilogos/expressions-boundary'
 import type { DetailMode } from './DeviceChainPanel'
@@ -9,7 +9,10 @@ import {Icon} from './Icon'
 import {RunContextReading} from '../shell/runContext'
 import {onInfoEvents, parseDataI, type DataIStatusInfo} from '../agent/statusInfo'
 import {useFoundationPending} from '../native/foundationDoor'
-import {apertureWords, useWorkbenchAperture} from '../native/workbenchDoor'
+import {useWorkbenchAperture, type WorkbenchAperture} from '../native/workbenchDoor'
+import {fieldView, subscribeSystem} from '../projections/atlas/system/systemStore'
+import type {WorldTrackClip, WorldTrackSet} from '../timeline/worldTrackAdapter'
+import './statusBar.css'
 import {useShownSides, type DetailSide} from '../frame/detail/detailSides'
 import {ChainOverview, useShownChain} from '../frame/detail/ChainOverview'
 import {useShownTracks} from '../frame/tracks/tracksDoor'
@@ -73,6 +76,30 @@ export interface StatusSwitches {
   hideDetail?: () => void
 }
 
+/** The aperture in the status bar's words (the mockup's `#counts`: "aperture shared · 2 panes"): "aperture" is the field aperture you
+ * look through — World, Local, Shared or Federated, the World's own choice that Technē's transport sets (projections/atlas/system/
+ * systemStore.ts fieldView) — and the panes the centre holds, with how many are pinned to their own subject (parity G12: "aperture"
+ * never names pinned panes). Pure. */
+export function statusApertureWords(fieldAperture: string, {panes, pinned}: WorkbenchAperture): string {
+  return `aperture ${fieldAperture} · ${panes} pane${panes === 1 ? '' : 's'}${pinned ? ` · ${pinned} pinned` : ''}`
+}
+
+/** The small picture of the selected clip the Clip switch carries (manual §10.1 "The switch carries a small picture of the selected
+ * clip"): the clip as its slot draws it in Session view — its track's colour, its launch triangle, dimmed when done, in the record colour
+ * while it records — read from the tracks the set's views publish (frame/tracks/tracksDoor.ts). Null where they hold no such clip. */
+export function clipPictureOf(tracks: Pick<WorldTrackSet, 'tracks' | 'clips'> | null | undefined, clipRef: string | undefined): {color?: string; status?: WorldTrackClip['status']; label: string} | null {
+  if (!tracks || !clipRef) return null
+  const clip = tracks.clips.find(entry => entry.id === clipRef)
+  if (!clip) return null
+  const color = tracks.tracks.find(track => track.id === clip.trackId)?.color
+  return {label: clip.label, ...(color ? {color} : {}), ...(clip.status ? {status: clip.status} : {})}
+}
+
+export function ClipPicture({picture}: {picture: NonNullable<ReturnType<typeof clipPictureOf>>}) {
+  return <span className="status-clip-picture" aria-hidden="true" data-status={picture.status}
+    style={picture.color ? {'--tc': picture.color} as CSSProperties : undefined}><span className="status-clip-tri" /></span>
+}
+
 /** Every clip of the set: Session view's slots and the arrangement's (walk of O-I 857, O3); an owner that counts no session slots
  * is said to count the arrangement's alone. */
 const clipCount = (set: SetSummary) => set.session_clips === undefined ? `${set.arrangement_clips} arrangement clips` : `${set.arrangement_clips + set.session_clips} clips`
@@ -82,6 +109,7 @@ export function StatusBar({ state, documentError, viewport, selectedTrack, audio
   // The bar's open line says the place's words (shared/Refusal.tsx refusalWords); the raw cause goes to the console.
   useEffect(() => { if (audio && error) console.warn('The set did not open:', error) }, [audio, error])
   const aperture = useWorkbenchAperture()
+  const field = useSyncExternalStore(subscribeSystem, fieldView, fieldView)
   // The detail area's two switches read Clip | Device in every mode (FOUNDATION F4; manual §16.4); what each side holds in this mode
   // is the mode's own registration (WORLD-SHELL-DESIGN Rev 4's pair: Document | Devices, Task log | Agent chain, Scene | Studio,
   // Clip | Instruments), said on the Info line. Each switch shows or hides its side; both stand pressed while both stand.
@@ -94,6 +122,7 @@ export function StatusBar({ state, documentError, viewport, selectedTrack, audio
   const deviceName = shownTracks?.tracks.find(track => track.id === deviceTrackRef)?.name ?? trackName ?? selectedTrack
   // The small picture of the selected track's chain the Device switch carries (manual §10.1): the row Device view shows now.
   const chainRow = useShownChain()
+  const clipPicture = clipPictureOf(shownTracks, clipRef)
   const other = (side: DetailSide): DetailSide => side === 'clip' ? 'device' : 'clip'
   const shown = (side: DetailSide) => detailShown && shownSides[side]
   // A switch brings its view forward (⌥-click shows both); ▲ beside it shows or hides that view, and hiding the last one standing
@@ -136,7 +165,7 @@ export function StatusBar({ state, documentError, viewport, selectedTrack, audio
     {audio && set && <span className="statusbar-counts" title={set.path}>{set.tracks.length} tracks · {set.scene_count} scenes · {clipCount(set)}</span>}
     {track && <span className="statusbar-track" title={track}>{track}</span>}
     {!audio && status?.snapshot && reading?.sceneState && reading.nativeScene && <span className="statusbar-counts" title="Current Scene snapshot; file-save standing appears in the native Save control">Snapshot: {reading.sceneState === 'Edited since save' ? 'edited' : reading.sceneState === 'Draft' ? 'none' : 'saved'}{reading.nativeScene ? ` · revision ${reading.nativeScene.revision}` : ''}</span>}
-    {aperture && <span className="statusbar-counts statusbar-aperture" data-i={`Aperture|${aperture.pinned ? 'panes pinned to their own subject' : 'every pane follows the shared encounter'} — ${aperture.panes} pane${aperture.panes === 1 ? '' : 's'} in the centre`}>{apertureWords(aperture)}</span>}
+    {aperture && <span className="statusbar-counts statusbar-aperture" data-i={`Aperture|how far you look: ${field.aperture}, the World's own aperture (Technē's transport sets it). ${aperture.panes} pane${aperture.panes === 1 ? '' : 's'} in the centre; ${aperture.pinned ? `${aperture.pinned} pinned to their own subject` : 'every pane follows the shared encounter'}.`}>{statusApertureWords(field.aperture, aperture)}</span>}
     {/* The run context stands in every mode: which world this shell runs in, from the host's own disclosure. */}
     <RunContextReading />
     <nav className="status-detail-views" aria-label="Detail view">
@@ -146,7 +175,7 @@ export function StatusBar({ state, documentError, viewport, selectedTrack, audio
         data-i={`Clip view|Shows or hides Clip view (⌥⌘3). ⌥⌘L hides Clip view and Device view together.`} onClick={() => triangle('clip')}>▲</button>
       <button type="button" className="status-switch" aria-label="Clip view" data-detail-side="clip" aria-pressed={shown('clip')}
         data-i={`Clip view|${pair.clip.label}: ${pair.clip.meaning}. Brings Clip view forward; ⌥-click shows Clip view and Device view together; ⇧Tab switches when only one shows; ⌥⌘E gives it the main area.`}
-        onClick={event => bring('clip', event.altKey)}><Icon name="set" size={12} /><span>{clipName ?? 'Clip'}</span></button>
+        onClick={event => bring('clip', event.altKey)}>{clipPicture ? <ClipPicture picture={clipPicture} /> : <Icon name="set" size={12} />}<span>{clipName ?? clipPicture?.label ?? 'Clip'}</span></button>
       <button type="button" className="status-triangle" aria-label={shown('device') ? 'Hide Device view' : 'Show Device view'} aria-pressed={shown('device')} data-detail-toggle="device"
         data-i={`Device view|Shows or hides Device view (⌥⌘4). ⌥⌘L hides Clip view and Device view together.`} onClick={() => triangle('device')}>▲</button>
       <button type="button" className="status-switch" aria-label="Device view" data-detail-side="device" aria-pressed={shown('device')}

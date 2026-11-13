@@ -118,8 +118,10 @@ test('every key of every page design is wired: a reading, a write, the view\'s o
   }
 })
 
-test('each page device is published under the id its design draws: designKey(family, face) === design.id', () => {
-  // REPLACED (#725): the eight page faces — the Document and Docs are the family's page faces now; the others are retired, declared no more.
+// REPLACED (D-24): "published under the id its design draws" was a naming check (designKey === central:document) while nothing published
+// the Document. The chain now publishes it on the door while a page is reached (CentralDevices.tsx documentPublication), and the published
+// device draws the catalogue's own Document on the page family's binding.
+test('each page device is published under the id its design draws; the Document stands on the door, drawn as the design draws, while a page is reached', async () => {
   for (const face of ['document', 'docs']) {
     const declared = central.faces.find(candidate => candidate.id === face)
     assert.ok(declared, `the family declares ${face}`)
@@ -128,6 +130,32 @@ test('each page device is published under the id its design draws: designKey(fam
     assert.ok(DESIGNS[`central:${face}`], `the catalogue's design central:${face}`)
   }
   for (const face of ['flow-document', 'text', 'highlight', 'notes', 'beings', 'things', 'workspace']) assert.ok(!central.faces.some(candidate => candidate.id === face), `${face}: retired`)
+  const {publishDevice, publishedDevice} = await import('../src/frame/devices/deviceDoor.ts')
+  const {PlacedDevice} = await import('../src/frame/devices/DeviceView.tsx')
+  const designs = await import('../src/frame/devices/designs.ts')
+  designs.registerDesignedDevice(DESIGNS[bindings.DOCUMENT_DESIGN])
+  const device = chain.centralDocumentDevice()
+  assert.equal(device.id, chain.DOCUMENT_DEVICE_ID)
+  assert.equal(designKey(device.family, device.face.id), bindings.DOCUMENT_DESIGN)
+  assert.equal(chain.documentPublication(device, {bindings: {}, fulls: {}}), null, 'no page reached: nothing stands on the door')
+  bindings.resetHolds()
+  const binding = bindings.documentBinding(chain.DOCUMENT_DEVICE_ID, reachedFlow(), flowMaterial)
+  const open = {open: () => {}}
+  publishDevice(chain.DOCUMENT_DEVICE_ID, chain.documentPublication(device, {bindings: {[chain.DOCUMENT_DEVICE_ID]: binding}, fulls: {[chain.DOCUMENT_DEVICE_ID]: open}}))
+  const entry = publishedDevice(chain.DOCUMENT_DEVICE_ID)
+  assert.equal(entry.binding, binding, 'the page family\'s binding')
+  assert.equal(entry.full, open, 'its Full is the reached page\'s own pane')
+  const placed = html(createElement(PlacedDevice, {device: entry.device, view: 'whole', binding: entry.binding}))
+  assert.match(placed, /data-device-design="central:document"/, 'the catalogue\'s design draws it')
+  assert.match(placed, /Flow v0\.4/, 'the template')
+  assert.match(placed, /Factory original development Run/, 'the title')
+  assert.match(placed, />saved</, 'the save state')
+  const own = html(createElement(() => DESIGNS[bindings.DOCUMENT_DESIGN].whole(props(binding))))
+  const words = markup => markup.replace(/<[^>]+>/g, '')
+  assert.equal(words(placed), words(own), 'the published device draws the design\'s own Whole on the binding; only the host\'s fold, rail, pane and pop-out marks surround it')
+  publishDevice(chain.DOCUMENT_DEVICE_ID, null)
+  const source = await readFile(new URL('../src/central/devices/CentralDevices.tsx', import.meta.url), 'utf8')
+  assert.match(source, /publishDevice\(DOCUMENT_DEVICE_ID, documentPublished\)/, 'the chain publishes it from its page readings')
 })
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────────── the page, read

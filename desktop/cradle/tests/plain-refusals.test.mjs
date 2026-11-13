@@ -461,7 +461,6 @@ const CEILING = {
   'packages/live-shell/ui/src/projections/stageInstruments/StageInstrumentPlate.tsx': 1,
   'packages/live-shell/ui/src/shell/ModeBrowser.tsx': 6,
   'packages/live-shell/ui/src/shell/constellationPreviews.tsx': 1,
-  'packages/live-shell/ui/src/widgets/PacketWidget.tsx': 3,
 };
 
 const held = (file, found) => found.filter(site => !(ALLOWED[file] ?? []).some(entry => site.text.includes(entry.text)));

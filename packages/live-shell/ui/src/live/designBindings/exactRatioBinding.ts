@@ -7,8 +7,14 @@
 // hosted reading does not announce the voices' ratios. So the reference, the ratio set, the comma, the export and the bend range
 // stand disabled with that reason, and the well says it. Readout and Error are the view's own choices, held by the binding's hand
 // (designed.ts `local`) for this session: how a note's tuning shows, not what it is.
+// It stands on Live's chain as a note device before the torus (noteDevices.ts `exact-ratio`, added from the browser's Chain devices):
+// exactRatioDevice is that plate's device, whose family and face make the design's key, so the chain, the pool and a pane draw the design.
 import type {DesignBinding, Standing, Value} from '../../frame/devices/designed'
+import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
+import type {DeviceDeclaration, SdkParamRow} from '../../inhabitants/sdk/define'
 import type {LiveModeCatalogueState} from '../../native/liveModeCatalogue'
+import {EXACT_RATIO_PASSES, NOTE_DEVICE_LABEL, type ExactRatioNoteDevice} from '../noteDevices/noteDevices'
+import {NOTE_DEVICE_KEPT, NOTE_DEVICE_WRITE, noteDeviceId, type NoteDeviceHold} from '../liveChainDevices'
 
 /** The design's family and face: designKey('live', 'exact-ratio') is the design's id. */
 export const EXACT_RATIO_FAMILY = 'live'
@@ -59,3 +65,25 @@ export function exactRatioBinding(id: string, reading: LiveModeCatalogueState, c
 
 /** Forget the view's choices (a test, or the device leaving the chain). */
 export function resetExactRatioView(id?: string): void { if (id) VIEW.delete(id); else VIEW.clear() }
+
+/** The Exact-ratio note device on the chain: its family and face are the design's (`live:exact-ratio`), its power written to the session
+ * hold as every note device's is; it hands each act on unchanged (EXACT_RATIO_PASSES). */
+export function exactRatioDevice(device: ExactRatioNoteDevice, hold: Pick<NoteDeviceHold, 'setPower'>): DeviceInstance {
+  const id = noteDeviceId(device.id), title = NOTE_DEVICE_LABEL['exact-ratio']
+  const row = (fields: Omit<SdkParamRow, 'family' | 'deviceInstance'>): SdkParamRow => ({family: EXACT_RATIO_FAMILY, deviceInstance: id, ...fields}) as SdkParamRow
+  const face = {id: EXACT_RATIO_FACE, title, icon: 'direct', liveSemantic: 'device-midi-fx', note: EXACT_RATIO_PASSES} as DeviceDeclaration
+  return {
+    id, family: EXACT_RATIO_FAMILY, face, enabledKey: 'enabled',
+    rows: [
+      row({key: 'enabled', type: 'boolean', title: 'On', writePath: NOTE_DEVICE_WRITE, group: title}),
+      row({key: 'kept', type: 'string', title: 'Kept', group: title, disclosure: NOTE_DEVICE_KEPT}),
+    ],
+    values: {enabled: device.enabled, kept: 'this session'},
+    submit: async changes => {
+      for (const change of changes) {
+        if (change.key === 'enabled' && typeof change.value === 'boolean') hold.setPower(device.id, change.value)
+        else throw Error(`${change.key}: not a setting of the ${title} device`)
+      }
+    },
+  }
+}

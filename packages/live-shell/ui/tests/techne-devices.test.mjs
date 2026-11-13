@@ -365,15 +365,19 @@ test('a face declared waiting is a dark device with no control: its standing and
   // so it draws on the M3 form through the clock, which is admitted on m3_reception (above); no Binding face is declared.
   assert.equal(faceOf('quaternal-logic', 'binding'), undefined, 'no Binding face')
   assert.equal(faceOf('quaternal-logic', 'm3-clock').invariant.generates, 'kernel:m3_reception', 'the clock that carries the skin reads and moves the M3 form')
-  for (const id of ['torus']) {
-    const face = faceOf('quaternal-logic', id)
-    assert.equal(face.admission, 'waiting')
-    const device = chain.techneEntries(manifests('quaternal-logic'), readings()).find(entry => entry.face.id === id).device
-    assert.equal(lightOf(device), 'unknown', `${id}: nothing is illuminated`)
-    assert.ok(device.rows.every(row => !row.writePath), `${id}: no control`)
-    assert.equal(device.values.standing, 'waiting')
-    assert.equal(device.rows.find(row => row.key === 'waits-for').disclosure, face.note, `${id}: the family\'s own note names the owner`)
-  }
+  // Parity D-06: the torus is admitted — Live's own device, held in the Expressions Studio's Body chain (§20.3) — and the Technē rack draws
+  // no waiting stand-in for it (TechneDevices.tsx techneEntries: Live's torus is never the rack's).
+  const torusFace = faceOf('quaternal-logic', 'torus')
+  assert.notEqual(torusFace.admission, 'waiting', 'the torus draws on its owner')
+  assert.deepEqual(torusFace.heldBy, ['studio:body'])
+  assert.equal(chain.techneEntries(manifests('quaternal-logic'), readings()).find(entry => entry.face.id === 'torus'), undefined, 'no stand-in on the rack')
+  // A face declared waiting is still a dark device with no control, its standing and the owner it waits for.
+  const waiting = {...torusFace, id: 'waiting-fixture', admission: 'waiting', heldBy: ['techne:m1']}
+  const device = chain.techneEntries([{...manifests('quaternal-logic')[0], faces: [waiting]}], readings()).find(entry => entry.face.id === 'waiting-fixture').device
+  assert.equal(lightOf(device), 'unknown', 'nothing is illuminated')
+  assert.ok(device.rows.every(row => !row.writePath), 'no control')
+  assert.equal(device.values.standing, 'waiting')
+  assert.equal(device.rows.find(row => row.key === 'waits-for').disclosure, waiting.note, 'the family\'s own note names the owner')
 })
 
 // ── the chain: compact devices, no text-only card ──────────────────────────────────────────────────────────────────
@@ -406,6 +410,17 @@ test('the focused 0 instrument stands open as one plate of the faces it holds, t
   assert.doesNotMatch(out, /inhabitant-card|data-inhabitant-rack|docks when its material is selected/, 'no rack card is drawn')
 })
 
+test('parity D-37: with an instrument open the M′ matrices stand beside it where it holds one of their racks\' devices, and only there', () => {
+  const timeline = html(createElement(TechneInstrumentsDetail, {transport, focusInstrument: 'techne:m2'}))
+  assert.match(timeline, /data-open-instrument="techne:m2"/)
+  assert.match(timeline, /data-face-id="m-prime-matrices"/, 'the Timeline holds the Sky and the M3 clock, whose racks hold the matrices')
+  const project = html(createElement(TechneInstrumentsDetail, {transport, focusInstrument: 'techne:m0'}))
+  assert.doesNotMatch(project, /data-face-id="m-prime-matrices"/, 'the Project holds none of their racks\' devices')
+  const entries = chain.techneEntries(manifests('quaternal-logic'), readings())
+  assert.deepEqual(chain.beside(entries, 'techne:m2').map(entry => entry.face.id), ['m-prime-matrices'])
+  assert.deepEqual(chain.beside(entries, 'techne:m0'), [])
+})
+
 test('with no focus the six fold and the faces no instrument holds stand after them: the QL owner open, the waiting faces folded', () => {
   const out = html(createElement(TechneInstrumentsDetail, {transport}))
   assert.doesNotMatch(out, /data-focus-instrument/)
@@ -413,8 +428,7 @@ test('with no focus the six fold and the faces no instrument holds stand after t
   assert.match(out, /data-face-id="ql-instrument"[^>]*data-expanded="true"/)
   assert.match(out, /data-device="quaternal-logic:ql-instrument" data-device-size="compact"/)
   assert.match(out, /data-ql-instrument/, 'the owner\'s body is its picture')
-  assert.match(out, /data-face-id="torus"[^>]*data-expanded="false"/)
-  assert.match(out, /class="dp-folded-title"[^>]*aria-label="Unfold Torus \/ field"/, 'a folded device opens from its title, by the kit\'s fold')
+  assert.doesNotMatch(out, /data-face-id="torus"/, 'the torus is the Studio\'s and Live\'s, never a stand-in here (parity D-06)')
   // REPLACED (#801): "the M′ matrices and Binding are the M′ instruments', inside their folds (lane W4)". No Technē instrument holds the
   // matrices: the app layers' racks do (the Torus's, the Sky's, the M3 clock's, the Chakra's; manual §22.6 "open all four here"), so with no
   // instrument focused they stand after the folds as their own device. Binding is the M3 clock's skin, no face of its own.

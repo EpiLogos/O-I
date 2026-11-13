@@ -41,6 +41,19 @@ export async function encounterProvision(transport:KernelTransportStatus,project
   if(result.error || result.outcome?.result!=="encounter_provisioned")throw new Error(result.error??"AIKit did not provision a chat conversation");
   return result.outcome.data as EncounterProvisioning;
 }
+/** Your conversation with one roster Agent (the kernel's agent_conversation, made by the one provision, O-I #1003): its SessionSpace and
+ * current session, the census agent it is with (`provider`), its Agency, and how its body stood. Every later act is the one encounter
+ * session's (EncounterSession): it observes `agent_session` and sends there. */
+export interface AgentConversation {agent_ref:string;space:string;agent_session:string;provider:string;agency:"minted-per-project"|"retained-native-binding";
+  body:"opened"|"resumed"|"renewed";
+  /** Every canonical session of this conversation, oldest first; the last is `agent_session`. A harness that cannot resume (pi) renews
+   * into a new session after its owner restarts, so the earlier ones hold the conversation's history. */
+  sessions:string[]}
+export async function agentConversation(transport:KernelTransportStatus,agentRef:string,project=""):Promise<AgentConversation> {
+  const result=await kernelOp(transport,{op:"agent_conversation",project,agent_ref:agentRef});
+  if(result.error || result.outcome?.result!=="encounter_provisioned")throw new Error(result.error??"AIKit did not open a conversation with this agent");
+  return result.outcome.data as AgentConversation;
+}
 /** The session's task record (`aikit.encounter-task/v1`), read through the
  * owner's `encounter-task-read`. `null` is honest absence — no task is bound
  * to this session. Refusals surface the owner's own words. */

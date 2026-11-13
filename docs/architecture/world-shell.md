@@ -1032,7 +1032,7 @@ not installed, the kernel's compose refuses with the exact repair named;
 ### 9.2 The five layers
 
 1. **Owners are the authority.**
-   - Central: worlds, pages, the Day, NOW.
+   - Central: worlds and their projects, pages, the Day, and each session's NOW.
    - AIKit: agents, sessions, models, skills, the wiki.
    - Actuation: harness detection, processes.
    - Factory: runs, tasks, attempts.
@@ -1054,6 +1054,12 @@ not installed, the kernel's compose refuses with the exact repair named;
    - A device declares four things: its kind and Live meaning (manual §16), the model slice it reads, the field each parameter reads, and the Action each control invokes. The SDK's `writePath` is an Action id.
    - Session view, Arrangement view, Pane view, Clip view, Device view, the browser and the transport are one renderer each over the Set and the declarations. A mode is a row in a table.
 
+Sessions keep their own record (#1016):
+- A session's start and end are owner events. The harness's hooks record them in AIKit's lifecycle. The start opens the session's NOW in Central and the end closes it.
+- The session starts oriented: its world, its project, today's Day, and its own NOW and scratch place come with the start. A prompt turn carries nothing unless that changed.
+- What a session yields at its end lands on the Day as a proposal (#1007).
+- No agent opens, writes or closes a NOW or a Return by hand, and no moment waits for a person to close it.
+
 Two rules are checked mechanically on every landing:
 - no device or view code calls an owner or a kernel read op directly;
 - no control writes except by an Action.
@@ -1064,7 +1070,7 @@ Each mode's core is the minimum that makes the mode work. It is drawn from the m
 
 | | Central | Factory | Expressions | Technē | Live |
 |---|---|---|---|---|---|
-| Model slice | Worlds, pages, today's Day, page revisions | Agents that start (one census), sessions, tasks and attempts, workcells | Expressions, scenes, Studio values, playback | Sources (the wiki), places, events, walks | The set, parts, clips, notes, the mixer |
+| Model slice | Worlds and their projects, pages, today's Day, page revisions | Agents that start (one census), with the skill set and the law each carries; sessions, tasks and attempts, workcells | Expressions, scenes, Studio values, playback | Sources (the wiki), places, events, walks | The set, parts, clips, notes, the mixer |
 | Track / clip | World / page | Agent session / task | Expression / scene | Reading / event | Part / clip |
 | Row / take | Pages opened together / revisions | Batch / attempts | A moment / captured takes | A walk's stop / readings | Row / take lanes |
 | Main track | Day, Approvals | Run map, Approvals | — | — | The main mix |
@@ -1073,7 +1079,7 @@ Each mode's core is the minimum that makes the mode work. It is drawn from the m
 | Chain | Packet → Agent → Scope | Gateway → Agent (model, effort) → Scope → Git / landing | Studio: the field and its devices | The instrument → Lens | Note devices → Torus → effects |
 | Pane | Document | The task's log or terminal | Field | World (globe), the ruler | Torus |
 | Transport | Play sends the packet; Stop; Overdub (new entry or replace); Arm (direct or proposal); Capture (selection → packet); Load (saved) | Play runs; Stop pauses, twice cancels; Overdub steers; Arm; Tap; Tempo (effort); Load (context) | Play and Stop scenes; Record a take; Tempo; Arm; Capture | Play walks; Stop; Record a walk; Tempo (pace); Key (how far, as whom) | Live's own |
-| Actions | Page open and save; Day open and close; send; approve, reject | Session start, send, stop; commission; attempt read; seat join, release; approve | Scene save and launch; keep a take | Place; record a walk | Clip edit; part; mixer |
+| Actions | Page open and save; Day open and close; send; approve, reject; make a project (create, keep its wiki, copy it in); accept a skill's or a law statement's revision | Session start (opens its NOW), send, stop, end (closes it); commission; attempt read; seat join, release; approve | Scene save and launch; keep a take | Ingest sources into the wiki; accept a proposed node, link or place; place; record a walk | Clip edit; part; mixer |
 | First repair | A Day on a ground Setup makes (#739) | One census and one send path; Factory in any world, not only O-I (#739) | One field engine | Earth mounts on the bound world | One sound engine in the build |
 
 Across every mode, one each of:
@@ -1085,13 +1091,24 @@ Across every mode, one each of:
 
 The planet, sky modulation, the shared field, the Palace, nested Agent racks and Nara wait until the core passes.
 
+The acts a person does first stand on these cores. Each is built inside the ticket named; none is a device or a path of its own. (Owner, 13 Nov 2026, PROGRAMME R36.)
+
+| Act | Where it is done | Core and ticket |
+|---|---|---|
+| Set up an agent | Settings › Setup › Harnesses. Each agent that starts shows its model, the skill set it gets and the law it carries. | The agent spine, #1003 |
+| Run a session | Factory: a session is a track, started and ended with one press. It runs in a terminal in the window or attaches to one outside it. | Factory's core, #1006; its record, #1016 |
+| Have a day | Central's Main track. The Day opens and closes itself, and its face 2 is the day's sessions. You write face 0 if you want and read face 5. | Central's core, #1005; receipts, #1007; sessions, #1016 |
+| Make a project | The browser's Work place, through Setup's Projects step. The project becomes a world with its Docs, its wiki and its agents. | Central's core, #1005 |
+| Grow a wiki into a world | Technē. Sources dropped on the world are ingested into its wiki, and the nodes, links and places the agent proposes are accepted in Approvals. The World and the Knowledge graph are two faces of that wiki. | Technē's core, #1009 |
+| Write docs, skills and law | Central's Document. A doc is bound to its tier. A skill is written, reviewed and released. A law statement is the root world's tier 0, and its adoption re-renders every harness's floor. | Central's core, #1005 |
+
 ### 9.4 Order
 
 The gate, §9.5, is #1000. It is built first, and every step after it passes it.
 
 1. The World Model: #1001.
 2. The Action registry: #1002.
-3. The agent spine: #1003.
+3. The agent spine: #1003. Sessions keep their own record: #1016.
 4. Sets in the kernel: #1004.
 5. Central's core: #1005. Factory's core: #1006.
 6. Receipts into the Day: #1007.
@@ -1105,12 +1122,12 @@ Each mode's core acts are scripts that drive the real owners on a fresh, isolate
 
 The spine's five acts come first:
 1. Open a world and save a page.
-2. See the agents on this machine that start.
+2. See the agents on this machine that start, with the skill set and the law each carries.
 3. Send a passage to one and get the answer in the page.
 4. Run a Factory task to its end.
-5. See the Day hold all of it and close.
+5. See the Day hold all of it, each session's start and end among it, and close.
 
-A ticket closes only when its acts' scripts pass and a session other than the builder's has run them. A refusal or a dimmed control never counts as a pass.
+A ticket closes when its acts' scripts pass. A refusal or a dimmed control never counts as a pass.
 
 ## 10. Kernel rules for builders
 

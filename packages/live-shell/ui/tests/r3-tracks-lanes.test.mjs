@@ -43,8 +43,9 @@ const {modeSetOf, setClip, setTrack} = await import('./support/modeSetFixture.mj
 const {techneTakeLanes, TECHNE_MIXER} = await import('../src/timeline/techneTrackAdapter.ts')
 const {liveSetTrackAdapter, LIVE_MIXER} = await import('../src/timeline/liveSetTrackAdapter.ts')
 const {nativeTracks, sceneAutomationOf} = await import('../src/frame/tracks/modeTracks.ts')
-const {SessionGrid, SessionGridView, answerOf} = await import('../src/frame/tracks/SessionGrid.tsx')
-const {ArrangementRuler, ArrangementRulerView} = await import('../src/frame/tracks/ArrangementRuler.tsx')
+const {answerOf} = await import('../src/frame/tracks/SessionGrid.tsx')
+const {SessionGrid, SessionGridView} = await import('../src/inhabitants/catalogue/panels/dlw__session-grid.tsx')
+const {ArrangementRuler, ArrangementRulerView} = {...await import('../src/frame/tracks/ArrangementRuler.tsx'), ...await import('../src/inhabitants/catalogue/panels/dlw__arrangement-ruler.tsx')}
 const lanes = await import('../src/frame/tracks/trackLanes.ts')
 
 const SELECT = {select() {}}
@@ -260,7 +261,7 @@ test('an automation lane names its device and its parameter: an armed take\'s re
 // manual §20.1: "Takes lie as take lanes under the Expression's track in Arrangement view", and in the Sequence tab "The scene's sound lies
 // beneath it"). FIXTURE: the scenes inventory's rows as expressions-boundary scenes.ts sceneTorusTakes reads a Scene's performance.
 test('a Torus take under a scene lies as a take lane under its Expression\'s sound, from its second of the scene where the scene lies on the ruler', async () => {
-  const {placeClips} = await import('../src/frame/tracks/ArrangementRuler.tsx')
+  const {placeClips} = {...await import('../src/frame/tracks/ArrangementRuler.tsx'), ...await import('../src/inhabitants/catalogue/panels/dlw__arrangement-ruler.tsx')}
   const take = {lane_ref: 'take-lane:torus/3', title: 'Take 3', enabled: true, solo: false, take_ref: 'sha256:' + '1'.repeat(64), at_sample: '96000', frames: '144000',
     sample_rate: 48000, transport_rate: 48000, at_seconds: 2, seconds: 3}
   const row = (ref, title, duration, extra = {}) => ({scene_ref: ref, title, native_title: title, working: {duration, transition: 0}, snapshot: {duration: null},

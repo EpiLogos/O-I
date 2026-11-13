@@ -12,20 +12,22 @@
 //                     §21.2, DLW.md:10194-10199; the Sky §22.1, :10767-10772; the M3 clock §22.3, :11018-11023), the manual's words verbatim.
 //                     Parts carry none (§22.9).
 //   rack.part         the part you choose ('0'..'5'), the view's own; the manual's default is 1 (§22.9 Parameters).
-// M4′'s rack opens as a device of its own (§22.9), which no face places yet; this reads the three Rack pages. Nothing here writes the map.
+// M4′'s rack stands on the Chakra's Rack page (§22.5 "The Chakra is M4′'s face, so its Rack page holds M4′'s rack"); this reads the four
+// Rack pages. Nothing here writes the map.
 // Pure apart from the kernel reads, which take the call they are given, and the small store the views share.
 import {useEffect, useSyncExternalStore} from 'react'
 import {detectTransport, kernelOp, type KernelOpCall} from '../../../../../../../desktop/cradle/src/kernel/bridge'
 import type {KernelOp} from '../../../../../../../desktop/cradle/src/kernel/types'
 import type {Value} from '../../../frame/devices/designed'
 
-export type RackInstrument = 1 | 2 | 3
+export type RackInstrument = 1 | 2 | 3 | 4
 
 /** Each instrument: its label, its coordinate in the map and its face (§16.16 "Where it plays"). */
 export const RACK_INSTRUMENTS: Readonly<Record<RackInstrument, {readonly instrument: string; readonly ref: string; readonly face: string}>> = {
   1: {instrument: 'M1′', ref: '#1', face: 'quaternal-logic:torus'},
   2: {instrument: 'M2′', ref: '#2', face: 'quaternal-logic:sky'},
   3: {instrument: 'M3′', ref: '#3', face: 'quaternal-logic:m3-clock'},
+  4: {instrument: 'M4′', ref: '#4', face: 'quaternal-logic:chakra'},
 }
 
 /** Where each position is worked, as its instrument's entry says (DLW.md, the "Where you work it" rows): the device that carries it, and
@@ -54,6 +56,15 @@ export const RACK_CARRIED: Readonly<Record<RackInstrument, readonly {readonly de
     {device: 'quaternal-logic:m3-clock', where: 'Matrix, Seed, Pose map and the Generation readout; Binding\'s Pairing.'},
     {device: 'quaternal-logic:deck', where: 'The Deck\'s Tarot, with the card of the current form and its orientation.'},
     {device: 'quaternal-logic:m3-clock', where: 'Position, Turn, Aperture, Reciprocal and Open. The Resonator bank sounds the cut (§22.7).'},
+  ],
+  // M4′ (§16.16 M4′ of Nara, DLW.md:3069; §22.4, §22.5): where the Chakra's Rack page says each part is worked (map-rack.tsx RACK_M4).
+  4: [
+    {device: null, where: 'Your Being page'},
+    {device: 'quaternal-logic:chakra', where: 'The Chakra, Sitting'},
+    {device: 'quaternal-logic:deck', where: 'Drawing and casting'},
+    {device: null, where: 'A flow\'s Container'},
+    {device: null, where: 'Lenses on a practice page'},
+    {device: null, where: 'Returns to the Day'},
   ],
 }
 
@@ -109,9 +120,10 @@ export interface QlRackState {
 export type RackCall = (op: KernelOp) => Promise<KernelOpCall>
 const READING = 'Reading the rack from the map\'s ledger…'
 const INITIAL: QlRackState = {busy: false, rack: null, reason: READING, part: undefined}
-let states: Record<RackInstrument, QlRackState> = {1: INITIAL, 2: INITIAL, 3: INITIAL}
+let states: Record<RackInstrument, QlRackState> = {1: INITIAL, 2: INITIAL, 3: INITIAL, 4: INITIAL}
 const asked = new Set<RackInstrument>()
-let sequence = 0
+/** The newest read of each instrument's rack (a reset moves them all): one instrument's read never stales another's. */
+let sequence: Record<RackInstrument, number> = {1: 0, 2: 0, 3: 0, 4: 0}
 let call: RackCall = op => kernelOp(detectTransport(), op)
 const listeners = new Set<() => void>()
 const setRack = (n: RackInstrument, next: QlRackState) => { states = {...states, [n]: next}; for (const listener of [...listeners]) listener() }
@@ -134,17 +146,17 @@ async function views(refs: readonly string[]) {
   return out
 }
 
-/** Read an instrument's rack once: its view, its positions' views, their parts' views. Only the newest read stands. */
+/** Read an instrument's rack once: its view, its positions' views, their parts' views. Only the instrument's newest read stands. */
 export async function readQlRack(n: RackInstrument): Promise<void> {
-  const ticket = ++sequence, at = RACK_INSTRUMENTS[n]
+  const ticket = ++sequence[n], at = RACK_INSTRUMENTS[n]
   setRack(n, {...states[n], busy: true})
   const top = await view(at.ref)
-  if (!top.ok) { if (ticket === sequence) setRack(n, {...states[n], busy: false, rack: null, reason: top.reason}); return }
+  if (!top.ok) { if (ticket === sequence[n]) setRack(n, {...states[n], busy: false, rack: null, reason: top.reason}); return }
   const positions = rackChildren(top.view.segment, top.view.children).filter(child => /^[0-5]$/.test(child.local_segment))
   const posViews = await views(positions.map(p => p.source_ref))
   const parts = posViews.map((v, i) => (v.ok ? rackChildren(positions[i]!.local_segment, v.view.children) : []))
   const partViews = await views(parts.flat().map(part => part.source_ref))
-  if (ticket !== sequence) return
+  if (ticket !== sequence[n]) return
   const registries = new Set([top.view, ...posViews.flatMap(v => (v.ok ? [v.view] : [])), ...partViews.flatMap(v => (v.ok ? [v.view] : []))].map(v => v.registry))
   if (registries.size > 1) { setRack(n, {...states[n], busy: false, rack: null, reason: 'The ledger answered from two registry revisions while the rack was read.'}); return }
   let k = 0
@@ -169,7 +181,7 @@ export function setQlRackPart(n: RackInstrument, part: Value | undefined): void 
 
 /** Tests: start again, with another call. */
 export function resetQlRack(next: {call?: RackCall} = {}): void {
-  sequence++; asked.clear(); states = {1: INITIAL, 2: INITIAL, 3: INITIAL}; call = next.call ?? (op => kernelOp(detectTransport(), op))
+  sequence = {1: sequence[1] + 1, 2: sequence[2] + 1, 3: sequence[3] + 1, 4: sequence[4] + 1}; asked.clear(); states = {1: INITIAL, 2: INITIAL, 3: INITIAL, 4: INITIAL}; call = next.call ?? (op => kernelOp(detectTransport(), op))
   for (const listener of [...listeners]) listener()
 }
 

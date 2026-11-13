@@ -19,6 +19,8 @@
 //                         (expressionsDevice.ts SETTINGS.field; boundary nativeFieldPanelSettings.ts keySource, symbolVoices, collisionsStrike,
 //                         pulse); Pulse is the transport's Metronome too (useExpressionsTransport.tsx, nativeScenePlayback.ts pulseSlot);
 //   voices                the symbols of the open scene that have a voice (Entity.sound.enabled, native-field/entitySound.ts EntitySound);
+//   symbols               the open scene's own symbols, a JSON list of {name, glyph (the entity's text), tint, x, y (stage units), voiced},
+//                         drawn on the plate and listed in Full (expressions__field.tsx symbolsOf), never the catalogue's fixture;
 //   level                 the loudness of the whole field (§20.2 "Level | −60 to 0 dB | −12 dB | Sets the loudness of the whole field";
 //                         O-I #747 round 886): the scene's own (Scene.composition.fieldLevel, in dB), −12 dB where it keeps none, read and
 //                         written as the editor's `fieldLevel` panel setting; the frame hears every voice and the Torus's mix stage under it
@@ -70,6 +72,7 @@ export const FIELD_READINGS: Readonly<Record<string, string>> = {
   baseFrequency: 'A reading: set the resonator\'s f0 on Resonance.',
   particles: 'A reading: set the count in Ink.',
   voices: 'A reading: give a symbol its voice on the Sound page of the scene\'s Expression tab.',
+  symbols: 'A reading: the scene\'s own symbols. Place and voice them in the scene.',
 }
 const NO_FRAME = 'No Expressions application is mounted: the field\'s sound is the frame\'s.'
 const NO_SCENE = 'The frame presents no native Expression: the field\'s sound is the open one\'s.'
@@ -134,6 +137,12 @@ export function fieldValues(input: FieldInput): Record<string, Value> {
     const pulsing = expressionsSettingRead('field', 'pulse', scene)
     if (typeof pulsing === 'boolean') values.pulse = pulsing
     values.voices = scene.entities.filter(entity => (entity as {sound?: {enabled?: unknown}}).sound?.enabled === true).length
+    values.symbols = JSON.stringify(scene.entities.map(entity => {
+      const e = entity as {name?: unknown; text?: unknown; tint?: unknown; position?: {x?: unknown; y?: unknown}; sound?: {enabled?: unknown}}
+      const name = typeof e.name === 'string' ? e.name : '', text = typeof e.text === 'string' ? [...e.text.trim()][0] : undefined
+      return {name, ...(text ? {glyph: text} : {}), ...(typeof e.tint === 'string' ? {tint: e.tint} : {}),
+        ...(finite(e.position?.x) ? {x: e.position!.x} : {}), ...(finite(e.position?.y) ? {y: e.position!.y} : {}), voiced: e.sound?.enabled === true}
+    }).filter(symbol => symbol.name))
     const level = (scene.composition as {fieldLevel?: unknown} | undefined)?.fieldLevel
     values.level = finite(level) ? level : FIELD_LEVEL_DB.default
   }

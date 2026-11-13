@@ -36,8 +36,8 @@ const React = await import('react')
 const {renderToStaticMarkup} = await import('react-dom/server')
 const {factoryTaskRef, parseFactoryTaskRef} = await import('../src/timeline/factoryTrackAdapter.ts')
 const {kernelSetTracks} = await import('../src/frame/tracks/kernelSet.ts')
-const {SessionGrid} = await import('../src/frame/tracks/SessionGrid.tsx')
-const {placeClips} = await import('../src/frame/tracks/ArrangementRuler.tsx')
+const {SessionGrid} = await import('../src/inhabitants/catalogue/panels/dlw__session-grid.tsx')
+const {placeClips} = {...await import('../src/frame/tracks/ArrangementRuler.tsx'), ...await import('../src/inhabitants/catalogue/panels/dlw__arrangement-ruler.tsx')}
 
 const at = text => Date.parse(text)
 const SELECT = {select() {}}

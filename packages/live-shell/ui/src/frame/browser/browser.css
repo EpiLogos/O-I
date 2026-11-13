@@ -140,15 +140,44 @@
 .one-browser .world-browser-results .world-collection-row > :is(.native-error, .native-empty) { flex: 1 0 100%; margin: 0; padding: 1px 0 2px 18px; font-size: 10px }
 .one-browser .world-browser-results :is(.browser-empty, .native-empty) { padding: 8px 6px; margin: 0; font-size: 10.5px; color: var(--text-faint) }
 
-/* ——— the pool (.slot): 46% of the column under a 5px rule, bg-2; the aperture slot (apertureViews.css), then a body's pool
-   content, then the selected device; a body's pool head is the 22px .sloth on bg-1 ——— */
-.one-browser .one-browser-pool { flex: 0 0 46%; min-height: 120px; max-height: none; display: flex; flex-direction: column; overflow: auto; border-top: 5px solid var(--line); background: var(--bg-2) }
+/* ——— the lower 46% of the column (the mockup's .slot): the aperture slot, then the pool filling the rest of it, bg-2; a body's pool head is the 22px .sloth on bg-1 ——— */
+.one-browser .one-browser-lower { flex: 0 0 46%; min-height: 120px; display: flex; flex-direction: column; overflow: hidden; border-top: 5px solid var(--line); background: var(--bg-2) }
+.one-browser .one-browser-lower > .aperture-slot { border-top: 0 }
+.one-browser .one-browser-pool { flex: 1 1 auto; min-height: 0; max-height: none; display: flex; flex-direction: column; overflow: auto; border-top: 5px solid var(--line); background: var(--bg-2) }
 .one-browser .one-browser-pool > .device-pool { height: auto; flex: 1 0 auto }
 .one-browser .one-browser-pool-host > .world-context-pool { flex: none; min-height: 0; max-height: none; border-top: 0; background: transparent }
 .one-browser .one-browser-pool-host > .world-context-pool > header { flex: none; height: 22px; padding: 0 6px; background: var(--bg-1); border-bottom: 1px solid var(--line) }
 .one-browser .one-browser-pool-host > .world-context-pool > header > button { display: flex; align-items: center; gap: 6px; height: 21px; min-height: 0; padding: 0; font-size: 11px; color: var(--text) }
 .one-browser .one-browser-pool-host > .world-context-pool > .world-pool-body { padding: 4px 0 8px }
 .one-browser .one-browser-pool-host .pool { height: auto; min-height: 0; border-top: 0 }
+
+/* ——— the aperture slot (.slot/.sloth/.sec/.ctx; frame/encounter/ApertureSlot.tsx): under a 5px rule on bg-2, the 22px head on
+   bg-1 — the pane's kind in the accent, its tab, "pane i/N" and the pin (.pin-t) at the right — then Context and the four rows,
+   62px key | value | standing. The pool follows it under a hairline, the slot's rule being the column's one 5px rule. ——— */
+.one-browser .aperture-slot { flex: none; display: flex; flex-direction: column; border-top: 5px solid var(--line); background: var(--bg-2); font-size: 11px }
+.one-browser .aperture-slot + .one-browser-pool { border-top-width: 1px }
+.one-browser .aperture-slot-head { height: 22px; flex: none; display: flex; align-items: center; gap: 6px; padding: 0 6px; background: var(--bg-1); border-bottom: 1px solid var(--line); white-space: nowrap; overflow: hidden }
+.one-browser .aperture-slot-head > b { font-weight: 500; min-width: 0; overflow: hidden; text-overflow: ellipsis }
+.one-browser .aperture-slot-kind { color: var(--accent); flex: none }
+.one-browser .aperture-slot-none { color: var(--text-faint) }
+.one-browser .aperture-slot-r { margin-left: auto; flex: none; display: flex; gap: 2px; align-items: center; color: var(--text-faint); font-size: 10px }
+.one-browser .aperture-pin { margin-left: 2px; height: 16px; min-height: 0; padding: 0 5px; border: 1px solid var(--line); border-radius: 0; background: var(--bg-0); color: var(--text-faint); font-size: 9px; line-height: 14px; cursor: pointer }
+.one-browser .aperture-pin.on { color: var(--accent); border-color: var(--accent) }
+.one-browser .aperture-pin:disabled, .one-browser .aperture-pin.own { cursor: default; opacity: .6 }
+.one-browser .aperture-slot-body { padding: 4px 0 8px; overflow: auto }
+.one-browser .aperture-slot-sec { display: flex; justify-content: space-between; align-items: center; padding: 8px 8px 3px; font-size: 10px; color: var(--text-faint) }
+.one-browser .aperture-ctx { display: grid; grid-template-columns: 62px minmax(0, 1fr) auto; gap: 6px; align-items: center; min-height: 21px; padding: 2px 8px; font-size: 11px }
+.one-browser .aperture-ctx .k { color: var(--text-faint); font-size: 10px }
+.one-browser .aperture-ctx .v { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text) }
+.one-browser .aperture-ctx .v b { font-weight: 500 }
+.one-browser .aperture-ctx .v .kg { display: inline-grid; vertical-align: -2px; margin-right: 3px; color: var(--text-dim) }
+.one-browser .aperture-ctx .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-right: 5px }
+.one-browser .aperture-ctx .s { font-size: 9.5px; color: var(--text-faint) }
+/* The whole field from the browser's search: one row at the foot of the category's rows (.bsep's rhythm), the ⌘K line's key faint. */
+.one-browser .one-browser-field-search { display: flex; align-items: center; gap: 6px; width: 100%; min-height: 23px; padding: 2px 6px; border: 0; border-top: 1px solid var(--line); border-radius: 0;
+  background: transparent; color: var(--text-dim); font-size: 10.5px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.one-browser .one-browser-field-search:hover { background: var(--bg-3); color: var(--text) }
+.one-browser .one-browser-field-search kbd { margin-left: auto; font: inherit; font-size: 9.5px; color: var(--text-faint) }
 
 @media (max-width: 760px) {
   .one-browser .world-browser-main { grid-template-columns: fit-content(96px) minmax(0, 1fr) }

@@ -36,7 +36,7 @@ export async function load(url,context,next){
 globalThis.document = {getElementById: () => null, createElement: () => ({}), head: {appendChild: () => {}}, documentElement: {}}
 const {createElement} = await import('react')
 const {renderToStaticMarkup} = await import('react-dom/server')
-const grid = await import('../src/frame/tracks/SessionGrid.tsx')
+const grid = {...await import('../src/frame/tracks/SessionGrid.tsx'), ...await import('../src/inhabitants/catalogue/panels/dlw__session-grid.tsx')}
 const read = path => readFileSync(new URL(`../src/${path}`, import.meta.url), 'utf8')
 
 const SET = {columns: [{id: 'r1', name: '1'}], tracks: [{id: 'space:s1', name: 'Explain run', kind: 'session'}], clips: [], actions: {grain: 'whole harness'}}
@@ -54,7 +54,7 @@ test('the Main head is a track\'s head: a button that selects the Main track, pr
   const empty = renderToStaticMarkup(createElement(grid.SessionGridView, {set: {columns: [], tracks: [], clips: []}, selection: {ref: null, select() {}}, folded: {}, onFold() {},
     receipt: null, onPress() {}, onDismiss() {}}))
   assert.match(empty, /aria-label="Stops"><button type="button" class="thd" aria-pressed="false" data-track-head="main"/, 'an empty work\'s Main head selects too')
-  assert.doesNotMatch(read('frame/tracks/SessionGrid.tsx'), /'(?:live|base|central|factory|expressions|techne)'/, 'no mode named in the grid')
+  assert.doesNotMatch(read('frame/tracks/SessionGrid.tsx') + read('inhabitants/catalogue/panels/dlw__session-grid.tsx').split("the grid's law, moved from")[1].split('controls shared by the views')[0].replace(/^\/\/.*$/gm, ''), /'(?:live|base|central|factory|expressions|techne)'/, 'no mode named in the grid')
 })
 
 test('Factory routes the Main track: its Device side is the Main track\'s chain and its head reads Main', () => {

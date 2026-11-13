@@ -1,6 +1,6 @@
 import { Icon as CutIcon } from '../inhabitants/sdk/Icon'
 import { MODE_GRAMMAR, surfModeOf, type SurfMode } from '../shell/modeGrammar'
-import type { ModeTransportReadouts } from '../shell/ModeTransportBar'
+import type { ModeTransportReadouts } from '../shell/transports/spineControls'
 import { MODE_TITLE, ModeTransport } from '../shell/modeTransports'
 import { useContext } from 'react'
 import { useOptionalContinuity } from '../continuity/workspace'
@@ -9,11 +9,12 @@ import { trailSteps } from '../frame/encounter/encounterRows'
 import { standingOn } from '../../../../../desktop/cradle/src/workspace/store'
 import type { MainView } from '../shell/mainView'
 import { ShellConfigContext } from '../shell/useSet'
-import { useSpineRevision } from '../shell/ModeTransportBar'
+import { useSpineRevision } from '../shell/transports/spineControls'
 import { titleLine, worldName } from '../shell/transports/transportReadings'
 import type { TimeSpine } from '../timeline/timeSpine'
 import type { PaneInstrumentId } from '../shell/paneInstrument'
 import { ModeModeRail } from '../shell/ModeModeRail'
+import { TransportHome } from '../frame/transport/HomeSlot'
 import type { NativeCompositionViewSource } from '../shell/compositionViews'
 import type { SetSignature } from '../shell/document'
 
@@ -59,7 +60,10 @@ export function TransportBar({ tempoBpm, setPath = null, quantize = null, signat
   return <header className="transport" data-tauri-drag-region data-focus-region="transport" tabIndex={-1}><TransportTitle line={MODE_TITLE[surf]} setName={name} workName={workName} timeSpine={timeSpine} /><div className="transport-controls" data-tauri-drag-region>
     <button className="chrome-toggle" aria-label="Toggle browser" aria-pressed={browser} onClick={toggleBrowser} data-i="Browser|Shows or hides the browser (⌥⌘B)."><CutIcon name="browser" size={15} /></button>
     {/* One transport, five meanings (Rev 5): the SAME slots in the SAME places, in every mode, in Live's order. */}
-    <ModeTransport key={surf} mode={surf} reading={{readouts: modeReadouts, timeSpine, focusedInstrument, tempoBpm, setPath, quantize, signature, nativeTransport}} />
+    {/* Home (the mockup's #home) stands in the bar in every mode; the frame hands it the mode switch, as the mode rail has it. */}
+    <TransportHome.Provider value={{mode: surf, chooseMode}}>
+      <ModeTransport key={surf} mode={surf} reading={{readouts: modeReadouts, timeSpine, focusedInstrument, tempoBpm, setPath, quantize, signature, nativeTransport}} />
+    </TransportHome.Provider>
     <nav className="surface-icons transport-modes" aria-label="Mode">
       <ModeModeRail mode={mode} chooseMode={chooseMode} />
     </nav>
@@ -78,8 +82,9 @@ export function TransportBar({ tempoBpm, setPath = null, quantize = null, signat
  * goes the other way, until you go somewhere new"): one stop along the book's trail each way from the stop you stand on, through
  * the trail's one return (shell/TrailWidget.tsx returnToStop), never a second writer. The place on the trail is the book's
  * (WorldContext.trailAt), so the Trail's own press moves it too, and a move — which lands on the newest stop — leaves Forward
- * nothing. The browser's ‹ › walk only the categories the browser has shown (frame/browser/Browser.tsx): what the browser shows,
- * never where you are, so they add no stop and move no place on this trail. */
+ * nothing. Their words say the trail, so they are never taken for the browser's ‹ ›, which walk only the categories the browser
+ * has shown (frame/browser/Browser.tsx): what the browser shows, never where you are, so they add no stop and move no place on
+ * this trail (parity G11). */
 function TitleTrail() {
   const continuity = useOptionalContinuity()
   const context = continuity?.current.context
@@ -90,9 +95,9 @@ function TitleTrail() {
   const forward = steps.forward === null ? null : trail[steps.forward]
   return <span className="title-trail">
     <button type="button" aria-label="Back" disabled={!back} onClick={() => go(steps.back)}
-      data-i={back ? `Back|Return to ${back.label}.` : 'Back|Nothing before this on the trail yet.'}>‹</button>
+      data-i={back ? `Back|Back along the trail to ${back.label}.` : 'Back|Nothing before this on the trail yet.'}>‹</button>
     <button type="button" aria-label="Forward" disabled={!forward} onClick={() => go(steps.forward)}
-      data-i={forward ? `Forward|On to ${forward.label}.` : 'Forward|Nothing after this on the trail.'}>›</button>
+      data-i={forward ? `Forward|Forward along the trail to ${forward.label}.` : 'Forward|Nothing after this on the trail.'}>›</button>
   </span>
 }
 

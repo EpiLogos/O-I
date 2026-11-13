@@ -383,6 +383,15 @@
       "reason": "encounter is directly named in these existing scenario sources; no run is claimed by this register."
     },
     {
+      "op": "agent_conversation",
+      "native_owner": "kernel/src/agency.rs",
+      "spec_ref": "O-I PR #998; O-I #1003 (the one provision); kernel/tests/agent_conversation_live.rs (live, ignored)",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Proven by the ignored live kernel test against real aikit/ctrl in a fresh World; no native walk receipt yet. Its spine act (talk-to-an-agent) closes this."
+    },
+    {
       "op": "encounter_provision",
       "native_owner": "kernel/src/owner_write.rs",
       "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
