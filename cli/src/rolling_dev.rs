@@ -221,6 +221,19 @@ fn command_rolling_dev_gate(args: &[OsString]) -> Result<i32, String> {
         let result = rolling_check(&consumer_source, &command, &envs, &gate.join("cradle-kernel.log"));
         checks.push(json!({"check":"cradle-kernel","command":command,"result":if result.is_ok(){"passed"}else{"failed"}}));
         result?;
+        // The spine acts (`#[ignore]`d, so `cargo test` above skips them): the
+        // same runner the landing statuses come from, in its local mode, on
+        // the captured kernel and against its own board (tests/spine-acts.json).
+        let runner = gate.join("spine-gate.sh");
+        fs::copy(consumer.join("scripts/spine-gate.sh"), &runner).map_err(|e| format!("capture the spine runner: {e}"))?;
+        let consumer_head = git_output(&consumer, &["rev-parse", "HEAD"]).unwrap_or_else(|_| "unknown".into());
+        let spine = ["bash".into(), runner.to_string_lossy().into_owned(), "--local".into(), "--kernel".into(), consumer_source.to_string_lossy().into_owned(),
+            "--commit".into(), consumer_head, "--receipt-dir".into(), gate.join("spine").to_string_lossy().into_owned()];
+        envs.insert("SPINE_CARGO_TARGET_DIR".into(), gate.join("consumer-target").to_string_lossy().into_owned());
+        println!("spine: the five acts on a fresh World, checked against the spine board");
+        let result = rolling_check(&consumer_source, &spine, &envs, &gate.join("spine.log"));
+        checks.push(json!({"check":"spine","command":spine,"receipt":gate.join("spine/receipt.json"),"result":if result.is_ok(){"passed"}else{"failed"}}));
+        result?;
         if rolling_lock_hashes(&exported)? != locks { return Err("owner operation modified dependency lockfiles".into()); }
         Ok(())
     })();

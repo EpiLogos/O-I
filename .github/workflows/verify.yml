@@ -90,6 +90,42 @@ jobs:
           python3 -m unittest discover -s scripts/tests -p test_ci_install_retry.py -v
           python3 -m unittest discover -s tests/development-field -p test_ci_execution.py -v
 
+  # The spine acts run on a Mac against the real programs (scripts/spine-gate.sh),
+  # which posts `spine/<act>` on the commit it ran. This job reads those statuses
+  # on the PR head: every act the board lists green must be `success` there.
+  spine:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      statuses: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Every green spine act passed on the head commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh api "repos/$REPO/commits/$HEAD_SHA/status?per_page=100" > status.json
+          python3 - <<'PY'
+          import json, os, sys
+          board = json.load(open("desktop/cradle/kernel/tests/spine-acts.json"))
+          posted = {s["context"]: s for s in json.load(open("status.json"))["statuses"]}
+          missing = []
+          for row in board:
+              context = f"spine/{row['act']}"
+              state = posted.get(context, {}).get("state", "absent")
+              print(f"{context}: listed {row['standing']}, posted {state}")
+              if row["standing"] == "green" and state != "success":
+                  missing.append(f"{context} is {state}")
+          if missing:
+              sys.exit("Run scripts/spine-gate.sh on " + os.environ["HEAD_SHA"] + ", then re-run this job: " + "; ".join(missing))
+          PY
+
   rust:
     runs-on: ubuntu-24.04
     timeout-minutes: 30

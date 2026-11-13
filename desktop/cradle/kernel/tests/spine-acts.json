@@ -1,0 +1,27 @@
+[
+  {
+    "act": "open-a-world",
+    "standing": "green",
+    "reason": "ctrl init makes a fresh World; world_read reads it as the root World and central.world-relations.read answers its control:root declaration, the one on disk"
+  },
+  {
+    "act": "list-my-agents",
+    "standing": "green",
+    "reason": "harness_status finds every harness on PATH (pi, claude as claude-code, codex) as detected"
+  },
+  {
+    "act": "talk-to-an-agent",
+    "standing": "red",
+    "reason": "main has no kernel op agent_conversation (unknown variant; it is on PR #998). On #998 the first reply lands, but after the encounter owner restarts agent_conversation fails: encounter.reconnect_unsupported"
+  },
+  {
+    "act": "run-a-factory-task",
+    "standing": "red",
+    "reason": "factory_owner locate in a fresh World with no O-I project answers state absent: no .factory under its Central. The act drives no task past locate yet"
+  },
+  {
+    "act": "day-fills-and-closes",
+    "standing": "green",
+    "reason": "Setup's Ground keeps, ensure-day, initialise-day, a field written through receiving (on disk), close-day read back closed by day_read"
+  }
+]

@@ -24,6 +24,8 @@ Rules:
 - **Release is not a gate.** `release.yml` builds from main after the gate passed; it does not test again.
 - **CI cannot claim human acceptance, and fixtures are not provider proofs.** Nothing here sets a human or provider evidence grade; `oi prove factory` records those grades as unavailable unless a real owner receipt is supplied (see `docs/FACTORY-PROVING-FLOOR.md`).
 
+**Spine.** Five acts a person does on a fresh Mac (open a world, list my agents, talk to an agent, run a Factory task, fill and close a Day) run against the real installed programs in a fresh isolated home: `desktop/cradle/kernel/tests/spine.rs`, one `#[ignore]` test per act, driven by `scripts/spine-gate.sh` on a clean, pushed HEAD. The runner checks each act against the board `desktop/cradle/kernel/tests/spine-acts.json` (an act listed green that fails, or listed red that passes, fails it), writes `target/spine/receipt.json` and posts the commit status `spine/<act>`. The `spine` job in `verify.yml` fails a PR unless every act listed green is `success` on its head; run the script, then re-run the job. A red act is turned green by fixing the product and flipping its row in the same change. `oi dev gate` runs the same runner in `--local` mode.
+
 Local preflight: `oi dev gate PRODUCT` builds an isolated candidate and runs the owner and Cradle consumer tests. It is a convenience before pushing, not a second requirement; CI is the record.
 
 For a task spanning repertoire composition, native collaboration and Factory
