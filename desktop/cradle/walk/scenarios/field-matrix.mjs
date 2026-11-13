@@ -22,8 +22,8 @@
 // Real in every cell that reaches a turn: the AIKit build named by OI_AIKIT_BIN, AIKit's own Redis NOW service
 // (provisioned into the cell's home), the owner's Kev at 127.0.0.1:8019 (never a stand-in), a NOW allocated in the
 // cell's own Central ground by `central.now.allocate`. Walk-authored, and said so in the receipt: the ground, its
-// placement policy (Work/Field only), the candidate set Kev ranks (real pages of the edition), the agency-mint template
-// (an AIKit test fixture; the owner's standing template is not on this machine).
+// placement policy (Work/Field only), the candidate set Kev ranks (real pages of the edition), and the World's standing authority
+// each chat's Agency is minted under (granted in the walk's own Actuation store, never the person's; O-I #1003).
 import {execFileSync, spawn, spawnSync} from "node:child_process";
 import {chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync} from "node:fs";
 import {homedir, tmpdir} from "node:os";
@@ -97,7 +97,7 @@ const FACULTY = process.env.EPI_FACULTY_CONFIG ?? join(realHome, ".oi-candidates
 const SKILL = process.env.EPI_QL_SKILL_PATH ?? "/Users/admin/Central/Work/Actuation/experiments/ql-runtime/prime/skills/ql-relational";
 const QL_ROOT = process.env.EPI_QL_SOURCE_ROOT ?? "/Users/admin/Central/Work/Quaternal-Logic";
 const KEV = process.env.EPI_DECISION_PROVIDER ?? join(realHome, ".aikit/decision-provider.json");
-const TEMPLATE = process.env.AIKIT_AGENCY_MINT_TEMPLATE ?? "/Users/admin/Central/worktrees/env-1/ai-kit/crates/aikit-cli/tests/fixtures/mint-agency-template.json";
+const ACTUATION_BIN = process.env.OI_ACTUATION_BIN ?? join(ACTUATION, "target/debug/actuation");
 const CTRL = process.env.OI_CENTRAL_CTRL_BIN ?? join(realHome, ".local/bin/ctrl");
 const BODY = "agent-body/epi-prime-ql";
 const BODY_REVISION = process.env.EPI_ACTUATION_REVISION ?? execFileSync("git", ["-C", ACTUATION, "rev-parse", "HEAD"], {encoding: "utf8"}).trim();
@@ -106,7 +106,7 @@ const SPACE = "session-space/field-turn", SESSION = "agent-session/field-turn", 
 const kevModels = async () => (await (await fetch("http://127.0.0.1:8019/v1/models", {signal: AbortSignal.timeout(4000)})).json()).models?.find(m => m.name === "kev-latest");
 try { const m = await kevModels(); record.kev = {address: "127.0.0.1:8019", run: m.run, base: m.base, requests_before: m.batches?.requests ?? null}; }
 catch (e) { console.error(`the owner's Kev is not answering at 127.0.0.1:8019: ${e}`); process.exit(2); }
-const required = [["decision provider", KEV], ["ctrl", CTRL], ["redis-server", process.env.REDIS_SERVER ?? "/opt/homebrew/bin/redis-server"], ["mint template", TEMPLATE]];
+const required = [["decision provider", KEV], ["ctrl", CTRL], ["redis-server", process.env.REDIS_SERVER ?? "/opt/homebrew/bin/redis-server"], ["actuation", ACTUATION_BIN]];
 if (HARNESS === "prime") required.push(["launcher", LAUNCHER], ["prime-agent", PRIME], ["ql", QL_BIN], ["actuation-research", RESEARCH], ["faculty config", FACULTY], ["skill path", SKILL], ["QL root", QL_ROOT]);
 for (const [n, p] of required) if (!existsSync(p)) { console.error(`missing ${n}: ${p}`); process.exit(2); }
 
@@ -117,7 +117,8 @@ const provision = async ({root, home: oiHome, projectRoot}) => {
   // everything else is the oi in use.
   writeFileSync(router, `#!/usr/bin/env node\nimport {appendFileSync} from "node:fs";\nimport {spawnSync} from "node:child_process";\nconst a = process.argv.slice(2);\nif (/^(workcell|factory|software-factory)/.test(a[0] ?? "")) { if (process.env.OI_TRIPWIRE_LOG) appendFileSync(process.env.OI_TRIPWIRE_LOG, "oi " + a.join(" ") + "\\n"); console.error("tripwire: oi " + a[0] + " dispatched"); process.exit(97); }\nif (a[0] === "aikit") { const c = spawnSync(${JSON.stringify(aikit)}, a.slice(1), {stdio: "inherit"}); process.exit(c.status ?? 1); }\nconst c = spawnSync(process.env.OI_REAL_BIN || "oi", a, {stdio: "inherit"}); process.exit(c.status ?? 1);\n`); chmodSync(router, 0o755);
   const aikitHome = join(root, ".aikit-home");
-  ownerEnv = {...process.env, OI_CENTRAL_ROOT: root, OI_HOME: oiHome, OI_CENTRAL_PROJECT_QUERY: "Field", AIKIT_HOME: aikitHome, OI_AIKIT_BIN: aikit, OI_BIN: router, AIKIT_AGENCY_MINT_TEMPLATE: TEMPLATE};
+  ownerEnv = {...process.env, OI_CENTRAL_ROOT: root, OI_HOME: oiHome, OI_CENTRAL_PROJECT_QUERY: "Field", AIKIT_HOME: aikitHome, OI_AIKIT_BIN: aikit, OI_BIN: router,
+    OI_ACTUATION_BIN: ACTUATION_BIN, ACTUATION_AUTHORITY_STORE: join(root, ".actuation-authority")};
   delete ownerEnv.CENTRAL_NATIVE_TOKEN;
   const run = (cmd, args) => execFileSync(cmd, args, {encoding: "utf8", env: ownerEnv});
   const nativeRaw = (...p) => run(aikit, ["--json", "session-space", "-C", projectRoot, ...p]);
@@ -126,6 +127,8 @@ const provision = async ({root, home: oiHome, projectRoot}) => {
   const ctrl = (action, input) => { const r = JSON.parse(run(CTRL, ["--root", root, "--json", "action", "run", action, JSON.stringify(input)])); if (!r.ok) throw new Error(`${action}: ${JSON.stringify(r.error ?? r)}`); return r.data; };
   const bind = top("-C", projectRoot, "project", "bind", "field-walk", "--directory", projectRoot, "--no-default-skill-sets");
   if (!bind.ok) throw new Error(JSON.stringify(bind));
+  // The World's standing authority, held by the person: the root and the bound project each chat's Agency is minted for.
+  run(ACTUATION_BIN, ["authority", "grant-world", "--holder", "human:owner", "--world", "control:root", "--world", "project:field-walk", "--json"]);
 
   // a NOW in this ground: the ground's placement policy names Work/Field alone (walk-authored), recognised through the
   // ground's own source relations, then `central.now.allocate` against the policy revision `central.work.policy` reads

@@ -13,12 +13,12 @@ const {shapeHarnessClients, shapeCatalogue} = await import("../src/configuration
 const {shapePosture, shapeCapabilityDetails} = await import("../src/configuration/systemDisclosure.ts");
 
 const clients = shapeHarnessClients({clients: [
-  {client: "claude", harness: "claude-code", detection: "detected", capability: "descriptor", installed: true, items: 81, effect: "restart Claude", dispatch: "client"},
-  {client: "pi", harness: "pi", detection: "detected", capability: "descriptor", installed: false, items: 81, effect: "next session only — pi discovers .pi/skills", dispatch: "adapter-only"},
-  {client: "zcode", harness: "zcode", detection: "detected", capability: "descriptor", installed: true, items: 0, effect: "brokered — zcode loads skills natively", dispatch: "client"},
+  {client: "claude", harness: "claude-code", detection: "detected", capability: "descriptor", config_dir_present: true, items: 81, effect: "restart Claude", dispatch: "client"},
+  {client: "pi", harness: "pi", detection: "detected", capability: "descriptor", config_dir_present: false, items: 81, effect: "next session only — pi discovers .pi/skills", dispatch: "adapter-only"},
+  {client: "zcode", harness: "zcode", detection: "detected", capability: "descriptor", config_dir_present: true, items: 0, effect: "brokered — zcode loads skills natively", dispatch: "client"},
   {client: "hermes", harness: "hermes", detection: "detected", capability: "unavailable", dispatch: "adapter-only", gap: {authoring_skill_ref: "skill/aikit/harness-adapter-authoring", missing_contract: "aikit.harness-adapter/v1"}},
   {client: "aider", harness: "aider", detection: "not-installed", capability: "unavailable", dispatch: "adapter-only"},
-  {client: "broker", harness: null, detection: "self", capability: "self", dispatch: "self", installed: true},
+  {client: "broker", harness: null, detection: "self", capability: "self", dispatch: "self", config_dir_present: true},
 ]});
 const reading = {harness: {harnesses: {state: "ok", rows: clients}, catalogue: {state: "ok", rows: {count: 0, entries: []}}, providers: {state: "ok", rows: []}}, disclosure: {state: "absent", reason: "x"}};
 

@@ -415,15 +415,16 @@ test('Products, Profiles, Appearance: an owner\'s about, every operation of the 
 
 test('CODE-DERIVED — each page\'s owner reading becomes the design\'s keys: harnesses and routes, credentials by reference, profiles, machines, routines and timers, the theme, products and the four axes', () => {
   const reading = {kind: 'live', label: 'live', observed_at_unix_ms: 1, providers: {state: 'ok', rows: [{id: 'pi', label: 'Pi'}, {id: 'claude', label: 'Claude'}]},
-    harnesses: {state: 'ok', rows: [{harness: 'Claude Code', client: 'claude-code', detection: 'binary', detected: true, detection_reason: null, installed: true, config_dir: '/Users/x/.claude (settings)', dispatch: 'acp', capability: 'descriptor', effect: 'restart Claude', items: 3, adapter_gap: null}]},
+    harnesses: {state: 'ok', rows: [{harness: 'Claude Code', client: 'claude-code', detection: 'binary', detected: true, detection_reason: null, config_dir_present: true, config_dir: '/Users/x/.claude (settings)', dispatch: 'acp', capability: 'descriptor', effect: 'restart Claude', items: 3, adapter_gap: null}]},
     catalogue: {state: 'ok', rows: {count: 1, entries: [{model: 'm1', name: 'Model one', source: 'aikit', routes: [{kind: 'api', provider: 'anthropic', credential_required: true}]}]}}}
   // The rows are the census's agents (O-I #1003); AIKit's client row is detail on the agent it names, and no row of its own.
   const census = {state: 'read', agents: [{slug: 'claude-code', harnessRef: 'harness/claude-code', executable: '/x/claude', starts: true, version: '2.1.323', aikit: null},
     {slug: 'gemini', harnessRef: 'harness/gemini', executable: '/x/gemini', starts: false, why: 'gemini did not start', aikit: null}]}
   const h = win.harnessValues(reading, null, census)
   const rows = JSON.parse(h.harnesses)
-  assert.deepEqual([rows.length, rows[0].folder, rows[0].version, rows[1].why, rows[1].installed, JSON.parse(h.routes)[0].routes[0]],
-    [2, '/Users/x/.claude', '2.1.323', 'gemini did not start', undefined, {provider: 'anthropic', key: true}])
+  // AIKit's client row says whether the harness's folder exists (`config_dir_present`), which is all its old `installed` checked.
+  assert.deepEqual([rows.length, rows[0].folder, rows[0].folderPresent, rows[0].version, rows[1].why, rows[1].folderPresent, JSON.parse(h.routes)[0].routes[0]],
+    [2, '/Users/x/.claude', true, '2.1.323', 'gemini did not start', undefined, {provider: 'anthropic', key: true}])
   assert.equal(h.providers, undefined, 'no provider rows and no chat default stand in the values')
   const c = win.credentialValues([{credential: 'ai-kit:credential:anthropic', provider: 'anthropic', reference: 'keychain://aikit/anthropic', revoked: false, verifiedAt: 1792500000}], {'ai-kit:credential:anthropic': 'working'}, 2)
   assert.deepEqual([JSON.parse(c.credentials)[0].verdict, c.found], ['working', 2])
@@ -494,6 +495,8 @@ test('the pages the window drew before are retired with the port: the design dra
 /** Native oi's adoption and Central's Work as they answer (oi setup's oi.setup/v1 documents; ctrl's work.list, projectcentral.inspect,
  * central.files.list and projectcentral.init data, shapes read from the installed owners on scratch worlds, 28 Oct). A world's folder
  * is /w/Bare; its ground, once made, /w/Bare/Central. Every request is kept, in order. */
+/** A live standing grant Actuation keeps, as `authority list` lists it: held by the person, rooted at the World's root. */
+const standingGrant = (worlds = ['control:root']) => [{source: 'authority-source:world-grant@control:root:1726300000', at: 1726300000, holder: 'human:owner', worlds, revoked: null}]
 function scriptedSetup() {
   const calls = []
   const GROUND = '/w/Bare/Central'
@@ -519,7 +522,10 @@ function scriptedSetup() {
     // Central that refuses the agreement once.
     lacks: [], agreeRefusal: null,
     // `placed`: the projects Factory keeps (their .factory placement); `factoryRefusal`: a Factory that refuses project setup.
-    placed: new Set(), factoryRefusal: null}
+    placed: new Set(), factoryRefusal: null,
+    // `grants`: Actuation's authority store as `authority list` lists the World's standing grants (a renewal revokes the holder's earlier
+    // grant for the same root); `grantRefusal`: an Actuation that refuses grant-world once.
+    grants: [], grantRefusal: null}
   const HOME = '/w/Bare'
   const digestOf = relative => `digest:${relative}:${world.elsewhere.get(relative).revision}`
   // A ground the person chose (discover's `ground`) is read where it is: new until it is the bound one.
@@ -672,8 +678,8 @@ function scriptedSetup() {
   const aikit = async op => {
     calls.push(['aikit', op.op === 'aikit_read' || op.op === 'aikit_write' ? `${op.op} ${op.request.kind}` : op.op, structuredClone(op)])
     const tools = [...world.tools.values()]
-    if (op.op === 'harness_status') return {clients: [...tools.map(tool => ({client: tool.client, harness: tool.harness, detection: 'detected', installed: true, config_dir: tool.folder,
-      capability: 'descriptor', dispatch: 'client', credential: 'credential-gated'})), {client: 'codex', harness: 'codex', detection: 'not-installed', installed: false, config_dir: `${HOME}/.codex`}]}
+    if (op.op === 'harness_status') return {clients: [...tools.map(tool => ({client: tool.client, harness: tool.harness, detection: 'detected', config_dir_present: true, config_dir: tool.folder,
+      capability: 'descriptor', dispatch: 'client', credential: 'credential-gated'})), {client: 'codex', harness: 'codex', detection: 'not-installed', config_dir_present: false, config_dir: `${HOME}/.codex`}]}
     if (op.op === 'harness_auth_describe') {
       if (op.harness !== 'claude-code') throw new Error(`harness.unknown: no harness profile named ${op.harness}`)
       return REAL.harness_auth_claude.data
@@ -770,7 +776,21 @@ function scriptedSetup() {
     }
     throw new Error(`unexpected factory ${request.kind}`)
   }
-  return {source: {adoption, central, workcell, aikit, identity, harnessDisclosure, groundAuthority, groundForm, factory, groundChanged: () => calls.push(['groundChanged'])}, calls, world, GROUND, HOME}
+  // Actuation's Actions through the registry's door (actuation-cli authority.rs: grant-world and list, shapes as the built CLI answers).
+  const act = async (action, input) => {
+    calls.push(['act', action, structuredClone(input)])
+    if (action === 'actuation.authority.list') return {authorities: world.grants.map(grant => ({authority_source_ref: grant.source, issued_at_unix_seconds: grant.at,
+      record: {holder: grant.holder, allowed_world_refs: grant.worlds, governing_binding: {world_ref: grant.worlds[0]}}, revoked: grant.revoked ? {reason: grant.revoked} : null})), invalid: []}
+    if (action === 'actuation.authority.grant-world') {
+      if (world.grantRefusal) { const refusal = world.grantRefusal; world.grantRefusal = null; throw new Error(refusal) }
+      const at = 1726300000 + world.grants.length + 1, source = `authority-source:world-grant@${input.world[0]}:${at}`
+      for (const grant of world.grants) if (!grant.revoked && grant.holder === input.holder && grant.worlds[0] === input.world[0]) grant.revoked = `superseded by ${source}`
+      world.grants.push({source, at, holder: input.holder, worlds: [...input.world], revoked: null})
+      return {schema: 'actuation.local-authority/v1', issued: true, authority_source_ref: source, root_world_ref: input.world[0], allowed_world_refs: [...input.world]}
+    }
+    throw new Error(`Unknown action: ${action}`)
+  }
+  return {source: {adoption, central, act, workcell, aikit, identity, harnessDisclosure, groundAuthority, groundForm, factory, groundChanged: () => calls.push(['groundChanged'])}, calls, world, GROUND, HOME}
 }
 /** AIKit's answers on a scratch Arriving world (REAL; the kernel's owner-route fixture, the world's folder written /w/Arriving). */
 const REAL = JSON.parse(readFileSync(new URL('../../../../desktop/cradle/kernel/tests/fixtures/owner-routes/aikit-setup-harnesses-credentials-2026-10-28.json', import.meta.url), 'utf8'))
@@ -1017,6 +1037,57 @@ test('SCRIPTED — a project the person makes or brings in is theirs to act in: 
   assert.ok(!world.placed.has('Vault'), 'and Factory keeps nothing of it')
 })
 
+test('SCRIPTED — the World\'s standing authority (O-I #1003): Ground grants it in Actuation, held by the person and rooted at the World\'s root; each project made theirs renews it, superseding the earlier grant; one theirs already but unnamed is left to Finish; a refusal or no Action door says why and leaves the step found', async () => {
+  const {source, calls, world, GROUND} = scriptedSetup()
+  const walk = new settingsPages.SetupWalk(source)
+  await walk.read()
+  const authority = values => stepOf(values, 'ground').items.find(item => item.name === 'Your agents\' authority')
+  assert.deepEqual(authority(win.setupValues(walk.snapshot(), held({}))),
+    {name: 'Your agents\' authority', where: 'Actuation', adopts: true, change: 'Actuation keeps your standing authority in this world · each agent\'s Agency is minted under it'})
+  assert.match(await walk.accept('ground', held({})), /Your agents act on your standing authority in this world: Actuation keeps it, and each agent's Agency is minted under it\./)
+  assert.deepEqual(calls.filter(([kind, action]) => kind === 'act' && action === 'actuation.authority.grant-world').map(([, , input]) => input), [{holder: 'human:owner', world: ['control:root']}])
+  let values = win.setupValues(walk.snapshot(), held({}))
+  assert.equal(authority(values).change, 'Your agents act on your standing authority in this world')
+  assert.equal(stepOf(values, 'ground').state, 'accepted')
+  await assert.rejects(walk.accept('ground', held({})), /Nothing is made twice/)
+  // A project made theirs renews it: one live grant names the root and the project, the earlier superseded, never rewritten.
+  world.work.set('field-notes', {material: ['notes.md'], wikis: [], made: false})
+  await walk.read()
+  const create = {folder: `${GROUND}/Work/field-notes`, make: 'create'}
+  await walk.preview(held(create))
+  assert.match(await walk.accept('projects', held(create)), /You act as you in field-notes, and its agents may write inside it\. Your agents act on your standing authority in field-notes: Actuation keeps it/)
+  assert.deepEqual(world.grants.map(grant => [grant.worlds, !!grant.revoked]), [[['control:root'], true], [['control:root', 'project:field-notes'], false]])
+  assert.equal(authority(win.setupValues(walk.snapshot(), held({}))).change, 'Your agents act on your standing authority in this world and in field-notes')
+  // A project theirs already (an older Setup extended it) that the grant does not name: Finish renews the grant, carrying every world forward.
+  world.work.set('ledger', {material: ['a.md'], wikis: [], made: true}); world.extended.add('ledger'); world.placed.add('ledger')
+  await walk.read()
+  const folder = JSON.parse(win.setupValues(walk.snapshot(), held({})).folders).find(f => f.title === 'ledger')
+  assert.deepEqual(folder.left, ['extension'], 'only the standing authority is left')
+  const finish = {folder: `${GROUND}/Work/ledger`, make: 'finish'}
+  await walk.preview(held(finish))
+  assert.deepEqual(JSON.parse(win.setupValues(walk.snapshot(), held(finish)).setupPlan), ['Your agents act on your standing authority in ledger: Actuation keeps it, and each agent\'s Agency is minted under it.'])
+  assert.equal(await walk.accept('projects', held(finish)), 'Your agents act on your standing authority in ledger: Actuation keeps it, and each agent\'s Agency is minted under it.')
+  assert.ok(!calls.some(([, action, input]) => action === 'central.ground.project.adopt' && input.project === 'ledger'), 'Central is not asked to extend what is theirs already')
+  assert.deepEqual(world.grants.filter(grant => !grant.revoked).map(grant => grant.worlds), [['control:root', 'project:field-notes', 'project:ledger']])
+  // An Actuation that refuses: said in its words, and the Ground step stands found with the row to grant until Accept grants it.
+  const refusing = scriptedSetup()
+  refusing.world.grantRefusal = 'the authority store is not writable'
+  const again = new settingsPages.SetupWalk(refusing.source)
+  await again.read()
+  assert.match(await again.accept('ground', held({})), /Your agents have no standing authority in this world yet: the authority store is not writable Accept again to grant it\./)
+  values = win.setupValues(again.snapshot(), held({}))
+  assert.equal(stepOf(values, 'ground').state, 'found')
+  assert.equal(authority(values).adopts, true)
+  assert.match(await again.accept('ground', held({})), /^Central keeps your ground at .* Your agents act on your standing authority in this world/)
+  assert.equal(stepOf(win.setupValues(again.snapshot(), held({})), 'ground').state, 'accepted')
+  // A host that hands Setup no Action door: the row says so, and the step is not accepted on it.
+  const bare = scriptedSetup()
+  const without = new settingsPages.SetupWalk({...bare.source, act: undefined})
+  await without.read()
+  assert.equal(authority(win.setupValues(without.snapshot(), held({}))).why,
+    'Actuation does not say whether your agents act on your standing authority: Setup reaches no Actuation here (SetupSource.act, the kernel\'s act).')
+})
+
 test('SCRIPTED — a project its making left unfinished (made before, or its grant or placement refused) shows Finish: Accept finishes only what is left, and then nothing is', async () => {
   const {source, calls, world, GROUND} = scriptedSetup()
   const walk = new settingsPages.SetupWalk(source)
@@ -1033,7 +1104,7 @@ test('SCRIPTED — a project its making left unfinished (made before, or its gra
   await walk.preview(held(finish))
   assert.deepEqual(JSON.parse(win.setupValues(walk.snapshot(), held(finish)).setupPlan), ['You act as you in old-notes, and its agents may write inside it.', 'Factory keeps old-notes\' runs and pads.'])
   const said = await walk.accept('projects', held(finish))
-  assert.equal(said, 'You act as you in old-notes, and its agents may write inside it. Factory keeps old-notes\' runs and pads.')
+  assert.equal(said, 'You act as you in old-notes, and its agents may write inside it. Your agents act on your standing authority in old-notes: Actuation keeps it, and each agent\'s Agency is minted under it. Factory keeps old-notes\' runs and pads.')
   assert.ok(!calls.some(([, action]) => action === 'projectcentral.init'), 'Finish makes no ProjectCentral')
   values = win.setupValues(walk.snapshot(), held({}))
   folder = JSON.parse(values.folders).find(f => f.title === 'old-notes')
@@ -1054,7 +1125,7 @@ test('SCRIPTED — a project its making left unfinished (made before, or its gra
   await walk.preview(held(finishTide))
   assert.deepEqual(JSON.parse(win.setupValues(walk.snapshot(), held(finishTide)).setupPlan), ['You act as you in tide, and its agents may write inside it.'])
   const setups = calls.filter(([, action]) => action === 'project-setup').length
-  assert.equal(await walk.accept('projects', held(finishTide)), 'You act as you in tide, and its agents may write inside it.')
+  assert.equal(await walk.accept('projects', held(finishTide)), 'You act as you in tide, and its agents may write inside it. Your agents act on your standing authority in tide: Actuation keeps it, and each agent\'s Agency is minted under it.')
   assert.equal(calls.filter(([, action]) => action === 'project-setup').length, setups, 'what was not left is not made again')
   // A Factory that refused the placement leaves just that.
   world.work.set('reef', {material: ['a.md'], wikis: [], made: false})
@@ -1636,7 +1707,7 @@ test('SCRIPTED — run over an older setup, Setup\'s held Ground Accept brings t
   // A grant kept by hand (the owner's own): read hand-authored, never pressed, and the step stands accepted.
   const owner = scriptedSetup()
   Object.assign(owner.world, {bound: '/w/Bare/Central', outcome: 'recognized', civil: {timezone: 'Europe/London', day_boundary_minutes: 0}, placement: {writable: []}, key: true, form: true,
-    byHand: true, lacks: ['central.world.place']})
+    byHand: true, lacks: ['central.world.place'], grants: standingGrant()})
   const theirs = new settingsPages.SetupWalk(owner.source)
   await theirs.read()
   const ground = stepOf(win.setupValues(theirs.snapshot(), held({})), 'ground')

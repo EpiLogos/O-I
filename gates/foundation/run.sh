@@ -11,8 +11,8 @@
 # The board holds when every act listed green passes and every act listed red fails; an act listed red that passes fails the gate
 # until its row is flipped in the same change. A refusal or a dimmed control is never a pass: each act reads its effect back from the
 # owner that holds it. Owners come from OI_AIKIT_BIN, OI_CENTRAL_CTRL_BIN, OI_FACTORY_BIN, … (else the installed suite). An agent's
-# own sign-in stays the person's (Claude Code's keychain entry, CODEX_HOME, PI_CODING_AGENT_DIR when set); nothing else of theirs is
-# reached, and no act writes outside its fresh home.
+# own sign-in stays the person's (Claude Code's login keychain, Codex's and Pi's auth.json, linked into each act's fresh home);
+# nothing else of theirs is reached: each agent's settings, models and sessions stay in the fresh home.
 set -euo pipefail
 
 repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -55,8 +55,13 @@ scratch="$(mktemp -d /tmp/oi-fg-run.XXXXXX)"
 trap 'rm -rf "$scratch"' EXIT
 # A GIT_* exported around a suite aims its git at the wrong repository.
 for name in $(env | sed -n 's/^\(GIT_[A-Z_]*\)=.*/\1/p'); do unset "$name"; done
-# The agents' own sign-in, never their state: Codex keeps its login in CODEX_HOME.
-if [ -z "${CODEX_HOME:-}" ] && [ -f "$real_home/.codex/auth.json" ]; then export CODEX_HOME="$real_home/.codex"; fi
+# The agents' own sign-in, never their state: the files of the person's that hold it, linked into each act's fresh home
+# (foundation.rs World::fresh) — Claude Code's login keychain (macOS finds it under HOME), Codex's and Pi's auth.json.
+sign_in=""
+for file in Library/Keychains/login.keychain-db .codex/auth.json .pi/agent/auth.json; do
+  if [ -f "$real_home/$file" ]; then sign_in="${sign_in:+$sign_in:}$file"; fi
+done
+export FOUNDATION_REAL_HOME="$real_home" FOUNDATION_SIGN_IN="$sign_in"
 
 (cd "$kernel" && cargo test --locked --test foundation --no-run >"$receipts/build.log" 2>&1) || {
   echo "foundation: the act scripts did not build; see $receipts/build.log" >&2

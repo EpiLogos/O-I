@@ -85,7 +85,7 @@ export function harnessEffect(row: HarnessRow): string | null {
 export function harnessItems(row: HarnessRow): string | null {
   if (row.items === null) return null;
   const noun = row.items === 1 ? "skill" : "skills";
-  return row.installed ? `${row.items} ${noun} projected` : `${row.items} ${noun} ready to project`;
+  return row.config_dir_present ? `${row.items} ${noun} projected` : `${row.items} ${noun} ready to project`;
 }
 
 // ---------------------------------------------------------------------------

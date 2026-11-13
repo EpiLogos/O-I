@@ -36,11 +36,11 @@ function AikitClientDetail({row}:{row:HarnessRow}) {
   try{await expect({op:"client_install",client:row.client},"client_installed");await loadSuite();setNote("Installed. "+(harnessEffect(row)??""));}
   catch(cause){setNote(refusalWords("Not installed.",cause));}finally{setBusy(false);}
  };
- return <div className="settings-harness-aikit" data-settings-row={`harness-install:${row.client}`} data-harness-card={row.client} data-installed={row.installed?"true":"false"}>
-  <p className="settings-muted">AIKit: {row.installed?"installed":"not installed"}{harnessItems(row)?` · ${harnessItems(row)}`:""}</p>
+ return <div className="settings-harness-aikit" data-settings-row={`harness-install:${row.client}`} data-harness-card={row.client} data-config-dir={row.config_dir_present===true?"present":row.config_dir_present===false?"absent":"unread"}>
+  <p className="settings-muted">AIKit: {row.config_dir_present===true?"its folder is present":row.config_dir_present===false?"no folder yet":"no folder named"}{harnessItems(row)?` · ${harnessItems(row)}`:""}</p>
   {harnessEffect(row)&&<p className="settings-card-strong" data-harness-effect>{harnessEffect(row)}</p>}
   <div className="settings-card-actions">
-   {!row.installed&&<button type="button" className="settings-button" disabled={busy} data-harness-install onClick={()=>void install()}>{busy?"Installing…":"Install AIKit"}</button>}
+   {row.config_dir_present===false&&<button type="button" className="settings-button" disabled={busy} data-harness-install onClick={()=>void install()}>{busy?"Installing…":"Install AIKit"}</button>}
    {folder&&<button type="button" className="settings-button" onClick={()=>void expect({op:"settings_reveal",path:folder},"settings_revealed").catch(cause=>setNote(refusalWords("Couldn't open the folder.",cause)))}>Open folder</button>}
   </div>
   {note&&<p className="settings-card-note" role="status">{note}</p>}

@@ -32,7 +32,7 @@ import {NativeModeController,type NativeModeState} from "./nativeMode";
 import {recordAdvertisedModes} from "./advertisedModes";
 import {harnessName} from "../agent/chat/harness";
 import {useEffect,useMemo,useSyncExternalStore} from "react";
-import {useKernel} from "../kernel/KernelProvider";
+import {useKernel} from "../kernel/KernelContext";
 import {kernelOp,hasReadingsNoticeSource,onReadingsMoved} from "../kernel/bridge";
 import type {KernelTransportStatus} from "../kernel/types";
 import {encounter,taskRead,type A2aDifference,type A2aPeerFields,type Draft,type EncounterReading,type EncounterRequest,type EncounterStatus,type EncounterTaskReading,type JournalPage,type PermissionDecision} from "./client";
@@ -175,7 +175,12 @@ class EncounterSession implements EncounterSessionActions {
  private uncertainSend?:{submitted:string;basis:number;nativeSession?:string};
  private reconcilingSend=false;
 
- constructor(private transport:KernelTransportStatus,binding:EncounterSessionBinding) {
+ // A field, not a parameter property: the engine suite loads this module in Node's strip-only TypeScript, which erases types and
+ // nothing else.
+ private transport:KernelTransportStatus;
+
+ constructor(transport:KernelTransportStatus,binding:EncounterSessionBinding) {
+  this.transport=transport;
   this.state={key:encounterSessionKey(binding),project:binding.project,agentSession:binding.ref,space:binding.space,sourceWorldRef:binding.sourceWorldRef,providers:[],model:{phase:"unread"},mode:{phase:"unread"},draft:"",pending:false,busy:false,draftFailed:false,a2a:{busy:false}};
   this.models=new NativeModelController(binding.ref,request=>this.call(request),model=>this.set({model}));
   this.modes=new NativeModeController(binding.ref,request=>this.call(request),mode=>{this.set({mode});this.rememberModes(mode);});

@@ -76,6 +76,10 @@ export interface SetupSource {
   readonly adoption: AdoptionNative
   /** One Central action: its data, or a refusal in Central's words. */
   central(action: string, input: Readonly<Record<string, unknown>>): Promise<unknown>
+  /** One owner's Action through the registry's door (the kernel's `act`, O-I #1002), by its id and its owner's input names: its data,
+   * or the owner's refusal in its words. The Ground step grants the World its standing authority with it (Actuation's
+   * `actuation.authority.grant-world`, read back by `actuation.authority.list`; O-I #1003). */
+  act?(action: string, input: Readonly<Record<string, unknown>>): Promise<unknown>
   /** One AIKit op Setup asks (SetupAikitOp): its data, or AIKit's refusal in its words. */
   aikit?(op: SetupAikitOp): Promise<unknown>
   /** Workcell's status for this computer (`workcell status --json`, the kernel's workcell_status_read): the Workcell it answers as. */

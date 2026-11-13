@@ -44,7 +44,9 @@ export interface HarnessRow {
   detection: string;
   detected: boolean;
   detection_reason: string | null;
-  installed: boolean;
+  /** Whether the harness's configuration folder exists (AIKit's client row, `config_dir_present`): nothing about whether the
+   * harness runs, which the census says (agency/census.ts). Null where AIKit names no folder for it. */
+  config_dir_present: boolean | null;
   config_dir: string | null;
   dispatch: string;
   /** "descriptor" when an AIKit adapter exists for it; "unavailable" when
@@ -101,7 +103,7 @@ export function shapeHarnessClients(data: unknown): HarnessRow[] {
       detection,
       detected: detection === "detected",
       detection_reason: typeof record.detection_reason === "string" ? record.detection_reason : null,
-      installed: record.installed === true,
+      config_dir_present: typeof record.config_dir_present === "boolean" ? record.config_dir_present : null,
       config_dir: typeof record.config_dir === "string" ? record.config_dir : null,
       dispatch: typeof record.dispatch === "string" ? record.dispatch : "",
       capability: typeof record.capability === "string" ? record.capability : "",

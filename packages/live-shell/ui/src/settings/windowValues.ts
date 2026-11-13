@@ -307,7 +307,7 @@ export function harnessValues(reading: HarnessReading | null, logins: HarnessLog
   if (census?.state === 'read') values.harnesses = json(census.agents.map(agent => {
     const row = clients.find(client => client.harness === agent.slug || client.client === agent.slug)
     return {agent: agent.slug, harness: agentName(agent), starts: agent.starts, ...(agent.version ? {version: agent.version} : {}), ...(agent.why ? {why: agent.why} : {}),
-      ...(row ? {client: row.client, installed: row.installed, capability: row.capability, ...(row.effect ? {effect: row.effect} : {}),
+      ...(row ? {client: row.client, ...(row.config_dir_present !== null ? {folderPresent: row.config_dir_present} : {}), capability: row.capability, ...(row.effect ? {effect: row.effect} : {}),
         ...(folderOf(row.config_dir) ? {folder: folderOf(row.config_dir)} : {}),
         ...(row.adapter_gap ? {gap: {contract: row.adapter_gap.missing_contract, skill: row.adapter_gap.authoring_skill_ref}} : {}), ...harnessSignIn(logins, row.client)} : {})}
   }))
@@ -700,6 +700,9 @@ export type SetupForm = {readonly state: 'read'; readonly reading: {readonly sta
  * scope leaves out (`exclude`); or the refusal, in its owner's words. */
 export type SetupMusic = {readonly state: 'read'; readonly reading: {readonly path?: unknown; readonly state?: unknown; readonly world_ref?: unknown; readonly revision?: unknown
   readonly digest?: unknown; readonly exclude?: unknown; readonly words?: unknown}} | {readonly state: 'refused'; readonly error: string}
+/** The World's standing authority in Actuation (SetupSource.act: `actuation.authority.list`, O-I #1003): the worlds your live grant names,
+ * the World's root first (empty: none stands), or why Setup cannot read it. */
+export type SetupAuthority = {readonly state: 'read'; readonly worlds: readonly string[]} | {readonly state: 'refused'; readonly error: string}
 /** AIKit's disclosure of the agent tools (SetupSource.harnessDisclosure, aikit.harness-disclosure/v1), or its refusal. */
 export type SetupDisclosure = {readonly state: 'read'; readonly reading: unknown} | {readonly state: 'refused'; readonly error: string}
 export interface SetupSnapshot {
@@ -716,6 +719,8 @@ export interface SetupSnapshot {
   readonly key?: SetupKey
   /** Whether the person's grant agrees with what Setup grants now, once Central is asked. */
   readonly agreement?: SetupAgreement
+  /** The World's standing authority in Actuation, once it is asked. */
+  readonly authority?: SetupAuthority
   /** The Day's form, once the host is asked. */
   readonly form?: SetupForm
   /** The world's Music folder, once the ground stands and the host is asked (none where the host has no Music route). */
@@ -738,12 +743,13 @@ export function groundBound(discovery: AdoptionDiscovery | undefined): boolean {
  * the folder chosen, an existing one adopted where it is, or one Central cannot read, named with its reason. A refused read or a blocked
  * plan stands on the row in native oi's words. Undefined before any reading. Pure. */
 export function setupGroundStep(adoption: SetupSnapshot['adoption'], civil?: SetupCivilTime, placement?: SetupFounding, key?: SetupKey, form?: SetupForm,
-  agreement?: SetupAgreement, music?: SetupMusic): Record<string, unknown> | undefined {
+  agreement?: SetupAgreement, music?: SetupMusic, authority?: SetupAuthority): Record<string, unknown> | undefined {
   const discovery = adoption.discovery
   if (!discovery) return adoption.error ? {step: 'ground', state: 'found', items: [{name: 'Your ground', why: adoption.error}]} : undefined
   const where = discovery.selected_ground ?? discovery.suggested_ground
   // What the ground keeps beside itself: its days, its bounds, the person's key and their grant (each absent until its owner is asked).
-  const founding = [setupDaysItem(civil), setupBoundsItem(placement), setupFormItem(form), setupKeyItem(key), setupGrantItem(agreement), setupMusicItem(music)].flatMap(item => (item ? [item] : []))
+  const founding = [setupDaysItem(civil), setupBoundsItem(placement), setupFormItem(form), setupKeyItem(key), setupGrantItem(agreement), setupAuthorityItem(authority),
+    setupMusicItem(music)].flatMap(item => (item ? [item] : []))
   if (groundBound(discovery)) {
     // The ground stands; it is accepted once Central keeps its days, its bounds and the key, and the grant agrees with what Setup grants
     // today or is kept by hand (a reading not taken leaves its standing).
@@ -752,6 +758,8 @@ export function setupGroundStep(adoption: SetupSnapshot['adoption'], civil?: Set
       && (!key || (key.state === 'read' && key.reading.central?.state === 'present'))
       && (!form || (form.state === 'read' && (form.reading.state === 'project' || form.reading.central?.state === 'present')))
       && (!agreement || (agreement.state === 'read' && agreement.preview.state !== 'absent'))
+      // The World's standing authority: Actuation keeps it at the World's root, so every agent's Agency mints under it.
+      && (!authority || (authority.state === 'read' && authority.worlds.includes('control:root')))
       // Music is the one row Setup finishes without (round 47 item 1): kept, none to keep, or a reading Central did not give.
       && (!music || music.state === 'refused' || music.reading.state !== 'absent')
     return {step: 'ground', state: kept ? 'accepted' : 'found', items: [{name: 'Your ground', where, change: 'Central keeps it here · nothing in it moved'}, ...founding]}
@@ -764,6 +772,17 @@ export function setupGroundStep(adoption: SetupSnapshot['adoption'], civil?: Set
   return {step: 'ground', state: 'found', items: [why ? {...item, why} : item, ...founding]}
 }
 
+/** The World's standing authority as a row of the Ground step (O-I #1003): held by you and rooted at the World's root, so each agent's
+ * Agency is minted under it — granted by Accept (`adopts`) until Actuation keeps it, then the worlds it reaches — or why Setup cannot read
+ * it. Pure. */
+export function setupAuthorityItem(authority: SetupAuthority | undefined): Record<string, unknown> | undefined {
+  if (!authority) return undefined
+  const name = 'Your agents\' authority', where = 'Actuation'
+  if (authority.state === 'refused') return {name, where, why: `Actuation does not say whether your agents act on your standing authority: ${authority.error}`}
+  if (!authority.worlds.includes('control:root')) return {name, where, adopts: true, change: 'Actuation keeps your standing authority in this world · each agent\'s Agency is minted under it'}
+  const projects = authority.worlds.filter(world => world !== 'control:root').map(world => world.replace(/^project:/, ''))
+  return {name, where, change: `Your agents act on your standing authority in this world${projects.length ? ` and in ${projects.join(', ')}` : ''}`}
+}
 /** The ground's bounds as a row of the Ground step: the root placement policy Accept adopts — what is written in the ground stays inside
  * it, nothing outside it granted (`adopts`) — the one the ground keeps, or why Central keeps none, in its words. Pure. */
 export function setupBoundsItem(placement: SetupFounding | undefined): Record<string, unknown> | undefined {
@@ -1049,7 +1068,7 @@ export function setupCredentialStep(reading: SetupCredentials | undefined, held:
 export function setupValues(snapshot: SetupSnapshot, held: (key: string) => Value | undefined): Record<string, Value> {
   const values: Record<string, Value> = {}
   const steps: Record<string, unknown>[] = []
-  const ground = setupGroundStep(snapshot.adoption, snapshot.civilTime, snapshot.placement, snapshot.key, snapshot.form, snapshot.agreement, snapshot.music)
+  const ground = setupGroundStep(snapshot.adoption, snapshot.civilTime, snapshot.placement, snapshot.key, snapshot.form, snapshot.agreement, snapshot.music, snapshot.authority)
   const discovery = snapshot.adoption.discovery
   if (ground && discovery && !groundBound(discovery)) {
     // The folder and name of a ground to make (§10.11: "makes a new one in the folder you choose, under the name you give it"): the ones
@@ -1150,7 +1169,7 @@ export const SETTINGS_WINDOW_WIRING = {
     visualLayer: 'the renderer\'s visual layer (SettingsAdapter.visualPreferences)', welcome: 'the renderer\'s welcome scene (SettingsAdapter.visualPreferences)',
     products: 'each product\'s mount and operations (system_composition_read)', ran: 'the last operation\'s answer (product_action_run)',
     system: 'each owner\'s System disclosure on its four axes (system_composition_read)',
-    setup: 'Setup\'s steps (manual §10.11): Ground from native oi\'s adoption (the kernel op `setup`: status and discover) and Central\'s civil-time preview (central.time.policy.preview: how your days are kept), its bounds (central.ground.placement.preview), its Day\'s form (SetupSource.groundForm: the kernel\'s ground_form preview, carried by the ground\'s O-I project or kept in Control/forms) and the person\'s key (SetupSource.groundAuthority: the kernel\'s ground_authority preview, never the key), once the ground stands the world\'s Music folder (SetupSource.groundMusic: the kernel\'s ground_music preview, whether Central\'s file map keeps it as a folder scope), and whether the person\'s grant holds the root acts Setup grants today (central.ground.agreement.preview: the acts an older grant lacks, or a grant kept by hand named and left as it is), accepted once the ground is bound and recognised, Central keeps its days, bounds, Day form and key, and the grant agrees or is kept by hand; Harnesses and skills also show what AIKit discloses of each tool (SetupSource.harnessDisclosure: aikit harness disclose), and a step with nothing to adopt or bind is accepted and says so; Machines from Workcell\'s status (op workcell_status_read) and Central\'s machine.declaration of role current, accepted once that binds the Workcell this computer answers as; Projects from Central\'s Work, accepted once a project stands with its ground. Harnesses and skills from AIKit: the tools its client status detects (op harness_status), the skill roots aikit init discovers (aikit_read init) with who owns each (its ownership: foreign, adopted, generated), and the skills aikit collate --all names in each, accepted once AIKit holds every root that keeps skills. Credentials from AIKit: where aikit credential discover finds each key (presence only), the providers aikit harness auth names for each detected tool (op harness_auth_describe) and the bindings aikit credential list keeps (metadata only), accepted once a key is bound and none found waits; items carry the credential a row binds, and bound',
+    setup: 'Setup\'s steps (manual §10.11): Ground from native oi\'s adoption (the kernel op `setup`: status and discover) and Central\'s civil-time preview (central.time.policy.preview: how your days are kept), its bounds (central.ground.placement.preview), its Day\'s form (SetupSource.groundForm: the kernel\'s ground_form preview, carried by the ground\'s O-I project or kept in Control/forms) and the person\'s key (SetupSource.groundAuthority: the kernel\'s ground_authority preview, never the key), once the ground stands the world\'s Music folder (SetupSource.groundMusic: the kernel\'s ground_music preview, whether Central\'s file map keeps it as a folder scope), whether the person\'s grant holds the root acts Setup grants today (central.ground.agreement.preview: the acts an older grant lacks, or a grant kept by hand named and left as it is), and the World\'s standing authority in Actuation (SetupSource.act: actuation.authority.list, granted by Accept through actuation.authority.grant-world, held by the person and rooted at the World\'s root, renewed as each project becomes theirs), accepted once the ground is bound and recognised, Central keeps its days, bounds, Day form and key, the grant agrees or is kept by hand, and Actuation keeps the World\'s standing authority; Harnesses and skills also show what AIKit discloses of each tool (SetupSource.harnessDisclosure: aikit harness disclose), and a step with nothing to adopt or bind is accepted and says so; Machines from Workcell\'s status (op workcell_status_read) and Central\'s machine.declaration of role current, accepted once that binds the Workcell this computer answers as; Projects from Central\'s Work, accepted once a project stands with its ground. Harnesses and skills from AIKit: the tools its client status detects (op harness_status), the skill roots aikit init discovers (aikit_read init) with who owns each (its ownership: foreign, adopted, generated), and the skills aikit collate --all names in each, accepted once AIKit holds every root that keeps skills. Credentials from AIKit: where aikit credential discover finds each key (presence only), the providers aikit harness auth names for each detected tool (op harness_auth_describe) and the bindings aikit credential list keeps (metadata only), accepted once a key is bound and none found waits; items carry the credential a row binds, and bound',
     folders: 'the folders of the ground\'s Work (Central work.list), each with Central\'s projectcentral.inspect, its material and its ProjectCentral parts (central.files.list); then the folders of work that stand elsewhere under the world\'s folder (Central work.candidates)',
     groundFolder: 'the folder the Ground step would make your ground in: the one chosen (the system\'s chooser, then native oi\'s discover with it), else the folder native oi reads the world\'s ground in',
     birth: 'your name and date of birth as the identity owner keeps them (SetupSource.identity: the kernel\'s nara_identity list and open), once the ground is made; absent until you give them, never shown as missing',

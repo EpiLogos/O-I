@@ -6,10 +6,7 @@ pub const EPI_PRIME_QL_BODY_REF: &str = "agent-body/epi-prime-ql";
 use std::{
     path::{Path, PathBuf},
     process::Command,
-    sync::{
-        atomic::{AtomicU8, Ordering},
-        Arc, Mutex,
-    },
+    sync::{Arc, Mutex},
 };
 
 /// Keep native refusal detail without exposing a successful payload. A process
@@ -84,11 +81,6 @@ pub struct Client {
     executable: PathBuf,
     home: Option<PathBuf>,
     suite_route: bool,
-    /// The per-process verdict on whether the installed suite carries the
-    /// `encounter-agency-mint` verb (0 unknown, 1 present, 2 absent). The
-    /// fallback reuse path is never retried against a suite that already
-    /// answered; clones share the one cell.
-    mint_support: Arc<AtomicU8>,
     /// The Factory task sessions this process provisioned whose task Action
     /// the mint did not admit (O-I 768), each with the refusal's own words:
     /// the session was minted for chat, and a drop that asks it for a task
@@ -371,7 +363,6 @@ impl Client {
             executable,
             home,
             suite_route: false,
-            mint_support: Arc::new(AtomicU8::new(0)),
             task_mint_refusals: Arc::default(),
         }
     }
@@ -388,7 +379,6 @@ impl Client {
                 .unwrap_or_else(|| "oi".into()),
             home: None,
             suite_route: true,
-            mint_support: Arc::new(AtomicU8::new(0)),
             task_mint_refusals: Arc::default(),
         }
     }
@@ -1813,21 +1803,15 @@ impl Client {
     ///      `agent-session/<id>`.
     ///   5. `encounter-agency-mint` — the session's native Agency binding,
     ///      minted per project by the owner's own verb
-    ///      (`techne/agency-mint`: `--agent-session` + `--project-cwd`).
-    ///      When the installed suite does not carry the verb yet, or the
-    ///      mint refuses this one session, the binding falls back to the
-    ///      DISCLOSED REUSE path: the owner's most recently ADMITTED agency
-    ///      source (path + digest) and `actuation_bin` are copied verbatim
-    ///      from a stored binding whose source file still exists; the
-    ///      revision label is new and the configure runs the real
-    ///      `actuation agency actualise` admission. The verdict on the
-    ///      verb's existence is cached for the process, so an installed cut
-    ///      without the mint never pays the probe on every send. Either way
-    ///      the provision result names what happened (`agency`:
-    ///      `minted-per-project` or `reused-admitted-source`) and carries
-    ///      the `agent_ref` the flow attributes the session to — the
-    ///      mint's own when it succeeded, the reused binding's otherwise.
-    ///      This is a Factory task session (O-I 768): its mint asks for the
+    ///      (`techne/agency-mint`: `--agent-session` + `--project-cwd`),
+    ///      resolved by Actuation against the World's standing authority
+    ///      (`actuation.authority.grant-world`, which the World's Setup
+    ///      grants at the Ground step; O-I #1003). A refusal is the owner's
+    ///      words and the provision stops there: no other binding stands in
+    ///      for it. The provision result names `agency`
+    ///      (`minted-per-project`, or `retained-native-binding` on reopen)
+    ///      and carries the `agent_ref` the mint answered.
+    ///      For a Factory task session (O-I 768) the mint asks for the
     ///      task Action with `--for-task` first, Actuation judging it against
     ///      the owner's standing grant, and a refusal falls back to the chat
     ///      mint; `task_authority` says which, in the refusal's own words.
@@ -1923,9 +1907,7 @@ impl Client {
         let staged = self.stage_intent(cwd, &space, &intent)?;
         self.apply_preview(cwd, &staged)?;
 
-        // The session's native Agency binding — mint first, disclosed reuse
-        // as the fallback (see the doc comment). Both arms keep the real
-        // admission effect; neither fakes a mint.
+        // The session's native Agency binding, minted through the World's standing authority (see the doc comment).
         // A recorded binding belongs to the existing AgentSession. Its native
         // authority is revalidated by open/reconnect, never reminted on reopen.
         let recorded = if exists {
@@ -1934,7 +1916,6 @@ impl Client {
         } else {
             false
         };
-        let mut reuse_reason: Option<String> = None;
         // A Factory task session's task Action: admitted with its mint, or
         // refused in the owner's words and minted for chat (Null: not asked).
         let mut task_authority = Value::Null;
@@ -1978,42 +1959,13 @@ impl Client {
                 Err(mint_refused) if agent_ref_override.is_some() => {
                     return Err(format!("The named Agent was not admitted: {mint_refused}"));
                 }
-                // A refusal from an owner that HAS the mint verb is the
-                // owner's answer (policy, authority, an uncertain timeout):
-                // it is surfaced, never replaced by someone else's binding.
-                Err(mint_refused) if self.mint_support.load(Ordering::Relaxed) != 2 => {
+                // A refusal is the owner's answer (no grant from the World's Setup, policy, an uncertain timeout): it is
+                // surfaced in its words, never replaced by another binding (O-I #1003: one admission, through the World's
+                // standing authority in Actuation).
+                Err(mint_refused) => {
                     return Err(format!(
                         "This chat's Agency was not admitted: {mint_refused}"
                     ));
-                }
-                // Only an installed suite without the mint verb falls back to
-                // disclosed reuse, and only of a binding admitted for this
-                // same Project — never another Project's Agent identity.
-                Err(mint_refused) => {
-                    reuse_reason = Some(mint_refused);
-                    let stamp = chat_stamp();
-                    let reference = find_reference_binding(&agencies_state_dir(), &project)?;
-                    let binding =
-                        compose_chat_binding(reference, &format!("rev/desktop-chat-{stamp}"));
-                    let agent_ref = binding["agent_ref"]
-                        .as_str()
-                        .unwrap_or(agent_session.as_str())
-                        .to_owned();
-                    let binding_json = serde_json::to_string(&binding)
-                        .map_err(|error| format!("Agency binding is not serialisable: {error}"))?;
-                    with_temp_json(&binding_json, |path| {
-                        self.session_space(
-                            cwd,
-                            &[
-                                "encounter-agency-configure",
-                                "--agent-session",
-                                &agent_session,
-                                "--binding-json",
-                                &format!("@{path}"),
-                            ],
-                        )
-                    })?;
-                    (agent_ref, "reused-admitted-source")
                 }
             }
         };
@@ -2082,7 +2034,6 @@ impl Client {
             "agent_session":agent_session,
             "agent_ref":if recorded {Value::Null} else {Value::String(agent_ref)},
             "agency":agency,
-            "agency_reuse_reason":reuse_reason,
             "task_authority":task_authority,
             "provider":provider,
             "provider_default":provider_default,
@@ -2098,9 +2049,6 @@ impl Client {
     /// (`aikit session-space encounter-agency-mint --agent-session <id>
     /// --project-cwd <dir>`). Success carries the owner's own data (the
     /// minted `agent_ref` among it); any failure is the owner's own stderr.
-    /// A stderr naming an unknown subcommand is the suite saying the verb
-    /// does not exist in this installed cut — that verdict is cached for
-    /// this process so later provisions fall back without re-probing.
     #[cfg(test)]
     fn mint_agency(&self, cwd: &Path, agent_session: &str) -> Result<Value, String> {
         self.mint_agency_as(cwd, agent_session, None, false)
@@ -2111,8 +2059,7 @@ impl Client {
     /// grant. When that mint is refused by a suite that has the verb, the
     /// plain chat mint runs exactly as for any session, so provisioning a chat
     /// never breaks; the refusal's words come back with it and are kept for
-    /// this session, so a drop that asks it for a task says why it cannot. A
-    /// suite without the verb answers as it does today.
+    /// this session, so a drop that asks it for a task says why it cannot.
     fn mint_task_session(
         &self,
         cwd: &Path,
@@ -2120,7 +2067,6 @@ impl Client {
     ) -> Result<(Value, Option<String>), String> {
         let refused = match self.mint_agency_as(cwd, agent_session, None, true) {
             Ok(data) => return Ok((data, None)),
-            Err(refused) if self.mint_support.load(Ordering::Relaxed) == 2 => return Err(refused),
             Err(refused) => refused,
         };
         let data = self.mint_agency_as(cwd, agent_session, None, false)?;
@@ -2159,9 +2105,6 @@ impl Client {
         agent_ref: Option<&str>,
         for_task: bool,
     ) -> Result<Value, String> {
-        if self.mint_support.load(Ordering::Relaxed) == 2 {
-            return Err("the installed suite has no encounter-agency-mint verb (cached)".into());
-        }
         let mut command = crate::flow::child(&self.executable);
         if self.suite_route {
             command.arg("aikit");
@@ -2192,13 +2135,8 @@ impl Client {
         )
         .map_err(|error| format!("AIKit SessionSpace is unavailable: {error}"))?;
         if !output.status.success() {
-            let stderr = String::from_utf8_lossy(&output.stderr).trim().to_owned();
-            if mint_verb_absent(&stderr) {
-                self.mint_support.store(2, Ordering::Relaxed);
-            }
             return Err(owner_process_failure("encounter-agency-mint", &output));
         }
-        self.mint_support.store(1, Ordering::Relaxed);
         let mut data: Value = serde_json::from_slice(&output.stdout)
             .map_err(|error| format!("Unreadable AIKit agency mint response: {error}"))?;
         if data.get("ok").and_then(Value::as_bool) == Some(true) {
@@ -2429,13 +2367,6 @@ pub fn body_provider_choice<'a>(rows: &'a [Value], body_ref: &str) -> Option<(St
     Some((row["id"].as_str()?.to_owned(), row))
 }
 
-/// Whether a mint refusal is really the suite saying the verb does not
-/// exist in this installed cut (clap's own spelling), not a refusal of
-/// this one session.
-fn mint_verb_absent(stderr: &str) -> bool {
-    stderr.contains("unrecognized subcommand")
-}
-
 /// A readable, unique-per-call slug: the project's own name, lowercased and
 /// folded, bounded — so `Factory` mints `factory-chat-…` refs a person can
 /// recognise in the owner's own state.
@@ -2474,78 +2405,6 @@ fn mint_chat_refs(project: &str) -> (String, String) {
         format!("session-space/{slug}-chat-{stamp}"),
         format!("agent-session/{slug}-chat-{stamp}"),
     )
-}
-
-/// The owner's encounter-agency state directory, resolved by the owner's own
-/// home law (`AIKIT_HOME`, else `~/.aikit`) — the same precedence
-/// `aikit-store/src/home.rs` encodes.
-fn agencies_state_dir() -> std::path::PathBuf {
-    let root = std::env::var_os("AIKIT_HOME")
-        .map(std::path::PathBuf::from)
-        .or_else(|| {
-            std::env::var_os("HOME").map(|home| std::path::PathBuf::from(home).join(".aikit"))
-        })
-        .unwrap_or_default();
-    root.join("state").join("encounter-agencies")
-}
-
-/// The reference binding a new chat reuses: the owner's most recently ADMITTED
-/// agency — `active`, at least one permitted sender, and an agency source file
-/// that still exists on disk. Read-only reuse of the source; nothing here
-/// edits another session's binding.
-fn find_reference_binding(dir: &std::path::Path, project: &str) -> Result<Value, String> {
-    let entries=std::fs::read_dir(dir).map_err(|error|
-        format!("No admitted Agency binding is available to reuse ({}: {error}); configure one with `aikit session-space encounter-agency-configure` first",dir.display()))?;
-    let mut candidates: Vec<(std::time::SystemTime, std::path::PathBuf, Value)> = Vec::new();
-    for entry in entries.flatten() {
-        let path = entry.path();
-        if path.extension().and_then(|e| e.to_str()) != Some("json") {
-            continue;
-        }
-        let Ok(bytes) = std::fs::read(&path) else {
-            continue;
-        };
-        let Ok(binding) = serde_json::from_slice::<Value>(&bytes) else {
-            continue;
-        };
-        let senders = binding["allowed_senders"]
-            .as_array()
-            .map(Vec::len)
-            .unwrap_or(0);
-        let source_path = binding["agency_source"]["path"]
-            .as_str()
-            .map(std::path::PathBuf::from);
-        let source_live = source_path.is_some_and(|p| p.is_file());
-        let same_project = binding["world_ref"].as_str().is_some_and(|world| {
-            world == project || world.strip_prefix("project:") == Some(project)
-        });
-        if binding["active"] == true && senders > 0 && source_live && same_project {
-            let modified = entry
-                .metadata()
-                .and_then(|m| m.modified())
-                .unwrap_or(std::time::UNIX_EPOCH);
-            candidates.push((modified, path, binding));
-        }
-    }
-    candidates.sort_by_key(|(modified, _, _)| *modified);
-    candidates.pop().map(|(_,_,binding)|binding)
-        .ok_or_else(||format!("No admitted Agency binding for Project {project} is available to reuse: every stored binding for it is inactive, sender-less, or its agency source file is gone"))
-}
-
-/// Compose the NEW session's binding by copying the admitted identity
-/// verbatim and minting only the revision label — the CAS law
-/// (`encounter_agency.rs::configure_agency`) requires a new session's binding
-/// revision to differ from any current one, and there is no current one.
-fn compose_chat_binding(reference: Value, revision: &str) -> Value {
-    let mut binding = reference.clone();
-    if let Some(object) = binding.as_object_mut() {
-        object.insert(
-            "revision".into(),
-            serde_json::Value::String(revision.to_owned()),
-        );
-        object.insert("active".into(), serde_json::Value::Bool(true));
-    }
-    binding
 }
 
 /// Write JSON to one temp file for the `@file` CLI grammar, cleaned up after
@@ -2657,28 +2516,6 @@ mod tests {
         );
     }
 
-    #[test]
-    fn a_missing_mint_verb_is_recognised_and_cached_per_process() {
-        assert!(mint_verb_absent(
-            "error: unrecognized subcommand 'encounter-agency-mint'"
-        ));
-        assert!(mint_verb_absent(
-            "oi-aikit \n error: unrecognized subcommand"
-        ));
-        // A refusal from a present verb is NOT absence — the fallback runs
-        // for this provision but the verb stays cached as present.
-        assert!(!mint_verb_absent(
-            "encounter.agency refuses: no admitted source"
-        ));
-        assert!(!mint_verb_absent(""));
-        let client = Client::with("definitely-not-a-binary".into(), None);
-        assert_eq!(
-            client.mint_support.load(Ordering::Relaxed),
-            0,
-            "a fresh client has no verdict"
-        );
-    }
-
     /// Write a test stub without exposing a half-written or still-open file at
     /// its final name (stage, chmod, rename), as agent_card.rs's fixtures do:
     /// a bare write + chmod races a parallel test's fork/exec into ETXTBSY.
@@ -2733,7 +2570,7 @@ mod tests {
     }
 
     #[test]
-    fn mint_agency_parses_success_and_caches_the_absent_verb() {
+    fn mint_agency_parses_success_and_carries_a_refusal_in_the_owners_words() {
         let dir = std::env::temp_dir().join(format!("oi-mint-test-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
@@ -2743,9 +2580,9 @@ mod tests {
             path
         };
         let ok=script("mint-ok","echo '{\"ok\":true,\"data\":{\"configured\":true,\"standing\":\"minted-per-project-agency\",\"agent_ref\":\"agent/oh-i\"}}'");
-        let absent = script(
-            "mint-absent",
-            "echo \"error: unrecognized subcommand 'encounter-agency-mint'\" >&2\nexit 2",
+        let refusing = script(
+            "mint-refusing",
+            "echo \"agency_mint.authority_missing: no live authority in Actuation names the world project:Ember\" >&2\nexit 1",
         );
 
         let success = retry_busy(|| {
@@ -2759,20 +2596,20 @@ mod tests {
         );
         assert_eq!(success["agent_ref"], serde_json::json!("agent/oh-i"));
 
-        // The absent verb is refused once, the verdict is cached, and the
-        // next call falls back WITHOUT running the executable again.
-        let absent_client = Client::with(absent.clone(), None);
-        let error = retry_busy(|| {
-            absent_client.mint_agency(std::path::Path::new("/tmp"), "agent-session/x")
-        })
-        .unwrap_err();
-        assert!(mint_verb_absent(&error), "{error}");
-        assert_eq!(absent_client.mint_support.load(Ordering::Relaxed), 2);
-        // Rewrite the stub to succeed: the cached verdict still refuses first.
-        write_executable_stub(&absent, "#!/bin/sh\necho '{\"ok\":true}'\n");
-        assert!(absent_client
-            .mint_agency(std::path::Path::new("/tmp"), "agent-session/x")
-            .is_err());
+        // A refusal is the owner's words, and nothing is cached: once the World grants it, the next mint is asked again.
+        let client = Client::with(refusing.clone(), None);
+        let error =
+            retry_busy(|| client.mint_agency(std::path::Path::new("/tmp"), "agent-session/x"))
+                .unwrap_err();
+        assert!(error.contains("agency_mint.authority_missing"), "{error}");
+        write_executable_stub(
+            &refusing,
+            "#!/bin/sh\necho '{\"ok\":true,\"data\":{\"agent_ref\":\"agent/ember\"}}'\n",
+        );
+        let granted =
+            retry_busy(|| client.mint_agency(std::path::Path::new("/tmp"), "agent-session/x"))
+                .unwrap();
+        assert_eq!(granted["agent_ref"], serde_json::json!("agent/ember"));
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -2968,89 +2805,6 @@ esac"#,
             "{} is bounded",
             long
         );
-    }
-
-    #[test]
-    fn reference_binding_picks_the_newest_admitted_and_refuses_stale_sources() {
-        let dir = std::env::temp_dir().join(format!("oi-agency-test-{}", std::process::id()));
-        let _ = std::fs::remove_dir_all(&dir);
-        std::fs::create_dir_all(&dir).unwrap();
-        let source = dir.join("agency-request.json");
-        std::fs::write(&source, "{}").unwrap();
-        let write_binding = |name: &str, body: Value| {
-            let path = dir.join(format!("{name}.json"));
-            std::fs::write(&path, serde_json::to_vec(&body).unwrap()).unwrap();
-            path
-        };
-        let live = |revision: &str| {
-            serde_json::json!({
-                "revision":revision,"active":true,
-                "agent_ref":"agent:x","agency_ref":"agency:x","world_ref":"project:x","world_binding_ref":"binding:x",
-                "agency_source":{"source_ref":"source/x","revision":"source/1","path":source,"content_digest":"blake3:aa"},
-                "actuation_bin":"/Users/admin/.local/bin/actuation",
-                "allowed_senders":["human:owner"],"allowed_packet_sources":[],"context":null
-            })
-        };
-        let older = write_binding("older", live("rev/older"));
-        let newer = write_binding("newer", live("rev/newer"));
-        let stale = write_binding(
-            "stale",
-            serde_json::json!({
-                "revision":"rev/stale","active":true,
-                "agent_ref":"agent:y","agency_ref":"agency:y","world_ref":"project:y","world_binding_ref":"binding:y",
-                "agency_source":{"source_ref":"source/y","revision":"source/1","path":"/nonexistent/agency.json","content_digest":"blake3:bb"},
-                "actuation_bin":"/Users/admin/.local/bin/actuation",
-                "allowed_senders":["human:owner"],"allowed_packet_sources":[],"context":null
-            }),
-        );
-        let withdrawn = write_binding(
-            "withdrawn",
-            serde_json::json!({
-                "revision":"rev/wd","active":false,
-                "agent_ref":"agent:z","agency_ref":"agency:z","world_ref":"project:z","world_binding_ref":"binding:z",
-                "agency_source":{"source_ref":"source/z","revision":"source/1","path":source,"content_digest":"blake3:cc"},
-                "actuation_bin":"/Users/admin/.local/bin/actuation",
-                "allowed_senders":["human:owner"],"allowed_packet_sources":[],"context":null
-            }),
-        );
-        // Distinct mtimes: older predates newer; the stale pair is oldest.
-        let base = std::time::SystemTime::now() - std::time::Duration::from_secs(60);
-        for (index, path) in [
-            stale.clone(),
-            withdrawn.clone(),
-            older.clone(),
-            newer.clone(),
-        ]
-        .into_iter()
-        .enumerate()
-        {
-            std::fs::File::options()
-                .write(true)
-                .open(&path)
-                .unwrap()
-                .set_modified(base + std::time::Duration::from_secs(index as u64))
-                .unwrap();
-        }
-        let picked = find_reference_binding(&dir, "x").unwrap();
-        assert_eq!(
-            picked["revision"],
-            serde_json::json!("rev/newer"),
-            "the newest admitted binding is the reference"
-        );
-        // Composing mints a new revision label and keeps every identity field.
-        let composed = compose_chat_binding(picked.clone(), "rev/desktop-chat-1");
-        assert_eq!(
-            composed["revision"],
-            serde_json::json!("rev/desktop-chat-1")
-        );
-        assert_eq!(composed["agent_ref"], picked["agent_ref"]);
-        assert_eq!(composed["agency_source"], picked["agency_source"]);
-        assert_eq!(composed["allowed_senders"], picked["allowed_senders"]);
-        assert_eq!(composed["active"], serde_json::json!(true));
-        // Another Project's admitted binding is never a reuse candidate.
-        let refused = find_reference_binding(&dir, "elsewhere").unwrap_err();
-        assert!(refused.contains("elsewhere"), "{refused}");
-        let _ = std::fs::remove_dir_all(&dir);
     }
 }
 

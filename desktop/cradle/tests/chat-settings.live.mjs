@@ -52,11 +52,11 @@ test('the harness face reads `aikit --json client status` live and carries every
   for (const row of rows) {
     assert.deepEqual(
       Object.keys(row).sort(),
-      ['adapter_gap', 'capability', 'client', 'config_dir', 'detected', 'detection', 'detection_reason', 'dispatch', 'effect', 'harness', 'installed', 'items'],
+      ['adapter_gap', 'capability', 'client', 'config_dir', 'config_dir_present', 'detected', 'detection', 'detection_reason', 'dispatch', 'effect', 'harness', 'items'],
       'a harness row carries exactly the face contract fields',
     );
     assert.equal(typeof row.detected, 'boolean');
-    assert.equal(typeof row.installed, 'boolean');
+    assert.ok(row.config_dir_present === null || typeof row.config_dir_present === 'boolean', 'whether its folder exists, or null where AIKit names none');
     assert.ok(row.harness.length > 0, 'every rendered row names a harness (its client when the live row has none)');
   }
 

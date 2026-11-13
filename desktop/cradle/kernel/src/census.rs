@@ -3,8 +3,7 @@
 //! One list, made one way. Its rows are Actuation's detection (`actuation harness detect --json`, read through
 //! `ActuationRead::HarnessDetect`): every harness the catalogue finds detected, with the executable its probe found. Each such
 //! harness is started once (`<executable> --version`, bounded) and its row says whether it started and what it answered, or why
-//! not. AIKit adds detail to a row (`aikit --json client status`: whether AIKit is installed on that harness, its config
-//! directory, its gaps) and never a row of its own: a harness AIKit names that Actuation does not detect is not an agent here.
+//! not. AIKit adds detail to a row (`aikit --json client status`: its config directory and whether it exists, its gaps) and never a row of its own: a harness AIKit names that Actuation does not detect is not an agent here.
 //!
 //! The World Model holds the census as its `agents` slice (world_model.rs); nothing else lists agents.
 use crate::{KernelOp, KernelOpOutcome};
@@ -314,7 +313,7 @@ mod tests {
     #[test]
     fn a_row_is_an_agent_only_when_actuation_detects_its_harness_and_it_starts() {
         let clients = [
-            json!({"client": "claude", "harness": "claude-code", "installed": true}),
+            json!({"client": "claude", "harness": "claude-code", "config_dir_present": true}),
             json!({"client": "only-aikit"}),
         ];
         let census = census_of(&detection(), &clients, None, fake);
@@ -336,7 +335,7 @@ mod tests {
         );
         assert_eq!(census["agents"][1]["why"], "/bin/codex --version exited 1");
         assert_eq!(
-            census["agents"][0]["aikit"]["installed"], true,
+            census["agents"][0]["aikit"]["config_dir_present"], true,
             "AIKit adds detail to the row it names"
         );
         let others: Vec<_> = census["not_agents"]

@@ -40,7 +40,7 @@ test('the live source crosses the typed ops and shapes the answers', async () =>
     return {outcome: {receipts: [], ...ANSWERS[op.op]}};
   });
   const ANSWERS = {
-    harness_status: {result: 'harness_status_reading', data: {clients: [{client: 'claude', harness: 'claude-code', detection: 'detected', installed: true, config_dir: '/x/.claude', dispatch: 'client'}]}},
+    harness_status: {result: 'harness_status_reading', data: {clients: [{client: 'claude', harness: 'claude-code', detection: 'detected', config_dir_present: true, config_dir: '/x/.claude', dispatch: 'client'}]}},
     model_catalogue: {result: 'model_catalogue_reading', data: {catalogued: 2, entries: [{model: 'model:a', name: 'A', source: 's'}]}},
     encounter: {result: 'encounter_reading', data: [{id: 'pi', label: 'Pi'}]},
   };

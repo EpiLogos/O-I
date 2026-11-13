@@ -129,12 +129,15 @@ export async function setup() {
   const aikit = need("OI_AIKIT_BIN");
   const ctrlBin = need("OI_CENTRAL_CTRL_BIN");
   const pi = process.env.PF_PI ?? join(homedir(), ".local/bin/pi");
-  const template = process.env.PF_TEMPLATE ?? join(homedir(), "Central/Work/O-I/.aikit/sf6-agency/agency-request.json");
+  // The Actuation the World's standing authority is granted in and each chat's Agency is minted under (O-I #1003): the suite's own
+  // unless a build is named.
+  const actuation = process.env.OI_ACTUATION_BIN ?? "actuation";
   const root = mkdtempSync("/private/tmp/oi-plural-flow-");
   const aikitHome = mkdtempSync("/private/tmp/oi-plural-flow-home-");
   const home = mkdtempSync("/private/tmp/oi-plural-flow-oihome-");
   const projectRoot = join(root, "Work", "Flowlab");
-  const ownerEnv = {...process.env, AIKIT_HOME: aikitHome, CENTRAL_ROOT: root, AIKIT_CENTRAL_ROOT: root, CENTRAL_CTRL_BIN: ctrlBin, OI_CENTRAL_CTRL_BIN: ctrlBin, AIKIT_AGENCY_MINT_TEMPLATE: template, OI_AIKIT_BIN: aikit};
+  const ownerEnv = {...process.env, AIKIT_HOME: aikitHome, CENTRAL_ROOT: root, AIKIT_CENTRAL_ROOT: root, CENTRAL_CTRL_BIN: ctrlBin, OI_CENTRAL_CTRL_BIN: ctrlBin, OI_AIKIT_BIN: aikit,
+    OI_ACTUATION_BIN: actuation, ACTUATION_AUTHORITY_STORE: join(root, ".actuation-authority")};
   delete ownerEnv.CENTRAL_NATIVE_TOKEN;
   const call = (action, input = {}, env = {}) => {
     const r = JSON.parse(execFileSync(ctrlBin, ["--root", root, "--json", "action", "run", action, JSON.stringify(input)], {encoding: "utf8", env: {...ownerEnv, ...env}}));
@@ -164,6 +167,8 @@ export async function setup() {
     const aikitBin = (...args) => execFileSync(aikit, args, {encoding: "utf8", env: ownerEnv});
     const bind = JSON.parse(aikitBin("--json", "-C", projectRoot, "project", "bind", "flowlab-walk", "--directory", projectRoot, "--no-default-skill-sets"));
     if (!bind.ok) throw new Error(JSON.stringify(bind));
+    // The World's standing authority, held by the person: the root and the bound project each chat's Agency is minted for.
+    execFileSync(actuation, ["authority", "grant-world", "--holder", "human:owner", "--world", "control:root", "--world", "project:flowlab-walk", "--json"], {encoding: "utf8", env: ownerEnv});
     aikitBin("session-space", "-C", projectRoot, "encounter-configure", "--provider-json", JSON.stringify({protocol: "pi-rpc", id: "pi", label: "Pi (plural flow walk)", argv: [pi, "--mode", "rpc"]}));
     owner.starting();
     owner.started(JSON.parse(execFileSync(aikit, ["session-space", "-C", projectRoot, "encounter-start"], {encoding: "utf8", env: ownerEnv, timeout: 20000})));

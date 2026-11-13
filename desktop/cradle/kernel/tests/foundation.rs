@@ -78,6 +78,20 @@ impl World {
         std::fs::create_dir_all(&home).unwrap();
         // The path every owner this test starts is named by (`-C <home>/Central`).
         let home = home.canonicalize().unwrap();
+        // An agent's own sign-in stays the person's (gates/foundation/run.sh): the files FOUNDATION_SIGN_IN names under their
+        // home (Claude Code's login keychain, which macOS finds under HOME; Codex's and Pi's auth.json) are linked here, and nothing
+        // else of theirs: each agent's settings, models and sessions stay in this home.
+        #[cfg(unix)]
+        if let (Some(real), Ok(files)) = (
+            std::env::var_os("FOUNDATION_REAL_HOME"),
+            std::env::var("FOUNDATION_SIGN_IN"),
+        ) {
+            for file in files.split(':').filter(|file| !file.is_empty()) {
+                let link = home.join(file);
+                std::fs::create_dir_all(link.parent().unwrap()).unwrap();
+                std::os::unix::fs::symlink(PathBuf::from(&real).join(file), link).unwrap();
+            }
+        }
         let root = root.canonicalize().unwrap();
         for (var, name) in OWNERS {
             let bin = owner_bin(var, name);
@@ -807,15 +821,33 @@ fn send_a_passage(world: &World, page: &SavedPage, agent: &str) -> Result<String
         }
         std::thread::sleep(Duration::from_secs(2));
         let view = encounter(json!({"action": "view", "agent_session": session}))?;
-        let found = view["blocks"].as_array().and_then(|blocks| {
-            blocks.iter().find_map(|block| {
-                let text = block["text"].as_str()?;
-                (block["kind"] == "assistant" && text.to_lowercase().contains(&marker))
-                    .then(|| text.to_owned())
-            })
-        });
-        if let Some(text) = found {
-            break text;
+        // The turn as the window reads it (session.ts turnAnswer): the agent's words since the prompt, until its turn ends —
+        // completed, cancelled or in an error. An ended turn without the answer is said in the agent's own words, not waited out.
+        let blocks = view["blocks"].as_array().cloned().unwrap_or_default();
+        let said: String = blocks
+            .iter()
+            .filter(|block| block["kind"] == "assistant")
+            .filter_map(|block| block["text"].as_str())
+            .collect();
+        if said.to_lowercase().contains(&marker) {
+            break said;
+        }
+        if let Some(end) = blocks.iter().rev().find(|block| {
+            matches!(
+                block["kind"].as_str(),
+                Some("completed" | "cancelled" | "error")
+            )
+        }) {
+            let words = if said.trim().is_empty() {
+                end["text"].as_str().unwrap_or("").trim().to_owned()
+            } else {
+                said.trim().to_owned()
+            };
+            return Err(format!(
+                "{agent}'s turn ended {} without `{marker}`: {}",
+                end["kind"].as_str().unwrap_or("?"),
+                words.chars().take(400).collect::<String>()
+            ));
         }
     };
     // AIKit's own transcript of the conversation holds the answer.
@@ -848,6 +880,9 @@ fn send_a_passage(world: &World, page: &SavedPage, agent: &str) -> Result<String
 #[ignore = "foundation act: runs the installed owners in a fresh home and spends a provider prompt per agent"]
 fn act_3_send_a_passage_and_get_the_answer() {
     run("send-a-passage-and-get-the-answer", |world| {
+        // Setup's Ground Accept comes first, as it does for the person: it grants the World the standing authority each chat's
+        // Agency is minted under.
+        keep_ground(world).map_err(|e| format!("Setup's Ground Accept: {e}"))?;
         let page = save_a_page(world, "foundation-passage")?;
         let mut failed = Vec::new();
         for agent in chosen_agents(world)? {
@@ -976,6 +1011,31 @@ fn keep_ground(world: &World) -> Act {
             return Err(format!(
                 "{op} {act} answered, but its preview reads {}",
                 clip(&now["data"])
+            ));
+        }
+    }
+    // The World's standing authority in Actuation, held by the person and rooted at the World's root: each agent's Agency is
+    // minted under it (Setup's Ground Accept, windowPages.ts keepWorldGrant; O-I #1003).
+    let live = |listing: &Value| {
+        listing["authorities"].as_array().is_some_and(|rows| {
+            rows.iter().any(|row| {
+                !row["revoked"].is_object()
+                    && row["record"]["holder"] == "human:owner"
+                    && row["record"]["governing_binding"]["world_ref"] == "control:root"
+            })
+        })
+    };
+    if !live(&action(world, "actuation.authority.list", json!({}))?) {
+        action(
+            world,
+            "actuation.authority.grant-world",
+            json!({"holder": "human:owner", "world": ["control:root"]}),
+        )?;
+        let now = action(world, "actuation.authority.list", json!({}))?;
+        if !live(&now) {
+            return Err(format!(
+                "actuation.authority.grant-world answered, but no live grant at control:root reads back: {}",
+                clip(&now)
             ));
         }
     }

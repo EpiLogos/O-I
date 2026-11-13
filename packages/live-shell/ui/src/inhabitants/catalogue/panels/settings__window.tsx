@@ -37,9 +37,9 @@
 //   result      {status, operations: [{ref, title, status, message?}]}  the owners' answer to Apply or Reset (config_apply_reviewed,
 //               config_reset).
 // Harnesses & models (HarnessSource, desktop/cradle/src/configuration/harnessSource.ts, over harness_status and model_catalogue):
-//   harnesses   [{agent, harness, starts, version?, why?, client?, installed?, capability?, effect?, folder?, gap?, signIn?, signInNote?,
+//   harnesses   [{agent, harness, starts, version?, why?, client?, folderPresent?, capability?, effect?, folder?, gap?, signIn?, signInNote?,
 //               signInUnread?, loginNow?}]  one per agent on this machine, the census (the World Model's agents, O-I #1003): whether it
-//               starts (its version, or why not); and AIKit's client facts on it when AIKit has a client for it: installed, the owner's own
+//               starts (its version, or why not); and AIKit's client facts on it when AIKit has a client for it: whether its folder exists, the owner's own
 //               effect words, the configuration folder, an adapter gap's missing contract; and its own login as AIKit declares it
 //               (`aikit harness auth <client>`): signIn [{key,
 //               provider, command}] each one it can run, signInNote the harness's own words when it signs in only inside itself (no
@@ -385,7 +385,7 @@ function makeOptions(f: Rec | undefined, wiki: string | undefined): Option<strin
   const closed = finds === 'unreadable' ? 'Its ProjectCentral cannot be read. Mend its manifest by hand.' : finds === 'ground' ? 'Its ground is in place: nothing to make.' : undefined
   // A made project its making left unfinished (your key and bounds not reaching it, or Factory not keeping its runs and pads): Finish.
   const finish = finds === 'ground' && strs(f?.left).length
-    ? [{value: 'finish', label: 'Finish', does: 'Accept finishes what making it left: you act as you in it and its agents may write inside it, and Factory keeps its runs and pads.'}] : []
+    ? [{value: 'finish', label: 'Finish', does: 'Accept finishes what making it left: you act as you in it, its agents may write inside it on your standing authority, and Factory keeps its runs and pads.'}] : []
   return [...finish,
     {value: 'create', label: 'Create', does: 'ProjectCentral is made round the folder. Nothing in the folder moves.',
       why: closed ?? (finds === 'none' ? undefined : 'The folder keeps a wiki: keep it in place or copy it in.')},
@@ -628,11 +628,11 @@ function HarnessesPage({p}: {p: ViewProps}) {
           return <tr key={txt(h.agent) ?? client} data-census-agent={txt(h.agent)} data-read={h.starts === true ? undefined : 'true'}>
             <td><b>{txt(h.harness) ?? txt(h.agent) ?? NONE}</b>{gap && <i className="st-why" data-i={`Adapter gap|${txt(gap.contract) ?? 'A contract is missing.'}${txt(gap.skill) ? ` Its authoring skill: ${gap.skill}.` : ''}`}>!</i>}</td>
             <td data-i={txt(h.why) ? `Doesn't start|${h.why}` : undefined}>{h.starts === true ? txt(h.version) ?? 'yes' : txt(h.why) ?? 'no'}</td>
-            <td>{h.installed === true ? 'installed' : h.installed === false ? 'not installed' : NONE}</td>
+            <td data-i={h.folderPresent === false ? 'AIKit|No configuration folder for it yet: Install makes it and puts AIKit\'s skills there.' : undefined}>{h.folderPresent === true ? 'its folder' : h.folderPresent === false ? 'no folder' : NONE}</td>
             <td>{txt(h.capability) ?? NONE}</td>
             <td className="st-dim" data-i={txt(h.effect) ? `After a change|${h.effect}` : undefined}>{txt(h.effect) ?? NONE}</td>
             <td className="st-acts">
-              {client && h.installed === false && <Action {...st(p, 'install')} label="Install" does="The native owner installs this harness client. Read detection again before you start work." onPress={() => p.set('install', client)} />}
+              {client && h.folderPresent === false && <Action {...st(p, 'install')} label="Install" does="The native owner installs this harness client. Read detection again before you start work." onPress={() => p.set('install', client)} />}
               {client && txt(h.folder) && <Action {...st(p, 'reveal')} label="Folder" does={`Shows its configuration folder in Finder: ${h.folder}.`} onPress={() => p.set('reveal', client)} />}
               {/* Sign in runs the harness's own login in a terminal, where you answer it, and the page reads the result back; one that signs in
                 only inside itself says so, in its own words when you point at it, and offers no button (manual §10.10 Rules). */}
@@ -1325,15 +1325,15 @@ const DEFAULTS = {
   settings: dump(SETTINGS), conflicts: dump([]),
   elsewhere: dump([{ref: 'live:delay:time', title: 'Delay time', where: 'the Delay on its chain'}, {ref: 'techne:timeline:zoom', title: 'Timeline zoom', where: 'the Timeline'}]),
   harnesses: dump([
-    {agent: 'claude-code', harness: 'Claude Code', starts: true, version: '2.1.323 (Claude Code)', client: 'claude-code', installed: true, capability: 'agent', effect: 'Restart Claude to read new settings.', folder: '~/.claude',
+    {agent: 'claude-code', harness: 'Claude Code', starts: true, version: '2.1.323 (Claude Code)', client: 'claude-code', folderPresent: true, capability: 'agent', effect: 'Restart Claude to read new settings.', folder: '~/.claude',
       signIn: [{key: 'claude-code|provider:anthropic', provider: 'anthropic', command: 'claude auth login'}], loginNow: 'AIKit finds what claude-code needs to sign in.'},
-    {agent: 'codex', harness: 'Codex', starts: true, version: 'codex-cli 0.155.1', client: 'codex', installed: true, capability: 'agent', effect: 'Next session only.', folder: '~/.codex',
+    {agent: 'codex', harness: 'Codex', starts: true, version: 'codex-cli 0.155.1', client: 'codex', folderPresent: true, capability: 'agent', effect: 'Next session only.', folder: '~/.codex',
       signIn: [{key: 'codex|provider:openai', provider: 'openai', command: 'codex login'}], loginNow: 'AIKit finds what codex needs to sign in.'},
-    {agent: 'gemini', harness: 'Gemini CLI', starts: false, why: 'gemini did not start: its node runtime could not load a library.', client: 'gemini', installed: true, capability: 'agent', effect: 'Next session only.', folder: '~/.gemini',
+    {agent: 'gemini', harness: 'Gemini CLI', starts: false, why: 'gemini did not start: its node runtime could not load a library.', client: 'gemini', folderPresent: true, capability: 'agent', effect: 'Next session only.', folder: '~/.gemini',
       signInNote: 'Login with Google (OAuth) is Gemini CLI\'s default auth; the API key delivers only when credential:gemini is bound'},
-    {agent: 'pi', harness: 'Pi', starts: true, version: '1.5.0', client: 'pi', installed: true, capability: 'agent', folder: '~/.pi'},
-    {agent: 'hermes', harness: 'Hermes', starts: false, why: 'hermes did not answer its version.', client: 'hermes', installed: true, capability: 'gateway', gap: {contract: 'No session-settings contract for Hermes yet.', skill: 'aikit:harness-adapter-authoring'}},
-    {agent: 'opencode', harness: 'OpenCode', starts: false, why: 'Actuation detects opencode but found no executable to start', client: 'opencode', installed: false, capability: 'agent'},
+    {agent: 'pi', harness: 'Pi', starts: true, version: '1.5.0', client: 'pi', folderPresent: true, capability: 'agent', folder: '~/.pi'},
+    {agent: 'hermes', harness: 'Hermes', starts: false, why: 'hermes did not answer its version.', client: 'hermes', folderPresent: true, capability: 'gateway', gap: {contract: 'No session-settings contract for Hermes yet.', skill: 'aikit:harness-adapter-authoring'}},
+    {agent: 'opencode', harness: 'OpenCode', starts: false, why: 'Actuation detects opencode but found no executable to start', client: 'opencode', folderPresent: false, capability: 'agent'},
   ]),
   routes: dump([
     {model: 'claude-opus-5-5', name: 'Claude Opus 5.5', routes: [{provider: 'anthropic', key: true, standing: 'usable'}, {provider: 'claude-code', key: false, standing: 'usable'}]},
