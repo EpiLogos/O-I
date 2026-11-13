@@ -46,9 +46,9 @@
 // frame publishes it. Every device of this chain is published whichever chain is drawn, so the pool, a pane and the rail keep them. The
 // bindings: sessionChainBindings.ts, receiptBindings.ts, workcellBindings.ts. The Run, Tasks and Runs are no devices (a task's panels, the
 // session's mixer row and lanes, its takes — Clip view's and the views'), and nothing publishes them: the browser lists none (ticket 788).
-import {Fragment, useCallback, useEffect, useMemo, useRef, useState, type DragEvent, type HTMLAttributes} from 'react'
+import {Fragment, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type DragEvent, type HTMLAttributes} from 'react'
 import {DeviceView} from '../../frame/devices/DeviceView'
-import {publishDevice, selectDevice} from '../../frame/devices/deviceDoor'
+import {publishDevice, publishedDevice, selectDevice, subscribeDeviceDoor} from '../../frame/devices/deviceDoor'
 import {DEVICE_PANE_KIND} from '../../frame/devices/devicePane'
 import type {DesignBinding} from '../../frame/devices/designed'
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
@@ -60,7 +60,7 @@ import {chainLaw, slotStanding} from '../../inhabitants/sdk/chains'
 import {openInstrument} from '../../frame/instrumentDoor'
 import {agentAddress} from '../../inhabitants/agentParamAddresses'
 import {useRosterAnswer, useSettingsAnswer} from '../../owners/readers'
-import {registerOf, returnProjectOf, ROOT_REGISTER, useWorldReturns} from '../worldScope'
+import {registerOf, ROOT_REGISTER} from '../worldScope'
 import {useAgentSessionsOptional} from '../AgentSessionsProvider'
 import {useAgentShell, type AgentDeviceId} from '../AgentShellContext'
 import {threadTrackOf} from '../threadTrack'
@@ -79,7 +79,7 @@ import {chainPicture, type PictureContext} from './AgentDevicePictures'
 import {
   AGENT_DESIGN, AGENT_P0_ROWS, GATEWAY_DESIGN, LANDING_DESIGN, MEMBER_DESIGN, MEMBER_DEVICE_ID, RACK_DESIGN, SCOPE_DESIGN, SLOT_DESIGN_FACE, agentBinding, designWaits,
   gatewayBinding, memberBinding,
-  holdView, memberChains, openRefinement, rackBinding, refiningBinding, scopeBinding, seatedProfile, useChainHolds, viewHolds, type AgentRows, type MemberPorts, type RackUpkeep,
+  memberChains, rackBinding, refiningBinding, scopeBinding, seatedProfile, useChainHolds, viewHolds, type AgentRows, type MemberPorts, type RackUpkeep,
   type RefiningPorts, callsOf, callsOnEvery, lastUsageModels, type CallsDecision,
 } from './designBindings'
 import {useOwnerAccepted} from './ownerAccepted'
@@ -91,13 +91,7 @@ import {FRAMES_ID, mainDevices} from './mainTrackBindings'
 import {askRowsOf, shownSession, threadBinding, threadJson} from './threadBinding'
 import {CAPTURE_PAGE, REFINE_PAGE, SEAT_PAGE, carryPages, composeAgentBinding, withAgentGit} from './oneAgentBinding'
 import {testRefinement, useScopeWaits, writeSessionSettings} from '../sessionSettings'
-import {openNotificationTarget, useOwnerRequests} from '../../widgets/railDevices'
-import {openedHold, openedOf, withOwnerRequests} from '../../widgets/railBindings'
 import {useIdentityDevice} from '../../central/devices/agentChainDevices'
-import {PERSONAL_ANCHOR_ACTION, acceptSourceReturn, personRefOf, rejectSourceReturn} from '../../central/devices/sourceReturnAccept'
-import {commentSourceReturn, withReturnComments} from '../../central/devices/sourceReturnComment'
-import {receiving} from '../../../../../../desktop/cradle/src/receiving/client'
-import {useUnitDecisions, waitingDecisions} from './unitDecisions'
 import {useAgentSetReadings, useCentralAction} from '../../central/devices/useCentralReadings'
 import {actionAnswerOf, centralActionOp} from '../../central/devices/centralActions'
 import {useAtSearch} from '../../central/searchPane'
@@ -116,7 +110,7 @@ import {publishChainHead} from '../../shell/modeDetails'
 import {openInReader} from '../../frame/browser/constellationActs'
 import {retryTask, stopAfterTask} from './taskBindings'
 import {communiqueRefOf} from './messagesBinding'
-import {APPROVALS_DESIGN, APPROVALS_ID, approvalsBinding, receiptDevices} from './receiptBindings'
+import {APPROVALS_DESIGN, APPROVALS_ID, approvalsAwayBinding, receiptDevices} from './receiptBindings'
 import {CARRIER_DESIGN, CARRIER_ID, carrierBinding, connectionLabels, gitBinding, planRunOf, runDemandOf, seatBinding, seatDropRefusal, workcellDevices, type SeatPorts} from './workcellBindings'
 import {ROUTE_WORDS, aikitWriteOp, centralRevisionWrite, deskActorOf, factoryOwnerWrite, gatewayWriteOp, ownerRouteWrite, refinementWrite, refusalWords, seatWriteOp} from './ownerRoutes'
 import {worldsOf} from './workcellMaterial'
@@ -125,7 +119,7 @@ import {WORKCELL_RACK_ID, chosenWorld, workcellGitReading} from './workcellRackB
 import {AGENT_SLOTS, ON_ITS_TRACK, RACK_CHAIN, SOURCES_OFF_DRAG, chainSlots, factoryPlace, reachOf, sourcesPlaceRequest, sourcesPlacementOf, sourcesUnplaceRequest, type FactorySlot,
   type RackChainName, type Reach} from './factoryPlaces'
 import {useOwnerOp} from '../../owners/ownerCall'
-import type {AikitWriteRequest, EncounterSessionSettingsReading, KernelOp} from '../../../../../../desktop/cradle/src/kernel/types'
+import type {AikitWriteRequest, KernelOp} from '../../../../../../desktop/cradle/src/kernel/types'
 import {kernelOp} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import {DECISION_HELPER_ID, decisionHelperBinding, decisionHelperDevice} from './decisionHelperBinding'
 import {captureSkillBinding, type CaptureSkillPorts} from './captureSkillBinding'
@@ -197,8 +191,6 @@ type ChainDropTarget = {kind: 'zone'; label: string} | {kind: 'card'; id: string
 
 /** The hold the Factory Agent's Identity page keeps its choices under (the agent, the World, Proposed), apart from Central's Agent's. */
 const FACTORY_IDENTITY_ID = `${chainDeviceId('agent')}/identity`
-/** Central's personal anchor takes no input: one held object, so the read is asked once. */
-const NO_INPUT: Readonly<Record<string, unknown>> = Object.freeze({})
 /** AIKit's capture inbox (lane W3's aikit_read {inbox}) in a register (agent/worldScope.ts; null the root), read while the Skillset rack
  * stands on the armed track's chain, for its Capture page (§19.11). */
 const captureInboxOp = (register: string | null): KernelOp => ({op: 'aikit_read' as const, request: {kind: 'inbox' as const, project: register}})
@@ -757,24 +749,16 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const rackChains = useMemo(() => rackChainsOf(agentsetDesignBinding.values.members), [agentsetDesignBinding.values.members])
   const reachHere = (slot: FactorySlot): Reach => (place.kind === 'session' ? reachOf(slot, rackChains, loneTrack?.sessionRef) : ON_ITS_TRACK)
 
-  // The Main track's reader: Approvals on the shown session's consent requests and the world's source returns (lane K1's
-  // source_returns_read); the default answer is the Gateway's, never Approvals' (ticket 788). The Ledger is a monitor on the rail
-  // (AgentRailDevices.tsx). Approvals is "one place to answer what waits for you" (§19.14) on Factory's Main track, which is no session's:
-  // it reads every project's returned work, as Central's does in your world (agent/worldScope.ts useWorldReturns), each row in its own
-  // project, and says why when none stands (a world with no project).
+  // The Main track's Approvals (§19.14 "one place to answer what waits for you"): the rail claims its tile in every mode, so the rail's
+  // publisher composes and publishes it in every mode (AgentRailDevices.tsx: the shown session's consent requests, every project's returned
+  // work, the unit decisions, AIKit's revisions and the owners' requests), and the Main track draws that same entry from the door. Where the
+  // rail's publisher has not loaded yet (the rail not yet shown), the plate stands with why rather than a second reading of the same owners.
   const receipts = useMemo(() => receiptDevices(), [])
   const designsReceipts = {approvals: useDesign(APPROVALS_DESIGN, true)}
+  const approvalsEntry = useSyncExternalStore(subscribeDeviceDoor, () => publishedDevice(APPROVALS_ID) ?? null, () => null)
+  const approvalsDesignBinding = useMemo(() => approvalsEntry?.binding ?? approvalsAwayBinding(holds), [approvalsEntry, holds])
   const shownTrack = shown ? tracks?.find(item => item.sessionRef === shown && !item.group) ?? null : null
-  const approvalsReturns = useWorldReturns(transport, null)
-  const returned = approvalsReturns.returns
-  // Factory's unit decisions (W9): the questions the shown session's Runs wait on (unitDecisions.ts), read from the Runs its takes name.
   const shownTakesAll = useAttemptTakes(transport, shownTrack ? [shownTrack.sessionRef] : [], shownTrack?.project ?? ROOT_REGISTER)
-  const unitRuns = useMemo(() => {
-    const takes = shownTakesAll && shownTrack ? shownTakesAll.of(shownTrack.sessionRef) ?? [] : []
-    return takes.filter((take, at) => takes.findIndex(other => other.runRef === take.runRef && other.statePath === take.statePath) === at)
-      .map(take => ({statePath: take.statePath, runRef: take.runRef}))
-  }, [shownTakesAll, shownTrack])
-  const unitsRead = useUnitDecisions(transport, unitRuns)
   // The Run map's Run (§19.25 To use, 1: "Run map shows the run of the selected work"): the Run the shown session's newest take names,
   // read with its Journey and the Journey's Runs — the work across runs, whichever sessions ran them (runJourney.ts; O-I 844).
   const mapTake = useMemo(() => {
@@ -796,49 +780,6 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
       transport.kind !== 'unavailable' ? {owner: request => factoryOwnerWrite(transport, request, '`factory attempt retry`')} : {},
       {status: mapChain.status, value, error: mapChain.error})
   }, [holds, mapTake, mapChain, transport])
-  const units = unitsRead.status === 'answered' ? unitsRead.value : null
-  // Approve (W2): the person who accepts is the principal Central's personal anchor names; it is asked only while a proposal or a unit
-  // decision waits (only the unit's resolver answers one).
-  const waiting = !!returned?.entries.some(entry => entry.status === 'pending') || waitingDecisions(units).length > 0
-  const anchor = useCentralAction(transport, PERSONAL_ANCHOR_ACTION, waiting ? NO_INPUT : null)
-  const person = anchor.status === 'answered' ? personRefOf(anchor.value) : null
-  // Changes (W9): a comment on the waiting return in the words written in the thread — the Agent's composer — through Central's
-  // projectcentral.source.return_comment (central/devices/sourceReturnComment.ts); once Central keeps it, the composer is cleared.
-  const agentDraft = typeof oneAgent?.values.draft === 'string' ? oneAgent.values.draft : null
-  const agentWrite = oneAgent?.write
-  const ownerRequests = useOwnerRequests(transport)
-  // The asking agent's Scope (§19.12, §19.14): AIKit's settings of the shown session — its Wait and On no answer, and what its executor did
-  // with its asks — read here and set on its Scope.
-  const shownAnswer = useSettingsAnswer(transport, shownTrack?.sessionRef ?? null, shownTrack?.project ?? ROOT_REGISTER).reading
-  const shownSettings = shownAnswer.status === 'answered' ? shownAnswer.value as EncounterSessionSettingsReading | null : null
-  const approvalsDesignBinding = useMemo(() => {
-    const state = observedState(shownHandle)
-    const actions = shownHandle && 'actions' in shownHandle ? shownHandle.actions : undefined
-    // Approvals is handed no Gateway: the default answer is the Gateway's own, set on the Gateway (§19.14, §19.2; ticket 788).
-    const binding = approvalsBinding({session: shownTrack, encounter: state?.reading ?? null, holds,
-      returns: returned, returnsAbsent: approvalsReturns.absent, returnsRefused: approvalsReturns.refusals, tracks, nowUnixMs: sessions?.nowUnixMs ?? Date.now(), units, person,
-      refinements: rackRefinements, settings: shownSettings},
-      {...(actions ? {permission: (id, decision) => actions.permission(id, decision)} : {}),
-        // A skill's proposed revision (§19.7): Accept and Discard through the Refining page's own AIKit verbs; Open shows it on the
-        // Skillset rack's Refining page, where a session's chain stands the rack.
-        ...(refineWrite ? {refine: refineWrite} : {}), ...(centralRevision ? {refineCentral: centralRevision} : {}),
-        openRefinement: member => openRefinement(member),
-        approve: row => acceptSourceReturn(transport, returnProjectOf(row, null), row, person),
-        // Deny on a proposal (§19.14): Central's projectcentral.source.return_reject through invoke_action (sourceReturnAccept.ts).
-        reject: row => rejectSourceReturn(transport, returnProjectOf(row, null), row),
-        ...(transport.kind !== 'unavailable' ? {answerUnit: (project, review) => receiving(transport, project, review).catch(cause => { throw new Error(refusalWords(cause instanceof Error ? cause.message : String(cause))) })} : {})})
-    const commented = withReturnComments(binding, {returns: returned, comment: agentDraft, absent: approvalsReturns.absent}, {
-      send: (row, words) => commentSourceReturn(transport, returnProjectOf(row, null), row, words, person),
-      after: () => { void agentWrite?.([{key: 'draft', value: ''}]) },
-    })
-    // Notifications' readings wait here under Requests (§23.9; the Notifications device was retired into Approvals in the 22 Oct manual
-    // rewrite): the requests Central keeps for personal.notify, Messages' waiting agents and the desktop's notice (railBindings.ts
-    // withOwnerRequests), as Central's Approvals carries them; Open marks an item opened here, after opening an owner's request.
-    return withOwnerRequests(commented, {...ownerRequests, nowUnixMs: sessions?.nowUnixMs || Date.now()}, openNotificationTarget,
-      {opened: openedOf(viewHolds(holds, APPROVALS_ID).opened), hold: ids => holdView(APPROVALS_ID, 'opened', openedHold(ids))})
-  }, [shownHandle, shownTrack, holds, returned, approvalsReturns.absent, approvalsReturns.refusals, tracks, sessions?.nowUnixMs, transport, person, units, agentDraft, agentWrite, ownerRequests,
-    rackRefinements, refineWrite, centralRevision, shownSettings])
-
   // A workcell's devices (§19.23): Git / landing's Seat group (the seat instrument), starting at the selected workcell's seat of the project;
   // and the Remote carrier (Workcell's status). Workcell's instrument stands on no chain: the rail's publisher holds it with its Seats and
   // Machine pages (AgentRailDevices.tsx).
@@ -893,16 +834,16 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   useEffect(() => { publishDevice(PROMPT_PADS_ID, padsDev ? {device: padsDev, binding: mainBindings.pads, acts: padsActs} : null) }, [padsDev, mainBindings, padsActs])
   useEffect(() => {
     const own = [[AGENTSET_ID, ownDevices.agentset, agentsetDesignBinding], [DECISION_HELPER_ID, helperStands ? helperDevice : null, helperDesignBinding],
-      [APPROVALS_ID, receipts.approvals, approvalsDesignBinding], [CARRIER_ID, cells.carrier, carrierDesignBinding]] as const
+      [CARRIER_ID, cells.carrier, carrierDesignBinding]] as const
     for (const [id, device, designBinding] of own) publishDevice(id, device ? {device, binding: designBinding} : null)
-  }, [ownDevices, receipts, cells, agentsetDesignBinding, helperStands, helperDevice, helperDesignBinding, approvalsDesignBinding, carrierDesignBinding])
+  }, [ownDevices, cells, agentsetDesignBinding, helperStands, helperDevice, helperDesignBinding, carrierDesignBinding])
   useEffect(() => () => {
     // The chain withdraws exactly what it publishes. The Thread and Custody (the Agent carries them, §19.4), Tasks and Runs (a task is a
     // clip, a run its track's take lanes, §19.1), the Run, the Experiment (a task launched with Repeat, §19.5) and the Seat (Git / landing's
     // Seat page, §19.17) publish nowhere, and the door is the session's memory, so no entry of theirs can stand to be cleared (ticket 804).
-    // The Link is the transport's (§19.19), and the rail's agent devices — Messages, Frames, the Ledger, Workcell's instrument — are the rail's
-    // publisher's (AgentRailDevices.tsx RAIL_AGENT_DEVICE_IDS): none of them is withdrawn here.
-    for (const id of [...CHAIN_DEVICE_IDS, MEMBER_DEVICE_ID, AGENTSET_ID, DECISION_HELPER_ID, APPROVALS_ID, CARRIER_ID, RUN_MAP_ID, PROMPT_PADS_ID]) publishDevice(id, null)
+    // The Link is the transport's (§19.19), and the rail's agent devices — Messages, Frames, the Ledger, Approvals, Workcell's instrument —
+    // are the rail's publisher's (AgentRailDevices.tsx RAIL_AGENT_DEVICE_IDS): none of them is withdrawn here.
+    for (const id of [...CHAIN_DEVICE_IDS, MEMBER_DEVICE_ID, AGENTSET_ID, DECISION_HELPER_ID, CARRIER_ID, RUN_MAP_ID, PROMPT_PADS_ID]) publishDevice(id, null)
   }, [])
 
   const choose = (slotId: string) => { shell.setExpandedDevice(slotId as AgentDeviceId); selectDevice(chainDeviceId(slotId)) }
@@ -1200,7 +1141,7 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
       // Sources ahead of the rack (§19.9): the shared reading every agent of it reads.
       case 'sources': return sourcesPlate('rack')
       // The Main track (§16.2, §19.1): the Run map, then Approvals, where every proposal waits (§19.14), then the Prompt pads.
-      case 'approvals': return placed(APPROVALS_ID, receipts.approvals, approvalsDesignBinding, designsReceipts.approvals ? APPROVALS_DESIGN : undefined, 'Approvals', {attrs: {'data-main-slot': 'approvals'}})
+      case 'approvals': return placed(APPROVALS_ID, approvalsEntry?.device ?? receipts.approvals, approvalsDesignBinding, designsReceipts.approvals ? APPROVALS_DESIGN : undefined, 'Approvals', {attrs: {'data-main-slot': 'approvals'}})
       case 'run-map': return placed(RUN_MAP_ID, runMapDev, runMapDesignBinding, designsMain.runMap ? RUN_MAP_DESIGN : undefined, 'the Run map', {attrs: {'data-main-slot': 'run-map'}})
       case 'prompt-pads': return placed(PROMPT_PADS_ID, padsDev, mainBindings.pads, designsMain.pads ? PROMPT_PADS_DESIGN : undefined, 'the Prompt pads', {attrs: {'data-main-slot': 'prompt-pads'}})
       // The road in (§16.2 "Connections keep the same order"; §19.18): the Remote carrier names the machine the work runs on — on a

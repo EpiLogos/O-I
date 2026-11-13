@@ -218,8 +218,8 @@ test('Approvals reads the Wait and On no answer of the asking session from AIKit
   assert.equal(unread.standing.wait.disabled, rec.APPROVALS_ABSENT.wait)
   assert.match(unread.standing.wait.disabled, /^The Wait on the asking agent's Scope: no reading reaches it yet — AIKit's settings of the shown session/)
   for (const key of ['wait', 'noAnswer']) assert.doesNotMatch(unread.standing[key].disabled, /missing op|Hermes/, key)
-  // The chain hands Approvals the shown session's settings.
-  assert.match(read('agent/devices/FactoryDeviceChain.tsx'), /settings: shownSettings/)
+  // REPLACED (parity D-09): the chain handed Approvals the shown session's settings; the rail's publisher composes Approvals in every mode now.
+  assert.match(read('agent/devices/AgentRailDevices.tsx'), /settings: shownSettings/)
   bind.resetHolds()
 })
 
@@ -288,10 +288,16 @@ test('the rail\'s Ledger and Approvals are their devices\' own widgets (§23.9, 
   // it stays published for both. Approvals is an effect on the Main track (§19.14).
   assert.doesNotMatch(view, /placed\(LEDGER_ID/, 'the Ledger stands on no chain (§19.13 "Kind: monitor")')
   assert.match(read('agent/devices/AgentRailDevices.tsx'), /publish\(LEDGER_ID, ledger\)/, 'and stays published, for the rail and a pane, by the rail\'s publisher in every mode')
-  assert.match(view, /case 'approvals': return placed\(APPROVALS_ID, receipts\.approvals, approvalsDesignBinding, [^\n]*'data-main-slot': 'approvals'/, 'Approvals on the Main track (§19.14)')
+  // REPLACED (parity D-09): the Main track drew Approvals on a binding of its own, published only while Factory's chain stood, so the rail's
+  // tile, claimed in every mode, was away everywhere else. The rail's publisher composes and publishes it in every mode; the Main track draws
+  // that same door entry.
+  assert.match(view, /case 'approvals': return placed\(APPROVALS_ID, approvalsEntry\?\.device \?\? receipts\.approvals, approvalsDesignBinding, [^\n]*'data-main-slot': 'approvals'/, 'Approvals on the Main track (§19.14)')
+  assert.match(view, /publishedDevice\(APPROVALS_ID\)/, 'the door\'s one entry')
+  assert.doesNotMatch(view, /approvalsBinding\(/, 'composed once, by the rail\'s publisher')
+  const railPublisher = read('agent/devices/AgentRailDevices.tsx')
   // REPLACED (#788): "the Gateway's values and the shown session" — Approvals is handed the shown session, never the Gateway (§19.14).
-  assert.match(view, /approvalsBinding\(\{session: shownTrack, encounter:/, 'the shown session')
-  assert.doesNotMatch(view, /approvalsBinding\(\{gateway|gatewayDesignBinding,\s*\{\.\.\.\(actions/, 'no Gateway handed to Approvals')
+  assert.match(railPublisher, /approvalsBinding\(\{session: shownTrack, encounter:/, 'the shown session')
+  assert.doesNotMatch(railPublisher, /approvalsBinding\(\{gateway|gatewayDesignBinding,\s*\{\.\.\.\(actions/, 'no Gateway handed to Approvals')
   assert.match(read('agent/devices/AgentRailDevices.tsx'), /useCentralGroundAnswer\(transport\)/, 'the window\'s one ground answer')
   assert.doesNotMatch(read('agent/devices/receiptBindings.ts'), /\.defaults\[|\.fixtures|catalogue\/panels\//, 'the bindings read no design default or fixture')
 })

@@ -229,7 +229,8 @@ test('the chain draws the plan and no other plate: no Gateways rack, Agency gate
   // REPLACED (#804): "SEAT_ID, CARRIER_ID, RUN_MAP_ID, PROMPT_PADS_ID withdrawn" — the chain withdraws only what it publishes: the Seat is
   // Git / landing's Seat page (§19.17), and nothing publishes its id (t804-retired-carries-answer-face.test.mjs).
   // The Decision helper is published beside a group's rack (§19.20, a chain of the rack), so it is withdrawn with the chain.
-  assert.match(view, /AGENTSET_ID, DECISION_HELPER_ID, APPROVALS_ID, CARRIER_ID, RUN_MAP_ID, PROMPT_PADS_ID\]\) publishDevice\(id, null\)/, 'withdrawn with the chain — never the Link, never the rail\'s')
+  // REPLACED (parity D-09): Approvals is the rail's publisher's in every mode (AgentRailDevices.tsx), so the chain withdraws it no more.
+  assert.match(view, /AGENTSET_ID, DECISION_HELPER_ID, CARRIER_ID, RUN_MAP_ID, PROMPT_PADS_ID\]\) publishDevice\(id, null\)/, 'withdrawn with the chain — never the Link, never the rail\'s')
   assert.doesNotMatch(view, /SEAT_ID[^\n]*publishDevice\(id, null\)/, 'no retired Seat cleared')
   const detail = read('agent/AgentShellDeviceDetail.tsx')
   assert.match(detail, /import \{workcellOfTrack\} from '\.\.\/frame\/tracks\/returnTracks'/)
