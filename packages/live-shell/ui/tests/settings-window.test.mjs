@@ -1163,8 +1163,16 @@ test('CODE-DERIVED — Setup\'s Credentials step is where AIKit finds each provi
   const none = stepOf(win.setupValues({...base, credentials: {state: 'read', findings: win.setupKeyFindings(REAL.discover_none.data), providers, bindings: []}}, held({})), 'credentials')
   assert.equal(none.state, 'accepted')
   assert.match(none.said, /^Nothing to bind/)
-  assert.deepEqual(none.items.map(row => [row.name, !!row.why, row.credential]), [['anthropic for claude-code', true, undefined]])
-  assert.match(none.items[0].why, /own credential store/)
+  assert.deepEqual(none.items.map(row => [row.name, !!row.why, row.credential]), [['anthropic for claude-code', false, undefined]], 'its own login is no fault, and nothing to bind')
+  assert.equal(none.items[0].change, 'claude-code signs in itself · nothing to bind')
+  // A key inside a harness's own login store (`aikit credential discover` source harness-auth: codex's auth.json) is the harness's own
+  // login: never offered for binding, which would copy it into a second store; it stands as the tool's own.
+  const own = {state: 'read', findings: [{source: 'harness-auth', location: '/w/Arriving/.codex/auth.json (codex)', name: 'OPENAI_API_KEY', credential: 'credential:openai', bound: false},
+    {source: 'harness-auth', location: '/w/Arriving/.codex/auth.json (codex)', name: 'tokens', bound: false}], providers: [], bindings: []}
+  const kept = stepOf(win.setupValues({...base, credentials: own}, held({})), 'credentials')
+  assert.equal(kept.state, 'accepted', 'a harness\'s own login keeps nothing waiting')
+  assert.deepEqual(kept.items, [{name: 'codex', where: '/w/Arriving/.codex/auth.json', change: 'its own login, kept by the tool itself · nothing to bind'}], 'one row for the store, none per entry, no credential to pick')
+  assert.deepEqual(win.setupOpenKeys(own), [], 'nothing to bind')
   // A key found in the world's .env (a dummy value AIKit never reads): its place and name, the credential it would bind.
   const findings = win.setupKeyFindings(REAL.discover_found.data)
   assert.deepEqual(findings, [{source: 'project-env', location: '/w/Arriving/.env', name: 'ANTHROPIC_API_KEY', credential: 'credential:anthropic', bound: false}])

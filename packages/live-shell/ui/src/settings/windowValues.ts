@@ -1007,6 +1007,14 @@ export function setupHarnessProviders(tool: SetupHarness, auth: unknown): SetupH
     return {harness: tool.harness, ...(tool.folder ? {folder: tool.folder} : {}), provider: name, ...(envVar ? {envVar} : {}), ...(ownLogin ? {ownLogin} : {})}
   })
 }
+/** A key found inside a harness's own login store (`aikit credential discover` source harness-auth): the harness signed itself in and
+ * keeps it there. Binding it into AIKit would copy the harness's own login into a second store, so Setup never offers it. Pure. */
+export const harnessOwned = (row: SetupKeyFinding): boolean => row.source === 'harness-auth'
+/** The keys Setup's Credentials step offers to bind: found, with a provider, not bound, and not a harness's own login. Pure. */
+export function setupOpenKeys(reading: Extract<SetupCredentials, {state: 'read'}>): SetupKeyFinding[] {
+  const bound = new Set(reading.bindings.filter(row => !row.revoked).map(row => row.credential))
+  return reading.findings.filter(row => row.credential && !row.bound && !bound.has(row.credential) && !harnessOwned(row))
+}
 /** The credential a provider's key binds as (AIKit's own convention, `credential:<provider>`: discovery proposes it, client status names it). */
 const credentialFor = (provider: string) => `credential:${provider}`
 /** The schemes of a stored-secret reference AIKit declares (`aikit credential setup --ref`): a place in a store, never a key. */
@@ -1021,24 +1029,28 @@ export function setupCredentialStep(reading: SetupCredentials | undefined, held:
   if (!reading) return undefined
   if (reading.state === 'refused') return {step: 'credentials', state: 'found', items: [{name: 'Your keys', why: reading.error}]}
   const bound = new Map(reading.bindings.filter(row => !row.revoked).map(row => [row.credential, row.reference]))
-  const open = reading.findings.filter(row => row.credential && !row.bound && !bound.has(row.credential))
+  const open = setupOpenKeys(reading)
   const chosen = txt(held('credential')) ?? open[0]?.credential, reference = txt(held('reference'))
-  const items: Record<string, unknown>[] = reading.findings.map(row => {
+  // A harness's own login store (codex's ~/.codex/auth.json, pi's ~/.pi/agent/auth.json): the harness signed itself in and keeps it.
+  const own = new Set(reading.findings.filter(harnessOwned).map(row => row.location))
+  const items: Record<string, unknown>[] = reading.findings.filter(row => !harnessOwned(row)).map(row => {
     if (!row.credential) return {name: row.name, where: row.location, why: `AIKit knows no provider for ${row.name}: it is left as it is.`}
     if (row.bound || bound.has(row.credential)) return {name: row.name, where: row.location, credential: row.credential, bound: true,
       change: `${row.credential} is bound by reference${bound.get(row.credential) ? ` to ${bound.get(row.credential)}` : ''} · the key stays where it lies`}
     return {name: row.name, where: row.location, credential: row.credential,
       change: `AIKit binds ${row.credential} ${row.credential === chosen && reference ? `to ${reference}` : 'by the reference you give'} · the key stays where it lies; the DLW never shows it and never keeps it`}
   })
-  const covered = new Set([...reading.findings.flatMap(row => (row.credential ? [row.credential] : [])), ...bound.keys()])
+  for (const where of own) items.push({name: where.replace(/^.*\(([^)]+)\)\s*$/, '$1'), where: where.replace(/\s*\([^)]+\)\s*$/, ''),
+    change: 'its own login, kept by the tool itself · nothing to bind'})
+  const covered = new Set([...reading.findings.filter(row => !harnessOwned(row)).flatMap(row => (row.credential ? [row.credential] : [])), ...bound.keys()])
   for (const [credential, where] of bound) if (!reading.findings.some(row => row.credential === credential))
     items.push({name: credential, where: where ?? credential, credential, bound: true, change: `bound by reference${where ? ` to ${where}` : ''}`})
   for (const provider of reading.providers) {
     if (provider.unread) { items.push({name: provider.harness, where: provider.folder ?? provider.harness, why: provider.unread}); continue }
     if (covered.has(credentialFor(provider.provider))) continue
     covered.add(credentialFor(provider.provider))
-    items.push({name: `${provider.provider} for ${provider.harness}`, where: provider.folder ?? provider.harness,
-      why: provider.ownLogin ?? `No key for it lies on this computer${provider.envVar ? ` (${provider.envVar} is not set)` : ''}.`})
+    items.push(provider.ownLogin ? {name: `${provider.provider} for ${provider.harness}`, where: provider.folder ?? provider.harness, change: `${provider.harness} signs in itself · nothing to bind`}
+      : {name: `${provider.provider} for ${provider.harness}`, where: provider.folder ?? provider.harness, why: `No key for it lies on this computer${provider.envVar ? ` (${provider.envVar} is not set)` : ''}.`})
   }
   // Nothing waiting to be bound is done (manual §10.11: what you leave out is not shown as missing), and says so.
   if (!open.length) return {step: 'credentials', state: 'accepted', items, ...(bound.size ? {} : {said: 'Nothing to bind: AIKit finds no provider\'s key waiting on this computer. Each tool keeps its own login.'})}

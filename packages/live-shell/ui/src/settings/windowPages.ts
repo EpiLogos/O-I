@@ -21,7 +21,7 @@ import {connectionBasis, machineBasis, validateMachine, type MachineConnection, 
 import {authorityAllowsTrigger, eligibleProofs, routineBasis, scheduleFromInput, type RoutineAuthoringOptions, type RoutineAuthoringResult, type ScheduleShape} from './routines'
 import {appearanceValues, automationValues, credentialValues, NEW_SCHEDULE, ROUTINE_FORM, scanWords, workcellSecretValues, folderOf, harnessValues, machineValues, NO_AUTHORING, NO_HARNESS, NO_INVOKE, NO_MACHINES, NO_NAVIGATE, NO_PRODUCTS,
   NO_PROFILES, NO_SETUP_AIKIT, NO_SETUP_SOURCE, NO_VISUALS, groundBound, productValues, profileValues, SECRET_REFERENCE, setupFolder, setupHarnessClients, setupHarnessProviders,
-  setupKeyFindings, setupNamespace, setupSkillRoots, setupValues, systemValues, type CredentialRow, type SetupCredentials, type SetupHarnesses, type SetupMachine, type SetupPreview,
+  setupKeyFindings, setupNamespace, setupOpenKeys, harnessOwned, setupSkillRoots, setupValues, systemValues, type CredentialRow, type SetupCredentials, type SetupHarnesses, type SetupMachine, type SetupPreview,
   harnessLoginClients, harnessLoginsOf, loginCheckOf, loginReadBack, commandWords, type HarnessLoginClient, type HarnessLoginReading,
   setupExtensionLine, setupPlacementLine, possessive, type SetupExtension, type SetupLeft, type SetupPlacement, type SetupSnapshot, type SetupWorkFolder, type SetupFounding, type SetupKey, type SetupAgreement, type SetupForm, type SetupMusic, type CivilTimePreview, type SetupBirth, type SetupCivilTime, type SetupDisclosure, groundNameRefusal, groundParts, groundPath} from './windowValues'
 import type {IdentityProfile} from '../../../../../desktop/cradle/src/nara/identity/types'
@@ -1144,8 +1144,10 @@ export class SetupWalk {
     const reading = this.credentials
     if (reading?.state !== 'read') throw new Error(reading?.error ?? 'AIKit did not read your keys.')
     const bound = new Set(reading.bindings.filter(row => !row.revoked).map(row => row.credential))
-    const open = reading.findings.filter(row => row.credential && !row.bound && !bound.has(row.credential))
+    const open = setupOpenKeys(reading)
     const credential = text(held('credential')) || open[0]?.credential
+    const owned = reading.findings.find(row => harnessOwned(row) && row.credential === credential)
+    if (owned && !open.some(row => row.credential === credential)) throw new Error(`${credential} is a tool's own login (${owned.location}): the tool keeps it, and nothing is bound.`)
     if (!credential) throw new Error(bound.size ? 'Accepted: every key found is bound. Nothing is made twice.' : 'Nothing found to bring in: AIKit finds no provider\'s key on this computer.')
     if (bound.has(credential)) throw new Error(`Accepted: ${credential} is bound already. Nothing is made twice.`)
     if (!open.some(row => row.credential === credential)) throw new Error(`${credential} is no key AIKit found here. Read again.`)
