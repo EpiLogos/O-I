@@ -114,10 +114,13 @@ pub(crate) struct PreparedPlace {
 impl PreparedPlace {
     /// The owners' answers, outside the kernel lock.
     pub(crate) fn resolve(self) -> Result<Place, String> {
-        let world = self.world.read()?;
-        let cwd = location(&world, (!self.project.is_empty()).then_some(&*self.project))?;
-        let project_ref = project_ref(&self.client, &self.aikit, &self.reads, &self.project, &cwd)?;
-        Ok(Place { cwd, project_ref })
+        place_of(
+            &self.client,
+            &self.aikit,
+            &self.reads,
+            &self.world.read()?,
+            &self.project,
+        )
     }
 }
 
@@ -146,6 +149,21 @@ impl Kernel {
         let project_ref = self.agent_project_ref(project, &cwd)?;
         Ok(Place { cwd, project_ref })
     }
+}
+
+/// Where a conversation is held (O-I #1003): the World's root for the root World (an empty Project label), else the
+/// disclosed Project's location, with the ProjectRef bound there ([`project_ref`]). Provisioning a conversation and every
+/// encounter read of it resolve the one place, so a conversation the root World opens is the one its reads find.
+pub(crate) fn place_of(
+    client: &CentralClient,
+    aikit: &agency::Client,
+    reads: &Mutex<read_cache::OwnerReadCache>,
+    world: &Value,
+    project: &str,
+) -> Result<Place, String> {
+    let cwd = location(world, (!project.is_empty()).then_some(project))?;
+    let project_ref = project_ref(client, aikit, reads, project, &cwd)?;
+    Ok(Place { cwd, project_ref })
 }
 
 /// The working directory an agent op runs in: the World's root for the root

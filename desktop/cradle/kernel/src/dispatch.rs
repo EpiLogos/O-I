@@ -487,9 +487,7 @@ pub(crate) fn is_free(op: &KernelOp) -> bool {
         | KernelOp::WorldResolve { .. }
         | KernelOp::A2aExchange { .. }
         | KernelOp::Setup { .. }
-        // Lane AK: an AIKit SessionSpace delivery (being.rs, its owner
-        // re-admits the binding by CAS) and a file shown in Finder.
-        | KernelOp::BeingEncounter { .. }
+        // Lane AK: a file shown in Finder.
         | KernelOp::SettingsReveal { .. } => true,
         KernelOp::SharedField { request } => !crate::shared_field::is_read(request),
         // A presence's listing and withdrawal: SharedField's own transport,
@@ -659,17 +657,7 @@ fn free(op: KernelOp) -> Result<KernelOpOutcome, String> {
                 },
             })
         }
-        // A projected Agent's delivery through AIKit's SessionSpace owner,
-        // which re-admits the Agent and its binding by CAS (being.rs); and a
-        // file of the person's own shown in Finder. Neither reads or records
-        // kernel state (lane AK).
-        KernelOp::BeingEncounter { request } => Ok(KernelOpOutcome {
-            read_scopes: None,
-            receipts: Vec::new(),
-            result: KernelOpResult::BeingEncounter {
-                data: crate::being::apply(request),
-            },
-        }),
+        // A file of the person's own shown in Finder: it reads or records no kernel state (lane AK).
         KernelOp::SettingsReveal { path } => Ok(KernelOpOutcome {
             read_scopes: None,
             receipts: Vec::new(),
@@ -932,7 +920,6 @@ mod tests {
         assert_eq!(form(KernelOp::HarnessStatus), "agent");
         assert_eq!(form(KernelOp::ModelCatalogue), "agent");
         assert_eq!(form(KernelOp::ConfigReceipts), "owner-read");
-        assert_eq!(form(KernelOp::ChatDefaultRead), "owner-read");
         // Lane K1: the seat instrument, Central's source returns and AIKit's
         // declared remotes.
         assert_eq!(form(KernelOp::SeatStatusRead), "owner-read");
@@ -1690,7 +1677,6 @@ else:
             json!({"op": "invoke_action", "invocation": {"action": "projectcentral.now.return", "target_ref": "t"}}),
             json!({"op": "instance_commission", "location": location, "expected_revision": "v", "content": "c"}),
             json!({"op": "encounter_provision", "project": "p"}),
-            json!({"op": "flow_participant_provision", "project": "p", "agent_ref": "a", "flow_ref": "f", "sender": "s"}),
             json!({"op": "act", "action": "aikit.gateway.agent", "input": {"binding": "b", "operation": "stop"}}),
             json!({"op": "gateway_service", "on": false}),
             json!({"op": "harness_ingress_rule", "binding": "b", "kind": "agent", "decision": "pair"}),
@@ -1743,13 +1729,13 @@ else:
     /// (`an_owner_runs_under_the_lock_only_for_an_ordering_invariant`).
     const SERVED_BY_A_FORM: &str = "
         a2a_exchange act act_describe actuation_read actuation_write agency_read agent_card agent_definition
-        aikit_read aikit_write being_encounter central chat_default_read client_install
+        aikit_read aikit_write central client_install
         composition_read config_apply config_apply_reviewed config_capabilities_read
         config_desired_discard config_desired_hold config_diff config_plan config_plan_reviewed
         config_receipts config_registry_read config_reset config_resolutions_read
         credential_discover credential_list credential_revoke credential_rotate
         credential_setup credential_verify day_read decide decision_status dictation_probe
-        dictation_transcribe encounter encounter_join encounter_provision
+        dictation_transcribe encounter encounter_provision
         encounter_session_attach encounter_session_bench encounter_session_decision_helper
         encounter_session_detach encounter_session_drag_out encounter_session_group
         encounter_session_hot_swap
@@ -1759,7 +1745,7 @@ else:
         factory_attempt_read
         factory_attempt_task_list_read factory_attempt_task_read factory_build_snapshot
         factory_development_read factory_owner file_bytes file_last_reading file_operation
-        file_read file_resolve files_list flow_changed_since flow_participant_provision
+        file_read file_resolve files_list flow_changed_since
         gateway_remotes_read gateway_service gateway_team git_diff_read git_repository_read graph
         ground ground_authority ground_form ground_music harness_agent_read
         harness_auth_describe harness_ingress_rule harness_status inhabitation_read instance_commission
@@ -1912,8 +1898,6 @@ else:
             json!({"op": "theme_revert"}),
             json!({"op": "theme_remove", "id": "t"}),
             json!({"op": "nara_decision_record", "decision": {}}),
-            json!({"op": "chat_default_hold", "provider": "p"}),
-            json!({"op": "chat_default_discard"}),
             json!({"op": "source_edit", "source_ref": "s", "content": "c"}),
             json!({"op": "surface_open", "surface_id": "s", "kind": "k", "title": "t"}),
             json!({"op": "surface_close", "surface_id": "s"}),
@@ -1938,11 +1922,6 @@ else:
             (
                 json!({"op": "ground_music", "request": {"operation": "preview"}}),
                 "owner-write",
-            ),
-            (
-                json!({"op": "being_encounter", "request": {"operation": "standing",
-                "agent_ref": "a", "target_agency_ref": "t", "source_refs": []}}),
-                "free",
             ),
             (json!({"op": "settings_reveal", "path": "~/a"}), "free"),
         ];

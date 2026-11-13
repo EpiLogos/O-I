@@ -239,6 +239,22 @@ impl Model {
         (answer(slice, &self.held(slice)), moved)
     }
 
+    /// The slice's value as the model holds it, read first through the model's own asking when it never was: for a kernel act
+    /// that decides from the model (a new conversation opens with the census's first agent that starts; O-I #1003). `None` when
+    /// the model has not started (a kernel in a test) or the slice's owner has never answered.
+    pub fn value_now(&self, slice: Slice) -> Option<Value> {
+        let (asking, telling) = self.running.get()?;
+        let via = |op: KernelOp| asking(op);
+        let (answer, moved) = self.subscribe(slice, &via, false);
+        if let Some(version) = moved {
+            telling(slice, version);
+        }
+        answer
+            .get("value")
+            .filter(|value| !value.is_null())
+            .cloned()
+    }
+
     /// Read the slice again now; the version it moved to, if it moved.
     pub fn read_again(&self, slice: Slice, via: Via<'_>) -> Option<u64> {
         self.read_once(slice, via, false, false)
@@ -459,9 +475,6 @@ pub fn written_by(op: &KernelOp) -> Vec<Slice> {
         "factory_owner" => vec![Slice::Factory, Slice::Sessions],
         "encounter"
         | "encounter_provision"
-        | "encounter_join"
-        | "flow_participant_provision"
-        | "being_encounter"
         | "encounter_task_configure"
         | "encounter_task_remove"
         | "encounter_task_copy"
@@ -472,9 +485,7 @@ pub fn written_by(op: &KernelOp) -> Vec<Slice> {
         | "encounter_session_hot_swap"
         | "encounter_session_drag_out"
         | "agent_definition"
-        | "aikit_write"
-        | "chat_default_hold"
-        | "chat_default_discard" => {
+        | "aikit_write" => {
             vec![Slice::Sessions, Slice::Models, Slice::Factory]
         }
         "client_install"

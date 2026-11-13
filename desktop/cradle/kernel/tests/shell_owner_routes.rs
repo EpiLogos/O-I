@@ -1550,38 +1550,6 @@ fn factory_unit_decisions_and_custody_through_the_factory_owner() {
 }
 
 #[test]
-fn the_encounter_join_no_longer_asks_actuation_for_a_correlation_it_does_not_have() {
-    let _held = hold();
-    let dir = scratch("encounter");
-    let actuation = Fake::new(&dir, "actuation");
-    let _actuation = Bound::set("OI_ACTUATION_BIN", &actuation.bin);
-    let aikit_dir = dir.join("aikit");
-    fs::create_dir_all(&aikit_dir).unwrap();
-    let aikit = Fake::new(&aikit_dir, "aikit");
-    let _aikit = Bound::set("OI_AIKIT_BIN", &aikit.bin);
-    aikit.answer(&json!({"ok": true, "data": {"events": []}}));
-    let reading =
-        oi_cradle_kernel::encounter::assemble(&dir, "agent-session/w3", "prq_01K8W3", None);
-    assert!(
-        actuation.asked().is_empty(),
-        "Actuation 0.2.1 has no correlate"
-    );
-    let wire = serde_json::to_value(&reading).unwrap();
-    assert_eq!(
-        wire["inputs"]["actuation_correlation"]["state"],
-        "unavailable"
-    );
-    assert_eq!(
-        wire["inputs"]["actuation_correlation"]["detail"],
-        oi_cradle_kernel::encounter::ACTUATION_CORRELATE_ABSENT
-    );
-    assert_eq!(wire["inputs"]["aikit_lifecycle"]["state"], "available");
-    // The disposition rests on the side that was queried.
-    assert_ne!(wire["disposition"]["state"], "unavailable", "{wire}");
-    let _ = fs::remove_dir_all(&dir);
-}
-
-#[test]
 fn the_frames_monitor_reads_a_streams_frames_from_aikits_gateway_journal() {
     let _held = hold();
     let dir = scratch("replay");

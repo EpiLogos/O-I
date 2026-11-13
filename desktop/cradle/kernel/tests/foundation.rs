@@ -640,35 +640,133 @@ fn act_2_see_the_agents_that_start() {
 
 // ------------------------------------------------------------------------ 3
 
-/// The agent a passage is sent to: the first that starts of those a person is
-/// most likely to have signed in (Claude Code, Codex, Pi, Gemini), unless
-/// FOUNDATION_AGENT names one.
-fn chosen_agent(world: &World) -> Result<String, String> {
-    let starting = agents_that_start(world)?;
-    let preferred = std::env::var("FOUNDATION_AGENT").ok();
-    let order: Vec<&str> = match &preferred {
-        Some(agent) => vec![agent.as_str()],
-        None => vec!["claude-code", "codex", "pi", "gemini"],
-    };
-    order
-        .iter()
-        .find(|slug| starting.iter().any(|(s, _)| s == *slug))
-        .map(|slug| (*slug).to_owned())
-        .ok_or_else(|| format!("none of {order:?} starts here"))
+/// The agents a passage is sent to: every agent the census says starts (the World Model's agents, as the window offers them),
+/// or the one FOUNDATION_AGENT names.
+fn chosen_agents(world: &World) -> Result<Vec<String>, String> {
+    let starting = window_agents(world)?;
+    match std::env::var("FOUNDATION_AGENT")
+        .ok()
+        .filter(|a| !a.trim().is_empty())
+    {
+        Some(agent) if starting.iter().any(|slug| slug == &agent) => Ok(vec![agent]),
+        Some(agent) => Err(format!(
+            "{agent} is not among the agents that start here: {starting:?}"
+        )),
+        None if starting.is_empty() => Err("no agent on this machine starts".into()),
+        None => Ok(starting),
+    }
 }
 
-/// A passage of a page sent to an agent the way the window sends one (a
-/// conversation provisioned for the World, the passage drafted and prompted),
-/// and the answer read back from AIKit's transcript of that conversation and
-/// from the page, where the answer must land.
+/// The page's ql-doc island, parsed.
+fn island_of(html: &str) -> Result<(usize, usize, Value), String> {
+    let open = "<script type=\"application/json\" id=\"ql-doc\">";
+    let start = html.find(open).ok_or("the page holds no ql-doc island")? + open.len();
+    let end = start
+        + html[start..]
+            .find("</script>")
+            .ok_or("the page's ql-doc island is not closed")?;
+    let doc: Value = serde_json::from_str(&html[start..end])
+        .map_err(|e| format!("the page's ql-doc island: {e}"))?;
+    Ok((start, end, doc))
+}
+
+/// Keep an agent's answer in the page as the window does (FlowSurface.tsx `appendAgentResponse` → instance.ts `appendEntry`):
+/// the answer appended as the agent's own entry, the page written by `central.files.write` on the revision it was read at,
+/// and read back from Central. Answers the page's new revision.
+fn keep_the_answer(
+    world: &World,
+    page: &SavedPage,
+    agent: &str,
+    session: &str,
+    answer: &str,
+) -> Result<String, String> {
+    let read = central_owner(
+        world,
+        "central.files.read",
+        json!({"location": page.location}),
+    )?;
+    let html = read["content"]
+        .as_str()
+        .or_else(|| read["text"].as_str())
+        .unwrap_or_default()
+        .to_owned();
+    let revision = read["revision"].as_str().unwrap_or_default().to_owned();
+    let (start, end, mut doc) = island_of(&html)?;
+    let participants = doc["meta"]["participants"]
+        .as_array()
+        .cloned()
+        .unwrap_or_default();
+    let initial = participants
+        .iter()
+        .find(|p| p["ref"] == session)
+        .and_then(|p| p["initial"].as_str())
+        .map(str::to_owned)
+        .unwrap_or_else(|| {
+            let taken: Vec<&str> = participants
+                .iter()
+                .filter_map(|p| p["initial"].as_str())
+                .collect();
+            ('A'..='Z')
+                .map(String::from)
+                .find(|c| !taken.contains(&c.as_str()))
+                .unwrap_or_else(|| "Z".into())
+        });
+    if !participants.iter().any(|p| p["ref"] == session) {
+        let mut list = participants.clone();
+        list.push(json!({"initial": initial, "name": agent, "kind": "agent", "ref": session}));
+        doc["meta"]["participants"] = Value::Array(list);
+    }
+    let escaped = answer
+        .replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;");
+    let entry = json!({"id": format!("foundation-{}-{agent}", std::process::id()), "author": initial,
+        "at": "2026-11-13T00:00:00.000Z", "html": format!("<p>{escaped}</p>"), "replyTo": null, "touched": false});
+    doc["entries"]
+        .as_array_mut()
+        .ok_or("the page's island has no entries")?
+        .push(entry);
+    doc["meta"]["revision"] = json!(doc["meta"]["revision"].as_u64().unwrap_or(0) + 1);
+    let next = format!("{}{}{}", &html[..start], doc, &html[end..]);
+    let written = action(
+        world,
+        "central.files.write",
+        json!({"location": page.location, "expected_revision": revision, "content": next}),
+    )
+    .map_err(|e| format!("keeping {agent}'s answer in the page: {e}"))?;
+    let kept = written["revision"]
+        .as_str()
+        .or_else(|| written["new_revision"].as_str())
+        .unwrap_or_default()
+        .to_owned();
+    let back = central_owner(
+        world,
+        "central.files.read",
+        json!({"location": page.location}),
+    )?;
+    let content = back["content"]
+        .as_str()
+        .or_else(|| back["text"].as_str())
+        .unwrap_or_default();
+    if !content.contains(&escaped) || back["revision"].as_str() != Some(kept.as_str()) {
+        return Err(format!(
+            "Central reads the page without {agent}'s answer at revision {kept}: {}",
+            clip(&back)
+        ));
+    }
+    Ok(kept)
+}
+
+/// A passage of a page sent to an agent the way the window sends one: a conversation provisioned with the census agent
+/// (`encounter_provision` `agent`), the passage put in its draft and prompted (session.ts `EncounterSession.submit`), the answer
+/// read back from AIKit's transcript, and kept in the page. Answers the session.
 fn send_a_passage(world: &World, page: &SavedPage, agent: &str) -> Result<String, String> {
-    let marker = format!("foundation answer {}", std::process::id() % 100_000);
+    let marker = format!("foundation answer {} {agent}", std::process::id() % 100_000);
     let provisioned = world
-        .send(json!({"op": "encounter_provision", "project": "", "preferred_body_ref": agent}))
+        .send(json!({"op": "encounter_provision", "project": "", "agent": agent}))
         .map_err(|e| format!("opening a conversation with {agent}: {e}"))?;
     let session = provisioned["data"]["agent_session"]
         .as_str()
-        .or_else(|| provisioned["data"]["refs"]["agent_session"].as_str())
         .map(str::to_owned)
         .ok_or_else(|| {
             format!(
@@ -676,6 +774,13 @@ fn send_a_passage(world: &World, page: &SavedPage, agent: &str) -> Result<String
                 clip(&provisioned)
             )
         })?;
+    if provisioned["data"]["provider"] != agent {
+        return Err(format!(
+            "the conversation opened {} for {agent}: {}",
+            provisioned["data"]["provider"],
+            clip(&provisioned)
+        ));
+    }
     let encounter = |request: Value| -> Result<Value, String> {
         let name = request["action"].as_str().unwrap_or("?").to_owned();
         let answer = world.send(json!({"op": "encounter", "project": "", "request": request}))?;
@@ -694,7 +799,7 @@ fn send_a_passage(world: &World, page: &SavedPage, agent: &str) -> Result<String
         .ok_or_else(|| format!("the draft named no revision: {}", clip(&draft)))?;
     encounter(json!({"action": "prompt", "agent_session": session, "draft_revision": revision}))?;
     let deadline = Instant::now() + Duration::from_secs(300);
-    loop {
+    let answer = loop {
         if Instant::now() > deadline {
             return Err(format!(
                 "{agent} gave no answer with `{marker}` within 300 s"
@@ -702,18 +807,17 @@ fn send_a_passage(world: &World, page: &SavedPage, agent: &str) -> Result<String
         }
         std::thread::sleep(Duration::from_secs(2));
         let view = encounter(json!({"action": "view", "agent_session": session}))?;
-        let answered = view["blocks"].as_array().is_some_and(|blocks| {
-            blocks.iter().any(|block| {
-                block["kind"] == "assistant"
-                    && block["text"]
-                        .as_str()
-                        .is_some_and(|t| t.to_lowercase().contains(&marker))
+        let found = view["blocks"].as_array().and_then(|blocks| {
+            blocks.iter().find_map(|block| {
+                let text = block["text"].as_str()?;
+                (block["kind"] == "assistant" && text.to_lowercase().contains(&marker))
+                    .then(|| text.to_owned())
             })
         });
-        if answered {
-            break;
+        if let Some(text) = found {
+            break text;
         }
-    }
+    };
     // AIKit's own transcript of the conversation holds the answer.
     let transcript = owner(
         world,
@@ -734,28 +838,32 @@ fn send_a_passage(world: &World, page: &SavedPage, agent: &str) -> Result<String
             "AIKit's transcript of {session} does not hold the answer `{marker}`"
         ));
     }
-    // The page holds the answer.
-    let on_disk = std::fs::read_to_string(&page.path).unwrap_or_default();
-    if !on_disk.to_lowercase().contains(&marker) {
-        return Err(format!(
-            "{agent} answered in its conversation, but the answer did not land in the page {}",
-            page.path.display()
-        ));
-    }
+    keep_the_answer(world, page, agent, &session, &answer)?;
     Ok(session)
 }
 
-/// Act 3: send a passage to an agent and get the answer in the page, read back
-/// from AIKit's transcript and the page.
+/// Act 3: send a passage to each agent that starts and get each answer in the page, read back from AIKit's transcript and
+/// from Central.
 #[test]
-#[ignore = "foundation act: runs the installed owners in a fresh home and spends a provider prompt"]
+#[ignore = "foundation act: runs the installed owners in a fresh home and spends a provider prompt per agent"]
 fn act_3_send_a_passage_and_get_the_answer() {
     run("send-a-passage-and-get-the-answer", |world| {
-        let agent = chosen_agent(world)?;
         let page = save_a_page(world, "foundation-passage")?;
-        let session = send_a_passage(world, &page, &agent)?;
-        println!("{agent} answered in {session} and in the page");
-        Ok(())
+        let mut failed = Vec::new();
+        for agent in chosen_agents(world)? {
+            match send_a_passage(world, &page, &agent) {
+                Ok(session) => println!("{agent} answered in {session} and in the page"),
+                Err(why) => {
+                    println!("{agent}: {why}");
+                    failed.push(format!("{agent}: {why}"));
+                }
+            }
+        }
+        if failed.is_empty() {
+            Ok(())
+        } else {
+            Err(failed.join("; "))
+        }
     });
 }
 
@@ -959,7 +1067,7 @@ fn act_5_the_day_holds_it_and_closes() {
             "the page saved",
             page.location["path"].as_str().unwrap_or_default(),
         )?;
-        let agent = chosen_agent(world)?;
+        let agent = chosen_agents(world)?.remove(0);
         let session = send_a_passage(world, &page, &agent)?;
         day_holds(world, &day_ref, "the passage sent and answered", &session)?;
         let attempt = run_a_factory_task(world)?;

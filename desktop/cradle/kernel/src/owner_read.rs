@@ -521,7 +521,6 @@ impl PreparedRead {
             | KernelOp::InhabitationRead { .. }
             | KernelOp::WikiProjectionRead { .. }
             | KernelOp::WikiProjectionSources
-            | KernelOp::ChatDefaultRead
             | KernelOp::CredentialList
             | KernelOp::CredentialDiscover
             | KernelOp::HarnessAuthDescribe { .. }
@@ -529,7 +528,6 @@ impl PreparedRead {
             | KernelOp::ProfileRead { .. }
             | KernelOp::ConfigReceipts
             | KernelOp::AgentCard { .. }
-            | KernelOp::EncounterJoin { .. }
             | KernelOp::FlowChangedSince { .. }
             | KernelOp::KnowledgeImpact { .. }
             // Lane K1: the seat instrument, Central's source returns and
@@ -576,7 +574,6 @@ impl PreparedRead {
                 | KernelOp::ProfileList
                 | KernelOp::ProfileRead { .. }
                 | KernelOp::ConfigReceipts
-                | KernelOp::EncounterJoin { .. }
                 | KernelOp::FlowChangedSince { .. }
                 | KernelOp::KnowledgeImpact { .. }
                 | KernelOp::WorldBodyRead { .. }
@@ -1171,9 +1168,6 @@ impl PreparedRead {
                 }
                 KernelOpResult::WikiProjectionSourcesReading { data }
             }
-            KernelOp::ChatDefaultRead => KernelOpResult::ChatDefaultReading {
-                document: crate::chat_defaults::read()?,
-            },
             op @ (KernelOp::CredentialList
             | KernelOp::CredentialDiscover
             | KernelOp::HarnessAuthDescribe { .. }) => {
@@ -1206,23 +1200,6 @@ impl PreparedRead {
                     world_ref.as_deref(),
                 )?,
             },
-            KernelOp::EncounterJoin {
-                session,
-                request_ref,
-                reply,
-            } => {
-                // Central discloses the context anchor; the lifecycle store
-                // itself is the AIKit owner's, never renderer-supplied.
-                let world = self.world.read()?;
-                let cwd = PathBuf::from(
-                    world["root"]
-                        .as_str()
-                        .ok_or("Central root location unavailable")?,
-                );
-                KernelOpResult::EncounterJoined {
-                    reading: crate::encounter::assemble(&cwd, session, request_ref, reply.as_ref()),
-                }
-            }
             KernelOp::SharedField { request } => KernelOpResult::SharedFieldReading {
                 data: crate::shared_field::reading(request)?,
             },
@@ -1590,7 +1567,6 @@ mod tests {
             json!({"op": "credential_list"}),
             json!({"op": "profile_list"}),
             json!({"op": "config_receipts"}),
-            json!({"op": "chat_default_read"}),
             json!({"op": "wiki_projection_sources"}),
         ] {
             assert!(prepared(&read), "{read} is prepared");
@@ -1601,7 +1577,6 @@ mod tests {
             json!({"op": "shared_field", "request": {"kind": "enter"}}),
             json!({"op": "shared_field", "request": {"kind": "observe-stop", "observer_ref": "o"}}),
             json!({"op": "credential_revoke", "credential": "credential:x"}),
-            json!({"op": "chat_default_discard"}),
         ] {
             assert!(!prepared(&write), "{write} is not a prepared read");
         }

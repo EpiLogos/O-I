@@ -140,6 +140,42 @@ pub fn starting(census: &Value) -> Vec<&Value> {
         .unwrap_or_default()
 }
 
+/// The agent a conversation opens with (O-I #1003): the one named, when the census lists it as an agent that starts; with none
+/// named, the census's first agent that starts. Nothing else chooses. With no census held (a kernel whose World Model has not
+/// started), a named agent is left to its owner, which refuses one it cannot open, and an unnamed one is refused in words.
+pub fn agent_for(census: Option<&Value>, named: Option<&str>) -> Result<String, String> {
+    let named = named.map(str::trim).filter(|slug| !slug.is_empty());
+    let Some(census) = census else {
+        return named.map(str::to_owned).ok_or_else(|| {
+            "No agent is named, and the census of the agents on this machine has not been read yet".to_owned()
+        });
+    };
+    let Some(slug) = named else {
+        return starting(census)
+            .first()
+            .and_then(|row| row["slug"].as_str())
+            .map(str::to_owned)
+            .ok_or_else(|| {
+                "No agent on this machine starts: the census lists none that answered".to_owned()
+            });
+    };
+    let row_of = |list: &str| {
+        census[list]
+            .as_array()
+            .and_then(|rows| rows.iter().find(|row| row["slug"] == slug))
+    };
+    match row_of("agents").or_else(|| row_of("not_agents")) {
+        Some(row) if row["starts"] == true => Ok(slug.to_owned()),
+        Some(row) => Err(format!(
+            "{slug} does not start on this machine: {}",
+            row["why"].as_str().unwrap_or("it did not answer its start")
+        )),
+        None => Err(format!(
+            "{slug} is not an agent Actuation detects on this machine"
+        )),
+    }
+}
+
 /// What starting one agent answered.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Started {

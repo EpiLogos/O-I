@@ -1570,50 +1570,6 @@ pub enum EncounterRequest {
         request_id: String,
         decision: PermissionDecision,
     },
-    /// Explicit addressed machine turn. The payload, sender, audience and
-    /// participation basis are owner-validated at commit; a refusal carries the
-    /// owner's own code verbatim. The human draft buffer is never touched.
-    Send {
-        agent_session: String,
-        turn: AddressedTurn,
-    },
-    /// Addressed group dispatch: one delivery identity, explicit per-recipient
-    /// participation bases. The owner admits the whole group (privacy
-    /// admission) before the first transport effect and every recipient gets
-    /// an independent durable result; the fanout is never atomic.
-    SendGroup {
-        delivery_ref: String,
-        sender: String,
-        packet: AddressedPacket,
-        recipients: Vec<GroupRecipient>,
-    },
-    /// Read one addressed delivery's durable owner receipt.
-    Delivery {
-        agent_session: String,
-        delivery_ref: String,
-    },
-    /// One authored Flow entry put to several recipients (O:I #558). The
-    /// request is the owner's own wire contract (`ConversationSendRequest` in
-    /// the bound ai-kit revision), carried verbatim and never re-keyed: the
-    /// owner records it, commits the entry through Central, dispatches each
-    /// recipient as its own delivery and — with no desktop involved — appends
-    /// each returned reply to the Flow. The attachment gate covers every
-    /// recipient session before the owner sees the request.
-    ConversationSend {
-        request: Value,
-    },
-    /// One request's per-recipient standing, reply so far and inclusion.
-    ConversationRead {
-        request_ref: String,
-    },
-    /// The requests bound to one Flow source, newest first.
-    ConversationList {
-        flow_ref: String,
-    },
-    /// Bring one request forward now; never replays an uncertain delivery.
-    ConversationReconcile {
-        request_ref: String,
-    },
     /// Resume the actually recorded native session identity. The owner refuses
     /// contradictory provider/space/cwd/command bases; a plain open with a
     /// recorded binding is refused first (`encounter.resume_required`).
@@ -1624,36 +1580,6 @@ pub enum EncounterRequest {
     },
     /// Probe the resident owner dispatch service (never a provider effect).
     Health,
-}
-/// Field names are the owner wire contract (`crates/aikit-cli/src/encounter_agency.rs`
-/// in the bound ai-kit revision); they are carried verbatim, never re-keyed.
-#[derive(Clone, Debug, serde::Deserialize, PartialEq, serde::Serialize)]
-pub struct AddressedPacket {
-    pub text: String,
-    pub source_refs: Vec<String>,
-    pub audience: Vec<String>,
-}
-/// `expected_task` is the owner's `EncounterTaskBasis`, validated by the owner
-/// against the stored task and the session's agency binding before any
-/// transport. The kernel never interprets or composes it — an opaque value
-/// carried verbatim; a fabricated basis is the owner's refusal to answer.
-#[derive(Clone, Debug, serde::Deserialize, PartialEq, serde::Serialize)]
-pub struct AddressedTurn {
-    pub delivery_ref: String,
-    pub sender: String,
-    pub expected_binding_revision: String,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub expected_task: Option<Value>,
-    pub packet: AddressedPacket,
-}
-/// One explicit group recipient; field names are the owner wire contract
-/// (`encounter_agency.rs` in the bound ai-kit revision), carried verbatim.
-#[derive(Clone, Debug, serde::Deserialize, PartialEq, serde::Serialize)]
-pub struct GroupRecipient {
-    pub agent_session: String,
-    pub expected_binding_revision: String,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub expected_task: Option<Value>,
 }
 #[derive(Clone, Debug, serde::Deserialize, PartialEq, serde::Serialize)]
 #[serde(tag = "outcome", rename_all = "lowercase")]
@@ -1678,28 +1604,12 @@ impl EncounterRequest {
                     | Self::Read { .. }
                     | Self::View { .. }
                     | Self::Status { .. }
-                    | Self::Delivery { .. }
-                    | Self::ConversationRead { .. }
-                    | Self::ConversationList { .. }
             ),
         }
     }
     fn sessions(&self) -> Vec<&str> {
         match self {
-            Self::Start
-            | Self::Providers
-            | Self::Health
-            | Self::ConversationRead { .. }
-            | Self::ConversationList { .. }
-            | Self::ConversationReconcile { .. } => Vec::new(),
-            Self::ConversationSend { request } => request["recipients"]
-                .as_array()
-                .map(|rows| {
-                    rows.iter()
-                        .filter_map(|row| row["agent_session"].as_str())
-                        .collect()
-                })
-                .unwrap_or_default(),
+            Self::Start | Self::Providers | Self::Health => Vec::new(),
             Self::Context { agent_session, .. } => {
                 agent_session.iter().map(String::as_str).collect()
             }
@@ -1716,16 +1626,7 @@ impl EncounterRequest {
             | Self::ModelSelect { agent_session, .. }
             | Self::ModeRead { agent_session }
             | Self::ModeSelect { agent_session, .. }
-            | Self::Send { agent_session, .. }
-            | Self::Delivery { agent_session, .. }
             | Self::Reconnect { agent_session, .. } => vec![agent_session],
-            // The attachment gate covers every named participant of a group: a
-            // session outside this Project's SessionSpaces is refused here, before
-            // the owner sees the turn.
-            Self::SendGroup { recipients, .. } => recipients
-                .iter()
-                .map(|recipient| recipient.agent_session.as_str())
-                .collect(),
         }
     }
 }
@@ -1936,62 +1837,18 @@ impl Client {
     ///
     /// The existing attachment gate stays intact for every other action;
     /// provision is the one path allowed to CREATE the attachment it needs.
+    /// `agent` is the census agent the conversation is with (census.rs `agent_for`; O-I #1003): its slug is the provider AIKit
+    /// opens. A mode that needs one acting body names `preferred_body_ref` instead. `agent_ref` names a roster Agent to mint the
+    /// session's Agency for (a Flow's participant, O:I #558): minted for exactly that Agent, without the task Action, or refused.
     pub fn provision(
         &self,
         cwd: &Path,
         project_ref: &str,
+        agent: Option<&str>,
+        agent_ref: Option<&str>,
         preferred_body_ref: Option<&str>,
     ) -> Result<Value, String> {
-        self.provision_inner(cwd, project_ref, preferred_body_ref, None, None, true)
-    }
-
-    /// Bring a named roster agent into a shared Flow (O:I #558): a fresh
-    /// Agency session minted for exactly that agent, its resident opened, and
-    /// then the one sender and the one Flow source admitted to it. The
-    /// admission is the owner-side half of the person's "bring in" — it widens
-    /// nothing else, and a session that cannot be minted for the named agent
-    /// is refused rather than replaced by a generic chat.
-    pub fn provision_flow_participant(
-        &self,
-        cwd: &Path,
-        project_ref: &str,
-        agent_ref: &str,
-        preferred_body_ref: Option<&str>,
-        sender: &str,
-        flow_ref: &str,
-    ) -> Result<Value, String> {
-        let mut data = self.provision_inner(
-            cwd,
-            project_ref,
-            preferred_body_ref,
-            None,
-            Some(agent_ref),
-            false,
-        )?;
-        let session = data["agent_session"]
-            .as_str()
-            .ok_or("Provisioning returned no AgentSession")?
-            .to_owned();
-        let admitted = self.session_space(
-            cwd,
-            &[
-                "encounter-agency-admit",
-                "--agent-session",
-                &session,
-                "--sender",
-                sender,
-                "--source-ref",
-                flow_ref,
-            ],
-        )?;
-        let admitted: Value = serde_json::from_str(&admitted)
-            .map_err(|error| format!("Unreadable AIKit admission response: {error}"))?;
-        let admitted = admitted.get("data").cloned().unwrap_or(admitted);
-        data["admission"] = admitted;
-        data["flow_ref"] = Value::String(flow_ref.to_owned());
-        data["sender"] = Value::String(sender.to_owned());
-        data["requested_agent_ref"] = Value::String(agent_ref.to_owned());
-        Ok(data)
+        self.provision_inner(cwd, project_ref, agent, preferred_body_ref, None, agent_ref)
     }
 
     /// Exact native attachment identity lets a personal dialogue reopen without
@@ -2003,12 +1860,12 @@ impl Client {
         preferred_body_ref: Option<&str>,
         named: Option<&crate::nara_dialogue::Binding>,
     ) -> Result<Value, String> {
-        self.provision_inner(cwd, project_ref, preferred_body_ref, named, None, false)
+        self.provision_inner(cwd, project_ref, None, preferred_body_ref, named, None)
     }
 
     /// `agent_ref` names the roster Agent to mint the Agency for (a Flow
     /// participant); `named` names a personal dialogue's exact binding.
-    /// `for_task` is a Factory task session (the desktop's `encounter_provision`,
+    /// Any other is a Factory task session (the desktop's `encounter_provision`,
     /// O-I 768): its mint asks for the task Action as well, which Actuation
     /// judges against the owner's standing grant, and a refusal falls back to
     /// the chat mint every other session has. No other kind asks for more.
@@ -2016,11 +1873,12 @@ impl Client {
         &self,
         cwd: &Path,
         project_ref: &str,
+        agent: Option<&str>,
         preferred_body_ref: Option<&str>,
         named: Option<&crate::nara_dialogue::Binding>,
         agent_ref_override: Option<&str>,
-        for_task: bool,
     ) -> Result<Value, String> {
+        let for_task = named.is_none() && agent_ref_override.is_none();
         let context = self.session_space(cwd, &["project-context"])?;
         let binding: Value = serde_json::from_str(&context)
             .map_err(|error| format!("Unreadable AIKit project-context reading: {error}"))?;
@@ -2090,17 +1948,18 @@ impl Client {
                     Some(&binding.expected_agent_ref),
                     false,
                 ),
-                None if for_task && agent_ref_override.is_none() => self
-                    .mint_task_session(cwd, &agent_session)
-                    .map(|(data, refused)| {
-                        task_authority = match refused {
-                            None => serde_json::json!({"standing": "admitted"}),
-                            Some(words) => {
-                                serde_json::json!({"standing": "refused", "words": words})
-                            }
-                        };
-                        data
-                    }),
+                None if for_task => {
+                    self.mint_task_session(cwd, &agent_session)
+                        .map(|(data, refused)| {
+                            task_authority = match refused {
+                                None => serde_json::json!({"standing": "admitted"}),
+                                Some(words) => {
+                                    serde_json::json!({"standing": "refused", "words": words})
+                                }
+                            };
+                            data
+                        })
+                }
                 None => self.mint_agency_as(cwd, &agent_session, agent_ref_override, false),
             };
             match minted {
@@ -2117,9 +1976,7 @@ impl Client {
                     ));
                 }
                 Err(mint_refused) if agent_ref_override.is_some() => {
-                    return Err(format!(
-                        "The named Agent was not admitted to this Flow: {mint_refused}"
-                    ));
+                    return Err(format!("The named Agent was not admitted: {mint_refused}"));
                 }
                 // A refusal from an owner that HAS the mint verb is the
                 // owner's answer (policy, authority, an uncertain timeout):
@@ -2161,41 +2018,36 @@ impl Client {
             }
         };
 
-        // Provider choice for a new chat: the owner's held default when it
-        // names a configured row, else the row literally named `pi`, else
-        // the owner's first row. The rule that chose it travels with the
-        // result, and the composer's own connect UI can still switch the
-        // conversation later.
-        let rows = self.encounter(cwd, project_ref, &EncounterRequest::Providers)?;
-        let configured = rows.as_array().map(Vec::as_slice).unwrap_or_default();
-        let held = crate::chat_defaults::held_provider();
+        // The provider (O-I #1003): the census agent named, whose slug AIKit opens — from the agent's own profile when no row of
+        // the owner's names it — or, for a mode that needs one acting body, the configured row that discloses that body. Nothing
+        // else chooses: no held default, no `pi` row, no first row. AIKit's `model_defaults` picks the model when it opens.
         let (provider, provider_default, resolved_body) = match preferred_body_ref
             .map(str::trim)
             .filter(|value| !value.is_empty())
         {
             Some(body_ref) => {
-                let (provider,row,rule)=preferred_body_provider_choice(configured,held.as_deref(),body_ref)
+                let rows = self.encounter(cwd, project_ref, &EncounterRequest::Providers)?;
+                let configured = rows.as_array().map(Vec::as_slice).unwrap_or_default();
+                let (provider,row)=body_provider_choice(configured,body_ref)
                     .ok_or_else(||format!(
                         "The selected mode requires acting body {body_ref}, but no configured AIKit encounter provider discloses that exact body. Configure the Prime-RPC provider first; a generic provider will not be relabelled Prime–QL."
                     ))?;
-                let resolved_body = if row["body_ref"].as_str() == Some(body_ref) {
-                    let revision=row["body_revision"].as_str().ok_or_else(||format!(
-                        "Provider {provider} names body {body_ref} without an attributable body_revision"
-                    ))?;
-                    Some(serde_json::json!({
-                        "body_ref":body_ref,
-                        "body_revision":revision,
-                        "standing":if rule=="owner-choice" {"explicit-provider-override-resolves-same-body"} else {"mode-selected-default; provider readback required"}
-                    }))
-                } else {
-                    None
-                };
-                (provider, rule, resolved_body)
+                let revision=row["body_revision"].as_str().ok_or_else(||format!(
+                    "Provider {provider} names body {body_ref} without an attributable body_revision"
+                ))?;
+                let resolved_body = serde_json::json!({
+                    "body_ref":body_ref,
+                    "body_revision":revision,
+                    "standing":"mode-selected-default; provider readback required"
+                });
+                (provider, "mode-body", Some(resolved_body))
             }
             None => {
-                let (provider,rule)=default_provider_choice(configured,held.as_deref())
-                    .ok_or("No encounter provider is configured; connect one in System → Sources, then send again")?;
-                (provider, rule, None)
+                let agent = agent
+                    .map(str::trim)
+                    .filter(|slug| !slug.is_empty())
+                    .ok_or("Name the agent to talk to: one of the census's agents that start (the World Model's agents)")?;
+                (agent.to_owned(), "census-agent", None)
             }
         };
 
@@ -2557,27 +2409,9 @@ impl Client {
     }
 }
 
-/// The provider default for a new chat, with the rule that chose it, in
-/// precedence order: the owner's held choice (when it names a configured
-/// row), the row literally named `pi`, else the first configured row.
-/// `None` = nothing is configured. A held choice that no longer names a
-/// configured row falls through honestly — it is never invented back.
-/// A mode-selected acting body narrows the eligible provider set before the
-/// ordinary provider preference is considered. A configured generic provider
-/// is never substituted for the required body.
-pub fn preferred_body_provider_choice<'a>(
-    rows: &'a [Value],
-    owner_choice: Option<&str>,
-    body_ref: &str,
-) -> Option<(String, &'a Value, &'static str)> {
-    if let Some(choice) = owner_choice
-        .map(str::trim)
-        .filter(|choice| !choice.is_empty())
-    {
-        if let Some(row) = rows.iter().find(|row| row["id"].as_str() == Some(choice)) {
-            return Some((choice.to_owned(), row, "owner-choice"));
-        }
-    }
+/// The provider for a mode that needs one acting body: the first configured row that discloses exactly that body with an
+/// attributable revision. A generic provider is never substituted for the required body.
+pub fn body_provider_choice<'a>(rows: &'a [Value], body_ref: &str) -> Option<(String, &'a Value)> {
     let eligible = rows
         .iter()
         .filter(|row| {
@@ -2592,32 +2426,7 @@ pub fn preferred_body_provider_choice<'a>(
         return None;
     }
     let row = eligible[0];
-    Some((row["id"].as_str()?.to_owned(), row, "mode-body"))
-}
-
-pub fn default_provider_choice(
-    rows: &[Value],
-    owner_choice: Option<&str>,
-) -> Option<(String, &'static str)> {
-    let ids: Vec<&str> = rows.iter().filter_map(|row| row["id"].as_str()).collect();
-    if ids.is_empty() {
-        return None;
-    }
-    if let Some(choice) = owner_choice
-        .map(str::trim)
-        .filter(|choice| !choice.is_empty() && ids.contains(choice))
-    {
-        return Some((choice.to_owned(), "owner-choice"));
-    }
-    if ids.contains(&"pi") {
-        return Some(("pi".to_owned(), "pi-row"));
-    }
-    Some((ids[0].to_owned(), "first-configured"))
-}
-
-/// The provider default alone (the choice without its rule).
-pub fn default_provider(rows: &[Value], owner_choice: Option<&str>) -> Option<String> {
-    default_provider_choice(rows, owner_choice).map(|(provider, _)| provider)
+    Some((row["id"].as_str()?.to_owned(), row))
 }
 
 /// Whether a mint refusal is really the suite saying the verb does not
@@ -2833,77 +2642,18 @@ mod tests {
     }
 
     #[test]
-    fn mode_body_is_default_but_explicit_provider_override_stays_explicit() {
+    fn a_mode_body_takes_the_row_that_discloses_it_and_never_a_generic_one() {
         let rows = &[
             serde_json::json!({"id":"pi","label":"Pi"}),
             serde_json::json!({"id":"prime","label":"Prime","body_ref":EPI_PRIME_QL_BODY_REF,"body_revision":"actuation/110"}),
             serde_json::json!({"id":"prime-alt","label":"Prime Alt","body_ref":EPI_PRIME_QL_BODY_REF,"body_revision":"actuation/111"}),
         ];
-        let (provider, row, rule) =
-            preferred_body_provider_choice(rows, None, EPI_PRIME_QL_BODY_REF).unwrap();
+        let (provider, row) = body_provider_choice(rows, EPI_PRIME_QL_BODY_REF).unwrap();
         assert_eq!(provider, "prime");
         assert_eq!(row["body_revision"], serde_json::json!("actuation/110"));
-        assert_eq!(rule, "mode-body");
-        let (provider, _, rule) =
-            preferred_body_provider_choice(rows, Some("prime-alt"), EPI_PRIME_QL_BODY_REF).unwrap();
-        assert_eq!(provider, "prime-alt");
-        assert_eq!(rule, "owner-choice");
-        let (provider, row, rule) =
-            preferred_body_provider_choice(rows, Some("pi"), EPI_PRIME_QL_BODY_REF).unwrap();
-        assert_eq!(provider, "pi");
-        assert_eq!(row["body_ref"], serde_json::Value::Null);
-        assert_eq!(
-            rule, "owner-choice",
-            "an explicit provider override wins without being relabelled Prime–QL"
-        );
-        assert!(preferred_body_provider_choice(&rows[..1],None,EPI_PRIME_QL_BODY_REF).is_none(),
-            "without an explicit override a generic provider never substitutes for the required mode body");
-    }
-
-    #[test]
-    fn provider_default_prefers_owner_choice_then_pi_then_first_row() {
-        let row = |id: &str| serde_json::json!({"id":id,"label":id});
-        let rows = &[row("claude-code"), row("pi")];
-        // No configured provider is an honest None, whatever was held.
-        assert_eq!(default_provider(&[], Some("pi")), None);
-        assert_eq!(default_provider(&[], None), None);
-        // The owner's held choice wins when it names a configured row.
-        assert_eq!(
-            default_provider_choice(rows, Some("claude-code")),
-            Some(("claude-code".into(), "owner-choice"))
-        );
-        assert_eq!(
-            default_provider_choice(rows, Some(" pi ")),
-            Some(("pi".into(), "owner-choice")),
-            "a padded choice is trimmed, not dropped"
-        );
-        // Without a held choice: the `pi` row, else the first configured.
-        assert_eq!(
-            default_provider_choice(rows, None),
-            Some(("pi".into(), "pi-row"))
-        );
-        assert_eq!(
-            default_provider_choice(&[row("claude-code"), row("codex")], None),
-            Some(("claude-code".into(), "first-configured"))
-        );
-        // A held choice that no longer names a configured row falls through —
-        // never invented back into the list.
-        assert_eq!(
-            default_provider_choice(rows, Some("withdrawn-provider")),
-            Some(("pi".into(), "pi-row"))
-        );
-        assert_eq!(
-            default_provider_choice(&[row("codex")], Some("withdrawn")),
-            Some(("codex".into(), "first-configured"))
-        );
-        // Blank held choices are absence, and rows without ids never answer.
-        assert_eq!(
-            default_provider_choice(rows, Some("  ")).map(|(p, _)| p),
-            Some("pi".to_owned())
-        );
-        assert_eq!(
-            default_provider(&[serde_json::json!({"label":"no id"})], None),
-            None
+        assert!(
+            body_provider_choice(&rows[..1], EPI_PRIME_QL_BODY_REF).is_none(),
+            "a generic provider never substitutes for the required mode body"
         );
     }
 
@@ -2929,49 +2679,6 @@ mod tests {
         );
     }
 
-    /// The mint success shape (`{"ok":true,"data":{...}}`) and the absent-verb
-    /// verdict cache, against stub executables (configuration.rs's pattern).
-    #[test]
-    fn conversation_requests_are_the_owner_wire_contract_and_gate_every_recipient() {
-        let send = EncounterRequest::ConversationSend {
-            request: serde_json::json!({
-                "request_ref": "conversation/q",
-                "recipients": [
-                    {"participant_key": "p-ada", "agent_session": "agent-session/ada"},
-                    {"participant_key": "p-ash", "agent_session": "agent-session/ash"}
-                ]
-            }),
-        };
-        let wire = serde_json::to_value(&send).unwrap();
-        assert_eq!(wire["action"], "conversation-send");
-        assert_eq!(
-            wire["request"]["request_ref"], "conversation/q",
-            "carried verbatim, never re-keyed"
-        );
-        assert_eq!(
-            send.sessions(),
-            vec!["agent-session/ada", "agent-session/ash"],
-            "the attachment gate covers every recipient session before the owner sees the request"
-        );
-        for request in [
-            EncounterRequest::ConversationRead {
-                request_ref: "conversation/q".into(),
-            },
-            EncounterRequest::ConversationList {
-                flow_ref: "central:path:/x:Control/user/flows/f.html".into(),
-            },
-            EncounterRequest::ConversationReconcile {
-                request_ref: "conversation/q".into(),
-            },
-        ] {
-            assert!(
-                request.sessions().is_empty(),
-                "a record read names no session to gate"
-            );
-        }
-        let back: EncounterRequest = serde_json::from_value(wire).unwrap();
-        assert_eq!(back, send);
-    }
     /// Write a test stub without exposing a half-written or still-open file at
     /// its final name (stage, chmod, rename), as agent_card.rs's fixtures do:
     /// a bare write + chmod races a parallel test's fork/exec into ETXTBSY.
@@ -3156,7 +2863,7 @@ esac"#,
         let provision = |client: &Client| {
             retry_busy(|| {
                 let _ = std::fs::remove_file(&log);
-                client.provision(&dir, "O-I", None)
+                client.provision(&dir, "O-I", Some("claude-code"), None, None)
             })
         };
         const AUTHORITY: &str =
@@ -3227,26 +2934,6 @@ esac"#,
         assert_eq!(mints().len(), 2);
         std::fs::remove_file(&refuse).unwrap();
 
-        // A Flow participant asks for no more than it did: one mint, for the named Agent, without the task Action.
-        retry_busy(|| {
-            let _ = std::fs::remove_file(&log);
-            client.provision_flow_participant(
-                &dir,
-                "O-I",
-                "agent/ada",
-                None,
-                "human:owner",
-                "flow/f",
-            )
-        })
-        .unwrap_err();
-        let asked = mints();
-        assert_eq!(asked.len(), 1, "{asked:?}");
-        assert!(
-            asked[0].contains("--agent-ref agent/ada") && !asked[0].contains("--for-task"),
-            "{}",
-            asked[0]
-        );
         let _ = std::fs::remove_dir_all(&dir);
     }
 

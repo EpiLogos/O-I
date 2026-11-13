@@ -36,6 +36,8 @@ use std::path::PathBuf;
 pub struct PreparedWrite {
     client: CentralClient,
     agency: agency::Client,
+    /// The agent reads' retained scopes: a conversation's place resolves as its reads resolve it (agent_prepared.rs `place_of`).
+    reads: std::sync::Arc<std::sync::Mutex<crate::read_cache::OwnerReadCache>>,
     world: PreparedWorld,
     op: KernelOp,
 }
@@ -91,6 +93,18 @@ fn reads_only(client: &CentralClient, op: &KernelOp) -> bool {
 }
 
 impl PreparedWrite {
+    /// Where a conversation this write provisions is held: the root World's root, or a named Project's place
+    /// (agent_prepared.rs `place_of`, as the conversation's reads resolve it).
+    fn place(&self, project: &str) -> Result<crate::agent_prepared::Place, String> {
+        crate::agent_prepared::place_of(
+            &self.client,
+            &self.agency,
+            &self.reads,
+            &self.world.read()?,
+            project,
+        )
+    }
+
     /// Whether `op` is an owner write with a prepared form.
     pub(crate) fn claims(op: &KernelOp) -> bool {
         match op {
@@ -122,7 +136,6 @@ impl PreparedWrite {
             | KernelOp::ProfileEdit { .. }
             | KernelOp::InstanceCommission { .. }
             | KernelOp::EncounterProvision { .. }
-            | KernelOp::FlowParticipantProvision { .. }
             | KernelOp::HarnessIngressRule { .. }
             | KernelOp::Routine { .. } => true,
             // Lane W3 (T-COVERAGE §1.2): the owner routes that write
@@ -446,38 +459,40 @@ impl PreparedWrite {
             }
             KernelOp::EncounterProvision {
                 project,
+                agent,
+                agent_ref,
                 preferred_body_ref,
             } => {
-                // The same disclosure gate as every project-scoped op: the
+                // The same disclosure gate as every project-scoped op: a named
                 // project must be inside Central's disclosed ground, and the
-                // canonical ProjectRef is Central's own, never the caller's.
-                let (cwd, project_ref) =
-                    owner_read::project_ground(&self.client, &self.world.read()?, project)?;
+                // canonical ProjectRef is the owners', never the caller's. The
+                // root World (no project named) converses at its root (O-I #1003).
+                let place = self.place(project)?;
+                // The agent is the census's (census.rs `agent_for`, from the World Model's agents): the one named when it starts,
+                // else the first that starts. A mode that needs one acting body names its body instead.
+                let body = preferred_body_ref
+                    .as_deref()
+                    .map(str::trim)
+                    .filter(|body| !body.is_empty());
+                let agent = match body {
+                    Some(_) => None,
+                    None => Some(crate::census::agent_for(
+                        crate::world_model::Model::global()
+                            .value_now(crate::world_model::Slice::Agents)
+                            .as_ref(),
+                        agent.as_deref(),
+                    )?),
+                };
                 KernelOpResult::EncounterProvisioned {
                     data: self.agency.provision(
-                        &cwd,
-                        &project_ref,
-                        preferred_body_ref.as_deref(),
-                    )?,
-                }
-            }
-            KernelOp::FlowParticipantProvision {
-                project,
-                agent_ref,
-                flow_ref,
-                sender,
-                preferred_body_ref,
-            } => {
-                let (cwd, project_ref) =
-                    owner_read::project_ground(&self.client, &self.world.read()?, project)?;
-                KernelOpResult::EncounterProvisioned {
-                    data: self.agency.provision_flow_participant(
-                        &cwd,
-                        &project_ref,
-                        agent_ref,
-                        preferred_body_ref.as_deref(),
-                        sender,
-                        flow_ref,
+                        &place.cwd,
+                        &place.project_ref,
+                        agent.as_deref(),
+                        agent_ref
+                            .as_deref()
+                            .map(str::trim)
+                            .filter(|r| !r.is_empty()),
+                        body,
                     )?,
                 }
             }
@@ -1175,6 +1190,7 @@ impl Kernel {
         Some(PreparedWrite {
             client: self.client.clone(),
             agency: self.agency.clone(),
+            reads: std::sync::Arc::clone(&self.agent_reads),
             world,
             op: op.clone(),
         })

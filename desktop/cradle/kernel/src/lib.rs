@@ -32,10 +32,8 @@ pub mod agent_card;
 pub mod agent_definition;
 pub mod agent_prepared;
 pub mod application_asset;
-pub mod being;
 pub mod census;
 pub mod central;
-pub mod chat_defaults;
 pub mod commission;
 pub mod composition;
 pub mod configuration;
@@ -45,7 +43,6 @@ pub mod decision;
 pub mod dictation;
 pub mod dispatch;
 pub mod document_frame;
-pub mod encounter;
 pub mod events;
 pub mod expression;
 mod expression_act_storage;
@@ -401,9 +398,6 @@ pub enum KernelOp {
         #[serde(skip)]
         channel: flow::Channel,
     },
-    BeingEncounter {
-        request: being::Request,
-    },
     /// A hosted subject's explicitly qualified native owner route. The host
     /// binds its own published World address; the renderer cannot select a
     /// root, credential, executable or fallback owner.
@@ -536,20 +530,6 @@ pub enum KernelOp {
     /// process — the renderer never touches `fetch` and never mints a grant.
     A2aExchange {
         request: serde_json::Value,
-    },
-    /// Compose the W3-A AIKit session-lifecycle read with the W3-B
-    /// Actuation request-correlation read for ONE permission request
-    /// identity (`oi.cradle.encounter/v1`). Adapter only — the identities
-    /// travel verbatim, the pull emits nothing, and the grant-record seam
-    /// is reconciled explicitly, never adjudicated. An optional `reply`
-    /// is only classified against the pulled owner state (a later
-    /// recorded disposition makes it a stale reply); the kernel records
-    /// nothing.
-    EncounterJoin {
-        session: String,
-        request_ref: String,
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        reply: Option<encounter::ReplyAnswer>,
     },
     /// Dispatch one owner-disclosed Action ref to its native owner
     /// operation (U3.1: every result row invokes its Action). The kernel
@@ -908,19 +888,14 @@ pub enum KernelOp {
     /// path allowed to create the attachment it needs.
     EncounterProvision {
         project: String,
+        /// The agent the conversation is with: a census row's `slug` (census.rs; O-I #1003). Absent, the census's first agent
+        /// that starts.
         #[serde(default, skip_serializing_if = "Option::is_none")]
-        preferred_body_ref: Option<String>,
-    },
-    /// Bring a named roster Agent into a shared Flow (O:I #558): a fresh
-    /// Agency session for exactly that Agent, its resident opened, and this one
-    /// sender and Flow source admitted to it. Nothing else is widened.
-    FlowParticipantProvision {
-        project: String,
-        agent_ref: String,
-        /// The Flow's native source ref (`central.path-ref/v1` `ref`).
-        flow_ref: String,
-        /// Who will be asking, as the owner's admission names them.
-        sender: String,
+        agent: Option<String>,
+        /// A roster Agent the conversation's Agency is minted for (a Flow's participant, O:I #558): the session answers as that
+        /// Agent, or is refused; never a generic chat in its place.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        agent_ref: Option<String>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         preferred_body_ref: Option<String>,
     },
@@ -1108,22 +1083,6 @@ pub enum KernelOp {
     /// `ql.vak-team-space/v2` verbatim — the instruments the Decision helper
     /// may be asked, with their heads and labels. Pull read, machine-level.
     TeamSpace,
-    /// The desktop-held default provider for NEW chats
-    /// (`chat_defaults.rs`): the desired-entry-shaped document when one is
-    /// held, `None` when the owner's rows decide (`pi` row, else first).
-    /// The owner's configuration plane carries no setting for this choice —
-    /// its models are "resolved per launch", not addressable — so the
-    /// desktop holds it honestly under its own `oi:cradle` namespace.
-    ChatDefaultRead,
-    /// Hold (or replace) that default: the provider id of one CONFIGURED
-    /// encounter provider row. Machine-local desktop state, never an
-    /// owner write.
-    ChatDefaultHold {
-        provider: String,
-    },
-    /// Withdraw the held default — an explicit operation; the discard
-    /// document carries the observed `removed` fact.
-    ChatDefaultDiscard,
     /// Settings · Credentials (docs/cradle/12-SETTINGS.md §3.4, S12/S13):
     /// the owner's own `aikit credential …` verbs (`credentials.rs`). A
     /// pasted key crosses to AIKit on STDIN only and never comes back out.
@@ -1705,9 +1664,6 @@ pub enum KernelOpResult {
     GroundMusicReading {
         data: serde_json::Value,
     },
-    BeingEncounter {
-        data: serde_json::Value,
-    },
     Expression {
         data: serde_json::Value,
     },
@@ -1787,11 +1743,6 @@ pub enum KernelOpResult {
     /// The owner floor's `oi.a2a-difference/v1` document, carried verbatim.
     A2aExchangeDifference {
         data: serde_json::Value,
-    },
-    /// The typed encounter join (`encounter.rs`): both owner views, the
-    /// grant-record seam and the failure-taxonomy disposition.
-    EncounterJoined {
-        reading: encounter::EncounterReading,
     },
     /// The typed result of one owner-Action dispatch (`action.rs`): the
     /// owner payload verbatim, or an explicit named state.
@@ -1954,17 +1905,6 @@ pub enum KernelOpResult {
     /// The team space, verbatim from Quaternal Logic.
     TeamSpaceReading {
         data: serde_json::Value,
-    },
-    /// The held chat default — the desktop's own document, or `None` when
-    /// the owner's rows decide.
-    ChatDefaultReading {
-        document: Option<serde_json::Value>,
-    },
-    ChatDefaultHeld {
-        document: serde_json::Value,
-    },
-    ChatDefaultDiscarded {
-        document: serde_json::Value,
     },
     /// The owner's credential readings/changes (`credentials.rs`), verbatim
     /// `data` — binding metadata and verdicts only, never material.
@@ -3755,7 +3695,6 @@ impl Kernel {
             | KernelOp::InhabitationRead { .. }
             | KernelOp::WikiProjectionRead { .. }
             | KernelOp::WikiProjectionSources
-            | KernelOp::ChatDefaultRead
             | KernelOp::CredentialList
             | KernelOp::CredentialDiscover
             | KernelOp::HarnessAuthDescribe { .. }
@@ -3763,7 +3702,6 @@ impl Kernel {
             | KernelOp::ProfileRead { .. }
             | KernelOp::ConfigReceipts
             | KernelOp::AgentCard { .. }
-            | KernelOp::EncounterJoin { .. }
             | KernelOp::FlowChangedSince { .. }
             | KernelOp::KnowledgeImpact { .. }
             | KernelOp::SeatStatusRead
@@ -3821,22 +3759,6 @@ impl Kernel {
                     },
                 })
             }
-            KernelOp::ChatDefaultHold { provider } => {
-                let document = chat_defaults::hold(&provider)?;
-                Ok(KernelOpOutcome {
-                    read_scopes: None,
-                    receipts: Vec::new(),
-                    result: KernelOpResult::ChatDefaultHeld { document },
-                })
-            }
-            KernelOp::ChatDefaultDiscard => {
-                let document = chat_defaults::discard()?;
-                Ok(KernelOpOutcome {
-                    read_scopes: None,
-                    receipts: Vec::new(),
-                    result: KernelOpResult::ChatDefaultDiscarded { document },
-                })
-            }
             // Owner writes: the prepared write's own steps (owner_write.rs),
             // run under the lock.
             op @ (KernelOp::CredentialSetup { .. }
@@ -3858,7 +3780,6 @@ impl Kernel {
             | KernelOp::ProfileEdit { .. }
             | KernelOp::InstanceCommission { .. }
             | KernelOp::EncounterProvision { .. }
-            | KernelOp::FlowParticipantProvision { .. }
             | KernelOp::HarnessIngressRule { .. }
             | KernelOp::GroundForm { .. }
             | KernelOp::GroundMusic { .. }
@@ -3955,13 +3876,6 @@ impl Kernel {
                 let answered = prepared.execute();
                 self.finish_agent_read(answered)
             }
-            KernelOp::BeingEncounter { request } => Ok(KernelOpOutcome {
-                read_scopes: None,
-                receipts: Vec::new(),
-                result: KernelOpResult::BeingEncounter {
-                    data: being::apply(request),
-                },
-            }),
             KernelOp::WorkingSurfaceRead {
                 project,
                 agent_session,
