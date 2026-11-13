@@ -18,7 +18,7 @@ const STYLE: CSSProperties = {width: '100%', height: '100%', display: 'block'}
 export function foldMap(device: NoteDevice, mode: ModeInForce): {readonly to: readonly number[]; readonly mask: readonly boolean[] | null} {
   const plan = scalePlan(mode)
   const mask = plan.state === 'fold' ? plan.mask : null
-  const to = PITCH_CLASS_NAMES.map((_, pitchClass) => (device.enabled && mask ? foldPitchClass(pitchClass, mask, device.params.tie) : pitchClass))
+  const to = PITCH_CLASS_NAMES.map((_, pitchClass) => (device.enabled && mask && device.kind === 'scale' ? foldPitchClass(pitchClass, mask, device.params.tie) : pitchClass))
   return {to, mask}
 }
 

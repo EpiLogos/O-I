@@ -132,3 +132,24 @@ test('Exact-ratio draws the bases\' generators the owner states, names why no tu
   for (const view of VIEWS) assert.ok(renderToStaticMarkup(h(HostedDevice, {designed: exactDesign, binding: again, view, nav: {}})).length > 0, view)
   exact.resetExactRatioView()
 })
+
+test('Exact-ratio is published: a note device of its own the browser offers, whose plate on the chain wears the design on its binding', async () => {
+  const {registerDesignedDevice, unregisterDesignedDevice} = await import('../src/frame/devices/designs.ts')
+  assert.equal(noteDevices.NOTE_DEVICE_LABEL['exact-ratio'], 'Exact-ratio tuning')
+  assert.ok(!noteDevices.NOTE_DEVICES_WAITING.some(item => /Exact-ratio/.test(item.label)), 'no longer named waiting')
+  const device = noteDevices.newNoteDevice('exact-ratio', 'nd-x')
+  const mode = modes.resolveModeInForce(parsed.catalogue.scales, {key: aeolian.key, root: 10})
+  assert.deepEqual(noteDevices.runNoteChain([device], [1, 4, 6], {mode}), [1, 4, 6], 'it hands every act on as it came: nothing sounds a tuning')
+  assert.equal(noteDevices.traceNoteChain([device], [1], {mode}).stages[0].passed, noteDevices.EXACT_RATIO_PASSES)
+  const instance = exact.exactRatioDevice(device, {setPower: () => {}})
+  assert.equal(designKey(instance.family, instance.face.id), exactDesign.id, 'its family and face make the design\'s key')
+  registerDesignedDevice(exactDesign)
+  try {
+    door.publishDevice(instance.id, {device: instance, binding: exact.exactRatioBinding(instance.id, ready)})
+    const chain = renderToStaticMarkup(h(chainView.NoteDeviceChainView, {devices: [device], mode, catalogue: {reading: ready, hold: {key: aeolian.key, root: 10}}}))
+    assert.match(chain, /data-note-device="exact-ratio"/)
+    assert.match(chain, /aria-label="Exact-ratio tuning note device, 1 of 1"/)
+    assert.match(chain, /data-device-design="live:exact-ratio"/, 'the plate draws the catalogue design')
+    assert.doesNotMatch(chain, /NaN|undefined/)
+  } finally { door.publishDevice(instance.id, null); unregisterDesignedDevice?.(exactDesign.id) }
+})

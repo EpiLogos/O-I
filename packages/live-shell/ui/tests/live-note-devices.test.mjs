@@ -329,7 +329,7 @@ test('the plates: an empty chain draws nothing; a bypassed device says so; the w
   assert.match(folding, /aria-keyshortcuts="Alt\+ArrowLeft Alt\+ArrowRight Delete"/, 'it moves and comes off the chain as a device does in Live')
   const browser = renderToStaticMarkup(createElement(browserPane.BrowserPane, {defaultSet: '', ctx: {set: null, loading: false, error: null, openSet() {}}, controlled: {category: 'Chain devices', query: ''}}))
   assert.match(browser, /data-browser-note-device="scale"/, 'the browser offers the Scale device for the chain')
-  assert.match(browser, /data-browser-note-device-waiting="Exact-ratio tuning"[^>]*title="Exact-ratio tuning is waiting on its owner/, 'tuning is named, not offered')
+  assert.match(browser, /data-browser-note-device="exact-ratio"/, 'the browser offers Exact-ratio tuning for the chain (it wears its catalogue design)')
   assert.match(browser, /data-browser-note-device-waiting="Sky"/, 'sky is named, not offered')
   assert.match(browser, /Held for this session only: the set document has no owner write for a note-device chain yet\./)
 })
