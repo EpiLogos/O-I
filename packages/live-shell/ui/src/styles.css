@@ -197,15 +197,23 @@ input { min-width:0; border:1px solid var(--line); background:var(--bg-1); paddi
 .statusbar-offer { flex:none; height:18px; margin:0 4px; padding:0 8px; border:1px solid var(--accent-dim); border-radius:2px; background:var(--accent-soft); color:var(--accent); font:inherit; line-height:16px; cursor:pointer }
 .statusbar-offer:hover { background:var(--accent-wash) }
 /* Retry opening on the field pane's fault line (O-I #747 round 894): the same open again. */
-/* The readings to its right shorten to what fits, each whole in its title (the Info line reads it on hover): the run context
-   ellipsizes; the owner readback shows its count and folds its admitted rows away (a failed owner stays in the bar, in --rec);
-   the aperture and the Clip | Device switch keep their size, the Scene's name its own 90–140px. */
-.statusbar > :is(.statusbar-counts, .statusbar-error) { flex:0 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis }
-.statusbar > :is(.statusbar-aperture, .status-detail-views) { flex:none }
-.statusbar > .owner-readback { flex-shrink:4 }
+/* The readings to its right stand whole or yield whole, never cut mid-word (the mockup's .sb: Info, the counts, Clip | Device, the
+   track): the bar is one 28px line that wraps into nothing, so a reading with no room left on the line drops out of view entire,
+   its words still in its title. What yields first is ordered last: the run context, then the owner readback (a failed owner is
+   kept forward, in --rec); the counts, Clip | Device and the track hold their place after the Info line, as in the mockup. */
+.statusbar { flex-wrap:wrap; align-content:flex-start; height:28px; padding-top:3px; padding-bottom:3px; box-sizing:border-box; overflow:hidden; row-gap:8px }
+.statusbar > :not(.statusbar-info-line) { flex:none }
+.statusbar > :is(.statusbar-counts, .statusbar-error, .owner-readback) { min-width:0; height:20px; line-height:20px; white-space:nowrap }
+/* A refusal is never dropped: it shares the line with the Info line and shortens, whole in its title. */
+.statusbar > .statusbar-error { flex:1 1 0; min-width:120px; overflow:hidden; text-overflow:ellipsis }
+.statusbar > .statusbar-counts { order:1 }
+.statusbar > .status-detail-views { order:2 }
+.statusbar > .statusbar-track { order:3 }
+.statusbar > .run-context { order:4 }
+.statusbar > .owner-readback { order:5 }
+.statusbar > .owner-readback:has([data-owner-state="failed"]) { order:1 }
 .statusbar .owner-readback-row:not([data-owner-state="failed"]) { display:none }
-.statusbar .owner-readback-summary { min-width:0; overflow:hidden; text-overflow:ellipsis }
-.statusbar-track { min-width:90px; max-width:140px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; color:var(--text-dim) }
+.statusbar-track { min-width:90px; max-width:140px; height:20px; line-height:20px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; color:var(--text-dim) }
 .browser-resizer { position:absolute; left:calc(var(--browser-w) + 2px); top:var(--transport-h); bottom:calc(var(--frame-detail) + var(--frame-band) + 28px); width:6px; cursor:col-resize; z-index:3; touch-action:none }
 /* The detail area's edge runs under the panes only: the rail beside it keeps its own edge (its wedge). */
 .detail-resizer { position:absolute; left:6px; right:calc(var(--frame-rail) + 6px); bottom:calc(var(--frame-detail) + var(--frame-band) + 25px); height:6px; z-index:3; cursor:row-resize; touch-action:none }

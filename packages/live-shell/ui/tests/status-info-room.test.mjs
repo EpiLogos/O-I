@@ -21,14 +21,21 @@ test('the Info line never narrows below its floor and takes all the room left', 
   assert.match(floor, /min\(45%, 560px\)/, 'about half the bar, at most 560 px: room for a control\'s name and what it does')
 })
 
-test('the readings to its right shorten to what fits, each whole in its title; the switch and the aperture keep their size', () => {
-  assert.match(rule('.statusbar > :is(.statusbar-counts, .statusbar-error)'), /flex:0 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis/,
-    'the run context and the counts ellipsize instead of crushing the line')
-  assert.match(rule('.statusbar > :is(.statusbar-aperture, .status-detail-views)'), /flex:none/, 'Clip | Device and the aperture stand whole (the mockup\'s right side)')
-  assert.match(rule('.statusbar > .owner-readback'), /flex-shrink:4/, 'the owner readback gives way first')
+test('the readings to its right stand whole or drop out whole, never cut mid-word; the run context and owner readback yield first', () => {
+  // Seen on the built candidate (window ~1135 px): "6 of 6 o…", "Native host · rev…" — the readings ellipsized mid-word.
+  assert.match(css, /\n\.statusbar \{ flex-wrap:wrap; align-content:flex-start; height:28px;[^}]*overflow:hidden/,
+    'one 28px line that wraps into nothing: a reading with no room drops out entire')
+  assert.match(rule('.statusbar > :not(.statusbar-info-line)'), /flex:none/, 'every reading keeps its whole width')
+  assert.doesNotMatch(css, /\.statusbar > :is\(\.statusbar-counts[^{]*\{[^}]*text-overflow:ellipsis/, 'the counts no longer ellipsize')
+  const order = selector => Number(rule(selector)?.match(/order:(\d+)/)?.[1])
+  assert.ok(order('.statusbar > .statusbar-counts') < order('.statusbar > .status-detail-views'), 'the counts, then Clip | Device, as the mockup')
+  assert.ok(order('.statusbar > .status-detail-views') < order('.statusbar > .statusbar-track'))
+  assert.ok(order('.statusbar > .statusbar-track') < order('.statusbar > .run-context'), 'the run context yields before the mockup\'s readings')
+  assert.ok(order('.statusbar > .run-context') < order('.statusbar > .owner-readback'), 'and the owner readback yields first of all')
+  assert.equal(order('.statusbar > .owner-readback:has([data-owner-state="failed"])'), 1, 'a failed owner is kept forward')
+  assert.match(rule('.statusbar > .statusbar-error'), /flex:1 1 0; min-width:120px; overflow:hidden; text-overflow:ellipsis/, 'a refusal shortens, never drops')
   assert.match(rule('.statusbar .owner-readback-row:not([data-owner-state="failed"])'), /display:none/,
     'its admitted rows fold away to the count ("6 of 6 owners admitted"); a failed owner stays in the bar, in --rec')
-  assert.match(rule('.statusbar .owner-readback-summary'), /min-width:0; overflow:hidden; text-overflow:ellipsis/)
 })
 
 test('the run context and the owner readback still carry their whole words in their titles (what the Info line reads on hover)', async () => {
