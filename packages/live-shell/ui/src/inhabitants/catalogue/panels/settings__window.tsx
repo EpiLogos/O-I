@@ -111,8 +111,6 @@
 //   then the same) · runNow <ref>, disableRoutine <ref> (kernel `routine`) · revertTheme (theme_revert) ·
 //   removeTheme <id> (theme_remove) · importTheme (file picker, then theme_import) · openExpressions (the Expressions editor, where
 //   scene, glyph, material and musical controls stay) · run <product>:<action> (product_action_run): all exist.
-//   enterKey <credential>: a write-only key goes to the native host's own secure field, never through these values; it stands
-//   disabled until the host qualifies its credential capability (SettingsAdapter.canEnterCredentialMaterial).
 //   scan (`workcell secret scan`) · revokeProjection <name> (`workcell secret revoke-projection --name`): the kernel's workcell_read and
 //   workcell_write (owner_routes.rs).
 //   addMachine with new.label, new.endpoint, new.credential, new.expects, new.note (`workcell machine add`) · connect <label>
@@ -708,14 +706,13 @@ function CredentialsPage({p}: {p: ViewProps}) {
                 does={`Runs ${txt(l.command) ?? NONE}, ${txt(l.harness) ?? NONE}'s own login for this provider, in a terminal in the Workbench, where you answer it; this page then reads the result back.`}
                 onPress={() => p.set('signIn', txt(l.key) ?? true)} />)}
               <Action {...st(p, 'verify')} label="Verify" does="One live check against the provider with the bound key. The verdict: working, refused or unreachable." onPress={() => p.set('verify', id)} />
-              <Action label="Rotate…" does="Replaces the key's reference or material. The binding keeps its name." onPress={() => p.set('rotating', rotating === id ? undefined : id)} />
+              <Action label="Rotate…" does="Replaces where the key lies (its reference). The binding keeps its name." onPress={() => p.set('rotating', rotating === id ? undefined : id)} />
               <Action {...st(p, 'revoke')} hold label="Revoke" does="Marks the binding revoked, so nothing resolves or dispatches through it. The stored secret is kept." onPress={() => p.set('revoke', id)} />
             </td>
           </tr>
           return rotating === id ? [row, <tr key={`${id}:rotate`} className="st-sub"><td colSpan={5}><div className="st-form">
             <TextField label="New reference" does="A keychain:// or secret-service:// reference. Never the key itself." value={strOf(v, 'new.reference') ?? ''} placeholder="keychain://…" onChange={x => p.set('new.reference', x)} />
             <Action {...st(p, 'rotate')} label="Send" does="Sends the new reference to the credential owner." onPress={() => p.set('rotate', id)} />
-            <Action {...st(p, 'enterKey')} label="Enter key…" does="Opens the native host's own secure field for a new key. The key goes to the credential owner and never through the window." onPress={() => p.set('enterKey', id)} />
             <Action label="Cancel" does="Keeps the binding as it is." onPress={() => p.set('rotating', undefined)} />
           </div></td></tr>] : [row]
         })}

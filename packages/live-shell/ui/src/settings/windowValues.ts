@@ -1123,7 +1123,6 @@ export const NO_PRODUCTS = NO('Products and System', 'readProducts')
 export const NO_VISUALS = NO('Opening', 'visualPreferences')
 export const NO_AUTHORING = NO('Making and enabling a routine', 'routineAuthoring')
 export const NO_NAVIGATE = (what: string) => `${what} stands beside its instrument, and this window reaches no other place from here (SettingsAdapter.navigate).`
-export const NO_SECURE_FIELD = 'Enter key: a write-only key goes to the native host\'s own secure field, never through the window; no host qualifies that capability here (SettingsAdapter.canEnterCredentialMaterial).'
 export const NO_STANDING = 'A route\'s standing (unproven, observed, usable) is not the catalogue\'s: AIKit\'s model catalogue is catalogue identity only, '
   + 'and a route\'s availability is its composition of a project (`aikit compose --json`), which Settings does not read here.'
 export const NO_SETUP_SOURCE = NO('Setup', 'setup')
@@ -1205,9 +1204,7 @@ export const SETTINGS_WINDOW_WIRING = {
     credential: 'the key the Credentials step binds (a found key\'s credential)', reference: 'where that key lies in your secure store, which Accept binds it to: a reference, never the key',
     'new.<field>': 'the open form\'s fields', 'new.from': 'what opened the new routine (SettingsRequest.newRoutine: a pad\'s Make routine, a song\'s Routine…), forgotten when the form closes', 'draft:<ref>': 'your local change of a setting, until Review and Apply',
   },
-  refused: {
-    enterKey: NO_SECURE_FIELD,
-  },
+  refused: {} as Record<string, string>,
   absent: {},
 } as const
 

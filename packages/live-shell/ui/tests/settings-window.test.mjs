@@ -86,7 +86,7 @@ test('every key the design reads and every press it makes is classified — a re
   assert.ok(presses.length > 40, 'the design\'s presses are read')
   for (const key of presses) assert.ok(placed(key), `press ${key}: classified`)
   for (const key of win.SETTINGS_LOCAL_KEYS) assert.ok(key in w.local || key.startsWith('new.'), `${key} is the window's own`)
-  assert.match(w.refused.enterKey, /canEnterCredentialMaterial/, 'Enter key… waits for the host to qualify its secure field, and says so')
+  assert.ok(!('enterKey' in w.refused) && !/p\.set\('enterKey'/.test(text), 'no key field: Settings takes no key, a key is bound by reference')
   // Workcell's secrets are Workcell's own (O-I #758): read and pressed through its CLI, references and presence only, never refused.
   for (const [key, route] of [['secretRefs', 'workcell secret list'], ['projections', 'workcell secret projections'], ['outside', 'workcell secret scan']])
     assert.ok(w.reads[key]?.includes(route) && !(key in w.absent), `${key}: Workcell's ${route}`)

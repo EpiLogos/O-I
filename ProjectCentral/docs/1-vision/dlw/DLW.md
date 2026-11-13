@@ -1533,9 +1533,9 @@ running session keeps its harness, its model and its composition.
 
 #### Rules
 
-- Settings shows no secret. A credential, a projection and a machine's
-  connection show their reference. A key you enter goes to the computer's own
-  secure field and on to the credential owner, never through the window.
+- Settings shows no secret and takes none. A credential, a projection and a
+  machine's connection show their reference. A provider's key stays where you
+  keep it, and is bound by that reference; Settings has no field for a key.
 - A page shows each setting as a row with its control. An owner's raw record never stands on a page; its configuration as written stands read only on the System page.
 - Where a harness or a provider has a login of its own, Sign in runs it in a terminal, where you answer it, and the page reads the result back. It stands on each harness client on Harnesses & models, and beside a provider's key on Credentials. A harness that signs in only inside itself says so in its own words and offers no button, and a login the page cannot read affects that harness alone.
 - A change stays yours until its owner applies it.

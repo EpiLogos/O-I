@@ -160,9 +160,8 @@ const FUNCTIONS = [
   {was: 'OwnerPreferences.tsx:137 Verify', place: ['credentials', press('Verify')]},
   {was: 'OwnerPreferences.tsx:137 Rotate… (a new reference)', place: ['credentials', /New reference[\s\S]*>Send</, {rotating: 'ai-kit:credential:zai'}]},
   {was: 'OwnerPreferences.tsx:137 Revoke… · confirm · Cancel', place: ['credentials', held('Revoke')]},
-  {was: 'OwnerPreferences.tsx:138 entry method · write-only key · Send to credential owner', place: ['credentials', press('Enter key…'), {rotating: 'ai-kit:credential:zai'}],
-    note: 'the key goes to the native host\'s own secure field', dropped: 'A key you enter goes to the computer\'s own secure field and on to the credential owner, never through the window.',
-    why: 'The in-window key field leaves: Enter key… opens the host\'s secure field instead.'},
+  {was: 'OwnerPreferences.tsx:138 entry method · write-only key · Send to credential owner', dropped: 'A provider\'s key stays where you keep it, and is bound by that reference; Settings has no field for a key.',
+    why: 'Settings keeps no second store of keys: a key is bound by the reference to where you keep it, and a harness keeps its own login.'},
   {was: 'OwnerPreferences.tsx:138 Cancel (rotate)', place: ['credentials', press('Cancel'), {rotating: 'ai-kit:credential:zai'}]},
   {was: 'OwnerPreferences.tsx:140 Connection details (reference, state, last verdict)', place: ['credentials', /keychain:\/\/aikit\/zai-coding[\s\S]*?refused[\s\S]*?20 Oct 22:40/]},
   // ── AutomationPreferences.tsx and ScheduleControl.tsx ──
