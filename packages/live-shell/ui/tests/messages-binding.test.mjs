@@ -218,12 +218,15 @@ test('(b) every key the design reads is an owner reading, absent with its missin
   const binding = msg.messagesBinding({population: answered(REAL.population), gateway: ANSWERED, conversation, project: 'O-I', agentSets, holds: bind.chainHolds()}, {act: async () => ({})})
   const classes = Object.fromEntries(designKeys.map(key => [key, classify(binding, key)]))
   for (const [key, kind] of Object.entries(classes)) assert.ok(kind, `${key}: classified`)
-  assert.deepEqual(Object.entries(classes).filter(([, kind]) => kind === 'reading').map(([key]) => key).sort(), ['agents', 'gateway', 'groups', 'worlds'])
+  // Voice's value is the hand's listening (off until it is turned on), written through the kernel's dictation.
+  assert.deepEqual(Object.entries(classes).filter(([, kind]) => kind === 'reading').map(([key]) => key).sort(), ['agents', 'conv.voice', 'gateway', 'groups', 'worlds'])
+  // Voice is the kernel's dictation (no owner op missing): with no carrier it says the dictation cannot be asked.
   for (const [key, kind] of Object.entries(classes)) if (kind === 'absent') assert.match(binding.standing[key].disabled, /missing op:/, `${key}: names what it waits for`)
-  // Absent: the readings no owner reports, and the conversation's Voice — a control with no value, disabled with the send route.
+  assert.equal(binding.standing['conv.voice'].disabled, msg.MESSAGES_REFUSE.voice)
+  // Absent: the readings no owner reports. REPLACED (lane A wiring): Voice is the kernel's dictation, no longer absent.
   // REPLACED (lane AC, Buzz): Input is the hand's — where Send lands, carried with the words as AIKit's handling.
   assert.deepEqual(Object.entries(classes).filter(([, kind]) => kind === 'absent').map(([key]) => key).sort(),
-    ['conv.age', 'conv.light', 'conv.voice', 'conv.writes', 'skillsets', 'types'])
+    ['conv.age', 'conv.light', 'conv.writes', 'skillsets', 'types'])
   // The proposal is Central's reading once Make wrote one; Change is the hand's (it takes the card back to its fields).
   for (const key of ['open', 'show', 'order', 'search', 'conv.draft', 'conv.toolRows', 'conv.subagents', 'conv.messages', 'conv.input', 'new.for', 'new.type', 'new.world', 'proposal']) assert.equal(classes[key], 'local', key)
   assert.deepEqual(JSON.parse(binding.values.worlds), ['project:O-I', 'control:root'], 'the World refs AIKit\'s population names')
@@ -232,14 +235,16 @@ test('(b) every key the design reads is an owner reading, absent with its missin
     'unread, the groups say which listing they wait for')
 })
 
-test('(c) the conversation\'s Voice and session acts refused with what they lack; with no carrier Send, a drop, Make, Accept and Discard say so', async () => {
+test('(c) without a carrier Voice and the session acts are refused with what they lack; with no carrier Send, a drop, Make, Accept and Discard say so', async () => {
   bind.resetHolds()
   const binding = msg.messagesBinding({population: answered(REAL.population), gateway: ANSWERED, conversation, holds: bind.chainHolds()})
   // REPLACED (lane W3): Send and a drop onto a track write through AIKit's gateway (w3-factory-bindings.test.mjs); with no carrier they say so.
   // REPLACED (lane AC, Buzz): Input stands, starting on Queue — where AIKit lands words that name no handling.
   assert.equal(binding.standing['conv.input'], undefined)
   assert.equal(binding.values['conv.input'], 'queue')
-  for (const [key, op] of [['conv.voice', /dictation into Messages' composer/],
+  // REPLACED (lane A wiring): Voice is the kernel's dictation (dictation_probe → dictation_transcribe), not an AIKit op; with no carrier
+  // it says the dictation cannot be asked.
+  for (const [key, op] of [['conv.voice', /dictation_probe/],
     ['conv.approve', /a session for the Position's conversation/], ['conv.retry', /a session for the Position's conversation/], ['conv.hardStop', /a session/]]) {
     assert.match(binding.standing[key].disabled, op, key)
     assert.equal(binding.writes(key), true)
@@ -258,6 +263,33 @@ test('(c) the conversation\'s Voice and session acts refused with what they lack
   binding.local.order('name')
   const held = msg.messagesValues({population: answered(REAL.population), gateway: ANSWERED, holds: bind.chainHolds()})
   assert.deepEqual([held['new.for'], held.order, held.show], ['Watches the build', 'name', 'both'], 'the card\'s fields and the list\'s settings are the hand\'s, never sent')
+  bind.resetHolds()
+})
+
+test('(c2) Voice turns speech into the composer\'s words through the kernel\'s dictation: on arms it, off lands the transcript in the draft', async () => {
+  bind.resetHolds()
+  const calls = []
+  let transcript = 'the build is green'
+  const voice = {start: async () => { calls.push('start') }, stop: async () => { calls.push('stop'); if (transcript instanceof Error) throw transcript; return transcript }}
+  const make = () => msg.messagesBinding({population: answered(REAL.population), gateway: ANSWERED, conversation, holds: bind.chainHolds()}, {voice})
+  let binding = make()
+  assert.equal(binding.standing['conv.voice'], undefined, 'Voice stands where the dictation carrier does')
+  assert.equal(binding.writes('conv.voice'), true)
+  binding.local['conv.draft']('Note:')
+  await make().write([{key: 'conv.voice', value: true}])
+  binding = make()
+  assert.equal(binding.values['conv.voice'], true, 'listening: the composer shows the wave')
+  await binding.write([{key: 'conv.voice', value: false}])
+  binding = make()
+  assert.deepEqual(calls, ['start', 'stop'])
+  assert.equal(binding.values['conv.voice'], false)
+  assert.equal(binding.values['conv.draft'], 'Note: the build is green', 'the transcript lands in the composer, editable and unsent')
+  // A refused dictation is its own words, and Voice stands off.
+  transcript = Error('Voice ended: service-down — no speech server answers at http://127.0.0.1:8178')
+  await make().write([{key: 'conv.voice', value: true}])
+  await assert.rejects(() => make().write([{key: 'conv.voice', value: false}]), /service-down/)
+  assert.equal(make().values['conv.voice'], false)
+  assert.equal(make().values['conv.draft'], 'Note: the build is green', 'nothing invented lands in the draft')
   bind.resetHolds()
 })
 

@@ -5,7 +5,7 @@
 // session's task record and temporal_events_read), the session list the Thread offers (threadBinding.ts sessionRowsOf), and the
 // task THE selection names (`<track>#task/<n>`, timeline/factoryTrackAdapter.ts parseFactoryTaskRef). Launch quantize is the
 // transport's Quantize — the Agent's interrupt timing (one binding feeds both). A new task goes the Agent's own way (its declared
-// new-task row, kernel:harness_agent_control configure {prompt}). Launch, Retry and Stop after are Software Factory's acts on a Run's
+// new-task row, kernel:harness_agent_control: AIKit's `new`, whose words it does not carry). Launch, Retry and Stop after are Software Factory's acts on a Run's
 // unit: Factory names the units a task stands on (factory_owner attempt-task-units), so Retry reads them and retries the task's unit
 // (retryTask), and Stop after asks the unit its current attempt stands on to stop (stopAfterTask); Launch starts the unit Factory names
 // for the task (its custody of the work, else the one unit its attempts stand on) on the model AIKit realises on the task's session

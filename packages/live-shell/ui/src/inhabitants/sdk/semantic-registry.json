@@ -93,7 +93,7 @@
     ],
     "formats": {},
     "invariant": {
-      "generatesAbsent": "Born on the rail: it reads AIKit's population and the open agent's conversation (kernel inhabitation_read); a send waits for `aikit gateway send` through the kernel."
+      "generatesAbsent": "Born on the rail: it reads AIKit's population and the open agent's conversation (kernel inhabitation_read); Send goes to the open agent's Position through `aikit gateway send` (kernel gateway_write), and Voice fills the composer through the kernel's dictation."
     },
     "writePaths": [],
     "heldBy": [],
@@ -649,7 +649,7 @@
     ],
     "formats": {},
     "invariant": {
-      "generatesAbsent": "The Run map writes through Factory: Recognise and Close need a Run named on the Main track, and the attempt retry and development mutate for ContinueCommission have no kernel route yet (T-COVERAGE §1.2)."
+      "generatesAbsent": "The Run map writes through Factory: Retry through factory_owner attempt-retry (the attempt `retry` under the unit's retry grant); Recognise and Close stand in Approvals; the development mutate for ContinueCommission has no kernel route yet (T-COVERAGE §1.2)."
     },
     "writePaths": [],
     "heldBy": [],

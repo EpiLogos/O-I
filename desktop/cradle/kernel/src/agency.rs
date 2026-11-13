@@ -133,11 +133,20 @@ impl Client {
         binding: &str,
         op: &str,
     ) -> Result<Value, String> {
-        self.gateway_call(
-            cwd,
-            &["agent", "--binding", binding, op],
-            "AIKit gateway agent control",
-        )
+        self.gateway_agent_with(cwd, binding, &[op])
+    }
+
+    /// `gateway_agent` with the operation's own arguments after its verb
+    /// (`model --model <ID>`).
+    pub fn gateway_agent_with(
+        &self,
+        cwd: Option<&Path>,
+        binding: &str,
+        op: &[&str],
+    ) -> Result<Value, String> {
+        let mut tail = vec!["agent", "--binding", binding];
+        tail.extend_from_slice(op);
+        self.gateway_call(cwd, &tail, "AIKit gateway agent control")
     }
 
     /// One sender kind's ingress rule on a harness binding (manual §19.12,
