@@ -753,7 +753,11 @@ fn carries_hold(world: &World, starting: &[(String, String)]) -> Act {
         .clone();
     let rows = census["agents"].as_array().cloned().unwrap_or_default();
     let status = aikit(&["--json", "client", "status"])?;
-    let clients = status["clients"].as_array().cloned().unwrap_or_default();
+    // AIKit answers in its JSON envelope (`{ok, data, warnings}`): its client rows are the data's.
+    let clients = status["data"]["clients"]
+        .as_array()
+        .cloned()
+        .unwrap_or_default();
     for (slug, _) in starting {
         let row = rows
             .iter()
