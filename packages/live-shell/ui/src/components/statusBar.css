@@ -1,0 +1,9 @@
+/* The Clip switch's small picture of the selected clip (manual §10.1; StatusBar.tsx ClipPicture): the clip as Session view's slot draws
+   it (world-shell-mockup.html .cs.clip, .tri) at the switch's size — the track's colour, the launch triangle, dimmed when done, the
+   record colour while it records. */
+.status-clip-picture { display: inline-flex; align-items: center; flex: none; width: 18px; height: 11px; padding-left: 3px;
+  background: var(--tc, var(--bg-0)); border: 1px solid var(--line) }
+.status-clip-picture .status-clip-tri { width: 0; height: 0; border-left: 5px solid var(--tc-ink, var(--bg-0)); opacity: .75; border-top: 3.5px solid transparent; border-bottom: 3.5px solid transparent }
+.status-clip-picture[data-status=done] { opacity: .55 }
+.status-clip-picture[data-status=recording] { background: var(--rec) }
+.status-clip-picture[data-status=running] .status-clip-tri { border-left-color: var(--green) }

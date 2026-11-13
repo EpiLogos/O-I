@@ -195,8 +195,8 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
     const pinned = groups.filter(group => {const id = group.active ?? group.tabs[0]; return !!(id && layout.surfaces[id]?.projection?.subject_ref)}).length
     publishWorkbenchAperture(presented ? {panes: groups.length, pinned} : null)
   }, [book.current.layout, presented])
-  // The encounter bar reads the focused pane (frame/encounter/EncounterBar.tsx; once the browser's aperture slot): its kind and tab, which pane of how
-  // many, its pin — and pins or lets it follow through the pane's own Follow/Pin action (surface.pin-subject).
+  // The browser's aperture slot reads the focused pane (frame/encounter/ApertureSlot.tsx): its kind and tab, which pane of how many, its
+  // pin — and pins or lets it follow through the pane's own Follow/Pin action (surface.pin-subject).
   useEffect(() => {
     const layout = book.current.layout
     const groups = groupsOf(layout.root).filter(group => group.tabs.length > 0)
@@ -465,7 +465,7 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
     if (ref === 'surface.open-sources' || ref === 'frame.world') {insert({id: crypto.randomUUID(), kind: 'sources', title: 'Sources', project: latest.current.book.current.project}); return}
     // ⌘⌥\ and the orientation toggle, read through the candidate's pane grammar (paneTabsAction, above)
     if (isPaneTabsRef(ref)) {latest.current.book.setLayout(layout => paneTabsAction(layout, ref, arg?.groupId)); return}
-    const mayRelease = ['surface.close', 'surface.split-right', 'surface.split-down', 'surface.tile', 'surface.restore-layout', 'surface.drop', 'surface.move'].includes(ref) || ref.startsWith('surface.move-to:')
+    const mayRelease = ['surface.close', 'surface.close-pane', 'surface.split-right', 'surface.split-down', 'surface.tile', 'surface.restore-layout', 'surface.drop', 'surface.move'].includes(ref) || ref.startsWith('surface.move-to:')
     if (mayRelease) {
       const origin = latest.current.book, workspaceId = origin.current.id, mode = origin.current.layout.mode, token = ++intent.current
       const ids = [...groupsOf(origin.current.layout.root).flatMap(group => group.tabs), ...(origin.current.layout.sidePane?.tabs ?? [])]

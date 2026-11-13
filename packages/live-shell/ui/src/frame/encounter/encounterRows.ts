@@ -1,9 +1,9 @@
-// The encounter's four context readings — field, world, subject, occasion — as the encounter bar above the panes draws them
-// (world-shell-mockup-r2.html `renderEncbar`: "field › world › subject › occasion"). They stood in the browser's aperture slot until
-// W1 (T-WORLDS §3: "the context (field, world, subject, occasion) to the encounter bar"). Pure functions of readings the shell already
-// holds: the focused pane (native/workbenchDoor.ts), THE selection and the selected occasion (the book's WorldContext), the World the
-// host discloses (ShellConfigContext) and the World cut's civil reading (the time spine). A row no owner answers says "—" and its
-// hover says why.
+// The encounter's four context readings — field, world, subject, occasion — as the browser's aperture slot draws them
+// (world-shell-mockup.html `renderSlot`, the Context section; frame/encounter/ApertureSlot.tsx). They stood in the encounter bar above
+// the panes from W1 until that bar was retired; the slot is back under the browser's list (parity G5). Pure functions of readings the
+// shell already holds: the focused pane (native/workbenchDoor.ts), THE selection and the selected occasion (the book's WorldContext),
+// the World the host discloses (ShellConfigContext) and the World cut's civil reading (the time spine). A row no owner answers says "—"
+// and its hover says why.
 import type {FocusedPane} from '../../native/workbenchDoor'
 import type {ShellConfig} from '../../shell/useSet'
 import {civilDateOfDayRef} from '../../central/centralVertical'

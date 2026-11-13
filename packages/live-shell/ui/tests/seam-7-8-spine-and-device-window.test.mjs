@@ -39,7 +39,13 @@ const {InhabitantRack, DeviceFace} = await import('../src/inhabitants/inhabitant
 const {DETACHED_KINDS} = await import('../src/inhabitants/manifest.ts')
 const {deviceBindingId, deviceIdentityFault} = await import('../src/native/detachedKinds.ts')
 const {createTimeSpine} = await import('../src/timeline/timeSpine.ts')
-const {ModeTransportBar, stepOccasion} = await import('../src/shell/ModeTransportBar.tsx')
+// REPLACED (parity G15, 13 Nov): these tests drew shell/ModeTransportBar.tsx's legacy bar, which nothing mounted. Its live helpers moved to
+// shell/transports/spineControls.tsx and the tests now draw the bar the shell draws: Technē's bindings over the one transport
+// (shell/modeTransports.tsx ModeTransport, its lazy parts fetched first as f7-transport.test.mjs does).
+const {stepOccasion} = await import('../src/shell/transports/spineControls.tsx')
+const {ModeTransport} = await import('../src/shell/modeTransports.tsx')
+await (await import('../src/shell/loadWhenDrawn.ts')).loadEveryPart()
+const bar = (mode, timeSpine) => renderToStaticMarkup(createElement(ModeTransport, {mode, reading: {timeSpine, tempoBpm: null}}))
 
 const html = (element) => renderToStaticMarkup(element)
 const transport = {kind: 'unavailable', reason: 'the test carrier is down'}
@@ -147,14 +153,15 @@ test('the Occasion steps through the spine\'s retained occasions and keeps each 
 test('the Techne transport steps the Occasion on the World spine, and waits honestly without one', () => {
   const spine = createTimeSpine()
   spine.selectOccasion({subject_ref: 'occ:a', instant_unix_ms: Date.UTC(1913, 0, 1), summary: 'the 1913 descent'}, 1000)
-  const drawn = html(createElement(ModeTransportBar, {mode: 'techne', timeSpine: spine}))
+  const drawn = bar('techne', spine)
   const step = drawn.match(/<button[^>]*data-occasion-step[^>]*>/)[0]
   assert.doesNotMatch(step, /disabled/)
   assert.match(drawn, /the 1913 descent/)
   assert.ok(drawn.includes('data-i="Occasion window|a saved occasion keeps its snapshot and separately qualifies its admission"'), 'the grammar\'s own meaning')
-  const waiting = html(createElement(ModeTransportBar, {mode: 'techne'}))
+  const waiting = bar('techne', null)
   assert.doesNotMatch(waiting, /data-occasion-step/)
-  assert.ok(waiting.includes('data-i="Occasion window|a saved occasion keeps its snapshot and separately qualifies its admission"'))
+  // Without the spine the slot is unbound in the shell's bar, so its line says why after its meaning (frame/transport/Transport.tsx unboundWhy).
+  assert.ok(waiting.includes('data-i="Occasion window|a saved occasion keeps its snapshot and separately qualifies its admission'))
 })
 
 // Seam 7, host side (UX-SPINE-ALIGNMENT §5 row 7): Back to Now, the two-way Occasion stepper, the loop brace read, the
@@ -184,18 +191,18 @@ test('Back to Now clears the selected occasion through the spine, keeps every re
 
 test('the Technē tap is Back to Now: disabled with its reason while Now stands, enabled over a selected occasion', () => {
   const spine = createTimeSpine()
-  const idle = html(createElement(ModeTransportBar, {mode: 'techne', timeSpine: spine}))
+  const idle = bar('techne', spine)
   const idleTap = buttonWith(idle, 'data-i="Back to Now|')
   assert.match(idleTap, /\sdisabled[=\s>]/)
   assert.match(idleTap, /title="[^"]*No occasion is selected/)
   spine.selectOccasion(occasionEvent('occ:a', Date.UTC(1913, 0, 1)), 1000)
-  const selected = html(createElement(ModeTransportBar, {mode: 'techne', timeSpine: spine}))
+  const selected = bar('techne', spine)
   const tap = buttonWith(selected, 'data-i="Back to Now|')
   assert.doesNotMatch(tap, /\sdisabled[=\s>]/)
   assert.match(tap, /aria-label="Back to Now"/)
   assert.match(tap, /Back to Now/)
   // Without a spine the tap stays the drawn waiting state.
-  const waiting = html(createElement(ModeTransportBar, {mode: 'techne'}))
+  const waiting = bar('techne', null)
   assert.match(buttonWith(waiting, 'data-i="Back to Now|'), /\sdisabled[=\s>]/)
 })
 
@@ -218,14 +225,14 @@ test('the Occasion steps both ways in the spine\'s retention order, wrapping at 
 
 test('the Occasion slot draws both steppers and the selected label, every enabled control named and tagged', () => {
   const spine = createTimeSpine()
-  const empty = html(createElement(ModeTransportBar, {mode: 'techne', timeSpine: spine}))
+  const empty = bar('techne', spine)
   const emptySteps = buttonTags(empty).filter(tag => tag.includes('data-occasion-step'))
   assert.equal(emptySteps.length, 2, 'previous and next')
   assert.ok(emptySteps.every(tag => /\sdisabled[=\s>]/.test(tag)), 'nothing retained, nothing to step to')
   spine.selectOccasion({...occasionEvent('occ:a', Date.UTC(1913, 0, 1)), summary: 'the 1913 descent'}, 1000)
   spine.selectOccasion(occasionEvent('occ:b', Date.UTC(1950, 0, 1)), 2000)
   spine.selectOccasion({...occasionEvent('occ:a', 0), summary: 'the 1913 descent'}, 9999)
-  const drawn = html(createElement(ModeTransportBar, {mode: 'techne', timeSpine: spine}))
+  const drawn = bar('techne', spine)
   assert.match(drawn, /<output[^>]*data-occasion-label[^>]*>the 1913 descent<\/output>/)
   assert.match(drawn, /data-occasion-step="previous"[^>]*aria-label="Occasion window: previous occasion"/)
   assert.match(drawn, /data-occasion-step="next"[^>]*aria-label="Occasion window: next occasion"/)
@@ -237,31 +244,27 @@ test('the Occasion slot draws both steppers and the selected label, every enable
   }
 })
 
-test('punch-in, punch-out and loop-length stay honest waiting states, and loop-length reads the spine\'s brace read-only', () => {
+test('loop-length reads the spine\'s brace read-only, and the punch slots are the Earth\'s window, never presses', () => {
+  // REPLACED (parity G15): the legacy bar drew punch-in and punch-out as waiting buttons. In the shell's bar they are the Earth's shared
+  // window's edges (projections/atlas/places/placesTransport.ts atlasTimeBindings), read, never pressed.
   const spine = createTimeSpine()
   spine.selectOccasion(occasionEvent('occ:a', Date.UTC(1913, 0, 1)), 1000)
-  const plain = html(createElement(ModeTransportBar, {mode: 'techne', timeSpine: spine}))
-  assert.match(buttonWith(plain, 'window opens here'), /\sdisabled[=\s>]/)
-  assert.match(plain, /<output[^>]*data-i="Window span\|[^"]*"[^>]*>—<\/output>/)
+  const plain = bar('techne', spine)
+  assert.match(plain, /<output[^>]*data-slot="loop-length"[^>]*>—<\/output>/)
   spine.setTransportLoop(['clip:1', 'clip:2'])
-  const braced = html(createElement(ModeTransportBar, {mode: 'techne', timeSpine: spine}))
+  const braced = bar('techne', spine)
   assert.match(braced, /<output[^>]*data-i="Window span\|[^"]*"[^>]*>2 clips<\/output>/)
-  assert.match(buttonWith(braced, 'window opens here'), /\sdisabled[=\s>]/, 'punch-in still waits')
+  for (const id of ['punch-in', 'punch-out']) assert.equal(buttonTags(braced).filter(tag => tag.includes(`data-slot="${id}"`)).length, 0, `${id} is a reading, not a press`)
 })
 
-test('Instrument writes names the focused instrument and waits for its writer: no fake toggle, no enabled control', () => {
-  const focused = html(createElement(ModeTransportBar, {mode: 'techne', focusedInstrument: 'techne:m0'}))
-  const arm = buttonWith(focused, 'data-i="Instrument writes|')
+// REPLACED (parity G15): 'Instrument writes names the focused instrument and waits for its writer' drew the legacy bar's
+// instrumentArmControl, which the shell never drew: Technē's Arm is the World's walk Arm (placesTransport.ts walkBindings), live while
+// the World is open and dimmed with its words while it is not. Base's bar keeps no Occasion: the stepper is Technē's slot alone.
+test('Technē\'s Arm is the World\'s walk arm, dimmed with its words while the World is not open; Base draws no Occasion', () => {
+  const arm = buttonWith(bar('techne', createTimeSpine()), 'data-i="Instrument writes|')
   assert.match(arm, /\sdisabled[=\s>]/)
-  assert.match(focused, /<span> Project<\/span>/, 'the focused instrument\'s name stands in the slot')
-  assert.match(arm, /Quaternal Logic family/, 'the title names the missing writer owner')
-  assert.match(arm, /agent, not to the instrument/, 'the agent\'s write arm is named as not this gate')
-  const none = html(createElement(ModeTransportBar, {mode: 'techne'}))
-  assert.match(buttonWith(none, 'data-i="Instrument writes|'), /No instrument is focused/)
-  assert.equal(enabledButtons(none).length, 0, 'with no spine and no focus, no Technē control is live')
-  const base = html(createElement(ModeTransportBar, {mode: 'base', timeSpine: createTimeSpine()}))
-  assert.equal(enabledButtons(base).length, 0, 'Base keeps every control waiting; the Occasion is Technē\'s slot')
-  assert.doesNotMatch(base, /data-occasion-step/)
+  assert.match(arm, /The World is not open in this session/)
+  assert.doesNotMatch(bar('base', createTimeSpine()), /data-occasion-step/)
 })
 
 test('the App hands the one spine the temporal hook holds to the transport, and makes no second spine', async () => {

@@ -403,11 +403,13 @@ are set: Central keeps the day's bounds.
 In Central you:
 
 - write about the constellation in focus;
-- bring the worlds you work on into today, and pick each up where you left it;
+- make a project of a folder, with its wiki, and bring the worlds you work on
+  into today, picking each up where you left it;
 - read and write their pages, and mark what matters in them;
 - hand a passage to an agent, and keep or refuse what it proposes;
 - find anything you can reach with @, and send what you selected there;
-- keep each world's own account of itself, from its origin to its evidence;
+- keep each world's own account of itself, from its origin to its evidence,
+  and write the law your agents work under;
 - see the day written down as you lived it, and add what only you know;
 - let the day close into what it taught.
 
@@ -1213,9 +1215,9 @@ Capture page (§19.7).
 
 What lives outside the DLW comes in through an adapter, which keeps its own
 form and its function: your harnesses and their skills, your credentials,
-your other machines (§10.11). The day's NOWs, across your own ground, your
-projects and your workcells, can be looked over in one place, the NOWs widget:
-this machine's are read directly, another machine's by asking it.
+your other machines (§10.11). The day's sessions, on every machine and in
+every world, can be looked over in one place, the Day's widget (§18.2): this
+machine's are read directly, another machine's by asking it.
 
 The agent house and the docs house are different chains, and they meet only
 by reference. So "intent" has three homes. An agent's expression is the
@@ -1273,7 +1275,7 @@ the one answering, its state, the last lines of the conversation and a
 composer. Choose Epi or Nara at its head, type, and press Enter. Others hold
 the packet, the trail, your agents at
 their stations, your workcells, a terminal, the files an agent is changing,
-the changes waiting for your approval, the wiki, the day's NOWs, the sky. Each
+the changes waiting for your approval, the wiki, the day and its sessions, the sky. Each
 widget holds a piece of context that belongs to your whole world, not to one
 kind of work, so it stays with you when you move. Open a terminal in Factory
 and it is still there in Central.
@@ -1573,7 +1575,7 @@ then nothing you have moves or changes.
 | Step | What setup finds | What Accept does | Where you come back to it |
 |---|---|---|---|
 | Ground | Where your own ground lies, or that you have none yet. | Adopts the ground where it is, or makes a new one in the folder you choose, under the name you give it. Your days follow this computer's time zone and turn at midnight, and the ground keeps a key so that only you act as you in it. Nothing in an adopted ground moves. | Settings, Setup |
-| Harnesses and skills | Each agent tool you use, with its settings, its instructions and its skills. A tool or a setting setup cannot read is named and left alone. | Connects each tool through its adapter, so its skills keep their function in the DLW and in the tool itself. The tool's own settings and plugins stay as they are. | Settings, Harnesses & models and Skills & methods |
+| Harnesses and skills | Each agent tool you use that starts, with its settings, its instructions, its skills and the law it carries. A tool or a setting setup cannot read is named and left alone. | Connects each tool through its adapter, so its skills keep their function in the DLW and in the tool itself, and writes your law into the instructions it reads (§18.5). The tool's own settings and plugins stay as they are. | Settings, Harnesses & models and Skills & methods |
 | Credentials | Where each provider's key lies: the place, never the value. | Binds each key by reference. The value stays in your computer's secure store; the DLW never shows it and never keeps it. | Settings, Credentials |
 | Machines | This computer, and the other machines you reach. | Makes this computer a workcell, and prepares another machine as a place to work, keeping its own settings. | Settings, Machines & services; the browser's Machines |
 | Projects | Your folders of work, inside your ground's Work or anywhere else, and any wiki a folder already keeps. | Adopts a project where it stands, or migrates it into your ground's Work under its own name, with its ProjectCentral beside its material. A wiki is kept in place or copied in, as you choose; where a folder holds two, you choose which. A migrated project's original stays until you remove it. | The browser's Work place: Add folder… opens this step for that folder |
@@ -1999,7 +2001,7 @@ which views it has (§16.3), and whose time it keeps.
 
 Between them the monitors keep what is live in front of you: your own trail,
 your agents' messages and the frames they send, the files and changes they
-make, the receipts their writes leave, and the day's NOWs.
+make, the receipts their writes leave, and the day's sessions.
 
 #### How the kinds work together
 
@@ -3507,6 +3509,19 @@ How lived in a world is sets how finished its body looks. A world you have barel
 
 Only agents at work and what they make circle a body. Agents at work ride the inner ring, each keeping its place on the ring however the list around it changes. What an agent has just made rides the outer ring, each thing keeping its own place, and drifts off as it ages. Your files, your open pages and the works you have to hand do not circle anything: they are on the ground, where the things you are making are.
 
+#### Bring in your sources
+
+A world is built from its wiki, and the wiki grows from what you bring. Drop a
+folder of sources on a world's body: notes, letters, papers, a corpus you
+already keep. The World reads what the folder holds and previews what it would
+add to that world's wiki: the pages, the links between them, and the places and
+times the sources name. Nothing is added before you press Accept, which is held.
+Then the agent reads further and proposes more: a node, a link, a place on the
+body or on Earth. Each proposal waits in Approvals (§19.14), and what you accept
+stands on the body and in the Knowledge graph (§17.3) at once, because the World
+and the graph are two faces of the one wiki. Every added thing keeps its source,
+so a reader can go back and check.
+
 #### The sky and its occasions
 
 Every world has a sky, and the sky belongs to the world. The planets move as the real ones do. The sky comes from its owner. The World does not compute it. If the owner is not available, the sky layer says why and draws nothing in its place.
@@ -3658,9 +3673,11 @@ The widget shows your planet, small, with its phase and today's sky. Click it to
 8. To visit another world, widen the aperture and select its planet.
 9. To light a star, set the scale to Field and choose Light a star. Name it, and say what it gathers and who may come.
 10. To bring your world to a star, select the star and choose Gather. Leave takes it back.
+11. To grow a world from your sources, drop a folder on its body, read the preview and press Accept. Keep or refuse the agent's further proposals in Approvals.
 
 #### Rules
 - Earth is given. You cannot change its land. You place things on it and anchor your places to its real places.
+- Sources come into a world's wiki only on Accept, and what an agent proposes for it only when you accept it. Each thing added names its source.
 - Another world's body is read-only. You see what its owner shows.
 - A place keeps the precision that its source states. An approximate place does not look exact.
 - A click on the body makes an approximate place. A drag does not make it exact. A change goes to the owner of the place as a proposal.
@@ -5061,7 +5078,7 @@ When the day closes, what still plays carries into tomorrow's set, playing, with
 | Agent | The agent of the selected world: its face, its state, the last lines of its thread and a composer. |
 | Packet | Exactly what the agent will read, and its size. |
 | Approvals | The proposals that wait for you, from every world. |
-| NOWs | What is open now: the pages playing on every machine, and the agent at work on each. |
+| Day | Today's die and the sessions running now on every machine, with the agent at work in each. |
 
 #### Rules
 
@@ -5141,13 +5158,16 @@ the poles. Opposite faces add to five.
 
 #### Where the faces come from
 
-Every machine you work on keeps its own NOW: what is open there, with a smaller
-NOW inside it for each task or piece of work handed to an agent. The
-Day reads all of them. Face 2 lists their sessions as done, running and queued,
-each linked to where it runs. Face 4 gathers the moments, people, places and
+Every session keeps its own record, on whichever machine it runs and in
+whichever mode: its start opens its NOW and its end closes it, with a smaller
+NOW inside it for each task handed to an agent. Nobody opens, writes or closes
+one by hand. The Day reads them. Face 2 lists the day's sessions as done,
+running and queued, each linked to where it runs. What a session yields when it
+ends, its receipts, its changes and a short account, arrives on face 2 as a
+proposal you keep or drop. Face 4 gathers the moments, people, places and
 files those sessions touched, each entry with its author. A machine that goes
 offline keeps working, and what it did arrives when it is back, at the time it
-happened. A NOW still open at the close carries into tomorrow's Day.
+happened. A session still running at the close carries into tomorrow's Day.
 
 #### Moves
 
@@ -5242,16 +5262,11 @@ parameter, in five groups.
 | Faces | Face, View, Template |
 | Moves | Tasks, Patterns, Context, Synthesis, Close: each pad's Prompt |
 | Sources | Sources |
-| Close | Close routine, Close now, Open today, and Close-out with Verify |
+| Close | Close routine, Close now |
 
 Each face also shows a count: tasks on face 1, sessions on face 2, patterns on
 face 3. It does not add the Day
 to your rack.
-
-Close-out reads back what the last close left behind: a continuation
-registered, earlier handoffs closed, what was learned recorded, and deferred
-work registered. It shows verified, or how many of the clauses it checks hold;
-point at it to read which fail. Verify reads them again.
 
 ##### Full
 
@@ -5272,7 +5287,11 @@ a tab to open that Day.
 
 The widget shows today's die and three counts:
 open tasks, running sessions and new patterns. Click a count to open that face
-in the pane that has focus.
+in the pane that has focus. Under the die, the sessions running now stand in one
+row for each machine: this machine's read directly, another's by asking it
+through its Remote carrier (§19.18). A machine that does not answer shows its
+last answer, dimmed, with when it answered. Press a session to open its track in
+Factory.
 
 #### Transport
 
@@ -5287,14 +5306,13 @@ in the pane that has focus.
 
 #### To use the Day
 
-1. Open face 0. Write what you want from the day.
-2. Press Tasks. Turn to face 1, and accept, re-tier or remove the tasks that
-   the agent proposes.
-3. Work in any mode. Face 2 fills as sessions start, run and finish.
-4. In the afternoon, press Patterns and keep the ones that hold.
-5. At the end of the day, press Synthesis and open face 5. Write what the day
-   taught. Read the agent's proposal for tomorrow.
-6. When tomorrow's Day opens, open it and prepare its face 0.
+1. Work in any mode. The Day is already open, and face 2 fills as sessions
+   start, run and end.
+2. If you want, write on face 0 what you want from the day, and press Tasks to
+   have it turned into tasks on face 1.
+3. Keep or drop what each finished session laid on face 2.
+4. At the end of the day, read face 5 and add what only you know. The close
+   runs by itself, and tomorrow's face 0 holds its proposal.
 
 #### Rules
 
@@ -5306,8 +5324,10 @@ in the pane that has focus.
 - A Day keeps the template version it opened with. A new template version does
   not change an old Day.
 - A move writes only as Scope and Arm allow.
-- No hours are set on the Day. Central keeps the day's bounds, and the close
-  runs by itself.
+- No hours are set on the Day. Central keeps the day's bounds. The Day opens
+  by itself and the close runs by itself.
+- Nothing on the Day waits for you to close it. A session closes its own
+  record when it ends.
 - The close shows on its pad when it last ran, and keeps a record of every
   run. Nothing runs where you cannot see it.
 - A late result keeps the time it happened. The Day does not rewrite it as new.
@@ -5669,6 +5689,8 @@ Seats and checkouts are read in Git / landing (§19.16), and what a run leaves b
 
 A document's kind, such as Vision, Design, Capability matrix, Mockup or Architecture, is a tag on its source. A Mockup has no tier of its own: it is tagged at tier 2 with the design it shows. Design and capability share tier 2.
 
+On your own ground, the root world, tier 0 holds your law: the statements your agents work under. Write a statement in Document like any page. Adopting it writes it into the instructions every harness reads (§10.11), and Settings › Harnesses & models shows which statements each agent carries. An agent may propose a statement; it stands only when you adopt it.
+
 #### What each row shows
 
 | Reading | What it shows |
@@ -5779,7 +5801,7 @@ The widget shows the small ladder and how many sources wait. Press a rung to ope
 
 ### 18.6 Impact
 
-What a change to a folder or a note reaches, its references, its links and the sessions that touch it, is read in the Knowledge graph (§17.3) and the NOWs (§23.6). Whether the code still says what the subject means is Docs' Meaning (§18.5).
+What a change to a folder or a note reaches, its references, its links and the sessions that touch it, is read in the Knowledge graph (§17.3) and on the Day's face 2 (§18.2). Whether the code still says what the subject means is Docs' Meaning (§18.5).
 
 ### 18.7 Machine
 
@@ -5799,7 +5821,7 @@ Factory opens in Session view, its sessions as tracks, with the selected task's 
 
 #### The track
 
-A track is an agent session. To seat an agent, drag it from the browser onto an empty track. The agent takes the seat, and the track carries its tasks.
+A track is an agent session. To seat an agent, drag it from the browser onto an empty track. The agent takes the seat, and the track carries its tasks. A session starts already oriented: its world, its project, today's Day, and its own NOW and scratch place come with it, so the agent reads nothing to find where it stands. It runs in a terminal in the window, or attaches to one you started outside it. Its start opens its record. End session, on the track's menu, ends it; so does the session ending in its own terminal. Its end closes the record and lays what it yields on the Day (§18.2).
 
 The track head shows the session's name and colour, and the agent who works it. Each track has a stop button. A group of agents folds under one header, and each agent's helpers step in beneath it, with one coloured rail for each level, so three layers of delegation read at a glance. When a task on the track stalls, the track lights a retry. Retry starts again from the last good step, on the same basis.
 
@@ -7059,7 +7081,7 @@ shows all three forms, and its face changes with the form.
 
 | Form | The face shows | You can |
 |---|---|---|
-| Skill | Its mark, its evidence, the harnesses it reaches and the sets that carry it. | Turn it on or off. Review its revision. |
+| Skill | Its mark, its evidence, the harnesses it reaches and the sets that carry it. | Write it in Document, or open the one you have. Propose a revision, review it and release it to every harness that carries it. Turn it on or off. |
 | Method | Its mark, its evidence, and the path that it composes, from claim to return, with the members that each step uses. | Run it once, after a preflight. Prove the last run. |
 | Methodology | Its mark, its evidence, its field, and which Method applies when. | Read whether the act in hand needs it. |
 
@@ -12850,54 +12872,6 @@ Full's head carries the stop you stand on, the stops kept and the stop chosen, w
 
 **Stories:** UI04, WM07
 
-### 23.6 NOWs
-
-**Product:** Central · **Kind:** monitor · **Rail:** the widget rail on the right, and a pane
-
-You need to see the moments of today that are still open, wherever they are. NOWs shows the day and the present moment, with the open moments of your own ground, of each project and of each workcell, on every machine. This machine's are read directly; another machine's are read by asking it, through its Remote carrier (§19.18). Sessions that touch a subject you select show here too (§17.3).
-
-#### Parameters
-| Parameter | Values | Default | What it does |
-|---|---|---|---|
-| Day | A date (reading) | Today | The day in force. |
-| Now | A time (reading) | The present | The present moment. |
-| Machines | All · One machine | All | Shows the open moments of one machine. |
-| Where | All · Your ground · A project · A workcell | All | Shows the open moments of one register or one workcell. |
-| Asked | A time, for each other machine (reading) | Read when you open NOWs | When each other machine last answered. A machine that does not answer shows its last answer, dimmed. |
-
-#### Views
-
-```ui
-device: widgets:nows
-caption: NOWs, on a fixture of readings: the tile on the rail, and Full in a pane.
-```
-
-##### Widget
-
-The tile is the day, the time and the open moments, with Machines as a handle across its top. Press a moment to open it in Full.
-
-##### Full
-
-Full's head carries the day, the time and its zone, the day's state and the count of open moments, with Machines and Close. Below it the day runs in one lane for each machine, its moments grouped by your ground, each project and each workcell, beside the moment you opened.
-
-#### To use NOWs
-1. Open NOWs from the launcher.
-2. Read the open moments.
-3. Click a moment to open it.
-4. Close the moments you have finished.
-
-#### Rules
-- The tile shows the day and the time that the ground reports. It shows nothing when the ground reports nothing.
-- The day opens and closes by itself.
-- NOWs reads. Asking another machine changes nothing there.
-
-#### Tips
-- To end the day clean, close each open moment before the day closes.
-
-**Source:** interior.dev (the shell's kit); VS Code's workbench (the code-editor side)
-
-**Stories:** WR05, UI04, WM08–WM10, RF12, TO17
-
 ### 23.7 Wiki
 
 **Product:** Central · **Kind:** monitor · **Rail:** the widget rail on the right, and a pane
@@ -12932,7 +12906,8 @@ Full's head carries the page's kind, its links and the page the agent read last,
 4. Click the open mark to read the page in a pane.
 
 #### Rules
-- The wiki is read here. It is not edited here.
+- The wiki is read here. What is added to it comes in through the World's
+  sources (§17.2) or as a proposal you accept in Approvals (§19.14).
 - A link that does not resolve shows as it is.
 
 #### Tips
@@ -13668,7 +13643,7 @@ process it draws.
 | River | Flows without end. | Is a stream with no done. | A gateway (§19.2). |
 | Lake | Fills from its inflows and drains. | Is a store whose level is its backlog. | The Approvals queue (§19.14). |
 | Erosion | Slow wear by repeated passage. | Is the effect of many runs on the ground: drift, worn paths. | The Seats page of Workcell's instrument (§19.23), and Docs (§18.5). |
-| Seasons | The year's cycle. | Is a field's cycle: a NOW clearing active, quiescent, closed, archived. | The NOWs (§23.6). |
+| Seasons | The year's cycle. | Is a field's cycle: a session's record open, quiet, closed, archived. | The Day's widget and face 2 (§18.2). |
 | Succession | One community replaces another. | Is one lane after another on the same ground. | The Seats page of Workcell's instrument (§19.23). |
 
 A tree and its fruit are a run and its artefacts. The tree is the run, each
@@ -13692,10 +13667,10 @@ caption: The gateway as a river across the head of its frames: two sessions come
 ```
 
 ```ui
-device: widgets:nows
-view: full
+device: central:day-die
+view: widget
 height: 520
-caption: The NOWs as the field's year, over the moments of the day: four clearings in growth, one bent dormant, none harvested, one laid in the record.
+caption: The day's sessions as the field's year: four in growth, one quiet, one laid in the record.
 ```
 
 ```ui

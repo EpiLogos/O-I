@@ -1601,5 +1601,24 @@ The agent's reading, which the owner adopted. The full text is `docs/architectur
 - One Action registry (`oi act`, every owner's Actions) is the only write path for the window and for agents alike. Availability comes from the model.
 - Each mode's Set (tracks, clips, rows, takes, the Main track) is built in the kernel. Devices and views are declarations over it.
 - Each mode is scaled down to its core (§9.3). Nothing outside the core is built until the core passes the gate.
-- The gate is scripts that drive the real owners on a fresh home and read the effect back (§9.5). A ticket closes only when they pass, run by a session that is not the builder's. A refusal or a dimmed control is never a pass.
+- The gate is scripts that drive the real owners on a fresh home and read the effect back (§9.5). A ticket closes when they pass. A refusal or a dimmed control is never a pass. (R36 dropped the rule that another session must run them.)
 - One job has one implementation. A ticket names the code that already does its job and deletes the rest.
+
+### R36 — The core acts over the NOW bookkeeping (owner, 13 Nov 2026)
+
+Spoken in a session that planned the DLW's agentic core. The quotations are the owner's own messages, with their typing slips corrected and nothing else changed. The first gives the reason, and the second adopts the agent's plan and asks for it to be folded into R35's architecture.
+
+> doing lots of recovery and big rethink around the core DLW, wanting now to focus on the dynamics of the agentic systems and the ease of use and clarity around the core functionalities of harness setup, having a day, and having projects setup and wikis setup... seems like all this and the strapping of agents into the structure is currently buried under all the dumb NOW tracking and all the manual day management which was never desired, and indeed loads of the governance stuff is also buried, wanting to see how UX in the app can be planned around the core UX of writing up docs, skills etc, of making projects, of building worlds with the agent via the wiki development and ingestion system, and the management of sessions etc
+
+> okay, go ahead with this layer relative to the current kernel core work going on, wanting this to properly fold into this clarified architecture, please no random ad hoc shit, build into that lane's work and get going on the developments
+
+The plan, as adopted. The full text is in `docs/architecture/world-shell.md` §9.2 ("Sessions keep their own record") and the table of acts in §9.3.
+
+- The app is planned around six acts a person does: set up an agent, run a session, have a day, make a project, grow a wiki into a world, and write docs, skills and law. Each is built inside an existing core ticket (#1003, #1005, #1006, #1007, #1009). None is a device or a path of its own.
+- NOW and Returns go under the floor (#1016). A session's start and end are recorded by the harness hooks: the start opens the session's NOW and the end closes it. What a session yields lands on the Day as a proposal. No agent writes NOW or Return by hand, and the ritual's skills and the floor's session-end line retire into the session's start.
+- The Day opens and closes itself. Its face 2 is the day's sessions, and the NOWs widget retires.
+- Governance comes up as writing: a law statement is the root world's tier 0. Each agent shows the law it carries, and adopting a statement re-renders every harness's floor.
+- Agent-made process gates come off the tickets. A ticket closes when its acts pass on a fresh home, in the built app.
+
+Read on 13 Nov 2026: 45 root NOWs stood active, opened 23 Sep to 20 Oct, none opened after and none closed. `central.day.read` answered 30 Oct, empty. AIKit's session lifecycle held 0 sessions although the hooks dispatched. There were 24 `central-*` skills of about 13,000 words. Central exposed 3 wiki Actions, all read-only, and no device ingested a wiki.
+

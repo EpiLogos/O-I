@@ -90,3 +90,23 @@ test('Full size: the ⊞ menu stands a pane at full size through the grammar\'s 
   assert.match(menu, /execute\("surface\.focus-group", \{ groupId: group\.id \}\); execute\("surface\.maximize"\)/, 'it focuses this pane, then maximises or restores it');
   assert.match(menu, />\{state\.maximizedGroupId === group\.id \? "Restore panes" : "Full size"\}</);
 });
+
+test('Close pane: the ⊞ menu\'s last item closes a pane with its tabs into the closed stack; never the last pane, nor one with a pinned tab', () => {
+  // world-shell-mockup.html renderPmenu "Close pane" / closePane (parity G6): `if(leaves<2)return`.
+  const files = layout();
+  files.surfaces = {a: {id: 'a', kind: 'file', title: 'A', ref: 'a.md'}, b: {id: 'b', kind: 'file', title: 'B', ref: 'b.md'}};
+  const split = splitQuad(files, 'g1');
+  const [first, second] = groupsOf(split.root);
+  const closed = executeFrameAction(split, 'surface.close-pane', {groupId: first.id});
+  assert.equal(groupsOf(closed.root).length, groupsOf(split.root).length - 1, 'the pane is gone');
+  assert.ok(!groupsOf(closed.root).some(g => g.id === first.id));
+  assert.deepEqual(closed.closedStack, first.tabs, 'its tabs wait in the closed stack, as their own closes put them');
+  assert.ok(groupsOf(closed.root).some(g => g.id === second.id), 'the others stand');
+  const one = layout();
+  assert.equal(executeFrameAction(one, 'surface.close-pane', {groupId: 'g1'}), one, 'the last pane stays');
+  const pinnedFirst = executeFrameAction(split, 'surface.pin', {surfaceId: first.tabs[0]});
+  assert.equal(executeFrameAction(pinnedFirst, 'surface.close-pane', {groupId: first.id}), pinnedFirst, 'a pinned tab holds its pane');
+  const blanks = executeFrameAction(splitQuad(layout(), 'g1'), 'surface.close-pane', {groupId: 'g1'});
+  assert.deepEqual(blanks.closedStack, [], 'a dismissed New tab has nothing to reopen, as its own close');
+  assert.equal(blanks.surfaces.a, undefined);
+});

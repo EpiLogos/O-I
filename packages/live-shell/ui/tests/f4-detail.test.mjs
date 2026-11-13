@@ -64,5 +64,6 @@ test('App mounts one detail residence, the host with its sides, and the status b
   assert.match(bar, /const shownTracks = useShownTracks\(\)/, 'the status bar reads them where it draws the name')
   // The two switches read Clip | Device in every mode; what each side holds is the mode's registration, said on the Info line
   // (rendered per mode in detail-host.test.mjs).
-  assert.match(bar, /data-detail-side="clip"[\s\S]{0,500}<span>\{clipName \?\? 'Clip'\}<\/span>/); assert.match(bar, /data-detail-side="device"[\s\S]{0,500}<span>\{deviceName \?\? 'Device'\}<\/span>/)
+  // REPLACED (F8, 13 Nov): the Clip switch named the clip alone; it now carries the clip's small picture (manual §10.1), its name from the set's views where the frame names none.
+  assert.match(bar, /data-detail-side="clip"[\s\S]{0,600}<span>\{clipName \?\? clipPicture\?\.label \?\? 'Clip'\}<\/span>/); assert.match(bar, /data-detail-side="device"[\s\S]{0,500}<span>\{deviceName \?\? 'Device'\}<\/span>/)
 })

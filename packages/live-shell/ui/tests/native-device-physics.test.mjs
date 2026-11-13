@@ -198,12 +198,15 @@ test('switches: plane select renders the app options; pause stays text, and the 
 
 const findButton = (tree, label) => findElement(tree, node => node.type === 'button' && node.props?.children === label)
 
-test('the runtime actions send one typed request each, and reset asks before it sends', () => {
+// REPLACED (shell parity B8, 13 Nov): reset's inline two-step (Confirm reset (reseeds particles) / Cancel reset in the button row)
+// became the shell's confirm dialog (shell/ConfirmDialog.tsx, the world-shell mockup's .dlg): the view hands the press to onAskReset,
+// and the frame sends {action: 'reset', confirmed: true} only on the dialog's Reset field.
+test('the runtime actions send one typed request each, and reset asks before it sends', async () => {
   const sent = []
-  let asks = 0, cancels = 0
+  let asks = 0
   // The view has no hooks, so its returned tree is walked directly.
-  const view = props => NativeEngineActionsView({reason: null, confirming: false, noteId: 'native-engine-note-test', onRequest: request => sent.push(request),
-    onAskConfirm: () => asks++, onCancelConfirm: () => cancels++, ...props})
+  const view = props => NativeEngineActionsView({reason: null, noteId: 'native-engine-note-test', onRequest: request => sent.push(request),
+    onAskReset: () => asks++, ...props})
   const idle = view({})
   findButton(idle, 'Disperse particles').props.onClick()
   findButton(idle, 'Reset phases').props.onClick()
@@ -211,29 +214,21 @@ test('the runtime actions send one typed request each, and reset asks before it 
   assert.deepEqual(sent, [{action: 'disperse'}, {action: 'reset-phases'}, {action: 'recover'}])
   findButton(idle, 'Reset field').props.onClick()
   assert.equal(asks, 1)
-  assert.equal(sent.length, 3, 'the first reset press sends nothing')
-  const asking = view({confirming: true})
-  assert.equal(findButton(asking, 'Reset field'), null, 'the confirm step replaces the first reset press')
-  findButton(asking, 'Confirm reset (reseeds particles)').props.onClick()
-  assert.deepEqual(sent[3], {action: 'reset', confirmed: true}, 'only the confirmed reset carries confirmed: true')
-  findButton(asking, 'Cancel reset').props.onClick()
-  assert.equal(cancels, 1)
-  assert.equal(sent.length, 4)
-  const html = renderToStaticMarkup(view({confirming: true}))
-  assert.match(html, /Confirm reset \(reseeds particles\)/)
-  assert.match(html, /Cancel reset/)
-  assert.doesNotMatch(html, />Reset field</, 'the two-step markup replaces the first reset button')
+  assert.equal(sent.length, 3, 'the reset press sends nothing: it asks')
+  const {RESET_ASK} = await import('../src/components/NativeEngineActions.tsx')
+  assert.equal(RESET_ASK.ok, 'Reset field', 'the dialog\'s act is the button\'s own word')
+  assert.match(renderToStaticMarkup(createElement('div', null, RESET_ASK.body)), /reseeds <b>every particle<\/b>[\s\S]*nothing brings/, 'it says what is lost and that it does not come back')
 })
 
 test('a busy device names its reason once, and the note is what the buttons describe', () => {
   const reason = 'Wait for the native work to finish saving.'
-  const busy = renderToStaticMarkup(createElement(NativeEngineActionsView, {reason, confirming: false, noteId: 'native-engine-note-busy', onRequest() {}, onAskConfirm() {}, onCancelConfirm() {}}))
+  const busy = renderToStaticMarkup(createElement(NativeEngineActionsView, {reason, noteId: 'native-engine-note-busy', onRequest() {}, onAskReset() {}}))
   assert.equal((busy.match(/<button[^>]*disabled=""/g) ?? []).length, 4)
   const id = busy.match(/<small id="([^"]+)" class="native-engine-note">/)?.[1]
   assert.ok(id, 'the reason is a note with an id')
   assert.equal((busy.match(new RegExp(`aria-describedby="${id}"`, 'g')) ?? []).length, 4, 'every off button is described by the note')
   assert.match(busy, new RegExp(reason.replace(/\./g, '\\.')))
-  const ready = renderToStaticMarkup(createElement(NativeEngineActionsView, {reason: null, confirming: false, noteId: 'native-engine-note-ready', onRequest() {}, onAskConfirm() {}, onCancelConfirm() {}}))
+  const ready = renderToStaticMarkup(createElement(NativeEngineActionsView, {reason: null, noteId: 'native-engine-note-ready', onRequest() {}, onAskReset() {}}))
   assert.doesNotMatch(ready, /disabled=""|aria-describedby|native-engine-note/)
   assert.equal(engine.engineCommandReason({mounted: true, busy: false}), null)
 })
