@@ -329,6 +329,41 @@ test('Search asks AIKit the line as typed, in your world or one project, and dra
   assert.equal(refused.standing.query.refused, refusal)
 })
 
+// D-15: the shipped hosts (the Search pane, the search line) hand Search no list; the hook reads the world's projects itself, from
+// Central's world_browse disclosure (agent/worldScope.ts useWorldProjects), as the browser's worlds do. FAKE OWNER: a stubbed bridge.
+const {ownerReadings} = await import('../src/owners/ownerReading.ts')
+const {spineEpochKey} = await import('../src/owners/spine.ts')
+const worldScope = await import('../src/agent/worldScope.ts')
+test('Search\'s Reach lists the world\'s projects as Central discloses them, though its hosts hand it none, and draws as the design does with that list', async () => {
+  holds.resetHolds()
+  const bridge = {kind: 'bridge', url: 'http://search-world.fixture'}
+  const realFetch = globalThis.fetch
+  globalThis.fetch = async (_url, init) => {
+    const body = JSON.parse(init.body)
+    if (body.op === 'world_browse') return {json: async () => ({ok: true, outcome: {result: 'world_read', snapshot: {navigator: {root: {control: {agent_wiki: {wiki: {space_ref: 'central:wiki:root'}}},
+      work: {projects: [{name: 'O-I', path: 'Work/O-I'}, {name: 'Archetypal-Earth', path: 'Work/Archetypal-Earth'}]}}}}}})}
+    return {json: async () => ({ok: false, error: `unexpected op ${body.op}`})}
+  }
+  try { await ownerReadings.entry(worldScope.worldProjectsKey(bridge), async () => ({value: await worldScope.readWorldProjects(bridge)})).ensure(spineEpochKey(0, null)) }
+  finally { globalThis.fetch = realFetch }
+  let bound = null
+  function Probe() { bound = chain.useSearchDevice(bridge); return null }
+  html(createElement(Probe))
+  assert.deepEqual(parse(bound.values.projects), ['O-I', 'Archetypal-Earth'], 'Reach reads the projects Central disclosed')
+  const design = DESIGNS[search.SEARCH_DESIGN]
+  const drawn = view => html(createElement(() => design[view](props(bound))))
+  const own = view => html(createElement(() => design[view](props(search.searchBinding('central:search', null, ['O-I', 'Archetypal-Earth'])))))
+  for (const view of ['compact', 'full']) {
+    assert.equal(drawn(view), own(view), `${view}: the design's own draw with the world's projects`)
+    assert.doesNotMatch(drawn(view), /No reading of the projects/, `${view}: Reach is not left on Your world alone`)
+  }
+  // No carrier: nothing is read, and the design says so in its words.
+  function Down() { bound = chain.useSearchDevice({kind: 'unavailable', reason: 'down'}); return null }
+  html(createElement(Down))
+  assert.equal(bound.values.projects, undefined)
+  assert.match(html(createElement(() => design.compact(props(bound)))), /No reading of the projects/)
+})
+
 test('Search writes nothing: its line, reach, kinds and pick are the view\'s own; a tag, the aliases, the fields and the limit refuse in words', async () => {
   holds.resetHolds()
   const binding = search.searchBinding('central:search', null, null)

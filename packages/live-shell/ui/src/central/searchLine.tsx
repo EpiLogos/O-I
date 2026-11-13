@@ -133,7 +133,7 @@ export function SearchLine({request}: {request: LineRequest}) {
     const timer = window.setTimeout(() => setHeld(SEARCH_DEVICE_ID, 'query', query), SETTLE_MS)
     return () => window.clearTimeout(timer)
   }, [mode, query])
-  const search = useSearchDevice(transport, null)
+  const search = useSearchDevice(transport)
   const held = heldOf(SEARCH_DEVICE_ID)
   const project = searchProjectOf(SEARCH_DEVICE_ID)
   const asking = mode === 'jump' || mode === 'search'

@@ -42,7 +42,7 @@ export const SEARCH_WIRING: DesignWiring = {
     light: 'AIKit answered the search (lit) or refused it (dark), in its own words (op knowledge search)',
     results: 'AIKit\'s hits for the query, in its order (op knowledge search, then resolve; searchProgress.ts progressiveSearch): ref the hit\'s resource, title its label, kind its kind, says its snippet; a resolution row\'s owner; for Your world, then Central\'s matches in Control (control.search: each a document, its path and line, the line\'s words)',
     limit: `${SEARCH_LIMIT}: the kernel asks AIKit for ${SEARCH_LIMIT} results (desktop/cradle/kernel/src/knowledge.rs request_args)`,
-    projects: 'the projects the shell reaches (the browser\'s projects, when the chain is handed them)',
+    projects: 'the world\'s projects: Central\'s world_browse disclosure, the read the browser\'s worlds draw from (agent/worldScope.ts useWorldProjects)',
     'vak.context': 'the located entry\'s neighbourhood: Quaternal Logic\'s `ql vak context <ref> <depth>` (ql.vak-context/v1) through the kernel\'s ql_read vak-context, as {centre, depth, revision, entries: [[ref, name, symbol, source line]], relations: [[from, relation, into]]}; the entry itself is `ql vak locate <ref>` (ql_read vak-locate), among the results as a vak-entry',
   },
   writes: {},
@@ -66,7 +66,7 @@ export const SEARCH_WIRING: DesignWiring = {
     aliases: 'No owner keeps your aliases.',
     selection: NO_SELECTION,
     from: NO_SELECTION,
-    projects: 'No project list is handed to this chain.',
+    projects: 'Central has not disclosed the world\'s projects (world_browse) yet, or refused to.',
     'vak.context': NO_VAK_TERM,
   },
 }
