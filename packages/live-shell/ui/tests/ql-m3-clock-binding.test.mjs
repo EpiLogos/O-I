@@ -81,7 +81,7 @@ test('the form is read once per encounter; a new degree advances forward on the 
   assert.deepEqual(calls[0], {op: 'm3_reception', project: '', request: {operation: 'read', binding: m3.m3Binding(basis)}})
   const values = m3.qlM3Values(m3.qlM3State())
   assert.deepEqual(values, {'clock.degree720': 419, 'clock.tick12': 1, 'clock.backbone': '#3-5-1-3', 'aperture.index': 2, 'form.address': 17, 'form.codon': 'TAT',
-    'law.matrix': 'moving-resting', 'law.seed': 'sum-difference-mod', 'law.poseMap': 'raw-bin',
+    'law.matrix': 'moving-resting', 'law.seed': 'sum-difference-mod', 'law.poseMap': 'raw-bin', 'pose.bin': 0, 'pose.slot': 0,
     'generation.lower': 'CT', 'generation.upper': 'CC', 'generation.positive': 'CCC', 'generation.negative': 'CTC', 'generation.nonDual': false})
   // The Rack page's keys are the rack's (qlRack.ts): the rack absent with its reason until it is read, the part in the view's own hand.
   const binding = m3.qlM3Binding(m3.qlM3State())
