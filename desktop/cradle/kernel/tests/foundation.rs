@@ -2176,6 +2176,19 @@ fn run_a_factory_task(world: &World) -> Result<String, String> {
                 "the task's log did not stream: its lines read {seen:?}"
             ));
         }
+        // It streams the agent's turn as AIKit shows it (its `turn` lines), not only the task's send and its end.
+        let turn = ended["lines"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .filter(|line| line["kind"] == "turn")
+            .count();
+        if turn == 0 {
+            return Err(format!(
+                "the task's log holds nothing of the agent's turn: {}",
+                clip(&ended["lines"])
+            ));
+        }
         if !ended["attempt"]["returned"].is_object() {
             return Err(format!(
                 "the task ended without a return: {}",
@@ -2209,7 +2222,7 @@ fn run_a_factory_task(world: &World) -> Result<String, String> {
             ));
         }
         println!(
-            "task {task}: its log streamed {seen:?} lines; attempt {attempt} returned, its diff {}",
+            "task {task}: its log streamed {seen:?} lines, {turn} of them the agent's turn; attempt {attempt} returned, its diff {}",
             git(&checkout, &["diff", "--stat"])?.trim()
         );
 
