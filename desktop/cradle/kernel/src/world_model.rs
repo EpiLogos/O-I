@@ -245,6 +245,9 @@ pub struct Model {
     running: OnceLock<(Asking, Telling)>,
     /// Set once by `stop`, for good: no slice is read again and the model's threads end.
     stopped: std::sync::atomic::AtomicBool,
+    /// The AIKit home AIKit's slices read: `None`, the one AIKit's commands inherit from this process (agency.rs
+    /// `aikit_home_gone`). A test names its own.
+    aikit_home: Option<std::path::PathBuf>,
 }
 
 impl Model {
@@ -254,6 +257,7 @@ impl Model {
             queue: Queue::default(),
             running: OnceLock::new(),
             stopped: std::sync::atomic::AtomicBool::new(false),
+            aikit_home: None,
         }
     }
 
@@ -416,6 +420,13 @@ impl Model {
     }
 
     fn load(&self, slice: Slice, via: Via<'_>) -> Result<Value, String> {
+        // Every AIKit command makes AIKit's home when it finds none, so a read of a World part-way through its removal would make
+        // it again and the removal fail. Where this window found that home removed, AIKit's slices keep what they held.
+        if slice.owner() == "AIKit" {
+            if let Some(removed) = crate::agency::aikit_home_gone(self.aikit_home.as_deref()) {
+                return Err(removed);
+            }
+        }
         match slice {
             Slice::Worlds => worlds(via),
             Slice::Day => day(via),
@@ -2587,5 +2598,63 @@ mod tests {
             !Writing::of(&KernelOp::ModelCatalogue).settle(&model, &taken),
             "a read marks nothing"
         );
+    }
+
+    /// A World part-way through its removal: `rm -rf` takes its `.aikit` before the rest, and AIKit reads a home that is
+    /// missing in a folder that stands as its first run, making it again for the read, so the removal fails. This window read
+    /// that home before: AIKit's slices are not read where it is gone, made again or not. They keep what they held and say
+    /// why (O-I #1001).
+    #[test]
+    fn aikit_s_slices_are_not_read_where_this_window_found_its_home_removed() {
+        use std::sync::atomic::{AtomicU64, Ordering::SeqCst};
+        let home = std::env::temp_dir().join(format!(
+            "oi-world-model-aikit-home-{}-{}",
+            std::process::id(),
+            line!()
+        ));
+        std::fs::create_dir_all(&home).unwrap();
+        let mut model = Model::new();
+        model.aikit_home = Some(home.clone());
+        let asked = AtomicU64::new(0);
+        let via = |_op: KernelOp| -> Result<KernelOpOutcome, String> {
+            let n = asked.fetch_add(1, SeqCst) + 1;
+            Ok(KernelOpOutcome {
+                receipts: Vec::new(),
+                read_scopes: None,
+                result: crate::KernelOpResult::ModelCatalogueReading {
+                    data: json!({"read": n}),
+                },
+            })
+        };
+        let (first, _) = model.subscribe(Slice::Models, &via, false);
+        assert_eq!(first["value"], json!({"read": 1}), "{first}");
+        std::fs::remove_dir_all(&home).unwrap();
+        model.read_again(Slice::Models, &via);
+        let (after, _) = model.subscribe(Slice::Models, &via, false);
+        assert_eq!(
+            asked.load(SeqCst),
+            1,
+            "AIKit was asked where its home was removed"
+        );
+        assert_eq!(
+            after["value"], first["value"],
+            "the slice keeps what it held"
+        );
+        assert_eq!(after["state"], "stale", "{after}");
+        assert!(
+            after["error"]
+                .as_str()
+                .is_some_and(|words| words.contains(&home.display().to_string())),
+            "the slice says why: {after}"
+        );
+        // A read elsewhere made it again: this window still reads nothing of AIKit's there.
+        std::fs::create_dir_all(&home).unwrap();
+        model.read_again(Slice::Models, &via);
+        assert_eq!(
+            asked.load(SeqCst),
+            1,
+            "AIKit was asked once its removed home was made again"
+        );
+        let _ = std::fs::remove_dir_all(&home);
     }
 }

@@ -79,7 +79,8 @@ fn owner_unreachable(output: &std::process::Output) -> bool {
 /// Why no encounter owner is started for `cwd`: the folder it would stand in is gone, or the folder that holds its home
 /// (`AIKIT_HOME`, else `$HOME/.aikit`). A World or a project's folder removed while a window still reads it leaves its owner
 /// unreachable, and AIKit's start would make that ground again (its state and its home) with a resident owner standing in it
-/// until its idle close. A first start, whose home is not made yet, starts as before: only its folder must stand.
+/// until its idle close. A first start, whose home is not made yet, starts as before: only its folder must stand. Nor is one
+/// started where this window found the home itself removed (`aikit_home_gone`).
 fn owner_ground_gone(cwd: &Path, home: Option<&Path>) -> Option<String> {
     let home_folder = match home {
         Some(home) => home.parent().map(Path::to_path_buf),
@@ -96,6 +97,53 @@ fn owner_ground_gone(cwd: &Path, home: Option<&Path>) -> Option<String> {
                 folder.display()
             )
         })
+        .or_else(|| aikit_home_gone(home))
+}
+
+/// The AIKit home a command started with `home` reads: `home`, else the `AIKIT_HOME` this process hands on, else
+/// `$HOME/.aikit` (AIKit's own `AikitHome::discover`).
+fn aikit_home_of(home: Option<&Path>) -> Option<PathBuf> {
+    if let Some(home) = home {
+        return Some(home.to_path_buf());
+    }
+    std::env::var_os("AIKIT_HOME")
+        .filter(|home| !home.is_empty())
+        .map(PathBuf::from)
+        .or_else(|| {
+            std::env::var_os("HOME")
+                .filter(|home| !home.is_empty())
+                .map(|home| PathBuf::from(home).join(".aikit"))
+        })
+}
+
+/// The AIKit homes this window has found standing, and those it then found removed.
+static AIKIT_HOMES: std::sync::OnceLock<Mutex<std::collections::HashMap<PathBuf, bool>>> =
+    std::sync::OnceLock::new();
+
+/// Why this window reads and starts nothing of AIKit's for `home` (`None`: the home AIKit's commands inherit from it): the
+/// home stood when the window read it, and is gone. A World part-way through its removal (`rm -rf` takes `.aikit` before the
+/// rest of it) looks to AIKit like a World it has never run in, and AIKit makes its home for a read and starts an owner in
+/// it, so the removal fails with an owner standing in what is left. The window tells the two apart: a home it read and cannot
+/// find now was removed. It stays removed for this window, made again or not (a read elsewhere may have made it), and is
+/// read again by a window opened after. A home this window never found standing is AIKit's first run in its World.
+pub(crate) fn aikit_home_gone(home: Option<&Path>) -> Option<String> {
+    let home = aikit_home_of(home)?;
+    let mut homes = AIKIT_HOMES
+        .get_or_init(Default::default)
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
+    let removed = match homes.get(&home).copied() {
+        Some(removed) => removed || !home.is_dir(),
+        None if home.is_dir() => false,
+        None => return None,
+    };
+    homes.insert(home.clone(), removed);
+    removed.then(|| {
+        format!(
+            "AIKit's home {} was removed while this window read it: nothing of AIKit's is read or started there again until the window is opened again",
+            home.display()
+        )
+    })
 }
 
 #[derive(Clone, Debug)]
@@ -2637,6 +2685,38 @@ mod tests {
         assert!(message.contains("AIKit encounter failed"), "{message}");
         assert!(message.contains("9"), "{message}");
         assert!(message.contains("without an owner diagnostic"), "{message}");
+    }
+
+    /// A World part-way through its removal (O-I #1001): `rm -rf` takes its `.aikit` before the rest, so the folders an owner
+    /// would stand in still stand and AIKit reads the missing home as a first run. The window that read that home starts no
+    /// owner there, made again or not; a home it has never read is a first run and starts as before.
+    #[test]
+    fn no_owner_is_started_where_this_window_found_its_aikit_home_removed() {
+        let world = std::env::temp_dir().join(format!(
+            "oi-agency-world-{}-{}",
+            std::process::id(),
+            line!()
+        ));
+        let home = world.join(".aikit");
+        let cwd = world.join("Central");
+        std::fs::create_dir_all(&cwd).unwrap();
+        assert_eq!(
+            super::owner_ground_gone(&cwd, Some(&home)),
+            None,
+            "a first start, its home not made yet"
+        );
+        std::fs::create_dir_all(&home).unwrap();
+        assert_eq!(super::owner_ground_gone(&cwd, Some(&home)), None);
+        std::fs::remove_dir_all(&home).unwrap();
+        let gone = super::owner_ground_gone(&cwd, Some(&home))
+            .expect("no owner is started where the home this window read was removed");
+        assert!(gone.contains(&home.display().to_string()), "{gone}");
+        std::fs::create_dir_all(&home).unwrap();
+        assert!(
+            super::owner_ground_gone(&cwd, Some(&home)).is_some(),
+            "made again by a read elsewhere, it stays removed for this window"
+        );
+        let _ = std::fs::remove_dir_all(&world);
     }
 
     #[test]
