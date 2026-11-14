@@ -122,7 +122,7 @@ test('compact is a picture and at most four controls: the others\' are their mos
   assert.deepEqual(compact('agent'), ['model', 'effort', 'budget-used', 'input'], 'the manual\'s four (§19.4 Compact: "Macros: Model, Effort, Budget, Input"): the Agent\'s Autonomy is retired')
   assert.deepEqual(compact('skillset'), [], 'the rack\'s four settings are readings no owner maps, so the compact rack draws its chains and no badge posing as a macro')
   assert.deepEqual(compact('world'), ['write-mode'])
-  assert.deepEqual(compact('git'), ['commit-policy', 'push-policy', 'land'])
+  assert.deepEqual(compact('git'), ['commit-policy', 'push-policy', 'landAs', 'land'], 'the manual\'s four (§19.16 Compact: Commit, Push, Land as, Land)')
   for (const {device} of set) assert.ok(compactRows(device.rows).length <= 4)
   const rack = slotOf(set, 'skillset').device.rows
   // REPLACED (lane BD round 12, §19.7 "Refining a skill"): the rack's rows were ai-kit's four settings alone. The Refining page's rows

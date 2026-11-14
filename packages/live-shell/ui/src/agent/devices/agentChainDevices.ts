@@ -52,6 +52,14 @@ export interface SkillChain {
   carriedBy: readonly string[]
 }
 
+/** A seat as Workcell's landing Actions name it (workcell.lane.*: `--workcell`, `--product`), and whether a lane holds it: a free seat
+ * holds no lane to land. */
+export interface LandingSeat {
+  readonly workcell: string
+  readonly product: string
+  readonly held: boolean
+}
+
 export interface AgentChainReading {
   gateway: OwnerReading
   /** The harness answered the read (the gateway lamp is earned by an answered reading, never assumed). Null while reading. */
@@ -61,7 +69,11 @@ export interface AgentChainReading {
   git: OwnerReading
   /** The workcell seat answered. Null while reading. */
   gitAdmitted: boolean | null
-  gitRepo: {branch?: string; uncommitted?: number}
+  /** The seat's branch, its files with no commit, and the commits it holds that main does not and the reverse (`ahead_main`,
+   * `behind_main`). */
+  gitRepo: {branch?: string; uncommitted?: number; ahead?: number; behind?: number}
+  /** The seat Git / landing lands from, as the seat instrument names it; absent where no seat is named. */
+  gitSeat?: LandingSeat | null
   /** Who each unlit lamp waits on (P0-R4): the owner of the refused reading, or null while reading / once admitted. */
   waitingOn: {gateway: string | null; skillset: string | null; git: string | null}
   /** The roster's skill chains. Null while the roster is being read. */
@@ -266,11 +278,15 @@ const PLAN: Readonly<Record<string, Readonly<Record<string, RowPlan>>>> = {
     'write-mode': {group: 'Writes', compact: true},
     'write-receipts': {group: 'Writes'},
   },
+  // The manual's four macros (§19.16 Compact: Commit, Push, Land as, Land).
   git: {
     branch: {group: 'Seat'},
     uncommitted: {group: 'Seat'},
+    ahead: {group: 'Seat'},
+    behind: {group: 'Seat'},
     'commit-policy': {group: 'Policy', compact: true},
     'push-policy': {group: 'Policy', compact: true},
+    landAs: {group: 'Policy', compact: true},
     land: {group: 'Policy', compact: true},
   },
 }
@@ -285,6 +301,7 @@ const LABELS: Readonly<Record<string, string>> = {
   'write-receipts': 'Receipts',
   'commit-policy': 'Commit',
   'push-policy': 'Push',
+  landAs: 'Land as',
 }
 export const rowTitle = (key: string): string => LABELS[key] ?? key.charAt(0).toUpperCase() + key.slice(1)
 

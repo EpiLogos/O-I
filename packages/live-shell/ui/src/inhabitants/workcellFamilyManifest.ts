@@ -12,7 +12,7 @@ export function workcellFamilyManifest(): FamilyManifest {
         hint: 'The git seat: branch against main, uncommitted work, push, land. Reads through op workcell_status_read and op git_repository_read; the agent shell\'s Git column reads it, and no row source is composed here yet.'},
     ],
     faces: [
-      {id: 'git-seat', presentations: statePresentations('workcell:git-seat'), liveSemantic: 'return', invariant: {routesTo: 'workcell-cli:git commit'}, note: 'Branch vs main, uncommitted, commit policy, push, Land/draft PR; subagents share lead seat.'},
+      {id: 'git-seat', presentations: statePresentations('workcell:git-seat'), liveSemantic: 'return', invariant: {routesTo: 'act:workcell.lane.land'}, note: 'Branch vs main, uncommitted, commit policy, push, Land/draft PR; subagents share lead seat.'},
       {id: 'remote-carrier', presentations: statePresentations('workcell:remote-carrier'), liveSemantic: 'link', note: 'Reach/where; composed or refused — never live in mockup.'},
       {id: 'link', presentations: statePresentations('workcell:link'), liveSemantic: 'link', note: 'Transport Link: shared field across Mac and Omarchy sessions.'},
       // Workcell's instrument (DLW §19.23): born in a pane and standing only there and on the rail, on the run you select, in every

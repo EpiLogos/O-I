@@ -183,12 +183,16 @@ test('(c) the instrument changes none of its connections\' settings; every act o
 
 test('the chain\'s own devices read the selected workcell: the Seat starts at its seat, Git / landing on its seat of the project', () => {
   bind.resetHolds()
-  assert.deepEqual(rack.workcellGitReading(answered(REAL.seatStatus), 'env-1', 'O-I'), {gitAdmitted: true, gitRepo: {branch: 'dlw/build', uncommitted: 38}})
-  assert.deepEqual(rack.workcellGitReading(answered(REAL.seatStatus), 'env-2', 'ai-kit'), {gitAdmitted: true, gitRepo: {uncommitted: 0}}, 'a free seat stands on no lane')
+  // REPLACED (O-I 1006): the reading was the branch and the files with no commit; it holds the seat's commits against main too, and the
+  // seat Land lands from (workcellBindings.ts gitBinding: Workcell's landing Actions name a seat by its workcell and product).
+  assert.deepEqual(rack.workcellGitReading(answered(REAL.seatStatus), 'env-1', 'O-I'),
+    {gitAdmitted: true, gitRepo: {branch: 'dlw/build', uncommitted: 38, ahead: 35, behind: 0}, gitSeat: {workcell: 'env-1', product: 'o-i', held: true}})
+  assert.deepEqual(rack.workcellGitReading(answered(REAL.seatStatus), 'env-2', 'ai-kit'),
+    {gitAdmitted: true, gitRepo: {uncommitted: 0, ahead: 0, behind: 1}, gitSeat: {workcell: 'env-2', product: 'ai-kit', held: false}}, 'a free seat stands on no lane, and holds none to land')
   assert.deepEqual(rack.workcellGitReading({status: 'refused', value: null}, 'env-1', 'O-I'), {gitAdmitted: false, gitRepo: {}})
   assert.deepEqual(rack.workcellGitReading({status: 'reading', value: null}, 'env-1', 'O-I'), {gitAdmitted: null, gitRepo: {}})
   const git = cell.gitValues(rack.workcellGitReading(answered(REAL.seatStatus), 'env-3', 'O-I'), bind.chainHolds())
-  assert.deepEqual(git, {light: 'lit', branch: 'dlw/t1-theme', uncommitted: 0})
+  assert.deepEqual(git, {light: 'lit', branch: 'dlw/t1-theme', uncommitted: 0, ahead: 0, behind: 716, 'push-policy': 'off', landAs: 'draft'})
   for (const name of ['env-1', 'env-2', 'env-3']) {
     assert.equal(cell.seatValues({status: REAL.seatStatus, project: 'O-I', branch: 'dlw/build', workcell: name, holds: bind.chainHolds()}).seat, name, `${name}: the Seat starts at its seat`)
   }

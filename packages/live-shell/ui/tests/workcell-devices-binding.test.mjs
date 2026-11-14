@@ -9,7 +9,8 @@
 //   --project-world project:O-I --json` as read on workcell:mac on 16 Oct, read-only. The Seat is proved on the instrument's own reading here, because no kernel op runs it in the shell.
 // - FIXTURE: the chain's git reading (agentChainDevices.ts AgentChainReading shape) and a refused Workcell read.
 // - SCRIPTED: the four catalogue designs rendered through the runtime's host (deviceHost.HostedDevice) to static markup.
-// No owner state is written: every write here is refused by the binding before any port is reached.
+// No owner state is written: every write here is refused by the binding before any port is reached, but Git / landing's Land, whose
+// port here records the Actions it is asked to run (act-registry.sh runs Workcell's landing Actions themselves).
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {register} from 'node:module'
@@ -80,20 +81,60 @@ test('the three devices are keyed to their designs exactly, from the Workcell fa
   assert.equal(cell.GIT_ID, model.chainDeviceId('git'))
 })
 
-test('Git / landing reads the chain\'s git reading only; every policy and Land stand disabled with the command that does not exist', async () => {
+test('Git / landing reads the chain\'s git reading; Land runs Workcell\'s landing Actions on the held seat in order, and Commit stands disabled', async () => {
+  // REPLACED (O-I 1006): "every policy and Land stand disabled with the command that does not exist" (`workcell-cli git commit|push`, `seat
+  // land`). Workcell's own Actions land a seat (workcell.lane.commit, .push and .land, which the kernel's `act` runs): Land runs them in
+  // the design's order — the work committed, the lane pushed, the lane landed as Land as says — and waits while Push is Off. Push and Land
+  // as are the hand's, from the manual's defaults. No owner commits on a cadence, so Commit stands disabled.
   bind.resetHolds()
-  const reading = {...model.INITIAL_READING, gitAdmitted: true, gitRepo: {branch: 'main', uncommitted: 3}}
-  const binding = cell.gitBinding(reading, bind.chainHolds())
-  assert.deepEqual(binding.values, {light: 'lit', branch: 'main', uncommitted: 3})
+  const seat = {workcell: 'env-1', product: 'O-I', held: true}
+  const reading = {...model.INITIAL_READING, gitAdmitted: true, gitRepo: {branch: 'dlw/build', uncommitted: 3, ahead: 2, behind: 1}, gitSeat: seat}
+  const asked = []
+  const ports = {lane: async (action, input) => { asked.push([action, input]); return {} }}
+  const binding = cell.gitBinding(reading, bind.chainHolds(), ports)
+  assert.deepEqual(binding.values, {light: 'lit', branch: 'dlw/build', uncommitted: 3, ahead: 2, behind: 1, 'push-policy': 'off', landAs: 'draft'})
   assert.equal(cell.gitValues({...model.INITIAL_READING, gitAdmitted: false, gitRepo: {}}, bind.chainHolds()).light, 'dark')
-  assert.deepEqual(cell.gitValues(model.INITIAL_READING, bind.chainHolds()), {}, 'unread: nothing, not even a light')
-  for (const key of ['commit-policy', 'push-policy', 'landAs', 'land']) {
-    assert.match(binding.standing[key].disabled, /missing op/, key)
-    await assert.rejects(() => binding.write([{key, value: true}]), /missing op/)
+  assert.deepEqual(cell.gitValues(model.INITIAL_READING, bind.chainHolds()), {'push-policy': 'off', landAs: 'draft'}, 'unread: no light and no reading, only the hand\'s settings')
+  assert.match(binding.standing['commit-policy'].disabled, /no owner commits on a cadence/)
+  await assert.rejects(() => binding.write([{key: 'commit-policy', value: 'per turn'}]), /no owner commits on a cadence/)
+  await assert.rejects(() => binding.write([{key: 'branch', value: 'x'}]), /is a reading/)
+  assert.equal(binding.standing.land, undefined, 'Land stands for the held seat, its carrier standing')
+  // Push Off: Land waits, and no Action is asked.
+  await assert.rejects(() => binding.write([{key: 'land', value: true}]), /Push is Off/)
+  assert.deepEqual(asked, [])
+  // Push On land: the work committed, the lane pushed, then landed as a draft — in that order, on the seat's workcell and product.
+  binding.local['push-policy']('on land')
+  await binding.write([{key: 'land', value: true}])
+  const at = {workcell: 'env-1', product: 'O-I'}
+  assert.deepEqual(asked, [
+    ['workcell.lane.commit', {...at, message: 'The work of lane dlw/build, committed by Land'}],
+    ['workcell.lane.push', at],
+    ['workcell.lane.land', {...at, as: 'draft'}],
+  ])
+  // A clean seat lands with no commit, as Land as says.
+  asked.length = 0
+  binding.local.landAs('merge')
+  await cell.gitBinding({...reading, gitRepo: {...reading.gitRepo, uncommitted: 0}}, bind.chainHolds(), ports).write([{key: 'land', value: true}])
+  assert.deepEqual(asked, [['workcell.lane.push', at], ['workcell.lane.land', {...at, as: 'merge'}]])
+  // Workcell's refusal is the press's: the steps after it are not asked.
+  asked.length = 0
+  const refusing = {lane: async action => { asked.push([action]); if (action === 'workcell.lane.push') throw Error('workcell lane push: the project has no remote named origin'); return {} }}
+  await assert.rejects(() => cell.gitBinding(reading, bind.chainHolds(), refusing).write([{key: 'land', value: true}]), /no remote named origin/)
+  assert.deepEqual(asked, [['workcell.lane.commit'], ['workcell.lane.push']])
+  // No carrier, no seat named, a free seat: Land stands disabled in those words, and asks nothing.
+  asked.length = 0
+  for (const [git, given, why] of [[reading, {}, /carrier is unavailable/], [{...reading, gitSeat: null}, ports, /no seat of the project/],
+    [{...reading, gitSeat: {...seat, held: false}}, ports, /seat is free/]]) {
+    const standing = cell.gitBinding(git, bind.chainHolds(), given)
+    assert.match(standing.standing.land.disabled, why)
+    await assert.rejects(() => standing.write([{key: 'land', value: true}]), why)
   }
-  assert.match(cell.GIT_REFUSE.land, /seat land \(no such command/)
+  assert.deepEqual(asked, [])
   binding.local.sel('a/b.ts')
   assert.equal(cell.gitValues(reading, bind.chainHolds()).sel, 'a/b.ts', 'the file shown in the pane is the hand\'s')
+  assert.deepEqual(cell.gitValues(reading, bind.chainHolds())['push-policy'], 'on land', 'Push is the hand\'s hold')
+  // The chain's Land is the kernel's `act` with Workcell's Action id (FactoryDeviceChain.tsx): no other path carries it.
+  assert.match(read('agent/devices/FactoryDeviceChain.tsx'), /lane: \(action, input\) => ownerRouteWrite\(transport, actOp\(action, input\), LANE_WORDS\[action\]\)/)
   bind.resetHolds()
 })
 

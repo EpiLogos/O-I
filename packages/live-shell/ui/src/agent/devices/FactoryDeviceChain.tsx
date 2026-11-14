@@ -108,8 +108,8 @@ import {familyFaceDevice} from './mainTrackBindings'
 import {publishChainHead} from '../../shell/modeDetails'
 import {openInReader} from '../../frame/browser/constellationActs'
 import {APPROVALS_DESIGN, APPROVALS_ID, approvalsAwayBinding, receiptDevices} from './receiptBindings'
-import {CARRIER_DESIGN, CARRIER_ID, carrierBinding, connectionLabels, gitBinding, planRunOf, runDemandOf, seatBinding, seatDropRefusal, workcellDevices, type SeatPorts} from './workcellBindings'
-import {ROUTE_WORDS, aikitWriteOp, centralRevisionWrite, deskActorOf, factoryOwnerWrite, ownerRouteWrite, refinementWrite, refusalWords, seatWriteOp} from './ownerRoutes'
+import {CARRIER_DESIGN, CARRIER_ID, LANE_WORDS, carrierBinding, connectionLabels, gitBinding, planRunOf, runDemandOf, seatBinding, seatDropRefusal, workcellDevices, type GitPorts, type SeatPorts} from './workcellBindings'
+import {ROUTE_WORDS, actOp, aikitWriteOp, centralRevisionWrite, deskActorOf, factoryOwnerWrite, ownerRouteWrite, refinementWrite, refusalWords, seatWriteOp} from './ownerRoutes'
 import {worldsOf} from './workcellMaterial'
 import {currentIdentity} from '../../../../../../desktop/cradle/src/nara/identity/current'
 import {WORKCELL_RACK_ID, chosenWorld, workcellGitReading} from './workcellRackBinding'
@@ -569,10 +569,13 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   // The seat instrument (lane K1's seat_status_read: slow, read once while a session's or a workcell's chain stands, and on demand): the
   // workcell's seats, the Seat, Git / landing on a workcell's chain, and the Workcells tile.
   const seats = useSeatStatusAnswer(transport, sessionRef != null || cellName != null).reading
-  // Git / landing: on a workcell's chain, that workcell's seat of the project (its branch, the files with no commit); elsewhere — on the
-  // door, on no chain — the chain's git reading. Every act stands disabled.
+  // Git / landing: on a workcell's chain, that workcell's seat of the project (its branch, the files with no commit, its commits against
+  // main); elsewhere — on the door, on no chain — the chain's git reading. Land is Workcell's own Actions on the held seat
+  // (workcell.lane.commit, .push and .land) through the kernel's `act`, each answering or refusing in Workcell's words (O-I 1006).
   const gitReading = useMemo(() => (cellName ? workcellGitReading(seats, cellName, rackProject) : reading), [cellName, seats, reading, rackProject])
-  const gitDesignBinding = useMemo(() => (waits.git ? null : gitBinding(gitReading, holds)), [waits.git, gitReading, holds])
+  const gitPorts = useMemo((): GitPorts => (transport.kind !== 'unavailable'
+    ? {lane: (action, input) => ownerRouteWrite(transport, actOp(action, input), LANE_WORDS[action])} : {}), [transport])
+  const gitDesignBinding = useMemo(() => (waits.git ? null : gitBinding(gitReading, holds, gitPorts)), [waits.git, gitReading, holds, gitPorts])
   // The one Agent (R4): its Custody page on the session's custody (its write mode Scope's), its Identity page on the roster card of the
   // session's own agent (the hold keyed apart from Central's Agent), its Thread page the Thread's binding — each composed under its prefix.
   // Custody's Grants page (lane W8): Actuation's authority list, and Revoke as the current person's own press — Actuation authenticates no

@@ -668,10 +668,10 @@
     ],
     "formats": {},
     "invariant": {
-      "routesTo": "workcell-cli:git commit"
+      "routesTo": "act:workcell.lane.land"
     },
     "writePaths": [
-      "workcell-cli:git commit"
+      "act:workcell.lane.land"
     ],
     "heldBy": [],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/session-model.md#3"

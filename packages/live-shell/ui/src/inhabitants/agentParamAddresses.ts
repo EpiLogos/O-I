@@ -11,8 +11,9 @@ import type {ModelSliceName} from '../../../../../desktop/cradle/src/kernel/type
  * holds to software-factory and identity to central on one visible face.
  *
  * writePath is present ONLY where a real owner write exists in the tree —
- * the kernel harness control for the gateway, the shell's own setters for
- * armed controls, the workcell-cli ops for the git seat. A row without a
+ * the owners' Actions the kernel's `act` runs (the gateway's, Workcell's
+ * landing Actions for the git seat), the shell's own setters for armed
+ * controls. A row without a
  * writePath is a READING or a declared scope, never a silent fake control;
  * rows whose source is absent carry their disclosure verbatim.
  *
@@ -118,12 +119,18 @@ export const AGENT_SHELL_ADDRESS_TABLE: readonly AgentParamAddress[] = Object.fr
   enumed('software-factory', 'world', 'write-mode', ['propose', 'draft', 'direct'], 'shell.setWriteArm', 'The shell write arm carries propose·direct today; draft awaits its writer.'),
   reading('software-factory', 'world', 'write-receipts', 'receipts'),
 
-  // — Git seat (workcell): readings from the seat, writes through workcell-cli —
+  // — Git / landing (workcell): readings from the seat; Land lands the held seat through Workcell's own Actions (O-I 1006) —
   reading('workcell', 'git', 'branch', 'string'),
   reading('workcell', 'git', 'uncommitted', 'number', {unit: 'files'}),
-  enumed('workcell', 'git', 'commit-policy', ['per turn', 'per task', 'manual'], 'workcell-cli:git commit'),
-  enumed('workcell', 'git', 'push-policy', ['off', 'on land'], 'workcell-cli:git push'),
-  agentParamAddress({family: 'workcell', deviceInstance: 'git', key: 'land', type: 'boolean', writePath: 'workcell-cli:seat land'}),
+  reading('workcell', 'git', 'ahead', 'number', {unit: 'commits'}),
+  reading('workcell', 'git', 'behind', 'number', {unit: 'commits'}),
+  enumed('workcell', 'git', 'commit-policy', ['per turn', 'per task', 'manual'], undefined,
+    'No owner commits on a cadence (per turn or per task): Land commits the seat\'s work first, through Workcell\'s workcell.lane.commit.'),
+  enumed('workcell', 'git', 'push-policy', ['off', 'on land'], undefined,
+    'The hand\'s: Land waits while Push is Off; On land, Land pushes the lane to the project\'s remote (Workcell\'s workcell.lane.push) before it lands it.'),
+  enumed('workcell', 'git', 'landAs', ['draft', 'mr', 'merge'], undefined, 'The hand\'s: how Land lands the lane (workcell.lane.land `as`).'),
+  agentParamAddress({family: 'workcell', deviceInstance: 'git', key: 'land', type: 'boolean', writePath: 'act:workcell.lane.land',
+    disclosure: 'Land runs Workcell\'s own Actions on the held seat, in order: workcell.lane.commit where the work has no commit, workcell.lane.push, then workcell.lane.land as Land as says. It waits while Push is Off.'}),
 ])
 
 // ---------------------------------------------------------------------------------------------------------------- the declarations
@@ -155,7 +162,6 @@ export interface ChainDeviceDeclaration {
 const GATEWAY: ModelField = 'sessions:gateway.reading'
 const HARNESS = `${GATEWAY}.agent.reading` as const
 const GATEWAY_AGENT = {action: 'aikit.gateway.agent'} as const
-const WORKCELL_NO_ACTION = (what: string): ControlAction => ({none: `${what}: Workcell declares no Action that carries it (its Actions write a seat's join and release, workcell.seat.join and workcell.seat.release), so it stands disabled.`})
 
 /** The four devices of a session's chain (§16.2 Factory: Gateway → Agent (model, effort) → Scope → Git / landing). */
 export const CHAIN_DECLARATIONS: readonly ChainDeviceDeclaration[] = Object.freeze<ChainDeviceDeclaration[]>([
@@ -205,10 +211,21 @@ export const CHAIN_DECLARATIONS: readonly ChainDeviceDeclaration[] = Object.free
   },
   {
     device: 'git', face: 'workcell:git-seat', slice: 'workcells',
-    // The workcell's seat of the session's project: its live branch, and its files with no commit (tracked changes and untracked files).
-    fields: {branch: 'workcells:seats.reading', uncommitted: 'workcells:seats.reading', workcell: 'workcells:workcells.reading.workcell_ref'},
-    unheld: {},
-    controls: {'commit-policy': WORKCELL_NO_ACTION('Commit policy'), 'push-policy': WORKCELL_NO_ACTION('Push policy'), land: WORKCELL_NO_ACTION('Land')},
+    // The workcell's seat of the session's project: its live branch, its files with no commit (tracked changes and untracked files), and
+    // its commits against main.
+    fields: {branch: 'workcells:seats.reading', uncommitted: 'workcells:seats.reading', ahead: 'workcells:seats.reading',
+      behind: 'workcells:seats.reading', workcell: 'workcells:workcells.reading.workcell_ref'},
+    unheld: {
+      'push-policy': 'Push is the hand\'s setting: Land waits while it is Off. No owner holds it, so the World Model holds none.',
+      landAs: 'Land as is the hand\'s setting: how Land lands the lane (workcell.lane.land `as`). No owner holds it, so the World Model holds none.',
+    },
+    // Land is Workcell's landing Actions on the held seat: the work committed (workcell.lane.commit), the lane pushed
+    // (workcell.lane.push), then landed (workcell.lane.land) as Land as says (workcellBindings.ts landSteps). Push and Land as are the
+    // hand's settings (unheld), which no owner holds; Land waits while Push is Off.
+    controls: {
+      'commit-policy': {none: 'Commit policy: no owner commits on a cadence (per turn or per task); Land commits the seat\'s work first (workcell.lane.commit).'},
+      land: {action: 'workcell.lane.land'},
+    },
   },
 ])
 

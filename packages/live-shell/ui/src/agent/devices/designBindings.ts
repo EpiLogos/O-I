@@ -27,7 +27,7 @@ import {refusalLine, safeJson} from '../RefusalCard'
 import type {AgentGit} from './oneAgentBinding'
 import {CHAIN_ADMIT_WORDS, OWNER_BINDINGS, SKILLSETS_ARRIVE, ownerRefusalLine} from '../agentChainDrag'
 import {harnessKeyUncarried} from '../aikitGatewayOps'
-import {INITIAL_READING, chainDeviceId, gatewayLine, rosterAdmits, rosterChains, rosterIdentity, taskReading, type AgentChainReading} from './agentChainDevices'
+import {INITIAL_READING, chainDeviceId, gatewayLine, rosterAdmits, rosterChains, rosterIdentity, taskReading, type AgentChainReading, type LandingSeat} from './agentChainDevices'
 import {flipDevice, publishedDevice, selectDevice, subscribeDeviceDoor} from '../../frame/devices/deviceDoor'
 import {setHostPage} from '../../frame/devices/deviceHost'
 import type {OwnerAcceptedValues} from './ownerAccepted'
@@ -491,11 +491,12 @@ function gatewayOf(sessions: ModelSliceReading | undefined) {
 function landingOf(workcells: ModelSliceReading | undefined, sessionRef: string | null, project: string, absent: string | null) {
   const slice = heldSlice(workcells)
   if (slice.state === 'reading') {
-    return {git: INITIAL_READING.git, admitted: null, repo: {}, waiting: null as string | null, own: {sessionRef, project, repo: null, error: absent} as AgentGit}
+    return {git: INITIAL_READING.git, admitted: null, repo: {}, waiting: null as string | null, seat: null as LandingSeat | null,
+      own: {sessionRef, project, repo: null, error: absent} as AgentGit}
   }
   if (slice.state === 'refused') {
     return {git: {kind: 'refused' as const, title: 'Git', line: ownerRefusalLine('workcell', slice.why), receipt: safeJson(slice.why)}, admitted: false, repo: {},
-      waiting: OWNER_BINDINGS.workcell.owner as string | null, own: {sessionRef, project, repo: null, error: absent ?? slice.why} as AgentGit}
+      waiting: OWNER_BINDINGS.workcell.owner as string | null, seat: null as LandingSeat | null, own: {sessionRef, project, repo: null, error: absent ?? slice.why} as AgentGit}
   }
   const values = {workcells: slice.value}
   const cells = partOf(declaredValue(values, CELLS_PART)), seats = partOf(declaredValue(values, SEATS_PART))
@@ -508,12 +509,15 @@ function landingOf(workcells: ModelSliceReading | undefined, sessionRef: string 
   const seat = 'seat' in found ? found.seat : null
   const why = 'why' in found ? found.why : null
   const uncommitted = seat && seat.dirty != null && seat.untracked != null ? seat.dirty + seat.untracked : undefined
-  const repo = seat ? {...(seat.branch ? {branch: seat.branch} : {}), ...(uncommitted !== undefined ? {uncommitted} : {})} : {}
+  const repo = seat ? {...(seat.branch ? {branch: seat.branch} : {}), ...(uncommitted !== undefined ? {uncommitted} : {}),
+    ...(seat.ahead != null ? {ahead: seat.ahead} : {}), ...(seat.behind != null ? {behind: seat.behind} : {})} : {}
   const seatLine = seat ? `seat ${seat.workcell}/${seat.product}${seat.branch ? ` on ${seat.branch}` : ''}` : why ?? ''
   return {
     git: {kind: answered && seat ? 'reading' as const : 'refused' as const, title: 'Git', line: `${cellLine} · ${seatLine}`,
       receipt: safeJson({workcell: cells ?? null, seat: seat ?? why})},
     admitted: answered, repo, waiting: answered ? null : OWNER_BINDINGS.workcell.owner as string | null,
+    // The seat Land lands from (workcellBindings.ts gitBinding): Workcell's landing Actions name it by its workcell and product.
+    seat: seat ? {workcell: seat.workcell, product: seat.product, held: seat.state !== 'free'} as LandingSeat : null,
     own: {sessionRef, project, repo: seat ? repo : null, error: seat ? null : why} as AgentGit,
   }
 }
@@ -549,7 +553,7 @@ export function chainFromModel(input: ChainModelInput): ChainFromModel {
   const reading: AgentChainReading = {
     ...INITIAL_READING,
     gateway: gateway.gateway, gatewayAdmitted: gateway.admitted, gatewayDoc: gateway.doc,
-    git: landing.git, gitAdmitted: landing.admitted, gitRepo: landing.repo,
+    git: landing.git, gitAdmitted: landing.admitted, gitRepo: landing.repo, gitSeat: landing.seat,
     waitingOn: {gateway: gateway.waiting, skillset: null, git: landing.waiting},
   }
   // The roster: the shared answer of the root register.

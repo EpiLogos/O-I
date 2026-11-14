@@ -33,15 +33,17 @@
 // writes the machine's register and answers central.workcell-seat-result/v1 (an `owner_changed` receipt when the instrument takes it), and
 // the seat reading is asked again. The Floor stands disabled: the join Action takes a floor of its own (`min_free_gb`, `--min-free-gb`), but
 // the Seat page holds no Floor (manual §19.16; a seat below the floor is the Checkouts page's finding), so Join keeps the register's.
-// `workcell-cli git commit|push` and `seat
-// land` do not exist; moving a session to another machine, joining the link and its Share have no owner operation; Workcell's connect and
-// machine declarations (workcell_write) have no control on these designs. Each stands disabled with that reason.
+// Land is Workcell's own Actions on the held seat, through the kernel's `act` (O-I 1006): `workcell lane commit|push|land --workcell W
+// --product P` (workcell.lane.commit, .push, .land), each answering workcell.landing/v1 or refusing in Workcell's words. No owner commits on
+// a cadence, so Commit stands disabled; Push and Land as are the hand's, and Land waits while Push is Off. Moving a session to another machine, joining the link and its
+// Share have no owner operation; Workcell's connect and machine declarations (workcell_write) have no control on these designs. Each
+// stands disabled with that reason.
 // Pure, apart from the view holds (designBindings.ts holdView).
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
 import type {SeatWriteRequest} from '../../../../../../desktop/cradle/src/kernel/types'
 import {parseSeatStatusJson} from '../../inhabitants/centralHygieneModel'
-import {chainDeviceId, type AgentChainReading} from './agentChainDevices'
+import {chainDeviceId, type AgentChainReading, type LandingSeat} from './agentChainDevices'
 import {chainHolds, holdView, viewHolds, type ChainHolds} from './chainHolds'
 import {familyFaceDevice} from './mainTrackBindings'
 import {offersOf, planOf, probeFields, probesByLabel} from './workcellMaterial'
@@ -86,33 +88,79 @@ export interface WorkcellAnswer {
 
 // ---------------------------------------------------------------------------------------------------------------- Git / landing
 
+/** Git / landing's settings no owner carries. */
 export const GIT_REFUSE = {
-  'commit-policy': missing('Commit', 'workcell-cli git commit (the address table\'s write path names a command that does not exist)', 'Workcell'),
-  'push-policy': missing('Push', 'workcell-cli git push (no such command)', 'Workcell'),
-  landAs: missing('Land as', 'a landing form held by the seat (no owner holds it)', 'Workcell'),
-  land: missing('Land', 'workcell-cli seat land (no such command; the seat instrument has no kernel op)', 'Workcell'),
+  'commit-policy': 'Commit: no owner commits on a cadence (per turn or per task). Land commits the work that has no commit (Workcell\'s workcell.lane.commit), then pushes the lane and lands it.',
 } as const
+/** Why Land cannot be asked. */
+export const LAND_REFUSE = {
+  carrier: 'Land: the kernel carrier is unavailable here, so Workcell cannot be asked (`workcell lane land`, the Action workcell.lane.land).',
+  seat: 'Land: no seat of the project is named here (`seat status`), so there is no lane to land.',
+  free: 'Land: the seat is free, so it holds no lane to land. Join it first (the Seat page\'s Join, workcell.seat.join).',
+  push: 'Land: Push is Off, so the work stays on this machine and Land waits. Set Push to On land.',
+} as const
+/** Workcell's landing Actions (`workcell lane commit|push|land`), which Land runs in this order. */
+export type LaneAction = 'workcell.lane.commit' | 'workcell.lane.push' | 'workcell.lane.land'
+export const LANE_WORDS: Readonly<Record<LaneAction, string>> = {
+  'workcell.lane.commit': '`workcell lane commit`', 'workcell.lane.push': '`workcell lane push`', 'workcell.lane.land': '`workcell lane land`',
+}
+/** Push and Land as are the hand's, from the manual's defaults (§19.16: Push Off, Land as a draft merge request). */
+const GIT_LOCAL = ['push-policy', 'landAs', 'sel'] as const
+const GIT_DEFAULTS: Readonly<Record<string, Value>> = {'push-policy': 'off', landAs: 'draft'}
 
-/** Git / landing's values: the chain's git reading — its light, the checkout's branch and the files with no commit. The seat, the
- * branch against main, the commits, the diff's sums, the checks and the policies have no reading a kernel op reaches here. */
+/** Git / landing's writes: Workcell's landing Actions through the kernel's `act` (ownerRoutes.ts actOp). Absent: no carrier stands. */
+export interface GitPorts {
+  readonly lane?: (action: LaneAction, input: Readonly<Record<string, unknown>>) => Promise<unknown>
+}
+
+/** Git / landing's values: the chain's git reading — its light, the seat's branch, its files with no commit and its commits against
+ * main — and the hand's Push, Land as and file shown. The commits, the diff's sums and the checks have no reading a kernel op reaches here. */
 export function gitValues(reading: Pick<AgentChainReading, 'gitAdmitted' | 'gitRepo'>, holds: ChainHolds): Values {
   const values: Record<string, Value> = {}
   if (reading.gitAdmitted === true) values.light = 'lit'
   if (reading.gitAdmitted === false) values.light = 'dark'
   put(values, 'branch', reading.gitRepo.branch)
   put(values, 'uncommitted', reading.gitRepo.uncommitted)
-  put(values, 'sel', viewHolds(holds, GIT_ID).sel)
+  put(values, 'ahead', reading.gitRepo.ahead)
+  put(values, 'behind', reading.gitRepo.behind)
+  const view = viewHolds(holds, GIT_ID)
+  for (const key of GIT_LOCAL) put(values, key, view[key] ?? GIT_DEFAULTS[key])
   return values
 }
 
-export function gitBinding(git: Pick<AgentChainReading, 'gitAdmitted' | 'gitRepo'>, holds: ChainHolds): DesignBinding {
+/** The Actions one Land press runs, in order, from the values as they stand (the design's "Commit the work, push the branch and open a
+ * draft merge request"): the work with no commit committed, the lane pushed, and the lane landed as Land as says. Land waits while Push
+ * is Off (LAND_REFUSE.push). Workcell refuses what it cannot do, in its words (a draft where the project is not on GitHub). Pure. */
+export function landSteps(values: Values, seat: LandingSeat): {action: LaneAction; input: Record<string, unknown>}[] {
+  const at = {workcell: seat.workcell, product: seat.product}
+  const lane = typeof values.branch === 'string' ? values.branch : seat.product
+  return [
+    ...(typeof values.uncommitted === 'number' && values.uncommitted > 0
+      ? [{action: 'workcell.lane.commit' as const, input: {...at, message: `The work of lane ${lane}, committed by Land`}}] : []),
+    {action: 'workcell.lane.push' as const, input: at},
+    {action: 'workcell.lane.land' as const, input: {...at, as: typeof values.landAs === 'string' ? values.landAs : 'draft'}},
+  ]
+}
+
+export function gitBinding(git: Pick<AgentChainReading, 'gitAdmitted' | 'gitRepo' | 'gitSeat'>, holds: ChainHolds, ports: GitPorts = {}): DesignBinding {
+  const seat = git.gitSeat ?? null
+  const landWhy = !ports.lane ? LAND_REFUSE.carrier : !seat ? LAND_REFUSE.seat : !seat.held ? LAND_REFUSE.free : null
   return {
     id: GIT_ID,
     values: gitValues(git, holds),
-    standing: disabled(GIT_REFUSE),
-    local: held(GIT_ID, ['sel']),
-    writes: key => key in GIT_REFUSE,
-    write: async (changes: readonly ValueChange[]) => { for (const {key} of changes) throw Error(GIT_REFUSE[key as keyof typeof GIT_REFUSE] ?? reading(key)) },
+    standing: {...disabled(GIT_REFUSE), ...(landWhy ? {land: {disabled: landWhy}} : {})},
+    local: held(GIT_ID, GIT_LOCAL),
+    writes: key => key === 'land' || key in GIT_REFUSE,
+    write: async (changes: readonly ValueChange[]) => {
+      for (const {key} of changes) {
+        if (key !== 'land') throw Error(GIT_REFUSE[key as keyof typeof GIT_REFUSE] ?? reading(key))
+        if (landWhy) throw Error(landWhy)
+        // What the hand holds when it presses (the holds as they stand then); each step waits on the one before it.
+        const now = gitValues(git, chainHolds())
+        if (now['push-policy'] !== 'on land') throw Error(LAND_REFUSE.push)
+        for (const step of landSteps(now, seat!)) await ports.lane!(step.action, step.input)
+      }
+    },
   }
 }
 

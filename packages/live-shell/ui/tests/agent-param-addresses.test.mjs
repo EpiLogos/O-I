@@ -55,10 +55,15 @@ test('writePath is present exactly where a real owner write exists — known-ref
   for (const key of ['transport', 'approvals', 'stall-after']) {
     assert.equal(byKey('gateway', key)?.writePath, 'act:aikit.gateway.agent', key)
   }
-  // The git seat writes through the workcell-cli ops.
-  assert.equal(byKey('git', 'commit-policy')?.writePath, 'workcell-cli:git commit')
-  assert.equal(byKey('git', 'push-policy')?.writePath, 'workcell-cli:git push')
-  assert.equal(byKey('git', 'land')?.writePath, 'workcell-cli:seat land')
+  // REPLACED (O-I 1006): the git seat wrote through `workcell-cli git commit|push` and `seat land`, which do not exist. Land is Workcell's
+  // own landing Action (workcell.lane.land, after workcell.lane.commit and .push); no owner commits on a cadence, and Push and Land as
+  // are the hand's: each discloses why it has no writer.
+  assert.equal(byKey('git', 'land')?.writePath, 'act:workcell.lane.land')
+  for (const key of ['commit-policy', 'push-policy', 'landAs']) {
+    assert.equal(byKey('git', key)?.writePath, undefined, key)
+    assert.ok(byKey('git', key)?.disclosure, `${key} discloses why it has no writer`)
+  }
+  assert.ok(TABLE.every(row => !row.writePath?.startsWith('workcell-cli:')), 'no row writes through a workcell-cli command')
   // Spend has NO writer: the row must disclose its absence, never fake a fill.
   const spend = byKey('gateway', 'spend')
   assert.equal(spend?.writePath, undefined, 'spend_ledger has no writer in O-I')
@@ -131,10 +136,12 @@ test('the table counts exactly the rendered control set (F4, count from the tabl
   // §14 addresses. Never pad the table to meet a claim.
   // REPLACED (lane BD round 12): skillset 4 → 12 and 28 → 36 — the rack's Refining page (§19.7) renders eight parameters: Member, Why,
   // Revision, Test, Result, its Test press, Accept and Discard.
+  // REPLACED (O-I 1006): git 5 → 8 and 36 → 39 — Git / landing's design draws the seat's commits against main (Ahead, Behind) and its
+  // Land as, which the table did not carry; Land runs Workcell's landing Actions.
   const perDevice = {}
   for (const row of TABLE) perDevice[row.deviceInstance] = (perDevice[row.deviceInstance] ?? 0) + 1
-  assert.deepEqual(perDevice, {gateway: 7, agent: 7, skillset: 12, world: 5, git: 5})
-  assert.equal(TABLE.length, 36)
+  assert.deepEqual(perDevice, {gateway: 7, agent: 7, skillset: 12, world: 5, git: 8})
+  assert.equal(TABLE.length, 39)
 })
 
 test('the address table module stays pure (no React, no store)', async () => {
