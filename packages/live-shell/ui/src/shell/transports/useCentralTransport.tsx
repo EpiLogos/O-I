@@ -15,13 +15,14 @@
 //  - the core (world-shell.md §9.3; O-I ticket 1005): Play sends what the packet's conversation holds, with the packet, through that
 //    conversation's one shared session (encounter/session.ts `encounterSessionOf(...).ask`, the send the Packet's Send and the Flow make),
 //    and keeps the answer per Arm — the shell's one write arm (AgentShellContext `writeArm`): on, in the page the hand reached as the agent's
-//    entry with its sources (centralDeviceWrites.ts keepAgentAnswer), a new entry or the replacement Overdub names; off, a proposal, nothing
-//    written. Stop cancels the turn Play sent. Capture stands refused with why; Load is the Save state slot.
+//    entry with its sources (centralDeviceWrites.ts keepAgentAnswer), a new entry or the replacement Overdub names; off, a proposal for that
+//    page, nothing written: Central's source Return, which Approvals accepts or refuses (proposeAgentAnswer; a page of a project). Stop cancels
+//    the turn Play sent. Capture stands refused with why; Load is the Save state slot.
 // The Day is read again when the window returns (focus, visibility) and after the die turns — never polled.
 import {useContext, useEffect, useState} from 'react'
 import {nativeContext, PREPARED_CONTEXT_CHANGED, type PreparedContext} from '../../../../../../desktop/cradle/src/context/nativeContext'
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
-import {keepAgentAnswer, turnDieFace, type AnswerTake} from '../../central/devices/centralDeviceWrites'
+import {keepAgentAnswer, proposeAgentAnswer, turnDieFace, type AnswerTake} from '../../central/devices/centralDeviceWrites'
 import {encounterSessionOf} from '../../../../../../desktop/cradle/src/encounter/session'
 import {useAgentShellOptional} from '../../agent/AgentShellContext'
 import {dieFaceLabel} from '../../central/devices/dayDie'
@@ -131,18 +132,24 @@ export const useCentralTransport: UseModeTransport = ({readouts}) => {
   const playRefused = transport.kind === 'unavailable' ? transport.reason
     : !conversation ? 'No conversation holds the packet: open the Agent on the chain, or select a session, then Play.'
     : playing ? `${agent} is answering the last Play; Stop cancels it.`
-    : arm && !page ? 'Arm is on and no Flow page is open to keep the answer in: open one, or turn Arm off to have the answer as a proposal.' : undefined
+    : !page ? `No Flow page is open for the answer: open one to ${arm ? 'keep the answer in it' : 'have the answer proposed for it'}.` : undefined
   const play = !playRefused && conversation ? () => {
     const session = encounterSessionOf(transport, conversation)
     const asked = session.snapshot().draft.trim()
     if (!asked) { setPlayed(`↳ Nothing was sent: Play sends what you write in ${agent}'s conversation, with the packet. Write your ask there first.`); return }
-    const keepIn = arm ? page : null
+    const keepIn = page
     setPlaying(true)
     setPlayed(null)
     session.ask(asked, agent, PLAY_WAIT_MS, `${agent} has not finished answering: the ask stands in the conversation, and nothing was kept in the page.`)
       .then(async answer => {
-        if (!keepIn?.location) { setPlayed(`↳ ${agent} answered. Arm is off, so the answer is a proposal: it waits in the conversation, and nothing was written in the page.`); return }
-        const kept = await keepAgentAnswer(transport, keepIn.location, {text: answer.text, agent, session: conversation.ref, sources, take})
+        if (!keepIn?.location) throw new Error(`${agent} answered, but the page was closed; nothing was kept. The answer, unlost:\n\n${answer.text}`)
+        const given = {text: answer.text, agent, session: conversation.ref, sources, take}
+        if (!arm) {
+          const proposed = await proposeAgentAnswer(transport, keepIn.location, given)
+          setPlayed(`↳ ${agent}'s answer is a proposal for ${keepIn.title || 'the page'} (Arm is off): it waits in ${proposed.project}'s returns${proposed.returnRef ? ` as ${proposed.returnRef}` : ''}, for Approvals to accept or refuse; nothing was written in the page.`)
+          return
+        }
+        const kept = await keepAgentAnswer(transport, keepIn.location, given)
         setPlayed(`↳ ${agent}'s answer is in ${keepIn.title || 'the page'} ${take === 'replace' ? 'replacing its last entry' : 'as a new entry'}${kept.revision ? ` at ${kept.revision}` : ''}.`)
         keepIn.reread?.()
       })
@@ -151,7 +158,7 @@ export const useCentralTransport: UseModeTransport = ({readouts}) => {
   } : undefined
   const playWords = [`Play — send what ${agent}'s conversation holds, with the packet (${sources.length} item${sources.length === 1 ? '' : 's'}); the answer ${arm
     ? `lands in ${page ? page.title || 'the page' : 'the open Flow page'} as ${take === 'replace' ? 'the replacement of the agent\'s last entry' : 'a new entry'}, with its sources`
-    : 'is a proposal (Arm is off): nothing is written in the page'}.`, played].filter(Boolean).join(' ')
+    : `is a proposal for ${page ? page.title || 'the page' : 'the open Flow page'} (Arm is off), which Approvals accepts or refuses: nothing is written in the page`}.`, played].filter(Boolean).join(' ')
   const core = {playWords, arm, take, setTake, ...(play ? {play} : {}), ...(playRefused ? {playRefused} : {}),
     ...(playing && conversation ? {stop: () => encounterSessionOf(transport, conversation).cancel()} : {}),
     ...(shell ? {setArm: shell.setWriteArm} : {})}

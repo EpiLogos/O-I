@@ -173,7 +173,7 @@ test('Central\'s core: Play, Overdub and Arm press their writes, Stop while Play
   assert.equal(bindings.play.title, core.playWords)
   assert.equal(bindings.stop.refused, 'Nothing Play sent is running.')
   assert.equal(bindings.capture.refused, R.CENTRAL_CAPTURE_WHY)
-  assert.equal(bindings.arm.lit, false); assert.match(bindings.arm.title, /proposal and nothing is written/)
+  assert.equal(bindings.arm.lit, false); assert.match(bindings.arm.title, /proposal and nothing is written in the page: Central's source Return, which Approvals accepts or refuses/)
   assert.equal(bindings.overdub.lit, false); assert.match(bindings.overdub.title, /new entry/)
   for (const id of Object.keys(R.CENTRAL_OUTSIDE_CORE)) assert.match(bindings[id].refused, /outside Central's core \(world-shell\.md §9\.3/, `${id} names why it is dimmed`)
   const markup = renderToStaticMarkup(React.createElement(Transport, {bindings, words: id => slotWords('base', id)}))
@@ -194,10 +194,10 @@ test('Central\'s core: Play, Overdub and Arm press their writes, Stop while Play
   assert.match(R.coreSlots(unarmed).arm.refused, /write arm is not mounted/)
 })
 
-test('O-I ticket 1005: the hook sends through the packet\'s conversation\'s one session and keeps the answer through the Flow\'s own write', async () => {
+test('O-I ticket 1005: the hook sends through the packet\'s conversation\'s one session and keeps the answer through the Flow\'s own write, or proposes it with Arm off', async () => {
   const code = await source('shell/transports/useCentralTransport.tsx')
   for (const call of ['encounterSessionOf(transport, conversation)', 'session.ask(asked, agent, PLAY_WAIT_MS', 'keepAgentAnswer(transport, keepIn.location', 'shell?.writeArm === true', 'setArm: shell.setWriteArm',
-    'encounterSessionOf(transport, conversation).cancel()']) {
+    'encounterSessionOf(transport, conversation).cancel()', 'if (!arm) {', 'proposeAgentAnswer(transport, keepIn.location, given)']) {
     assert.ok(code.includes(call), `the hook makes ${call}`)
   }
 })

@@ -24,6 +24,7 @@
 import {readGround} from '../../../../../../desktop/cradle/src/central/client'
 import {kernelOp, kernelRead} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import {modelSlice, sliceValue, type ModelSliceReading} from '../../owners/model'
+import {readWorlds, type CentralWorldsReading} from '../centralWorlds'
 import {DAY_ENTRY_PART_ACTION, DAY_FIELD_RECORD_ACTION, type DayFieldRecord, type DaySettingsPatch} from './dayBinding'
 import {actionAnswerOf, centralActionOp} from './centralActions'
 import {DayFormSession, isObject, unmappedChanges, validateDocumentBasis} from '../../../../../../desktop/cradle/src/central/dayForm'
@@ -125,6 +126,13 @@ export async function adoptLaw(transport: KernelTransportStatus, statement: stri
   if (typeof revision !== 'string' || !revision) throw new Error(`Central read ${path} without its revision, so its adoption cannot be checked against it; nothing was adopted.`)
   const links = lawFilesOf(await agents()).filter(file => file !== LAW_FLOOR)
   return centralWrite(transport, 'control.law.adopt', {statement: path, expected_revision: revision, files: links})
+}
+
+/** One of Central's readings asked of Central itself (the read that precedes a write): its data, or its refusal in its own words, thrown. */
+export async function centralRead(transport: KernelTransportStatus, action: string, input: Readonly<Record<string, unknown>>): Promise<unknown> {
+  const answer = actionAnswerOf(await readCall(transport, action, input), action)
+  if (answer.status === 'answered') return answer.value
+  throw new Error(answer.status === 'refused' ? answer.error : `${action} did not answer.`)
 }
 
 /** One of Central's readings through invoke_action, asked of Central itself (the read that precedes a write). */
@@ -389,32 +397,85 @@ export type AnswerTake = 'new' | 'replace'
  * (the letter it has there, else the first free one), the answer's sources named under it (what the packet carried) — and written with the
  * owner's revision check, read again once if the page moved. `take` `replace` writes it as the correction of the agent's last entry. Resolves
  * with the owner's new revision; refuses in words, the answer kept in them, when the page moved twice. */
-export async function keepAgentAnswer(transport: KernelTransportStatus, location: CentralLocation, answer: {readonly text: string; readonly agent: string;
-  readonly session: string; readonly sources: readonly string[]; readonly take: AnswerTake}): Promise<{revision: string | null; entryId: string | null}> {
+export async function keepAgentAnswer(transport: KernelTransportStatus, location: CentralLocation, answer: AgentAnswer): Promise<{revision: string | null; entryId: string | null}> {
   const text = answer.text.trim()
   if (!text) throw new Error(`${answer.agent} answered without words; nothing was kept in the page.`)
-  const escape = (words: string) => words.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-  const html = [...text.split(/\n{2,}/).map(part => `<p>${escape(part.trim()).replace(/\n/g, '<br>')}</p>`),
-    ...(answer.sources.length ? [`<p><em>Sources:</em> ${answer.sources.map(escape).join(' · ')}</p>`] : [])].join('')
   let instance = await readFlowInstance(transport, location)
   for (let attempt = 0; attempt < 2; attempt++) {
-    const plural = isCurrentFormat(instance.doc)
-    const participants = (instance.doc.meta.participants ?? []) as PluralParticipant[]
-    const known = participants.find(person => person.kind === 'agent' && person.ref === answer.session)
-    const taken = new Set(participants.map(person => person.initial))
-    const initial = known?.initial ?? ([...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'].find(letter => !taken.has(letter)) ?? 'Z')
-    const participant = known ?? {initial, name: answer.agent, kind: 'agent' as const, ref: answer.session}
-    // The agent's last entry here: by its participant's key on the plural form, by its letter on an earlier one.
-    const last = answer.take === 'replace' && known ? [...instance.doc.entries].reverse()
-      .find(entry => (known.key && (entry as {authorKey?: string}).authorKey === known.key) || entry.author === known.initial) : undefined
-    if (answer.take === 'replace' && !last) throw new Error(`Replace: ${answer.agent} has no entry on this page to replace; switch Overdub to a new entry.`)
-    const relations: Relation[] = plural && last ? [{type: 'correct', entryId: last.id, revision: instance.doc.meta.revision, anchor: null}] : []
-    const written = appendEntry(instance.html, text, {participant, html, ...(plural ? {basisRevision: instance.doc.meta.revision, ...(relations.length ? {relations} : {})} : {})})
+    const written = agentEntry(instance, text, answer)
     const result = await writeFlowInstance(transport, instance.location, instance.revision, written.html)
-    if (result.outcome !== 'conflict') return {revision: result.revision ?? null, entryId: written.entry?.id ?? null}
+    if (result.outcome !== 'conflict') return {revision: result.revision ?? null, entryId: written.entryId}
     instance = await readFlowInstance(transport, location)
   }
   throw new Error(`${answer.agent} answered, but the page moved twice while the answer was kept; nothing was overwritten. The answer, unlost:\n\n${text}`)
+}
+
+/** An agent's answer to Play, as the page keeps or is proposed it: its words, the agent and its session, the packet's items it answered
+ * from, and Overdub's take. */
+export interface AgentAnswer {readonly text: string; readonly agent: string; readonly session: string; readonly sources: readonly string[]; readonly take: AnswerTake}
+
+/** The page's bytes with the answer appended as the agent's entry (keepAgentAnswer, proposeAgentAnswer): the agent a participant of the page
+ * by its session (the letter it has there, else the first free one), the answer's sources named under it, and with `take` `replace` the
+ * correction of the agent's last entry. Pure over the page read. */
+function agentEntry(instance: Awaited<ReturnType<typeof readFlowInstance>>, text: string, answer: AgentAnswer): {html: string; entryId: string | null} {
+  const escape = (words: string) => words.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const html = [...text.split(/\n{2,}/).map(part => `<p>${escape(part.trim()).replace(/\n/g, '<br>')}</p>`),
+    ...(answer.sources.length ? [`<p><em>Sources:</em> ${answer.sources.map(escape).join(' · ')}</p>`] : [])].join('')
+  const plural = isCurrentFormat(instance.doc)
+  const participants = (instance.doc.meta.participants ?? []) as PluralParticipant[]
+  const known = participants.find(person => person.kind === 'agent' && person.ref === answer.session)
+  const taken = new Set(participants.map(person => person.initial))
+  const initial = known?.initial ?? ([...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'].find(letter => !taken.has(letter)) ?? 'Z')
+  const participant = known ?? {initial, name: answer.agent, kind: 'agent' as const, ref: answer.session}
+  // The agent's last entry here: by its participant's key on the plural form, by its letter on an earlier one.
+  const last = answer.take === 'replace' && known ? [...instance.doc.entries].reverse()
+    .find(entry => (known.key && (entry as {authorKey?: string}).authorKey === known.key) || entry.author === known.initial) : undefined
+  if (answer.take === 'replace' && !last) throw new Error(`Replace: ${answer.agent} has no entry on this page to replace; switch Overdub to a new entry.`)
+  const relations: Relation[] = plural && last ? [{type: 'correct', entryId: last.id, revision: instance.doc.meta.revision, anchor: null}] : []
+  const written = appendEntry(instance.html, text, {participant, html, ...(plural ? {basisRevision: instance.doc.meta.revision, ...(relations.length ? {relations} : {})} : {})})
+  return {html: written.html, entryId: written.entry?.id ?? null}
+}
+
+/** Propose an agent's answer for a page (Play with Arm off, world-shell.md §9.3 "Arm (direct or proposal)"): the page with the answer as the
+ * agent's entry, filed as Central's source Return on the revision read (projectcentral.source.return: the agent's session its provenance,
+ * the packet's items its evidence), which Approvals lists among Central's source returns and accepts or refuses (return_accept, as the
+ * person's press, or return_reject). Nothing is written in the page. The page's project is the world whose folder holds it (the World Model's
+ * worlds, read afresh); Central keeps Returns for a project's sources only, so a page of your own world is refused in words, the answer kept
+ * in them. Resolves with Central's return ref and the project it waits in. */
+export async function proposeAgentAnswer(transport: KernelTransportStatus, location: CentralLocation, answer: AgentAnswer,
+  worlds: () => Promise<CentralWorldsReading> = () => readWorlds(transport, {fresh: true})): Promise<{returnRef: string | null; project: string}> {
+  const text = answer.text.trim()
+  if (!text) throw new Error(`${answer.agent} answered without words; nothing was proposed for the page.`)
+  const unlost = `The answer, unlost:\n\n${text}`
+  const read = await worlds()
+  if (read.state !== 'read') throw new Error(`${answer.agent} answered, but Central's worlds were not read (${read.state === 'unavailable' ? read.reason : 'still reading'}), so the page's project is not known; nothing was proposed. ${unlost}`)
+  const relative = (folder: string) => (folder.startsWith(`${location.root}/`) ? folder.slice(location.root.length + 1) : folder)
+  const world = read.worlds.find(candidate => candidate.kind === 'project' && candidate.project && location.path.startsWith(`${relative(candidate.folder)}/`))
+  if (!world?.project) throw new Error(`Arm is off, so ${answer.agent}'s answer is a proposal, but ${location.path} is a page of your own world: Central keeps proposals (source Returns, which Approvals lists) for a project's pages only. Nothing was written. ${unlost}`)
+  const project = world.project
+  const horizon = await centralRead(transport, 'projectcentral.change.horizon', {project}).catch((cause: unknown) => {
+    throw new Error(`${cause instanceof Error ? cause.message : String(cause)}; nothing was proposed. ${unlost}`)
+  })
+  const sources = (horizon as {sources?: {binding?: {ref?: unknown; path?: unknown; roles?: unknown}; revision?: {revision?: unknown}}[]} | null)?.sources ?? []
+  // The page as the project's source: its path within the project, the longest that ends the page's path.
+  const source = sources.filter(row => typeof row.binding?.path === 'string' && location.path.endsWith(`/${row.binding.path}`))
+    .sort((a, b) => String(b.binding!.path).length - String(a.binding!.path).length)[0]
+  const sourceRef = typeof source?.binding?.ref === 'string' ? source.binding.ref : null
+  const revision = typeof source?.revision?.revision === 'string' ? source.revision.revision : null
+  if (!sourceRef || !revision) throw new Error(`${location.path} is not among ${project}'s sources in Central's change horizon, so no Return can be filed on it; nothing was proposed. ${unlost}`)
+  const instance = await readFlowInstance(transport, location)
+  if (instance.revision !== revision) throw new Error(`The page moved while the proposal was made (Central's horizon holds ${revision}, the page read ${instance.revision}); nothing was proposed. Play again. ${unlost}`)
+  const proposed = agentEntry(instance, text, answer)
+  // A page of the project's human ground changes only on the person's authenticated acceptance: Central's commissioned-maintenance
+  // Return (v2), which captures the page's binding and is accepted on the person's credential (sourceReturnAccept.ts acceptSourceReturn).
+  const humanGround = Array.isArray(source?.binding?.roles) && source.binding.roles.includes('project-human-source-aperture')
+  const filed = await centralWrite(transport, 'projectcentral.source.return', {project, source_ref: sourceRef, expected_revision: revision, proposed_content: proposed.html,
+    ...(humanGround ? {acceptance: 'commissioned-maintenance'} : {}),
+    reason: `${answer.agent}'s answer to Play, proposed for ${location.path.split('/').pop()} as ${answer.take === 'replace' ? 'the correction of its last entry' : 'a new entry'}`,
+    agent_session_ref: answer.session, evidence_refs: [...answer.sources]}) as {outcome?: unknown; return_ref?: unknown; proposal?: {return_ref?: unknown}} | null
+  if (filed?.outcome === 'conflict') throw new Error(`The page moved before Central filed the proposal; nothing was proposed. Play again. ${unlost}`)
+  const returnRef = typeof filed?.return_ref === 'string' ? filed.return_ref : typeof filed?.proposal?.return_ref === 'string' ? filed.proposal.return_ref : null
+  return {returnRef, project}
 }
 
 /** The controls for the next entry as Clip view holds them for this Flow (manual §18.1 "In a Flow, the controls for the next entry stand

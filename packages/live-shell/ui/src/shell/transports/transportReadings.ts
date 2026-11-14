@@ -293,7 +293,7 @@ export function coreSlots(core: CentralCore): TransportBindings {
         : 'Overdub — replace: Play keeps the answer as the correction of the agent\'s last entry on the page (the page keeps both). Press for a new entry.'},
     arm: core.setArm ? {lit: core.arm, press: () => core.setArm!(!core.arm),
       title: core.arm ? 'Arm — on: the answer lands in the page as the agent\'s entry, with its sources and the owner\'s receipt. Press to make answers proposals.'
-        : 'Arm — off: the answer is a proposal and nothing is written in the page. Press to let it land in the page.'}
+        : 'Arm — off: the answer is a proposal and nothing is written in the page: Central\'s source Return, which Approvals accepts or refuses. Press to let it land in the page.'}
       : {refused: 'The shell\'s write arm is not mounted here (AgentShellContext).'},
     capture: {refused: CENTRAL_CAPTURE_WHY},
   }

@@ -473,6 +473,32 @@ test('Approve accepts a pending return through projectcentral.source.return_acce
   assert.equal(owner.sent[0].project, 'O-I')
 })
 
+// O-I ticket 1005: a commissioned-maintenance Return (Play with Arm off on a page of a project's human ground: centralDeviceWrites.ts
+// proposeAgentAnswer) is accepted in that mode — Central's maintenance reading names the authority's revision and the principals its grant
+// lets accept here, and the acceptance names that principal (Central source_return.rs refuses any other). FIXTURE owner (the fake above).
+test('Approve accepts a maintenance Return in its own mode: the authority revision and the principal Central names', async () => {
+  const row = {return_ref: 'central:return:project:atlas:1', schema: 'central.source-return/v2', source_ref: 'central:source:project:atlas:ProjectCentral/user/plan.html',
+    basis_revision: 'b1', status: 'pending', current_revision: 'b1'}
+  const reading = {commissioned_maintenance: {authority_revision: 'auth-7', principal_refs: ['human:frank']}}
+  const anchored = 'central:source:control:root:Control/user/identity'
+  assert.deepEqual(accept.maintenanceAcceptInput('atlas', row, reading, anchored).input,
+    {project: 'atlas', return_ref: row.return_ref, expected_revision: 'b1', acceptance: 'commissioned-maintenance', accepted_by_ref: 'human:frank', expected_authority_revision: 'auth-7'},
+    'the one principal Central names, whatever the anchor calls the person')
+  const two = {commissioned_maintenance: {authority_revision: 'auth-7', principal_refs: ['human:a', 'human:b']}}
+  assert.match(accept.maintenanceAcceptInput('atlas', row, two, null).refused, /which of them you are/)
+  assert.equal(accept.maintenanceAcceptInput('atlas', row, two, 'human:b').input.accepted_by_ref, 'human:b')
+  assert.match(accept.maintenanceAcceptInput('atlas', row, {commissioned_maintenance: {authority_revision: 'auth-7', principal_refs: []}}, null).refused,
+    /no grant of yours covers accepting in this project/)
+  assert.match(accept.maintenanceAcceptInput('atlas', row, {}, null).refused, /names no authority revision/)
+  assert.match(accept.maintenanceAcceptInput('atlas', {...row, current_revision: 'b2'}, reading, null).refused, /the source moved since the agent proposed this/)
+  const owner = kernel({actions: {'projectcentral.source.return_read': reading, 'projectcentral.source.return_accept': {status: 'accepted'}}})
+  await withKernel(owner, () => accept.acceptSourceReturn(bridge('http://approve.fixture'), 'atlas', row, anchored))
+  assert.deepEqual(invoked(owner), [
+    ['projectcentral.source.return_read', {project: 'atlas', return_ref: row.return_ref, acceptance: 'commissioned-maintenance'}],
+    ['projectcentral.source.return_accept', {project: 'atlas', return_ref: row.return_ref, expected_revision: 'b1', acceptance: 'commissioned-maintenance', accepted_by_ref: 'human:frank',
+      expected_authority_revision: 'auth-7'}]])
+})
+
 // ── the Flow's Thought ───────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 const PREFLIGHT_REFUSED = {status: 'refused', error: W2.flowPreflight.envelope.error.message}
