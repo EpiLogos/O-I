@@ -15,7 +15,7 @@
     "act": "send-a-passage-and-get-the-answer",
     "test": "act_3_send_a_passage_and_get_the_answer",
     "standing": "green",
-    "reason": "13 Nov 2026: each agent of the census you can talk to (claude-code, codex and pi on this Mac) is opened by the one provision (encounter_provision) and sent a passage by the encounter op EncounterSession sends with; each answers in its conversation, the answer lands in the page in Central, and both stand in the Sets (#1004). gemini and hermes are listed as not starting, and kimi, opencode, openclaw and prime as ones you cannot talk to, each in its owner's words (#1003)"
+    "reason": "14 Nov 2026 (export of e4418e88c; Central main's ctrl, AIKit 347de5ae, oi b2592c58): each agent of the census you can talk to (claude-code, codex and pi on this Mac) is opened by the one provision (encounter_provision); the passage the person selects in the page goes into its Packet (Capture, the page's To packet) and the Send carries it (prompt-context): each answers in its conversation with the code only the selected words hold, the answer lands in the page in Central, and both stand in the Sets (#1004); a conversation opened in a project's register (passage-project) holds its Packet, with a passage brought to it, and its own settings, as the World Model's packet and scope slices read them in that register (#1005). gemini, hermes and hermes-acp do not start, and kimi, opencode, openclaw and prime are ones you cannot talk to, each in its owner's words (#1003)"
   },
   {
     "act": "run-a-factory-task",
