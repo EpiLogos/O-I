@@ -114,34 +114,51 @@ fn day_reading(value: &Value) -> Result<(), String> {
 }
 
 /// Central's turn of today's Day (`central.day.turn`): asked first with no form, and again with the Day form only where today's
-/// Day stands without its page and Central asks for one (`wants-form`). Where the turn moved anything (a Day opened or closed, a
-/// page made), every reading the kernel holds retires, once: the turn is Central's derived write, so nothing else retires them.
+/// Day stands without its page and Central asks for one (`wants-form`). Central classes the turn locally-mutating (it writes the
+/// person's Day), yet it is asked at every read of today's Day and writes only when the Day turns; so the kernel retires its
+/// readings from the turn's own answer: where it moved anything (a Day opened or closed, a page made), every reading the kernel
+/// holds retires, once, and where nothing turned, none does (`CentralClient::run_retired_by_its_answer`).
 fn turn(client: &CentralClient, project: Option<&str>) -> Result<Value, String> {
-    // A Central whose catalogue does not name the turn is not asked for it: an id the kernel cannot class would count as a write
-    // and retire every reading on each read of the Day (action.rs `reads`).
+    // A Central whose catalogue does not name the turn is not asked for it: today's Day is read as it stands, and a today pointer
+    // left on an earlier civil Day is refused naming the missing turn (`day`).
     if client.mutation_class(TURN).is_none() {
         return Err(format!("Central's Action field names no {TURN}"));
     }
     let mut value = client
-        .run(TURN, json!({"project":project}))
+        .run_retired_by_its_answer(TURN, json!({"project":project}))
         .map_err(|e| e.to_string())?;
+    let mut moved = turned(&value);
     if value["turn"]["document"]["state"] == "wants-form" {
         if let Some(form) = crate::ground_form::day_form(client) {
-            value = client
-                .run(TURN, json!({"project":project,"form":form}))
-                .map_err(|e| e.to_string())?;
+            match client.run_retired_by_its_answer(TURN, json!({"project":project,"form":form})) {
+                Ok(made) => {
+                    moved |= turned(&made);
+                    value = made;
+                }
+                // What the first ask turned stays turned when the page could not be made.
+                Err(error) => {
+                    if moved {
+                        crate::read_cache::written();
+                    }
+                    return Err(error.to_string());
+                }
+            }
         }
     }
-    let turned = &value["turn"];
-    if turned["opened"] == true
-        || turned["document"]["state"] == "made"
-        || turned["closed"]
-            .as_array()
-            .is_some_and(|closed| !closed.is_empty())
-    {
+    if moved {
         crate::read_cache::written();
     }
     Ok(value)
+}
+
+/// Whether one answer of the turn moved anything: a Day opened or closed, or a page made.
+fn turned(value: &Value) -> bool {
+    let turn = &value["turn"];
+    turn["opened"] == true
+        || turn["document"]["state"] == "made"
+        || turn["closed"]
+            .as_array()
+            .is_some_and(|closed| !closed.is_empty())
 }
 
 pub fn day_document(day: &Value) -> Result<&Value, String> {

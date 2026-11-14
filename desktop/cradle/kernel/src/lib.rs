@@ -5444,6 +5444,80 @@ mod tests {
         assert_eq!(refusal, "Unsupported native Day reading");
     }
 
+    /// Central's turn of today's Day (`central.day.turn`, O-I 1005) writes the person's Day, so Central classes it locally-mutating;
+    /// it is asked at every read of today's Day and writes only when the Day turns. The kernel retires its readings from the turn's
+    /// own answer: once where a Day opened, a page was made or an earlier Day closed, and never where nothing turned.
+    #[test]
+    fn the_days_turn_retires_readings_only_when_the_day_turned() {
+        let _serial = day_read_guard();
+        for (tag, turned, retired) in [
+            (
+                "still",
+                r#"{"opened":false,"document":{"state":"ready"},"closed":[]}"#,
+                0,
+            ),
+            (
+                "opened",
+                r#"{"opened":true,"document":{"state":"made"},"closed":[]}"#,
+                1,
+            ),
+            (
+                "closed",
+                r#"{"opened":false,"document":{"state":"ready"},"closed":["opaque:earlier"]}"#,
+                1,
+            ),
+        ] {
+            let dir = std::env::temp_dir()
+                .join(format!("oi-kernel-day-turn-{tag}-{}", std::process::id()));
+            std::fs::create_dir_all(&dir).unwrap();
+            std::fs::write(
+                dir.join("turn.json"),
+                DAY_UNINITIALISED.replace(
+                    "\"document_state\"",
+                    &format!("\"turn\":{turned},\"document_state\""),
+                ),
+            )
+            .unwrap();
+            std::fs::write(
+                dir.join("list.json"),
+                r#"{"ok":true,"data":{"actions":[{"id":"central.day.turn","mutation_class":"locally-mutating"}]}}"#,
+            )
+            .unwrap();
+            let path = dir.join("central-fake");
+            std::fs::write(
+                &path,
+                format!(
+                    "#!/bin/sh\ncase \"$4\" in\n  action.list) cat '{d}/list.json' ;;\n  central.day.turn) cat '{d}/turn.json' ;;\n  *) echo '{{\"ok\":false,\"error\":{{\"message\":\"unexpected action\"}}}}' ;;\nesac\n",
+                    d = dir.display()
+                ),
+            )
+            .unwrap();
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::PermissionsExt;
+                std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o755)).unwrap();
+            }
+            let mut kernel = Kernel::new(CentralClient::with(path, None, "o-i".to_owned()));
+            let before = crate::read_cache::written_here();
+            let outcome = kernel
+                .apply(KernelOp::DayRead { day_ref: None })
+                .expect("today's Day is read after its turn");
+            let KernelOpResult::DayReading { data } = outcome.result else {
+                panic!("expected the day_reading result");
+            };
+            assert_eq!(
+                data["turn"],
+                serde_json::from_str::<serde_json::Value>(turned).unwrap(),
+                "{tag}"
+            );
+            assert_eq!(
+                crate::read_cache::written_here() - before,
+                retired,
+                "{tag}: the readings the kernel holds retire once where the Day turned, and never where nothing turned"
+            );
+        }
+    }
+
     #[test]
     fn day_read_refuses_a_stale_today_pointer_by_name() {
         let _serial = day_read_guard();

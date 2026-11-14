@@ -928,7 +928,24 @@ impl CentralClient {
     }
 
     pub fn run(&self, action: &str, input: Value) -> Result<Value, OwnerCallError> {
-        let value = self.run_envelope(action, input)?;
+        Self::data_of(action, self.run_envelope(action, input)?)
+    }
+
+    /// One owner Action whose own answer says what it wrote, run outside the read model: the caller retires the readings it moved
+    /// (`read_cache::written`), and none where it moved nothing. Central's turn of the Day is the one (central.rs `turn`, O-I 1005):
+    /// asked at every read of today's Day, it writes the person's Day only when the Day turns, and its `turn` says when.
+    pub(crate) fn run_retired_by_its_answer(
+        &self,
+        action: &str,
+        input: Value,
+    ) -> Result<Value, OwnerCallError> {
+        Self::data_of(
+            action,
+            self.run_envelope_owner(action, self.with_project(input))?,
+        )
+    }
+
+    fn data_of(action: &str, value: Value) -> Result<Value, OwnerCallError> {
         if value["ok"] != true {
             return Err(OwnerCallError::Refused {
                 message: value
