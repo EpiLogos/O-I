@@ -556,45 +556,6 @@ fn day_of(day: &Read) -> Day {
     }
 }
 
-/// The day's entries as the day slice holds them: each Action receipt Central laid into today's Day (`central.day.read` `receipts`,
-/// `central.day-receipt/v1`). Each lies on the Day, the Main track, at its instant on today's ruler, and holds no Session slot (no
-/// row): in Session view the Day's die stands on its chain (manual §18.1 "The Main track"). A receipt with no id or instant is not laid.
-fn day_entries(day: &Read) -> Vec<Clip> {
-    let Some(reading) = day.value else {
-        return Vec::new();
-    };
-    reading["receipts"]
-        .as_array()
-        .into_iter()
-        .flatten()
-        .filter_map(|entry| {
-            let id = text(&entry["receipt_id"])?;
-            let at = entry["occurred_at_unix_seconds"].as_u64()?;
-            let act = text(&entry["act"]).unwrap_or("an act");
-            let subject = text(&entry["subject"]);
-            let owner = text(&entry["owner"]);
-            Some(Clip {
-                id: format!("{CENTRAL_DAY_TRACK}:entry:{id}"),
-                track: CENTRAL_DAY_TRACK.into(),
-                row: String::new(),
-                label: subject
-                    .map_or_else(|| act.to_owned(), |subject| format!("{act} · {subject}")),
-                subject: subject.map(str::to_owned),
-                state: Some("done".into()),
-                at: Some(Span {
-                    start_unix_ms: at.saturating_mul(1000),
-                    end_unix_ms: None,
-                }),
-                note: Some(match owner {
-                    Some(owner) => format!("{owner}'s receipt, laid into the Day by Central"),
-                    None => "a receipt laid into the Day by Central".into(),
-                }),
-                ..Clip::default()
-            })
-        })
-        .collect()
-}
-
 /// One page of a world, as the page owner lists it (kernel/src/page.rs `list_pages`).
 struct Page {
     path: String,
@@ -1079,15 +1040,10 @@ fn central(worlds: &Read, day: &Read, cells: &Read) -> ModeSet {
     if let Some(stale) = day.stale() {
         day_parts.push(stale);
     }
-    let entries = day_entries(day);
-    if day.value.is_some() {
-        day_parts.push(format!(
-            "{} laid into it, at their instants",
-            plural(entries.len(), "entry", "entries")
-        ));
-    }
-    day_parts.push("the pages that play are no slice of the World Model yet (O-I #1005)".into());
-    clips.extend(entries);
+    day_parts.push(
+        "the day's entries and the pages that play are no slice of the World Model yet (O-I #1005)"
+            .into(),
+    );
     let day_absent = day.value.is_none().then(|| day_reading.words.clone());
     tracks.push(Track {
         id: CENTRAL_DAY_TRACK.into(),
@@ -2066,64 +2022,6 @@ mod tests {
             "workcells": {"state": "refused", "why": "no workcell instrument"}}),
             None,
         )
-    }
-
-    #[test]
-    fn central_lays_the_days_entries_on_the_day_at_their_instants_and_in_no_session_slot() {
-        let mut today = day(None);
-        today["value"]["receipts"] = json!([
-            {"schema": "central.day-receipt/v1", "receipt_id": "r-1", "act": "page saved", "owner": "Central",
-             "subject": "Control/user/flows/plan.html", "occurred_at_unix_seconds": 1_794_600_000_u64},
-            {"schema": "central.day-receipt/v1", "receipt_id": "r-2", "act": "passage answered", "owner": "AIKit",
-             "occurred_at_unix_seconds": 1_794_600_060_u64},
-            {"schema": "central.day-receipt/v1", "act": "no id", "occurred_at_unix_seconds": 1_794_600_120_u64},
-            {"schema": "central.day-receipt/v1", "receipt_id": "r-4", "act": "no instant"}
-        ]);
-        let set = build(
-            Mode::Central,
-            &[worlds(vec![], Ok(vec![])), today, seats(json!([]))],
-        );
-        let entries: Vec<&Clip> = set
-            .clips
-            .iter()
-            .filter(|clip| clip.track == CENTRAL_DAY_TRACK)
-            .collect();
-        assert_eq!(
-            entries.len(),
-            2,
-            "each receipt with an id and an instant is an entry; the others are not laid"
-        );
-        assert_eq!(entries[0].id, "central:day:entry:r-1");
-        assert_eq!(
-            entries[0].label,
-            "page saved · Control/user/flows/plan.html"
-        );
-        assert_eq!(
-            entries[0].subject.as_deref(),
-            Some("Control/user/flows/plan.html")
-        );
-        assert_eq!(
-            entries[0].at.as_ref().map(|at| at.start_unix_ms),
-            Some(1_794_600_000_000),
-            "an entry lies at its instant on today's ruler"
-        );
-        assert_eq!(entries[1].label, "passage answered");
-        assert!(
-            entries
-                .iter()
-                .all(|clip| !set.rows.iter().any(|row| row.id == clip.row)),
-            "the Day holds no clip in Session view: no entry stands in a row"
-        );
-        let day_track = set
-            .tracks
-            .iter()
-            .find(|track| track.main)
-            .expect("the Day, the Main track");
-        assert!(
-            day_track.kind.contains("2 entries laid into it"),
-            "the Day says how many entries it holds: {}",
-            day_track.kind
-        );
     }
 
     #[test]
