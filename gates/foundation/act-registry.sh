@@ -220,10 +220,12 @@ echo "act-registry: Workcell and Factory's sessions"
   && git -c user.name=act-registry -c user.email=act-registry@local commit -qm "Field notes begin" ) || ground "the project's repository"
 register="$world/Control/machines/workcells.register.json"
 checkout=""
+# The seat is a linked checkout of the project's primary, as every seat of the machine is (its .git a file the primary keeps).
 if declared="$(act workcell.declare "$(jq -nc --arg w "$world" --arg p "$project" '{world:$w, project:$p}')")" \
-  && checkout="$(jq -r .checkout <<<"$declared")" && [ -d "$checkout/.git" ] \
+  && checkout="$(jq -r .checkout <<<"$declared")" && [ -f "$checkout/.git" ] \
+  && git -C "$world/Work/$project" worktree list --porcelain | grep -qxF "worktree $checkout" \
   && [ "$(jq -r '.workcells[0].seats[0].state' "$register")" = "free" ]; then
-  holds workcell.declare "env-1 holds a checkout of $project, its seat free in this World's register"
+  holds workcell.declare "env-1 holds a linked checkout of $project's primary, its seat free in this World's register"
 else
   fails workcell.declare "no workcell declared in this World"
 fi
