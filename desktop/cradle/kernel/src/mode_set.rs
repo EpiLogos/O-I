@@ -133,6 +133,62 @@ pub struct ModeSet {
     pub acts: BTreeMap<String, Act>,
     /// What each act no single Action carries waits for, by the op its menu names.
     pub waiting: BTreeMap<String, String>,
+    /// The automation lanes under the tracks (manual §16.6): Expressions' the presented Scene's recorded lanes and the generator lanes
+    /// that move its values, each on the clip it rides.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub lanes: Vec<Lane>,
+    /// The loop brace, in the seconds the clips are laid on (Expressions' loop region, or its whole saved sequence).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub loop_brace: Option<LoopBrace>,
+}
+
+/// A stretch in seconds: of a clip's own time (a take inside its Scene), or of the seconds the clips are laid on.
+#[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
+pub struct Stretch {
+    pub start_s: f64,
+    pub end_s: f64,
+}
+
+/// The loop brace: where it starts, where it ends (none: the end of what is laid), and whether it is off.
+#[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
+pub struct LoopBrace {
+    pub start_s: f64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub end_s: Option<f64>,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub off: bool,
+}
+
+/// A take lane's Activator and Solo, as its owner keeps them on the lane.
+#[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
+pub struct LaneSetting {
+    pub enabled: bool,
+    pub solo: bool,
+}
+
+/// One point of an automation lane: at a second of its clip's own time, at 0–1 of its range.
+#[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
+pub struct LanePoint {
+    pub at: f64,
+    pub value: f64,
+}
+
+/// An automation lane: the parameter it moves (device and parameter), its points, its range where its owner reads one, what moves it
+/// where a generator does, and its acts (`draw`, where it is drawn by hand).
+#[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
+pub struct Lane {
+    pub id: String,
+    pub track: String,
+    pub clip: String,
+    pub device: String,
+    pub parameter: String,
+    pub points: Vec<LanePoint>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub range: Option<Stretch>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub modulated_by: Option<String>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub acts: BTreeMap<String, Act>,
 }
 
 /// One slice the Set was built from.
@@ -203,11 +259,15 @@ pub struct Track {
     /// The track's mixer as its owner keeps it, where the owner keeps one per track (an Expression's Volume, Activator, Solo and Arm).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub mix: Option<Mix>,
+    /// The track's info text, as its owner keeps it (an Expression's description).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub info: Option<String>,
 }
 
 /// One track's mixer as its owner keeps it: each control the owner holds, and nothing it does not.
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
 pub struct Mix {
+    /// A linear gain: 1 is the level the material was made at, 0 silence (the views say it in dB).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub volume: Option<f64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -226,6 +286,9 @@ pub struct Studio {
     pub values: BTreeMap<String, Value>,
     pub settings: BTreeMap<String, Value>,
     pub act: Act,
+    /// The automated targets (`field.<key>`) a hand holds off their automation, until Re-enable gives them back.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub held: Vec<String>,
 }
 
 /// An instant, or a stretch from one instant to another, in unix ms. No end: it runs on (a running clip's open edge).
@@ -255,6 +318,12 @@ pub struct Clip {
     pub at: Option<Span>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub note: Option<String>,
+    /// Its length in seconds, where the Set lays its clips end to end in seconds rather than on a clock (an Expression's Scene).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub seconds: Option<f64>,
+    /// Where it starts inside its own content, in seconds (what Slip moves).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub entry: Option<f64>,
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub acts: BTreeMap<String, Act>,
 }
@@ -277,6 +346,15 @@ pub struct Take {
     pub run: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub unit: Option<String>,
+    /// Where it lies inside its clip, in the clip's seconds (an Expression's take, inside its Scene).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub within: Option<Stretch>,
+    /// The stretch of it kept into the main lane, in the clip's seconds.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub kept: Option<Stretch>,
+    /// Its lane's Activator and Solo, where its owner keeps them on the lane (a Torus take).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub lane: Option<LaneSetting>,
     /// The take's own acts: Factory's lays `choose` on a returned take its Run's Flow can receive.
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub acts: BTreeMap<String, Act>,
@@ -1945,6 +2023,7 @@ fn factory(sessions: &Read, field: &Read, cells: &Read) -> ModeSet {
                 run: Some(task.run.clone()),
                 unit: attempt.unit_ref.clone(),
                 acts: take_acts,
+                ..Take::default()
             });
         }
         // A task written on a session and not yet run runs from its clip (factory.task.run on its Run, on that session). One that ran
@@ -2013,6 +2092,7 @@ fn factory(sessions: &Read, field: &Read, cells: &Read) -> ModeSet {
                     task.run
                 ),
             }),
+            ..Clip::default()
         });
     }
     let row_count = ordinal
@@ -2163,6 +2243,9 @@ pub fn expression_row(n: usize) -> String {
 /// The track that says why the works home, or a file of it, gives no work.
 pub const EXPRESSIONS_HOME_TRACK: &str = "expressions:home";
 
+/// Expressions' Main track (manual §20.1, The Main track): its Volume is every Expression's level together.
+pub const EXPRESSIONS_MAIN_TRACK: &str = "expressions:main";
+
 /// Expressions' mixer row (manual §20.1, The mixer row): Volume, the Activator, Solo and Arm are each one Expression's, written by
 /// one Action on its track; Monitor is none.
 fn expressions_mixer() -> BTreeMap<String, Control> {
@@ -2189,19 +2272,14 @@ fn expressions_mixer() -> BTreeMap<String, Control> {
 /// What Expressions' acts no single Action carries wait for, by the op the menu names.
 fn expressions_waiting() -> BTreeMap<String, String> {
     words(&[
-        ("track.rename", "an Expression's title: the store renames a work (its rename change), and no Action of the registry carries it yet — missing op: expressions.rename (Expressions)"),
-        ("clip.edit", "a Scene's Clip and Launch panels, its name, duration, transition, Quantize and follow action: no Action of the registry carries them yet — missing op: expressions.scene.edit (Expressions)"),
-        ("clip.delete", "a Scene taken out of its Expression: the store removes one (its scene_remove change), and no Action of the registry carries it yet — missing op: expressions.scene.remove (Expressions)"),
-        ("take.unkeep", "a kept take given back: keeping writes its values into the Scene's lanes, and no Action restores what they replaced yet — missing op: expressions.take.unkeep (Expressions)"),
-        ("take.lane", "a take moved onto another take lane: no Action of the registry carries it yet — missing op: expressions.take.lane (Expressions)"),
-        ("lane.draw", "a lane of the Studio drawn by hand: no Action of the registry carries it yet — missing op: expressions.lane.draw (Expressions)"),
-        ("studio.reenable", "a value given back to the lane that holds it (the hand-back light): no Action of the registry carries it yet — missing op: expressions.studio.reenable (Expressions)"),
+        ("clip.edit", "a Scene's Clip and Launch panels — its name, length, transition, colour, Quantize and follow action — are the field's own editor's, which writes them on the presented Scene; no Action of the registry carries them yet — missing op: expressions.scene.edit {rename, pacing, clip} (Expressions)"),
+        ("take.audition", "a take heard in place of its main lane is the field's hearing, not a write: the field auditions the presented Scene's Torus lanes from its own take lane controls"),
     ])
 }
 
 fn expressions_lanes_absent() -> BTreeMap<String, String> {
     words(&[
-        ("automation", "An Expression's automation is each Scene's own lanes, which Clip view edits; the Set lays none under the track."),
+        ("automation", "The Scene each Expression has selected holds no recorded lane and no generator lane: a kept take lays its moves on one."),
         ("events", "Expressions keeps no events beside its Scenes and their takes."),
     ])
 }
@@ -2260,20 +2338,50 @@ fn expression_take(
         ));
     }
     let mut acts = BTreeMap::new();
+    let take_input = json!({"expression_ref": work, "scene_ref": scene_ref, "take_ref": take_ref});
     if !running && !kept {
         acts.insert(
             "choose".to_owned(),
             done(
                 act(
                     "expressions.take.keep",
-                    json!({"expression_ref": work, "scene_ref": scene_ref, "take_ref": take_ref}),
-                    None,
-                    "Expressions' expressions.take.keep: the take kept, whole, into its Scene's main lane",
+                    take_input.clone(),
+                    Some("*"),
+                    "Expressions' expressions.take.keep: the take kept, whole or the stretch chosen (from_s, to_s), into its Scene's main lane",
                 ),
                 format!("{name} is kept into the main lane."),
             ),
         );
     }
+    if kept {
+        acts.insert(
+            "unchoose".to_owned(),
+            done(
+                act(
+                    "expressions.take.unkeep",
+                    take_input,
+                    Some("*"),
+                    "Expressions' expressions.take.unkeep: the kept take taken back out of its Scene's main lane",
+                ),
+                format!("{name} is taken back out of the main lane."),
+            ),
+        );
+    }
+    let torus = take["kind"] == "torus";
+    let lane_ref = text(&take["lane_ref"]);
+    if let (true, Some(lane_ref)) = (torus, lane_ref) {
+        acts.insert(
+            "lane".to_owned(),
+            act(
+                "expressions.take.lane",
+                json!({"expression_ref": work, "scene_ref": scene_ref, "lane_ref": lane_ref}),
+                Some("*"),
+                "Expressions' expressions.take.lane: the take lane's Activator and Solo, kept on its lane in the Scene's performance",
+            ),
+        );
+    }
+    let start = take["start_s"].as_f64().unwrap_or(0.0);
+    let length = take["seconds"].as_f64().unwrap_or(0.0);
     Some(Take {
         id: take_ref.to_owned(),
         clip: scene_ref.to_owned(),
@@ -2289,6 +2397,18 @@ fn expression_take(
                 end_unix_ms: None,
             }),
         words,
+        within: Some(Stretch {
+            start_s: start,
+            end_s: start + length,
+        }),
+        kept: take["kept"].is_object().then(|| Stretch {
+            start_s: take["kept"]["from_s"].as_f64().unwrap_or(start),
+            end_s: take["kept"]["to_s"].as_f64().unwrap_or(start + length),
+        }),
+        lane: torus.then(|| LaneSetting {
+            enabled: take["enabled"] != false,
+            solo: take["solo"] == true,
+        }),
         acts,
         ..Take::default()
     })
@@ -2337,6 +2457,9 @@ fn expressions(store: &Read) -> ModeSet {
     let mut tracks: Vec<Track> = Vec::new();
     let mut clips: Vec<Clip> = Vec::new();
     let mut takes: Vec<Take> = Vec::new();
+    let mut lanes: Vec<Lane> = Vec::new();
+    // The work the field presents: the open work touched last, which the reading lists first.
+    let mut presented: Option<Value> = None;
     // Each stop's launches: every open work's n-th Scene that holds material, on a work whose Activator is on.
     let mut stops: Vec<Vec<Value>> = Vec::new();
     for work in value["works"].as_array().into_iter().flatten() {
@@ -2445,7 +2568,36 @@ fn expressions(store: &Read) -> ModeSet {
                 act("expressions.delete", work_input.clone(), None, "Expressions' expressions.delete: the Expression's file taken to Central's trash, from where its history brings it back"),
                 format!("{title} is in Central's trash."),
             )),
+            ("renameTrack".to_owned(), act("expressions.scene.edit", json!({"expression_ref": reference, "operation": "expression-title"}), Some("title"),
+                "Expressions' expressions.scene.edit · expression-title: the Expression's title")),
+            ("colourTrack".to_owned(), act("expressions.scene.edit", json!({"expression_ref": reference, "operation": "colour"}), Some("colour"),
+                "Expressions' expressions.scene.edit · colour: the Expression's colour, kept in its document")),
+            ("trackInfo".to_owned(), act("expressions.scene.edit", json!({"expression_ref": reference, "operation": "expression-description"}), Some("description"),
+                "Expressions' expressions.scene.edit · expression-description: the Expression's description, its track's info text")),
+            ("insertClip".to_owned(), done(
+                act("expressions.scene.edit", json!({"expression_ref": reference, "operation": "add"}), None,
+                    "Expressions' expressions.scene.edit · add: a blank Scene after the one the Expression has selected"),
+                "A blank Scene is added after the selected one.".into(),
+            )),
         ]);
+        let held: Vec<String> = playback["held"][reference]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .filter_map(|target| target.as_str().map(str::to_owned))
+            .collect();
+        if !held.is_empty() {
+            kind.push(format!(
+                "{} held off {} automation by hand",
+                plural(held.len(), "value", "values"),
+                if held.len() == 1 { "its" } else { "their" }
+            ));
+            acts.insert("reenable".to_owned(), done(
+                act("expressions.studio.reenable", work_input.clone(), Some("target"),
+                    "Expressions' expressions.studio.reenable: the values held off their automation by hand given back to it"),
+                "Every held value went back to its automation.".into(),
+            ));
+        }
         if playing.is_some() || recording.is_some() {
             acts.insert("stopTrack".to_owned(), done(
                 act("expressions.scene.stop", work_input.clone(), None, "Expressions' expressions.scene.stop: the Expression stopped; a take it records is closed and laid on its Scene"),
@@ -2471,6 +2623,7 @@ fn expressions(store: &Read) -> ModeSet {
                     Some("value"),
                     "Expressions' expressions.studio.set: a value of the field (bind) or a device setting (setting) written into the Scene by the law the devices write with, and recorded on the take while the Expression records",
                 ),
+                held: held.clone(),
             })
         });
         for (index, scene) in scenes.iter().enumerate() {
@@ -2515,6 +2668,29 @@ fn expressions(store: &Read) -> ModeSet {
                     ));
                 }
             }
+            acts.insert("duplicateClip".to_owned(), done(
+                act("expressions.scene.edit", json!({"expression_ref": reference, "operation": "duplicate", "scene_ref": scene_ref}), None,
+                    "Expressions' expressions.scene.edit · duplicate: a copy of the Scene, after it"),
+                format!("A copy of {label} is after it."),
+            ));
+            acts.insert("deleteClip".to_owned(), done(
+                act("expressions.scene.edit", json!({"expression_ref": reference, "operation": "remove", "scene_ref": scene_ref}), None,
+                    "Expressions' expressions.scene.edit · remove: the Scene taken out of its Expression"),
+                format!("{label} is taken out of {title}."),
+            ));
+            // The Arrangement's cuts (manual §16.6's table): each takes what the ruler gives (`*`), in the Scene's own seconds.
+            for (key, operation, words) in [
+                ("moveClip", "move", "move: the Scene laid where it is dropped — Insert shifts the Scenes after it, Overwrite replaces the one there"),
+                ("trimClip", "trim", "trim: an edge of the Scene moved; the start edge moves its entry with it"),
+                ("rollClip", "roll", "roll: the seam after the Scene moved; it grows by what the next one loses"),
+                ("slipClip", "slip", "slip: where the Scene starts inside its own content"),
+                ("slideClip", "slide", "slide: the Scene moved between its fixed neighbours"),
+                ("splitClip", "split", "split: the Scene cut in two at the point given"),
+            ] {
+                acts.insert(key.to_owned(), act("expressions.scene.edit",
+                    json!({"expression_ref": reference, "operation": operation, "scene_ref": scene_ref}), Some("*"),
+                    &format!("Expressions' expressions.scene.edit · {words}")));
+            }
             let note = if material {
                 format!(
                     "{} · lands on {}",
@@ -2532,6 +2708,7 @@ fn expressions(store: &Read) -> ModeSet {
                 row: expression_row(index + 1),
                 label,
                 subject: Some(scene_ref.to_owned()),
+                // A launch the Quantize holds has not landed: its `at` starts where it lands, which the shell reads against its clock.
                 status: if records {
                     Some("recording".into())
                 } else {
@@ -2545,17 +2722,65 @@ fn expressions(store: &Read) -> ModeSet {
                         end_unix_ms: None,
                     }),
                 note: Some(note),
+                seconds: scene["duration"].as_f64(),
+                entry: Some(scene["entry"].as_f64().unwrap_or(0.0)),
                 acts,
             });
             for take in scene["takes"].as_array().into_iter().flatten() {
                 takes.extend(expression_take(reference, scene_ref, take, recording));
             }
         }
+        // The selected Scene's automation lanes, on its clip: a recorded lane is drawn by hand where its value's range is read.
+        if let Some(selected) = text(&work["selected_scene_ref"]) {
+            for lane in work["lanes"].as_array().into_iter().flatten() {
+                let Some(id) = text(&lane["id"]) else {
+                    continue;
+                };
+                let range = lane["range"]["min"]
+                    .as_f64()
+                    .zip(lane["range"]["max"].as_f64())
+                    .map(|(min, max)| Stretch {
+                        start_s: min,
+                        end_s: max,
+                    });
+                let mut acts = BTreeMap::new();
+                if lane["drawable"] == true {
+                    acts.insert("draw".to_owned(), done(
+                        act("expressions.lane.draw", json!({"expression_ref": reference, "scene_ref": selected, "track_id": id}), Some("points"),
+                            "Expressions' expressions.lane.draw: the Scene's recorded lane drawn by hand, over the stretch drawn"),
+                        "The lane is drawn.".into(),
+                    ));
+                }
+                lanes.push(Lane {
+                    id: format!("{selected}#lane/{id}"),
+                    track: reference.to_owned(),
+                    clip: selected.to_owned(),
+                    device: text(&lane["device"]).unwrap_or("Scene").to_owned(),
+                    parameter: text(&lane["parameter"]).unwrap_or(id).to_owned(),
+                    points: lane["points"]
+                        .as_array()
+                        .into_iter()
+                        .flatten()
+                        .map(|point| LanePoint {
+                            at: point["at"].as_f64().unwrap_or(0.0),
+                            value: point["value"].as_f64().unwrap_or(0.0),
+                        })
+                        .collect(),
+                    range,
+                    modulated_by: text(&lane["modulated_by"]).map(str::to_owned),
+                    acts,
+                });
+            }
+        }
+        if presented.is_none() {
+            presented = Some(work.clone());
+        }
         tracks.push(Track {
             id: reference.to_owned(),
             name: title,
             kind: kind.join(" · "),
             color,
+            info: text(&work["description"]).map(str::to_owned),
             acts,
             studio,
             mix: Some(Mix {
@@ -2643,7 +2868,7 @@ fn expressions(store: &Read) -> ModeSet {
         name: n.to_string(),
         ..Row::default()
     }));
-    let acts = BTreeMap::from([
+    let mut acts = BTreeMap::from([
         ("new".to_owned(), done(
             act("expressions.new", json!({}), Some("title"), "Expressions' expressions.new: an Expression of one blank Scene, the field's own, saved into the works home"),
             "The new Expression is open and saved.".into(),
@@ -2653,6 +2878,54 @@ fn expressions(store: &Read) -> ModeSet {
             "Every Expression stopped.".into(),
         )),
     ]);
+    // The presented work's loop brace and its saved sequence; and the Main track, whose Volume is every Expression's level together.
+    let mut loop_brace = None;
+    if let Some(work) = &presented {
+        let reference = text(&work["expression_ref"]).unwrap_or_default();
+        let region = &work["loop_region"];
+        loop_brace = match (region["from"].as_f64(), region["to"].as_f64()) {
+            (Some(from), Some(to)) => Some(LoopBrace {
+                start_s: from,
+                end_s: Some(to),
+                off: work["loop"] == false,
+            }),
+            _ if work["loop"] == true => Some(LoopBrace {
+                start_s: 0.0,
+                end_s: None,
+                off: false,
+            }),
+            _ => None,
+        };
+        acts.insert("setLoop".to_owned(), act("expressions.scene.edit", json!({"expression_ref": reference, "operation": "loop-edge"}), Some("*"),
+            "Expressions' expressions.scene.edit · loop-edge: one end of the loop brace, in the sequence's seconds"));
+        let first = work["scenes"].as_array().and_then(|scenes| scenes.first());
+        if let Some(scene) = first
+            .filter(|scene| scene["saved"] != "never" && scene["material"]["available"] == true)
+        {
+            acts.insert("backToArrangement".to_owned(), done(
+                act("expressions.scene.launch", json!({"launches": [{"expression_ref": reference, "scene_ref": scene["scene_ref"]}], "saved": true}), None,
+                    "Expressions' expressions.scene.launch, saved: the saved sequence plays again from its first Scene's saved version"),
+                "The saved sequence plays again.".into(),
+            ));
+        }
+        tracks.push(Track {
+            id: EXPRESSIONS_MAIN_TRACK.into(),
+            name: "Main".into(),
+            kind: "the Main track: its Stops, and the sound of every Expression together".into(),
+            main: true,
+            mix: Some(Mix { volume: Some(work["main_level"].as_f64().unwrap_or(1.0)), ..Mix::default() }),
+            acts: BTreeMap::from([("volume".to_owned(), act("expressions.mix.set", json!({"expression_ref": reference, "key": "main"}), Some("value"),
+                "Expressions' expressions.mix.set · main: every Expression's level together, on the Main track"))]),
+            ..Track::default()
+        });
+    }
+    let mut lanes_absent = lanes_absent;
+    if !lanes.is_empty() {
+        lanes_absent.remove("automation");
+    }
+    if !takes.is_empty() {
+        lanes_absent.remove("takes");
+    }
     ModeSet {
         rows,
         tracks,
@@ -2667,6 +2940,8 @@ fn expressions(store: &Read) -> ModeSet {
         lanes_absent,
         acts,
         waiting,
+        lanes,
+        loop_brace,
         ..ModeSet::default()
     }
 }
@@ -3728,6 +4003,145 @@ mod tests {
             Some(vec!["Stops".to_owned(), "Sound".to_owned()])
         );
         assert!(set.mixer["monitor"].disabled.is_some());
+        let roundtrip: ModeSet = serde_json::from_value(serde_json::to_value(&set).unwrap())
+            .expect("the Set round-trips");
+        assert_eq!(roundtrip, set);
+    }
+
+    #[test]
+    fn the_presented_work_lays_its_cuts_lanes_loop_holds_and_main_track_each_an_expressions_action()
+    {
+        let mut value = store(true);
+        {
+            let reading = &mut value["value"];
+            let work = &mut reading["works"][0];
+            work["description"] = json!("Morning light");
+            work["main_level"] = json!(0.8);
+            work["loop"] = json!(false);
+            work["loop_region"] = json!({"from": 2.0, "to": 10.0});
+            work["scenes"][0]["entry"] = json!(1.5);
+            work["lanes"] = json!([
+                {"id": "track:1", "device": "Field", "parameter": "Time scale", "drawable": true,
+                 "range": {"min": 0.1, "max": 4.0}, "points": [{"at": 0.0, "value": 0.25}, {"at": 6.0, "value": 0.75}]},
+                {"id": "gen:1", "device": "Generator", "parameter": "Turbulence", "drawable": false,
+                 "modulated_by": "sine · 0.5 Hz · automation", "points": []}]);
+            reading["playback"]["held"] =
+                json!({"expression:authored-a": ["field.params.timeScale"]});
+        }
+        let set = build(Mode::Expressions, &[value]);
+        let dawn = &set.tracks[0];
+        assert_eq!(dawn.info.as_deref(), Some("Morning light"));
+        let edit = |act: &Act, operation: &str, takes: Option<&str>| {
+            assert_eq!(act.action, "expressions.scene.edit");
+            assert_eq!(act.input["operation"], operation);
+            assert_eq!(act.takes.as_deref(), takes);
+        };
+        edit(&dawn.acts["renameTrack"], "expression-title", Some("title"));
+        edit(&dawn.acts["colourTrack"], "colour", Some("colour"));
+        edit(
+            &dawn.acts["trackInfo"],
+            "expression-description",
+            Some("description"),
+        );
+        edit(&dawn.acts["insertClip"], "add", None);
+        // A value held off its automation by hand: the Studio says which, and the track gives it back.
+        assert_eq!(
+            dawn.studio.as_ref().map(|s| s.held.clone()),
+            Some(vec!["field.params.timeScale".to_owned()])
+        );
+        assert_eq!(dawn.acts["reenable"].action, "expressions.studio.reenable");
+        assert_eq!(dawn.acts["reenable"].takes.as_deref(), Some("target"));
+        assert!(
+            dawn.kind
+                .contains("1 value held off its automation by hand"),
+            "{}",
+            dawn.kind
+        );
+        // Each Scene lays its length and entry, and every cut of the Arrangement is the one Action, taking what the ruler gives.
+        let opening = &set.clips[0];
+        assert_eq!((opening.seconds, opening.entry), (Some(12.0), Some(1.5)));
+        for (key, operation) in [
+            ("moveClip", "move"),
+            ("trimClip", "trim"),
+            ("rollClip", "roll"),
+            ("slipClip", "slip"),
+            ("slideClip", "slide"),
+            ("splitClip", "split"),
+        ] {
+            edit(&opening.acts[key], operation, Some("*"));
+            assert_eq!(
+                opening.acts[key].input["scene_ref"],
+                "expression:authored-a:scene:main"
+            );
+        }
+        edit(&opening.acts["duplicateClip"], "duplicate", None);
+        edit(&opening.acts["deleteClip"], "remove", None);
+        // The selected Scene's lanes: the recorded one is drawn by hand within its range, the generator's is read.
+        assert_eq!(set.lanes.len(), 2);
+        let drawn = &set.lanes[0];
+        assert_eq!(drawn.id, "expression:authored-a:scene:main#lane/track:1");
+        assert_eq!(
+            (drawn.track.as_str(), drawn.clip.as_str()),
+            ("expression:authored-a", "expression:authored-a:scene:main")
+        );
+        assert_eq!(
+            drawn.range,
+            Some(Stretch {
+                start_s: 0.1,
+                end_s: 4.0
+            })
+        );
+        assert_eq!(
+            drawn.points[1],
+            LanePoint {
+                at: 6.0,
+                value: 0.75
+            }
+        );
+        assert_eq!(drawn.acts["draw"].action, "expressions.lane.draw");
+        assert_eq!(drawn.acts["draw"].input["track_id"], "track:1");
+        assert_eq!(drawn.acts["draw"].takes.as_deref(), Some("points"));
+        assert!(
+            set.lanes[1].acts.is_empty()
+                && set.lanes[1].modulated_by.as_deref() == Some("sine · 0.5 Hz · automation")
+        );
+        assert!(!set.lanes_absent.contains_key("automation"));
+        // The presented work's loop brace, off and still where it was set; its ends move by the one Action.
+        assert_eq!(
+            set.loop_brace,
+            Some(LoopBrace {
+                start_s: 2.0,
+                end_s: Some(10.0),
+                off: true
+            })
+        );
+        edit(&set.acts["setLoop"], "loop-edge", Some("*"));
+        assert_eq!(set.acts["backToArrangement"].input["saved"], true);
+        // The Main track: every Expression's level together.
+        let main = set
+            .tracks
+            .iter()
+            .find(|track| track.main)
+            .expect("the Main track");
+        assert_eq!(main.id, EXPRESSIONS_MAIN_TRACK);
+        assert_eq!(main.mix.as_ref().and_then(|mix| mix.volume), Some(0.8));
+        assert_eq!(
+            main.acts["volume"].input,
+            json!({"expression_ref": "expression:authored-a", "key": "main"})
+        );
+        for act in set
+            .acts
+            .values()
+            .chain(set.lanes.iter().flat_map(|lane| lane.acts.values()))
+            .chain(set.tracks.iter().flat_map(|track| track.acts.values()))
+            .chain(set.clips.iter().flat_map(|clip| clip.acts.values()))
+        {
+            assert!(
+                crate::expression_actions::holds(&act.action),
+                "{} is an Action of Expressions",
+                act.action
+            );
+        }
         let roundtrip: ModeSet = serde_json::from_value(serde_json::to_value(&set).unwrap())
             .expect("the Set round-trips");
         assert_eq!(roundtrip, set);

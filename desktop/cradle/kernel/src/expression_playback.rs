@@ -36,6 +36,9 @@ pub struct Playback {
     pub(crate) launched: BTreeMap<String, Launched>,
     pub(crate) armed: BTreeSet<String>,
     pub(crate) recording: BTreeMap<String, Recording>,
+    /// The values held off their automation by hand, by Expression: each automated target (`field.<key>`) a person moved, which
+    /// the field holds where it was put until Re-enable gives it back (`expressions.studio.reenable`; the frame's `live hold`).
+    pub(crate) held: BTreeMap<String, BTreeSet<String>>,
     /// Moves with every change of playback: the guard a press read on a stale playback is refused by.
     pub(crate) epoch: u64,
 }
@@ -65,8 +68,9 @@ impl Playback {
 
     /// An Expression closed or deleted: nothing of it plays, is armed or records. The take it was recording is returned unkept.
     pub fn forget(&mut self, expression_ref: &str) -> Option<Recording> {
-        let moved =
-            self.launched.remove(expression_ref).is_some() | self.armed.remove(expression_ref);
+        let moved = self.launched.remove(expression_ref).is_some()
+            | self.armed.remove(expression_ref)
+            | self.held.remove(expression_ref).is_some();
         let recording = self.recording.remove(expression_ref);
         if moved || recording.is_some() {
             self.epoch += 1;
@@ -86,7 +90,7 @@ impl Playback {
             })
             .collect();
         json!({"state": self.state(), "epoch": self.epoch, "launched": self.launched.values().collect::<Vec<_>>(),
-            "armed": self.armed, "recording": recordings.first(), "recordings": recordings})
+            "armed": self.armed, "held": self.held, "recording": recordings.first(), "recordings": recordings})
     }
 }
 

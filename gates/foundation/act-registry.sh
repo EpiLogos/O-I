@@ -232,7 +232,8 @@ echo "act-registry: Expressions' core"
 # invocation is refused in words and makes nothing. Act 6 of the foundation gate runs them on the kernel itself. ----------------------
 expressions="expressions.new expressions.open expressions.studio.set expressions.scene.save expressions.scene.launch
   expressions.scene.stop expressions.scene.capture expressions.arm expressions.take.keep expressions.save expressions.mix.set
-  expressions.duplicate expressions.delete"
+  expressions.duplicate expressions.delete expressions.scene.edit expressions.lane.draw expressions.studio.reenable
+  expressions.take.unkeep expressions.take.lane"
 listed="$("$oi" act --json 2>/dev/null | jq -c '[.fields[]? | select(.owner == "expressions")] | first // {}')"
 if [ "$(jq -r '.count // 0' <<<"$listed")" = "$(wc -w <<<"$expressions" | tr -d ' ')" ] \
   && jq -e '.actions | all(.availability.available == false and (.availability.reason | test("no O:I desktop answers")))' \

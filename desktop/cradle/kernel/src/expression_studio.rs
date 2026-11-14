@@ -512,6 +512,10 @@ pub struct TakeTrack {
 pub struct Kept {
     pub from_s: Finite,
     pub to_s: Finite,
+    /// What the keep laid over in the main lane, so that `expressions.take.unkeep` gives it back: each bind's lane as it stood
+    /// inside the stretch (`created` where the keep made the lane), and the Scene's length and take range before it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub before: Option<Value>,
 }
 
 /// A Studio take (manual §20.1, "Arm the Expression and press Play, and Play records a take"): the values the Studio's devices
@@ -652,7 +656,12 @@ impl Recording {
 /// A take kept into the Scene's main lane (propertyTracks.ts `layPropertyTake` and `mergeTake`): the stretch `from..to` of each of
 /// its lanes laid over the Scene's lane on the same bind (what lies there outside the stretch stays), a lane of its own where the
 /// Scene had none; the Scene's take range is the stretch, and its length grows to hold it. Returns the material as it stands after.
-pub fn keep(material: &Value, take: &StudioTake, from: f64, to: f64) -> Result<Value, String> {
+pub fn keep(
+    material: &Value,
+    take: &StudioTake,
+    from: f64,
+    to: f64,
+) -> Result<(Value, Value), String> {
     if !(from >= 0.0 && to > from && to <= SECONDS) {
         return Err("A kept stretch runs forward inside the Scene's hour".into());
     }
@@ -661,6 +670,11 @@ pub fn keep(material: &Value, take: &StudioTake, from: f64, to: f64) -> Result<V
         .as_array()
         .cloned()
         .unwrap_or_default();
+    let inside = |point: &Value| {
+        let time = point["time"].as_f64().unwrap_or(-1.0);
+        time >= from && time <= to
+    };
+    let mut before = Vec::new();
     for lane in &take.tracks {
         let points: Vec<Value> = lane
             .points
@@ -676,6 +690,8 @@ pub fn keep(material: &Value, take: &StudioTake, from: f64, to: f64) -> Result<V
             .find(|track| track["bind"] == lane.bind.as_str() && track.get("entityId").is_none())
         {
             Some(track) => {
+                before.push(json!({"id": track["id"], "bind": lane.bind, "created": false,
+                    "points": track["points"].as_array().into_iter().flatten().filter(|point| inside(point)).cloned().collect::<Vec<_>>()}));
                 let mut merged: Vec<Value> = track["points"]
                     .as_array()
                     .cloned()
@@ -700,10 +716,13 @@ pub fn keep(material: &Value, take: &StudioTake, from: f64, to: f64) -> Result<V
                 if tracks.len() >= TRACKS {
                     return Err(format!("A Scene holds at most {TRACKS} property lanes"));
                 }
+                before
+                    .push(json!({"id": lane.id, "bind": lane.bind, "created": true, "points": []}));
                 tracks.push(json!({"id": lane.id, "bind": lane.bind, "points": points}));
             }
         }
     }
+    let before = json!({"lanes": before, "duration": material["duration"], "propertyTakeRange": material["propertyTakeRange"]});
     let duration = material["duration"]
         .as_f64()
         .unwrap_or(0.0)
@@ -712,6 +731,242 @@ pub fn keep(material: &Value, take: &StudioTake, from: f64, to: f64) -> Result<V
     material["propertyTakeRange"] = json!({"start": from, "end": to});
     material["propertyTracks"] = Value::Array(tracks);
     material["duration"] = json!(duration);
+    Ok((material, before))
+}
+
+/// A kept take given back (`expressions.take.unkeep`, Undo's way back for a keep): inside the stretch it was kept over, each of its
+/// binds' main lanes holds again what it held before the keep (a lane the keep made is taken away), and the Scene's length and take
+/// range stand as they stood. Moves made since on that stretch of those lanes give way to it, as an Undo's do.
+pub fn unkeep(material: &Value, kept: &Kept) -> Result<Value, String> {
+    let before = kept
+        .before
+        .as_ref()
+        .ok_or("This take was kept before the main lane remembered what it laid over, so there is nothing to give back")?;
+    let (from, to) = (kept.from_s.0, kept.to_s.0);
+    let mut material = material.clone();
+    let mut tracks: Vec<Value> = material["propertyTracks"]
+        .as_array()
+        .cloned()
+        .unwrap_or_default();
+    for lane in before["lanes"].as_array().into_iter().flatten() {
+        let bind = lane["bind"].as_str().unwrap_or_default();
+        let at = tracks
+            .iter()
+            .position(|track| track["bind"] == bind && track.get("entityId").is_none());
+        let Some(at) = at else { continue };
+        if lane["created"] == true {
+            tracks.remove(at);
+            continue;
+        }
+        let mut points: Vec<Value> = tracks[at]["points"]
+            .as_array()
+            .cloned()
+            .unwrap_or_default()
+            .into_iter()
+            .filter(|point| {
+                let time = point["time"].as_f64().unwrap_or(-1.0);
+                time < from || time > to
+            })
+            .chain(lane["points"].as_array().cloned().unwrap_or_default())
+            .collect();
+        points.sort_by(|a, b| {
+            let (a, b) = (
+                a["time"].as_f64().unwrap_or(0.0),
+                b["time"].as_f64().unwrap_or(0.0),
+            );
+            a.total_cmp(&b)
+        });
+        tracks[at]["points"] = Value::Array(points);
+    }
+    let fields = material
+        .as_object_mut()
+        .ok_or("The Scene's material is not an object")?;
+    if tracks.is_empty() {
+        fields.remove("propertyTracks");
+    } else {
+        fields.insert("propertyTracks".into(), Value::Array(tracks));
+    }
+    for key in ["duration", "propertyTakeRange"] {
+        match &before[key] {
+            Value::Null => {
+                fields.remove(key);
+            }
+            value => {
+                fields.insert(key.into(), value.clone());
+            }
+        }
+    }
+    Ok(material)
+}
+
+/// The automated target a Field bind's write is held on (the frame's `live hold`: an enabled automation lane drives it), if one is.
+pub fn automated_target(material: &Value, bind_name: &str) -> Option<String> {
+    let target = format!("field.{}", bind(bind_name)?.key);
+    material["automation"]
+        .as_array()?
+        .iter()
+        .any(|lane| lane["target"] == target.as_str() && lane["enabled"] != false)
+        .then_some(target)
+}
+
+/// A recorded lane's device and parameter, from its binding (the Scene's own parameter names stand where the binding is a Field's).
+fn bind_words(bind: &str) -> (String, String) {
+    if let Some(parameter) = bind.strip_prefix("field.params.") {
+        return ("Field".into(), parameter.into());
+    }
+    let (head, rest) = bind.split_once('.').unwrap_or((bind, ""));
+    let device = if head == "entity" {
+        "Symbol"
+    } else if head.is_empty() {
+        "Scene"
+    } else {
+        head
+    };
+    (
+        device.into(),
+        if rest.is_empty() {
+            bind.into()
+        } else {
+            rest.into()
+        },
+    )
+}
+
+/// A Scene's automation lanes as the Set lays them (manual §16.6; XT10): each recorded lane (a property track: a kept take's moves or
+/// a lane drawn) with its points on its value's own range, drawable there — or, where the Scene no longer holds what it moves or it
+/// moves an object, normalised to the span it recorded and not drawn — and each enabled generator lane, naming what moves its value.
+pub fn lanes(material: &Value) -> Vec<Value> {
+    let recorded = material["propertyTracks"].as_array().into_iter().flatten().map(|track| {
+        let bind_name = track["bind"].as_str().unwrap_or_default();
+        let field = bind(bind_name).filter(|_| track.get("entityId").is_none());
+        let values: Vec<f64> = track["points"].as_array().into_iter().flatten().filter_map(|p| p["value"].as_f64()).collect();
+        let (min, max) = match field {
+            Some(binding) => (binding.hard_min, binding.hard_max),
+            None if values.is_empty() => (0.0, 0.0),
+            None => (values.iter().copied().fold(f64::INFINITY, f64::min), values.iter().copied().fold(f64::NEG_INFINITY, f64::max)),
+        };
+        let spread = max - min;
+        let (device, parameter) = bind_words(bind_name);
+        let points: Vec<Value> = track["points"].as_array().into_iter().flatten().map(|point| {
+            let value = point["value"].as_f64().unwrap_or(0.0);
+            json!({"at": point["time"], "value": if spread > 0.0 { ((value - min) / spread).clamp(0.0, 1.0) } else { 0.5 }})
+        }).collect();
+        json!({"id": track["id"], "device": device, "parameter": parameter, "range": {"min": min, "max": max},
+            "drawable": field.is_some() && spread > 0.0, "points": points})
+    });
+    let generated = material["automation"].as_array().into_iter().flatten().filter(|lane| lane["enabled"] != false).map(|lane| {
+        let (device, parameter) = bind_words(lane["target"].as_str().unwrap_or_default());
+        let blend = lane["blend"].as_str().unwrap_or_default();
+        let moves = format!("{} · {} · {} Hz · {}", lane["type"].as_str().unwrap_or_default(), lane["wave"].as_str().unwrap_or_default(),
+            lane["rate"], if blend == "replace" { "automation".to_owned() } else { format!("modulation ({blend})") });
+        json!({"id": lane["id"], "device": device, "parameter": parameter, "range": {"min": lane["min"], "max": lane["max"]},
+            "modulated_by": moves, "points": []})
+    });
+    recorded.chain(generated).collect()
+}
+
+/// The most points a lane is drawn with (nativeTrackEdits.ts `DRAW_POINTS`), as many as a Live envelope drawn across a Scene keeps.
+pub const DRAWN_POINTS: usize = 512;
+
+/// A recorded lane drawn (nativeTrackEdits.ts `applyNativeTrackChanges`, `track-draw`; XT10): the points drawn lie over the stretch
+/// they cover, inside the Scene and the value's range, and the moves outside it stay; a kept move's curve handle never reaches into
+/// the stretch drawn over. A value shared by All scenes is not recorded, so it is not drawn. The material as it stands after.
+pub fn draw(
+    material: &Value,
+    shared: Option<&Value>,
+    track_id: &str,
+    drawn: &[(f64, f64)],
+) -> Result<Value, String> {
+    const REFUSAL: &str = "Draw a lane with 2 to 512 points, in time order, from 0 to 3600 s.";
+    if drawn.len() < 2 || drawn.len() > DRAWN_POINTS {
+        return Err(REFUSAL.into());
+    }
+    let mut last = f64::NEG_INFINITY;
+    for (time, value) in drawn {
+        if !time.is_finite()
+            || !value.is_finite()
+            || *time < 0.0
+            || *time > SECONDS
+            || *time <= last
+        {
+            return Err(REFUSAL.into());
+        }
+        last = *time;
+    }
+    let gone = "The recorded property track no longer belongs to this Scene. Read it again.";
+    let found = material["propertyTracks"]
+        .as_array()
+        .and_then(|tracks| tracks.iter().find(|track| track["id"] == track_id))
+        .ok_or(gone)?;
+    let Some(binding) = found["bind"]
+        .as_str()
+        .and_then(bind)
+        .filter(|_| found.get("entityId").is_none())
+    else {
+        return Err("This lane moves an object of the field: draw it in the field's own editor, where the object's range is read.".into());
+    };
+    if is_shared(shared, material, &binding.bind) {
+        return Err(
+            "A macro set to All scenes is not recorded. Turn All scenes off to draw its moves."
+                .into(),
+        );
+    }
+    let mut material = material.clone();
+    let duration = material["duration"].as_f64().unwrap_or(0.0);
+    let track = material["propertyTracks"]
+        .as_array_mut()
+        .and_then(|tracks| tracks.iter_mut().find(|track| track["id"] == track_id))
+        .ok_or(gone)?;
+    let (from, to) = (drawn[0].0, drawn[drawn.len() - 1].0);
+    if to > duration {
+        return Err(format!(
+            "A lane is drawn within its scene: 0 to {duration} s."
+        ));
+    }
+    if let Some((_, value)) = drawn
+        .iter()
+        .find(|(_, value)| *value < binding.hard_min || *value > binding.hard_max)
+    {
+        return Err(format!(
+            "{} moves between {} and {}: {value} lies outside it.",
+            binding.label, binding.hard_min, binding.hard_max
+        ));
+    }
+    let kept = track["points"]
+        .as_array()
+        .cloned()
+        .unwrap_or_default()
+        .into_iter()
+        .filter_map(|mut point| {
+            let time = point["time"].as_f64()?;
+            if time >= from && time <= to {
+                return None;
+            }
+            if let Some(fields) = point.as_object_mut() {
+                if time > from {
+                    fields.remove("in");
+                }
+                if time < to {
+                    fields.remove("out");
+                }
+            }
+            Some(point)
+        });
+    let mut points: Vec<Value> = kept
+        .chain(
+            drawn
+                .iter()
+                .map(|(time, value)| json!({"time": time, "value": value})),
+        )
+        .collect();
+    points.sort_by(|a, b| {
+        let (a, b) = (
+            a["time"].as_f64().unwrap_or(0.0),
+            b["time"].as_f64().unwrap_or(0.0),
+        );
+        a.total_cmp(&b)
+    });
+    track["points"] = Value::Array(points);
     Ok(material)
 }
 
@@ -869,7 +1124,7 @@ mod tests {
         assert_eq!(take.tracks[0].points[2].time.0, 1.0);
         assert_eq!(take.seconds.0, 1.0);
         validate_takes("expression:t:scene:main", std::slice::from_ref(&take)).unwrap();
-        let kept = keep(&material, &take, 0.0, take.seconds.0).unwrap();
+        let (kept, _) = keep(&material, &take, 0.0, take.seconds.0).unwrap();
         let lane = &kept["propertyTracks"][0];
         assert_eq!(lane["bind"], "field.params.timeScale");
         assert_eq!(lane["points"].as_array().unwrap().len(), 3);

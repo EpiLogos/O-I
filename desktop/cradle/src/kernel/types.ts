@@ -169,6 +169,8 @@ export interface ModeSetTrack {
   acts?: Record<string, ModeSetAct>;
   /** Expressions' Studio of the track's work (O-I #1008): the values and settings of the Scene it has selected, each written by `act`. */
   studio?: ModeSetStudio;
+  /** The track's info text, as its owner keeps it (an Expression's description). */
+  info?: string;
   /** The track's mixer as its owner keeps it, where the owner keeps one per track (an Expression's Volume, Activator, Solo and Arm). */
   mix?: ModeSetMix;
 }
@@ -180,10 +182,13 @@ export interface ModeSetStudio {
   values: Record<string, unknown>;
   settings: Record<string, unknown>;
   act: ModeSetAct;
+  /** The automated targets (`field.<key>`) a hand holds off their automation, until Re-enable gives them back. */
+  held?: string[];
 }
 
 /** One track's mixer as its owner keeps it: each control the owner holds, and nothing it does not. */
 export interface ModeSetMix {
+  /** A linear gain: 1 is the level the material was made at, 0 silence (the views say it in dB). */
   volume?: number;
   activator?: boolean;
   solo?: boolean;
@@ -201,6 +206,30 @@ export interface ModeSetClip {
   state?: string;
   at?: ModeSetSpan;
   note?: string;
+  /** Its length in seconds, where the Set lays its clips end to end in seconds rather than on a clock (an Expression's Scene). */
+  seconds?: number;
+  /** Where it starts inside its own content, in seconds (what Slip moves). */
+  entry?: number;
+  acts?: Record<string, ModeSetAct>;
+}
+
+/** A stretch in seconds: of a clip's own time (a take inside its Scene), or of the seconds the clips are laid on. */
+export interface ModeSetStretch {
+  start_s: number;
+  end_s: number;
+}
+
+/** An automation lane (kernel mode_set.rs `Lane`): the parameter it moves, its points (at a second of its clip, at 0–1 of its range),
+ * its range where its owner reads one, what moves it where a generator does, and its acts (`draw`, where it is drawn by hand). */
+export interface ModeSetLane {
+  id: string;
+  track: string;
+  clip: string;
+  device: string;
+  parameter: string;
+  points: {at: number; value: number}[];
+  range?: ModeSetStretch;
+  modulated_by?: string;
   acts?: Record<string, ModeSetAct>;
 }
 
@@ -215,6 +244,11 @@ export interface ModeSetTake {
   words: string;
   run?: string;
   unit?: string;
+  /** Where it lies inside its clip, and the stretch of it kept into the main lane, in the clip's seconds (an Expression's take). */
+  within?: ModeSetStretch;
+  kept?: ModeSetStretch;
+  /** Its lane's Activator and Solo, where its owner keeps them on the lane (a Torus take). */
+  lane?: {enabled: boolean; solo: boolean};
   /** The take's own acts: Factory's `choose` (factory.attempt.choose) on a returned take its Run's Flow can receive. */
   acts?: Record<string, ModeSetAct>;
 }
@@ -245,6 +279,10 @@ export interface ModeSet {
   lanes_absent: Record<string, string>;
   acts: Record<string, ModeSetAct>;
   waiting: Record<string, string>;
+  /** The automation lanes under the tracks: Expressions' presented Scene's recorded lanes and generator lanes, each on its clip. */
+  lanes?: ModeSetLane[];
+  /** The loop brace, in the seconds the clips are laid on: no end, the end of what is laid. */
+  loop_brace?: {start_s: number; end_s?: number; off?: boolean};
 }
 
 /** One mode's Set as `set_subscribe` answers it (`oi.mode-set/v1`): its version moves exactly when the Set does. */

@@ -1198,10 +1198,8 @@ fn torus_takes(performance: &crate::expression_performance::Performance) -> Vec<
         .torus_takes
         .iter()
         .map(|record| {
-            let lane_ref = performance
-                .layers
-                .get(usize::from(record.layer))
-                .map(|layer| layer.layer_ref.as_str());
+            let layer = performance.layers.get(usize::from(record.layer));
+            let lane_ref = layer.map(|layer| layer.layer_ref.as_str());
             let (start, end) = (record.at_sample.0, record.end().unwrap_or(record.at_sample.0));
             let kept = performance.torus_comp.iter().find(|comp| {
                 Some(comp.lane_ref.as_str()) == lane_ref
@@ -1209,6 +1207,7 @@ fn torus_takes(performance: &crate::expression_performance::Performance) -> Vec<
                     && comp.end_sample.0 <= end
             });
             json!({"take_ref": record.take.take_ref, "kind": "torus", "lane": record.layer, "lane_ref": lane_ref,
+                "enabled": layer.map(|layer| layer.enabled), "solo": layer.map(|layer| layer.solo),
                 "start_s": start as f64 / rate, "seconds": record.take.frames.0 as f64 / rate, "binds": [], "points": 0,
                 "state": "returned",
                 "kept": kept.map(|comp| json!({"from_s": comp.start_sample.0 as f64 / rate, "to_s": comp.end_sample.0 as f64 / rate}))})
@@ -2220,6 +2219,11 @@ impl Application {
                 .as_ref()
                 .map(|p| crate::expression_studio::studio(&s.scene_ref, &p.scene, shared))
         });
+        // The selected Scene's automation lanes (its recorded lanes and its generator lanes), as the Set lays them under its clip.
+        let lanes = selected
+            .and_then(|s| s.presentation.as_ref())
+            .map(|p| crate::expression_studio::lanes(&p.scene))
+            .unwrap_or_default();
         json!({"expression_ref": r, "title": d.title, "revision": d.revision, "open": true,
             "dirty": self.saved.get(r) != Some(&d.revision), "saved_revision": self.saved.get(r),
             "description": composition.as_ref().map(|c| &c["description"]).filter(|v| v.as_str().is_some_and(|t| !t.is_empty())),
@@ -2230,7 +2234,8 @@ impl Application {
                 "level": mix.and_then(|m| m["level"].as_f64()).unwrap_or(1.0)},
             "main_level": mix.and_then(|m| m["main"].as_f64()),
             "selected_scene_ref": selected.map(|s| &s.scene_ref),
-            "scenes": scenes, "studio": studio, "now_unix_ms": now})
+            "loop": composition.as_ref().map(|c| c["loop"] == true), "loop_region": composition.as_ref().map(|c| &c["loopRegion"]).filter(|v| v.is_object()),
+            "lanes": lanes, "scenes": scenes, "studio": studio, "now_unix_ms": now})
     }
     fn inspect(&self, r: &str) -> Result<Value, String> {
         let d = self.document(r)?;

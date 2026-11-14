@@ -476,7 +476,7 @@ mod unix {
         // O-I #1008: Expressions' field is the kernel's own, listed with no app running; while no
         // desktop answers on the Expression socket, each Action says so in words.
         let expressions = field("expressions");
-        assert_eq!(expressions["count"], 13, "{value}");
+        assert_eq!(expressions["count"], 18, "{value}");
         for action in expressions["actions"]
             .as_array()
             .expect("expressions' actions")
