@@ -533,6 +533,8 @@ function CredentialsStep({p, reading}: {p: ViewProps; reading: Rec | undefined})
 function GroundForm({p, reading, items}: {p: ViewProps; reading: Rec | undefined; items: Rec[]}) {
   const v = p.v, making = has(v, 'groundFolder') || has(v, 'groundName') || strOf(v, 'groundFolder') !== undefined
   const ground = items[0], kept = items.slice(1)
+  // Your Day's Close, while it is yours to choose before Accept saves it (O-I ticket 1005): the row names the kind Accept saves.
+  const day = kept.find(r => r.name === 'Your Day' && txt(r.close) !== undefined)
   const standing = txt(ground?.change)?.startsWith('Central keeps it here') === true
   // A ground that stands has something to accept while a row would be kept (its days, bounds or key); else the first reason why not.
   const disabled = txt(reading?.state) === 'accepted' ? 'Accepted.' : txt(ground?.why)
@@ -545,6 +547,8 @@ function GroundForm({p, reading, items}: {p: ViewProps; reading: Rec | undefined
       <Action {...st(p, 'chooseGroundFolder')} label="Choose…" does="Opens the system's folder chooser. Setup then reads the folder: nothing is made until you accept." onPress={() => p.set('chooseGroundFolder', true)} />
       <TextField {...st(p, 'groundName')} label="Name" does="The name you give your ground: the folder Central makes in the one chosen." value={strOf(v, 'groundName') ?? ''} onChange={x => p.set('groundName', x)} />
     </>}
+    {day && <Chooser {...st(p, 'dayClose')} label="Close" does="How your Day closes, which Accept saves in your Day's settings. At Day start, as Setup proposes: the Day closes itself at its turn, and face 5's proposal for tomorrow waits in Approvals. Off: each Day stays open until you close it."
+      value={strOf(v, 'dayClose') ?? txt(day.close) ?? 'day_start'} options={[{value: 'day_start', label: 'At Day start'}, {value: 'off', label: 'Off'}]} onChange={x => p.set('dayClose', x)} />}
     <Action {...st(p, 'acceptStep')} hold label="Accept" does="Central makes your ground here, or adopts the one it finds, and keeps your days, its bounds and your key as shown. Until you accept, nothing you have moves or changes." onPress={() => p.set('acceptStep', 'ground')}
       disabled={disabled} />
   </div>

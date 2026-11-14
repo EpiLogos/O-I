@@ -182,7 +182,8 @@ const SHELL_SENDERS = {
   'packages/live-shell/ui/src/central/devices/sourceReturnAccept.ts': ['projectcentral.source.return_accept', 'projectcentral.source.return_reject'],
   'packages/live-shell/ui/src/inhabitants/ql/devices/skyPlace.ts': ['central.world.place'],
   'packages/live-shell/ui/src/inhabitants/sdk/chains.ts': ['agent-profile.chain-order'],
-  'packages/live-shell/ui/src/settings/windowPages.ts': ['machine.adopt-current', 'work.bring'],
+  // Setup's Ground Accept saves your Day (its Day form and Close) on your key, on the press of Accept (O-I ticket 1005).
+  'packages/live-shell/ui/src/settings/windowPages.ts': ['central.day.settings.write', 'machine.adopt-current', 'work.bring'],
 }
 const SENT_WITHOUT_A_PRESS = {'central.day.field.record': NO_PRESS}
 

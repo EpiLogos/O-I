@@ -519,6 +519,9 @@ function scriptedSetup() {
     placement: null, key: false, keeps: true,
     // `form`: whether the ground keeps the Day's form (Control/forms); `formByProject`: whether its O-I project carries it instead.
     form: false, formByProject: false,
+    // `day`: your Day's settings as Central keeps them (central.day.settings.read/write, O-I ticket 1005): their revision (`absent` before the
+    // first save), the Day form saved and Close's runs_at (null: Central's default, Off); `formRevision`: the revision the form stands at.
+    day: {revision: 'absent', day_form: null, close: null, saves: 0}, formRevision: 'central.content-fnv1a64/v1:form-1',
     // `extended`: the projects the person's grant and the ground's bounds reach (central.ground.project.adopt); `byHand`: a ground
     // whose key and bounds the person keeps by hand (their recognition is not Setup's), which Central never extends.
     extended: new Set(), byHand: false, adoptRefusal: null,
@@ -628,6 +631,21 @@ function scriptedSetup() {
       return {adopted: true, added, actions: ['central.day.ensure', 'central.world.place'], authority_revision: 'a-2', source_ref: 'central:source:control:root:Control/user/native-action-authority.json'}
     }
     if (!world.bound) throw new Error(`Central root does not exist as a directory: ${GROUND}`)
+    // Your Day's settings (Central's continuous_work/day_moves.rs, O-I ticket 1005; shapes as the built ctrl answers): the Day form saved at
+    // the revision read, and Close; a save on a stale revision, or of a form that changed since it was read, is refused in Central's words.
+    const dayReading = () => ({schema: 'central.day-settings-reading/v1', scope_ref: 'control:root', path: 'Control/agents/now/day/settings.json', revision: world.day.revision,
+      saved: world.day.revision !== 'absent', settings: {day_form: world.day.day_form, moves: {close: {prompt: '', runs_at: world.day.close ?? {kind: 'off'}}}},
+      standing: {day_form: world.day.day_form ? 'saved' : 'default', moves: {close: {prompt: 'default', runs_at: world.day.close ? 'saved' : 'default'}}}, automatic_agent_or_model_invocation: false})
+    if (action === 'central.day.settings.read') return dayReading()
+    if (action === 'central.day.settings.write') {
+      if (input.expected_revision !== world.day.revision) throw new Error('the Day\'s settings changed; read them again')
+      if (input.day_form && input.day_form.revision !== world.formRevision)
+        throw new Error(`The Day form at ${input.day_form.path} changed since you read it (it stands at ${world.formRevision} now): read it again before you save it`)
+      if ('day_form' in input) world.day.day_form = input.day_form
+      if (input.moves?.close?.runs_at) world.day.close = input.moves.close.runs_at
+      world.day.saves += 1; world.day.revision = `day-settings-${world.day.saves}`
+      return {...dayReading(), written_by: 'human:Bare'}
+    }
     const project = name => { const row = world.work.get(name); if (!row) throw new Error(`Project root does not exist as a directory: ${GROUND}/Work/${name}`); return row }
     if (action === 'work.list') return {items: [...world.work.keys()].map(name => ({name, path: `${GROUND}/Work/${name}`})), root: GROUND}
     if (action === 'projectcentral.inspect') {
@@ -750,14 +768,18 @@ function scriptedSetup() {
   // The kernel's ground_form route (desktop/cradle/kernel/src/ground_form.rs): the application's own Day form, kept through Central.
   const groundForm = async request => {
     calls.push(['form', request.operation, structuredClone(request)])
-    if (world.formByProject) return {schema: 'oi.ground-form/v1', name: 'ql-daily-die.html', carried_by: 'Work/O-I/desktop/cradle/documents', kept: false, state: 'project'}
+    // The form as your Day's settings save it, where one stands (the kernel's ground_form `day_form`, O-I ticket 1005).
+    const dayForm = path => ({path, revision: world.formRevision})
+    if (world.formByProject) return {schema: 'oi.ground-form/v1', name: 'ql-daily-die.html', carried_by: 'Work/O-I/desktop/cradle/documents', kept: false, state: 'project',
+      day_form: dayForm('Work/O-I/desktop/cradle/documents/ql-daily-die.html')}
     const central = {schema: 'central.ground-form-preview/v1', state: !world.bound ? 'no-ground' : world.form ? 'present' : 'absent', source_path: 'Control/forms/ql-daily-die.html', digest: world.form ? null : 'form-digest'}
-    if (request.operation === 'preview') return {schema: 'oi.ground-form/v1', name: 'ql-daily-die.html', central}
+    const standing = () => (world.form ? dayForm('Control/forms/ql-daily-die.html') : null)
+    if (request.operation === 'preview') return {schema: 'oi.ground-form/v1', name: 'ql-daily-die.html', central, day_form: standing()}
     if (!world.bound) throw new Error('there is no ground here yet: make the ground first')
-    if (world.form) return {schema: 'oi.ground-form/v1', name: 'ql-daily-die.html', kept: false, state: 'present'}
+    if (world.form) return {schema: 'oi.ground-form/v1', name: 'ql-daily-die.html', kept: false, state: 'present', day_form: standing()}
     if (request.expected_digest !== 'form-digest') throw new Error('the form Central would keep changed since its preview (or no preview was named): preview it again. Nothing was written.')
     world.form = true; world.formAcceptance = request.acceptance_ref
-    return {schema: 'oi.ground-form/v1', name: 'ql-daily-die.html', kept: true, state: 'present', source_path: 'Control/forms/ql-daily-die.html'}
+    return {schema: 'oi.ground-form/v1', name: 'ql-daily-die.html', kept: true, state: 'present', source_path: 'Control/forms/ql-daily-die.html', day_form: standing()}
   }
   const harnessDisclosure = async () => { calls.push(['disclosure']); if (!world.disclosure) throw new Error('aikit harness disclose did not answer'); return world.disclosure }
   // The census as the World Model answers it (`model_subscribe` agents; kernel census.rs census_of's row shape, O-I #1003): each tool
@@ -1795,10 +1817,11 @@ test('SCRIPTED — run over an older setup, Setup\'s held Ground Accept brings t
   await again.read()
   assert.match(await again.accept('ground', held({})), /Your grant is not in agreement yet: the founded source's relation moved Accept again to bring it\./)
   assert.equal(stepOf(win.setupValues(again.snapshot(), held({})), 'ground').state, 'found')
-  // A grant kept by hand (the owner's own): read hand-authored, never pressed, and the step stands accepted.
+  // A grant kept by hand (the owner's own): read hand-authored, never pressed, and the step stands accepted (their Day kept as they saved it).
   const owner = scriptedSetup()
   Object.assign(owner.world, {bound: '/w/Bare/Central', outcome: 'recognized', civil: {timezone: 'Europe/London', day_boundary_minutes: 0}, placement: {writable: []}, key: true, form: true,
-    byHand: true, lacks: ['central.world.place'], grants: standingGrant()})
+    byHand: true, lacks: ['central.world.place'], grants: standingGrant(),
+    day: {revision: 'r1', day_form: {path: 'Control/forms/ql-daily-die.html', revision: 'central.content-fnv1a64/v1:form-1'}, close: {kind: 'daily', time: '22:00'}, saves: 1}})
   const theirs = new settingsPages.SetupWalk(owner.source)
   await theirs.read()
   const ground = stepOf(win.setupValues(theirs.snapshot(), held({})), 'ground')
@@ -1830,6 +1853,96 @@ test('CODE-DERIVED — the Ground step keeps the Day\'s form in a ground no O-I 
   assert.match(row(project).change, /Work\/O-I\/desktop\/cradle\/documents/)
   assert.equal(stepOf(project, 'ground').state, 'accepted', 'the owner\'s ground changes nothing')
   assert.match(row(of({state: 'refused', error: 'no route'})).why, /no route/)
+})
+
+// ── your Day (O-I ticket 1005: the Day opens by itself on the form you saved, and closes itself at its turn) ──────────────────────────────
+
+test('CODE-DERIVED — the Ground step proposes your Day: made from the Day form as it stands, closing itself at Day start, Close yours to choose; accepted once Central keeps both', () => {
+  const bound = {bound_ground: '/w/Bare/Central', suggested_ground: '/w/Bare/Central', selected_ground: '/w/Bare/Central', ground: {outcome: 'recognized', canonical_path: '/w/Bare/Central', access: {readable: true, searchable: true}}}
+  const FORM = {path: 'Control/forms/ql-daily-die.html', revision: 'central.content-fnv1a64/v1:form-1'}
+  const form = {state: 'read', reading: {central: {state: 'present'}, day_form: FORM}}
+  const day = (saved = {}) => ({state: 'read', reading: {path: 'Control/agents/now/day/settings.json', revision: saved.revision ?? 'absent', form: saved.form ?? null,
+    close: saved.close ?? {kind: 'off'}, closeSaved: !!saved.close}})
+  const of = (d, values = {}) => win.setupValues({adoption: {discovery: bound}, civilTime: civilRead('recognised'), form, day: d, folders: {state: 'read', folders: []}, plan: null}, held(values))
+  const row = values => stepOf(values, 'ground').items.find(item => item.name === 'Your Day')
+  // Before Accept: the form as it stands and Close at Day start, as Setup proposes it; yours to change to Off.
+  const proposed = of(day())
+  assert.deepEqual(row(proposed), {name: 'Your Day', where: 'Control/agents/now/day/settings.json', adopts: true, close: 'day_start',
+    change: 'Today\'s Day is made from Control/forms/ql-daily-die.html as it stands now · it closes itself at its turn, and face 5\'s proposal for tomorrow waits in Approvals · Central keeps both in your Day\'s settings'})
+  assert.equal(proposed.dayClose, 'day_start', 'Setup proposes Close at Day start')
+  assert.equal(stepOf(proposed, 'ground').state, 'found')
+  const off = of(day(), {dayClose: 'off'})
+  assert.equal(row(off).close, 'off')
+  assert.match(row(off).change, /· Close is Off: each Day stays open until you close it, and says why ·/)
+  assert.equal(off.dayClose, undefined, 'your choice stands as you held it')
+  // Kept: the form saved as it stands, and Close saved, whichever you chose.
+  const kept = of(day({revision: 'r1', form: FORM, close: {kind: 'day_start'}}))
+  assert.deepEqual(row(kept), {name: 'Your Day', where: 'Control/agents/now/day/settings.json',
+    change: 'Today\'s Day is made from Control/forms/ql-daily-die.html · it closes itself at its turn, and face 5\'s proposal for tomorrow waits in Approvals'})
+  assert.equal(stepOf(kept, 'ground').state, 'accepted')
+  assert.equal(kept.dayClose, undefined, 'no Close to choose once it is saved')
+  const keptOff = of(day({revision: 'r1', form: FORM, close: {kind: 'off'}}))
+  assert.match(row(keptOff).change, /Close is Off: each Day stays open until you close it, and says why$/)
+  assert.equal(stepOf(keptOff, 'ground').state, 'accepted', 'Off is yours to choose')
+  // A form that changed since it was saved is saved again as it stands; a Close you saved is never changed here.
+  const stale = of(day({revision: 'r1', form: {...FORM, revision: 'central.content-fnv1a64/v1:form-0'}, close: {kind: 'daily', time: '22:00'}}))
+  assert.equal(row(stale).adopts, true)
+  assert.equal(row(stale).close, undefined)
+  assert.match(row(stale).change, /as it stands now · it closes at 22:00 each day ·/)
+  assert.equal(win.setupDayPatch(form, day({revision: 'r1', form: {...FORM, revision: 'x'}, close: {kind: 'daily', time: '22:00'}}), undefined).moves, undefined)
+  assert.match(row(of({state: 'refused', error: 'Unknown Action: central.day.settings.read'})).why, /^Central did not say how your Day is kept: Unknown Action/)
+  assert.equal(row(of(undefined)), undefined, 'no row before the ground stands')
+})
+
+test('SCRIPTED — a held Ground Accept saves your Day on your key: the Day form as it stands at the revision read, and Close at Day start or Off as you choose', async () => {
+  const saves = calls => calls.filter(call => call[0] === 'central' && call[1] === 'central.day.settings.write').map(call => call[2])
+  const FORM = {path: 'Control/forms/ql-daily-die.html', revision: 'central.content-fnv1a64/v1:form-1'}
+  {
+    const {source, calls, world} = scriptedSetup()
+    const walk = new settingsPages.SetupWalk(source)
+    await walk.read()
+    assert.equal(stepOf(win.setupValues(walk.snapshot(), held({})), 'ground').items.find(item => item.name === 'Your Day'), undefined, 'no Day before the ground stands')
+    const made = await walk.accept('ground', held({}))
+    assert.match(made, /Central keeps your Day: today's page is made from Control\/forms\/ql-daily-die\.html, and it closes itself at its turn\./)
+    assert.deepEqual(saves(calls), [{project: null, expected_revision: 'absent', day_form: FORM, moves: {close: {runs_at: {kind: 'day_start'}}}}])
+    // Saved on the person's key: after the key's adoption, never before it.
+    const order = calls.map(call => (call[0] === 'key' && call[1] === 'adopt' ? 'key' : call[1] === 'central.day.settings.write' ? 'day' : null)).filter(Boolean)
+    assert.deepEqual(order, ['key', 'day'])
+    assert.deepEqual(world.day.day_form, FORM)
+    assert.deepEqual(world.day.close, {kind: 'day_start'})
+    const row = stepOf(win.setupValues(walk.snapshot(), held({})), 'ground').items.find(item => item.name === 'Your Day')
+    assert.equal(row.adopts, undefined, 'read back kept')
+    // Nothing is saved twice.
+    await walk.accept('ground', held({})).catch(() => null)
+    assert.equal(saves(calls).length, 1)
+  }
+  {
+    // Off, as you chose it: each Day then stays open until you close it, and says why.
+    const {source, calls, world} = scriptedSetup()
+    const walk = new settingsPages.SetupWalk(source)
+    await walk.read()
+    const made = await walk.accept('ground', held({dayClose: 'off'}))
+    assert.match(made, /Central keeps your Day: today's page is made from Control\/forms\/ql-daily-die\.html, and Close is Off: each Day stays open until you close it\./)
+    assert.deepEqual(saves(calls)[0].moves, {close: {runs_at: {kind: 'off'}}})
+    assert.deepEqual(world.day.close, {kind: 'off'})
+  }
+  {
+    // A ground whose Close you saved keeps it: only the Day form is saved, and a form that changed since the step read it is refused in
+    // Central's words, the Accept saying so.
+    const {source, calls, world} = scriptedSetup()
+    Object.assign(world, {bound: '/w/Bare/Central', outcome: 'recognized', civil: {timezone: 'Europe/London', day_boundary_minutes: 0}, placement: {writable: []}, key: true, form: true,
+      day: {revision: 'day-settings-7', day_form: null, close: {kind: 'daily', time: '22:00'}, saves: 7}})
+    const walk = new settingsPages.SetupWalk(source)
+    await walk.read()
+    world.formRevision = 'central.content-fnv1a64/v1:form-2'
+    const refused = await walk.accept('ground', held({}))
+    assert.match(refused, /Your Day is not kept yet: The Day form at Control\/forms\/ql-daily-die\.html changed since you read it/)
+    assert.deepEqual(saves(calls), [{project: null, expected_revision: 'day-settings-7', day_form: FORM}])
+    await walk.read()
+    const kept = await walk.accept('ground', held({}))
+    assert.match(kept, /Central keeps your Day: today's page is made from Control\/forms\/ql-daily-die\.html, and it closes as you set it \(daily\)\./)
+    assert.deepEqual(world.day.close, {kind: 'daily', time: '22:00'}, 'your Close stands')
+  }
 })
 
 // ── the world's Music folder (DLW build ruling 2026-11-08 LV01: "Setup's part is only where"; 2026-11-09, round 47 item 1) ──────────────

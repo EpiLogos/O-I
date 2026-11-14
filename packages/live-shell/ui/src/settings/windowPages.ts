@@ -25,7 +25,8 @@ import {appearanceValues, automationValues, credentialValues, NEW_SCHEDULE, ROUT
   NO_PROFILES, NO_SETUP_AIKIT, NO_SETUP_SOURCE, NO_VISUALS, groundBound, productValues, profileValues, SECRET_REFERENCE, setupFolder, setupAgentTools, setupRootAgent, setupHarnessProviders,
   setupKeyFindings, setupNamespace, setupSkillRoots, setupValues, systemValues, type CredentialRow, type SetupCredentials, type SetupHarnesses, type SetupMachine, type SetupPreview,
   harnessLoginClients, harnessLoginsOf, loginCheckOf, loginReadBack, commandWords, type HarnessLoginClient, type HarnessLoginReading, launchSaid, launchSeats, launchValues,
-  setupExtensionLine, setupPlacementLine, possessive, type SetupExtension, type SetupLeft, type SetupPlacement, type SetupSnapshot, type SetupWorkFolder, type SetupFounding, type SetupKey, type SetupAgreement, type SetupForm, type SetupMusic, type SetupAuthority, type CivilTimePreview, type SetupBirth, type SetupCivilTime, type SetupDisclosure, groundNameRefusal, groundParts, groundPath} from './windowValues'
+  setupExtensionLine, setupPlacementLine, possessive, type SetupExtension, type SetupLeft, type SetupPlacement, type SetupSnapshot, type SetupWorkFolder, type SetupFounding, type SetupKey, type SetupAgreement, type SetupForm, type SetupMusic, type SetupAuthority, type CivilTimePreview, type SetupBirth, type SetupCivilTime, type SetupDisclosure, groundNameRefusal, groundParts, groundPath,
+  dayFormOf, setupDayPatch, type SetupDay} from './windowValues'
 import type {IdentityProfile} from '../../../../../desktop/cradle/src/nara/identity/types'
 import {chooseFolder, nativeFolderChooser, NO_NATIVE_FOLDER_CHOOSER} from './folderChooser'
 import {AdoptionController} from '../../../../../desktop/cradle/src/configuration/adoptionController'
@@ -936,6 +937,7 @@ export class SetupWalk {
   private agreement: SetupAgreement | undefined = undefined
   private authority: SetupAuthority | undefined = undefined
   private form: SetupForm | undefined = undefined
+  private day: SetupDay | undefined = undefined
   private music: SetupMusic | undefined = undefined
   private brought: string | null = null
   /** Folders you chose to bring in (the browser's Work place: Add folder…), read beside the ones work.candidates finds. */
@@ -955,7 +957,7 @@ export class SetupWalk {
     return {adoption: this.controller.getSnapshot(), folders: this.folders, plan: this.plan, machine: this.machine, brought: this.brought, ...(this.agents ? {agents: this.agents} : {}), harnesses: this.harnesses, credentials: this.credentials,
       ...(this.civilTime ? {civilTime: this.civilTime} : {}), ...(this.groundChoice ? {groundAt: this.groundChoice} : {}), ...(this.birth ? {birth: this.birth} : {}),
       ...(this.disclosure ? {disclosure: this.disclosure} : {}), ...(this.placement ? {placement: this.placement} : {}), ...(this.key ? {key: this.key} : {}), ...(this.agreement ? {agreement: this.agreement} : {}), ...(this.authority ? {authority: this.authority} : {}), ...(this.form ? {form: this.form} : {}),
-      ...(this.music ? {music: this.music} : {})}
+      ...(this.day ? {day: this.day} : {}), ...(this.music ? {music: this.music} : {})}
   }
   private publish(): void { this.current = this.compose(); for (const listener of [...this.listeners]) listener() }
 
@@ -970,6 +972,7 @@ export class SetupWalk {
     await this.readAgreement()
     await this.readAuthority()
     await this.readForm()
+    await this.readDay()
     await this.readHarnesses(options.fresh)
     await this.readCredentials()
     await this.readMachine()
@@ -1047,6 +1050,21 @@ export class SetupWalk {
       if (!data || typeof data !== 'object' || (data as {schema?: unknown}).schema !== 'oi.ground-form/v1') throw new Error('The host answered for the Day\'s form in a form Setup does not read (oi.ground-form/v1 expected).')
       this.form = {state: 'read', reading: data as SetupForm extends {reading: infer R} ? R : never}
     } catch (cause) { this.form = {state: 'refused', error: words(cause)} }
+    this.publish()
+  }
+  /** Your Day's settings (Central's `central.day.settings.read`, O-I ticket 1005): where they are kept, their revision, the Day form saved and
+   * Close, read once there is a ground, which keeps them. A refusal stands in Central's words. */
+  private async readDay(): Promise<void> {
+    if (!groundBound(this.controller.getSnapshot().discovery)) { this.day = undefined; this.publish(); return }
+    try {
+      const data = await this.source.central(DAY_SETTINGS_READ, {project: null}) as {schema?: unknown; path?: unknown; revision?: unknown
+        settings?: {day_form?: unknown; moves?: {close?: {runs_at?: {kind?: unknown; time?: unknown}}}}; standing?: {moves?: {close?: {runs_at?: unknown}}}} | null
+      const runsAt = data?.settings?.moves?.close?.runs_at
+      if (data?.schema !== 'central.day-settings-reading/v1' || typeof data.revision !== 'string' || typeof data.path !== 'string' || typeof runsAt?.kind !== 'string')
+        throw new Error(`Central answered ${DAY_SETTINGS_READ} in a form Setup does not read (central.day-settings-reading/v1 expected).`)
+      this.day = {state: 'read', reading: {path: data.path, revision: data.revision, form: dayFormOf(data.settings?.day_form),
+        close: {kind: runsAt.kind, ...(typeof runsAt.time === 'string' ? {time: runsAt.time} : {})}, closeSaved: data.standing?.moves?.close?.runs_at === 'saved'}}
+    } catch (cause) { this.day = {state: 'refused', error: words(cause)} }
     this.publish()
   }
   /** The person's identity kept in the ground (SetupSource.identity: the kernel's nara_identity list, then open of the one it lists):
@@ -1281,12 +1299,14 @@ export class SetupWalk {
     // The days, bounds and key the step showed are the ones Accept keeps: the previews the person saw, on their digests (Central refuses
     // one that moved).
     const shown = this.civilTime, shownPlacement = this.placement, shownKey = this.key, shownForm = this.form, shownAgreement = this.agreement, shownMusic = this.music
+    // How your Day closes, as the step shows it: at Day start as Setup proposes it, or Off as you chose (`dayClose`).
+    const close = text(held('dayClose')) || undefined
     if (groundBound(before.discovery)) {
       // A ground Central keeps already: only what an older ground lacks is made — its days, bounds, form or key, and its grant's agreement.
       const where = before.discovery.bound_ground ?? before.discovery.selected_ground ?? before.discovery.suggested_ground
       const acceptance = `dlw-setup-ground-accept:${Date.now()}`
       const days = await this.keepDays(shown, acceptance)
-      const kept = [days, ...(await this.keepFounding(shownPlacement, shownKey, acceptance, shownForm, shownAgreement, shownMusic))].filter((line): line is string => !!line)
+      const kept = [days, ...(await this.keepFounding(shownPlacement, shownKey, acceptance, shownForm, shownAgreement, shownMusic, close))].filter((line): line is string => !!line)
       if (!kept.length) throw new Error('Accepted: Central keeps your ground here already. Nothing is made twice.')
       return `Central keeps your ground at ${where}, where it was. Nothing in it moved. ${kept.join(' ')}`
     }
@@ -1322,7 +1342,7 @@ export class SetupWalk {
       if (now?.state === 'read' && now.preview.state === 'absent') days = 'Your days are not kept yet: Central reads them now that your ground stands. Accept again to keep them as the step shows.'
     }
     // Its bounds and the person's key, on the same acceptance: the ground stands whatever they answer, and each says what it kept.
-    const founded = await this.keepFounding(shownPlacement, shownKey, `oi-setup-adoption:${token}`, shownForm, shownAgreement)
+    const founded = await this.keepFounding(shownPlacement, shownKey, `oi-setup-adoption:${token}`, shownForm, shownAgreement, undefined, close)
     await this.readHarnesses()
     await this.readCredentials()
     await this.readMachine()
@@ -1341,7 +1361,7 @@ export class SetupWalk {
    * today (`central.ground.agreement.adopt` on the preview's digest, read back in agreement). One that cannot be kept says why; none
    * stops another. */
   private async keepFounding(placement: SetupFounding | undefined, key: SetupKey | undefined, acceptance: string, form?: SetupForm, agreement?: SetupAgreement,
-    music?: SetupMusic): Promise<string[]> {
+    music?: SetupMusic, close?: string): Promise<string[]> {
     const said: string[] = []
     if (placement?.state === 'read' && ['absent', 'no-ground'].includes(placement.preview.state) && placement.preview.digest) {
       try {
@@ -1390,6 +1410,9 @@ export class SetupWalk {
       // A grant founded just now, or a reading the step did not have: read what Central says of it now, so the row stands as it is.
       await this.readAgreement()
     }
+    // Your Day, on your key (O-I ticket 1005): the Day form as the step showed it standing, else as the keep above made it, and Close.
+    const day = await this.keepDay(dayFormOf(form?.state === 'read' ? form.reading.day_form : null) ? form : this.form, close)
+    if (day) said.push(day)
     // The world's Music folder (round 47 item 1), as the step showed it: Central's file map registers it on this Accept's acceptance of
     // the digest of what the step showed, which the kernel checks against what its preview gives now (47c item 10, round 54b item 9), read
     // back kept.
@@ -1410,6 +1433,26 @@ export class SetupWalk {
     const granted = await this.keepWorldGrant([])
     if (granted) said.push(granted)
     return said
+  }
+  /** Saves your Day as the Ground step shows it (Central's `central.day.settings.write`, O-I ticket 1005; manual §18.2 "The Day opens by itself
+   * and the close runs by itself"): the Day form at the revision `form` read, while none is saved or the one saved is not it, and Close at
+   * Day start as Setup proposes it or Off as you chose, while you have not saved Close (`setupDayPatch`), on the revision of your Day's
+   * settings read now, and read back by `central.day.settings.read`. Central's civil clock then makes today's page from that form and closes
+   * the Day at its turn. Null where nothing waits to be saved; otherwise what was kept, or why not. */
+  private async keepDay(form: SetupForm | undefined, close: string | undefined): Promise<string | null> {
+    await this.readDay()
+    const day = this.day, patch = setupDayPatch(form, day, close)
+    if (!patch || day?.state !== 'read') return null
+    try {
+      await this.source.central(DAY_SETTINGS_WRITE, {project: null, expected_revision: day.reading.revision, ...patch})
+      await this.readDay()
+      const now = this.day
+      const saved = (patch.day_form as {path: string; revision: string} | undefined) ?? (now?.state === 'read' ? now.reading.form : null)
+      if (now?.state !== 'read' || setupDayPatch(form, now, close) || (patch.day_form && (now.reading.form?.path !== saved?.path || now.reading.form?.revision !== saved?.revision)))
+        throw new Error(`Central answered ${DAY_SETTINGS_WRITE}, but your Day does not read back as saved.`)
+      const shut = now.reading.close.kind === 'off' ? 'Close is Off: each Day stays open until you close it' : now.reading.close.kind === 'day_start' ? 'it closes itself at its turn' : `it closes as you set it (${now.reading.close.kind})`
+      return `Central keeps your Day: today's page is made from ${saved?.path ?? 'no Day form'}, and ${shut}.`
+    } catch (cause) { return `Your Day is not kept yet: ${words(cause)} Accept again to keep it.` }
   }
   /** Grants the World's standing authority as Setup stands (Actuation's `actuation.authority.grant-world`, O-I #1003): held by you, rooted
    * at the World's root, naming every world your live grant names already and the projects `adds` makes yours, read back by
@@ -1679,6 +1722,9 @@ const SETUP_GROUND_FIRST = 'Make your ground first: AIKit\'s routes run from you
 const CIVIL_PREVIEW = 'central.time.policy.preview', CIVIL_ADOPT = 'central.time.policy.adopt'
 /** Central's adoption of the ground's bounds (ctrl ground_founding.rs, O-I #740). */
 const PLACEMENT_PREVIEW = 'central.ground.placement.preview', PLACEMENT_ADOPT = 'central.ground.placement.adopt'
+/** Your Day's settings (Central's continuous_work/day_moves.rs, O-I ticket 1005): read, and saved on the person's key (a person act, the
+ * kernel's PERSON_ACTS): the Day form today's page is made from and Close. */
+const DAY_SETTINGS_READ = 'central.day.settings.read', DAY_SETTINGS_WRITE = 'central.day.settings.write'
 /** Central's agreement of the person's grant with what Setup grants today (ctrl ground_agreement.rs, O-I #740, lane AU). */
 const AGREEMENT_PREVIEW = 'central.ground.agreement.preview', AGREEMENT_ADOPT = 'central.ground.agreement.adopt'
 /** Central's extension of the person's grant and the ground's bounds to a project (ctrl ground_projects.rs, O-I #740, lane D). */
