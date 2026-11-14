@@ -1,8 +1,9 @@
 // The World Model as device and view code reads it (kernel world_model.rs; docs/architecture/world-shell.md §9.2 layer 2; O-I #1001).
 // The kernel holds the owners' present state as slices — worlds and pages, today's Day, the agents that start, sessions, models, Factory,
-// workcells and seats, the sky now — loaded at launch and kept by the watch and by the kernel's own writes. A device asks for a slice by
-// the one op, `model_subscribe`, and asks again when the kernel's `model_changed` notice names a newer version of it. Nothing here reads
-// an owner, and nothing here keeps a second copy of an owner's answer: what is held is the kernel's slice, at its version.
+// workcells and seats, the sky now, and what Central's chain reads (O-I ticket 1005): the packets, your world's scope and its roster —
+// loaded at launch and kept by the watch and by the kernel's own writes. A device asks for a slice by the one op, `model_subscribe`, and
+// asks again when the kernel's `model_changed` notice names a newer version of it. Nothing here reads an owner, and nothing here keeps a
+// second copy of an owner's answer: what is held is the kernel's slice, at its version.
 //
 // Pure TypeScript and one React hook.
 
@@ -12,7 +13,7 @@ import type {KernelOutcome, KernelReceipt, KernelTransportStatus, ModelSliceAnsw
 
 export const MODEL_CHANGED_EVENT = 'model_changed'
 
-const SLICES: ReadonlySet<string> = new Set(['worlds', 'day', 'agents', 'sessions', 'models', 'factory', 'workcells', 'sky'])
+const SLICES: ReadonlySet<string> = new Set(['worlds', 'day', 'agents', 'sessions', 'models', 'factory', 'workcells', 'sky', 'packet', 'scope', 'roster'])
 
 /** A slice as the window holds it: being asked for, the kernel's answer (whatever its own state), or why the kernel gave none. */
 export type ModelSliceReading =

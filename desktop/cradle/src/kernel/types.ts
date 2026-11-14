@@ -106,7 +106,7 @@ export interface SharedFieldChangedReceipt extends KernelReceipt {
 }
 
 /** The World Model's slices (kernel world_model.rs; docs/architecture/world-shell.md §9.2 layer 2; O-I #1001). */
-export type ModelSliceName = "worlds" | "day" | "agents" | "sessions" | "models" | "factory" | "workcells" | "sky";
+export type ModelSliceName = "worlds" | "day" | "agents" | "sessions" | "models" | "factory" | "workcells" | "sky" | "packet" | "scope" | "roster";
 
 /** One slice as the kernel holds it (`oi.world-model-slice/v1`): its owner and scopes, the version that moves exactly when its state
  * or its owner's refusal changes, and its state: `read` (a value), `refused` (the owner's words, no value yet), `stale` (the owner's
