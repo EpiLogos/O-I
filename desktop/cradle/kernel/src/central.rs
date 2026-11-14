@@ -275,6 +275,9 @@ const SESSION_ENDS: [&str; 2] = ["factory.session.end", "aikit.session.end"];
 const RECEIPT_ANSWER_BYTES: usize = 12 * 1024;
 /// How many receipts wait at most for the person's credential (`Receipt::lay`); past it the oldest is dropped, and said.
 const RECEIPTS_HELD: usize = 256;
+/// The Action whose drag sends its samples while a take records (`gesture: "sample"`, O-I #1008): each lands in the take alone, so it
+/// lays no receipt of its own; the drag's release, and the take's keep, lay the person's.
+const SAMPLED: &str = "expressions.studio.set";
 
 /// What one act lays into the Day of the civil date it happened on (manual §18.2 "a write arrives with its receipt"; O-I #1005
 /// for the gate's act 5, the whole of it O-I #1007): an Action that writes, a passage sent to an agent, a Factory act. Taken from
@@ -312,6 +315,10 @@ impl Receipt {
                     return None;
                 }
                 let input = invocation.input.clone().unwrap_or(Value::Null);
+                // A drag's sample is no act of the person's: the gesture lays one receipt, on its release.
+                if action == SAMPLED && input["gesture"] == "sample" {
+                    return None;
+                }
                 Some(Self {
                     act: action.to_owned(),
                     owner: owner_of(action).to_owned(),
@@ -659,6 +666,40 @@ mod tests {
             ["person-token"],
             "the press's receipt on the person's credential, and none asked for the wire's"
         );
+    }
+
+    /// A recorded drag lays one receipt (O-I #1008): its samples while a take records land in the take alone, and its release is the
+    /// person's act.
+    #[test]
+    fn a_drag_s_samples_lay_no_receipt_and_its_release_lays_one() {
+        let studio = |input: Value| crate::KernelOp::InvokeAction {
+            project: None,
+            invocation: crate::action::ActionInvocation {
+                action: SAMPLED.into(),
+                target_ref: SAMPLED.into(),
+                input: Some(input),
+            },
+            channel: Channel::PersonPress,
+        };
+        let write = json!({"expression_ref": "expression:a", "scene_ref": "expression:a:scene:main", "bind": "field.params.timeScale", "value": 1.5});
+        let mut sample = write.clone();
+        sample["gesture"] = json!("sample");
+        assert!(
+            Receipt::of(&studio(sample.clone())).is_none(),
+            "a sample lays none"
+        );
+        assert!(
+            Receipt::of(&studio(write)).is_some(),
+            "the release lays the person's"
+        );
+        // Another Action carrying the same key is not a sample: its write lays its receipt.
+        let mut other = saved(Channel::PersonPress);
+        if let crate::KernelOp::InvokeAction { invocation, .. } = &mut other {
+            invocation.input = Some(
+                json!({"location": {"path": "Control/user/flows/page.html"}, "gesture": "sample"}),
+            );
+        }
+        assert!(Receipt::of(&other).is_some());
     }
 
     /// A passage the person sends to an agent comes by the shell window's channel as the host's press command takes it (`person_press`,
