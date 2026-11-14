@@ -1161,6 +1161,9 @@ struct Attempt {
     end: Option<u64>,
     receiving: Option<String>,
     summary: Option<String>,
+    /// The session it ran on, as Factory's disposition keeps it (`body.sessionSpaceRef`, `body.agentSessionRef`), and the harness.
+    session: Option<(String, String)>,
+    harness: Option<String>,
 }
 
 fn attempt_of(record: &Value) -> Option<Attempt> {
@@ -1201,6 +1204,10 @@ fn attempt_of(record: &Value) -> Option<Attempt> {
         summary: returned
             .and_then(|r| text(&r["summary"]))
             .map(str::to_owned),
+        session: text(&record["disposition"]["body"]["sessionSpaceRef"])
+            .zip(text(&record["disposition"]["body"]["agentSessionRef"]))
+            .map(|(space, session)| (space.to_owned(), session.to_owned())),
+        harness: text(&record["disposition"]["body"]["harnessRef"]).map(str::to_owned),
         state,
         reference,
         task,
@@ -1260,19 +1267,17 @@ const SOLO_UNHANDED: &str = "Solo: no owner operation carries it yet — missing
 
 /// What Factory's acts no single Action carries wait for, by the op the menu names.
 fn factory_waiting() -> BTreeMap<String, String> {
-    const SESSION_ACT: &str = "an act on the session's own settings or task at AIKit (the encounter's ops), which no Action of the registry carries yet (O-I #1006)";
-    const RUN: &str = "a task run to its end from the window: Factory's attempt-launch on the unit Factory names for the task (factory.attempt.launch), which the Set does not compose yet (O-I #1006)";
-    const STOP: &str = "a session's stop on its own encounter owner, or the bound harness's (aikit.gateway.agent on the harness binding, which is no slice of the World Model yet) (O-I #1006)";
+    const SESSION_ACT: &str = "an act on the session's own settings or task at AIKit (the encounter's ops), which no Action of the registry carries yet";
     words(&[
-        ("clip.launch", RUN),
-        ("row.launch", RUN),
-        ("track.stop", STOP),
-        ("set.stop-all", STOP),
+        ("clip.launch", "a task run from its clip: factory.task.run runs a task Factory ran on a session seated in a project of this World; a task of a Run that names no such session has no session to run on"),
+        ("row.launch", "a batch row launched: the n-th task of every track at once, which no Action carries"),
+        ("track.stop", "a running task's stop: factory.task.stop, on the track whose task is running (it pauses the turn; pressed again it cancels the attempt); this track runs none"),
+        ("set.stop-all", "every running task stopped at once: each track's Stop carries factory.task.stop for its own task, and no Action stops them all"),
+        ("track.end", "a session ended: factory.session.end, on the track of a session seated in a project of this World; this track is none"),
         ("clip.delete", SESSION_ACT),
         ("clip.paste", SESSION_ACT),
         ("clip.insert", SESSION_ACT),
         ("clip.make", "the session's task of a constellation dropped on it: AIKit's task made on the session (encounter-task-configure), which no Action of the registry carries yet (O-I #1006)"),
-        ("track.seat", "an agent seated on a new track (a new agent on the bound harness, aikit.gateway.agent, whose binding is no slice of the World Model yet) or a chat reopened on its session, which the Set does not compose yet (O-I #1006)"),
         ("track.rename", SESSION_ACT),
         ("track.remove", SESSION_ACT),
         ("track.activator", SESSION_ACT),
@@ -1301,6 +1306,29 @@ struct Task {
     task: String,
     attempts: Vec<Attempt>,
     track: String,
+    /// The Factory state that keeps it.
+    state: String,
+}
+
+/// The World and the project a Factory state stands in (`<World>/Work/<project>/.factory/<state>`, session.rs `place`).
+fn world_project(state: &str) -> Option<(String, String)> {
+    let root = std::path::Path::new(state).parent()?.parent()?;
+    let work = root.parent()?;
+    (work.file_name()? == "Work").then_some(())?;
+    Some((
+        work.parent()?.to_string_lossy().into_owned(),
+        root.file_name()?.to_string_lossy().into_owned(),
+    ))
+}
+
+/// A session Factory ran a task on in a project of this World, which the sessions slice (the root register's SessionSpaces) does not
+/// list: its track is laid from Factory's own record of the attempt.
+struct Seated {
+    space: String,
+    session: String,
+    harness: Option<String>,
+    world: String,
+    project: String,
 }
 
 fn factory(sessions: &Read, field: &Read, cells: &Read) -> ModeSet {
@@ -1362,6 +1390,7 @@ fn factory(sessions: &Read, field: &Read, cells: &Read) -> ModeSet {
 
     // Factory's tasks and their attempts, from each located source's runs.
     let mut tasks: Vec<Task> = Vec::new();
+    let mut seated: BTreeMap<String, Seated> = BTreeMap::new();
     let mut run_tracks: Vec<Track> = Vec::new();
     match field.value {
         None => run_tracks.push(Track {
@@ -1394,6 +1423,8 @@ fn factory(sessions: &Read, field: &Read, cells: &Read) -> ModeSet {
             }
             for source in &sources {
                 let project = text(&source["project"]).map(str::to_owned);
+                let state_path = text(&source["state_path"]).unwrap_or_default().to_owned();
+                let place = world_project(&state_path);
                 if source["journeys"]["state"] == "refused" {
                     run_tracks.push(Track {
                         id: format!(
@@ -1454,12 +1485,30 @@ fn factory(sessions: &Read, field: &Read, cells: &Read) -> ModeSet {
                         let Some(attempt) = attempt_of(record) else {
                             continue;
                         };
+                        // On the session that executes it, as the Run's executions name it; else on the session Factory's own record
+                        // of the attempt names (a session Factory ran it on, O-I #1006), laid from that record when the root
+                        // register's sessions do not list it.
                         let on = attempt
                             .execution
                             .as_ref()
                             .and_then(|execution| executions.get(execution))
                             .filter(|track| tracks.iter().any(|t| &t.id == *track))
-                            .cloned();
+                            .cloned()
+                            .or_else(|| {
+                                let (space, session) = attempt.session.as_ref()?;
+                                let id = session_track(space, session);
+                                if !tracks.iter().any(|t| t.id == id) {
+                                    let (world, project) = place.clone()?;
+                                    seated.entry(id.clone()).or_insert_with(|| Seated {
+                                        space: space.clone(),
+                                        session: session.clone(),
+                                        harness: attempt.harness.clone(),
+                                        world,
+                                        project,
+                                    });
+                                }
+                                Some(id)
+                            });
                         match tasks
                             .iter_mut()
                             .find(|task| task.run == run_ref && task.task == attempt.task)
@@ -1479,6 +1528,7 @@ fn factory(sessions: &Read, field: &Read, cells: &Read) -> ModeSet {
                                     task: attempt.task.clone(),
                                     attempts: vec![attempt],
                                     track,
+                                    state: state_path.clone(),
                                 });
                             }
                         }
@@ -1526,7 +1576,69 @@ fn factory(sessions: &Read, field: &Read, cells: &Read) -> ModeSet {
             track.kind = format!("{} · {stale}", track.kind);
         }
     }
+    // The sessions Factory ran a task on in a project of this World that the root register does not list: each its own track, laid
+    // from Factory's record, its menu's End session ending it (factory.session.end; manual §19.1).
+    for (id, seated) in &seated {
+        let harness = seated
+            .harness
+            .as_deref()
+            .map(|harness| harness.trim_start_matches("harness/").to_owned());
+        let name = harness.clone().unwrap_or_else(|| {
+            let session = seated.session.rsplit('/').next().unwrap_or(&seated.session);
+            session.chars().take(16).collect()
+        });
+        tracks.push(Track {
+            id: id.clone(),
+            name: name.clone(),
+            kind: format!(
+                "an Agent session seated in {} · {} · laid from Factory's record of its tasks (its SessionSpace {} is no root register's)",
+                seated.project,
+                harness.map_or_else(|| "its harness unnamed".to_owned(), |harness| format!("its harness {harness}")),
+                seated.space
+            ),
+            acts: BTreeMap::from([(
+                "endSession".to_owned(),
+                done(
+                    act(
+                        "factory.session.end",
+                        json!({"world": seated.world, "project": seated.project, "session": seated.session}),
+                        None,
+                        "Factory's factory.session.end: the session ended — a running turn stopped, its record closed, its body released",
+                    ),
+                    format!("{name}'s session has ended: its record is closed."),
+                ),
+            )]),
+            ..Track::default()
+        });
+    }
     tracks.extend(run_tracks);
+    // A track whose task is running carries its Stop (factory.task.stop): the turn paused, and pressed again the attempt cancelled.
+    for task in &tasks {
+        let Some(last) = task
+            .attempts
+            .last()
+            .filter(|attempt| attempt.state == "running")
+        else {
+            continue;
+        };
+        if task.state.is_empty() {
+            continue;
+        }
+        if let Some(track) = tracks.iter_mut().find(|track| track.id == task.track) {
+            track.acts.insert(
+                "stopTrack".into(),
+                done(
+                    act(
+                        "factory.task.stop",
+                        json!({"state": task.state, "run_ref": task.run, "attempt_ref": last.reference}),
+                        None,
+                        "Factory's factory.task.stop: the running task paused (AIKit cancels the turn); pressed again, its attempt cancelled",
+                    ),
+                    format!("{}'s task is stopped: paused, or cancelled when it was paused already.", track.name),
+                ),
+            );
+        }
+    }
     for (index, track) in tracks.iter_mut().enumerate() {
         track.color = Some(FACTORY_PALETTE[index % FACTORY_PALETTE.len()].to_owned());
     }
@@ -1590,11 +1702,32 @@ fn factory(sessions: &Read, field: &Read, cells: &Read) -> ModeSet {
                 unit: attempt.unit_ref.clone(),
             });
         }
+        // A task Factory ran on a session runs again from its clip (factory.task.run on its Run, on that session), unless it runs now.
+        let mut clip_acts = BTreeMap::new();
+        if let Some((last, (_, session))) =
+            last.and_then(|last| Some((last, last.session.as_ref()?)))
+        {
+            if last.state != "running" && !task.state.is_empty() {
+                clip_acts.insert(
+                    "launch".to_owned(),
+                    done(
+                        act(
+                            "factory.task.run",
+                            json!({"state": task.state, "run_ref": task.run, "session": session}),
+                            None,
+                            "Factory's factory.task.run: the task run on its session under your grant, its log streaming, its end an attempt with its diff",
+                        ),
+                        format!("Task {} is running on its session.", task.task),
+                    ),
+                );
+            }
+        }
         clips.push(Clip {
             id,
             track: task.track.clone(),
             row: format!("batch:{n}"),
             subject: Some(task.task.clone()),
+            acts: clip_acts,
             label: unit.unwrap_or_else(|| {
                 format!(
                     "Task {}",
@@ -1629,7 +1762,6 @@ fn factory(sessions: &Read, field: &Read, cells: &Read) -> ModeSet {
                 plural(task.attempts.len(), "attempt", "attempts"),
                 last.map(take_words).unwrap_or_default()
             )),
-            ..Clip::default()
         });
     }
     let row_count = ordinal
@@ -1647,6 +1779,61 @@ fn factory(sessions: &Read, field: &Read, cells: &Read) -> ModeSet {
 
     // The workcells of the machine's register as return tracks (§19.23), holding no clips and taking none of the Set's acts.
     let register = register_workcells(cells);
+    // Seating an agent on a new track (manual §19.1: drag it from the browser onto an empty track): factory.session.start in the
+    // project of this World whose workcell seat is held, the agent the census slug the drop names.
+    let seats: Vec<(String, String)> = field
+        .value
+        .and_then(|value| value["located"]["locations"].as_array())
+        .into_iter()
+        .flatten()
+        .filter_map(|row| {
+            let root = std::path::Path::new(text(&row["root"])?);
+            let work = root.parent()?;
+            (work.file_name()? == "Work").then_some(())?;
+            Some((
+                work.parent()?.to_string_lossy().into_owned(),
+                root.file_name()?.to_string_lossy().into_owned(),
+            ))
+        })
+        .filter(|(_, project)| works_in(&register, project).is_ok())
+        .collect();
+    let mut waiting = factory_waiting();
+    let mut acts = BTreeMap::from([
+        (
+            "arm".to_owned(),
+            act("shell.setWriteArm", Value::Null, Some("on"), ARM_WORDS),
+        ),
+        (
+            "solo".to_owned(),
+            act("shell.setSolo", Value::Null, Some("on"), SOLO_WORDS),
+        ),
+    ]);
+    match seats.as_slice() {
+        [(world, project)] => {
+            acts.insert(
+                "seat".into(),
+                done(
+                    act(
+                        "factory.session.start",
+                        json!({"world": world, "project": project}),
+                        Some("agent"),
+                        &format!("Factory's factory.session.start: the agent seated on a new track in {project}, its session opened in the checkout {project}'s workcell seat holds and its record opened"),
+                    ),
+                    format!("The agent is seated on a new track in {project}: its session is open."),
+                ),
+            );
+        }
+        [] => {
+            waiting.insert("track.seat".into(), "an agent seated on a new track: factory.session.start opens its session in a project's workcell seat, and no project of this World holds one (Workcell's seat join)".into());
+        }
+        several => {
+            let named: Vec<&str> = several
+                .iter()
+                .map(|(_, project)| project.as_str())
+                .collect();
+            waiting.insert("track.seat".into(), format!("an agent seated on a new track: factory.session.start opens its session in one project, and several hold a workcell seat ({}), which a drop does not choose between", named.join(", ")));
+        }
+    }
     let mut mixer = factory_mixer();
     match &register {
         Ok(workcells) => tracks.extend(workcells.iter().map(|(name, _)| Track {
@@ -1702,17 +1889,8 @@ fn factory(sessions: &Read, field: &Read, cells: &Read) -> ModeSet {
         }),
         mixer,
         lanes_absent,
-        acts: BTreeMap::from([
-            (
-                "arm".to_owned(),
-                act("shell.setWriteArm", Value::Null, Some("on"), ARM_WORDS),
-            ),
-            (
-                "solo".to_owned(),
-                act("shell.setSolo", Value::Null, Some("on"), SOLO_WORDS),
-            ),
-        ]),
-        waiting: factory_waiting(),
+        acts,
+        waiting,
         ..ModeSet::default()
     }
 }
@@ -2182,6 +2360,124 @@ mod tests {
                 .as_deref()
                 .is_some_and(|words| words.contains("what you attend to")),
             "where no attention is handed, Solo says what it waits for"
+        );
+    }
+
+    #[test]
+    fn a_session_factory_ran_a_task_on_is_its_track_with_its_end_stop_and_run_and_the_set_seats_an_agent(
+    ) {
+        let state = "/w/Central/Work/atelier/.factory/development-state.json";
+        let body = json!({"sessionSpaceRef": "session-space/atelier-chat-1", "agentSessionRef": "agent-session/atelier-chat-1",
+            "harnessRef": "harness/codex"});
+        let run = |run: &str, task: &str, attempt: Value| {
+            json!({"run_ref": run, "run": {"state": "read", "reading": {"executions": []}},
+            "attempts": {"state": "read", "reading": {"attempts": [attempt.as_object().unwrap().clone().into_iter()
+                .chain([("taskRef".to_owned(), json!(task)), ("disposition".to_owned(), json!({"body": body}))]).collect::<serde_json::Map<_, _>>()]}}})
+        };
+        let returned = run(
+            "run:a",
+            "task:a",
+            json!({"attemptRef": "attempt:a", "workflowUnitRef": "workflow-unit:a",
+            "attemptRecordedAt": "2026-11-14T10:00:00Z", "returnRecordedAt": "2026-11-14T10:01:00Z", "readableReturn": {"summary": "Done"}}),
+        );
+        let running = run(
+            "run:b",
+            "task:b",
+            json!({"attemptRef": "attempt:b", "workflowUnitRef": "workflow-unit:b",
+            "attemptRecordedAt": "2026-11-14T10:02:00Z", "executionRef": "execution:b"}),
+        );
+        let located = json!([{"project": "atelier", "root": "/w/Central/Work/atelier", "state": "located"},
+            {"project": null, "root": "/w/Central", "state": "absent"}]);
+        let held = json!([{"name": "env-1", "seats": [{"product": "atelier", "state": "held", "live_branch": "atelier-work"}]}]);
+        let set = build(
+            Mode::Factory,
+            &[
+                agency(json!([])),
+                field(
+                    json!([{"project": "atelier", "state_path": state, "project_ref": "project:atelier",
+                    "journeys": {"state": "read"}, "runs": [returned, running]}]),
+                    located.clone(),
+                ),
+                seats(held),
+            ],
+        );
+        let track = "session-space/atelier-chat-1:agent-session/atelier-chat-1";
+        let seated = set
+            .tracks
+            .iter()
+            .find(|t| t.id == track)
+            .expect("the session is a track, laid from Factory's record");
+        assert_eq!(seated.name, "codex");
+        let end = &seated.acts["endSession"];
+        assert_eq!(
+            (end.action.as_str(), &end.input),
+            (
+                "factory.session.end",
+                &json!({"world": "/w/Central", "project": "atelier", "session": "agent-session/atelier-chat-1"})
+            )
+        );
+        let stop = &seated.acts["stopTrack"];
+        assert_eq!(
+            (stop.action.as_str(), &stop.input),
+            (
+                "factory.task.stop",
+                &json!({"state": state, "run_ref": "run:b", "attempt_ref": "attempt:b"})
+            ),
+            "its running task's Stop"
+        );
+        let on: Vec<&Clip> = set
+            .clips
+            .iter()
+            .filter(|clip| clip.track == track)
+            .collect();
+        assert_eq!(on.len(), 2, "both tasks lie on the session that ran them");
+        let again = on
+            .iter()
+            .find(|clip| clip.subject.as_deref() == Some("task:a"))
+            .unwrap();
+        assert_eq!(
+            (
+                again.acts["launch"].action.as_str(),
+                &again.acts["launch"].input
+            ),
+            (
+                "factory.task.run",
+                &json!({"state": state, "run_ref": "run:a", "session": "agent-session/atelier-chat-1"})
+            )
+        );
+        assert!(
+            on.iter()
+                .find(|clip| clip.subject.as_deref() == Some("task:b"))
+                .unwrap()
+                .acts
+                .is_empty(),
+            "a running task does not launch again"
+        );
+        let seat = &set.acts["seat"];
+        assert_eq!(
+            (seat.action.as_str(), &seat.input, seat.takes.as_deref()),
+            (
+                "factory.session.start",
+                &json!({"world": "/w/Central", "project": "atelier"}),
+                Some("agent")
+            )
+        );
+
+        let free = build(
+            Mode::Factory,
+            &[
+                agency(json!([])),
+                field(json!([]), located),
+                seats(
+                    json!([{"name": "env-1", "seats": [{"product": "atelier", "state": "free"}]}]),
+                ),
+            ],
+        );
+        assert!(!free.acts.contains_key("seat"));
+        assert!(
+            free.waiting["track.seat"].contains("no project of this World holds one"),
+            "{}",
+            free.waiting["track.seat"]
         );
     }
 
