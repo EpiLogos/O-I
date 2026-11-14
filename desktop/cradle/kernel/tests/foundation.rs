@@ -286,6 +286,13 @@ impl World {
 
 impl Drop for World {
     fn drop(&mut self) {
+        // What the World's own kernel runs stops first, as its process ends: the change watch, then the World Model (a read
+        // under way is waited for). Left running, they read the World again as it was removed and made it again
+        // (`the_teardown_leaves_no_owner_and_no_folder_of_its_world`).
+        watch::stop_global();
+        if !world_model::Model::global().stop(Duration::from_secs(60)) {
+            println!("a read of the World Model was still under way after 60 s");
+        }
         for (pid, command) in self.owner_pids("") {
             println!("stopping owner pid {pid}: {command}");
             World::stop(pid);
@@ -296,6 +303,62 @@ impl Drop for World {
             let _ = std::fs::remove_dir_all(&self.root);
         }
     }
+}
+
+/// The gate's teardown leaves nothing of its World behind: once the World is dropped, no process names it and its folder stays
+/// removed. Before (14 Nov), the change watch and the World Model still ran while the World was removed: the watch's notice of
+/// the removal had the slices read again in the removed World, and the Packet slice's read found AIKit's encounter owner gone
+/// (stopped a moment before) and started it there, which made the World's `home/.aikit` again with a resident owner standing in
+/// it until its idle close.
+#[test]
+#[ignore = "foundation teardown: runs the installed owners in a fresh home"]
+fn the_teardown_leaves_no_owner_and_no_folder_of_its_world() {
+    let root = {
+        let world = World::fresh("teardown");
+        // The World Model's first read of every slice asks AIKit's encounter owner for the root's prepared context (the Packet
+        // slice), which starts it: the teardown has an owner to stop, and the watch something to announce.
+        let deadline = Instant::now() + Duration::from_secs(90);
+        while world.owner_pids("encounter").is_empty() {
+            assert!(
+                Instant::now() < deadline,
+                "AIKit's encounter owner never started in {}",
+                world.root.display()
+            );
+            std::thread::sleep(Duration::from_millis(250));
+        }
+        world.root.clone()
+    };
+    // The watch announces within a second or two of a move, and the model reads at once: a re-read has had its time by now.
+    std::thread::sleep(Duration::from_secs(8));
+    let listing = Command::new("ps")
+        .args(["-axww", "-o", "pid=,command="])
+        .output()
+        .expect("ps");
+    let named = root.to_string_lossy().into_owned();
+    let naming: Vec<(u32, String)> = String::from_utf8_lossy(&listing.stdout)
+        .lines()
+        .filter_map(|line| {
+            let (pid, command) = line.trim_start().split_once(' ')?;
+            let pid: u32 = pid.parse().ok()?;
+            (pid != std::process::id() && command.contains(&named))
+                .then(|| (pid, command.to_owned()))
+        })
+        .collect();
+    // What a failed teardown left is stopped by pid and removed, so the failure leaves nothing either.
+    for (pid, _) in &naming {
+        World::stop(*pid);
+    }
+    let came_back = root.exists();
+    let _ = std::fs::remove_dir_all(&root);
+    assert!(
+        naming.is_empty(),
+        "processes still name the removed World: {naming:#?}"
+    );
+    assert!(
+        !came_back,
+        "the removed World came back: {}",
+        root.display()
+    );
 }
 
 fn result_of(value: &Value, variant: &str) -> Result<Value, String> {

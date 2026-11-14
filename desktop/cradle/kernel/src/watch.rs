@@ -1079,6 +1079,12 @@ fn canonical(path: &Path) -> PathBuf {
     std::fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf())
 }
 
+/// Stop the process's change watch: nothing it watches is announced again (the kept readings stop being written with it). For
+/// the end of a World's process, before its folder is removed: the gate's teardown, a host's quit.
+pub fn stop_global() {
+    Watch::global().stop();
+}
+
 /// Start the process's change watch over the roots its owners read, calling
 /// `announce` with the wire names of what moved (`Scope::wire`) and the
 /// watch's change count, debounced. On failure the watch stays degraded -

@@ -234,6 +234,8 @@ pub struct Model {
     cells: [Cell; Slice::ALL.len()],
     queue: Queue,
     running: OnceLock<(Asking, Telling)>,
+    /// Set once by `stop`, for good: no slice is read again and the model's threads end.
+    stopped: std::sync::atomic::AtomicBool,
 }
 
 impl Model {
@@ -242,7 +244,41 @@ impl Model {
             cells: Default::default(),
             queue: Queue::default(),
             running: OnceLock::new(),
+            stopped: std::sync::atomic::AtomicBool::new(false),
         }
+    }
+
+    fn stopped(&self) -> bool {
+        self.stopped.load(std::sync::atomic::Ordering::SeqCst)
+    }
+
+    /// Stop the model for good, as its process ends: no slice is read again from now, the model's thread and the Day-turn thread
+    /// end, and a read already under way is waited for, up to `wait`. What the model holds is still answered (`subscribe` no
+    /// longer reads). Whether every read under way ended within `wait`.
+    ///
+    /// The gate's teardown stops it before it stops a World's owners and removes its folder: the change watch's notice of the
+    /// removal had the Packet slice read again, the read found AIKit's encounter owner gone (stopped a moment before) and started
+    /// it in the removed World, which made its `home/.aikit` again with a resident owner standing in it (14 Nov). A host's quit
+    /// may stop it for the same reason.
+    pub fn stop(&self, wait: Duration) -> bool {
+        self.stopped
+            .store(true, std::sync::atomic::Ordering::SeqCst);
+        {
+            let _due = self.queue.due.lock().unwrap_or_else(|e| e.into_inner());
+            self.queue.ready.notify_all();
+        }
+        let deadline = std::time::Instant::now() + wait;
+        self.cells.iter().all(|cell| loop {
+            match cell.reading.try_lock() {
+                Ok(_) | Err(std::sync::TryLockError::Poisoned(_)) => break true,
+                Err(std::sync::TryLockError::WouldBlock)
+                    if std::time::Instant::now() < deadline =>
+                {
+                    std::thread::sleep(Duration::from_millis(20))
+                }
+                Err(std::sync::TryLockError::WouldBlock) => break false,
+            }
+        })
     }
 
     /// The process's one model.
@@ -307,6 +343,9 @@ impl Model {
     fn read_once(&self, slice: Slice, via: Via<'_>, only_if_due: bool, fresh: bool) -> Option<u64> {
         let cell = self.cell(slice);
         let _reading = cell.reading.lock().unwrap_or_else(|e| e.into_inner());
+        if self.stopped() {
+            return None;
+        }
         let started = now_ms();
         let (written, writes) = {
             let held = cell.held.lock().unwrap_or_else(|e| e.into_inner());
@@ -401,7 +440,7 @@ impl Model {
     /// this returns. The watch calls it before it tells the host (watch.rs `start_global`), so the shell's `readings_changed`
     /// comes after the model holds what moved, and a view that asks again on it is answered from the moved state.
     pub fn scopes_moved(&self, scopes: &[String]) {
-        let Some((asking, telling)) = self.running.get() else {
+        let Some((asking, telling)) = self.running.get().filter(|_| !self.stopped()) else {
             return;
         };
         self.read_side_by_side(&self.moved_by(scopes), asking, telling);
@@ -435,7 +474,7 @@ impl Model {
     }
 
     fn due(&self, slices: Vec<Slice>) {
-        if slices.is_empty() || self.running.get().is_none() {
+        if slices.is_empty() || self.running.get().is_none() || self.stopped() {
             return;
         }
         let mut due = self.queue.due.lock().unwrap_or_else(|e| e.into_inner());
@@ -462,12 +501,15 @@ impl Model {
                 loop {
                     let slices: Vec<Slice> = {
                         let mut due = self.queue.due.lock().unwrap_or_else(|e| e.into_inner());
-                        while due.is_empty() {
+                        while due.is_empty() && !self.stopped() {
                             due = self
                                 .queue
                                 .ready
                                 .wait(due)
                                 .unwrap_or_else(|e| e.into_inner());
+                        }
+                        if self.stopped() {
+                            return;
                         }
                         std::mem::take(&mut *due).into_iter().collect()
                     };
@@ -489,6 +531,9 @@ impl Model {
         std::thread::Builder::new()
             .name("oi-day-turn".into())
             .spawn(move || loop {
+                if self.stopped() {
+                    return;
+                }
                 let held = self.held(Slice::Day);
                 let turns_at = held
                     .value
