@@ -1,4 +1,5 @@
 import type {FamilyManifestId} from './familyManifest.ts'
+import type {ModelSliceName} from '../../../../../desktop/cradle/src/kernel/types'
 
 /** Agent-shell parameter addresses (WORLD-SHELL-DESIGN §14).
  *
@@ -71,7 +72,7 @@ export const AGENT_SHELL_ADDRESS_TABLE: readonly AgentParamAddress[] = Object.fr
   enumed('actuation', 'gateway', 'approvals', ['ask', 'session', 'always'], HARNESS_AGENT_ACTION),
   agentParamAddress({family: 'actuation', deviceInstance: 'gateway', key: 'stall-after', type: 'duration', writePath: HARNESS_AGENT_ACTION}),
   agentParamAddress({family: 'actuation', deviceInstance: 'gateway', key: 'connect', type: 'boolean', writePath: HARNESS_AGENT_ACTION}),
-  reading('actuation', 'gateway', 'readiness', 'string', {disclosure: 'Readiness is a harness_status reading; nothing here writes it.'}),
+  reading('actuation', 'gateway', 'readiness', 'string', {disclosure: 'Readiness is AIKit\'s harness reading of the gateway\'s binding, which the World Model\'s sessions slice carries; nothing here writes it.'}),
   reading('actuation', 'gateway', 'frames', 'stream', {disclosure: 'Frames flow from the temporal adapters; the monitor is the Frames dock tile.'}),
   reading('actuation', 'gateway', 'spend', 'number', {unit: 'USD', disclosure: 'spend_ledger has no writer in O-I — the meter discloses absence.'}),
 
@@ -124,6 +125,118 @@ export const AGENT_SHELL_ADDRESS_TABLE: readonly AgentParamAddress[] = Object.fr
   enumed('workcell', 'git', 'push-policy', ['off', 'on land'], 'workcell-cli:git push'),
   agentParamAddress({family: 'workcell', deviceInstance: 'git', key: 'land', type: 'boolean', writePath: 'workcell-cli:seat land'}),
 ])
+
+// ---------------------------------------------------------------------------------------------------------------- the declarations
+
+/** A field of the World Model: `<slice>:<path>`, the path dotted into the slice's value as the kernel holds it (world_model.rs). */
+export type ModelField = `${ModelSliceName}:${string}`
+
+/** What a control invokes: the registry's Action (`oi act`), or why none carries it. `kernelOp` names the kernel op that still writes it,
+ * outside the registry, where one does (gates/foundation/lint.mjs counts the code that sends it until its owner declares the Action). */
+export type ControlAction = {readonly action: string} | {readonly none: string; readonly kernelOp?: string}
+
+/** One device of the Factory chain as a declaration (docs/architecture/world-shell.md §9.2.5; O-I ticket 1006): its face in its family's
+ * manifest, which carries its kind and its Live meaning (manual §16); the World Model slice it reads; the field each parameter reads
+ * there, or why the World Model holds none for it yet (`unheld`); and the Action each control invokes. The chain reads the slices its
+ * declarations name and no owner (agent/devices/designBindings.ts chainFromModel). */
+export interface ChainDeviceDeclaration {
+  /** The address table's device (its rows' `deviceInstance`). */
+  readonly device: string
+  /** `${family}:${face}` in its family's manifest. */
+  readonly face: string
+  readonly slice: ModelSliceName
+  readonly fields: Readonly<Record<string, ModelField>>
+  readonly unheld: Readonly<Record<string, string>>
+  readonly controls: Readonly<Record<string, ControlAction>>
+}
+
+/** AIKit's gateway as the sessions slice holds it (world_model.rs `gateway`): its ecology, its conversation binding, and that binding's
+ * harness reading (`aikit gateway agent --binding B sessions`). */
+const GATEWAY: ModelField = 'sessions:gateway.reading'
+const HARNESS = `${GATEWAY}.agent.reading` as const
+const GATEWAY_AGENT = {action: 'aikit.gateway.agent'} as const
+const WORKCELL_NO_ACTION = (what: string): ControlAction => ({none: `${what}: Workcell declares no Action that carries it (its Actions write a seat's join and release, workcell.seat.join and workcell.seat.release), so it stands disabled.`})
+
+/** The four devices of a session's chain (§16.2 Factory: Gateway → Agent (model, effort) → Scope → Git / landing). */
+export const CHAIN_DECLARATIONS: readonly ChainDeviceDeclaration[] = Object.freeze<ChainDeviceDeclaration[]>([
+  {
+    device: 'gateway', face: 'actuation:gateway', slice: 'sessions',
+    fields: {binding: `${GATEWAY}.binding`, readiness: `${HARNESS}.state`, transport: `${HARNESS}.transport`, approvals: `${HARNESS}.approvals`,
+      connect: `${HARNESS}.connect`, frames: `${GATEWAY}.ecology`},
+    unheld: {'stall-after': 'AIKit\'s harness reading names no stall-after.', spend: 'spend_ledger has no writer in O-I — the meter discloses absence.'},
+    // AIKit's gateway takes pause and resume for Connect; for the others it has no operation, and the dispatch refuses them by name
+    // before anything is sent (aikitGatewayOps.ts harnessKeyUncarried).
+    controls: {transport: GATEWAY_AGENT, approvals: GATEWAY_AGENT, 'stall-after': GATEWAY_AGENT, connect: GATEWAY_AGENT},
+  },
+  {
+    device: 'agent', face: 'actuation:harness-model', slice: 'sessions',
+    // The Harness chooser offers the census's agents that start (O-I ticket 1003), the Model chooser the catalogue's models.
+    fields: {harness: `${GATEWAY}.binding`, model: `${HARNESS}.model`, harnesses: 'agents:agents', models: 'models:entries'},
+    unheld: {
+      'budget-used': 'AIKit\'s task record of the session (encounter_task_read): the World Model holds no session\'s task record yet.',
+      held: 'Factory\'s custody list of the session (factory development custody), drawn on the Agent\'s Run page.',
+      identity: 'Central\'s roster (agent-profile.roster), read with the Skillset rack.',
+      effort: 'No owner holds it: AIKit\'s gateway has no operation that carries it.', input: 'No owner holds it: AIKit\'s gateway has no operation that carries it.',
+      heartbeat: 'Heartbeat is presentation-state: its owner is the cron-stratum cadence (WO-A3).',
+    },
+    // Effort and input go to AIKit's gateway, which refuses them by name (no operation carries them).
+    controls: {model: GATEWAY_AGENT, effort: GATEWAY_AGENT, input: GATEWAY_AGENT,
+      heartbeat: {none: 'Heartbeat is presentation-state: its owner is the cron-stratum cadence (WO-A3), which declares no Action.'}},
+  },
+  {
+    device: 'world', face: 'software-factory:context-write-mode', slice: 'sessions',
+    // Tool calls are the harness's approvals; Calls to other agents are AIKit's rule for the sender kind agent, as its ecology reads it.
+    fields: {'tool-calls': `${HARNESS}.approvals`, calls: `${GATEWAY}.ecology`},
+    unheld: {
+      wait: 'AIKit\'s settings of the session (encounter_session_settings): the World Model holds no session\'s settings yet.',
+      'on-no-answer': 'AIKit\'s settings of the session (encounter_session_settings): the World Model holds no session\'s settings yet.',
+      reads: 'Central declares no scope reading of a session yet.', writes: 'Central declares no scope reading of a session yet.',
+      'knowledge-route': 'protocol_read is available but unwired — the route discloses absence.',
+      'write-mode': 'Write arm is presentation-state: its owner is Factory receiving\'s enforcement (WO-SF2).',
+      'write-receipts': 'Factory receiving\'s receipts of the device apply path (WO-SF2) are not written yet.',
+    },
+    controls: {
+      'tool-calls': GATEWAY_AGENT,
+      'write-mode': {none: 'Write arm is presentation-state: Factory receiving\'s enforcement on the device apply path (WO-SF2) declares no Action yet.'},
+      calls: {none: 'AIKit declares no Action for a gateway binding\'s ingress rule (its Actions: aikit.gateway.send, .agent, .delegate, .who and .heard).', kernelOp: 'harness_ingress_rule'},
+      wait: {none: 'AIKit declares no Action for a session\'s settings.', kernelOp: 'encounter_session_settings'},
+      'on-no-answer': {none: 'AIKit declares no Action for a session\'s settings.', kernelOp: 'encounter_session_settings'},
+    },
+  },
+  {
+    device: 'git', face: 'workcell:git-seat', slice: 'workcells',
+    // The workcell's seat of the session's project: its live branch, and its files with no commit (tracked changes and untracked files).
+    fields: {branch: 'workcells:seats.reading', uncommitted: 'workcells:seats.reading', workcell: 'workcells:workcells.reading.workcell_ref'},
+    unheld: {},
+    controls: {'commit-policy': WORKCELL_NO_ACTION('Commit policy'), 'push-policy': WORKCELL_NO_ACTION('Push policy'), land: WORKCELL_NO_ACTION('Land')},
+  },
+])
+
+/** The declaration of one chain device, by the address table's device. */
+export const chainDeclaration = (device: string): ChainDeviceDeclaration | undefined => CHAIN_DECLARATIONS.find(declared => declared.device === device)
+
+/** The slices the chain's declared devices read, each once. */
+export const CHAIN_SLICES: readonly ModelSliceName[] = Object.freeze([...new Set(CHAIN_DECLARATIONS.flatMap(declared =>
+  [declared.slice, ...Object.values(declared.fields).map(field => field.slice(0, field.indexOf(':')) as ModelSliceName)]))])
+
+/** A declared field's value in the slices held (each slice's value as `model_subscribe` answers it), or undefined where the path stands
+ * on nothing. Pure. */
+export function declaredValue(values: Readonly<Partial<Record<ModelSliceName, unknown>>>, field: ModelField): unknown {
+  const at = field.indexOf(':')
+  let value: unknown = values[field.slice(0, at) as ModelSliceName]
+  for (const key of field.slice(at + 1).split('.')) {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined
+    value = (value as Record<string, unknown>)[key]
+  }
+  return value
+}
+
+/** The conversation binding AIKit's gateway names in the sessions slice's value (the Gateway's declared `binding`), or null where it names
+ * none: until it does, 'cursor' is only the shell's default, and nothing is written to it. Pure. */
+export function gatewayBindingIn(sessions: unknown): string | null {
+  const named = declaredValue({sessions}, `${GATEWAY}.binding`)
+  return typeof named === 'string' && named ? named : null
+}
 
 /** The addresses of one chain device, in table order. */
 export function agentAddressesForDevice(deviceInstance: string): AgentParamAddress[] {

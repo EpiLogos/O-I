@@ -11,8 +11,8 @@
 //     messages that wait for it. The Agency gateway's inbox is their sum;
 //   the run state of the session an occupant works (runFaces.ts runStateOfSession over the agency reading's tracks: its task, its needle, its
 //     thread): working, waiting on you, stalled — its face's posture (lane W5);
-//   harness_agent_read through AIKit's gateway (useAgentChainReading.ts; mainTrackBindings.ts gatewayAnswer): whether the Agency gateway
-//     answered — its state in the mark;
+//   AIKit's gateway as the World Model's sessions slice carries it (designBindings.ts chainFromModel; mainTrackBindings.ts gatewayAnswer):
+//     whether the Agency gateway answered — its state in the mark;
 //   the open agent's conversation (O-I ticket 1003): the session its Position's occupant works (the agency reading's track whose agent is the
 //     occupant), observed through the one encounter session (EncounterObservers.tsx; encounter/session.ts), as the Thread's rows
 //     (threadBinding.ts threadRowsOf: its own `thread`, which the design lays under `conv.`) and its last line;

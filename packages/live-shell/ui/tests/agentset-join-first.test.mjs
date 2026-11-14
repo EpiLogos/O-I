@@ -49,7 +49,8 @@ const familyDoor = await import('../src/inhabitants/familyManifest.ts')
 familyDoor.resetFamilyManifestsForTest()
 ;(await import('../src/inhabitants/loadAgentShellFamilies.ts')).loadAgentShellFamilies()
 ;(await import('../src/inhabitants/worldShellFamilies.ts')).loadWorldShellFamilies()
-const {catalogueModels} = await import('../src/agent/devices/useModelCatalogue.ts')
+// REPLACED (O-I ticket 1006): the catalogue's models are the World Model's models slice, read by the chain's declarations (designBindings.ts).
+const {catalogueModels} = bind
 const {design: threadDesign} = await import('../src/inhabitants/catalogue/panels/thread.tsx')
 const {THREAD_PAGE} = await import('../src/agent/devices/oneAgentBinding.ts')
 const {design: agentDesign} = await import('../src/inhabitants/catalogue/panels/actuation__harness-model.tsx')

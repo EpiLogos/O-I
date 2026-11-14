@@ -125,7 +125,6 @@ export const ROUTE_WORDS = {
   release: '`seat release`',
   trust: '`aikit trust record`',
   connectionsShow: '`workcell connections show`',
-  ecology: '`aikit gateway ecology`',
   replay: '`aikit gateway replay`',
 } as const
 

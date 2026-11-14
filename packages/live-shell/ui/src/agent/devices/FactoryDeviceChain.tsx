@@ -59,8 +59,10 @@ import {openSettings} from '../../settings/host'
 import {chainLaw, slotStanding} from '../../inhabitants/sdk/chains'
 import {openInstrument} from '../../frame/instrumentDoor'
 import {agentAddress} from '../../inhabitants/agentParamAddresses'
-import {useRosterAnswer, useSettingsAnswer} from '../../owners/readers'
-import {registerOf, ROOT_REGISTER} from '../worldScope'
+import {useRosterAnswer, useSettingsAnswer, useTaskAnswer} from '../../owners/readers'
+import {useModelSlice} from '../../owners/model'
+import {useWorkspace} from '../../shell/workspaceContext'
+import {gitRepositoryAbsence, projectOfSession, registerOf, ROOT_REGISTER} from '../worldScope'
 import {useAgentSessionsOptional} from '../AgentSessionsProvider'
 import {useAgentShell, type AgentDeviceId} from '../AgentShellContext'
 import {threadTrackOf} from '../threadTrack'
@@ -80,11 +82,10 @@ import {
   AGENT_DESIGN, AGENT_P0_ROWS, GATEWAY_DESIGN, LANDING_DESIGN, MEMBER_DESIGN, MEMBER_DEVICE_ID, RACK_DESIGN, SCOPE_DESIGN, SLOT_DESIGN_FACE, agentBinding, designWaits,
   gatewayBinding, memberBinding,
   memberChains, rackBinding, refiningBinding, scopeBinding, seatedProfile, useChainHolds, viewHolds, type AgentRows, type MemberPorts, type RackUpkeep,
-  type RefiningPorts, callsOf, callsOnEvery, lastUsageModels, type CallsDecision,
+  type RefiningPorts, callsOf, callsOnEvery, chainFromModel, lastUsageModels, type CallsDecision,
 } from './designBindings'
 import {useOwnerAccepted} from './ownerAccepted'
 import {useSelectedSkillChain} from './skillRackSelection'
-import {useAgentChainReading} from './useAgentChainReading'
 import {composePorts, useRackReading} from './useRackReading'
 import {observedState, useEncounterSessions} from './EncounterObservers'
 import {FRAMES_ID, mainDevices} from './mainTrackBindings'
@@ -95,7 +96,6 @@ import {useIdentityDevice} from '../../central/devices/agentChainDevices'
 import {useAgentSetReadings, useCentralAction} from '../../central/devices/useCentralReadings'
 import {actionAnswerOf, centralActionOp} from '../../central/devices/centralActions'
 import {useAtSearch} from '../../central/searchPane'
-import {useModelCatalogue} from './useModelCatalogue'
 import {useAttemptTakes} from '../../owners/attemptTakes'
 import {useWorkcellAnswer} from '../../owners/readers'
 import {factoryLocateOp, useSessionCustody} from './sessionCustody'
@@ -126,7 +126,7 @@ import {useRunJourney} from './runJourney'
 import {PROMPT_PADS_DESIGN, PROMPT_PADS_ID, padsHeadActs, padsLocation, promptPadsBinding, promptPadsDevice, type PadsPresetPorts, type PromptPadsPorts} from './promptPadsBinding'
 import {useDecisionHelperReadings} from './decisionHelperReads'
 import {useTeamSpace, withTeamCell} from './teamCell'
-import {useActuationRead, useAikitRead, useConnectionShows, useGatewayEcology, useSeatStatusAnswer, useWorkcellRead} from './workcellReads'
+import {useActuationRead, useAikitRead, useConnectionShows, useSeatStatusAnswer, useWorkcellRead} from './workcellReads'
 import {workcellTrackId} from '../../frame/tracks/returnTracks'
 import '../agentShell.css'
 import './factoryDevices.css'
@@ -188,11 +188,26 @@ const SLOT_DESIGNS: Readonly<Record<string, string>> = {gateway: GATEWAY_DESIGN,
  * session's or the Main track's. */
 export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: string | null; workcell?: string | null}) {
   const shell = useAgentShell()
-  const {reading, transport, binding, resolved, harnesses, git: sessionGit} = useAgentChainReading(sessionRef)
+  const {transport} = useWorkspace()
+  const sessions = useAgentSessionsOptional()
+  // The chain's devices are declarations (inhabitants/agentParamAddresses.ts CHAIN_DECLARATIONS): each reads the World Model's slice it
+  // names — the Gateway and the Agent the sessions slice (AIKit's gateway, its binding and that binding's harness reading), Git / landing
+  // the workcells slice (Workcell's status and the seat of the session's project), the Harness and Model choosers the agents and models
+  // slices — kept current by the World Model's `model_changed`. The roster and the session's task record are the window's shared answers.
+  const sessionsSlice = useModelSlice(transport, 'sessions'), workcellsSlice = useModelSlice(transport, 'workcells')
+  const agentsSlice = useModelSlice(transport, 'agents'), modelsSlice = useModelSlice(transport, 'models')
+  const chainProject = projectOfSession(sessions?.rows ?? [], sessionRef)
+  const rosterAnswer = useRosterAnswer(transport, null)
+  const roster = rosterAnswer.reading
+  const taskAnswer = useTaskAnswer(transport, transport.kind === 'unavailable' ? null : sessionRef, chainProject).reading
+  const {reading, binding, resolved, harnesses, models, ecology, git: sessionGit} = useMemo(() => chainFromModel({
+    slices: {sessions: sessionsSlice, workcells: workcellsSlice, agents: agentsSlice, models: modelsSlice},
+    sessionRef, project: chainProject, absent: gitRepositoryAbsence(sessionRef, chainProject), roster, task: taskAnswer,
+    unreachable: transport.kind === 'unavailable' ? transport.reason ?? 'Transport unavailable' : null,
+  }), [sessionsSlice, workcellsSlice, agentsSlice, modelsSlice, sessionRef, chainProject, roster, taskAnswer, transport])
   // The settings an owner accepted on this harness: the only readings effort and input have. The shell's own effort, steer,
   // heartbeat and write-arm flags are presentation, so they are not read here.
   const accepted = useOwnerAccepted(binding)
-  const sessions = useAgentSessionsOptional()
   const track = sessionRef != null ? sessions?.tracks.find(item => item.sessionRef === sessionRef) ?? null : null
   // The register this chain reads in: the session's own (the one its world-wide agency read listed it in, agent/worldScope.ts); a chain
   // with no session (a workcell's, the Main track's) reads your world's root register. `register` is null for the root, as the ops that
@@ -262,7 +277,6 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
     return held ? [{ref: held.sessionRef, space: held.spaceRef, project: held.project ?? ROOT_REGISTER}] : []
   }), [shown, sessionRef, tracks])
   const {handles, observers} = useEncounterSessions(observed)
-  const models = useModelCatalogue(transport, !waits.agent)
   // The asks each conversation's session put to the decision helper, as AIKit keeps them against it (§19.4 Ask rows; O-I ticket 684).
   const shownAsks = useAikitRead(transport, !waits.agent && shown ? {kind: 'decision-asks', agent_session: shown} : null)
   const chainAsks = useAikitRead(transport, !waits.agent && sessionRef ? {kind: 'decision-asks', agent_session: sessionRef} : null)
@@ -348,8 +362,6 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
 
   // The rack: the seated agent's carried practice (its accepted profile in the roster, the sets AIKit replies for), and the
   // composition through the configuration plane. Read only while its design can draw it.
-  const rosterAnswer = useRosterAnswer(transport, null)
-  const roster = rosterAnswer.reading
   const profile = useMemo(() => seatedProfile(roster.status === 'answered' ? roster.value : null, track?.agentRef ?? null), [roster, track?.agentRef])
   // The chain is the profile Central keeps for the agent (§19.4; Central PR 318): the Agent's Rename and the Skillset rack's Hot-swap write it
   // at its revision as read, and the roster is read again behind each act.
@@ -501,11 +513,10 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const writeModeRow = chain.find(entry => entry.slot.id === 'world')?.device.rows.find(row => row.key === 'write-mode')
   const toolCallsRow = chain.find(entry => entry.slot.id === 'gateway')?.device.rows.find(row => row.key === 'approvals')
   const toolCalls = gatewayDisclosed(reading.gatewayDoc).approvals
-  // Calls to other agents: AIKit's rule for the sender kind agent on the session's gateway bindings, as its ecology reads it, set on every
-  // binding of the session through the kernel's harness_ingress_rule.
-  const ecology = useGatewayEcology(transport, !waits.world && sessionRef != null)
-  const calls = useMemo(() => (ecology.status === 'answered' ? callsOf(ecology.value, sessionRef)
-    : ecology.status === 'refused' ? {refused: ecology.error ?? 'AIKit refused the gateway\'s ecology.'} : null), [ecology, sessionRef])
+  // Calls to other agents: AIKit's rule for the sender kind agent on the session's gateway bindings, as its ecology reads it (the sessions
+  // slice's gateway, Scope's declared `calls`), set on every binding of the session through the kernel's harness_ingress_rule.
+  const calls = useMemo(() => (sessionRef == null || waits.world ? null : ecology.status === 'answered' ? callsOf(ecology.value, sessionRef)
+    : ecology.status === 'refused' ? {refused: ecology.error ?? 'AIKit refused the gateway\'s ecology.'} : null), [ecology, sessionRef, waits.world])
   // One binding at a time: where one refuses, the words say which bindings now answer the new way and what to press next.
   const callsWrite = useMemo(() => (transport.kind === 'unavailable' ? undefined : async (bindings: readonly string[], decision: CallsDecision) => {
     await callsOnEvery(bindings, decision, (ruled, said) => harnessIngressRule(transport, ruled, 'agent', said))

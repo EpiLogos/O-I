@@ -179,7 +179,8 @@ test('2 · the Ledger: a model-usage record counts tokens, never turns; with no 
   assert.match(binding.standing.used.disabled, /counts a model message's tokens, never turns/)
   assert.match(binding.standing.cap.disabled, /no model-usage record carries one/)
   // No reading the shell holds names a model-usage record (code-reading, over the shell and the cradle client it imports).
-  for (const file of ['agent/devices/receiptBindings.ts', 'agent/useAgentMetrics.ts', 'agent/devices/useAgentChainReading.ts']) {
+  // REPLACED (O-I ticket 1006): the chain's reading is designBindings.ts chainFromModel (devices/useAgentChainReading.ts is gone).
+  for (const file of ['agent/devices/receiptBindings.ts', 'agent/useAgentMetrics.ts', 'agent/devices/designBindings.ts']) {
     assert.doesNotMatch(read(file).replace(/\/\/.*|\/\*[\s\S]*?\*\//g, ''), /usage_ref|op: 'actuation_read'/, `${file}: holds no usage record and asks no usage reading`)
   }
 })

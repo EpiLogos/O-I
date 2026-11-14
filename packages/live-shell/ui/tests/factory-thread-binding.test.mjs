@@ -56,7 +56,8 @@ const familyDoor = await import('../src/inhabitants/familyManifest.ts')
 familyDoor.resetFamilyManifestsForTest()
 ;(await import('../src/inhabitants/loadAgentShellFamilies.ts')).loadAgentShellFamilies()
 ;(await import('../src/inhabitants/worldShellFamilies.ts')).loadWorldShellFamilies()
-const {catalogueModels} = await import('../src/agent/devices/useModelCatalogue.ts')
+// REPLACED (O-I ticket 1006): the catalogue's models are the World Model's models slice, read by the chain's declarations (designBindings.ts).
+const {catalogueModels} = bind
 const {design: threadDesign} = await import('../src/inhabitants/catalogue/panels/thread.tsx')
 const {THREAD_PAGE} = await import('../src/agent/devices/oneAgentBinding.ts')
 const {design: agentDesign} = await import('../src/inhabitants/catalogue/panels/actuation__harness-model.tsx')
@@ -355,7 +356,8 @@ test('the Thread is the one Agent\'s Full on the session\'s conversation (REPLAC
   assert.match(read('AgentThreadView.tsx'), /const project = track\.project \?\? ROOT_REGISTER[\s\S]*?project,\n\s+accompanying: \{ref: track\.sessionRef, project, space: track\.spaceRef\}/, 'the pane observes the same key')
   assert.match(view, /\[\{ref: held\.sessionRef, space: held\.spaceRef, project: held\.project \?\? ROOT_REGISTER\}\]/, 'the chain observes it in the same register')
   assert.match(read('AgentThreadView.tsx'), /import \{threadTrackOf\} from '\.\/threadTrack'/, 'and resolves the same session')
-  for (const file of ['devices/threadBinding.ts', 'devices/EncounterObservers.tsx', 'devices/EncounterObserver.tsx', 'devices/useModelCatalogue.ts', 'threadTrack.ts']) {
+  // REPLACED (O-I ticket 1006): devices/useModelCatalogue.ts is gone (the models are the World Model's models slice).
+  for (const file of ['devices/threadBinding.ts', 'devices/EncounterObservers.tsx', 'devices/EncounterObserver.tsx', 'threadTrack.ts']) {
     assert.deepEqual(read(file).match(/#[0-9a-fA-F]{3,8}\b/g) ?? [], [], `${file}: shell tokens only`)
     assert.doesNotMatch(read(file), /\.defaults\[|\.fixtures|catalogue\/panels\//, `${file}: no design default or fixture is read`)
   }

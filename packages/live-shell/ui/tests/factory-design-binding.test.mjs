@@ -203,6 +203,80 @@ test('the catalogue\'s Gateway draws on the binding in all five views: the owner
   host.resetHost()
 })
 
+// ---- the chain's reading, from the World Model (O-I ticket 1006) -------------------------------------------------------------
+
+// REAL CAPTURE: `seat status --json` on this machine, 21 Oct 2026 (fixtures/workcell-readings-2026-10-21.json): three workcells, each with a
+// seat of every product; o-i claimed in all three, actuation in env-1 alone, factory in none.
+const SEATS = JSON.parse(readFileSync(new URL('./fixtures/workcell-readings-2026-10-21.json', import.meta.url), 'utf8')).seatStatus
+const held = (slice, value) => ({state: 'held', answer: {schema: 'oi.world-model-slice/v1', slice, owner: 'kernel', scopes: ['machine'], version: 1, state: 'read', error: null, read_at_unix_ms: 1, value}})
+const workcellsSlice = (seats = SEATS) => held('workcells', {seats: {state: 'read', reading: seats}, workcells: {state: 'read', reading: {workcell_ref: 'workcell:mac'}}})
+
+test('Git / landing reads the workcell\'s seat of the session\'s project: the one seat, or the one held; several held or none name no checkout, and say why', () => {
+  const one = bind.projectSeatOf(SEATS, 'actuation')
+  assert.equal(one.seat?.workcell, 'env-1', 'of three seats of actuation, the one held')
+  assert.equal(one.seat.branch, 'fold/day-close-20261012')
+  const several = bind.projectSeatOf(SEATS, 'O-I')
+  assert.match(several.why, /^3 seats of O-I stand in the workcells \(env-1, env-2, env-3\), 3 of them held: Git \/ landing names no checkout it cannot tell is the session's/)
+  assert.match(bind.projectSeatOf(SEATS, 'factory').why, /3 seats of factory .*none held/)
+  assert.match(bind.projectSeatOf(SEATS, 'Nowhere').why, /^No workcell holds a seat of Nowhere/)
+  assert.match(bind.projectSeatOf({schema: 'other'}, 'O-I').why, /not a seat reading/)
+  // A fresh world: one workcell, one seat of the project, free — that seat is the session's checkout.
+  const fresh = {schema: 'central.workcell-status/v1', workcells: [{name: 'cell-1', path: '/w/cell-1', seats: [{product: 'first-project', state: 'free', live_branch: 'main', tracked_changes: 2, untracked: 1}]}]}
+  assert.equal(bind.projectSeatOf(fresh, 'first-project').seat?.workcell, 'cell-1')
+  // The chain's Git line and the Agent's Context row read the same seat.
+  const chain = bind.chainFromModel({slices: {workcells: workcellsSlice(fresh)}, sessionRef: 's', project: 'first-project', absent: null})
+  assert.equal(chain.reading.git.kind, 'reading')
+  assert.equal(chain.reading.git.line, 'workcell workcell:mac · seat cell-1/first-project on main')
+  assert.deepEqual(chain.reading.gitRepo, {branch: 'main', uncommitted: 3}, 'its files with no commit: changed and untracked')
+  assert.equal(chain.reading.gitAdmitted, true)
+  assert.deepEqual(chain.git, {sessionRef: 's', project: 'first-project', repo: {branch: 'main', uncommitted: 3}, error: null})
+  assert.deepEqual(bind.sessionGitOf(workcellsSlice(fresh), 's', 'first-project', null), chain.git, 'Central\'s Context reads the one function')
+  const ambiguous = bind.chainFromModel({slices: {workcells: workcellsSlice()}, sessionRef: 's', project: 'O-I', absent: null})
+  assert.equal(ambiguous.reading.git.kind, 'refused', 'the workcells answered, but no seat is the session\'s')
+  assert.equal(ambiguous.reading.gitAdmitted, true, 'Workcell answered: its lamp is not the seat\'s')
+  assert.equal(ambiguous.git.repo, null)
+  assert.match(ambiguous.git.error, /3 seats of O-I/)
+  // No session, or your world's root register, names no checkout, in the world scope's words.
+  const absent = bind.chainFromModel({slices: {workcells: workcellsSlice()}, sessionRef: null, project: '', absent: 'No session is selected.'})
+  assert.deepEqual([absent.git.repo, absent.git.error], [null, 'No session is selected.'])
+  assert.match(absent.reading.git.line, /No session is selected\.$/)
+  // The seat instrument refused, Workcell answered: the line says both.
+  const seatsRefused = held('workcells', {seats: {state: 'refused', why: 'seat status timed out'}, workcells: {state: 'read', reading: {workcell_ref: 'workcell:mac'}}})
+  const noSeats = bind.chainFromModel({slices: {workcells: seatsRefused}, sessionRef: 's', project: 'O-I', absent: null})
+  assert.equal(noSeats.reading.git.line, 'workcell workcell:mac · seat status timed out.', 'the owner\'s words, as one line')
+  // Not held yet: the lamp dark, nothing said.
+  const reading = bind.chainFromModel({slices: {}, sessionRef: 's', project: 'O-I', absent: null})
+  assert.deepEqual([reading.reading.gitAdmitted, reading.reading.waitingOn.git, reading.git.error], [null, null, null])
+})
+
+test('the Gateway, the Harness and the Model choosers read the World Model\'s slices: the binding the gateway names, its refusal in AIKit\'s words, the kernel not reached', () => {
+  const sessions = gateway => held('sessions', {project_ref: 'project:root', spaces: [], gateway})
+  const named = bind.chainFromModel({slices: {sessions: sessions({state: 'read', reading: {ecology: {type: 'ecology', ecology: {agencies: []}}, binding: 'gateway-binding/one',
+    agent: {state: 'read', reading: {state: 'ready', transport: 'ws'}}}}), models: held('models', {entries: [{model: 'model:aion-2.0'}, {model: 'model:glm-5.1'}, {name: 'no id'}]})},
+  sessionRef: 's', project: 'O-I', absent: null})
+  assert.deepEqual([named.binding, named.resolved], ['gateway-binding/one', true])
+  assert.equal(named.reading.gateway.kind, 'reading')
+  assert.match(named.reading.gateway.line, /^binding gateway-binding\/one · /)
+  assert.deepEqual(named.reading.gatewayDoc, {state: 'ready', transport: 'ws'})
+  assert.deepEqual(named.models, ['model:aion-2.0', 'model:glm-5.1'], 'the catalogue\'s models, by id')
+  assert.equal(named.harnesses, null, 'the census not read: nothing to choose yet')
+  assert.equal(named.ecology.status, 'answered')
+  const refused = bind.chainFromModel({slices: {sessions: sessions({state: 'refused', why: 'aikit: no gateway is configured'})}, sessionRef: 's', project: 'O-I', absent: null})
+  assert.deepEqual([refused.binding, refused.resolved], ['cursor', false], 'no binding named: the shell\'s default, which nothing writes to')
+  assert.equal(refused.reading.gateway.kind, 'refused')
+  assert.equal(refused.reading.gateway.line, 'waiting on AIKit — harness_agent_read refused: aikit: no gateway is configured.')
+  assert.equal(refused.reading.waitingOn.gateway, 'AIKit')
+  assert.deepEqual(refused.ecology, {status: 'refused', value: null, error: 'aikit: no gateway is configured.'})
+  const unbound = bind.chainFromModel({slices: {sessions: sessions({state: 'read', reading: {ecology: {}, binding: null, agent: {state: 'refused', why: 'AIKit\'s gateway names no conversation binding'}}})},
+    sessionRef: 's', project: 'O-I', absent: null})
+  assert.equal(unbound.resolved, false)
+  assert.match(unbound.reading.gateway.line, /names no conversation binding/)
+  const unreached = bind.chainFromModel({slices: {sessions: sessions({state: 'read', reading: {}})}, sessionRef: 's', project: 'O-I', absent: null, unreachable: 'Transport unavailable'})
+  assert.match(unreached.reading.gateway.line, /not reached: Transport unavailable$/)
+  assert.deepEqual(unreached.reading.waitingOn, {gateway: 'AIKit', skillset: unreached.reading.waitingOn.skillset, git: 'Workcell'})
+  assert.equal(unreached.git.error, 'Transport unavailable')
+})
+
 // ---- the Agent ---------------------------------------------------------------------------------------------------------------
 
 const agentInput = (over = {}) => ({

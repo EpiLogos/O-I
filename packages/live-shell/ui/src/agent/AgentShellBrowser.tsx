@@ -248,8 +248,8 @@ export function AgentShellBrowser({rows, error, loading, controlled}: {rows: Age
   // The sessions' states and the agents' names, from the one agent-sessions provider (its task reads, its needles, its roster).
   const sessions = useAgentSessionsOptional()
   const {transport} = useWorkspace()
-  // The gateway is not read here: the Gateway on the chain reads harness_agent_read itself (devices/useAgentChainReading.ts). The
-  // Git seat's settings and its Land are the landing device's (workcell:git-seat), whole in its band above the chain (W1).
+  // The gateway is not read here: the Gateway on the chain reads it from the World Model's sessions slice (devices/designBindings.ts
+  // chainFromModel). The Git seat's settings and its Land are the landing device's (workcell:git-seat), whole in its band above the chain (W1).
   // AIKit's SkillSets and the seat are the window's shared answers (owners/readers.ts): the seat the same one the Factory chain and
   // the Central devices read — one owner read between them, a refusal remembered for its epoch.
   const setsAnswer = useSkillSetsAnswer(transport, null).reading

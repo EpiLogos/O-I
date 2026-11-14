@@ -138,10 +138,12 @@ test('the Agency gateway\'s mark starts the gateway while it is off (§19.10 Ser
   const {sameWorld} = await import('../src/owners/ownerReading.ts')
   assert.ok(sameWorld(generation.gatewayEpochKey('1|central', before), generation.gatewayEpochKey('1|central')))
   assert.ok(!sameWorld(generation.gatewayEpochKey('1|central'), generation.gatewayEpochKey('1|/other/world')))
-  // The chain's harness read goes through the kernel's held-read holder, which keeps a refused document as an answer: once the
-  // gateway has moved here it asks fresh (walk18: Start ran the gateway and the mark stayed Refused on the held answer).
-  const chain = readFileSync(new URL('../src/agent/devices/useAgentChainReading.ts', import.meta.url), 'utf8')
-  assert.match(chain, /kernelRead\(transport, \{op: 'harness_agent_read', binding\}, gatewayAt \? \{fresh: true\} : \{\}\)/)
+  // REPLACED (O-I ticket 1006): the chain asked AIKit's gateway itself, fresh once the gateway had moved here (walk18: Start ran the gateway
+  // and the mark stayed Refused on the held answer). It reads the World Model's sessions slice, which carries the gateway: the kernel's
+  // gateway_service moves that slice (its own test below), and a write this window completed leaves no slice held current (owners/model.ts).
+  const kernel = readFileSync(new URL('../../../../desktop/cradle/kernel/src/world_model.rs', import.meta.url), 'utf8')
+  assert.match(kernel, /fn a_gateway_started_or_stopped_here_moves_the_sessions_slice_that_carries_it\(\)/)
+  assert.match(readFileSync(new URL('../src/owners/model.ts', import.meta.url), 'utf8'), /onWrite\(\(\) => \{\n\s+for \(const \[transport, slices\] of byTransport\) \{\n\s+for \(const \[slice, held\] of slices\) \{\n\s+held\.due = true/)
   const offCard = draw(off, 'full')
   assert.match(offCard, /<button[^>]*class="ms-gateway"[^>]*>.*Start/s, 'off: the mark is a press that starts it')
   const ready = msg.messagesBinding({population: answered(REAL.population), gateway: ANSWERED, holds: bind.chainHolds()}, {gateway})

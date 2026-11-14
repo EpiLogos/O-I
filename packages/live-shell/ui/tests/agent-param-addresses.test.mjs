@@ -142,3 +142,40 @@ test('the address table module stays pure (no React, no store)', async () => {
   assert.doesNotMatch(source, /react/i)
   assert.doesNotMatch(source, /use[A-Z]/)
 })
+
+// O-I ticket 1006 (docs/architecture/world-shell.md §9.2.5): the chain's four devices are declarations. Each names its face in its family's
+// manifest (which carries its kind and Live meaning), the World Model slice it reads, the field each parameter reads there or why the World
+// Model holds none for it yet, and the Action each control invokes or why none carries it. The chain reads the slices its declarations name
+// (designBindings.ts chainFromModel), and no hook of its own.
+test('the chain\'s four devices are declarations: a face of its family, the slice it reads, the field of each parameter, the Action of each control', () => {
+  door.resetFamilyManifestsForTest()
+  load.loadAgentShellFamilies()
+  const {CHAIN_DECLARATIONS, CHAIN_SLICES, chainDeclaration, declaredValue} = addresses
+  assert.deepEqual(CHAIN_DECLARATIONS.map(declared => declared.device), ['gateway', 'agent', 'world', 'git'], '§16.2: Gateway → Agent → Scope → Git / landing')
+  assert.deepEqual(CHAIN_SLICES, ['sessions', 'agents', 'models', 'workcells'], 'the slices the chain reads, each once')
+  const SLICES = new Set(['worlds', 'day', 'agents', 'sessions', 'models', 'factory', 'workcells', 'sky'])
+  for (const declared of CHAIN_DECLARATIONS) {
+    const [family, face] = declared.face.split(':')
+    assert.ok(door.familyManifest(family)?.faces.some(one => one.id === face), `${declared.face}: a face its family's manifest carries`)
+    assert.ok(SLICES.has(declared.slice), `${declared.device}: reads a slice the World Model holds`)
+    for (const [key, field] of Object.entries(declared.fields)) {
+      assert.ok(SLICES.has(field.slice(0, field.indexOf(':'))), `${declared.device}.${key}: ${field} is a field of a World Model slice`)
+    }
+    for (const [key, control] of Object.entries(declared.controls)) {
+      if ('action' in control) assert.match(control.action, /^[a-z-]+(\.[a-z-]+)+$/, `${declared.device}.${key}: an Action id`)
+      else assert.ok(control.none.length > 20, `${declared.device}.${key}: why no Action carries it, in words`)
+    }
+    // Every parameter the device renders (its address rows) reads a declared field, stands unheld with its reason, or is a control.
+    const declaredKeys = new Set([...Object.keys(declared.fields), ...Object.keys(declared.unheld), ...Object.keys(declared.controls)])
+    for (const row of addresses.agentAddressesForDevice(declared.device)) assert.ok(declaredKeys.has(row.key), `${declared.device}.${row.key}: declared`)
+    for (const [key, why] of Object.entries(declared.unheld)) assert.ok(why.length > 20, `${declared.device}.${key}: why the World Model holds none, in words`)
+  }
+  assert.equal(chainDeclaration('skillset'), undefined, 'the Skillset rack reads Central\'s roster and AIKit\'s sets: it is no declaration of the World Model yet')
+  // A field is a path into a slice's value as the kernel holds it (world_model.rs `part`: {state, reading} or {state, why}).
+  const values = {sessions: {gateway: {state: 'read', reading: {binding: 'gateway-binding/one', agent: {state: 'read', reading: {state: 'ready', model: 'gpt-5'}}}}}}
+  assert.equal(declaredValue(values, chainDeclaration('gateway').fields.binding), 'gateway-binding/one')
+  assert.equal(declaredValue(values, chainDeclaration('gateway').fields.readiness), 'ready')
+  assert.equal(declaredValue(values, chainDeclaration('agent').fields.model), 'gpt-5')
+  assert.equal(declaredValue(values, chainDeclaration('git').fields.workcell), undefined, 'a slice not held: the path stands on nothing')
+  assert.equal(declaredValue({sessions: {gateway: {state: 'refused', why: 'no gateway'}}}, chainDeclaration('gateway').fields.readiness), undefined)
+})

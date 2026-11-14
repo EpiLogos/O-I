@@ -75,8 +75,9 @@ export interface CarriedBindings {
   readonly voice?: DesignBinding | null
 }
 
-/** The session's repository as the chain reads it (kernel git_repository_read for the session's own register, useAgentChainReading.ts and
- * useSessionGit; agent/worldScope.ts): its branch and uncommitted count, its root, the owner's refusal; `openDiff` opens Files' Diff page. */
+/** The session's checkout as the chain reads it: the workcell's seat of the session's project, from the World Model's workcells slice
+ * (designBindings.ts sessionGitOf; agent/worldScope.ts for no session or the root register): its branch and files with no commit, the owner's
+ * refusal, or why no seat is the session's; `openDiff` opens Files' Diff page. */
 export interface AgentGit {
   readonly sessionRef: string | null
   /** The session's register: a project's name, or '' for your world's root register. */
@@ -92,7 +93,7 @@ export interface AgentGit {
  * refusal, or no answer yet. Pure. */
 export function agentGitValues(git: AgentGit): {values: Record<string, Value>; standing: Record<string, Standing>} {
   const absent = gitRepositoryAbsence(git.sessionRef, git.project)
-  const why = absent ?? git.error ?? (!git.repo ? 'The session\'s repository has not answered yet (git_repository_read).' : null)
+  const why = absent ?? git.error ?? (!git.repo ? 'The workcell\'s seat of the session\'s project has not answered yet (`workcell seat status`).' : null)
   if (why || !git.repo) return {values: {}, standing: {'ctx.git': {disabled: why ?? 'No reading of the session\'s repository.'}, 'ctx.diff': {disabled: why ?? 'No reading of the session\'s repository.'}}}
   const repo = git.repoRoot ? git.repoRoot.split('/').filter(Boolean).pop() : git.project
   const reading = {...(git.repo.branch ? {branch: git.repo.branch} : {}), ...(git.repo.uncommitted !== undefined ? {uncommitted: git.repo.uncommitted} : {}), ...(repo ? {repo} : {})}

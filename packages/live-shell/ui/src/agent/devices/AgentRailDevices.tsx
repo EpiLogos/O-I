@@ -9,13 +9,14 @@
 // its tile is claimed in every mode, and Factory's Main track draws this same entry; AIKit's instrument (§19.26) publishes itself beside
 // these (AikitRailDevice.tsx), its widget the rail's AIKit tile.
 //
-// Every read is the window's shared held reading, the same one the chain reads, so publishing here doubles no owner call: the chain's
-// readings (useAgentChainReading.ts — harness_agent_read and git_repository_read go through the kernel's held-read holder,
-// owners/ownerCall.ts installKernelReadHolder; the roster and Workcell's status are owners/readers.ts answers), AIKit's population
+// Every read is the window's shared held reading, the same one the chain reads, so publishing here doubles no owner call: the gateway the
+// chain's Gateway declares (the World Model's sessions slice, owners/model.ts useModelSlice, composed by designBindings.ts chainFromModel —
+// the slice carries AIKit's gateway, its binding and that binding's harness reading), the roster and Workcell's status (owners/readers.ts
+// answers; a kernelRead from an effect goes through owners/ownerCall.ts installKernelReadHolder), AIKit's population
 // (usePopulationAnswer.ts) and the open agent's conversation (its occupant's session, EncounterObservers.tsx), Central's ground (central/devices/useCentralReadings.ts
 // useCentralGroundAnswer), the seat instrument (workcellReads.ts useSeatStatusAnswer — slow, so asked only while the Workcells tile is open
-// or a workcell's return track is selected), AIKit's own gateway journal (workcellReads.ts useGatewayEcology and useGatewayReplays: the
-// Frames monitor's frames, lane W6). Messages' Send is the open agent's conversation's next turn through the one encounter session (O-I #1003), and a drop onto a track AIKit's Action aikit.gateway.delegate (the kernel's act, ownerRoutes.ts). The bindings are the devices' own: messagesBinding.ts, mainTrackBindings.ts (rackBinding,
+// or a workcell's return track is selected), AIKit's own gateway journal (the sessions slice's gateway ecology, and workcellReads.ts
+// useGatewayReplays: the Frames monitor's frames, lane W6). Messages' Send is the open agent's conversation's next turn through the one encounter session (O-I #1003), and a drop onto a track AIKit's Action aikit.gateway.delegate (the kernel's act, ownerRoutes.ts). The bindings are the devices' own: messagesBinding.ts, mainTrackBindings.ts (rackBinding,
 // agencyBinding, framesBinding), receiptBindings.ts ledgerBinding, workcellRackBinding.ts — Workcell's instrument, which changes none of its
 // connections' settings (§19.23) and carries the seat instrument, Ground hygiene's census, the Remote carrier's plan and Central's machine
 // readings as its Seats and Machine pages (oneAgentBinding.ts carryPages).
@@ -35,7 +36,7 @@ import {useAgentShellOptional} from '../AgentShellContext'
 import {fireWritePath} from '../agentNativeDispatch'
 import {trackKey} from '../agentRunModel'
 import {chainDeviceId, slotRows} from './agentChainDevices'
-import {gatewayBinding, holdView, openRefinement, useChainHolds, viewHolds} from './designBindings'
+import {chainFromModel, gatewayBinding, holdView, openRefinement, useChainHolds, viewHolds} from './designBindings'
 import {FRAMES_ID, FRAMES_VIEW, framesBinding, journalAsks, journalSessions, mainDevices, rackBinding} from './mainTrackBindings'
 import {CARRIER_PAGE, CHECKOUTS_PAGE, GATEWAYS_PAGE, LEFT_BEHIND_PAGE, MACHINE_PAGE, SEAT_PAGE, carryPages} from './oneAgentBinding'
 import {AGENT_ROSTER, MESSAGES_ID, MESSAGES_REFUSE, PERSON_ACTS, acceptedProfilesOf, isRosterAgent, madeOf, messagesBinding, messagesDevice, occupantOf, positionRefs, type MessagesPorts} from './messagesBinding'
@@ -45,16 +46,17 @@ import {hostState} from '../../frame/devices/deviceHost'
 import {kernelOp} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import type {GatewayWriteRequest, KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {APPROVALS_ID, LEDGER_ID, approvalsBinding, ledgerBinding, ledgerReceiptSession, receiptDevices, withNoticeReasons} from './receiptBindings'
-import {useAgentChainReading} from './useAgentChainReading'
 import {useAgentConversation} from './useAgentConversation'
 import {ROUTE_WORDS, centralRevisionWrite, gatewayWriteOp, ownerRouteWrite, refinementWrite, refusalWords, workcellWriteOp} from './ownerRoutes'
 import {usePopulationAnswer} from './usePopulationAnswer'
-import {projectOfSession, registerOf, returnProjectOf, ROOT_REGISTER, useWorldReturns} from '../worldScope'
+import {gitRepositoryAbsence, projectOfSession, registerOf, returnProjectOf, ROOT_REGISTER, useWorldReturns} from '../worldScope'
+import {useModelSlice} from '../../owners/model'
+import {useWorkspace} from '../../shell/workspaceContext'
 import {CARRIER_ID, carrierBinding, carrierChainState, carrierValues, gitValues, planRunOf, runDemandOf, seatBinding} from './workcellBindings'
 import {worldsOf} from './workcellMaterial'
 import {useMachineDevice} from '../../central/devices/machineDevice'
 import {WORKCELL_RACK_ID, chosenWorld, workcellGitReading, workcellRackBinding, workcellRackDevice} from './workcellRackBinding'
-import {useActuationRead, useAikitRead, useGatewayEcology, useGatewayReplays, useInstanceUsages, useSeatStatusAnswer, useSourceReturnsAnswer, useWorkcellRead} from './workcellReads'
+import {useActuationRead, useAikitRead, useGatewayReplays, useInstanceUsages, useSeatStatusAnswer, useSourceReturnsAnswer, useWorkcellRead} from './workcellReads'
 import {AikitRailDevice} from './AikitRailDevice'
 import {shownSession} from './threadBinding'
 import {useUnitDecisions, waitingDecisions} from './unitDecisions'
@@ -102,7 +104,13 @@ export function AgentRailDevices() {
   const shell = useAgentShellOptional()
   const sessions = useAgentSessionsOptional()
   const continuity = useOptionalContinuity()
-  const {reading, transport, binding, resolved} = useAgentChainReading(null)
+  const {transport} = useWorkspace()
+  // The gateways and the Frames read the gateway as the chain's Gateway does (inhabitants/agentParamAddresses.ts CHAIN_DECLARATIONS): the
+  // World Model's sessions slice carries it — its conversation binding, that binding's harness reading and its ecology.
+  const sessionsSlice = useModelSlice(transport, 'sessions')
+  const {reading, binding, resolved, ecology} = useMemo(() => chainFromModel({slices: {sessions: sessionsSlice}, sessionRef: null, project: ROOT_REGISTER,
+    absent: gitRepositoryAbsence(null, ROOT_REGISTER), unreachable: transport.kind === 'unavailable' ? transport.reason ?? 'Transport unavailable' : null}),
+  [sessionsSlice, transport])
   const holds = useChainHolds()
   // The rail's register (agent/worldScope.ts): the selected session's own, else your world's root register. Messages read the world's
   // whole population (no project world names it); the Ledger, your groups and the workcell's seat follow the selected session.
@@ -120,10 +128,9 @@ export function AgentRailDevices() {
     if (shown) selectDevice(shown)
   }, [])
   const gateways = useMemo(() => rackBinding({reading, holds, carrier}, {show: showChain}), [reading, holds, carrier, showChain])
-  // The Frames monitor's frames (lane W6): AIKit's own gateway journal — its ecology names the sessions and their Streams, and each Stream of
-  // the session chosen is replayed from where its last Keep frames begin. Refusals are AIKit's words (the installed AIKit may not carry
-  // `gateway replay` yet), drawn as the reason.
-  const ecology = useGatewayEcology(transport, true)
+  // The Frames monitor's frames (lane W6): AIKit's own gateway journal — its ecology (the sessions slice's gateway) names the sessions and
+  // their Streams, and each Stream of the session chosen is replayed from where its last Keep frames begin. Refusals are AIKit's words (the
+  // installed AIKit may not carry `gateway replay` yet), drawn as the reason.
   const framesView = viewHolds(holds, FRAMES_ID)
   const asks = useMemo(() => journalAsks((ecology.status === 'answered' ? journalSessions(ecology.value) : null) ?? [], framesView.session ?? FRAMES_VIEW.session,
     framesView.keep ?? FRAMES_VIEW.keep), [ecology, framesView.session, framesView.keep])

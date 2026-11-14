@@ -284,14 +284,23 @@ test('a refused reading waits on its owner by name; a transport failure is never
 test('the chain earns every lamp from a reading and names who an unlit lamp waits on', async () => {
   const chain = await read('devices/FactoryDeviceChain.tsx')
   const model = await read('devices/agentChainDevices.ts')
-  const readings = await read('devices/useAgentChainReading.ts')
   const pictures = await read('devices/AgentDevicePictures.tsx')
   assert.match(model, /gatewayAdmitted: null,/, 'the gateway lamp is dark until a reading answers — no default-on lamp')
   assert.match(model, /put\('admitted', reading\.gatewayAdmitted\)/, 'the device carries the earned gateway admission, not an assumed one')
-  // Lane Q: the roster, the task record and the seat are the shared owner answers (owners/readers.ts); the lamps are composed
-  // over them, with the same waits.
-  assert.match(readings, /gatewayWaiting: gatewayAnswered \? null : OWNER_BINDINGS\.gateway\.owner/, 'the gateway names AIKit until its reading answers')
-  assert.match(readings, /next\.waitingOn\.git = seatAnswered \? null : OWNER_BINDINGS\.workcell\.owner/, 'the git seat names Workcell until its reading answers')
+  // REPLACED (O-I ticket 1006): the waits were composed in devices/useAgentChainReading.ts over the owners' own reads; the chain's reading is
+  // composed from the World Model's slices (designBindings.ts chainFromModel), with the same waits: AIKit until the gateway's harness reading
+  // answers, Workcell until its status answers.
+  const {chainFromModel} = await import('../src/agent/devices/designBindings.ts')
+  const slice = (name, value) => ({state: 'held', answer: {schema: 'oi.world-model-slice/v1', slice: name, owner: 'kernel', scopes: ['machine'], version: 1, state: 'read', error: null, read_at_unix_ms: 1, value}})
+  const waits = (sessions, workcells) => chainFromModel({slices: {sessions, workcells}, sessionRef: 'agent-session/one', project: 'O-I', absent: null}).reading.waitingOn
+  const reading = {state: 'reading'}
+  assert.deepEqual(waits(reading, reading), {gateway: null, skillset: null, git: null}, 'nothing has answered: no owner is yet said to be waited on')
+  const gateway = agent => slice('sessions', {spaces: [], gateway: {state: 'read', reading: {ecology: {}, binding: 'gateway-binding/one', agent}}})
+  const cells = workcells => slice('workcells', {seats: {state: 'read', reading: {seats: []}}, workcells})
+  assert.equal(waits(gateway({state: 'refused', why: 'the gateway at its socket did not answer'}), reading).gateway, drag.OWNER_BINDINGS.gateway.owner, 'the gateway names AIKit until its reading answers')
+  assert.equal(waits(gateway({state: 'read', reading: {state: 'ready'}}), reading).gateway, null, 'and none once it has')
+  assert.equal(waits(reading, cells({state: 'refused', why: 'workcell: no seat registered'})).git, drag.OWNER_BINDINGS.workcell.owner, 'the git seat names Workcell until its reading answers')
+  assert.equal(waits(reading, cells({state: 'read', reading: {workcell_ref: 'workcell:mac'}})).git, null, 'and none once it has')
   assert.match(pictures, /carried, not admitted/, 'an unlit skill chain says it is carried, not admitted')
   assert.match(pictures, /Waiting on/, 'and the skillset picture names who it waits on')
   assert.doesNotMatch(chain, /'unadmitted'/, 'no bare unadmitted wall')
