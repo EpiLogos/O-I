@@ -1146,59 +1146,471 @@ fn conversations_in_the_sets(world: &World, page: &SavedPage, sessions: &[String
 
 // ------------------------------------------------------------------------ 4
 
-fn factory(world: &World, request: Value) -> Result<Value, String> {
-    let kind = request["kind"].as_str().unwrap_or("?").to_owned();
-    let answer = world.send(json!({"op": "factory_owner", "request": request}))?;
-    answer
-        .get("data")
-        .cloned()
-        .ok_or_else(|| format!("factory_owner {kind} answered no data: {}", clip(&answer)))
+/// An owner asked by its own CLI in one of this World's folders (AIKit resolves the project it works in from there).
+fn owner_in(cwd: &Path, var: &str, name: &str, args: &[&str]) -> Result<Value, String> {
+    let output = Command::new(owner_bin(var, name))
+        .args(args)
+        .current_dir(cwd)
+        .stdin(std::process::Stdio::null())
+        .output()
+        .map_err(|e| format!("{name} could not start: {e}"))?;
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let value: Value = serde_json::from_str(stdout.trim()).map_err(|_| {
+        format!(
+            "{name} {} answered no JSON (exit {}): {}{}",
+            args.join(" "),
+            output.status.code().unwrap_or(-1),
+            stdout.chars().take(300).collect::<String>(),
+            String::from_utf8_lossy(&output.stderr)
+                .chars()
+                .take(300)
+                .collect::<String>()
+        )
+    })?;
+    if !output.status.success() || value["ok"] == false {
+        return Err(format!(
+            "{name} {} refused: {}",
+            args.join(" "),
+            clip(&value)
+        ));
+    }
+    Ok(value.get("data").cloned().unwrap_or(value))
 }
 
-/// A Factory task run to its end in this World, read back from Factory's
-/// own attempt and from Factory's Set (`set_subscribe` factory: the task a
-/// clip, its attempt a take under it). Answers the attempt's ref.
-fn run_a_factory_task(world: &World) -> Result<String, String> {
-    if world.central().join("Work/O-I").exists() {
-        return Err("the fresh World carries a project named O-I".into());
-    }
-    // Where Factory's tasks lie, as Session and Arrangement view draw them: Factory's Set says why it holds none.
-    let set = world.set("factory")?;
-    if let Some(why) = set["tracks"]
+/// The practice an agent carries into a task, made as a person makes it in AIKit's own tools: a skill of their own (a folder of
+/// skills AIKit finds and adopts), put in a Skill Set every harness carries, enabled and trusted. Factory requires a task's unit to
+/// name its practice, and admits it on AIKit's receipt of that practice prepared in the task's NOW; AIKit's NOW service, on a port
+/// of its own, prepares it. Answers the skill's ref.
+fn give_the_agents_their_practice(world: &World) -> Result<&'static str, String> {
+    let aikit = |args: &[&str]| owner_in(&world.central(), "OI_AIKIT_BIN", "aikit", args);
+    let skills = world.home.join(".agents/skills");
+    std::fs::create_dir_all(skills.join("notes-keeper"))
+        .map_err(|e| format!("the skill's folder: {e}"))?;
+    std::fs::write(
+        skills.join("notes-keeper/SKILL.md"),
+        "---\nname: notes-keeper\ndescription: Keep a project's notes file short and in plain words.\n---\n\n\
+         Keep NOTES.md short: one line per note, in plain words.\n",
+    )
+    .map_err(|e| format!("the skill: {e}"))?;
+    let skills = skills.to_string_lossy().into_owned();
+    aikit(&["--json", "init"])?;
+    let plan = aikit(&["--json", "adopt", &skills, "--namespace", "foundation"])?;
+    let digest = plan["review_digest"].as_str().ok_or_else(|| {
+        format!(
+            "AIKit's adoption plan names no review digest: {}",
+            clip(&plan)
+        )
+    })?;
+    aikit(&[
+        "--json",
+        "adopt",
+        &skills,
+        "--namespace",
+        "foundation",
+        "--yes",
+        "--expect-digest",
+        digest,
+    ])?;
+    let skill = "skill/foundation/notes-keeper";
+    aikit(&["--json", "set", "create", "foundation"])?;
+    aikit(&["--json", "set", "add", "foundation", skill])?;
+    aikit(&[
+        "--json",
+        "compose",
+        "repertoire",
+        "--set",
+        "foundation",
+        "--scope",
+        "global",
+        "--apply",
+    ])?;
+    aikit(&["--json", "enable", skill, "--scope", "global", "--apply"])?;
+    aikit(&["--json", "trust", "record", skill])?;
+    let carried = aikit(&["--json", "set", "show", "foundation"])?;
+    if !carried["projected"]
         .as_array()
-        .and_then(|tracks| tracks.iter().find(|row| row["id"] == "factory:runs"))
-        .and_then(|row| row["absent"].as_str())
+        .is_some_and(|refs| refs.iter().any(|r| r == skill))
     {
-        return Err(format!("Factory's Set holds no task: {why}"));
+        return Err(format!(
+            "the Skill Set does not carry {skill}: {}",
+            clip(&carried)
+        ));
     }
-    let located = factory(world, json!({"kind": "locate"}))
-        .map_err(|e| format!("locating Factory in the World: {e}"))?;
-    let rows = located["locations"].as_array().cloned().unwrap_or_default();
-    let state_path = rows
-        .iter()
-        .find(|row| row["state"] == "located")
-        .and_then(|row| {
-            row["state_path"]
+    let port = std::net::TcpListener::bind("127.0.0.1:0")
+        .and_then(|listener| listener.local_addr())
+        .map_err(|e| format!("no free port for AIKit's NOW service: {e}"))?
+        .port()
+        .to_string();
+    aikit(&[
+        "--json",
+        "now-context",
+        "service",
+        "provision",
+        "--port",
+        &port,
+    ])?;
+    let started = aikit(&["--json", "now-context", "service", "start"])?;
+    println!(
+        "AIKit's NOW service at {}",
+        started["address"].as_str().unwrap_or("?")
+    );
+    Ok(skill)
+}
+
+/// Factory's record of an attempt and its log, read by Factory itself (`factory.task.log`).
+fn task_log(world: &World, state: &str, run: &str, attempt: &str) -> Result<Value, String> {
+    action(
+        world,
+        "factory.task.log",
+        json!({"state": state, "run_ref": run, "attempt_ref": attempt}),
+    )
+}
+
+/// A task written on the session and run (the person's press: `factory.task.run` carries their authority). Answers the run's answer
+/// and the task's Run.
+fn write_and_run(
+    world: &World,
+    project: &str,
+    session: &str,
+    instruction: &str,
+) -> Result<(Value, String, String), String> {
+    let written = action(
+        world,
+        "factory.task.write",
+        json!({"world": world.central(), "project": project, "session": session, "instruction": instruction}),
+    )?;
+    let (Some(state), Some(run)) = (
+        written["factory_state"].as_str(),
+        written["run_ref"].as_str(),
+    ) else {
+        return Err(format!(
+            "factory.task.write answered no Run: {}",
+            clip(&written)
+        ));
+    };
+    let ran = action(
+        world,
+        "factory.task.run",
+        json!({"state": state, "run_ref": run, "session": session}),
+    )?;
+    if ran["state"] != "running" || !ran["attempt_ref"].is_string() {
+        return Err(format!(
+            "factory.task.run did not start the task: {}",
+            clip(&ran)
+        ));
+    }
+    Ok((ran, state.to_owned(), run.to_owned()))
+}
+
+/// A Factory task run to its end in a fresh World with a project, through Factory's own Actions as the window presses them (`act`):
+/// an agent of the census seated on a track in the checkout the project's workcell seat holds, a task written and run, its log
+/// streaming, its end an attempt with its diff in that checkout; a second task stopped (paused, then cancelled); the session ended.
+/// Each effect read back from Factory, AIKit, git in the checkout, and Factory's Set (`set_subscribe` factory: the session a track,
+/// the task a clip on it, its attempt a take under it). Answers the attempt's ref.
+fn run_a_factory_task(world: &World) -> Result<String, String> {
+    keep_ground(world)?;
+    let project = "atelier";
+    let central = world.central();
+    // A project of the World, made by Central's own Actions, and a repository standing on main.
+    let work = central.join("Work").join(project);
+    std::fs::create_dir_all(&work).map_err(|e| format!("the project's folder: {e}"))?;
+    let named = json!({"project": project, "project_id": project});
+    action(world, "projectcentral.init", named.clone())?;
+    let shown = action(world, "central.ground.project.preview", named.clone())?;
+    let mut adopt = json!({"actor_kind": "human", "acceptance": "human-accepted",
+        "acceptance_ref": format!("foundation-project:{}", std::process::id()), "expected_digest": shown["digest"]});
+    adopt["project"] = project.into();
+    adopt["project_id"] = project.into();
+    action(world, "central.ground.project.adopt", adopt)?;
+    let git = |cwd: &Path, args: &[&str]| -> Result<String, String> {
+        let output = Command::new("git")
+            .args([
+                "-c",
+                "user.name=foundation",
+                "-c",
+                "user.email=foundation@local",
+            ])
+            .args(args)
+            .current_dir(cwd)
+            .output()
+            .map_err(|e| format!("git could not start: {e}"))?;
+        if !output.status.success() {
+            return Err(format!(
+                "git {} refused: {}",
+                args.join(" "),
+                String::from_utf8_lossy(&output.stderr)
+            ));
+        }
+        Ok(String::from_utf8_lossy(&output.stdout).into_owned())
+    };
+    std::fs::write(
+        work.join("README.md"),
+        "# Atelier\n\nA project of the foundation gate's World.\n",
+    )
+    .and_then(|()| std::fs::write(work.join("NOTES.md"), "# Notes\n"))
+    .map_err(|e| format!("the project's files: {e}"))?;
+    git(&work, &["init", "--quiet", "--initial-branch", "main"])?;
+    git(&work, &["add", "README.md", "NOTES.md"])?;
+    git(&work, &["commit", "--quiet", "-m", "The atelier begins"])?;
+    // A session's Agency is minted in the project's world: the person's standing grant names it beside the World's root.
+    action(
+        world,
+        "actuation.authority.grant-world",
+        json!({"holder": "human:owner", "world": ["control:root", format!("project:{project}")]}),
+    )?;
+    // The World's first workcell, declared by Workcell, and its seat joined by the seat instrument in this World.
+    let declared = action(
+        world,
+        "workcell.declare",
+        json!({"world": central, "project": project}),
+    )?;
+    let checkout = PathBuf::from(
+        declared["checkout"]
+            .as_str()
+            .ok_or("workcell.declare named no checkout")?,
+    );
+    action(
+        world,
+        "workcell.seat.join",
+        json!({"workcell": "env-1", "product": project, "actor": "human:owner", "branch": "atelier-foundation"}),
+    )?;
+    let register: Value = serde_json::from_slice(
+        &std::fs::read(central.join("Control/machines/workcells.register.json"))
+            .map_err(|e| format!("the World's register: {e}"))?,
+    )
+    .map_err(|e| format!("the World's register: {e}"))?;
+    if register["workcells"][0]["seats"][0]["state"] == "free" {
+        return Err(format!(
+            "workcell.seat.join answered, but the World's register holds env-1's seat free: {}",
+            clip(&register)
+        ));
+    }
+    let skill = give_the_agents_their_practice(world)?;
+    println!("every harness carries {skill}, in the Skill Set foundation");
+    let outcome = (|| -> Result<String, String> {
+        let agent = match std::env::var("FOUNDATION_AGENT")
+            .ok()
+            .filter(|agent| !agent.trim().is_empty())
+        {
+            Some(agent) => agent,
+            None => window_agents(world)?
+                .into_iter()
+                .next()
+                .ok_or("no agent on this machine starts")?,
+        };
+        // One press seats the agent on a track: its session opened in the seat's checkout, its record opened.
+        let opened = action(
+            world,
+            "factory.session.start",
+            json!({"agent": agent, "world": central, "project": project}),
+        )?;
+        let (Some(session), Some(track)) = (opened["session"].as_str(), opened["track"].as_str())
+        else {
+            return Err(format!(
+                "factory.session.start opened no session: {}",
+                clip(&opened)
+            ));
+        };
+        if opened["state"] != "open"
+            || opened["checkout"].as_str() != Some(&checkout.to_string_lossy())
+        {
+            return Err(format!(
+                "factory.session.start did not open the session in the seat's checkout: {}",
+                clip(&opened)
+            ));
+        }
+        println!(
+            "{agent} seated on {track}, its record: {}",
+            clip(&opened["record"])
+        );
+        let status = |session: &str| {
+            owner_in(
+                &checkout,
+                "OI_AIKIT_BIN",
+                "aikit",
+                &[
+                    "session-space",
+                    "encounter",
+                    "--request-json",
+                    &json!({"action": "status", "agent_session": session}).to_string(),
+                ],
+            )
+        };
+        status(session).map_err(|e| format!("AIKit does not read the session back: {e}"))?;
+
+        // A task written and run; its log streams while it runs; it ends an attempt returned with its diff.
+        let (ran, state, run) = write_and_run(world, project, session,
+            "Append one line to NOTES.md that says the foundation gate ran a task here. Change no other file, and do not commit.")?;
+        let attempt = ran["attempt_ref"].as_str().unwrap_or_default().to_owned();
+        let task = ran["task_ref"].as_str().unwrap_or_default().to_owned();
+        let deadline = Instant::now() + Duration::from_secs(15 * 60);
+        let mut seen = Vec::new();
+        let ended = loop {
+            let log = task_log(world, &state, &run, &attempt)?;
+            let lines = log["lines"].as_array().map_or(0, Vec::len);
+            if seen.last() != Some(&lines) {
+                seen.push(lines);
+            }
+            let standing = log["attempt"]["status"]
                 .as_str()
-                .or_else(|| row["statePath"].as_str())
-        })
-        .map(str::to_owned)
-        .ok_or_else(|| {
-            let words = rows
-                .iter()
-                .filter_map(|row| row["error"].as_str())
-                .collect::<Vec<_>>()
-                .join("; ");
-            format!("Factory finds no state in a World without a project named O-I: {words}")
-        })?;
-    Err(format!(
-        "Factory is located at {state_path}, but no task can be written and run to its end from the window yet"
-    ))
+                .unwrap_or_default()
+                .to_owned();
+            if log["attempt"]["returned"].is_object()
+                || standing.contains("Returned")
+                || standing.contains("Fail")
+            {
+                break log;
+            }
+            if Instant::now() > deadline {
+                return Err(format!(
+                    "the task did not end within 15 minutes; its log: {}",
+                    clip(&log)
+                ));
+            }
+            std::thread::sleep(Duration::from_secs(3));
+        };
+        if seen.len() < 2 {
+            return Err(format!(
+                "the task's log did not stream: its lines read {seen:?}"
+            ));
+        }
+        if !ended["attempt"]["returned"].is_object() {
+            return Err(format!(
+                "the task ended without a return: {}",
+                clip(&ended["attempt"])
+            ));
+        }
+        let reading = owner(
+            world,
+            "OI_FACTORY_BIN",
+            "factory",
+            &["attempt", "read", &state, &run, "--json"],
+        )?;
+        let record = reading["attempts"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .find(|record| record["attemptRef"] == attempt.as_str());
+        if !record.is_some_and(|record| record["readableReturn"].is_object()) {
+            return Err(format!(
+                "Factory's own attempt read holds no return for {attempt}: {}",
+                clip(&reading)
+            ));
+        }
+        let changed = git(
+            &checkout,
+            &["status", "--porcelain=v1", "--untracked-files=all"],
+        )?;
+        if !changed.lines().any(|line| line.ends_with("NOTES.md")) {
+            return Err(format!(
+                "the task's diff is not in the workcell's checkout: git status reads {changed:?}"
+            ));
+        }
+        println!(
+            "task {task}: its log streamed {seen:?} lines; attempt {attempt} returned, its diff {}",
+            git(&checkout, &["diff", "--stat"])?.trim()
+        );
+
+        // Factory's Set: the session a track, the task a clip on it, its attempt a take under it.
+        let deadline = Instant::now() + Duration::from_secs(90);
+        loop {
+            let set = world.set("factory")?;
+            let clip_of = set["clips"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .find(|clip| clip["subject"] == task.as_str());
+            let on_track = clip_of.is_some_and(|clip| clip["track"] == track);
+            let take = format!("factory:attempt:{attempt}");
+            let taken = clip_of.is_some_and(|clip| {
+                set["takes"]
+                    .as_array()
+                    .into_iter()
+                    .flatten()
+                    .any(|row| row["id"] == take.as_str() && row["clip"] == clip["id"])
+            });
+            let ends = set["tracks"].as_array().into_iter().flatten().any(|row| {
+                row["id"] == track && row["acts"]["endSession"]["action"] == "factory.session.end"
+            });
+            if on_track && taken && ends {
+                break;
+            }
+            if Instant::now() > deadline {
+                return Err(format!("Factory's Set does not hold the task on {track} with its take and End session: clip {}, take {taken}, end {ends}",
+                    clip_of.map(clip).unwrap_or_else(|| "absent".into())));
+            }
+            std::thread::sleep(Duration::from_secs(2));
+        }
+
+        // Stop: a second task paused, then cancelled.
+        let (ran, state, run) = write_and_run(world, project, session,
+            "Read README.md and NOTES.md, then write a long paragraph about them into SUMMARY.md. Do not commit.")?;
+        let second = ran["attempt_ref"].as_str().unwrap_or_default().to_owned();
+        let stop = json!({"state": state, "run_ref": run, "attempt_ref": second});
+        let paused = action(world, "factory.task.stop", stop.clone())?;
+        let cancelled = action(world, "factory.task.stop", stop)?;
+        if paused["state"] != "paused" || cancelled["state"] != "cancelled" {
+            return Err(format!(
+                "Stop did not pause and then cancel: {} then {}",
+                clip(&paused),
+                clip(&cancelled)
+            ));
+        }
+        let log = task_log(world, &state, &run, &second)?;
+        if !log["attempt"]["status"]
+            .as_str()
+            .is_some_and(|status| status.contains("Cancel"))
+        {
+            return Err(format!(
+                "Factory does not read the stopped task cancelled: {}",
+                clip(&log["attempt"])
+            ));
+        }
+        println!(
+            "task {}: paused, then cancelled ({})",
+            ran["task_ref"], log["attempt"]["status"]
+        );
+
+        // One press ends the session: its record closed and its body released.
+        let ended = action(
+            world,
+            "factory.session.end",
+            json!({"world": central, "project": project, "session": session}),
+        )?;
+        if ended["state"] != "ended" || ended["released"]["released"] != true {
+            return Err(format!(
+                "factory.session.end did not end and release the session: {}",
+                clip(&ended)
+            ));
+        }
+        let after = status(session)?;
+        if !after.to_string().contains("Released") {
+            return Err(format!(
+                "AIKit does not read the session released: {}",
+                clip(&after)
+            ));
+        }
+        println!(
+            "session {session} ended, its record: {}",
+            clip(&ended["record"])
+        );
+        Ok(attempt)
+    })();
+    // AIKit's NOW service stopped by its own lifecycle, whatever the act's outcome.
+    if let Err(why) = owner_in(
+        &central,
+        "OI_AIKIT_BIN",
+        "aikit",
+        &["--json", "now-context", "service", "stop"],
+    ) {
+        println!("AIKit's NOW service did not stop: {why}");
+    }
+    outcome
 }
 
 /// Act 4: run a Factory task to its end, read back from Factory's attempt.
 #[test]
-#[ignore = "foundation act: runs the installed owners in a fresh home"]
+#[ignore = "foundation act: runs the installed owners in a fresh home and spends a provider prompt"]
 fn act_4_run_a_factory_task() {
     run("run-a-factory-task", |world| {
         let attempt = run_a_factory_task(world)?;
