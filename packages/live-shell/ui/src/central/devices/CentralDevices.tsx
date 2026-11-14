@@ -73,16 +73,16 @@ import {useAnswerVoice} from './useAnswerVoice'
 import {observedState, useEncounterSessions, type ObservedSession} from '../../agent/devices/EncounterObservers'
 import {composeAgentBinding, withAgentGit} from '../../agent/devices/oneAgentBinding'
 import {ChainSlot, chainLaw, chainSlotOf} from '../../frame/devices/ChainOrder'
-import {useSessionGit} from '../../agent/devices/useAgentChainReading'
+import {useModelSlice} from '../../owners/model'
 import {openSeatDiff} from '../../agent/AgentShellBrowser'
 import {custodyBinding, withCustodyAsks} from '../../agent/devices/sessionChainBindings'
 import {shownSession, threadBinding} from '../../agent/devices/threadBinding'
 import {useAikitRead} from '../../agent/devices/workcellReads'
-import {REFINING_MODE, holdView, openRefinement, useChainHolds, viewHolds} from '../../agent/devices/designBindings'
+import {REFINING_MODE, holdView, openRefinement, sessionGitOf, useChainHolds, viewHolds} from '../../agent/devices/designBindings'
 import {familyFaceDevice} from '../../agent/devices/mainTrackBindings'
 import {APPROVALS_ID, approvalsBinding} from '../../agent/devices/receiptBindings'
 import {centralRevisionWrite, refinementWrite} from '../../agent/devices/ownerRoutes'
-import {observedSessionsOf, returnProjectOf, ROOT_REGISTER, useWorldReturns, worldRegisterOf} from '../../agent/worldScope'
+import {gitRepositoryAbsence, observedSessionsOf, returnProjectOf, ROOT_REGISTER, useWorldReturns, worldRegisterOf} from '../../agent/worldScope'
 import {useAgentSessionsOptional} from '../../agent/AgentSessionsProvider'
 import {MAIN_TRACK_REF} from '../../frame/tracks/SessionGrid'
 import {CENTRAL_DAY_TRACK_ID} from '../../timeline/centralTrackAdapter'
@@ -634,9 +634,12 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
       select: ref => { holdView(CENTRAL_THREAD_HOLD, 'session', ref); holdView(CENTRAL_THREAD_HOLD, 'pin', true) },
     }, CENTRAL_THREAD_HOLD)
   }, [nara.session, threadShown, shownAsks, holds, encounters.handles, agency.tracks, nowUnixMs, own])
-  // The Context page's Git row (§19.4 Context; §23.2): the session's own repository, read in its register — your world's root register keeps
-  // none, and the row says so in the world scope's words — and Diff to Files' Diff page.
-  const sessionGit = useSessionGit(transport, nara.session, naraProject)
+  // The Context page's Git row (§19.4 Context; §23.2): the session's own checkout, the workcell's seat of its project as the World Model's
+  // workcells slice holds it (designBindings.ts sessionGitOf, what Factory's Git / landing reads) — your world's root register keeps none,
+  // and the row says so in the world scope's words — and Diff to Files' Diff page.
+  const workcells = useModelSlice(transport, 'workcells')
+  const sessionGit = useMemo(() => sessionGitOf(workcells, nara.session, naraProject, gitRepositoryAbsence(nara.session, naraProject)),
+    [workcells, nara.session, naraProject])
   const agent = useMemo(() => withAgentGit(composeAgentBinding(own, {custody, identity, thread, voice: voiceDesign}), {...sessionGit, openDiff: openSeatDiff}),
     [own, custody, identity, thread, voiceDesign, sessionGit])
   // The line where you type @ (§18.4): an @ word in the Agent's composer opens Search in a pane on it (searchPane.tsx).
