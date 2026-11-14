@@ -55,6 +55,9 @@ export interface DesignBinding {
   /** Send changes to the owner. Absent: nothing here writes, and every value is a reading. A refusal rejects with the owner's
    * own words. */
   readonly write?: (changes: readonly ValueChange[]) => Promise<void>
+  /** The hand's moves before it lets go (a drag), and null once it has (deviceHost.tsx): the owner may preview them and record them on a
+   * take that records. Nothing is written by a move: the release's drafts go to `write` as ever. */
+  readonly drag?: (changes: readonly ValueChange[] | null) => void
   /** Whether the owner takes a change of this key (absent: every key the owner is asked for). */
   readonly writes?: (key: string) => boolean
   /** Who holds a value that is not yours right now (an agent, the sky, an instrument), by key. */
@@ -97,6 +100,7 @@ export function bindingOf(device: DeviceInstance): DesignBinding {
     id: device.id,
     values,
     ...(device.submit ? {write: device.submit} : {}),
+    ...(device.drag ? {drag: device.drag} : {}),
     // A row with no write path is a reading (lock §0.4); a key the device does not declare is the owner's to refuse.
     writes: key => !known.has(key) || writable.has(key),
     ...(device.heldBy ? {heldBy: device.heldBy} : {}),

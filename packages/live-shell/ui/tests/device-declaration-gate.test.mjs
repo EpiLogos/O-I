@@ -15,8 +15,9 @@
 // reading while its owner cannot take it, with the reason; Central's instances are also built with no reading at all and with
 // none of its apertures, because Central keeps its write row at every size whether or not an owner stands.
 //
-// Channels: SCRIPTED over the production builders (no screen). Families whose builders need a live harness or an editor reading
-// (Expressions, the atlas, the knowledge graph) are not reached here; `declarationFaults` is exported for them to add.
+// Channels: SCRIPTED over the production builders (no screen). Expressions' field devices are built over an editor reading with the
+// Studio the kernel's Set gives its Scene laid over it (O-I ticket 1008). Families whose builders need a live harness (the atlas, the
+// knowledge graph) are not reached here; `declarationFaults` is exported for them to add.
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {register} from 'node:module'
@@ -57,6 +58,8 @@ const {torusDevice} = await import('../src/live/torusDevice.ts')
 const ql = await import('../src/inhabitants/ql/devices/qlDevices.ts')
 const agent = await import('../src/agent/devices/agentChainDevices.ts')
 const vertical = await import('../src/central/centralVertical.ts')
+const expressions = await import('../src/components/devices/expressionsDevice.ts')
+const {FIELD_DEVICE} = await import('../src/components/devices/fieldInstrument.ts')
 
 /** The gate. `instance` is a `DeviceInstance` (frame/devices/deviceRuntime.ts). Returns the faults, each naming the instance. */
 export function declarationFaults(instance) {
@@ -158,6 +161,35 @@ test('Central: every declared face\'s instance keeps its declaration, whatever t
   // ("Answer is the Agent on a page's chain", PROGRAMME R25 item 5; "Flow, Beings and Things are a page's Clip panel and editor tabs", item 4).
   // The Agent's light binds the dialogue on that op (central-devices-chain.test.mjs), and the Flow's states are its binding's reading.
   for (const id of ['nara-conversation', 'flow-document']) assert.ok(!centralFaces.some(face => face.id === id), `${id}: retired`)
+})
+
+// ── Expressions: the field devices over the Set's Studio (O-I ticket 1008) ──────────────────────────────────────────────────────
+
+// The open work as the retained editor reads it (the minimum the devices read), and the Studio the kernel's Set gives its Scene (kernel
+// mode_set.rs Studio): each device is built over the reading with the Studio laid over it, with a send, as the Studio holds it.
+const GATE_SCENE = {name: 'Gate', entities: [], automation: [], morph: {law: 'theta'}, composition: {focus: 'parallel', frequencyDriver: 'manual'},
+  engine: {mediumEnabled: false, resonanceEnabled: false, collisionEnabled: false, pairwiseEnabled: false, morphEnabled: false, colorEnabled: false,
+    trajectory: 'toroidalHopf', driveShape: 'sine', colorMode: 'linearGradient', mediumPlane: 'vertical', autoOscillate: true, pointerMode: 'attract',
+    relationalEnabled: false, volumeEnabled: false},
+  field: {background: '#ffffff', palette: ['#112233', '#445566', '#778899'], material: 'ink', params: {}}}
+const GATE_READING = {basis: {expression_ref: 'expression:gate', revision: 1, scene_ref: 'scene:gate', authored_revision: 1}, scene: GATE_SCENE,
+  entityOccurrences: {}, chosenControls: {available: false, entries: [], controls: []}, devices: [], selection: {entity_ids: [], step_id: null},
+  history: {canUndo: false, canRedo: false}, standing: {dirty: false, pending: false, notice: null}}
+const GATE_STUDIO = {scene_ref: 'scene:gate', values: {}, settings: {'field-setting:mediumPlane': 'vertical', 'morph-setting:trajectory': 'toroidalHopf'}, held: [],
+  act: {action: 'expressions.studio.set', input: {expression_ref: 'expression:gate', scene_ref: 'scene:gate'}, takes: '*', words: 'Expressions\' expressions.studio.set'}}
+const STUDIO_ACT_PATH = 'act:expressions.studio.set'
+const expressionsInstances = expressions.expressionsFieldEntries().map(entry => ({source: 'expressions, the Set\'s Studio given',
+  instance: expressions.expressionsFieldDevice(expressions.studioReading(GATE_READING, GATE_STUDIO), entry.family, async () => ({ok: true, reading: GATE_READING}))}))
+
+test('Expressions: every field device keeps its declaration and writes through the Studio\'s act, never the frame\'s retained editor', () => {
+  assert.equal(expressionsInstances.length, 11, 'the eleven field devices of the catalogue')
+  assert.deepEqual(expressionsInstances.flatMap(({instance}) => declarationFaults(instance)), [])
+  for (const {instance} of expressionsInstances) {
+    assert.deepEqual([...new Set(instance.rows.filter(row => row.writePath).map(row => row.writePath))], [STUDIO_ACT_PATH], `${instance.id} writes through the Studio's act alone`)
+  }
+  // Physics is the sounding instrument: it generates through that act. The Field, the front of these devices, declares the same.
+  assert.equal(expressionsInstances.find(({instance}) => instance.face.id === 'physics').instance.face.invariant.generates, STUDIO_ACT_PATH)
+  assert.equal(FIELD_DEVICE.face.invariant.generates, STUDIO_ACT_PATH)
 })
 
 // ── the other families this gate can reach ────────────────────────────────────────────────────────────────────────────────────────

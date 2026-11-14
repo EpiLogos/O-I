@@ -535,7 +535,10 @@ export function HostedDevice({designed, fallback, binding, view: asked, nav: giv
     })
   }, [title])
   const set = useCallback((key: string, value: Value | undefined) => {
-    if (setHosted(live.current, key, value) && !dragging.current) send()
+    if (!setHosted(live.current, key, value)) return
+    // A move while the hand is down is told to the binding (a preview, a take's sample); the release sends the drafts.
+    if (dragging.current) { if (value !== undefined) live.current.drag?.([{key, value}]) }
+    else send()
   }, [send])
   const props: HostedViewProps = useMemo(() => ({
     v: hostedValues(state, binding.values),
@@ -550,7 +553,7 @@ export function HostedDevice({designed, fallback, binding, view: asked, nav: giv
     ...(room ? {room} : {}),
     ...(member ? {member} : {}),
   }), [state, binding, set, nav, designed.firstPage, id, keys, wraps, frame, room, member])
-  const release = () => { if (!dragging.current) return; dragging.current = false; send() }
+  const release = () => { if (!dragging.current) return; dragging.current = false; send(); live.current.drag?.(null) }
   // The place's boundary: the device's own view, else the generic plate's with the reason, else the reason alone.
   const plain = fallback && fallback !== designed ? fallback : null
   // A design and the generic plate share the device's id: the boundary starts afresh when either takes the place, or the view changes.

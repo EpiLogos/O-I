@@ -115,10 +115,13 @@ function spanOf(span: ModeSetSpan | undefined, at: (ms: number) => number | unde
   return end === undefined ? {start} : {start, end: Math.max(start, end)}
 }
 
-/** An act's input with the person's value in the place the act takes it. */
+/** An act's input with the person's value in the place the act takes it: under its key, or, where the act takes it whole (`*`), each of
+ * its fields beside the Set's (a cut's point, a take's stretch, a Studio write). */
 const inputOf = (act: ModeSetAct, value?: unknown): Record<string, unknown> => {
   const input = act.input && typeof act.input === 'object' && !Array.isArray(act.input) ? {...act.input as Record<string, unknown>} : {}
-  if (act.takes && value !== undefined) input[act.takes] = value
+  if (act.takes === '*') {
+    if (value && typeof value === 'object' && !Array.isArray(value)) Object.assign(input, value)
+  } else if (act.takes && value !== undefined) input[act.takes] = value
   return input
 }
 

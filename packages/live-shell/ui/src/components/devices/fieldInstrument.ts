@@ -31,17 +31,18 @@ import {NATIVE_BINDINGS} from '@epilogos/expressions-boundary/parameters'
 import type {DesignBinding, Standing, Value, ValueChange} from '../../frame/devices/designed'
 import type {DeviceInstance, ParamValue} from '../../frame/devices/deviceRuntime'
 import type {DeviceDeclaration} from '../../inhabitants/sdk/define'
-import {ENABLED_KEY, SETTING_PREFIX, expressionsSettingChange, expressionsSettingChoices, expressionsSettingRead} from './expressionsDevice'
+import {ENABLED_KEY, EXPRESSIONS_WRITE_PATH, SETTING_PREFIX, expressionsSettingChange, expressionsSettingChoices, expressionsSettingRead} from './expressionsDevice'
 
 /** The design's id, and the device's id on the door (designKey('expressions', 'field')). */
 export const FIELD_DESIGN = 'expressions:field'
 export const FIELD_DEVICE_ID = 'expressions:field'
 
 /** The Field as a device of the runtime: no rows of its own, its values its binding's. Its family and face are the design's key, so the
- * door hands it to the Studio's Full at the Field's place (expressions__studio.tsx Suite, deviceDoor.ts publishedByDesign). */
+ * door hands it to the Studio's Full at the Field's place (expressions__studio.tsx Suite, deviceDoor.ts publishedByDesign). It generates
+ * through the Studio's act, as the field devices it fronts do (O-I ticket 1008). */
 export const FIELD_DEVICE: DeviceInstance = {
   id: FIELD_DEVICE_ID, family: 'expressions', rows: [], values: {},
-  face: {id: 'field', title: 'Field', icon: 'expr', liveSemantic: 'device-instrument', invariant: {generates: 'kernel:native_expression'},
+  face: {id: 'field', title: 'Field', icon: 'expr', liveSemantic: 'device-instrument', invariant: {generates: EXPRESSIONS_WRITE_PATH},
     note: 'The field of an Expression (DLW §20.2): its sound, level, tempo and key, the front of the owners its field devices carry.'} as DeviceDeclaration,
 }
 

@@ -18,7 +18,7 @@
 // Every write leaves through the owner path it used before: the retained editor's one request, the device's own submit, the stage's runner.
 import {useCallback, useEffect, useMemo, useRef, useState, type DragEvent, type ReactNode} from 'react'
 import {addressLink} from '@epilogos/expressions-boundary'
-import type {NativeEditorChange, NativeEditorReading, NativeEditorReply, NativeEditorRequest, NativeSequenceSettings} from '@epilogos/expressions-boundary/editor'
+import type {NativeEditorBasis, NativeEditorChange, NativeEditorReading, NativeEditorReply, NativeEditorRequest, NativeSequenceSettings} from '@epilogos/expressions-boundary/editor'
 import {InstrumentPlate, type PlateSection} from '../../../frame/devices/InstrumentPlate'
 import {OwnerValueBox, PlateRadio, PlateReading} from '../../../frame/devices/plateControls'
 import {DeviceView} from '../../../frame/devices/DeviceView'
@@ -39,7 +39,7 @@ import {TorusPicture, useTorusChainBinding} from '../../../live/TorusOnChain'
 import {useHolds} from '../../../techne/devices/designDevices'
 import {expressionsDeviceId} from '../../devices/expressionsDevice'
 import {ACTS_EDITOR, editorDevice} from '../../devices/summonedEditors'
-import {openFieldDeviceFull, useEditorApply, useFieldDevices} from '../../devices/ExpressionsDeviceView'
+import {openFieldDeviceFull, useEditorApply, useFieldDevices, useStudioHost} from '../../devices/ExpressionsDeviceView'
 import {useFieldInstrument} from '../../devices/useFieldInstrument'
 import {forceStripDevice, selectedEntity} from '../../nativeDeviceStripModel'
 import {DEVICE_MIME, PARAMETER_BROWSE_EVENT, activeDrag, afterIdFor, dispatchOpenDevice, parseDeviceDrag} from '../../nativeDrag'
@@ -190,9 +190,15 @@ export function ExpressionsStudio(props: ExpressionsStudioProps) {
   const naraOn = !!naraControl && !naraWhy
   // The Studio's own last act, held across its readings: a press before the next reading stands on the revision that act made (O12).
   const lastAct = useRef<StudioOwn['current']>(null)
-  const binding = useMemo(() => studioBinding({reading, chains, nara}, {request, browse, own: lastAct,
+  // A macro's value and a chain's On are the Studio's: written through its act; the rest of an apply (the order of your controls, their
+  // scope) and Save, Undo and Redo stay the retained editor's own requests (O-I ticket 1008).
+  const studioHost = useStudioHost({reading, apply: (changes: readonly NativeEditorChange[], basis?: NativeEditorBasis) => request({operation: 'apply', basis: basis ?? reading!.basis, changes})})
+  const studioApply = studioHost.apply
+  const studioRequest = useCallback((asked: NativeEditorRequest): Promise<NativeEditorReply> =>
+    asked.operation === 'apply' ? studioApply(asked.changes, asked.basis) : request(asked), [request, studioApply])
+  const binding = useMemo(() => studioBinding({reading, chains, nara}, {request: studioRequest, browse, own: lastAct,
     show: family => latest.current.show(family), pane: family => latest.current.pane(family), nara: naraOn ? () => latest.current.nara?.() : null}),
-  [reading, chains, nara, request, browse, naraOn])
+  [reading, chains, nara, studioRequest, browse, naraOn])
   useEffect(() => { publishDevice(STUDIO_DEVICE_ID, {device: STUDIO_DEVICE, binding}) }, [binding])
   useEffect(() => () => publishDevice(STUDIO_DEVICE_ID, null), [])
 

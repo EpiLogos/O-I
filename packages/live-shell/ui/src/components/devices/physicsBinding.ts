@@ -120,6 +120,11 @@ export function physicsDesignBinding(device: DeviceInstance, reading: Pick<Nativ
       if (rows.length) await submit(rows)
       for (const action of presses) press(action)
     }} : {}),
+    // The hand's moves before it lets go reach the device as its rows (a preview, a take's sample); a press is no move.
+    ...(submit && device.drag ? {drag: (changes: readonly ValueChange[] | null) => {
+      if (changes === null) { device.drag!(null); return }
+      try { const {rows} = physicsRowChanges(changes); if (rows.length) device.drag!(rows) } catch { /* said on release */ }
+    }} : {}),
     ...(Object.keys(modulatedBy).length ? {modulatedBy} : {}),
   }
 }

@@ -9,13 +9,17 @@ import {openFieldSound, setFieldSoundMuted} from '../../native/frameSound'
 import {useFrameTakeLink} from '../../native/frameTakes'
 import type {Apply} from '../nativeDeviceCustody'
 import {claimDevice, type DeviceClaim} from './devicePublication'
+import {useStudioHost} from './ExpressionsDeviceView'
 import {FIELD_DEVICE, FIELD_DEVICE_ID, fieldBinding, fieldSoundWhy, type FieldDevices, type FieldSound} from './fieldInstrument'
 
-/** The Field over the Studio's field devices and the editor's one apply, published while a native Expression is open. Returns its binding. */
+/** The Field over the Studio's field devices and the Studio's one act, published while a native Expression is open: its values the Studio
+ * the kernel's Set gives the Scene, its own settings written through that act (O-I ticket 1008; ExpressionsDeviceView.tsx useStudioHost).
+ * Returns its binding. */
 export function useFieldInstrument(devices: readonly {readonly family: string; readonly device: DeviceInstance | null}[],
   host: {readonly reading: NativeEditorReading | null; readonly apply: Apply; readonly locked: boolean}) {
   const link = useFrameTakeLink()
-  const {reading, apply, locked} = host
+  const {reading, apply} = useStudioHost(host)
+  const {locked} = host
   const presented = link.state?.nativeScene?.expression_ref ?? null
   // The Field's Sound is the frame's mute here, as it reports it (round 885): what is heard, never the Activator.
   const muted = link.state?.soundMuted ?? null
@@ -27,7 +31,7 @@ export function useFieldInstrument(devices: readonly {readonly family: string; r
       ...(closed ? {closed, open: link.run ? () => openFieldSound(link) : null} : {})}
   }, [link, presented, muted, closed])
   const held: FieldDevices = useMemo(() => Object.fromEntries(devices.map(entry => [entry.family, entry.device])), [devices])
-  // The editor's apply is read at each press, as the field devices read it (useFieldDevices): the binding changes only with what it reads.
+  // The Studio's apply is read at each press, as the field devices read it (useFieldDevices): the binding changes only with what it reads.
   const latest = useRef(apply)
   latest.current = apply
   const binding = useMemo(() => reading ? fieldBinding({reading, devices: held, sound,

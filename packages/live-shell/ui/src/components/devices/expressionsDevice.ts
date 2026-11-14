@@ -5,17 +5,20 @@
 //
 // Nothing here is a second reading. The rows are the catalogue's own (components/nativeDeviceCatalogue.ts: the paths, the
 // groups, the four compact controls, the enable light and its toggle), the labels and ranges are the native bindings'
-// (expressions-boundary parameters), the values are the retained editor's reading (baseValue over the reading's scene), and a
-// change leaves as the editor's own admitted change kinds — `parameter`, `field-setting`, `panel-setting`, `morph-setting`,
-// `colour-setting` — through the one `apply` the rack already holds. Owners write, faces read (lock §0.4): every row here
-// carries the write path of that owner (`kernel:native_expression`); a light is the owner's `enabled` reading and stays dark
-// when the catalogue discloses no enable operation (physics, pointer, ink).
+// (expressions-boundary parameters), the values are the Set's Studio (kernel mode_set.rs; O-I ticket 1008: each Field value at
+// its bind and each setting the Scene holds, laid over the reading's scene by `studioReading`), and a change leaves as the
+// editor's own admitted change kinds — `parameter`, `field-setting`, `panel-setting`, `morph-setting`, `colour-setting` — each
+// one Studio write (`studioWriteOf`) through the Studio's act. Owners write, faces read (lock §0.4): every row here carries the
+// act it writes through (`act:expressions.studio.set`); a light is the owner's `enabled` reading and stays dark when the
+// catalogue discloses no enable operation (physics, pointer, ink).
 import type {DeviceDeclaration, SdkParamRow} from '../../inhabitants/sdk/define'
 import type {IconName} from '../../inhabitants/sdk/icons'
 import type {DeviceInstance, ParamValue} from '../../frame/devices/deviceRuntime'
 import type {NativeEditorBasis, NativeEditorChange, NativeEditorReading, NativeEditorReply, Scene} from '@epilogos/expressions-boundary/editor'
 import {NATIVE_BINDINGS, baseValue} from '@epilogos/expressions-boundary/parameters'
-import {NATIVE_COLOUR_MODES, NATIVE_MORPH_SETTINGS, validateNativeColourChange, validateNativeFieldPanelChange, validateNativeMorphSetting} from '../../../../../expressions-boundary/src/nativeDeviceEdits'
+import {NATIVE_COLOUR_MODES, NATIVE_COLOUR_SETTINGS, NATIVE_FIELD_SETTINGS, NATIVE_MORPH_SETTINGS, validateNativeColourChange, validateNativeFieldPanelChange, validateNativeMorphSetting} from '../../../../../expressions-boundary/src/nativeDeviceEdits'
+import {FIELD_PANEL_SETTINGS} from '../../../../../expressions-boundary/src/nativeFieldPanelSettings'
+import type {ModeSetStudio} from '../../../../../../desktop/cradle/src/kernel/types'
 import {EXPRESSIONS_FACE_SEMANTICS} from '../../expressions/expressionsFamilyManifest.ts'
 import {deviceCatalogue, type RackDevice} from '../nativeDeviceCatalogue.ts'
 import {morphSettingValue} from '../nativeMorphController.ts'
@@ -23,8 +26,9 @@ import {stripToggleChanges} from '../nativeDeviceStripModel'
 import {modulationOf, modulationView} from '../nativeModulation'
 
 export const EXPRESSIONS_DEVICE_FAMILY = 'expressions'
-/** The owner every row writes through: the retained native expression (the same op the Expressions faces declare they generate by). */
-export const EXPRESSIONS_WRITE_PATH = 'kernel:native_expression'
+/** The act every row writes through: the Set's Studio act, through the kernel's one write door (O-I ticket 1008; the same path the
+ * Expressions faces declare they generate by). */
+export const EXPRESSIONS_WRITE_PATH = 'act:expressions.studio.set'
 /** The row of the device's own on/off light, when the catalogue discloses an enable operation. */
 export const ENABLED_KEY = 'enabled'
 /** A discrete setting's row key: `set:` and the owner's own key for it. */
@@ -225,6 +229,70 @@ function settingChange(spec: SettingSpec, value: ParamValue): NativeEditorChange
 }
 
 // ---------------------------------------------------------------------------
+// the Set's Studio: what the devices read, and the write each change is
+
+/** The setting kinds the Studio writes, each with its keys (the boundary's own tables, which the kernel's Studio table is generated
+ * from: expressions-boundary tests/studio-table.test.mjs). */
+const STUDIO_SETTINGS: Readonly<Record<string, readonly string[]>> = {
+  'field-setting': Object.keys(NATIVE_FIELD_SETTINGS), 'morph-setting': Object.keys(NATIVE_MORPH_SETTINGS),
+  'colour-setting': Object.keys(NATIVE_COLOUR_SETTINGS), 'panel-setting': Object.keys(FIELD_PANEL_SETTINGS),
+}
+
+/** Where a setting stands in a Scene: the path the Studio table reads it at (studio-table.test.mjs `studioTable`). */
+function settingPath(kind: string, key: string): string | null {
+  if (kind === 'field-setting' || kind === 'colour-setting') return `engine.${key}`
+  if (kind === 'morph-setting') return key === 'law' ? 'morph.law' : `engine.${key}`
+  const spec = (FIELD_PANEL_SETTINGS as Readonly<Record<string, {target: string}>>)[key]
+  return kind === 'panel-setting' && spec ? (spec.target === 'scene' ? key : `${spec.target}.${key}`) : null
+}
+
+function putPath(root: Record<string, unknown>, path: string, value: unknown): void {
+  const keys = path.split('.')
+  let at = root
+  for (const key of keys.slice(0, -1)) {
+    const next = at[key]
+    at = (at[key] = next && typeof next === 'object' && !Array.isArray(next) ? {...next as Record<string, unknown>} : {}) as Record<string, unknown>
+  }
+  if (value === undefined) delete at[keys.at(-1)!]
+  else at[keys.at(-1)!] = value
+}
+
+/** The reading's Scene with the Set's Studio laid over it (O-I ticket 1008): every Field value at its bind, every setting the Scene holds at
+ * its path, and a setting the Studio says the Scene does not hold taken away, so each value and setting a device shows is the kernel's.
+ * What the Studio does not carry (the Scene's entities, its lanes, its palette) stays the reading's, for the pictures and the lines that
+ * name what moves a value. Pure. */
+export function studioScene(scene: Scene, studio: Pick<ModeSetStudio, 'values' | 'settings'>): Scene {
+  const root = {...scene as unknown as Record<string, unknown>}
+  for (const [bind, value] of Object.entries(studio.values)) if (typeof value === 'number' && Number.isFinite(value)) putPath(root, bind, value)
+  for (const [kind, keys] of Object.entries(STUDIO_SETTINGS)) for (const key of keys) {
+    const path = settingPath(kind, key)
+    if (path) putPath(root, path, studio.settings[`${kind}:${key}`])
+  }
+  return root as unknown as Scene
+}
+
+/** The reading the devices draw: the editor's reading with the Studio of its Scene laid over it, where the Set gives the Studio of the Scene
+ * the reading presents; else the reading as it stands. Pure. */
+export function studioReading(reading: NativeEditorReading, studio: Pick<ModeSetStudio, 'scene_ref' | 'values' | 'settings'> | null): NativeEditorReading {
+  return studio && studio.scene_ref === reading.basis.scene_ref ? {...reading, scene: studioScene(reading.scene, studio)} : reading
+}
+
+/** One write of the Studio's act: a Field value by its bind, or a setting by its kind and key. */
+export type StudioWrite = {readonly bind: string; readonly value: unknown} | {readonly setting: {readonly kind: string; readonly key: string}; readonly value: unknown}
+
+/** The Studio write an editor change is, or null for a change the Studio does not take (a palette's stops, a route: the editor's own edits).
+ * Pure. */
+export function studioWriteOf(change: NativeEditorChange): StudioWrite | null {
+  const row = change as unknown as {kind?: string; target?: unknown; key?: unknown; value?: unknown}
+  if (row.kind === 'parameter') {
+    const found = typeof row.target === 'string' ? NATIVE_BINDINGS.find(binding => `field.${binding.key}` === row.target || binding.bind === row.target) : undefined
+    return found ? {bind: found.bind, value: row.value} : null
+  }
+  return typeof row.kind === 'string' && typeof row.key === 'string' && STUDIO_SETTINGS[row.kind]?.includes(row.key)
+    ? {setting: {kind: row.kind, key: row.key}, value: row.value} : null
+}
+
+// ---------------------------------------------------------------------------
 // the rows
 
 const binding = (path: string) => NATIVE_BINDINGS.find(row => row.path === path)
@@ -280,7 +348,7 @@ export function expressionsFieldDeclaration(entry: RackDevice): DeviceDeclaratio
   return {
     id: entry.family, title: entry.name, icon: EXPRESSIONS_DEVICE_ICONS[entry.family] ?? 'form', liveSemantic: semantic.liveSemantic,
     ...(semantic.invariant ? {invariant: semantic.invariant} : {}),
-    note: `The ${entry.name} field device of the open Expression: every setting is the retained editor's own reading, and a change goes through its one apply.`,
+    note: `The ${entry.name} field device of the open Expression: every setting is the Studio the kernel's Set gives its Scene, and a change goes through the Studio's act.`,
   } as DeviceDeclaration
 }
 
@@ -291,6 +359,9 @@ export function expressionsFieldDeclaration(entry: RackDevice): DeviceDeclaratio
  * private input custody can retain them (fieldDeviceSend.ts); a host without simply applies. */
 export interface NumericEdit {readonly id: string; readonly value: number; readonly initial: number}
 export type FieldDeviceSend = (edits: readonly NativeEditorChange[], numeric: readonly NumericEdit[], basis: NativeEditorBasis) => Promise<NativeEditorReply>
+/** The hand moving a device's values (a drag, before its release): the edits it would make, or null when the hand lets go. Nothing is
+ * written: the host previews them, and samples them into a take that records (fieldDeviceSend.ts studioDrag). */
+export type FieldDeviceDrag = (edits: readonly NativeEditorChange[] | null) => void
 
 /** The editor's changes for a set of row changes. Throws, naming the row, when a change is not one this device can make. */
 export function fieldDeviceEdits(entry: RackDevice, reading: NativeEditorReading, changes: readonly {key: string; value: ParamValue}[]): {edits: NativeEditorChange[]; numeric: NumericEdit[]} {
@@ -318,8 +389,9 @@ export function fieldDeviceEdits(entry: RackDevice, reading: NativeEditorReading
   return {edits, numeric}
 }
 
-/** One field device over the owner's reading. `send` absent: every row is a reading (the work is busy or not yet read). */
-export function expressionsFieldDevice(reading: NativeEditorReading, family: string, send: FieldDeviceSend | null): DeviceInstance | null {
+/** One field device over the owner's reading. `send` absent: every row is a reading (the work is busy or not yet read). `drag`: what the
+ * hand's moves before its release are told to. */
+export function expressionsFieldDevice(reading: NativeEditorReading, family: string, send: FieldDeviceSend | null, drag: FieldDeviceDrag | null = null): DeviceInstance | null {
   const entry = expressionsFieldEntry(family)
   if (!entry) return null
   const rows = [...settingRows(entry), ...numericRows(entry, reading)]
@@ -344,9 +416,16 @@ export function expressionsFieldDevice(reading: NativeEditorReading, family: str
       if (!reply.ok) throw Error(reply.error)
     }
     : undefined
+  // A move the device cannot make is no preview: it is refused, in words, when the hand lets go.
+  const dragged: DeviceInstance['drag'] = send && drag
+    ? changes => {
+      if (changes === null) { drag(null); return }
+      try { drag(fieldDeviceEdits(entry, reading, changes).edits) } catch { /* said on release */ }
+    }
+    : undefined
   return {
     id: expressionsDeviceId(entry.family), family: EXPRESSIONS_DEVICE_FAMILY, face: expressionsFieldDeclaration(entry), rows, values,
-    ...(typeof on === 'boolean' ? {enabledKey: ENABLED_KEY} : {}), ...(submit ? {submit} : {}),
+    ...(typeof on === 'boolean' ? {enabledKey: ENABLED_KEY} : {}), ...(submit ? {submit} : {}), ...(dragged ? {drag: dragged} : {}),
   }
 }
 

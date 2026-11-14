@@ -37,6 +37,8 @@ import {closedWork, expressionOwner, openListedWork} from '../components/nativeE
 // held as the presented work's, and a deleted work closed.
 import {frameActs} from '../components/nativeExpressionCommands'
 import {publishFrameTakeLink} from '../native/frameTakes'
+import {holdsToFollow, studioHolds} from '../components/devices/fieldDeviceSend'
+import {useWorkStudio} from '../components/devices/ExpressionsDeviceView'
 import {publishHostedChrome, publishHostedExpressions, useFramePlacement} from '../projections/expressionsPaneHost'
 import {followFrame} from '../projections/framePlacement'
 import {registerExpressionsPaneHost} from '../projections/expressionsPane'
@@ -177,6 +179,32 @@ export function ExpressionsPanel() {
   useEffect(() => {publishFrameTakeLink({state: stage, run: host.current ? stageRun : null})}, [stage])
   useEffect(() => {followMoved(movedWorks(workspace.receipts))}, [workspace.receipts])
   useEffect(() => () => publishFrameTakeLink({state: null, run: null}), [])
+  // The frame follows the kernel (O-I ticket 1008): where an Action moved the presented work past the revision the frame shows (a Studio
+  // write, a take kept, a Scene saved), the frame reads the work again in place (the host's refresh-expression), one read at a time and
+  // once per revision told. The frame's own commits already stand at the revision their receipt names, so they ask nothing.
+  const stageNow = useRef(stage)
+  stageNow.current = stage
+  const following = useRef<{ref: string; asked: number; reading: boolean}>({ref: '', asked: 0, reading: false})
+  const followKernel = () => {
+    const shown = stageNow.current?.nativeScene, frame = host.current
+    if (!shown || !frame || following.current.reading) return
+    const ahead = movedWorks(workspaceRef.current.receipts).reduce((top, work) => work.expression_ref === shown.expression_ref ? Math.max(top, work.revision) : top, shown.revision)
+    if (ahead <= shown.revision || following.current.ref === shown.expression_ref && ahead <= following.current.asked) return
+    let read: Promise<unknown>
+    try {read = frame.openExpression(shown.expression_ref, 'world.expressions', {refresh: true})} catch {return}
+    following.current = {ref: shown.expression_ref, asked: ahead, reading: true}
+    void read.catch(() => {}).finally(() => {following.current = {...following.current, reading: false}; followKernel()})
+  }
+  useEffect(followKernel, [workspace.receipts, stage])
+  // And holds what the kernel holds: where the Set's Studio holds a value off its lane (a release over a lane, a Re-enable giving one back)
+  // or the frame presents another Scene, the frame's holds are made the kernel's (fieldDeviceSend.ts holdsToFollow).
+  const shownScene = stage?.nativeScene ?? null
+  const kernelHolds = JSON.stringify(studioHolds(useWorkStudio(shownScene?.expression_ref ?? null), shownScene))
+  useEffect(() => {
+    const frame = stageNow.current
+    if (!host.current || !frame?.nativeScene) return
+    for (const command of holdsToFollow(JSON.parse(kernelHolds) as {target: string; value: number}[], frame.automationHolds ?? [])) void stageRun(command).catch(() => {})
+  }, [kernelHolds, shownScene?.expression_ref, shownScene?.scene_ref])
 
   useEffect(() => {
     if (!qualified || !workspaceRef.current.accessReady) return
