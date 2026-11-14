@@ -968,7 +968,12 @@ fn law_holds(world: &World, starting: &[(String, String)]) -> Act {
             .ok_or_else(|| format!("the census does not list {slug}, which starts"))
     };
     // What AIKit says each agent reads in a project (its client status' `project_guidance`): the files, and how far up it looks.
-    let status = owner(world, "OI_AIKIT_BIN", "aikit", &["--json", "client", "status"])?;
+    let status = owner(
+        world,
+        "OI_AIKIT_BIN",
+        "aikit",
+        &["--json", "client", "status"],
+    )?;
     let clients = status["data"]["clients"]
         .as_array()
         .cloned()
@@ -1737,8 +1742,10 @@ fn send_a_passage(world: &World, page: &SavedPage, agent: &str) -> Result<String
     let revision = draft["revision"]
         .as_u64()
         .ok_or_else(|| format!("the draft named no revision: {}", clip(&draft)))?;
-    encounter(json!({"action": "prompt-context", "agent_session": session, "draft_revision": revision,
-        "context": expectation}))
+    encounter(
+        json!({"action": "prompt-context", "agent_session": session, "draft_revision": revision,
+        "context": expectation}),
+    )
     .map_err(|e| format!("sending with the Packet: {e}"))?;
     let code_said = code.to_lowercase();
     let deadline = Instant::now() + Duration::from_secs(300);
@@ -1841,7 +1848,9 @@ fn act_3_send_a_passage_and_get_the_answer() {
         // A conversation in a project's register holds its Packet and Scope there too, with the first agent that answered.
         if let Some(agent) = answering.first() {
             match a_conversation_in_a_project(world, &page, agent) {
-                Ok(session) => println!("{agent}'s conversation in a project holds its Packet and Scope: {session}"),
+                Ok(session) => println!(
+                    "{agent}'s conversation in a project holds its Packet and Scope: {session}"
+                ),
                 Err(why) => failed.push(format!("a conversation in a project: {why}")),
             }
         }
@@ -1903,7 +1912,11 @@ fn packet_of(world: &World, project: Option<&str>, session: &str) -> Result<Valu
 /// conversation's Packet through AIKit's own edit in that register, then the World Model's packet and scope slices read afresh: the
 /// project's part holds the session's Packet with the passage, and the session's own settings in AIKit. No prompt is sent. Answers
 /// the session.
-fn a_conversation_in_a_project(world: &World, page: &SavedPage, agent: &str) -> Result<String, String> {
+fn a_conversation_in_a_project(
+    world: &World,
+    page: &SavedPage,
+    agent: &str,
+) -> Result<String, String> {
     let project = "passage-project";
     a_project(world, project).map_err(|e| format!("making the project {project}: {e}"))?;
     let fresh = |slice: &str| -> Result<Value, String> {
@@ -1944,7 +1957,8 @@ fn a_conversation_in_a_project(world: &World, page: &SavedPage, agent: &str) -> 
         })?;
     let encounter = |request: Value| -> Result<Value, String> {
         let name = request["action"].as_str().unwrap_or("?").to_owned();
-        let answer = world.send(json!({"op": "encounter", "project": project, "request": request}))?;
+        let answer =
+            world.send(json!({"op": "encounter", "project": project, "request": request}))?;
         result_of(&answer, "encounter_reading")
             .map(|v| v["data"].clone())
             .map_err(|e| format!("encounter {name} in {project} {e}"))

@@ -700,7 +700,12 @@ pub fn written_by(op: &KernelOp) -> Vec<Slice> {
         "aikit_write" => {
             use crate::owner_routes::AikitWrite;
             // A capture lands in the packet it was made for.
-            let mut slices = vec![Slice::Sessions, Slice::Models, Slice::Factory, Slice::Packet];
+            let mut slices = vec![
+                Slice::Sessions,
+                Slice::Models,
+                Slice::Factory,
+                Slice::Packet,
+            ];
             if let KernelOp::AikitWrite {
                 request:
                     AikitWrite::Adopt { .. }
@@ -866,8 +871,9 @@ fn each_part<K: Sync>(
             reads
                 .into_iter()
                 .map(|read| {
-                    read.join()
-                        .unwrap_or_else(|_| part(Err("this read stopped before it answered".into())))
+                    read.join().unwrap_or_else(|_| {
+                        part(Err("this read stopped before it answered".into()))
+                    })
                 })
                 .collect()
         });
@@ -883,7 +889,10 @@ fn each_part<K: Sync>(
 /// `agencyRowsOf`), each once.
 fn agency_of(via: Via<'_>, project: &str) -> Result<(bool, Vec<String>), String> {
     let agency = payload(ask(via, json!({"op": "agency_read", "project": project}))?)?;
-    let spaces = agency["spaces"].as_array().map(Vec::as_slice).unwrap_or_default();
+    let spaces = agency["spaces"]
+        .as_array()
+        .map(Vec::as_slice)
+        .unwrap_or_default();
     let mut sessions: Vec<String> = spaces
         .iter()
         .filter_map(|space| space["agent_sessions"].as_object())
@@ -926,7 +935,9 @@ fn day(via: Via<'_>) -> Result<Value, String> {
     .and_then(payload);
     let mut day = match (read, &ground) {
         (Ok(day @ Value::Object(_)), _) => day,
-        (Ok(other), _) => json!({"refused": format!("Central's reading of today's Day is no object: {other}")}),
+        (Ok(other), _) => {
+            json!({"refused": format!("Central's reading of today's Day is no object: {other}")})
+        }
         (Err(day_why), Err(ground_why)) => return Err(format!("{day_why}; {ground_why}")),
         (Err(why), Ok(_)) => json!({"refused": why}),
     };
@@ -1000,9 +1011,7 @@ fn cards(via: Via<'_>, roster: &Value) -> serde_json::Map<String, Value> {
     let mut cards = serde_json::Map::new();
     for (key, card) in read {
         let (agent, world) = key.split_once('\n').unwrap_or((key.as_str(), "home"));
-        let by_world = cards
-            .entry(agent.to_owned())
-            .or_insert_with(|| json!({}));
+        let by_world = cards.entry(agent.to_owned()).or_insert_with(|| json!({}));
         if let Some(by_world) = by_world.as_object_mut() {
             by_world.insert(world.to_owned(), card);
         }
@@ -1060,7 +1069,9 @@ fn scope(via: Via<'_>, projects: Result<Vec<String>, String>) -> Result<Value, S
         let (_, sessions) = agency_of(via, project)?;
         settings_of(via, project, &sessions)
     });
-    Ok(json!({"effective": part(effective), "relations": part(relations), "settings": part(settings), "projects": projects}))
+    Ok(
+        json!({"effective": part(effective), "relations": part(relations), "settings": part(settings), "projects": projects}),
+    )
 }
 
 /// Each of a register's sessions' own settings in AIKit (`encounter_session_settings_list`: one owner read for the register, which
@@ -1073,16 +1084,24 @@ fn settings_of(via: Via<'_>, project: &str, sessions: &[String]) -> Result<Value
         via,
         json!({"op": "encounter_session_settings_list", "project": project, "agent_sessions": sessions}),
     )?)?;
-    let readings = listed["readings"].as_array().map(Vec::as_slice).unwrap_or_default();
+    let readings = listed["readings"]
+        .as_array()
+        .map(Vec::as_slice)
+        .unwrap_or_default();
     let by_session = sessions
         .iter()
         .map(|session| {
-            let read = match readings.iter().find(|reading| reading["agent_session"] == session.as_str()) {
+            let read = match readings
+                .iter()
+                .find(|reading| reading["agent_session"] == session.as_str())
+            {
                 Some(reading) => match reading["refused"].as_str() {
                     Some(why) => Err(why.to_owned()),
                     None => Ok(reading.clone()),
                 },
-                None => Err(format!("AIKit's settings list holds no reading of {session}")),
+                None => Err(format!(
+                    "AIKit's settings list holds no reading of {session}"
+                )),
             };
             (session.clone(), part(read))
         })
@@ -1871,7 +1890,10 @@ mod tests {
         };
 
         let day = day(&via).expect("today's Day reads");
-        assert_eq!(day["day_ref"], "day:1", "the Day's reading stands as Central gave it");
+        assert_eq!(
+            day["day_ref"], "day:1",
+            "the Day's reading stands as Central gave it"
+        );
         assert_eq!(
             day["ground"],
             json!({"state": "read", "reading": {"time": {"state": "ready"}}})
@@ -1952,8 +1974,7 @@ mod tests {
             "the card in its home World"
         );
         assert_eq!(
-            roster["cards"]["agent:fizz"]["project:QL"]["reading"]["world"],
-            "project:QL",
+            roster["cards"]["agent:fizz"]["project:QL"]["reading"]["world"], "project:QL",
             "and in each World it ratifies"
         );
         assert!(
@@ -2031,8 +2052,7 @@ mod tests {
             "a register AIKit's agency refused says so beside the others"
         );
         assert_eq!(
-            read["sessions"]["agent-session/root"]["reading"]["scope"]["project"],
-            "",
+            read["sessions"]["agent-session/root"]["reading"]["scope"]["project"], "",
             "the root register's stand as they did"
         );
         assert!(
@@ -2056,13 +2076,15 @@ mod tests {
             "no session, no settings read"
         );
         assert_eq!(
-            scope["settings"]["reading"]["agent-session/root"]["reading"]["revision"],
-            ":rev",
+            scope["settings"]["reading"]["agent-session/root"]["reading"]["revision"], ":rev",
             "the root register's sessions' settings stand as they did"
         );
 
-        let unknown = packet(&via, Err("the World Model has not read your world's projects yet".into()))
-            .expect("the root register's packet reads without the projects");
+        let unknown = packet(
+            &via,
+            Err("the World Model has not read your world's projects yet".into()),
+        )
+        .expect("the root register's packet reads without the projects");
         assert_eq!(
             unknown["projects"],
             json!({"state": "refused", "why": "the World Model has not read your world's projects yet"})
@@ -2071,7 +2093,8 @@ mod tests {
     }
 
     #[test]
-    fn the_projects_are_those_centrals_root_discloses_each_once_and_unknown_until_the_worlds_are_read() {
+    fn the_projects_are_those_centrals_root_discloses_each_once_and_unknown_until_the_worlds_are_read(
+    ) {
         let root = json!({"work": {"projects": [{"name": "O-I"}, {"name": ""}, {"name": "QL"}, {"name": "O-I"}, {"path": "x"}]}});
         assert_eq!(projects_of(&root), ["O-I", "QL"]);
         let mut worlds = Held::default();
@@ -2083,8 +2106,15 @@ mod tests {
         assert!(projects_held(&worlds)
             .unwrap_err()
             .contains("Central's worlds were refused (the map is unreadable)"));
-        take(&mut worlds, Ok(json!({"root": root, "worlds": [], "pages": []})), 2);
-        assert_eq!(projects_held(&worlds), Ok(vec!["O-I".to_owned(), "QL".to_owned()]));
+        take(
+            &mut worlds,
+            Ok(json!({"root": root, "worlds": [], "pages": []})),
+            2,
+        );
+        assert_eq!(
+            projects_held(&worlds),
+            Ok(vec!["O-I".to_owned(), "QL".to_owned()])
+        );
         take(&mut worlds, Err("Central refused".into()), 3);
         assert_eq!(
             projects_held(&worlds),
@@ -2100,10 +2130,14 @@ mod tests {
         let via = |op: KernelOp| -> Result<KernelOpOutcome, String> {
             let body = serde_json::to_value(&op).expect("an op serialises");
             let result = match body["op"].as_str().unwrap_or_default() {
-                "day_read" => return Err("Central keeps no civil-time policy for this ground".into()),
-                "central" if ground_answers.load(std::sync::atomic::Ordering::SeqCst) => CentralReading {
-                    data: json!({"time": {"state": "unavailable"}}),
-                },
+                "day_read" => {
+                    return Err("Central keeps no civil-time policy for this ground".into())
+                }
+                "central" if ground_answers.load(std::sync::atomic::Ordering::SeqCst) => {
+                    CentralReading {
+                        data: json!({"time": {"state": "unavailable"}}),
+                    }
+                }
                 "central" => return Err("Central's ground is unreadable".into()),
                 "act" => ActionDispatched {
                     dispatch: crate::action::ActionDispatch::Invoked {
@@ -2125,7 +2159,10 @@ mod tests {
             held["refused"],
             "Central keeps no civil-time policy for this ground"
         );
-        assert_eq!(held["ground"]["state"], "read", "the ground stands beside the refusal");
+        assert_eq!(
+            held["ground"]["state"], "read",
+            "the ground stands beside the refusal"
+        );
         assert_eq!(held["settings"]["state"], "read");
         assert_eq!(
             held["moves"]["why"],
@@ -2133,7 +2170,10 @@ mod tests {
         );
         ground_answers.store(false, std::sync::atomic::Ordering::SeqCst);
         let refused = day(&via).expect_err("neither answers");
-        assert!(refused.contains("civil-time policy") && refused.contains("unreadable"), "{refused}");
+        assert!(
+            refused.contains("civil-time policy") && refused.contains("unreadable"),
+            "{refused}"
+        );
     }
 
     #[test]
@@ -2144,15 +2184,24 @@ mod tests {
         .unwrap();
         let moved = written_by(&op);
         assert!(moved.contains(&Slice::Roster), "{moved:?}");
-        assert!(!moved.contains(&Slice::Agents), "the census is not read again for a profile: {moved:?}");
+        assert!(
+            !moved.contains(&Slice::Agents),
+            "the census is not read again for a profile: {moved:?}"
+        );
         // A session's settings written move Scope, which reads them; read, they move nothing.
         let settings = |request: Value| -> KernelOp {
             serde_json::from_value(json!({"op": "encounter_session_settings", "project": "",
                 "agent_session": "agent-session/a", "request": request}))
             .unwrap()
         };
-        assert_eq!(written_by(&settings(json!({"track": {"wait": 60}}))), vec![Slice::Scope]);
-        assert!(written_by(&settings(Value::Null)).is_empty(), "a read of the settings");
+        assert_eq!(
+            written_by(&settings(json!({"track": {"wait": 60}}))),
+            vec![Slice::Scope]
+        );
+        assert!(
+            written_by(&settings(Value::Null)).is_empty(),
+            "a read of the settings"
+        );
     }
 
     #[test]
