@@ -723,6 +723,12 @@ pub enum AikitRead {
     PraxisActivity {
         session: String,
     },
+    /// The sessions AIKit's lifecycle record keeps that one day reads (`aikit session lifecycle list --since MS`, O-I #1007; the
+    /// record is ai-kit#628's): each with an event since the instant, and each still open however long ago it started, as its read
+    /// model (its state and its events). The Day's face 2 lists them.
+    SessionLifecycle {
+        since_unix_ms: u64,
+    },
     /// Whether a close-out left the objects it claims (`aikit work
     /// continuity closeout verify [--project P] [--since N] [--run R]`): each
     /// clause read back from its carrier. An unverified close-out is AIKit's
@@ -1113,6 +1119,7 @@ impl AikitRead {
             | Self::FlowThoughts { .. }
             | Self::DecisionAsks { .. }
             | Self::PraxisActivity { .. }
+            | Self::SessionLifecycle { .. }
             | Self::Collate { .. }
             | Self::Init
             | Self::HarnessDisclose
@@ -2715,6 +2722,16 @@ pub(crate) fn aikit_read_args(request: &AikitRead) -> (&'static str, Vec<OsStrin
             args.push("--json".into());
             ("aikit praxis activity", args)
         }
+        AikitRead::SessionLifecycle { since_unix_ms } => {
+            let mut args = words(&["session", "lifecycle", "list"]);
+            push_flag(
+                &mut args,
+                "--since",
+                Some(since_unix_ms.to_string().as_str()),
+            );
+            args.push("--json".into());
+            ("aikit session lifecycle list", args)
+        }
         AikitRead::FlowThoughts { flow_ref, limit } => {
             let mut args = words(&["flow", "thoughts"]);
             args.push(flow_ref.into());
@@ -2906,6 +2923,11 @@ fn aikit_read_answer(request: &AikitRead, cwd: Option<&Path>) -> Result<Reading,
             &[("sources", Kind::List), ("unreadable", Kind::List)],
         )?,
         AikitRead::RefinementList => fields(route, data, &[("proposals", Kind::List)])?,
+        AikitRead::SessionLifecycle { .. } => fields(
+            route,
+            data,
+            &[("sessions", Kind::List), ("read", Kind::List)],
+        )?,
         AikitRead::ContinuityTurn { .. } => {
             if data.get("turn").is_none() {
                 return Err(unexpected(route, "the kept turn (or turn null)", &data));
@@ -4159,6 +4181,25 @@ mod tests {
                 "wiki:node:a",
                 "--file",
                 "/w/wiki.json",
+                "--json"
+            ]
+        );
+        // The sessions one day reads, from their own record (O-I #1007).
+        let day: AikitRead = serde_json::from_value(
+            serde_json::json!({"kind": "session-lifecycle", "since_unix_ms": 1794614400000u64}),
+        )
+        .unwrap();
+        assert_eq!(day.project(), None);
+        let (route, args) = aikit_read_args(&day);
+        assert_eq!(route, "aikit session lifecycle list");
+        assert_eq!(
+            spelled(&args),
+            [
+                "session",
+                "lifecycle",
+                "list",
+                "--since",
+                "1794614400000",
                 "--json"
             ]
         );

@@ -324,14 +324,21 @@ impl Model {
         // The writes this read began after are read now; one that landed while it ran keeps the slice due.
         held.read_after = held.read_after.max(writes);
         let known = (slice == Slice::Worlds).then(|| projects_held(&held).ok());
+        let opened = (slice == Slice::Day).then(|| day_opens_held(&held));
         let moved = take(&mut held, read, started);
         let version = held.version;
         let projects_moved = known.is_some_and(|known| known != projects_held(&held).ok());
+        let day_moved = opened.is_some_and(|opened| opened != day_opens_held(&held));
         drop(held);
         // The projects the worlds hold are the registers the packets and Scope read beside the root: a project come or gone (or the
         // worlds' first read) reads them again.
         if projects_moved {
             self.due(READ_BY_PROJECT.to_vec());
+        }
+        // The instant today's Day opened is where face 2's sessions are read from (`day_sessions`): a Day turned (or its first read)
+        // reads them again.
+        if day_moved {
+            self.due(vec![Slice::Sessions]);
         }
         moved.then_some(version)
     }
@@ -348,12 +355,24 @@ impl Model {
         )
     }
 
+    /// The instant today's Day opened, as the Day slice holds Central's bound of it (`bounds.opens_at_unix_seconds`), or none while
+    /// it holds no Day.
+    fn day_opens(&self) -> Option<u64> {
+        day_opens_held(
+            &self
+                .cell(Slice::Day)
+                .held
+                .lock()
+                .unwrap_or_else(|e| e.into_inner()),
+        )
+    }
+
     fn load(&self, slice: Slice, via: Via<'_>) -> Result<Value, String> {
         match slice {
             Slice::Worlds => worlds(via),
             Slice::Day => day(via),
             Slice::Agents => crate::census::read(via),
-            Slice::Sessions => sessions(via),
+            Slice::Sessions => sessions(via, self.day_opens()),
             Slice::Models => payload(ask(via, json!({"op": "model_catalogue"}))?),
             Slice::Factory => factory(via),
             Slice::Workcells => workcells(via),
@@ -721,6 +740,11 @@ const READ_BY_PROJECT: [Slice; 2] = [Slice::Packet, Slice::Scope];
 
 /// The projects Central discloses in the root the held worlds carry (`projects_of`), or why the World Model knows none: its worlds
 /// not read yet, or refused before they were ever read.
+/// The instant today's Day opened (unix seconds), as Central bounds the Day the slice holds.
+fn day_opens_held(day: &Held) -> Option<u64> {
+    day.value.as_ref()?["bounds"]["opens_at_unix_seconds"].as_u64()
+}
+
 fn projects_held(worlds: &Held) -> Result<Vec<String>, String> {
     match (&worlds.value, &worlds.error) {
         (Some(worlds), _) => Ok(projects_of(&worlds["root"])),
@@ -1215,12 +1239,82 @@ fn part(read: Result<Value, String>) -> Value {
 /// The root register's Agent sessions (`agency_read`), with AIKit's gateway beside them as its own part (`gateway`), so a gateway
 /// that does not answer leaves the sessions as they were read. The Factory chain's Gateway, Agent and Scope read the gateway here
 /// (O-I #1006), never the owner.
-fn sessions(via: Via<'_>) -> Result<Value, String> {
+fn sessions(via: Via<'_>, opens: Option<u64>) -> Result<Value, String> {
     let mut agency = payload(ask(via, json!({"op": "agency_read", "project": ""}))?)?;
+    let day = part(day_sessions(via, opens, &agency));
     if let Some(object) = agency.as_object_mut() {
         object.insert("gateway".to_owned(), part(gateway(via)));
+        object.insert("day".to_owned(), day);
     }
     Ok(agency)
+}
+
+/// Face 2's sessions of today's Day (manual §18.2 "The sessions of the day, in three lists: done, running, queued. Each entry links to
+/// its session"; O-I #1007), read from each session's own record, AIKit's lifecycle (ai-kit#628), and kept nowhere else: every
+/// session with an event since today's Day opened (`opens`, Central's bound of it) and every one still open however long ago it
+/// started (`aikit session lifecycle list --since`). A session whose record ends in its end (or its cancel) is done, any other runs,
+/// and one that crashed stands running with no recorded end, which is all its record says. A session that resumed shows each of
+/// its starts and ends. No record keeps a session that is queued (launched, not started), so `queued` is empty and says why.
+fn day_sessions(via: Via<'_>, opens: Option<u64>, agency: &Value) -> Result<Value, String> {
+    let opens = opens.ok_or(
+        "the World Model holds no Day yet, so face 2 has no instant to read the day's sessions from",
+    )?;
+    let since_unix_ms = opens.saturating_mul(1000);
+    let read = payload(ask(
+        via,
+        json!({"op": "aikit_read", "request": {"kind": "session-lifecycle", "since_unix_ms": since_unix_ms}}),
+    )?)?;
+    let read = read.get("data").cloned().unwrap_or(read);
+    let (mut done, mut running) = (Vec::new(), Vec::new());
+    for model in read["read"].as_array().into_iter().flatten() {
+        let entry = face_two_entry(model, agency);
+        if matches!(model["state"].as_str(), Some("ended" | "cancelled")) {
+            done.push(entry);
+        } else {
+            running.push(entry);
+        }
+    }
+    Ok(
+        json!({"since_unix_ms": since_unix_ms, "done": done, "running": running, "queued": [],
+        "queued_why": "AIKit's lifecycle records a session from its start, so no record keeps a session launched and not yet started."}),
+    )
+}
+
+/// One session as face 2 lists it, from its read model: its record (`session`, AIKit's lifecycle id, and `ref`, the session ref its
+/// events name: `aikit:session:<client>:<id>`), the harness that recorded it (`client`), its state, its starts and ends (the
+/// instants of its own events), and where it runs: the agent session it is, where its ref names one (`agent_session`: AIKit's
+/// conversations and Factory's sessions), and the space holding it in your world's root register, where the agency lists it.
+fn face_two_entry(model: &Value, agency: &Value) -> Value {
+    let events = model["events"]
+        .as_array()
+        .map(Vec::as_slice)
+        .unwrap_or_default();
+    let reference = events.iter().find_map(|event| {
+        event["origin"]
+            .as_str()
+            .filter(|origin| origin.starts_with("aikit:session:"))
+    });
+    let (client, tail) = reference
+        .and_then(|reference| reference.strip_prefix("aikit:session:")?.split_once(':'))
+        .map_or((None, None), |(client, tail)| (Some(client), Some(tail)));
+    let agent_session = tail.filter(|tail| tail.starts_with("agent-session/"));
+    let space = agent_session.and_then(|session| {
+        agency["spaces"].as_array()?.iter().find_map(|space| {
+            space["agent_sessions"]
+                .get(session)
+                .and(space["definition"]["id"].as_str())
+        })
+    });
+    let at = |kind: &str| -> Vec<Value> {
+        events
+            .iter()
+            .filter(|event| event["kind"] == kind)
+            .map(|event| event["recorded_at_unix_ms"].clone())
+            .collect()
+    };
+    json!({"session": model["session"], "ref": reference, "client": client, "agent_session": agent_session, "space": space,
+        "state": model["state"], "started_at_unix_ms": model["started_at_unix_ms"],
+        "last_event_at_unix_ms": model["last_event_at_unix_ms"], "starts": at("session-started"), "ends": at("session-ended")})
 }
 
 /// AIKit's gateway: its ecology (`aikit gateway ecology`), the conversation binding the harness controls address (the first
@@ -1420,6 +1514,114 @@ mod tests {
         assert_eq!(browsed.load(std::sync::atomic::Ordering::SeqCst), 6);
     }
 
+    /// Face 2 lists today's sessions from their own record, AIKit's lifecycle (O-I #1007): read since the instant today's Day opened,
+    /// done where the record ends in its end, running otherwise (a crash leaves no end, and a resume runs again), each with its
+    /// starts and ends and where it runs; none queued, and why. With no Day held, no instant is had to read them from, and AIKit is
+    /// not asked.
+    #[test]
+    fn face_two_lists_the_days_sessions_from_their_own_record() {
+        use crate::KernelOpResult::{AgencyReading, OwnerRouteReading};
+        let event = |session: &str, kind: &str, at: u64, origin: &str| {
+            json!({"event_id": format!("evt_{at}"), "session": session, "activity": "act_1", "recorded_at_unix_ms": at,
+                "kind": kind, "origin": origin})
+        };
+        let chat = "aikit:session:claude:agent-session/chat";
+        let terminal = "aikit:session:codex:0199-terminal";
+        let resumed = "aikit:session:claude:agent-session/again";
+        let models = json!([
+            {"version": "1", "session": "ses_chat", "state": "ended", "event_count": 2, "started_at_unix_ms": 1000,
+             "last_event_at_unix_ms": 2000, "activities": [], "open_permission_requests": [],
+             "events": [event("ses_chat", "session-started", 1000, chat), event("ses_chat", "session-ended", 2000, chat)]},
+            {"version": "1", "session": "ses_terminal", "state": "running", "event_count": 1, "started_at_unix_ms": 900,
+             "last_event_at_unix_ms": 900, "activities": [], "open_permission_requests": [],
+             "events": [event("ses_terminal", "session-started", 900, terminal)]},
+            {"version": "1", "session": "ses_again", "state": "thinking", "event_count": 4, "started_at_unix_ms": 500,
+             "last_event_at_unix_ms": 3000, "activities": [], "open_permission_requests": [],
+             "events": [event("ses_again", "session-started", 500, resumed), event("ses_again", "session-ended", 600, resumed),
+                        event("ses_again", "session-started", 2500, resumed), event("ses_again", "thinking", 3000, resumed)]}
+        ]);
+        let asked = Mutex::new(Vec::new());
+        let via = |op: KernelOp| -> Result<KernelOpOutcome, String> {
+            let body = serde_json::to_value(&op).expect("an op serialises");
+            asked.lock().unwrap().push(body.clone());
+            let result = match body["op"].as_str().unwrap_or_default() {
+                "agency_read" => AgencyReading {
+                    project_ref: "control:root".into(),
+                    spaces: json!([{"definition": {"id": "session-space/chat"},
+                        "agent_sessions": {"agent-session/chat": {}}}]),
+                    harness_disclosure: json!({}),
+                    observed_at_unix_ms: 1,
+                },
+                "aikit_read" if body["request"]["kind"] == "session-lifecycle" => {
+                    OwnerRouteReading {
+                        route: "aikit session lifecycle list".into(),
+                        data: json!({"sessions": ["ses_chat", "ses_terminal", "ses_again"], "count": 3,
+                        "since_unix_ms": body["request"]["since_unix_ms"], "read": models.clone()}),
+                        warnings: Vec::new(),
+                    }
+                }
+                "aikit_read" => return Err("no gateway here".into()),
+                other => panic!("the sessions slice asked {other}"),
+            };
+            Ok(KernelOpOutcome {
+                receipts: Vec::new(),
+                read_scopes: None,
+                result,
+            })
+        };
+        let value = sessions(&via, Some(1_794_614_400)).expect("the agency reads");
+        let day = &value["day"];
+        assert_eq!(day["state"], "read", "{day}");
+        let day = &day["reading"];
+        assert_eq!(day["since_unix_ms"], 1_794_614_400_000u64);
+        assert!(asked.lock().unwrap().iter().any(|op| op["request"]
+            == json!({"kind": "session-lifecycle", "since_unix_ms": 1_794_614_400_000u64})));
+        assert_eq!(
+            day["done"],
+            json!([{"session": "ses_chat", "ref": chat, "client": "claude", "agent_session": "agent-session/chat",
+                "space": "session-space/chat", "state": "ended", "started_at_unix_ms": 1000, "last_event_at_unix_ms": 2000,
+                "starts": [1000], "ends": [2000]}])
+        );
+        let running = day["running"].as_array().unwrap();
+        assert_eq!(running.len(), 2, "{day}");
+        assert_eq!(running[0]["ref"], terminal);
+        assert_eq!(running[0]["client"], "codex");
+        assert_eq!(
+            running[0]["agent_session"],
+            Value::Null,
+            "a terminal's session is no agent session"
+        );
+        assert_eq!(
+            running[0]["ends"],
+            json!([]),
+            "a session with no recorded end runs"
+        );
+        assert_eq!(running[1]["agent_session"], "agent-session/again");
+        assert_eq!(
+            running[1]["space"],
+            Value::Null,
+            "the agency lists it in no space of the root"
+        );
+        assert_eq!(running[1]["starts"], json!([500, 2500]));
+        assert_eq!(running[1]["ends"], json!([600]));
+        assert_eq!(day["queued"], json!([]));
+        assert!(day["queued_why"]
+            .as_str()
+            .is_some_and(|why| !why.is_empty()));
+
+        asked.lock().unwrap().clear();
+        let value = sessions(&via, None).expect("the agency reads");
+        assert_eq!(value["day"]["state"], "refused");
+        assert!(
+            asked
+                .lock()
+                .unwrap()
+                .iter()
+                .all(|op| op["request"]["kind"] != "session-lifecycle"),
+            "with no Day held, AIKit is not asked"
+        );
+    }
+
     #[test]
     fn the_sessions_slice_carries_the_gateway_its_binding_and_that_bindings_harness_reading() {
         use crate::KernelOpResult::{AgencyReading, HarnessAgentReading, OwnerRouteReading};
@@ -1462,7 +1664,7 @@ mod tests {
                     result,
                 })
             };
-            let value = sessions(&via).expect("the agency reads");
+            let value = sessions(&via, None).expect("the agency reads");
             (value, asked.into_inner().unwrap())
         };
 
