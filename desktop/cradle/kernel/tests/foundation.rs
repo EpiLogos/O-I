@@ -1523,10 +1523,11 @@ fn utc_now() -> String {
 /// selection → packet). The person's entry holds the passage; the page's packet is cleared as its own Clear clears it and the
 /// selected words put in it as its own To packet puts them (ql-flow.html `toPacket`, which the transport's Capture presses across
 /// the host bridge), saved through Central's file door and read back from Central. Then AIKit's prepared context for the
-/// conversation is brought to the page's packet as the Send's provider brings it (documentPacketContext.ts prepareDocumentPacket:
-/// `encounter` context edit, the item as packetSelectionOf shapes it), and the Packet read from the World Model's packet slice, as
-/// the Packet device reads it. Answers what the Send carries (nativeContext.ts contextExpectation: the Packet's scope, revision,
-/// digest and the items reviewed) and the code only the selected words hold.
+/// conversation is brought to the page's packet as the Send's provider brings it (documentPacketContext.ts prepareDocumentPacket: the
+/// Packet read from the World Model's packet slice, fresh, and an `encounter` context edit at its revision, the item as
+/// packetSelectionOf shapes it), and the Packet read from the slice again, as the Send's review reads it (packetSlice.ts
+/// reviewedContext). Answers what the Send carries (nativeContext.ts contextExpectation: the Packet's scope, revision, digest and the
+/// items reviewed) and the code only the selected words hold.
 fn capture_a_passage(
     world: &World,
     page: &SavedPage,
@@ -1594,11 +1595,9 @@ fn capture_a_passage(
             clip(&held["packet"])
         ));
     }
-    // The Send's provider: AIKit's prepared context brought to the page's packet, through the owner's own edit.
-    let context = encounter_reading(
-        world,
-        json!({"action": "context", "agent_session": session, "request": {"operation": "read"}}),
-    )?;
+    // The Send's provider: AIKit's prepared context brought to the page's packet, through the owner's own edit, at the revision of
+    // the Packet the World Model holds (no surface reads AIKit's prepared context itself, O-I #1005).
+    let context = packet_of(world, None, session)?;
     let basis = context["revision"]
         .as_u64()
         .ok_or_else(|| format!("the Packet named no revision: {}", clip(&context)))?;
@@ -1614,26 +1613,8 @@ fn capture_a_passage(
             "request": {"operation": "edit", "basis": basis, "mutation": {"operation": "add", "selection": selection}}}),
     )
     .map_err(|e| format!("bringing the Packet to the page's packet: {e}"))?;
-    // The Packet as the device reads it: the World Model's packet slice, this conversation's part.
-    let answer = world.send(json!({"op": "model_subscribe", "slice": "packet", "fresh": true}))?;
-    let slice = result_of(&answer, "model_slice")
-        .map_err(|e| format!("model_subscribe packet {e}"))?["data"]
-        .clone();
-    if slice["state"] != "read" {
-        return Err(format!(
-            "the World Model's packet slice is {}: {}",
-            slice["state"],
-            slice["error"].as_str().unwrap_or("no state")
-        ));
-    }
-    let part = &slice["value"]["sessions"][session];
-    if part["state"] != "read" {
-        return Err(format!(
-            "the World Model's packet slice holds no Packet for {session}: {}",
-            clip(part)
-        ));
-    }
-    let packet = &part["reading"];
+    // The Packet as the device and the Send's review read it: the World Model's packet slice, this conversation's part.
+    let packet = &packet_of(world, None, session)?;
     let items = packet["items"].as_array().cloned().unwrap_or_default();
     let holds = items.iter().any(|item| {
         item["selection"]["text"] == selected.as_str()
@@ -1808,6 +1789,50 @@ fn act_3_send_a_passage_and_get_the_answer() {
     });
 }
 
+/// The Packet of a conversation as the window reads it (O-I #1005; desktop/cradle/src/context/packetSlice.ts packetNow): the World
+/// Model's packet slice read fresh, the session's part — in your world's root register, or in `project`'s (the slice's `projects`,
+/// one part for each project the World Model knows). The read before an edit of it, and the read after.
+fn packet_of(world: &World, project: Option<&str>, session: &str) -> Result<Value, String> {
+    let answer = world.send(json!({"op": "model_subscribe", "slice": "packet", "fresh": true}))?;
+    let slice = result_of(&answer, "model_slice")
+        .map_err(|e| format!("model_subscribe packet {e}"))?["data"]
+        .clone();
+    if slice["state"] != "read" {
+        return Err(format!(
+            "the World Model's packet slice is {}: {}",
+            slice["state"],
+            slice["error"].as_str().unwrap_or("no state")
+        ));
+    }
+    let value = &slice["value"];
+    let (register, place) = match project {
+        None => (value, "your world's root register".to_owned()),
+        Some(project) => {
+            let projects = &value["projects"];
+            let held = &projects["reading"][project];
+            if projects["state"] != "read" || held["state"] != "read" {
+                return Err(format!(
+                    "the World Model's packet holds no register of {project}: {}",
+                    clip(if projects["state"] != "read" {
+                        projects
+                    } else {
+                        held
+                    })
+                ));
+            }
+            (&held["reading"], format!("{project}'s register"))
+        }
+    };
+    let part = &register["sessions"][session];
+    if part["state"] != "read" {
+        return Err(format!(
+            "the World Model's packet holds no Packet of {session} in {place}: {}",
+            clip(part)
+        ));
+    }
+    Ok(part["reading"].clone())
+}
+
 /// A conversation in a project's register holds its Packet and Scope there (O-I #1005), as the Packet and Scope read them: a project
 /// of this World (`a_project`), the World Model's worlds read afresh (as the change watch has them read when a project comes), a
 /// conversation with `agent` opened in the project's register (`encounter_provision`), a passage of the page brought to that
@@ -1860,9 +1885,8 @@ fn a_conversation_in_a_project(world: &World, page: &SavedPage, agent: &str) -> 
             .map(|v| v["data"].clone())
             .map_err(|e| format!("encounter {name} in {project} {e}"))
     };
-    let context = encounter(
-        json!({"action": "context", "agent_session": session, "request": {"operation": "read"}}),
-    )?;
+    // The edit at the revision of the Packet the World Model holds in the project's register, as the window makes it.
+    let context = packet_of(world, Some(project), &session)?;
     let basis = context["revision"].as_u64().ok_or_else(|| {
         format!(
             "the Packet in {project} named no revision: {}",
@@ -1880,23 +1904,8 @@ fn a_conversation_in_a_project(world: &World, page: &SavedPage, agent: &str) -> 
         "request": {"operation": "edit", "basis": basis, "mutation": {"operation": "add", "selection": selection}}}))
     .map_err(|e| format!("bringing a passage to the Packet in {project}: {e}"))?;
     // The Packet as the device reads it for a conversation in the project: the packet slice's part of that register.
-    let packet = fresh("packet")?;
-    let register = &packet["projects"];
-    let held = &register["reading"][project];
-    let part = &held["reading"]["sessions"][session.as_str()];
-    if part["state"] != "read" {
-        return Err(format!(
-            "the World Model's packet holds no Packet of {session} in {project}: {}",
-            clip(if register["state"] != "read" {
-                register
-            } else if held["state"] != "read" {
-                held
-            } else {
-                part
-            })
-        ));
-    }
-    let holds = part["reading"]["items"].as_array().is_some_and(|items| {
+    let packet = packet_of(world, Some(project), &session)?;
+    let holds = packet["items"].as_array().is_some_and(|items| {
         items
             .iter()
             .any(|item| item["selection"]["text"] == selected.as_str())
@@ -1904,7 +1913,7 @@ fn a_conversation_in_a_project(world: &World, page: &SavedPage, agent: &str) -> 
     if !holds {
         return Err(format!(
             "the Packet of {session} in {project} does not hold the passage `{selected}`: {}",
-            clip(&part["reading"])
+            clip(&packet)
         ));
     }
     // Scope as the device reads it for that conversation: the session's own settings in AIKit, read in the project's register.
