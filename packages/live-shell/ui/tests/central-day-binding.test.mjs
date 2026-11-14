@@ -228,35 +228,94 @@ test('REAL CAPTURE — the stale Day pointer: the date is Central\'s civil today
     'no value is the design\'s default (the defaults hold Wed 15 Oct, face 1, Propose, every source on)')
 })
 
-// D-27: the widget's "running" (c2run) is your register's active NOW clearings, as the rail's NOWs tile reads them (the ground's `now` leg,
-// central.now.list); drawn by the catalogue's own widget, it is the number, never "—".
-test('the Day widget\'s running count is your register\'s active NOW clearings, from Central\'s ground, drawn as the design draws it', () => {
-  const nowLeg = records => ({state: 'ready', action: 'central.now.list', data: {schema: 'central.now-listing/v1', automatic_agent_or_model_invocation: false, records}})
-  const row = (ref, lifecycle) => ({now_ref: ref, purpose: ref, lifecycle, participant_refs: [], created_at_unix_seconds: 1792110000})
-  const ground = {...READY, now: nowLeg([row('a', 'active'), row('b', 'active'), row('c', 'quiescent'), row('d', 'closed')])}
-  const facts = factsOf(ground)
-  assert.equal(facts.running, 2, 'two clearings are active')
-  const values = bind.dayValuesOf(facts, {face: 2, payload: PAYLOAD})
-  assert.equal(values.c2run, 2)
-  assert.ok(bind.DAY_KEYS.includes('c2run'))
-  assert.equal(bind.dayValuesOf(factsOf({...STALE, now: ground.now}), null).c2run, 2, 'the register\'s NOW, whether or not a Day document stands')
-  assert.equal('c2run' in bind.dayValuesOf(factsOf(READY), {face: 2, payload: PAYLOAD}), false, 'an unanswered listing gives no count')
-  assert.equal(factsOf(ground, {standing: null, aperture: null}).running, undefined, 'a Day you selected: no running sessions are kept for it')
-  const props = vals => ({v: vals, owner: vals, set: () => {}, nav: {}, page: '', setPage: () => {}, standing: {}})
+// O-I ticket 1007 (REPLACED D-27, where the widget's "running" was your register's active NOW clearings, the ground's `now` leg): face 2 is
+// the day's sessions from their own records — the World Model's sessions slice, its `day` part (kernel world_model.rs `day_sessions`) —
+// done, running and queued, each with its starts and ends and where it runs; what each yielded at its end is Central's reading of today's
+// Day (`yields`, ctrl day_turn.rs `yields_of`), and those that wait are face 2's proposals (c2p). FIXTURE in the kernel's shapes.
+const AT = Date.UTC(2026, 9, 16, 9, 0)
+const faceTwoEntry = (name, client, state, starts, ends) => ({session: `ses_${name}`, ref: `aikit:session:${client}:agent-session/${name}`, client,
+  agent_session: `agent-session/${name}`, space: 'session-space/root', state, started_at_unix_ms: starts[0], last_event_at_unix_ms: ends.at(-1) ?? starts.at(-1), starts, ends})
+const sessionsSliceOf = day => ({state: 'held', answer: {schema: 'oi.world-model-slice/v1', slice: 'sessions', owner: 'AIKit', scopes: ['aikit'], version: 1, state: 'read',
+  value: day === undefined ? {} : {day}, error: null, read_at_unix_ms: 1}})
+const QUEUED_WHY = 'AIKit\'s lifecycle records a session from its start, so no record keeps a session launched and not yet started.'
+const FACE_TWO_DAY = {state: 'read', reading: {since_unix_ms: AT - 3_600_000, done: [faceTwoEntry('morning', 'codex', 'ended', [AT], [AT + 600_000])],
+  running: [faceTwoEntry('essay', 'claude', 'running', [AT + 900_000], []),
+    {session: 'ses_term', ref: 'aikit:session:claude:4b1d', client: 'claude', agent_session: null, space: null, state: 'running', starts: [AT + 1_000_000], ends: []}],
+  queued: [], queued_why: QUEUED_WHY}}
+const YIELDS = [{session: 'agent-session/morning', day_ref: DAY_16.day_ref, return_ref: 'central:return:control:root:morning', receipts: ['receipt:1', 'receipt:2'], changes: 1,
+  account: 'Drafted the second section.', account_ref: null, filed_by: 'aikit:session:codex:agent-session/morning', filed_at_unix_seconds: (AT + 600_000) / 1000, status: 'pending',
+  revision: 'return-rev-1'},
+  {session: 'agent-session/review', day_ref: DAY_16.day_ref, return_ref: 'central:return:control:root:review', receipts: [], changes: 0, account: null, filed_by: 'x',
+    filed_at_unix_seconds: AT / 1000, status: 'rejected', revision: 'return-rev-2'}]
+const dayModelWith = reading => ({ground: READY, groundError: null, settings: null, today: {dayRef: DAY_16.day_ref, reading, moves: null, field: null}, todayRefused: null})
+
+test('face 2 is the day\'s sessions from their own records, and what each yielded waits as face 2\'s proposal: drawn by the widget and the Sessions page', () => {
+  const faceTwo = bind.faceTwoOf(sessionsSliceOf(FACE_TWO_DAY))
+  assert.equal(faceTwo.ok, true)
+  const yields = bind.dayYieldsOf(dayModelWith({...DAY_16, yields: YIELDS}))
+  assert.deepEqual(yields.rows.map(row => [row.session, row.returnRef, row.status, row.revision, row.receipts, row.changes, row.filedAtUnixMs]),
+    [['agent-session/morning', 'central:return:control:root:morning', 'pending', 'return-rev-1', 2, 1, AT + 600_000],
+      ['agent-session/review', 'central:return:control:root:review', 'rejected', 'return-rev-2', 0, 0, AT]])
+  assert.equal(bind.todaysPageRevisionOf(dayModelWith(DAY_16)), 'rev-1', 'the revision of today\'s page a keep lands on')
+  const facts = factsOf(READY)
+  const values = bind.dayValuesOf(facts, {face: 2, payload: PAYLOAD}, null, null, bind.faceTwoValuesOf(faceTwo, yields))
+  assert.deepEqual([values.c2done, values.c2run, values.c2queue, values.c2p], [1, 2, 0, 1], 'one done, two running, none queued; one yield waits')
+  for (const key of ['c2done', 'c2run', 'c2queue', 'c2p', 'daySessions', 'daySessionsWhy', 'openSession']) assert.ok(bind.DAY_KEYS.includes(key) || bind.DAY_WRITES.has(key), key)
+  const lists = JSON.parse(values.daySessions)
+  assert.deepEqual(lists.done.map(entry => [entry.agentSession, entry.client, entry.starts, entry.ends]), [['agent-session/morning', 'codex', [AT], [AT + 600_000]]])
+  assert.deepEqual(lists.running.map(entry => entry.agentSession), ['agent-session/essay', null], 'a session its own hooks recorded in a terminal names no agent session')
+  assert.equal(lists.queuedWhy, QUEUED_WHY)
+  assert.equal(lists.yields.length, 2)
+  // The page's own sessions ledger is no record of a session: without the records, face 2 counts nothing.
+  const unrecorded = bind.dayValuesOf(facts, {face: 2, payload: PAYLOAD})
+  for (const key of ['c2done', 'c2run', 'c2queue', 'c2p', 'daySessions']) assert.equal(key in unrecorded, false, `${key}: ${bind.DAY_ABSENT[key]}`)
+  // The slice holds no `day` part, or AIKit refused it: no count stands, and the words say why.
+  const unheld = bind.faceTwoValuesOf(bind.faceTwoOf(sessionsSliceOf(undefined)), {ok: false, why: bind.YIELDS_UNREAD})
+  assert.deepEqual(unheld, {daySessionsWhy: bind.FACE_TWO_UNHELD})
+  const refused = bind.faceTwoOf(sessionsSliceOf({state: 'refused', why: 'AIKit refused the session lifecycle read'}))
+  assert.equal(refused.ok, false)
+  assert.match(refused.why, /^Face 2 holds no sessions of the day: AIKit refused the session lifecycle read$/)
+  assert.match(bind.dayYieldsOf(dayModelWith({...DAY_16, yields_refused: 'receiving is locked'})).why, /did not read what today's sessions yielded: receiving is locked/)
+  // Drawn by the catalogue's own widget (running: 2, never —) and its Sessions page (the three lists, what was yielded and where it stands).
+  const props = (vals, page = '') => ({v: vals, owner: vals, set: () => {}, nav: {}, page, setPage: () => {}, standing: {}})
   const widget = html(createElement(() => catalogueDay.widget(props(values))))
-  assert.equal(widget, html(createElement(() => catalogueDay.widget(props({...values, c2run: 2})))), 'the design\'s own widget on the count')
   assert.match(widget, /data-i="running\|2 — Opens face 2\."><button[^>]*><output class="dp-readout-value" data-tone="value">2<\/output>/, 'running: 2, never —')
-  assert.notEqual(widget, html(createElement(() => catalogueDay.widget(props(bind.dayValuesOf(factsOf(READY), {face: 2, payload: PAYLOAD}))))), 'the count changes what the widget draws')
+  const page = html(createElement(() => catalogueDay.whole(props(values, 'sessions'))))
+  for (const words of ['Done', 'Running', 'Queued', 'Yielded', 'morning', 'essay', 'morning · 2 receipts, 1 change', 'review · 0 receipts, 0 changes', QUEUED_WHY.replace(/'/g, '&#x27;')]) {
+    assert.ok(page.includes(words), `the Sessions page draws ${words}`)
+  }
+  assert.match(page, /waits on you|waits/, 'a pending yield waits')
+  const unreadPage = html(createElement(() => catalogueDay.whole(props({...values, daySessions: undefined, daySessionsWhy: bind.FACE_TWO_UNHELD}, 'sessions'))))
+  assert.ok(unreadPage.includes('data-standing="unread"'), 'unread lists stand with the No-reading mark, never empty')
+})
+
+test('Open on one of face 2\'s sessions opens it where it runs; one its own hooks recorded in a terminal, or one not listed, is refused in words', async () => {
+  const values = bind.dayValuesOf(factsOf(READY), {face: 2, payload: PAYLOAD}, null, null,
+    bind.faceTwoValuesOf(bind.faceTwoOf(sessionsSliceOf(FACE_TWO_DAY)), bind.dayYieldsOf(dayModelWith({...DAY_16, yields: YIELDS}))))
+  const opened = []
+  const binding = bind.dayDesignBinding(ID, factsOf(READY), values, {turn: async () => {}, openSession: session => { opened.push(session.agentSession) }})
+  assert.equal(binding.writes('openSession'), true)
+  await binding.write([{key: 'openSession', value: 'agent-session/essay'}])
+  assert.deepEqual(opened, ['agent-session/essay'])
+  await assert.rejects(binding.write([{key: 'openSession', value: 'ses_term'}]), /recorded by claude's own hooks and runs outside the window.*aikit:session:claude:4b1d/)
+  await assert.rejects(binding.write([{key: 'openSession', value: 'agent-session/elsewhere'}]), /Face 2 lists no session agent-session\/elsewhere today/)
+  const handless = bind.dayDesignBinding(ID, factsOf(READY), values, {turn: async () => {}})
+  await assert.rejects(handless.write([{key: 'openSession', value: 'agent-session/essay'}]), {message: bind.OPEN_SESSION_UNWIRED})
+  assert.deepEqual(opened, ['agent-session/essay'], 'nothing else opened')
+  // Central's chain opens it on its Factory track, THE selection naming it; a session no track holds is refused.
+  assert.throws(() => chain.openSessionWhereItRuns({session: 'ses_x', ref: 'aikit:session:claude:agent-session/x', agentSession: 'agent-session/x'}, []),
+    /agent-session\/x is not among Factory's sessions here/)
 })
 
 test('a ready Day: its face and its records\' counts are the owner\'s; what the owner counts nothing for stays absent', () => {
   const facts = factsOf(READY)
   assert.deepEqual(facts.aperture, {project: null, sourceRef: SOURCE_16, documentId: DOC_16}, 'the aperture the die turns')
   const values = bind.dayValuesOf(facts, {face: 2, payload: PAYLOAD})
-  assert.deepEqual({face: values.face, c0: values.c0, c1: values.c1, c2done: values.c2done, light: values.light, refusal: values.refusal},
-    {face: 2, c0: 2, c1: 3, c2done: 1, light: 'lit', refusal: undefined},
-    'face 0 the capture rows, face 1 the three tiers, face 2 the sessions ledger; no refusal')
-  for (const key of ['c1p', 'c2run', 'c2queue', 'c3', 'c3p', 'c4', 'c5']) assert.equal(key in values, false, `${key}: ${bind.DAY_ABSENT[key]}`)
+  assert.deepEqual({face: values.face, c0: values.c0, c1: values.c1, light: values.light, refusal: values.refusal},
+    {face: 2, c0: 2, c1: 3, light: 'lit', refusal: undefined},
+    'face 0 the capture rows, face 1 the three tiers; no refusal')
+  // Face 2's counts are the sessions' own records (O-I ticket 1007), never the page's ledger.
+  for (const key of ['c1p', 'c2done', 'c2run', 'c2queue', 'c2p', 'c3', 'c3p', 'c4', 'c5']) assert.equal(key in values, false, `${key}: ${bind.DAY_ABSENT[key]}`)
   assert.deepEqual(bind.dayCountsOf({capture: 'not a list', fields: {p1_must: []}}), {}, 'a record that is not a list gives no count, and one missing tier gives no task count')
   assert.equal(bind.civilDayName('2026-02-29'), null, 'a date the calendar does not hold is no date')
   assert.equal(bind.civilDayName('2026-10-13'), 'Tue 13 Oct')
@@ -554,8 +613,8 @@ test('the Day publishes its page as its own Full, and names it as data for its P
 // The Day's moves (manual §18.2, O-I main 1fd6697c0): five pads move the day's work from face to face. Close is Close now. REPLACED
 // (T-COVERAGE §1.3): the moves' settings and runs are Central's readings (central.day.settings.read, central.day.moves.read — the REAL
 // shapes are proved in stale-refusals-binding.test.mjs); with neither read, every reading of a move is absent with that reason, and the
-// pads, every Runs at and Prompt, and Agent writes stand closed naming the route they wait on. Faces 2 and 4 still wait on the
-// machines' NOWs (Workcell #72, ai-kit #275).
+// pads, every Runs at and Prompt, and Agent writes stand closed naming the route they wait on. Face 4 still waits on what the
+// sessions touched; face 2 is the day's sessions from their own records (O-I ticket 1007).
 test('the moves: with Central\'s Day readings not read, every reading of a move is absent with that reason, never the design\'s sample', () => {
   const facts = factsOf(READY)
   const values = bind.dayValuesOf(facts, {face: 2, payload: PAYLOAD})
@@ -566,8 +625,8 @@ test('the moves: with Central\'s Day readings not read, every reading of a move 
     assert.equal(key in values, false, `${key}: no owner reading was handed in`)
     assert.match(why[key] ?? '', /central\.day\.(settings|moves)\.read/, `${key} names the reading it waits on`)
   }
-  // REPLACED (D-27): c2run waited on the machines' NOWs too; Running is now your register's active NOW clearings (the ground's `now` leg).
-  assert.match(bind.DAY_ABSENT.c2queue, /every machine's NOW and its child NOWs.*Workcell #72.*ai-kit #275/, 'face 2\'s queue waits on the machines\' NOWs')
+  // REPLACED (O-I ticket 1007): face 2's queue waited on the machines' NOWs; face 2 is the day's sessions from their own records.
+  assert.equal(bind.DAY_ABSENT.c2queue, bind.FACE_TWO_UNHELD, 'face 2 is the sessions slice\'s, from the sessions\' own records')
   assert.match(bind.DAY_ABSENT.c4, /each entry with its author/, 'face 4 gathers what the sessions touched, each with its author')
 })
 

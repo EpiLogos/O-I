@@ -6,7 +6,7 @@
 // Rack's pads stand in its display. Tasks 0 → 1, Patterns 2 → 3, Context 2 → 4, Synthesis 1–4 → 5, Close 5 → tomorrow's 0. A
 // pad shows the faces it moves between, what it gave when it last ran, the time it ran and whether its proposals wait for you.
 // Press a pad and its move runs now; click its record under it to see that move's Prompt in the Moves section and to turn the die to
-// the face it fills. Face 2 needs no pad: it fills from every machine's NOW. Close is the close routine, the same act as Close now
+// the face it fills. Face 2 needs no pad: it fills itself from the sessions' own records. Close is the close routine, the same act as Close now
 // (one parameter, `closeNow`), and it also runs by itself when the day closes. No pad keeps a time: a move wanted at a set time is a
 // routine in Settings, Automations (§10.10), and the Day's agent writes as Scope and Arm allow (§16.1), so the Day has no Agent writes.
 // Each move's keys: `run_<move>` the press; `prompt_<move>` the Prompt; readings `last_<move>` (minutes after midnight it last ran;
@@ -28,6 +28,12 @@
 // its field source is On (`src_field`, one of the Sources; EpiLogos/Central#324): `fieldKept` is how many the Day keeps, `fieldRefusal`
 // Central's refusal to record one, in its words, and `fieldSkipped` how many were never sent because Central would refuse them by its
 // bounds, and why, said once. The star shown is the face's own choice.
+// The Sessions page (manual §18.2 "The sessions of the day, in three lists: done, running, queued. Each entry links to its session";
+// O-I #1007): face 2 as the binding reads it from each session's own record (`daySessions`, JSON {done, running, queued, queuedWhy,
+// yields, yieldsWhy}; `daySessionsWhy` where it is not read), each entry with its starts and ends and where it runs. Click an entry to
+// open it there (`openSession`, set to its agent session; one that runs in a terminal outside the window opens nowhere, and says so).
+// What each session yielded at its end (its receipts, its changes and its account) stands there too, as a proposal you keep or drop in
+// Approvals; `c2p` counts those that wait, face 2's dot. The counts on face 2 are `c2done`·`c2run`·`c2queue`.
 import {useState} from 'react'
 import {Action, Band, Chooser, Dial, Display, Folded, Panel, Radio, Readout, Rows, Section, TextField, Tile, Toggle, unreadRows, type LightState, type RowItem} from '../../sdk/panel'
 import {ASKS_TO_COME, dayAskWhys, starDayLine, starWhen, type DayField} from '../../../projections/atlas/system/fieldModel'
@@ -56,7 +62,8 @@ const MOVES = [
   {id: 'close', name: 'Close', faces: '5 → 0′', face: 0, press: 'closeNow', does: "Runs the close routine: tomorrow's face 0 takes face 5's proposal."},
 ] as const
 type MoveId = typeof MOVES[number]['id']
-/** Where a move's proposals wait, counted on the face it fills (the faces' own keys, never a second count). */
+/** Where a move's proposals wait, counted on the face it fills (the faces' own keys, never a second count). Face 2's (`c2p`, what the
+ * sessions yielded) have no pad: no move fills face 2. */
 const WAITS: Partial<Record<MoveId, string>> = {tasks: 'c1p', patterns: 'c3p'}
 /** What stands beside the well in an expanded Whole: Bounds 92, Faces 150, Moves 146, Sources 70, the counts 56, Close's least, and
  * each section's rule. */
@@ -71,7 +78,7 @@ function counts(v: ViewProps['v']): {n: string; waiting: boolean}[] {
   return [
     {n: n('c0'), waiting: false},
     {n: n('c1'), waiting: waits('c1p')},
-    {n: has(v, 'c2done') || has(v, 'c2run') || has(v, 'c2queue') ? `${n('c2done')}·${n('c2run')}·${n('c2queue')}` : NONE, waiting: false},
+    {n: has(v, 'c2done') || has(v, 'c2run') || has(v, 'c2queue') ? `${n('c2done')}·${n('c2run')}·${n('c2queue')}` : NONE, waiting: waits('c2p')},
     {n: n('c3'), waiting: waits('c3p')},
     {n: n('c4'), waiting: false},
     {n: n('c5'), waiting: false},
@@ -178,11 +185,11 @@ function Whole({p}: {p: ViewProps}) {
   return <Panel title="Day" view="whole" {...head(p)} page={p.page} onPage={p.setPage}
     pages={[{id: 'today', label: shortDate(p.v, 'date')},
       ...(has(p.v, 'tomorrow') ? [{id: 'tomorrow', label: shortDate(p.v, 'tomorrow'), light: (boolOf(p.v, 'tomorrowOpen') === undefined ? 'unknown' : on(p.v, 'tomorrowOpen') ? 'lit' : 'dark') as LightState}] : []),
-      {id: 'field', label: 'Field'}]}>
+      {id: 'sessions', label: 'Sessions'}, {id: 'field', label: 'Field'}]}>
     <Band>
       <Section width={w + 12}><DieAndMoves p={p} w={w} h={146} chosen={chosen} choose={choose} /></Section>
     </Band>
-    {p.page === 'field' ? <FieldBands p={p} /> : <>
+    {p.page === 'field' ? <FieldBands p={p} /> : p.page === 'sessions' ? <SessionsBands p={p} /> : <>
     <Band>
       {/* The day's bounds are Central's readings: no hours are set on the Day (§18.2). */}
       <Section label="Bounds" width={92}>
@@ -206,7 +213,7 @@ function Whole({p}: {p: ViewProps}) {
         </div>
       </Section>
       <Section width={56}>
-        <Readout label="waiting" does="Agent proposals that wait for you, on faces 1 and 3." value={waiting(p.v)} tone="accent" />
+        <Readout label="waiting" does="Proposals that wait for you: the agent's on faces 1 and 3, and what the day's sessions yielded on face 2." value={waiting(p.v)} tone="accent" />
         <Readout label="running" does="Sessions running now, on face 2." value={numOf(p.v, 'c2run')} tone="value" />
       </Section>
       <Section label="Close" grow>
@@ -217,6 +224,80 @@ function Whole({p}: {p: ViewProps}) {
     </Band>
     </>}
   </Panel>
+}
+
+/** Face 2 as the binding hands it (`daySessions`; dayBinding.ts faceTwoValuesOf): the day's sessions in three lists, each from its own
+ * record, and what each yielded at its end. */
+interface DaySession {readonly session: string; readonly ref?: string | null; readonly client?: string | null; readonly agentSession?: string | null
+  readonly space?: string | null; readonly state?: string | null; readonly starts?: readonly number[]; readonly ends?: readonly number[]}
+interface DayYielded {readonly session: string; readonly returnRef: string; readonly status?: string | null; readonly receipts?: number
+  readonly changes?: number; readonly account?: string | null; readonly filedAtUnixMs?: number | null; readonly unread?: string | null}
+interface DaySessions {readonly done?: readonly DaySession[]; readonly running?: readonly DaySession[]; readonly queued?: readonly DaySession[]
+  readonly queuedWhy?: string | null; readonly yields?: readonly DayYielded[] | null; readonly yieldsWhy?: string | null}
+type SessionList = 'done' | 'running' | 'queued'
+
+const SESSIONS_SIZE = 6
+/** An instant as the clock reads it (hh:mm). */
+const clockAt = (ms: number) => { const d = new Date(ms); return clock(d.getHours() * 60 + d.getMinutes()) }
+/** A session's name on face 2: its agent session's, else its record's. */
+const sessionName = (ref: string) => ref.replace(/^agent-session\//, '')
+const counted = (n: number, one: string) => `${n} ${one}${n === 1 ? '' : 's'}`
+/** Where a yield stands in receiving, in words: waiting until you keep or drop it in Approvals. */
+const YIELD_STANDS: Readonly<Record<string, string>> = {pending: 'waits', accepted: 'accepted', included: 'kept', rejected: 'dropped'}
+
+/** One of face 2's entries: its name, when it started and (done) ended, as its own record keeps them, lit while it runs; what it is and
+ * where it runs for the status bar. Click to open it there. */
+function sessionRow(s: DaySession, list: SessionList): RowItem {
+  const starts = s.starts ?? [], ends = s.ends ?? [], first = starts[0], last = ends[ends.length - 1]
+  const span = first === undefined ? NONE : list === 'done' && last !== undefined ? `${clockAt(first)}–${clockAt(last)}` : `${clockAt(first)}–`
+  const by = s.client ?? 'its harness'
+  const again = starts.length > 1 ? ` It started ${counted(starts.length, 'time')} and ended ${counted(ends.length, 'time')}.` : ''
+  const where = s.agentSession ? `It runs as ${s.agentSession}${s.space ? ` in ${s.space}` : ''}: click to open it there.`
+    : `It was recorded by ${by}'s own hooks and runs in a terminal outside the window, so it opens nowhere here.`
+  return {id: s.agentSession ?? s.session, name: sessionName(s.agentSession ?? s.session), light: list === 'running' ? 'lit' : 'dark', busy: list === 'running', note: span,
+    does: `A ${by} session, ${list === 'done' ? 'ended' : list}, as its own record ${s.ref ?? s.session} keeps it.${again} ${where}`}
+}
+
+/** What one session yielded at its end, and where it stands: it waits until you keep it (it lands on face 2 of today's page) or drop it,
+ * both in Approvals. */
+function yieldRow(y: DayYielded): RowItem {
+  const what = `${counted(y.receipts ?? 0, 'receipt')}, ${counted(y.changes ?? 0, 'change')}`, who = sessionName(y.session)
+  const stands = y.status ? YIELD_STANDS[y.status] ?? y.status : undefined
+  const then = y.status === 'pending' ? 'It waits for you in Approvals: keep it and it lands on face 2 of today\'s page, or drop it.'
+    : y.status === 'included' ? 'You kept it: it stands on face 2 of today\'s page.' : y.status === 'rejected' ? 'You dropped it: nothing of it landed.' : ''
+  return {id: y.returnRef, name: `${who} · ${what}`, said: y.account ? `${who} · ${what}: ${y.account}` : undefined, light: y.status === 'pending' ? 'lit' : 'dark',
+    note: stands ?? NONE, ...(y.unread ? {why: y.unread} : {}),
+    does: `What ${who} yielded at its end: ${what}${y.account ? `, and its account: ${y.account}` : ''}. ${then}`.trim()}
+}
+
+/** The Sessions page (face 2, O-I #1007): the day's sessions in three lists, done, running and queued, each from its own record and
+ * opened where it runs on a click; and what each yielded at its end, waiting as a proposal you keep or drop in Approvals. */
+function SessionsBands({p}: {p: ViewProps}) {
+  const read = json<DaySessions | null>(p.v, 'daySessions', null), why = strOf(p.v, 'daySessionsWhy') ?? 'No reading of the day\'s sessions.'
+  const [at, setAt] = useState<Partial<Record<SessionList | 'yields', number>>>({})
+  // newest last, opening on the newest
+  const last = (items: readonly unknown[] | undefined) => Math.max(0, Math.ceil((items?.length ?? 0) / SESSIONS_SIZE) - 1)
+  const list = (key: SessionList, label: string, does: string, empty: string, width?: number) => {
+    const items = read ? (read[key] ?? []).map(s => sessionRow(s, key)) : undefined
+    return <Section label={label} {...(width ? {width} : {grow: true})}>
+      <Rows does={does} size={SESSIONS_SIZE} items={items} why={read ? undefined : why} empty={empty} onSelect={id => p.set('openSession', id)}
+        page={at[key] ?? last(items)} onPage={x => setAt(was => ({...was, [key]: x}))} />
+    </Section>
+  }
+  const yields = !read ? undefined : read.yields ? read.yields.map(yieldRow) : unreadRows(read.yieldsWhy ?? 'What the day\'s sessions yielded is not read.')
+  return <>
+    <Band>
+      {list('done', 'Done', 'The day\'s sessions that ended, each with its start and its end as its own record keeps them. Click one to open it where it ran.', 'No session has ended today.')}
+      {list('running', 'Running', 'The day\'s sessions that run now, from their own records: one that crashed has no recorded end and stands here, which is all its record says. Click one to open it where it runs.', 'No session runs now.')}
+      {list('queued', 'Queued', 'Sessions launched and not yet started.', read?.queuedWhy ?? 'No session waits to start.', 150)}
+    </Band>
+    <Band>
+      <Section label="Yielded" grow>
+        <Rows does="What each session yielded at its end: its receipts, its changes and its account. Each waits as a proposal you keep or drop in Approvals; kept, it lands on face 2 of today's page."
+          size={SESSIONS_SIZE} items={yields} why={read ? undefined : why} empty="No session has yielded anything today." page={at.yields ?? last(yields)} onPage={x => setAt(was => ({...was, yields: x}))} />
+      </Section>
+    </Band>
+  </>
 }
 
 /** What the Field page says the Day keeps of the field, by its field source (Central#324): On, Off, or not read. REPLACED (Central#324):
@@ -313,8 +394,8 @@ const closeoutPair = (p: ViewProps) => { const c = closeout(p.v)
       value={c.word} tone={c.ok ? 'green' : c.word ? 'stall' : undefined} />
     <Action {...st(p, 'verifyCloseout')} label="Verify" does="Reads the close back: a continuation registered, earlier handoffs closed, learning recorded, deferred work registered." onPress={() => p.set('verifyCloseout', true)} />
   </div> }
-/** The proposals that wait for you: face 1's tasks and face 3's patterns, as the faces count them. */
-const waiting = (v: ViewProps['v']) => { const a = numOf(v, 'c1p'), b = numOf(v, 'c3p'); return a === undefined && b === undefined ? undefined : (a ?? 0) + (b ?? 0) }
+/** The proposals that wait for you: face 1's tasks, what face 2's sessions yielded and face 3's patterns, as the faces count them. */
+const waiting = (v: ViewProps['v']) => { const counts = ['c1p', 'c2p', 'c3p'].map(key => numOf(v, key)); return counts.every(n => n === undefined) ? undefined : counts.reduce<number>((sum, n) => sum + (n ?? 0), 0) }
 const closeRoutine = (p: ViewProps, label = 'Routine') => toggle(p, 'closeRoutine', label, "When the day closes: summarise it, send what you learned to your knowledge, carry face 5's proposal to tomorrow's face 0.")
 const toggle = (p: ViewProps, key: string, label: string, does: string, tone?: 'value') => {
   const now = boolOf(p.v, key)
@@ -323,6 +404,20 @@ const toggle = (p: ViewProps, key: string, label: string, does: string, tone?: '
 
 /** [SF06, SF08] The design's own sample of the field beside the Day: your world at mara's star, its day, and what reached you from it. */
 const SAMPLE_AT = Date.UTC(2026, 9, 15, 9, 0)
+
+/** [O-I #1007] The design's own sample of face 2: four sessions done, two running, none queued (no record keeps one), and what two of them
+ * yielded — one waiting, one kept. */
+const sampleSession = (name: string, client: string, start: number, end?: number): DaySession => ({session: `ses_${name}`, ref: `aikit:session:${client}:agent-session/${name}`,
+  client, agentSession: `agent-session/${name}`, space: 'session-space/root', state: end === undefined ? 'running' : 'ended', starts: [SAMPLE_AT + start * 60_000],
+  ends: end === undefined ? [] : [SAMPLE_AT + end * 60_000]})
+const SAMPLE_SESSIONS: DaySessions = {
+  done: [sampleSession('morning-pages', 'claude', 0, 42), sampleSession('review', 'codex', 50, 95), sampleSession('ingest', 'pi', 100, 130), sampleSession('notes', 'claude', 140, 150)],
+  running: [sampleSession('essay', 'claude', 160), sampleSession('tests', 'codex', 175)], queued: [],
+  queuedWhy: 'AIKit\'s lifecycle records a session from its start, so no record keeps a session launched and not yet started.',
+  yields: [{session: 'agent-session/morning-pages', returnRef: 'central:return:control:root:sample-morning-pages', status: 'pending', receipts: 3, changes: 1,
+    account: 'Drafted the second section of the essay.', filedAtUnixMs: SAMPLE_AT + 42 * 60_000},
+  {session: 'agent-session/review', returnRef: 'central:return:control:root:sample-review', status: 'included', receipts: 2, changes: 2, account: null, filedAtUnixMs: SAMPLE_AT + 95 * 60_000}],
+  yieldsWhy: null}
 const SAMPLE_FIELD: DayField = {dayWhy: null,
   stars: [{ref: 'star:rosarium', name: 'The Rosarium plates', here: ['mara', 'stranger', 'your world'], day: [
     {star_ref: 'star:rosarium', world_ref: 'world:mara', what: 'lit', kind: null, at: SAMPLE_AT},
@@ -350,7 +445,7 @@ export const day: DesignedDevice = {
     light: 'lit', face: 1, view: 'die', closeRoutine: true, template: 'day',
     src_central: true, src_factory: true, src_expressions: true, src_techne: true, src_live: true, src_field: true,
     // Readings: what the device reports, never set from here. The bounds are Central's: tomorrow opens at 22:00, the day closes at 04:00.
-    rollover: 1320, dayStart: 240, date: 'Wed 15 Oct', tomorrow: 'Thu 16 Oct', tomorrowOpen: true, c0: 3, c1: 6, c1p: 2, c2done: 4, c2run: 2, c2queue: 3, c3: 2, c3p: 1, c4: 7, c5: 0,
+    rollover: 1320, dayStart: 240, date: 'Wed 15 Oct', tomorrow: 'Thu 16 Oct', tomorrowOpen: true, c0: 3, c1: 6, c1p: 2, c2done: 4, c2run: 2, c2queue: 0, c2p: 1, c3: 2, c3p: 1, c4: 7, c5: 0,
     // The moves: what each asks of the agent.
     prompt_tasks: 'Read face 0 and propose tasks in three tiers: must, should, could.',
     prompt_patterns: 'Read what ran and propose patterns, each with the items that show it.',
@@ -367,20 +462,26 @@ export const day: DesignedDevice = {
       {clause: 'learned-material-recorded', state: 'pass'}, {clause: 'deferred-work-registered', state: 'skipped', detail: 'No Factory Run ledger bound to this session.'}]}),
     // Readings: the held field beside the Day (SF06, SF08), and how many of what reached you the Day keeps (Central#324).
     fieldDay: JSON.stringify(SAMPLE_FIELD), fieldKept: 2,
+    // Reading: face 2, the day's sessions from their own records and what each yielded (O-I #1007).
+    daySessions: JSON.stringify(SAMPLE_SESSIONS),
   },
   fixtures: {
     'A working day': {canClose: true, running_context: true, closeout: JSON.stringify({verified: true, clauses: [{clause: 'continuation-registered', state: 'pass'},
       {clause: 'previous-handoff-superseded', state: 'pass'}, {clause: 'learned-material-recorded', state: 'pass'}, {clause: 'deferred-work-registered', state: 'pass'}]})},
     'Stale pointer': {light: 'dark', notice: 'Today has not opened yet (the last Day was Tue 13 Oct). Central opens it by itself at the Day\'s turn.', canClose: undefined, face: undefined,
       date: 'Fri 16 Oct', tomorrow: undefined, tomorrowOpen: undefined, c0: undefined, c1: undefined, c1p: undefined, c2done: undefined, c2run: undefined,
-      c2queue: undefined, c3: undefined, c3p: undefined, c4: undefined, c5: undefined,
+      c2queue: undefined, c2p: undefined, c3: undefined, c3p: undefined, c4: undefined, c5: undefined, daySessions: undefined,
       ...Object.fromEntries(MOVE_KEYS.filter(k => !k.startsWith('prompt_')).map(k => [k, undefined]))},
     'No readings': Object.fromEntries(['light', 'face', 'view', 'dayStart', 'rollover', 'closeRoutine', 'template', 'src_central', 'src_factory',
-      'src_expressions', 'src_techne', 'src_live', 'date', 'tomorrow', 'tomorrowOpen', 'c0', 'c1', 'c1p', 'c2done', 'c2run', 'c2queue', 'c3', 'c3p', 'c4', 'c5', 'canClose', 'closeout', 'patternPoints',
-      'src_field', 'fieldDay', 'fieldKept', ...MOVE_KEYS].map(k => [k, undefined])),
+      'src_expressions', 'src_techne', 'src_live', 'date', 'tomorrow', 'tomorrowOpen', 'c0', 'c1', 'c1p', 'c2done', 'c2run', 'c2queue', 'c2p', 'c3', 'c3p', 'c4', 'c5', 'canClose', 'closeout', 'patternPoints',
+      'src_field', 'fieldDay', 'fieldKept', 'daySessions', ...MOVE_KEYS].map(k => [k, undefined])),
     // [SF06, SF08] the field where no World stands, and a world that is at no star and has had nothing reach it
     'Field not read': {fieldDay: undefined, fieldWhy: 'The field is read while the World stands: open the World to read it beside your Day.'},
     'At no star': {fieldDay: JSON.stringify({stars: [], reached: [], dayWhy: null} satisfies DayField)},
+    // [O-I #1007] face 2 where the sessions slice holds none (or the Day shown is not today), and a day no session has run in yet
+    'Sessions not read': {daySessions: undefined, c2done: undefined, c2run: undefined, c2queue: undefined, c2p: undefined,
+      daySessionsWhy: 'Face 2 holds no sessions of the day: AIKit\'s lifecycle is not read in this World.'},
+    'No session yet': {c2done: 0, c2run: 0, c2queue: 0, c2p: 0, daySessions: JSON.stringify({done: [], running: [], queued: [], queuedWhy: SAMPLE_SESSIONS.queuedWhy, yields: [], yieldsWhy: null} satisfies DaySessions)},
   },
 
   folded: p => <Folded title="Day" light={light(p)} readings={[shortDate(p.v, 'date'), `Face ${shown(p.v, 'face')}`]} onUnfold={p.nav.unfold} />,

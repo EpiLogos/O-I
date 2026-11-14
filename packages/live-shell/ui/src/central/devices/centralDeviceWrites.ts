@@ -20,12 +20,15 @@
 //     close-carry), each on the revision Central gave (centralWrite; W2);
 //   - a law statement written on the root world's tier 0 is adopted on the revision Central gives for it now (adoptLaw: central.files.read,
 //     then control.law.adopt as the person's press), and Central renders the root's floor again (manual §18.5, O-I ticket 1005);
+//   - what a session yielded at its end is kept in Approvals by Central's receiving Review and then its Include onto face 2 of today's
+//     page, or dropped by the Review alone, the person's presses through the kernel's `act` (keepSessionYield, dropSessionYield; O-I
+//     ticket 1007);
 // A refusal is the owner's own words, thrown as they came; the device keeps the change and says so. Pure of React.
 import type {CentralGroundReading} from '../../../../../../desktop/cradle/src/central/client'
 import {kernelOp, kernelRead} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import {modelSlice, sliceValue, type ModelSliceReading} from '../../owners/model'
 import {readWorlds, type CentralWorldsReading} from '../centralWorlds'
-import {DAY_ENTRY_PART_ACTION, DAY_FIELD_RECORD_ACTION, dayFromModel, type DayFieldRecord, type DaySettingsPatch} from './dayBinding'
+import {DAY_ENTRY_PART_ACTION, DAY_FIELD_RECORD_ACTION, dayFromModel, type DayFieldRecord, type DaySettingsPatch, type DayYield} from './dayBinding'
 import {actionAnswerOf, centralActionOp} from './centralActions'
 import {DayFormSession, isObject, unmappedChanges, validateDocumentBasis} from '../../../../../../desktop/cradle/src/central/dayForm'
 import {receiving} from '../../../../../../desktop/cradle/src/receiving/client'
@@ -372,6 +375,31 @@ export async function closeCarry(transport: KernelTransportStatus): Promise<{clo
   if (!day.relations_revision) throw new Error('Central\'s Day reading carries no relations revision, so the close cannot be checked against it; nothing was closed')
   const answer = await centralWrite(transport, DAY_ACTIONS.closeNow, {day_ref: day.day_ref, expected_revision: day.revision.revision, expected_relations_revision: day.relations_revision}) as {carry?: unknown} | null
   return {closed: day.day_ref, civilDate: day.temporal.civil_date, carry: answer?.carry ?? null}
+}
+
+/** Where Central names no revision of a session's yield: neither Keep nor Drop can be checked against it. */
+const yieldUnrevised = (verb: string, row: DayYield) =>
+  `${verb}: Central names no revision of what ${row.session} yielded, so the answer cannot be checked against it; nothing was ${verb === 'Keep' ? 'kept' : 'dropped'}.`
+
+/** Keep what a session yielded at its end (O-I #1007; manual §18.2): Central's receiving Review accepts its Return on today's page as it
+ * was read, then its Include lands it on face 2 of that page — the person's two presses (central.receiving.review, then
+ * central.receiving.include, through the kernel's `act`; action.rs PERSON_ACTS), each checked on the revisions Central gave, as act 5 keeps
+ * one (desktop/cradle/kernel/tests/foundation.rs keep_or_drop). Resolves with the Return's revision once included. */
+export async function keepSessionYield(transport: KernelTransportStatus, row: DayYield, pageRevision: string): Promise<{revision: string | null}> {
+  if (!row.revision) throw new Error(yieldUnrevised('Keep', row))
+  const reviewed = await receiving<{revision?: string} | null>(transport, null, {kind: 'review', return_ref: row.returnRef, expected_return_revision: row.revision,
+    disposition: 'accepted', expected_source_revision: pageRevision})
+  if (!reviewed?.revision) throw new Error(`Keep: Central accepted what ${row.session} yielded but named no revision of it, so it was not included on face 2. Keep it again.`)
+  const included = await receiving<{revision?: string} | null>(transport, null, {kind: 'include', return_ref: row.returnRef, expected_return_revision: reviewed.revision,
+    expected_source_revision: pageRevision})
+  return {revision: included?.revision ?? null}
+}
+
+/** Drop what a session yielded: Central's receiving Review rejects its Return, and nothing of it lands (central.receiving.review, the
+ * person's press). */
+export async function dropSessionYield(transport: KernelTransportStatus, row: DayYield): Promise<unknown> {
+  if (!row.revision) throw new Error(yieldUnrevised('Drop', row))
+  return receiving(transport, null, {kind: 'review', return_ref: row.returnRef, expected_return_revision: row.revision, disposition: 'rejected'})
 }
 
 /** Append the person's entry to a Flow: read the file again (the revision the write is checked against), append the entry as the

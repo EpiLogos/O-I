@@ -59,11 +59,12 @@ import {DayDocument, DayView} from '../documents/CentralDocumentPane'
 import {dayRefOfDate} from '../documents/centralDocuments'
 import {useDesign} from '../../frame/devices/designs'
 import {CENTRAL_FAMILY, centralDevice, centralDeviceId, centralPicture, chainFaces, type CentralReads, type CentralWriters} from './centralDeviceModel'
-import {beginDayMove, bringDayEntry, centralWrite, centralWriters, closeCarry, FieldRecorder, openTomorrow, recordFieldItems, turnDieFace, writeDaySettings} from './centralDeviceWrites'
+import {beginDayMove, bringDayEntry, centralWrite, centralWriters, closeCarry, dropSessionYield, FieldRecorder, keepSessionYield, openTomorrow, recordFieldItems, turnDieFace, writeDaySettings} from './centralDeviceWrites'
 import {turnDay, useDayInPane, useReachedDocument} from '../documents/documentDoor'
 import {documentPacketOf, packetItemOf} from './packetBinding'
 import type {DayDocumentField} from '../../../../../../desktop/cradle/src/central/dayForm'
-import {dayDesignBinding, dayEntryCandidates, dayFactsOf, dayFieldRecords, dayFromModel, dayOwnOf, dayValuesOf, fieldSkippedWords, todaysPageOf, type DayFacts, type DayFieldRecord} from './dayBinding'
+import {dayDesignBinding, dayEntryCandidates, dayFactsOf, dayFieldRecords, dayFromModel, dayOwnOf, dayValuesOf, dayYieldsOf, faceTwoOf, faceTwoValuesOf, fieldSkippedWords, todaysPageOf,
+  todaysPageRevisionOf, type DayFacts, type DayFieldRecord, type FaceTwoSession} from './dayBinding'
 import {heldField, holdDayEntries, starHand, subscribeSystem, systemReading} from '../../projections/atlas/system/systemStore'
 import {dayFieldOf, dayFieldReading} from '../../projections/atlas/system/fieldModel'
 import {useCentralAction, useNaraReading, type DayDieAperture} from './useCentralReadings'
@@ -96,6 +97,8 @@ import {commentSourceReturn, withReturnComments} from './sourceReturnComment'
 import {writeSessionSettings} from '../../agent/sessionSettings'
 import {bindConversation} from './centralDeviceWrites'
 import {useAgencySessions} from '../../agent/useAgencySessions'
+import {trackKey, type AgentSessionTrack} from '../../agent/agentRunModel'
+import {openWhereItLives} from '../../frame/openWhereItLives'
 import {useOptionalContinuity} from '../../continuity/workspace'
 import {COMPANIONS} from '../../shell/modeDockTiles'
 import {conversationOf} from '../../widgets/agentConversation'
@@ -427,6 +430,15 @@ function useFieldRecords(transport: KernelTransportStatus, shownDay: string | nu
   return shownDay === null ? null : fieldRecording.words.get(shownDay) ?? null
 }
 
+/** Open one of face 2's sessions where it runs (O-I ticket 1007): its track in Factory, THE selection naming it as Factory's own sessions
+ * are chosen (frame/openWhereItLives.ts; agent/AgentShellContext.tsx sessionOfSelection). A session no Factory track holds here is refused
+ * in words. Nothing is written to any owner. */
+export function openSessionWhereItRuns(session: FaceTwoSession, tracks: readonly AgentSessionTrack[]): void {
+  const track = tracks.find(item => !item.group && item.sessionRef === session.agentSession)
+  if (!track) throw new Error(`${session.agentSession ?? session.session} is not among Factory's sessions here, so it opens nowhere from the Day: its record is ${session.ref ?? session.session}.`)
+  openWhereItLives({kind: 'track', mode: 'factory', track: trackKey(track), title: track.purpose ?? track.agentName ?? track.sessionRef})
+}
+
 /** Central's chains (DLW §16.2): the Main track's — the Day, then Approvals — and a world's — the Packet, the Agent, Scope, then Docs —,
  * compact, each published so the pool, a pane and the rail draw the same device on the same binding. Which stands follows THE selection
  * (centralChainOf, centralWorldOf). */
@@ -441,6 +453,16 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
   // ground reads it; the Day opens itself at Central's turn, and no press stands in for it.
   const daySlice = useModelSlice(transport, 'day')
   const dayModel = useMemo(() => dayFromModel(daySlice), [daySlice])
+  // Face 2 (O-I ticket 1007): the day's sessions from their own records, as the World Model's sessions slice holds them (its `day` part),
+  // and what each yielded at its end, Central's reading of today's Day — both today's, so they stand on the Day device while it shows
+  // today; a Day the person selected reads its sessions on its own page. Each session opens where it runs, its Factory track, read at the
+  // press (tracksAt, the agency's tracks below).
+  const sessionsSlice = useModelSlice(transport, 'sessions')
+  const faceTwo = useMemo(() => faceTwoOf(sessionsSlice), [sessionsSlice])
+  const dayYields = useMemo(() => dayYieldsOf(dayModel), [dayModel])
+  const todaysRevision = useMemo(() => todaysPageRevisionOf(dayModel), [dayModel])
+  const todayShown = dayStanding === null
+  const tracksAt = useRef<readonly AgentSessionTrack[]>([])
   const selectedKey = dayStanding ? `${dayStanding.state}|${dayStanding.dayRef}|${day?.sourceRef ?? ''}|${day?.documentId ?? ''}` : null
   const dayFacts = useMemo(() => dayFactsOf({ground: dayModel.ground, groundError: dayModel.groundError, selected: dayStanding ? {standing: dayStanding, aperture: day} : null}),
     // The selection is identity: a fresh object with the same parts is the same Day.
@@ -469,7 +491,7 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
   const dayBinding = useMemo(() => {
     if (!dayFacts.civilDate) return null
     const values = dayValuesOf(dayFacts, dayFacts.aperture && shownFace !== null ? {face: shownFace, payload: dayDocument.payload} : null, dayOwn,
-      {...field, ...(fieldRefusal ? {fieldRefusal} : {}), ...(fieldSkipped ? {fieldSkipped} : {})})
+      {...field, ...(fieldRefusal ? {fieldRefusal} : {}), ...(fieldSkipped ? {fieldSkipped} : {})}, todayShown ? faceTwoValuesOf(faceTwo, dayYields) : null)
     // Each write is Central's Action (CENTRAL_CHAIN_DECLARATIONS `day`); the World Model reads the Day again behind it.
     return dayDesignBinding(DAY_DEVICE_ID, dayFacts, values, {
       turn: async (aperture, face) => { await turnDay(aperture.documentId, face, () => turnDieFace(transport, aperture, face)) },
@@ -486,8 +508,10 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
       // Refine on the Patterns pad (§18.2): a refinement of the one skill or method its pattern points at, on the Skillset rack's
       // Refining page in Factory (§19.7). It writes nothing to any owner.
       refine: member => openRefinement(member, {toFactory}),
+      // Open on one of face 2's sessions: where it runs, its track in Factory.
+      openSession: session => openSessionWhereItRuns(session, tracksAt.current),
     }, dayOwn)
-  }, [dayFacts, shownFace, dayDocument.payload, dayOwn, field, fieldRefusal, fieldSkipped, transport, epoch, toFactory])
+  }, [dayFacts, shownFace, dayDocument.payload, dayOwn, field, fieldRefusal, fieldSkipped, transport, epoch, toFactory, todayShown, faceTwo, dayYields])
   const dayAperture = dayFacts.aperture
   const selection = useOptionalContinuity()?.current.context?.selection ?? null
   const selectionRef = selection?.ref ?? null
@@ -515,6 +539,7 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
     // eslint-disable-next-line react-hooks/exhaustive-deps -- the world is its ref
     [selectedWorld?.ref, codeProject, git.status, git.error])
   const agency = useAgencySessions(transport)
+  tracksAt.current = agency.tracks
   const nowUnixMs = useAgentSessionsOptional()?.nowUnixMs ?? 0
   const companion = COMPANIONS.base.name
   const packetTrack = conversationOf(agency.tracks, companion, selectionRef).track
@@ -679,12 +704,15 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
     // Approvals is handed no Gateway and stands no default answer: that answer is the Gateway's, never Approvals' (§19.14; ticket 788).
     const binding = approvalsBinding({session: naraTrack, encounter: answerObserved?.reading ?? null, holds, returns: returned,
       returnsAbsent: worldReturns.absent, returnsRefused: worldReturns.refusals, tracks: agency.tracks, nowUnixMs: nowUnixMs || Date.now(),
-      refinements: centralRefinements, settings: naraWaits.settings},
+      refinements: centralRefinements, settings: naraWaits.settings,
+      // What today's sessions yielded at their end, each kept onto face 2 of today's page or dropped (O-I ticket 1007).
+      yields: dayYields.ok ? {rows: dayYields.rows, pageRevision: todaysRevision} : {unread: dayYields.why}},
       {...(actions ? {permission: (id, decision) => actions.permission(id, decision)} : {}), approve: row => acceptSourceReturn(transport, returnProjectOf(row, approvalsRegister), row, person),
         reject: row => rejectSourceReturn(transport, returnProjectOf(row, approvalsRegister), row),
         ...(refineWrite ? {refine: refineWrite} : {}), ...(centralRevision ? {refineCentral: centralRevision} : {}),
         // Open shows a refinement where it belongs, the Skillset rack's Refining page: Factory's session chains stand the rack.
-        openRefinement: member => openRefinement(member, {toFactory})},
+        openRefinement: member => openRefinement(member, {toFactory}),
+        keepYield: (row, revision) => keepSessionYield(transport, row, revision), dropYield: row => dropSessionYield(transport, row)},
       CENTRAL_APPROVALS_ID)
     // Changes (W6): a comment on the return, in the words written in the thread — the Agent's composer here — through Central's
     // projectcentral.source.return_comment (sourceReturnComment.ts); once Central keeps it, the composer is cleared.
@@ -698,7 +726,7 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
       {opened, hold: ids => holdView(APPROVALS_ID, 'opened', openedHold(ids))})
     return requested
   }, [answerHandle, naraTrack, answerObserved, holds, returned, worldReturns.absent, worldReturns.refusals, agency.tracks, nowUnixMs, transport, person, agentDraft, agentWrite, ownerRequests, approvalsRegister, naraWaits.settings,
-    centralRefinements, refineWrite, centralRevision, toFactory])
+    centralRefinements, refineWrite, centralRevision, toFactory, dayYields, todaysRevision])
   const others = useMemo(() => centralAgentDevices(), [])
   // Docs (§18.5) on the selected world (pageDevices.ts useDocsDevice, pageBindings.ts docsBinding): the world's account on six tiers on
   // Central's own readings, and the person's presses through Central.

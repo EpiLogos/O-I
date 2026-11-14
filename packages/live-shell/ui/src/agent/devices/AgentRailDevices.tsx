@@ -63,6 +63,8 @@ import {useUnitDecisions, waitingDecisions} from './unitDecisions'
 import {threadTrackOf} from '../threadTrack'
 import {useAttemptTakes} from '../../owners/attemptTakes'
 import {PERSONAL_ANCHOR_ACTION, acceptSourceReturn, personRefOf, rejectSourceReturn} from '../../central/devices/sourceReturnAccept'
+import {dayFromModel, dayYieldsOf, todaysPageRevisionOf} from '../../central/devices/dayBinding'
+import {dropSessionYield, keepSessionYield} from '../../central/devices/centralDeviceWrites'
 import {commentSourceReturn, withReturnComments} from '../../central/devices/sourceReturnComment'
 import {openNotificationTarget, useOwnerRequests} from '../../widgets/railDevices'
 import {openedHold, openedOf, withOwnerRequests} from '../../widgets/railBindings'
@@ -200,17 +202,23 @@ export function AgentRailDevices() {
   const refinements = useAikitRead(transport, REFINEMENT_LIST)
   const refineWrite = useMemo(() => refinementWrite(transport), [transport])
   const centralRevision = useMemo(() => centralRevisionWrite(transport), [transport])
+  // What today's sessions yielded at their end (O-I ticket 1007): Central's reading of today's Day, as the World Model's day slice holds it,
+  // each kept onto face 2 of today's page or dropped, as on Central's Main track.
+  const daySlice = useModelSlice(transport, 'day')
+  const yields = useMemo(() => { const model = dayFromModel(daySlice), read = dayYieldsOf(model)
+    return read.ok ? {rows: read.rows, pageRevision: todaysPageRevisionOf(model)} : {unread: read.why} }, [daySlice])
   const approvals = useMemo(() => {
     const state = observedState(shownHandle)
     const actions = shownHandle && 'actions' in shownHandle ? shownHandle.actions : undefined
     const binding = approvalsBinding({session: shownTrack, encounter: state?.reading ?? null, holds,
       returns: worldReturns.returns, returnsAbsent: worldReturns.absent, returnsRefused: worldReturns.refusals, tracks, nowUnixMs: sessions?.nowUnixMs || Date.now(), units, person,
-      refinements, settings: shownSettings},
+      refinements, settings: shownSettings, yields},
     {...(actions ? {permission: (id, decision) => actions.permission(id, decision)} : {}),
       ...(refineWrite ? {refine: refineWrite} : {}), ...(centralRevision ? {refineCentral: centralRevision} : {}),
       openRefinement: member => openRefinement(member),
       approve: row => acceptSourceReturn(transport, returnProjectOf(row, null), row, person),
       reject: row => rejectSourceReturn(transport, returnProjectOf(row, null), row),
+      keepYield: (row, revision) => keepSessionYield(transport, row, revision), dropYield: row => dropSessionYield(transport, row),
       ...(transport.kind !== 'unavailable' ? {answerUnit: (project, review) => receiving(transport, project, review).catch(cause => { throw new Error(refusalWords(cause instanceof Error ? cause.message : String(cause))) })} : {})})
     const commented = withReturnComments(binding, {returns: worldReturns.returns, comment: agentDraft, absent: worldReturns.absent}, {
       send: (row, words) => commentSourceReturn(transport, returnProjectOf(row, null), row, words, person),
@@ -218,7 +226,7 @@ export function AgentRailDevices() {
     })
     return withNoticeReasons(withOwnerRequests(commented, {...ownerRequests, nowUnixMs: sessions?.nowUnixMs || Date.now()}, openNotificationTarget,
       {opened: openedOf(viewHolds(holds, APPROVALS_ID).opened), hold: ids => holdView(APPROVALS_ID, 'opened', openedHold(ids))}), ownerRequests)
-  }, [shownHandle, shownTrack, holds, worldReturns, tracks, sessions?.nowUnixMs, transport, person, units, agentDraft, agentWrite, ownerRequests, refinements, refineWrite, centralRevision, shownSettings])
+  }, [shownHandle, shownTrack, holds, worldReturns, tracks, sessions?.nowUnixMs, transport, person, units, agentDraft, agentWrite, ownerRequests, refinements, refineWrite, centralRevision, shownSettings, yields])
 
   // Messages: AIKit's population, the Agency gateway's answer, and the open agent's conversation (O-I #1003), observed through the one
   // encounter session — the Thread's rows, and where Send's words go: the session its Position's occupant works (the agency's track whose

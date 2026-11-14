@@ -11,8 +11,14 @@
 //   - a Day the person selected (the browser's ground, a Timeline clip): the owner's `open-day` standing (centralVertical.ts
 //     interpretDayOpen), as the chain read it before;
 //   - the shown Day's document (today's page, the Day reading's `document`, central.document-reading/v1): its open face (`meta.face`) and
-//     its records — the capture ledger, the three task tiers, the sessions ledger (desktop/cradle/documents/ql-daily-die.html:329
-//     `D.capture ||= []`, `D.sessions ||= []`; the `fields.p1_must|should|could` lists of its ql-doc island).
+//     its records — the capture ledger and the three task tiers (desktop/cradle/documents/ql-daily-die.html:329 `D.capture ||= []`; the
+//     `fields.p1_must|should|could` lists of its ql-doc island);
+//   - face 2, the day's sessions in three lists, done, running and queued (manual §18.2; O-I ticket 1007): each from the session's own
+//     record (AIKit's lifecycle), as the World Model's sessions slice holds them (its `day` part, world_model.rs `day_sessions`), never
+//     the page's sessions ledger, which is no record of a session (faceTwoOf). Each entry names where it runs, and `openSession` opens it
+//     there;
+//   - what each session yielded at its end (its receipts, its changes and its account), waiting on face 2 as a proposal you keep or drop
+//     in Approvals: Central's reading of today's Day (`yields`, ctrl day_turn.rs `yields_of`) in the World Model's day slice (dayYieldsOf).
 // The writes, each Central's own Action through the kernel's `act`:
 //   - `face` turns the die: the die's write route (centralDeviceWrites.ts turnDieFace, `central.document.mutate` field.set,
 //     CAS-checked);
@@ -41,7 +47,7 @@
 // every write (the write moves the World Model's day slice, world_model.rs `written_by`).
 import type {CentralGroundReading} from '../../../../../../desktop/cradle/src/central/client'
 import {validateDocumentBasis, type DayDocumentField} from '../../../../../../desktop/cradle/src/central/dayForm'
-import type {ModelSliceReading} from '../../owners/model'
+import {partOf, sliceValue, type ModelSliceReading} from '../../owners/model'
 import {dieFaceOf} from './dayDie'
 import type {DesignBinding, Standing, Value, ValueChange} from '../../frame/devices/designed'
 import {canCloseDay, civilDayName, currentDayOf, offersEntries, type DayAperture, type DayDocumentStanding} from '../centralVertical'
@@ -50,8 +56,8 @@ import {CONTROL, DAY_ENTRY_CANDIDATE, INVISIBLE, proseFault, proseText, shownPro
 
 /** The value keys the Day design reads that an owner reports or takes (day.tsx `defaults`), and the ones this binding adds for the
  * catalogue to draw (`refusal`, `notice`, `canClose`) and the press it takes (`closeNow`, the close routine). */
-export const DAY_KEYS = ['light', 'date', 'face', 'dayStart', 'rollover', 'c0', 'c1', 'c2done', 'c2run', 'refusal', 'notice', 'canClose', 'tomorrow', 'tomorrowOpen', 'fieldDay', 'fieldWhy',
-  'fieldKept', 'fieldRefusal', 'fieldSkipped'] as const
+export const DAY_KEYS = ['light', 'date', 'face', 'dayStart', 'rollover', 'c0', 'c1', 'c2done', 'c2run', 'c2queue', 'c2p', 'daySessions', 'daySessionsWhy', 'refusal',
+  'notice', 'canClose', 'tomorrow', 'tomorrowOpen', 'fieldDay', 'fieldWhy', 'fieldKept', 'fieldRefusal', 'fieldSkipped'] as const
 
 /** The held field beside the Day (SF06, SF08; DLW build ruling 2026-11-06): the field as the Day reads it (system/fieldModel.ts
  * dayFieldReading: each star your world is at with its day, and what has reached you), or why it is not read; Central's refusal to
@@ -62,7 +68,7 @@ export type DayFieldValues = ({readonly fieldDay: string} | {readonly fieldWhy: 
 
 /** Keys the owner takes a change of (the settings', the pads' and the presses'). Every other key of the design is a reading or has no
  * owner (manual §16.13). */
-export const DAY_WRITES: ReadonlySet<string> = new Set(['face', 'closeNow', 'openTomorrow', 'refinePattern', 'rollover', 'agentWrites', 'closeRoutine',
+export const DAY_WRITES: ReadonlySet<string> = new Set(['face', 'closeNow', 'openTomorrow', 'refinePattern', 'openSession', 'rollover', 'agentWrites', 'closeRoutine',
   'src_central', 'src_factory', 'src_expressions', 'src_techne', 'src_live', 'src_field',
   ...['tasks', 'patterns', 'context', 'synthesis', 'close'].flatMap(move => [`at_${move}`, `prompt_${move}`]),
   ...['tasks', 'patterns', 'context', 'synthesis'].map(move => `run_${move}`)])
@@ -74,6 +80,9 @@ export const DAY_MOVES = ['tasks', 'patterns', 'context', 'synthesis', 'close'] 
 // What faces 2 and 4 still wait on: the machines' own NOWs are Workcell's (EpiLogos/Workcell #72, portable NOW work), their delivery to
 // the Day AIKit's (EpiLogos/ai-kit #275); Central's Day/NOW contract is Central #150 and #153.
 const NO_NOWS = 'every machine\'s NOW and its child NOWs, which no owner reports to the Day yet (Central #150, #153; the machines\' NOWs are Workcell #72\'s, their delivery ai-kit #275)'
+/** Why face 2 lists no sessions here: its lists are today's, read from each session's own record by the World Model's sessions slice. */
+export const FACE_TWO_UNHELD = 'Face 2 lists today\'s sessions from their own records (AIKit\'s lifecycle), as the World Model\'s sessions slice holds them '
+  + '(its `day` part): it holds none here, or the Day shown is one you selected, whose sessions are read on its own page.'
 
 /** Central's Day readings the device reads through the kernel's invoke_action (owner_write.rs carries them as readings: they retire
  * nothing). */
@@ -118,8 +127,12 @@ export const DAY_ABSENT: Readonly<Record<string, string>> = {
   tomorrowOpen: 'Central names no tomorrow\'s Day yet, so none is open.',
   template: 'The Day keeps the template it opened with (meta.template), but the design\'s choices are not the owner\'s templates.',
   c1p: 'The Day document holds included contributions only; proposals that wait are no record of it.',
-  c2run: 'Running is how many clearings of your register\'s NOW are active (central.now.list, read with Central\'s ground): the listing has not answered, or it is a Day you selected, whose running sessions no owner keeps.',
-  c2queue: `Face 2 lists the sessions of ${NO_NOWS}; the sessions ledger records a session with no done, running or queued state.`,
+  c2done: FACE_TWO_UNHELD,
+  c2run: FACE_TWO_UNHELD,
+  c2queue: FACE_TWO_UNHELD,
+  c2p: 'What the day\'s sessions yielded at their end is Central\'s reading of today\'s Day (central.day.read `yields`), and it is not read here.',
+  daySessions: FACE_TWO_UNHELD,
+  daySessionsWhy: 'Why face 2 lists no sessions: handed in with the World Model\'s sessions slice where it holds none.',
   c3: 'Patterns are free text on face 3 (p3_patterns_noticed): the owner counts none.',
   c3p: 'The Day document holds included contributions only; proposals that wait are no record of it.',
   c4: `Face 4 gathers what the sessions of ${NO_NOWS} touched, each entry with its author; until then context is free text on face 4, and the owner counts none.`,
@@ -556,18 +569,124 @@ const listLength = (value: unknown): number | null => (Array.isArray(value) ? va
 const isObject = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value)
 
 /** The counts the Day's own records give its faces (the ql-doc island of ql-daily-die.html): face 0 the capture ledger's rows, face 1
- * the tasks in its three tiers, face 2 the sessions ledger's rows. A record the payload does not carry as a list gives no count. */
-export function dayCountsOf(payload: unknown): {c0?: number; c1?: number; c2done?: number} {
+ * the tasks in its three tiers. A record the payload does not carry as a list gives no count. Face 2's are the sessions' own records'
+ * (faceTwoValuesOf): the page's sessions ledger is no record of a session, and nothing counts it (O-I ticket 1007). */
+export function dayCountsOf(payload: unknown): {c0?: number; c1?: number} {
   if (!isObject(payload)) return {}
   const fields = isObject(payload.fields) ? payload.fields : {}
-  const out: {c0?: number; c1?: number; c2done?: number} = {}
+  const out: {c0?: number; c1?: number} = {}
   const capture = listLength(payload.capture)
   if (capture !== null) out.c0 = capture
   const tiers = [fields.p1_must, fields.p1_should, fields.p1_could].map(listLength)
   if (tiers.every(tier => tier !== null)) out.c1 = tiers.reduce<number>((sum, tier) => sum + tier!, 0)
-  const sessions = listLength(payload.sessions)
-  if (sessions !== null) out.c2done = sessions
   return out
+}
+
+/** One session as face 2 lists it, from its own record (world_model.rs `face_two_entry`; O-I ticket 1007): the record (`session`, AIKit's
+ * lifecycle id), the ref its events name and the harness that recorded it (`client`), where it runs — the agent session it is
+ * (`agentSession`, an AIKit conversation's or a Factory session's) and the space holding it in your world's root register — its state, and
+ * its starts and ends, the instants its record keeps (a resumed session shows each). A session with no agent session runs outside the
+ * window, in a terminal of its own. */
+export interface FaceTwoSession {
+  readonly session: string
+  readonly ref: string | null
+  readonly client: string | null
+  readonly agentSession: string | null
+  readonly space: string | null
+  readonly state: string | null
+  readonly starts: readonly number[]
+  readonly ends: readonly number[]
+}
+
+/** Face 2 (manual §18.2 "The sessions of the day, in three lists: done, running, queued. Each entry links to its session"): today's
+ * sessions as the World Model's sessions slice holds them (its `day` part, world_model.rs `day_sessions`), each list from the sessions'
+ * own records — done where the record ends in its end, running otherwise (a crash leaves no end, and it stands running with none) — and
+ * why `queued` holds none (no record keeps a session launched and not yet started). */
+export interface FaceTwo {
+  readonly done: readonly FaceTwoSession[]
+  readonly running: readonly FaceTwoSession[]
+  readonly queued: readonly FaceTwoSession[]
+  readonly queuedWhy: string | null
+}
+
+const words = (value: unknown): string | null => (typeof value === 'string' && value ? value : null)
+const instants = (value: unknown): number[] => (Array.isArray(value) ? value.filter((at): at is number => typeof at === 'number' && Number.isFinite(at)) : [])
+
+function faceTwoSessionOf(row: unknown): FaceTwoSession[] {
+  if (!isRecord(row) || !words(row.session)) return []
+  return [{session: row.session as string, ref: words(row.ref), client: words(row.client), agentSession: words(row.agent_session), space: words(row.space),
+    state: words(row.state), starts: instants(row.starts), ends: instants(row.ends)}]
+}
+
+/** Face 2 from the World Model's sessions slice, or why it holds none, in the owner's words where it refused. Pure. */
+export function faceTwoOf(slice: ModelSliceReading): {ok: true; value: FaceTwo} | {ok: false; why: string} {
+  const held = sliceValue<{day?: unknown}>(slice)
+  if (!held.ok) return {ok: false, why: held.reason}
+  const day = partOf<Record<string, unknown>>(held.value.day)
+  if (!day) return {ok: false, why: FACE_TWO_UNHELD}
+  if (!day.ok) return {ok: false, why: `Face 2 holds no sessions of the day: ${day.why}`}
+  const list = (key: string): FaceTwoSession[] => (Array.isArray(day.value[key]) ? (day.value[key] as unknown[]).flatMap(faceTwoSessionOf) : [])
+  return {ok: true, value: {done: list('done'), running: list('running'), queued: list('queued'), queuedWhy: words(day.value.queued_why)}}
+}
+
+/** What a session yielded at its end (manual §18.2 "What a session yields when it ends, its receipts, its changes and a short account,
+ * arrives on face 2 as a proposal you keep or drop"; O-I ticket 1007, R36), as Central's reading of today's Day gives it (central.day.read's
+ * and the turn's `yields`, ctrl day_turn.rs `yields_of`): the session, its Return in receiving with where it stands now (`status`:
+ * pending until it is kept or dropped) and the revision a keep or a drop is asked on, how many receipts and changes it carries, its
+ * account, and when it was filed. A Return Central could not read says why (`unread`). */
+export interface DayYield {
+  readonly session: string
+  readonly returnRef: string
+  readonly status: string | null
+  readonly revision: string | null
+  readonly receipts: number
+  readonly changes: number
+  readonly account: string | null
+  readonly filedAtUnixMs: number | null
+  readonly unread: string | null
+}
+
+/** Why no yields are read: today's Day is not read, or names none. */
+export const YIELDS_UNREAD = 'What today\'s sessions yielded is Central\'s reading of today\'s Day (central.day.read `yields`), which the World Model\'s Day holds none of yet.'
+
+function dayYieldOf(row: unknown): DayYield[] {
+  if (!isRecord(row) || !words(row.session) || !words(row.return_ref)) return []
+  const filed = typeof row.filed_at_unix_seconds === 'number' && Number.isFinite(row.filed_at_unix_seconds) ? row.filed_at_unix_seconds * 1000 : null
+  return [{session: row.session as string, returnRef: row.return_ref as string, status: words(row.status), revision: words(row.revision),
+    receipts: Array.isArray(row.receipts) ? row.receipts.length : 0, changes: typeof row.changes === 'number' && Number.isFinite(row.changes) ? row.changes : 0,
+    account: words(row.account), filedAtUnixMs: filed, unread: words(row.unread)}]
+}
+
+/** What today's sessions yielded, from the World Model's Day (Central's reading of today's Day), in the order Central filed them; or why
+ * none are read — Central's words where reading them refused (`yields_refused`). Pure. */
+export function dayYieldsOf(model: DayModel): {ok: true; rows: readonly DayYield[]} | {ok: false; why: string} {
+  const reading = model.today?.reading
+  if (!reading) return {ok: false, why: model.todayRefused ? `${YIELDS_UNREAD} Central refused today's Day: ${model.todayRefused}` : YIELDS_UNREAD}
+  if (typeof reading.yields_refused === 'string') return {ok: false, why: `Central did not read what today's sessions yielded: ${reading.yields_refused}`}
+  if (!Array.isArray(reading.yields)) return {ok: false, why: YIELDS_UNREAD}
+  return {ok: true, rows: reading.yields.flatMap(dayYieldOf)}
+}
+
+/** The revision of today's page as the World Model's Day holds it (the Day reading's `document`, central.document-reading/v1): the
+ * revision a kept yield lands on (central.receiving.review accepted, then include, each checked on it); null where no page stands. Pure. */
+export function todaysPageRevisionOf(model: DayModel): string | null {
+  const document = model.today?.reading.document
+  return isRecord(document) && isRecord(document.revision) ? words(document.revision.revision) : null
+}
+
+/** Face 2's readings for today's Day (O-I ticket 1007): how many sessions are done, running and queued (`c2done`, `c2run`, `c2queue`),
+ * the lists themselves with what each session yielded (`daySessions`, JSON {done, running, queued, queuedWhy, yields, yieldsWhy}: the
+ * device draws them and names where each runs), and how many yields wait to be kept or dropped (`c2p`, face 2's proposals, as `c1p` and
+ * `c3p` are faces 1's and 3's). Where face 2 is not read, `daySessionsWhy` says why and no count stands. Pure. */
+export function faceTwoValuesOf(faceTwo: {ok: true; value: FaceTwo} | {ok: false; why: string},
+  yields: {ok: true; rows: readonly DayYield[]} | {ok: false; why: string}): Record<string, Value> {
+  const values: Record<string, Value> = {}
+  if (yields.ok) values.c2p = yields.rows.filter(row => row.status === 'pending').length
+  if (!faceTwo.ok) { values.daySessionsWhy = faceTwo.why; return values }
+  const {done, running, queued, queuedWhy} = faceTwo.value
+  Object.assign(values, {c2done: done.length, c2run: running.length, c2queue: queued.length})
+  values.daySessions = JSON.stringify({done, running, queued, queuedWhy, yields: yields.ok ? yields.rows : null, yieldsWhy: yields.ok ? null : yields.why})
+  return values
 }
 
 /** One part of the day slice (world_model.rs `part`): its reading, or the owner's words why it has none; null where none is named. */
@@ -672,9 +791,6 @@ export interface DayFacts {
   readonly automaticRollover: boolean | null
   /** Why the policy gives no boundary, in Central's words where it refused (null while it answers, or has not). */
   readonly boundaryRefusal?: string | null
-  /** How many clearings of your register's NOW are active now (central.now.list, the ground's `now` leg; widgets/railBindings.ts reads the
-   * same listing): the sessions running, for the Day Central names as current; null for a Day the person selected or an unanswered listing. */
-  readonly running?: number | null
   /** Tomorrow's Day as Central names it beside today's (central.day-reading/v1 `tomorrow`, set by central.day.rollover): its civil date. */
   readonly tomorrow?: string | null
 }
@@ -706,10 +822,8 @@ export function dayFactsOf({ground, groundError, selected}: DayFactsInput): DayF
   // Tomorrow's Day, where Central names one after the Day shown (a stale name, on or before today, is no tomorrow).
   const named = (ground.day.data as {tomorrow?: {civil_date?: unknown} | null} | null | undefined)?.tomorrow?.civil_date
   const tomorrow = typeof named === 'string' && civilDate && named > civilDate ? named : null
-  const listing = ground.now?.state === 'ready' ? ground.now.data ?? null : null
-  const running = listing && Array.isArray(listing.records) ? listing.records.filter(row => row.lifecycle === 'active').length : null
   return {civilDate, standing: current.standing, refusal: refusalOf(current.standing, current.pointer, time?.civil_date ?? null),
-    canClose: canCloseDay(ground), offersEntries: offersEntries(ground), aperture: current.aperture, boundary, automaticRollover, boundaryRefusal, tomorrow, running}
+    canClose: canCloseDay(ground), offersEntries: offersEntries(ground), aperture: current.aperture, boundary, automaticRollover, boundaryRefusal, tomorrow}
 }
 
 function refusalOf(standing: DayDocumentStanding | null, pointer: string | null, today: string | null): string | null {
@@ -720,10 +834,11 @@ function refusalOf(standing: DayDocumentStanding | null, pointer: string | null,
   return standing.message
 }
 
-/** The design's values from the facts, the shown Day's document and the Day's own settings and moves. Only what an owner reports;
- * nothing from the design's defaults. */
+/** The design's values from the facts, the shown Day's document, the Day's own settings and moves, the field beside it, and face 2's
+ * sessions with what they yielded (faceTwoValuesOf, today's alone: the caller hands none for a Day the person selected). Only what an
+ * owner reports; nothing from the design's defaults. */
 export function dayValuesOf(facts: DayFacts, document: {readonly face: number; readonly payload: unknown} | null, own: DayOwnReadings | null = null,
-  field: DayFieldValues | null = null): Record<string, Value> {
+  field: DayFieldValues | null = null, faceTwo: Readonly<Record<string, Value>> | null = null): Record<string, Value> {
   const values: Record<string, Value> = {}
   const date = civilDayName(facts.civilDate)
   if (date) values.date = date
@@ -740,8 +855,8 @@ export function dayValuesOf(facts: DayFacts, document: {readonly face: number; r
   const tomorrow = civilDayName(facts.tomorrow ?? null)
   if (tomorrow) { values.tomorrow = tomorrow; values.tomorrowOpen = true }
   values.canClose = facts.canClose
-  // Running is the register's NOW, not the Day document's: it stands whether or not the document does.
-  if (typeof facts.running === 'number') values.c2run = facts.running
+  // Face 2 is the sessions' own records, not the Day document's: it stands whether or not the document does.
+  if (faceTwo) Object.assign(values, faceTwo)
   // The face and the counts belong to the Day document: none stands, none is drawn.
   if (facts.aperture && document) {
     values.face = document.face
@@ -767,6 +882,24 @@ export interface DayWriters {
   readonly openTomorrow?: () => Promise<void>
   /** Open a refinement of the one skill or method the Patterns move's pattern points at, on the Skillset rack's Refining page (§19.7). */
   readonly refine?: (member: string) => void | Promise<void>
+  /** Open one of face 2's sessions where it runs: its agent session, a track in Factory (§9.3 "Run a session"). It writes nothing. */
+  readonly openSession?: (session: FaceTwoSession) => void | Promise<void>
+}
+
+/** Open on a session where the chain hands no hand that opens one (DayWriters.openSession). */
+export const OPEN_SESSION_UNWIRED = 'Open: no hand opens a session where it runs from here.'
+
+/** Face 2's session an open names (`openSession` set to its agent session, or to its record where it has none), from the lists the
+ * binding handed the device; or why it opens nowhere. Pure. */
+export function faceTwoSessionNamed(values: Readonly<Record<string, Value>>, named: Value): {ok: true; session: FaceTwoSession} | {ok: false; why: string} {
+  let lists: Partial<Record<'done' | 'running' | 'queued', FaceTwoSession[]>> = {}
+  try { lists = typeof values.daySessions === 'string' ? JSON.parse(values.daySessions) as typeof lists : {} } catch { lists = {} }
+  const found = [...(lists.done ?? []), ...(lists.running ?? []), ...(lists.queued ?? [])].find(entry => entry.agentSession === named || entry.session === named)
+  if (!found) return {ok: false, why: `Face 2 lists no session ${String(named)} today: it opens only what the day's sessions' records hold.`}
+  if (!found.agentSession) {
+    return {ok: false, why: `This session was recorded by ${found.client ?? 'its harness'}'s own hooks and runs outside the window, in a terminal of its own: there is no session here to open (its record is ${found.ref ?? found.session}).`}
+  }
+  return {ok: true, session: found}
 }
 
 /** The binding the runtime hosts the Day design on: the readings, and the writes its owners take. A change of any other key is refused
@@ -807,6 +940,12 @@ export function dayDesignBinding(id: string, facts: DayFacts, values: Readonly<R
         } else if (change.key === 'refinePattern') {
           if (change.value !== points) throw new Error(`Refine opens a refinement of the one skill or method the pattern's items point at: it points at ${points}, not ${String(change.value)}.`)
           await writers.refine!(points!)
+        } else if (change.key === 'openSession') {
+          // Open, on a face 2 entry: the session where it runs. It writes nothing to any owner.
+          const named = faceTwoSessionNamed(values, change.value)
+          if (!named.ok) throw new Error(named.why)
+          if (!writers.openSession) throw new Error(OPEN_SESSION_UNWIRED)
+          await writers.openSession(named.session)
         } else if (DAY_SETTINGS_KEYS.includes(change.key)) {
           const revision = settingsRevisionOf(own)
           if (!revision || !writers.settings) throw new Error(SETTINGS_UNREAD(SETTING_NAME(change.key), own))

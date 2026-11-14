@@ -619,7 +619,8 @@ test('15 · Approvals: a proposed revision waits as a proposal with its Result f
   // the rail's publisher (AgentRailDevices.tsx) composes and publishes it in every mode, and the Main track draws that door entry.
   const chain = read('agent/devices/AgentRailDevices.tsx')
   assert.match(chain, /useAikitRead\(transport, REFINEMENT_LIST\)/)
-  assert.match(chain, /\n\s+refinements, settings: shownSettings\}/)
+  // O-I ticket 1007: it is handed what today's sessions yielded too (approvals-answers-binding.test.mjs answers them).
+  assert.match(chain, /\n\s+refinements, settings: shownSettings, yields\}/)
   // Approvals is one device (§19.14): Central's Main track answers a refinement too, with the same AIKit read and the one write
   // (ownerRoutes.ts refinementWrite) the Refining page presses.
   const centralChain = read('central/devices/CentralDevices.tsx')
@@ -627,6 +628,10 @@ test('15 · Approvals: a proposed revision waits as a proposal with its Result f
   assert.match(centralChain, /refinements: (\w+)Refinements/)
   for (const source of [chain, centralChain]) assert.match(source, /refinementWrite\(transport\)/, 'one write for both chains')
   assert.match(centralChain, /\{refine: refineWrite\}/)
+  // A session's yield is kept and dropped by the same two Central writes on both chains (centralDeviceWrites.ts).
+  for (const source of [chain, centralChain]) {
+    assert.match(source, /keepYield: \(row, revision\) => keepSessionYield\(transport, row, revision\), dropYield: row => dropSessionYield\(transport, row\)/)
+  }
   bind.resetHolds()
 })
 
