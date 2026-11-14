@@ -564,8 +564,9 @@ pub fn written_by(op: &KernelOp) -> Vec<Slice> {
             vec![Slice::Agents, Slice::Models, Slice::Sessions]
         }
         "workcell_write" => vec![Slice::Workcells],
-        // A gateway binding's ingress rule is AIKit's gateway, which the sessions slice carries (its ecology names the rules).
-        "harness_ingress_rule" => vec![Slice::Sessions],
+        // A gateway binding's ingress rule, and a gateway this window starts or stops, are AIKit's gateway, which the sessions slice
+        // carries (its ecology names the rules and the bindings).
+        "harness_ingress_rule" | "gateway_service" => vec![Slice::Sessions],
         _ => Vec::new(),
     }
 }
@@ -624,6 +625,7 @@ pub fn wrote(op_name: &str, outcome: &KernelOpOutcome) -> bool {
                 | "client_install"
                 | "encounter_provision"
                 | "harness_ingress_rule"
+                | "gateway_service"
         )
 }
 
@@ -1330,6 +1332,14 @@ mod tests {
         assert!(written_by(&KernelOp::ModelCatalogue).is_empty());
         assert!(written_by(&KernelOp::WorldBrowse { fresh: None }).is_empty());
         assert_eq!(written_by(&KernelOp::SeatStatusRead), Vec::<Slice>::new());
+    }
+
+    #[test]
+    fn a_gateway_started_or_stopped_here_moves_the_sessions_slice_that_carries_it() {
+        let service: KernelOp =
+            serde_json::from_value(json!({"op": "gateway_service", "on": true}))
+                .expect("a gateway_service op");
+        assert_eq!(written_by(&service), vec![Slice::Sessions]);
     }
 
     #[test]
