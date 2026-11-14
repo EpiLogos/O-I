@@ -463,4 +463,12 @@ test('the Work place\'s Add folder… chooses a folder and opens Setup\'s Projec
   assert.equal(await addFolderFromBrowser(async () => null, request => opened.push(request)), null, 'cancelled: nothing opens')
   assert.equal(opened.length, 1)
   assert.match(await addFolderFromBrowser(async () => { throw new Error('The system\'s folder chooser is the native app\'s') }, () => {}), /native app/)
+  // Outside the native host the refusal names what works there: a folder of work is picked from the folders Central finds on
+  // Setup's Projects step, which takes no typed path; only the Ground step takes its folder typed.
+  const {chooseFolder} = await import('../src/settings/folderChooser.ts')
+  const work = await addFolderFromBrowser(() => chooseFolder('work'), () => assert.fail('nothing opens without a chosen folder'))
+  assert.match(work, /native app/)
+  assert.match(work, /Setup's Projects step/)
+  assert.doesNotMatch(work, /Type the folder/, 'no typed path is offered where none can be typed')
+  await assert.rejects(chooseFolder('ground'), /Type the folder's path instead/)
 })
