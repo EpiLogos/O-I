@@ -322,6 +322,7 @@ else
   fails factory.task.run "the task did not run"
 fi
 # Its end, as Factory settles it: the agent's turn answered and the checkout holds no difference, so Factory reads the attempt failed.
+# Its log holds that turn as AIKit showed it (its `turn` lines), not only the send and the end.
 ended="" log=""
 if [ -n "$attempt" ]; then
   for _ in $(seq 1 200); do
@@ -330,10 +331,10 @@ if [ -n "$attempt" ]; then
     sleep 3
   done
 fi
-if [ -n "$ended" ] && jq -e '(.lines | length) > 0' <<<"$log" >/dev/null; then
-  holds factory.task.log "$(jq -r '.lines | length' <<<"$log") lines; Factory reads $attempt $ended"
+if [ -n "$ended" ] && jq -e 'any(.lines[]; .kind == "turn")' <<<"$log" >/dev/null; then
+  holds factory.task.log "$(jq -r '.lines | length' <<<"$log") lines, $(jq -r '[.lines[] | select(.kind == "turn")] | length' <<<"$log") of the agent's turn; Factory reads $attempt $ended"
 else
-  fails factory.task.log "no log, or the attempt not seen to end within 10 minutes"
+  fails factory.task.log "no log of the agent's turn, or the attempt not seen to end within 10 minutes"
 fi
 prior="$attempt"
 attempt=""
