@@ -176,18 +176,34 @@ test('ligament 3 — the rack writes AIKit’s own operations: Model rides `mode
   assert.deepEqual(captured.at(-1), agentAct('pause'))
   await dispatch.fireWritePath(sdkParamRowOf('actuation', 'gateway', 'connect'), true, ctx)
   assert.deepEqual(captured.at(-1), agentAct('resume'))
-  // The settings AIKit's gateway has no operation for are refused naming that, and nothing is sent.
+  // A setting AIKit's gateway has no operation for is refused naming that, and nothing is sent. REPLACED (O-I 1006): Transport, Approvals
+  // and Stall after wrote through aikit.gateway.agent and were refused the same way; AIKit names what owns each, so their rows are readings
+  // that declare no writer and say whose they are. Effort and Input are refused in AIKit's words for their owners, no operation missing.
   const before = captured.length
-  for (const [instance, key, value] of [['gateway', 'transport', 'ws'], ['gateway', 'approvals', 'ask'], ['gateway', 'stall-after', 90], ['agent', 'steer-line', 'settle physics next']]) {
-    const receipt = await dispatch.fireWritePath(sdkParamRowOf('actuation', instance, key), value, ctx)
+  const steer = await dispatch.fireWritePath(sdkParamRowOf('actuation', 'agent', 'steer-line'), 'settle physics next', ctx)
+  assert.equal(steer.kind, 'refused')
+  assert.match(steer.reason, /AIKit's gateway has no operation/)
+  assert.match(steer.missingOp ?? '', /aikit gateway agent/)
+  for (const [key, value, said] of [['transport', 'ws', /chosen by `aikit gateway setup` \(AIKit\)/],
+    ['approvals', 'ask', /AIKit's Action aikit\.session\.settings writes \(Scope's Tool calls\)/], ['stall-after', 90, /^No AIKit operation holds a stall-after/]]) {
+    const row = sdkParamRowOf('actuation', 'gateway', key)
+    assert.equal(row.writePath, undefined, `${key} declares no writer`)
+    assert.match(row.disclosure ?? '', said, key)
+    const receipt = await dispatch.fireWritePath(row, value, ctx)
     assert.equal(receipt.kind, 'refused', key)
-    assert.match(receipt.reason, /AIKit's gateway has no operation/, key)
-    assert.match(receipt.missingOp ?? '', /aikit gateway agent/, key)
+    assert.match(receipt.reason, /is a reading — it declares no writer/, key)
   }
-  for (const [key, value] of [['effort', 'high'], ['interrupt-quantize', 'now'], ['input', 'steer'], ['new-task', 'write the tests']]) {
+  for (const [key, value] of [['interrupt-quantize', 'now'], ['new-task', 'write the tests']]) {
     const receipt = await dispatch.fireHarnessControlByKey(key, value, ctx)
     assert.equal(receipt.kind, 'refused', key)
     assert.match(receipt.missingOp ?? '', /aikit gateway agent/, key)
+  }
+  for (const [key, value, said] of [['effort', 'high', /^Effort: .*which the Action aikit\.session\.settings writes \(`task\.set\.effort`\)/],
+    ['input', 'steer', /^Input \(steer or queue\): .*the Action aikit\.gateway\.send takes it as `handling`/]]) {
+    const receipt = await dispatch.fireHarnessControlByKey(key, value, ctx)
+    assert.equal(receipt.kind, 'refused', key)
+    assert.match(receipt.reason, said, key)
+    assert.equal(receipt.missingOp, undefined, `${key}: AIKit names its owner, so no operation is missing`)
   }
   assert.equal(captured.length, before, 'nothing reached the kernel for a setting AIKit has no operation for')
   assert.equal(JSON.stringify(captured).includes('configure'), false, 'configure is no AIKit operation and is never sent')
@@ -284,9 +300,12 @@ test('ligament 4 — the setter bridge wires the armed values: registration, arr
     invoke: async (_t, op) => { captured.push(op); return invoked({}) },
   })
   // REPLACED (lane A wiring): AIKit's gateway has no effort or input operation, so the setters refuse naming that and send nothing.
+  // REPLACED (O-I 1006): AIKit names their owners — Effort the session's task's (aikit.session.settings), Input each Communique's — so the
+  // setters refuse in those words, and no operation is missing.
   const receipt = await sdkSetters.shellSetter('shell.setEffort')('medium')
   assert.equal(receipt.kind, 'refused', JSON.stringify(receipt))
-  assert.match(receipt.missingOp ?? '', /aikit gateway agent/)
+  assert.match(receipt.reason, /which the Action aikit\.session\.settings writes \(`task\.set\.effort`\)/)
+  assert.equal(receipt.missingOp, undefined)
   await sdkSetters.shellSetter('shell.setSteer')(true)
   assert.deepEqual(captured, [], 'nothing reached the kernel')
   assert.deepEqual(presented, [], 'a refused setting never moves its flag')

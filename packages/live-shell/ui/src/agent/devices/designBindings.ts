@@ -31,6 +31,7 @@ import {INITIAL_READING, chainDeviceId, gatewayLine, rosterAdmits, rosterChains,
 import {flipDevice, publishedDevice, selectDevice, subscribeDeviceDoor} from '../../frame/devices/deviceDoor'
 import {setHostPage} from '../../frame/devices/deviceHost'
 import type {OwnerAcceptedValues} from './ownerAccepted'
+import type {TaskLevel} from '../sessionSettings'
 import type {TaskClip, TemporalEventLike} from '../agentRunModel'
 import {runStateOfSession, stageRecordingOf, threadRowsFrom} from './runFaces'
 import {armedOf, bypassesOf, contextPressureOf, contextTurnOf, historyOf, procedureDiffOf, proceduresOf, rootsOf, sourcesOf, unusedOf, whyOf, type AikitAnswer} from './aikitPages'
@@ -98,10 +99,10 @@ export const SHELL_MARK_SET = 'blade'
 const missing = (what: string, op: string, owner: string) => `${what}: no owner operation carries it yet — missing op: ${op} (${owner}).`
 
 /** Scope's Calls to other agents (§19.12 Asks): AIKit's ingress rule for the sender kind agent on each gateway binding of the session
- * (GatewayIngressPolicy kind_rules, decided after a sender's own id and before the binding's one default), set through the kernel's
- * harness_ingress_rule. Why it is not pressable, or a value it does not take. */
+ * (GatewayIngressPolicy kind_rules, decided after a sender's own id and before the binding's one default), set by AIKit's Action
+ * aikit.gateway.ingress (O-I 1006). Why it is not pressable, or a value it does not take. */
 export const CALLS_REFUSE = {
-  uncarried: 'Calls to other agents: no carrier to AIKit\'s ingress rule for the sender kind agent (the kernel\'s harness_ingress_rule) stands on this chain.',
+  uncarried: 'Calls to other agents: no carrier to AIKit\'s ingress rule for the sender kind agent (its Action aikit.gateway.ingress) stands on this chain.',
   unread: 'Calls to other agents: AIKit\'s gateway has not answered yet, so no rule for calls from other agents is read.',
   unbound: 'Calls to other agents: this session holds no conversation on AIKit\'s gateway, so no binding of it takes a rule for calls from other agents.',
   refused: (why: string) => `Calls to other agents: AIKit's gateway did not answer, so no rule for calls from other agents is read. ${why}`,
@@ -113,8 +114,8 @@ const CALLS_SAID: Readonly<Record<string, {readonly one: string; readonly many: 
   allow: {one: 'lets it through', many: 'let it through', word: 'Allow'}, pair: {one: 'asks you', many: 'ask you', word: 'Ask'},
   deny: {one: 'denies it', many: 'deny it', word: 'Deny'}}
 const listed = (items: readonly string[]) => (items.length <= 1 ? items.join('') : `${items.slice(0, -1).join(', ')} and ${items.at(-1)}`)
-/** Set one rule for calls from other agents on every binding of a session, one binding at a time (AIKit keeps a rule per binding: the
- * kernel's harness_ingress_rule). The bindings are not set as one: where one refuses, the words say which now answer the new way, which
+/** Set one rule for calls from other agents on every binding of a session, one binding at a time (AIKit keeps a rule per binding: its
+ * Action aikit.gateway.ingress). The bindings are not set as one: where one refuses, the words say which now answer the new way, which
  * keep the rule they had, and what to press next. */
 export async function callsOnEvery(bindings: readonly string[], decision: CallsDecision,
   set: (binding: string, decision: CallsDecision) => Promise<unknown>): Promise<void> {
@@ -131,14 +132,14 @@ export async function callsOnEvery(bindings: readonly string[], decision: CallsD
 }
 
 /** Scope's Wait and On no answer (§19.12 Asks: Wait 15 min–24 h, default 4 h; On no answer Hold or Deny, default Hold): the session's own
- * settings in AIKit (`track.wait` in seconds, `track.no_answer`; ai-kit encounter_task_settings.rs), written through the kernel's
- * encounter_session_settings. AIKit's executor plays them: a request nobody answered by its Wait is denied with the harness's own deny, or
+ * settings in AIKit (`track.wait` in seconds, `track.no_answer`; ai-kit encounter_task_settings.rs), written by AIKit's Action
+ * aikit.session.settings (O-I 1006). AIKit's executor plays them: a request nobody answered by its Wait is denied with the harness's own deny, or
  * held in Approvals past its Wait, as the person chose (ai-kit encounter_task_executor.rs settle_asks). */
 export const WAIT_SECONDS = {min: 900, max: 86_400} as const
 export const NO_ANSWERS: readonly string[] = ['hold', 'deny']
 export const WAIT_REFUSE = {
-  wait: 'Wait: no carrier to AIKit\'s Wait on the session\'s own settings (the kernel\'s encounter_session_settings, track wait) stands on this chain.',
-  noAnswer: 'On no answer: no carrier to AIKit\'s On no answer on the session\'s own settings (the kernel\'s encounter_session_settings, track no_answer) stands on this chain.',
+  wait: 'Wait: no carrier to AIKit\'s Wait on the session\'s own settings (its Action aikit.session.settings, track wait) stands on this chain.',
+  noAnswer: 'On no answer: no carrier to AIKit\'s On no answer on the session\'s own settings (its Action aikit.session.settings, track no_answer) stands on this chain.',
   unread: (what: string) => `${what}: AIKit has not read the session's settings yet.`,
   older: (what: string) => `${what}: this AIKit's session settings carry no ${what}, so it is neither read nor set (an AIKit before O-I round 860).`,
   range: 'Wait is 15 min to 24 h: a whole number of seconds from 900 to 86400.',
@@ -284,19 +285,18 @@ export function gatewayLinkStanding(reading: GatewayInput['reading'], values: Va
   return Object.fromEntries(Object.keys(LINK_WORDS).filter(key => !(key in values)).map(key => [key, {disabled: why(key)}]))
 }
 
-/** The Gateway's rows with a write: the address table's (agentParamAddresses.ts:70-73), each to act:aikit.gateway.agent. Its approvals
- * row is Scope's Tool calls (§19.12; ScopeAsks). */
+/** The Gateway's row with a write: the address table's Connect, to act:aikit.gateway.agent (agentParamAddresses.ts). Transport and Stall
+ * after are readings there, with AIKit's words for what owns each (O-I 1006); the harness's approvals are its own reading, and the session's
+ * answer to its requests to use a tool is Scope's Tool calls (§19.12; ScopeAsks). */
 export interface GatewayRows {
-  readonly transport?: SdkParamRow
   readonly connect?: SdkParamRow
-  readonly stallAfter?: SdkParamRow
 }
 
-const GATEWAY_KEYS: Readonly<Record<string, keyof GatewayRows>> = {transport: 'transport', connect: 'connect', stallAfter: 'stallAfter'}
+const GATEWAY_KEYS: Readonly<Record<string, keyof GatewayRows>> = {connect: 'connect'}
 
-/** The Gateway's settings AIKit's gateway has no operation for, by the design's key and the row key its refusal names
- * (aikitGatewayOps.ts): they stand disabled with AIKit's missing operation named, and a press is refused with the same words. Connect is
- * AIKit's pause/resume of the binding's connector and stands. */
+/** The Gateway's settings a binding's conversation does not carry, by the design's key and the row key its refusal names
+ * (aikitGatewayOps.ts): they stand disabled with AIKit's words for what owns each, or that nothing does, and a press is refused with the
+ * same words. Connect is AIKit's pause/resume of the binding's connector and stands. */
 const GATEWAY_UNCARRIED: Readonly<Record<string, string>> = {transport: 'transport', stallAfter: 'stall-after', autoContinue: 'auto-continue', fanOut: 'fan-out'}
 const uncarriedWhy = (rowKey: string): string => harnessKeyUncarried(rowKey)!.reason
 
@@ -309,7 +309,7 @@ export function gatewayBinding(id: string, input: GatewayInput, rows: GatewayRow
     values,
     standing: {...gatewayLinkStanding(input.reading, values),
       ...Object.fromEntries(Object.entries(GATEWAY_UNCARRIED).map(([key, rowKey]) => [key, {disabled: uncarriedWhy(rowKey)}]))},
-    writes: key => key in GATEWAY_KEYS || key === 'autoContinue' || key === 'fanOut',
+    writes: key => key in GATEWAY_KEYS || key in GATEWAY_UNCARRIED,
     write: async changes => {
       for (const {key, value} of changes) {
         if (key in GATEWAY_UNCARRIED) throw Error(uncarriedWhy(GATEWAY_UNCARRIED[key]!))
@@ -349,6 +349,9 @@ export interface AgentInput {
   readonly nowUnixMs: number
   readonly reading: Pick<AgentChainReading, 'attached' | 'budget' | 'gatewayAdmitted' | 'gatewayDoc'>
   readonly accepted: OwnerAcceptedValues
+  /** The Agent's Effort: the level the session's task holds, and its write by AIKit's Action aikit.session.settings (sessionSettings.ts
+   * taskLevelOf, O-I 1006), or why neither; absent where the chain hands in no session's settings. */
+  readonly effort?: TaskLevel
   /** The binding AIKit's gateway names, and whether it named one (chainFromModel, from the World Model's sessions slice: until it has, the
    * binding is only the shell's default and is no reading). */
   readonly harness: {readonly binding: string; readonly resolved: boolean}
@@ -649,7 +652,9 @@ function agentOwnValues(input: AgentInput): Record<string, Value> {
   if (doc && typeof doc.model === 'string') put(values, 'model', doc.model)
   // Where the gateway names no model, the one the session last reported using (Actuation's usage records, lane K0).
   else if (sessionRef != null && input.usage?.status === 'answered') put(values, 'model', lastUsageModelOf(input.usage.value))
-  put(values, 'effort', accepted.effort)
+  // Effort: the level the session's task starts at, as AIKit holds the task's Effort envelope (taskLevelOf); Inherit is the harness's own,
+  // which no owner reports, so it stands absent.
+  if (input.effort?.value && input.effort.value !== 'inherit') put(values, 'effort', input.effort.value)
   put(values, 'input', accepted.input)
   put(values, 'quantize', accepted.quantize)
   if (sessionRef != null) {
@@ -669,12 +674,12 @@ function agentOwnValues(input: AgentInput): Record<string, Value> {
   return values
 }
 
-/** The rows an Agent change goes through: the address table's (agentParamAddresses.ts — effort, input, heartbeat) and the declared
- * P0 rows (AGENT_P0_ROWS below — interrupt-quantize, steer-line, new-task), each with its own write path. */
+/** The rows an Agent change goes through: the address table's (agentParamAddresses.ts — model, input, heartbeat) and the declared
+ * P0 rows (AGENT_P0_ROWS below — interrupt-quantize, steer-line, new-task), each with its own write path. Effort is the session's task's,
+ * written through AgentInput.effort. */
 export interface AgentRows {
   /** The binding's harness model (AIKit's `gateway agent model --model ID`, the address table's model row). */
   readonly model?: SdkParamRow
-  readonly effort?: SdkParamRow
   readonly input?: SdkParamRow
   readonly heartbeat?: SdkParamRow
   readonly quantize?: SdkParamRow
@@ -702,10 +707,15 @@ export const AGENT_AUTONOMY_RETIRED = 'Autonomy is retired: Scope\'s Tool calls,
 // `autonomy` is taken only to be refused in words (AGENT_AUTONOMY_RETIRED): a preset or a hold from before may still name it.
 const AGENT_WRITES = new Set(['model', 'effort', 'input', 'heartbeat', 'quantize', 'draft', 'sent', 'light', 'cap', 'autonomy'])
 
-/** The Agent's settings AIKit's gateway has no operation for, by the design's key and the row key its refusal names (aikitGatewayOps.ts):
- * Effort, Input and Interrupt timing, and the composer's words (a steer line into the running turn, or a queued task's words — AIKit's
- * `new` carries none). They stand disabled with AIKit's missing operation named. */
-const AGENT_UNCARRIED: Readonly<Record<string, string>> = {effort: 'effort', input: 'input', quantize: 'interrupt-quantize'}
+/** The Agent's settings a binding's conversation does not carry, by the design's key and the row key its refusal names (aikitGatewayOps.ts):
+ * Input (AIKit's words: it goes with each Communique, not with the conversation) and Interrupt timing, and the composer's words (a steer
+ * line into the running turn, or a queued task's words — AIKit's `new` carries none). They stand disabled with AIKit's words. Effort is
+ * the session's task's (AIKit's Action aikit.session.settings, O-I 1006): the Agent writes it where the chain hands in the session's
+ * settings (AgentInput.effort). */
+const AGENT_UNCARRIED: Readonly<Record<string, string>> = {input: 'input', quantize: 'interrupt-quantize'}
+/** Why the Agent's Effort is not pressable, or null where it writes. */
+const effortWhy = (effort: TaskLevel | undefined): string | null =>
+  (effort?.write ? null : `Effort: ${effort?.why ?? 'the chain hands in no session\'s settings, so its task\'s Effort is neither read nor set here.'}`)
 export const AGENT_SEND_UNCARRIED = `Send: AIKit's gateway carries no words into a binding's conversation — ${harnessKeyUncarried('steer-line')!.reason} ${harnessKeyUncarried('new-task')!.reason}`
 
 /** The Agent's binding: its values, and each change through its row's own write path (or held, for the composer's text). */
@@ -731,6 +741,7 @@ export function agentBinding(id: string, input: AgentInput, rows: AgentRows, wri
     standing: {...disabled(contextStanding(input.context, values)), ...disabled(REFUSED_WRITES[AGENT_DESIGN]!), ...('run' in values ? {} : {run: {disabled: RUN_UNREAD}}),
       autonomy: {disabled: AGENT_AUTONOMY_RETIRED},
       ...Object.fromEntries(Object.entries(AGENT_UNCARRIED).map(([key, rowKey]) => [key, {disabled: harnessKeyUncarried(rowKey)!.reason}])),
+      ...(effortWhy(input.effort) ? {effort: {disabled: effortWhy(input.effort)!}} : {}),
       sent: {disabled: input.sessionRef == null ? AGENT_NO_SESSION : AGENT_SEND_UNCARRIED},
       // A census that lists no agent that starts leaves the chooser nothing to offer: it says so instead of drawing an empty list.
       ...(input.harnesses?.length === 0 ? {harness: {disabled: AGENT_NO_HARNESS}} : {}),
@@ -742,6 +753,13 @@ export function agentBinding(id: string, input: AgentInput, rows: AgentRows, wri
         if (key in AGENT_UNCARRIED) throw Error(harnessKeyUncarried(AGENT_UNCARRIED[key]!)!.reason)
         switch (key) {
           case 'model': await through(rows.model, 'Model', value); break
+          // Effort: one level for the whole of the session's task, by AIKit's Action aikit.session.settings (`task.set.effort`).
+          case 'effort': {
+            const why = effortWhy(input.effort)
+            if (why) throw Error(why)
+            await input.effort!.write!(value)
+            break
+          }
           case 'heartbeat': await through(rows.heartbeat, 'Heartbeat', value); break
           case 'draft': updateHolds(was => ({...was, composer: {...was.composer, draft: String(value)}})); break
           case 'sent': {
@@ -1677,15 +1695,15 @@ export function memberBinding(id: string, rack: Values, chosen: string | null, h
 
 // ---------------------------------------------------------------------------------------------------------------- Scope
 
-/** Scope's Tool calls on the chain (§19.12 Asks): the harness's approvals mode — ask · session · always — as the gateway's reading discloses
- * it (agentChainDevices.ts gatewayDisclosed `approvals`), and the Gateway slot's `approvals` row, whose write path is the registry's
- * aikit.gateway.agent — which has no approvals operation in AIKit's gateway (aikitGatewayOps.ts), so it stands disabled. Absent: the chain hands
- * in neither. */
+/** Scope's Asks on the chain (§19.12 Asks). Tool calls is the session's answer to the harness's request to use a tool — ask · session ·
+ * always — as its task holds it (`toolCallsLevel`, sessionSettings.ts taskLevelOf: written by AIKit's Action aikit.session.settings,
+ * `task.set.tool_calls`); where the task inherits it, the harness's own approvals mode as the gateway's reading discloses it (`toolCalls`,
+ * agentChainDevices.ts gatewayDisclosed `approvals`), which is the harness's and read only. Absent: the chain hands in neither. */
 export interface ScopeAsks {
   readonly toolCalls?: Value
-  readonly toolCallsRow?: SdkParamRow
+  readonly toolCallsLevel?: TaskLevel
   /** Calls to other agents: AIKit's rule for the sender kind agent on the session's gateway bindings (callsOf), null while the gateway's
-   * ecology is unread, its refusal where it refused; and the write that sets one rule on every binding (the kernel's harness_ingress_rule). */
+   * ecology is unread, its refusal where it refused; and the write that sets one rule on every binding (AIKit's Action aikit.gateway.ingress). */
   readonly calls?: CallsReading | {readonly refused: string} | null
   readonly callsWrite?: (bindings: readonly string[], decision: CallsDecision) => Promise<void>
   /** Wait and On no answer: the session's own settings in AIKit, and their write (ScopeWaits). */
@@ -1722,30 +1740,35 @@ const callsWhy = (asks: ScopeAsks): string | null =>
 const callsReadingOf = (asks: ScopeAsks): CallsReading | null => (asks.calls && !('refused' in asks.calls) ? asks.calls : null)
 
 /** Scope's values (§19.12). No owner reports the reach, the write mode, the basis, the places or the receipts (the address table's world
- * rows are readings with no source: agentParamAddresses.ts:93-97), so every one is absent; Tool calls is the harness's own reading, Calls to
- * other agents AIKit's rule on the session's bindings and Wait and On no answer the session's own settings in AIKit, where the chain hands
- * them in, and the only other value is a raised reach waiting for your Confirm. */
+ * rows are readings with no source: agentParamAddresses.ts:93-97), so every one is absent; Tool calls is the session's task's level, or
+ * the harness's own reading where the task inherits it, Calls to other agents AIKit's rule on the session's bindings and Wait and On no
+ * answer the session's own settings in AIKit, where the chain hands them in, and the only other value is a raised reach waiting for your
+ * Confirm. */
 export function scopeValues(held: ChainHolds, asks: ScopeAsks = {}): Values {
   const values: Record<string, Value> = {}
   if (held.reachPending !== undefined) values.reachPending = held.reachPending
-  if (asks.toolCalls !== undefined) values.toolCalls = asks.toolCalls
+  const level = asks.toolCallsLevel?.value
+  if (level && level !== 'inherit') values.toolCalls = level
+  else if (asks.toolCalls !== undefined) values.toolCalls = asks.toolCalls
   const calls = callsReadingOf(asks)
   if (calls?.decision) values.calls = calls.decision
   Object.assign(values, waitValues(asks.waits))
   return values
 }
 
-/** Tool calls with no row to carry it. */
-const TOOL_CALLS_UNCARRIED = 'Tool calls: the Gateway\'s approvals row is not adopted on this chain, so nothing carries it.'
+/** Why Tool calls is not pressable, or null where it writes. */
+const toolCallsWhy = (asks: ScopeAsks): string | null =>
+  (asks.toolCallsLevel?.write ? null : `Tool calls: ${asks.toolCallsLevel?.why ?? 'the chain hands in no session\'s settings, so its task\'s Tool calls are neither read nor set here.'}`)
 
 const SCOPE_WRITES = (key: string) => ['reach', 'writeMode', 'toolCalls'].includes(key) || key in REFUSED_WRITES[SCOPE_DESIGN]! || key.startsWith('w:')
 
 /** Scope's refused settings, Tool calls where no row carries it, and Calls to other agents, Wait and On no answer where they are not
  * pressable. */
 function scopeStanding(asks: ScopeAsks): Record<string, Standing> {
-  // Tool calls is the harness's approvals mode, which AIKit's gateway has no operation to set (aikitGatewayOps.ts).
-  const standing: Record<string, Standing> = {...disabled(REFUSED_WRITES[SCOPE_DESIGN]!),
-    toolCalls: {disabled: asks.toolCallsRow?.writePath ? harnessKeyUncarried('approvals')!.reason : TOOL_CALLS_UNCARRIED}}
+  // Tool calls is the session's task's (AIKit's Action aikit.session.settings), pressable where the chain hands in its settings.
+  const standing: Record<string, Standing> = {...disabled(REFUSED_WRITES[SCOPE_DESIGN]!)}
+  const tools = toolCallsWhy(asks)
+  if (tools) standing.toolCalls = {disabled: tools}
   const why = callsWhy(asks)
   if (why) standing.calls = {disabled: why}
   else delete standing.calls
@@ -1762,7 +1785,7 @@ const reachOf = (value: Value | undefined): number | undefined => {
 
 /** Scope's binding: a raised reach is the view's own key, held until Confirm — nothing is sent before, and Cancel drops it — and
  * Confirm goes to the owner; the write mode goes through the world row's own write path (the shell write arm, which its dispatcher
- * refuses until WO-SF2 reads it); Tool calls through the Gateway slot's approvals row (the harness's own control). Before it lands, Escalate
+ * refuses until WO-SF2 reads it); Tool calls on the session's task by AIKit's Action aikit.session.settings. Before it lands, Escalate
  * to and the Grants page are Custody's binding's, laid in by the chain (sessionChainBindings.ts withCustodyAsks). */
 export function scopeBinding(id: string, held: ChainHolds, writeModeRow: SdkParamRow | undefined, write: RowWrite, asks: ScopeAsks = {}): DesignBinding {
   return {
@@ -1787,8 +1810,11 @@ export function scopeBinding(id: string, held: ChainHolds, writeModeRow: SdkPara
           continue
         }
         if (key === 'toolCalls') {
-          // AIKit's gateway has no operation that sets the harness's approvals mode: refused in the words it stands disabled with.
-          throw Error(asks.toolCallsRow?.writePath ? harnessKeyUncarried('approvals')!.reason : TOOL_CALLS_UNCARRIED)
+          // One level for the whole of the session's task (`task.set.tool_calls`); refused in the words it stands disabled with.
+          const why = toolCallsWhy(asks)
+          if (why) throw Error(why)
+          await asks.toolCallsLevel!.write!(value)
+          continue
         }
         if (key === 'calls') {
           const why = callsWhy(asks)

@@ -26,7 +26,6 @@ import {publishDevice, publishedDevice, selectDevice, subscribeDeviceDoor} from 
 import type {DesignBinding} from '../../frame/devices/designed'
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
 import {workcellOfTrack} from '../../frame/tracks/returnTracks'
-import {agentAddress} from '../../inhabitants/agentParamAddresses'
 import {useSettingsAnswer, useWorkcellAnswer} from '../../owners/readers'
 import {useOptionalContinuity} from '../../continuity/workspace'
 import {actionAnswerOf, centralActionOp, useCentralAction, useCentralGroundAnswer} from '../../central/devices/useCentralReadings'
@@ -320,11 +319,8 @@ export function AgentRailDevices() {
   const seatsUnread = !asked ? SEATS_NOT_ASKED : seats.status === 'refused' && seats.error ? seats.error : undefined
   const gatewayPort = useMemo((): DesignBinding => {
     const rows = slotRows('gateway')
-    const stall = agentAddress('gateway', 'stall-after')
-    return gatewayBinding(chainDeviceId('gateway'), {reading, harness: {binding, resolved}}, {
-      transport: rows.find(row => row.key === 'transport'), connect: rows.find(row => row.key === 'connect'),
-      ...(stall ? {stallAfter: {...stall, title: 'Stall after'}} : {}),
-    }, (row, value) => fireWritePath(row, value, {transport, binding}))
+    return gatewayBinding(chainDeviceId('gateway'), {reading, harness: {binding, resolved}}, {connect: rows.find(row => row.key === 'connect')},
+      (row, value) => fireWritePath(row, value, {transport, binding}))
   }, [reading, binding, resolved, transport])
   // The Frames tile is the Gateway's widget (§19.6): the Gateway's own binding (its Link page, the same rows and write path the chain's Gateway
   // writes through) with the frames' binding laid over it (its Frames page, the frames themselves): each key goes to the binding that holds it.

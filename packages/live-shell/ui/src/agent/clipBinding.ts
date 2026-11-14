@@ -73,7 +73,7 @@ import {MENU_ACT} from '../native/openStudio'
 import {sayOnInfoLine} from '../frame/devices/deviceHost'
 import {canonNoteOf, exportSong, loopSongChange, publishChosenNote, unitsInSpan, type ChosenNote, type ExportChoice} from './songClips'
 import {shownSpanNow} from '../frame/tracks/tracksDoor'
-import {clipValuesOfSettings, settingsRefusal, SETTINGS_RESULT, SETTINGS_WHY, writeSessionSettings} from './sessionSettings'
+import {clipValuesOfSettings, settingsRefusal, SETTINGS_WHY, writeSessionSettings} from './sessionSettings'
 
 /** The register a session's settings are read in: the one its world-wide agency read listed it in (AgentSessionsProvider.tsx rows,
  * agent/worldScope.ts) — '' the root register, else its project. */
@@ -859,14 +859,14 @@ export async function makeTaskOf(transport: KernelTransportStatus, session: Sess
   if ('error' in before) return {ok: false, error: `${session.label}'s settings were not read, so no task is made of ${title}: ${before.error}`}
   const task = before.reading.task
   if (!task) return makeNewTaskOf(transport, session, constellation, project)
-  const written = await kernelOp(transport, {op: 'encounter_session_settings', project, agent_session: session.sessionRef,
-    request: {task: {task_ref: task.task_ref, set: {source: ref}}}, ...(before.reading.revision ? {expected_revision: before.reading.revision} : {})})
-  if (written.error || written.outcome?.result !== SETTINGS_RESULT) return {ok: false, error: `AIKit did not make ${task.name} of ${title}: ${written.error ?? 'it gave no reading'}`}
+  // The one settings write (AIKit's Action, sessionSettings.ts), against the reading the drop was judged on; it asks every reader of the
+  // session's settings again (the Clip panel, the mixer row).
+  try {
+    await writeSessionSettings(transport, project, session.sessionRef, {task: {task_ref: task.task_ref, set: {source: ref}}}, before.reading)
+  } catch (cause) {
+    return {ok: false, error: `AIKit did not make ${task.name} of ${title}: ${cause instanceof Error ? cause.message : String(cause)}`}
+  }
   const after = await read()
-  // Every reader of the session's settings is asked again (the Clip panel, the mixer row), as a settings write does (sessionSettings.ts).
-  const entry = settingsReadingEntry(transport, project, session.sessionRef)
-  const epoch = entry.snapshot().epoch
-  if (epoch !== null) void entry.refresh(epoch)
   if ('error' in after) return {ok: false, error: `AIKit kept ${title} as ${task.name}'s source, but did not read it back: ${after.error}`}
   const kept = after.reading.task
   if (!kept || kept.task_ref !== task.task_ref) return {ok: false, error: `AIKit kept the change, but its settings now read another task than ${task.name}.`}

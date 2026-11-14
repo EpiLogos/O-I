@@ -1,22 +1,28 @@
-// One agent session's settings on their owner (AIKit `encounter-session-settings`, kernel `encounter_session_settings`): the track's
-// Telemetry and Solo, Scope's Wait and On no answer (§19.12), and its bound task's name, colour, activator, output style, Loop, Launch mode, Then, Quantize, what a Repeat varies
+// One agent session's settings on their owner (AIKit `encounter-session-settings`): the track's Telemetry and Solo, Scope's Wait and On
+// no answer (§19.12), and its bound task's name, colour, activator, output style, Loop, Launch mode, Then, Quantize, what a Repeat varies
 // and envelopes (manual §19.1 Clip view, the Clip and Launch panels and the Envelopes: the Agent's Effort and Scope's Tool calls; the
 // Agent's Autonomy is retired, §19.4, §19.12). The owner keeps them under a revision with their
 // history and states every default, in the manual's words (ai-kit encounter_task_settings.rs: Launch mode trigger · gate · toggle ·
 // repeat, Then next · again · stop, Loop's stop condition done · pass, Repeat's variable and stop when); this module puts its reading on
 // the keys of the designed clip `clip:factory` and a control's change on the owner's request, each word as it is — the owner judges
-// it — and writes it against the revision that stands. Pure, apart from `writeSessionSettings`, the acts built on it and `useScopeWaits`.
+// it — and writes it against the revision that stands, by the registry's Action `aikit.session.settings` (O-I 1006). The World Model's
+// scope slice holds each session's settings (settingsFromModel). Pure, apart from `writeSessionSettings`, the acts built on it and
+// `useScopeWaits`.
 import {useMemo} from 'react'
 import type {Value, Values} from '../frame/devices/designed'
-import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
+import {actionData, kernelOp, ownerDocumentOf} from '../../../../../desktop/cradle/src/kernel/bridge'
 import type {ActuationComparisonRunRequest, ActuationComparisonTakes, EncounterEnvelopePoint, EncounterSessionSettingsReading,
   EncounterSessionSettingsRequest, EncounterTakeRun, KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
-import {settingsReadingEntry, useSettingsAnswer} from '../owners/readers'
+import {partOf, projectPartOf, sliceValue, useModelSlice, type ModelSliceReading} from '../owners/model'
+import {settingsReadingEntry} from '../owners/readers'
 import type {ScopeWaits} from './devices/designBindings'
-import {routeAnswerOf} from './devices/ownerRoutes'
+import {actOp, routeAnswerOf} from './devices/ownerRoutes'
 import type {TaskSetting} from './devices/taskBindings'
+import {ROOT_REGISTER} from './worldScope'
 
-export const SETTINGS_RESULT = 'encounter_session_settings_reading'
+/** The registry's Action a session's settings are written by (AIKit's `encounter-session-settings`, O-I 1006): with `request_json` it
+ * writes at `expected_revision`, without it it reads. */
+export const SETTINGS_ACTION = 'aikit.session.settings'
 
 /** Why a task's settings cannot be changed where they are drawn, in words. */
 export const SETTINGS_WHY = {
@@ -211,9 +217,10 @@ export function taskSettingChange(setting: TaskSetting, value: Value, reading: E
  * Solo, a gate on its executor's launches, is never written from here. */
 export const trackSettingChange = (setting: 'telemetry', on: boolean): EncounterSessionSettingsRequest => ({track: {[setting]: on}})
 
-/** Write one change to a session's settings against the revision its standing reading holds — or the reading the caller read them in
- * (`basis`: the World Model's, O-I ticket 1005) — then read them again. The owner's refusal (a stale revision, another task, a word outside
- * the manual's) is thrown in its words. */
+/** Write one change to a session's settings by the registry's Action (`aikit.session.settings`, its request as JSON) against the revision
+ * its standing reading holds — or the reading the caller read them in (`basis`: the World Model's, O-I ticket 1005) — then read them
+ * again. AIKit's answer is the settings as they now stand; its refusal (a stale revision, another task, a word outside the manual's) is
+ * thrown in its words. */
 export async function writeSessionSettings(transport: KernelTransportStatus, project: string, agentSession: string,
   change: EncounterSessionSettingsRequest, basis?: EncounterSessionSettingsReading): Promise<EncounterSessionSettingsReading> {
   const entry = settingsReadingEntry(transport, project, agentSession)
@@ -221,33 +228,100 @@ export async function writeSessionSettings(transport: KernelTransportStatus, pro
   const epoch = standing.epoch ?? ''
   const read = basis ?? (standing.status === 'answered' ? standing.value as EncounterSessionSettingsReading | null : null)
   if (!read) throw new Error('The session\'s settings are not read yet; read them before changing them.')
-  const revision = read.revision
-  const result = await kernelOp(transport, {op: 'encounter_session_settings', project, agent_session: agentSession, request: change,
-    ...(revision ? {expected_revision: revision} : {})})
-  if (result.error || result.outcome?.result !== SETTINGS_RESULT) {
+  let written: unknown
+  try {
+    written = ownerDocumentOf(actionData(await kernelOp(transport, actOp(SETTINGS_ACTION,
+      {agent_session: [agentSession], request_json: JSON.stringify(change), expected_revision: read.revision}, project)), SETTINGS_ACTION))
+  } catch (cause) {
     void entry.refresh(epoch)
-    throw new Error(result.error ?? 'AIKit did not return the session\'s settings')
+    throw cause
   }
   // Every reader of these settings holds this one entry: the re-read reaches them all.
   await entry.refresh(epoch)
-  return result.outcome.data
+  const reading = written as Partial<EncounterSessionSettingsReading> | null
+  if (reading?.schema !== 'aikit.encounter-session-settings/v1') throw new Error('AIKit did not return the session\'s settings')
+  return reading as EncounterSessionSettingsReading
 }
 
-/** Scope's Wait and On no answer on one session (§19.12 Asks): AIKit's own track settings of it, from the one settings reading every reader
- * of it holds, written against its revision, with the reading itself (`settings`, for Approvals). `why` stands where the Scope is on no one
- * session (a group's: each session keeps its own). */
-export function useScopeWaits(transport: KernelTransportStatus, session: string | null, project: string, why?: string):
-  ScopeWaits & {readonly settings: EncounterSessionSettingsReading | null} {
-  const answer = useSettingsAnswer(transport, why ? null : session, project).reading
+/** Why the World Model holds no settings of a session in a project's register: the project was not among those it knew when Scope was read. */
+export const PROJECT_SETTINGS = (project: string): string => `the World Model holds the settings of the sessions of your world's root register and of each project it knows (world_model.rs \`scope\`); ${project} was not among them when Scope was read.`
+
+/** A session's own settings in AIKit as the World Model's scope slice holds them (world_model.rs `scope`), in its register — your world's
+ * root, or the project's it stands in — or why it holds none; null while the slice is read, or where no session stands. Pure. */
+export function settingsFromModel(scope: ModelSliceReading, session: string | null, project: string = ROOT_REGISTER):
+  {readonly reading: EncounterSessionSettingsReading} | {readonly why: string} | null {
+  if (!session || scope.state === 'reading') return null
+  const held = sliceValue<{settings?: unknown; projects?: unknown}>(scope)
+  if (!held.ok) return {why: held.reason}
+  // The root's sessions' settings are a part of the value; a project's part is its sessions' settings, by session.
+  const sessions = project === ROOT_REGISTER ? partOf<Record<string, unknown>>(held.value.settings)
+    : projectPartOf<Record<string, unknown>>(held.value, project, PROJECT_SETTINGS)
+  if (!sessions) return {why: 'the World Model\'s scope holds no session\'s settings.'}
+  if (!sessions.ok) return {why: sessions.why}
+  const own = partOf<EncounterSessionSettingsReading>(sessions.value[session])
+  if (!own) return {why: `the World Model's scope holds no settings of ${session} yet: AIKit's agency had not listed it when Scope was read.`}
+  return own.ok ? {reading: own.value} : {why: `AIKit did not read the session's settings: ${own.why}`}
+}
+
+/** Scope's Wait and On no answer on a session (§19.12 Asks; designBindings.ts ScopeWaits), from its settings as the World Model's scope
+ * slice holds them (settingsFromModel), written against their revision (`write`, writeSessionSettings on the reading held), with the
+ * reading itself (`settings`, for Approvals). Pure. */
+export function scopeWaitsOf(session: string | null, held: ReturnType<typeof settingsFromModel>,
+  write: ((change: {wait?: number; no_answer?: 'hold' | 'deny'}, basis: EncounterSessionSettingsReading) => Promise<unknown>) | null): ScopeWaits & {readonly settings: EncounterSessionSettingsReading | null} {
+  if (!session) return {track: null, why: 'no session stands on this chain, so no settings of one are read.', settings: null}
+  if (!held) return {track: null, settings: null}
+  if ('why' in held) return {track: null, why: held.why, settings: null}
+  const reading = held.reading
+  return {track: reading.track ?? null, settings: reading, ...(write ? {write: (change: {wait?: number; no_answer?: 'hold' | 'deny'}) => write(change, reading)} : {})}
+}
+
+/** A session's settings as a chain is handed them: Scope's Wait and On no answer (ScopeWaits), the reading itself, and any change to them
+ * written against it (`change`: the Agent's Effort and Scope's Tool calls, taskLevelOf). */
+export type SessionWaits = ScopeWaits & {
+  readonly settings: EncounterSessionSettingsReading | null
+  readonly change?: (request: EncounterSessionSettingsRequest) => Promise<unknown>
+}
+
+/** Scope's Wait and On no answer on one session (§19.12 Asks): AIKit's own track settings of it, as the World Model's scope slice holds
+ * them in the session's register, written by AIKit's Action against the revision held, with the reading itself (`settings`, for
+ * Approvals) and its general write (`change`). `why` stands where the Scope is on no one session (a group's: each session keeps its own). */
+export function useScopeWaits(transport: KernelTransportStatus, session: string | null, project: string, why?: string): SessionWaits {
+  const scope = useModelSlice(transport, 'scope')
   return useMemo(() => {
     if (why) return {track: null, why, settings: null}
-    if (!session) return {track: null, why: 'no session stands on this chain, so no settings of one are read.', settings: null}
-    const write = transport.kind === 'unavailable' ? undefined
-      : (change: {wait?: number; no_answer?: 'hold' | 'deny'}) => writeSessionSettings(transport, project, session, {track: change})
-    const settings = answer.status === 'answered' ? answer.value as EncounterSessionSettingsReading | null : null
-    const refused = answer.status === 'refused' ? `AIKit did not read the session's settings: ${answer.error ?? 'it refused'}` : undefined
-    return {track: settings?.track ?? null, settings, ...(refused ? {why: refused} : {}), ...(write ? {write} : {})}
-  }, [transport, session, project, why, answer])
+    const carried = transport.kind !== 'unavailable' && session ? session : null
+    const waits = scopeWaitsOf(session, settingsFromModel(scope, session, project),
+      carried ? (change, basis) => writeSessionSettings(transport, project, carried, {track: change}, basis) : null)
+    const reading = waits.settings
+    return carried && reading ? {...waits, change: request => writeSessionSettings(transport, project, carried, request, reading)} : waits
+  }, [transport, session, project, why, scope])
+}
+
+/** A session-wide level its bound task holds (AIKit, O-I 1006: "A session's Effort for its task is the task's Effort envelope … the
+ * Action aikit.session.settings writes it (`task.set.effort`)", and its Tool calls likewise, `task.set.tool_calls`): the Agent's Effort
+ * (§19.4) and Scope's Tool calls (§19.12) as the level the task starts at, set as one level for the whole task (tasksDeviceChange), or
+ * why neither. */
+export interface TaskLevel {
+  readonly value?: string
+  readonly why?: string
+  readonly write?: (level: Value) => Promise<unknown>
+}
+
+/** The Agent's Effort or Scope's Tool calls of a session, from its settings as a chain is handed them. Pure. */
+export function taskLevelOf(key: 'effort' | 'toolCalls', waits: SessionWaits): TaskLevel {
+  if (waits.why) return {why: waits.why}
+  const reading = waits.settings
+  if (!reading) return {why: SETTINGS_WHY.reading}
+  if (!reading.task) return {why: SETTINGS_WHY.noTask}
+  const level = tasksDeviceValues(reading, 0)[key]
+  const value = typeof level === 'string' ? {value: level} : {}
+  const change = waits.change
+  if (!change) return {...value, why: 'the session\'s settings are read, but no kernel stands on this chain to change them.'}
+  return {...value, write: async (to: Value) => {
+    const made = tasksDeviceChange(key, to, reading)
+    if ('refused' in made) throw Error(made.refused)
+    await change(made.change)
+  }}
 }
 
 // ---------------------------------------------------------------------------------------------------------------- Repeat's takes

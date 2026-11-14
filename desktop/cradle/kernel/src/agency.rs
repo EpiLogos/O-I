@@ -163,34 +163,6 @@ impl Client {
         self.gateway_call(cwd, &tail, "AIKit gateway agent control")
     }
 
-    /// One sender kind's ingress rule on a harness binding (manual §19.12,
-    /// Scope's Calls to other agents): `aikit gateway ingress --binding <REF>
-    /// --kind <KIND> --decision allow|pair|deny|clear --json`. AIKit's policy
-    /// decides a sender by its own id first, then by this kind rule, then by
-    /// the binding's one default; the answer is the binding's ingress as it
-    /// now stands, and a refusal comes back as named data as the agent
-    /// controls' does.
-    pub fn gateway_ingress(
-        &self,
-        binding: &str,
-        kind: &str,
-        decision: Option<&str>,
-    ) -> Result<Value, String> {
-        self.gateway_call(
-            None,
-            &[
-                "ingress",
-                "--binding",
-                binding,
-                "--kind",
-                kind,
-                "--decision",
-                decision.unwrap_or("clear"),
-            ],
-            "AIKit gateway ingress rule",
-        )
-    }
-
     /// `aikit --json gateway <tail>`: the gateway's `data` verbatim, or its
     /// refusal (or an unreachable gateway) as named data.
     fn gateway_call(
@@ -611,22 +583,17 @@ impl Client {
 
 impl Client {
     /// One session's own settings through the owner's
-    /// `encounter-session-settings` (`aikit.encounter-session-settings/v1`):
-    /// a read without `request`, a change with it. The session must be
+    /// `encounter-session-settings` (`aikit.encounter-session-settings/v1`),
+    /// read. A change to them is AIKit's Action `aikit.session.settings`
+    /// (O-I #1006), which the kernel's `act` carries. The session must be
     /// attached to one of the Project's SessionSpaces, as an encounter's must;
-    /// the owner keeps the revision and the history, and its refusal (a stale
-    /// revision, another task, a word outside the manual's) passes through.
+    /// the owner's refusal passes through.
     pub fn session_settings(
         &self,
         cwd: &Path,
         project_ref: &str,
         agent_session: &str,
-        request: Option<&Value>,
-        expected_revision: Option<&str>,
     ) -> Result<Value, String> {
-        if request.is_none() && expected_revision.is_some() {
-            return Err("A settings revision goes with a change".into());
-        }
         self.require_attached(cwd, project_ref, agent_session)?;
         let mut command = crate::flow::child(&self.executable);
         if self.suite_route {
@@ -642,21 +609,11 @@ impl Client {
             "--agent-session",
             agent_session,
         ]);
-        if let Some(request) = request {
-            command.arg("--request-json").arg(request.to_string());
-        }
-        if let Some(revision) = expected_revision {
-            command.args(["--expected-revision", revision]);
-        }
         let bound = crate::owner_process::Bound {
             owner: "AIKit",
             operation: "encounter-session-settings",
             limit: DISCOVER_LIMIT,
-            effect: if request.is_some() {
-                crate::owner_process::Effect::Write
-            } else {
-                crate::owner_process::Effect::Read
-            },
+            effect: crate::owner_process::Effect::Read,
         };
         let output = crate::owner_process::output(&mut command, None, bound)
             .map_err(|error| format!("AIKit SessionSpace is unavailable: {error}"))?;
@@ -3167,33 +3124,6 @@ mod gateway_agent_tests {
         ] {
             assert!(argv.contains(expected), "argv missing `{expected}`: {argv}");
         }
-    }
-
-    /// Scope's Calls to other agents (manual §19.12): one sender kind's rule
-    /// goes to AIKit's `gateway ingress` with the binding, the kind and the
-    /// decision in order, `clear` where no decision is named; the policy as
-    /// the gateway now holds it passes through.
-    #[test]
-    fn an_ingress_rule_carries_the_binding_the_kind_and_the_decision() {
-        let dir = unique_dir("ingress");
-        let canned = r#"{"ok":true,"data":{"type":"ingress-rule-set","binding_ref":"gateway-binding/telegram","ingress":{"default":"allow","kind_rules":{"agent":"pair"}}},"schema":1}"#;
-        let client = Client::with(fake_aikit(&dir, canned), None);
-        let document = super::tests::retry_busy(|| {
-            client.gateway_ingress("gateway-binding/telegram", "agent", Some("pair"))
-        })
-        .expect("fake answers");
-        assert_eq!(document["ingress"]["kind_rules"]["agent"], "pair");
-        let argv = std::fs::read_to_string(dir.join("argv.txt")).unwrap();
-        assert!(
-            argv.ends_with("--json gateway ingress --binding gateway-binding/telegram --kind agent --decision pair"),
-            "{argv}"
-        );
-        super::tests::retry_busy(|| {
-            client.gateway_ingress("gateway-binding/telegram", "agent", None)
-        })
-        .expect("fake answers");
-        let argv = std::fs::read_to_string(dir.join("argv.txt")).unwrap();
-        assert!(argv.ends_with("--kind agent --decision clear"), "{argv}");
     }
 
     #[test]

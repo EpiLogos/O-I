@@ -59,25 +59,35 @@ const defaults = (overrides = {}, revision = null) => ({
   previous_task: null, standing: 'intent',
 })
 
-// A scripted owner behind the bridge: it keeps one session's settings, a revision per change, and refuses a stale one.
+// A scripted owner behind the bridge: it keeps one session's settings, a revision per change, and refuses a stale one. The settings are
+// read by the kernel's encounter_session_settings and written by AIKit's Action aikit.session.settings through the kernel's `act` (O-I
+// 1006: its request as JSON, at the revision expected), which answers the settings as they now stand, or AIKit's refusal in its words.
+const SETTINGS_ACTION = 'aikit.session.settings'
+const dispatched = dispatch => ({json: async () => ({ok: true, outcome: {result: 'action_dispatched', dispatch, receipts: []}})})
 function scriptedOwner(start = defaults()) {
   const owner = {reading: start, sent: [], revisions: 0}
   globalThis.fetch = async (_url, init) => {
     const op = JSON.parse(init.body)
     owner.sent.push(op)
-    const answer = data => ({json: async () => ({ok: true, outcome: {result: 'encounter_session_settings_reading', data, receipts: []}})})
-    if (op.op !== 'encounter_session_settings') return {json: async () => ({ok: false, error: `unexpected ${op.op}`})}
-    if (!op.request) return answer(owner.reading)
-    if ((op.expected_revision ?? null) !== owner.reading.revision)
-      return {json: async () => ({ok: false, error: 'encounter.runtime: Session settings revision conflict; read the current settings and write again'})}
+    if (op.op === 'encounter_session_settings')
+      return {json: async () => ({ok: true, outcome: {result: 'encounter_session_settings_reading', data: owner.reading, receipts: []}})}
+    if (op.op !== 'act' || op.action !== SETTINGS_ACTION || op.input?.agent_session?.[0] !== owner.reading.agent_session)
+      return {json: async () => ({ok: false, error: `unexpected ${op.op}`})}
+    if ((op.input.expected_revision ?? null) !== owner.reading.revision)
+      return dispatched({state: 'owner_refused', owner_operation: SETTINGS_ACTION,
+        message: 'encounter.runtime: Session settings revision conflict; read the current settings and write again'})
+    const request = JSON.parse(op.input.request_json)
     const task = {...owner.reading.task}
-    for (const [key, value] of Object.entries(op.request.task?.set ?? {})) task[key] = value ?? defaults().task[key]
-    const track = {...owner.reading.track, ...op.request.track}
+    for (const [key, value] of Object.entries(request.task?.set ?? {})) task[key] = value ?? defaults().task[key]
+    const track = {...owner.reading.track, ...request.track}
     owner.reading = {...owner.reading, revision: `session-settings/${++owner.revisions}`, task, track}
-    return answer(owner.reading)
+    return dispatched({state: 'invoked', owner_operation: SETTINGS_ACTION, data: owner.reading})
   }
   return owner
 }
+/** The settings writes the owner was sent, each as AIKit's Action took it: the revision expected and the request. */
+const writesTo = owner => owner.sent.filter(op => op.op === 'act' && op.action === SETTINGS_ACTION)
+  .map(op => ({expected_revision: op.input.expected_revision, request: JSON.parse(op.input.request_json)}))
 const transport = {kind: 'bridge', url: 'http://owner.test'}
 // The register the session was read under (its world-wide agency row's `project`, agent/worldScope.ts). REPLACED (O-I #740 lane B):
 // factory.SETTINGS_PROJECT, the shell's one literal project.
@@ -200,14 +210,15 @@ test('Clip view: the owner\'s values stand on the clip, and each change is writt
   for (const key of ['launch', 'then', 'loop', 'loop.until', 'loop.cap', 'repeat.variable', 'repeat.levels', 'repeat.repeats', 'repeat.stop'])
     assert.equal(binding.standing[key], undefined, `${key}: enabled on its owner`)
   await binding.write([{key: 'then', value: 'stop'}])
-  const write = owner.sent.find(op => op.request)
-  assert.deepEqual(write, {op: 'encounter_session_settings', project: 'O-I', agent_session: 'ses-214', expected_revision: 'session-settings/0',
-    request: {task: {task_ref: 'task:correlate', set: {then: 'stop'}}}})
+  // REPLACED (O-I 1006): the write was the kernel's encounter_session_settings with a request; it is AIKit's Action, the request as JSON.
+  const write = owner.sent.find(op => op.op === 'act')
+  assert.deepEqual(write, {op: 'act', action: 'aikit.session.settings', project: 'O-I', input: {agent_session: ['ses-214'],
+    request_json: JSON.stringify({task: {task_ref: 'task:correlate', set: {then: 'stop'}}}), expected_revision: 'session-settings/0'}})
   assert.equal(entry.snapshot().value.revision, 'session-settings/1', 'the standing reading is read again: every reader sees the change')
   assert.equal(entry.snapshot().value.task.then, 'stop')
   const next = factory.factoryClipBinding({ref: taskRef, tracks: [track], events: null, settings: contextOf(entry)})
   await next.write([{key: 'env.agent.effort', value: JSON.stringify([[0, 3]])}])
-  assert.equal(owner.sent.filter(op => op.request).at(-1).expected_revision, 'session-settings/1', 'the next change is made on the new revision')
+  assert.equal(writesTo(owner).at(-1).expected_revision, 'session-settings/1', 'the next change is made on the new revision')
   assert.deepEqual(entry.snapshot().value.task.effort, [[0, 'high']])
 })
 
@@ -220,7 +231,7 @@ test('Clip view: Loop and what a Repeat varies are written to AIKit in its words
   await write('launch', 'repeat')
   await write('repeat.levels', 'opus, sonnet')
   await write('then', 'again')
-  assert.deepEqual(owner.sent.filter(op => op.request).map(op => [op.expected_revision, op.request.task.set]), [
+  assert.deepEqual(writesTo(owner).map(op => [op.expected_revision, op.request.task.set]), [
     ['session-settings/0', {loop: true}], ['session-settings/1', {loop_cap: 5}], ['session-settings/2', {launch: 'repeat'}],
     ['session-settings/3', {repeat_levels: ['opus', 'sonnet']}], ['session-settings/4', {then: 'again'}]])
   const read = factory.factoryClipBinding({ref: taskRef, tracks: [track], events: null, settings: contextOf(entry)}).values
@@ -247,7 +258,7 @@ test('Tasks device: Mode, To and a single Effort go to the owner; Launch, Retry 
   assert.equal(binding.values.mode, 'trigger'); assert.equal(binding.values.effort, 'inherit')
   for (const key of ['mode', 'then', 'to', 'effort', 'toolCalls', 'register', 'form']) assert.equal(binding.standing[key], undefined, key)
   await binding.write([{key: 'mode', value: 'toggle'}])
-  assert.equal(owner.sent.filter(op => op.request)[0].expected_revision, undefined, 'a session with no settings yet is written without a revision')
+  assert.equal(writesTo(owner)[0].expected_revision, undefined, 'a session with no settings yet is written without a revision')
   const after = tasks.tasksBinding({...input, settings: contextOf(entry)}, null, {selectTask() {}, queue: async () => {}})
   await after.write([{key: 'effort', value: 'high'}])
   assert.deepEqual(entry.snapshot().value.task.effort, [[0, 'high']])

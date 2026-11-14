@@ -58,7 +58,6 @@ import {openSeatDiff} from '../AgentShellBrowser'
 import {openSettings} from '../../settings/host'
 import {chainLaw, slotStanding} from '../../inhabitants/sdk/chains'
 import {openInstrument} from '../../frame/instrumentDoor'
-import {agentAddress} from '../../inhabitants/agentParamAddresses'
 import {useRosterAnswer, useSettingsAnswer, useTaskAnswer} from '../../owners/readers'
 import {useModelSlice} from '../../owners/model'
 import {useWorkspace} from '../../shell/workspaceContext'
@@ -91,7 +90,7 @@ import {observedState, useEncounterSessions} from './EncounterObservers'
 import {FRAMES_ID, mainDevices} from './mainTrackBindings'
 import {askRowsOf, shownSession, threadBinding, threadJson} from './threadBinding'
 import {CAPTURE_PAGE, REFINE_PAGE, SEAT_PAGE, carryPages, composeAgentBinding, withAgentGit} from './oneAgentBinding'
-import {testRefinement, useScopeWaits, writeSessionSettings} from '../sessionSettings'
+import {taskLevelOf, testRefinement, useScopeWaits, writeSessionSettings} from '../sessionSettings'
 import {identityFromModel, useIdentityHolds} from '../../central/devices/agentChainDevices'
 import {useAgentSetReadings, useCentralAction} from '../../central/devices/useCentralReadings'
 import {actionAnswerOf, centralActionOp} from '../../central/devices/centralActions'
@@ -214,6 +213,14 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   // take `project?: string | null` name it.
   const rackProject = track?.project ?? ROOT_REGISTER
   const register = registerOf(rackProject)
+  // The session's own settings in AIKit, as the World Model's scope slice holds them in its register (sessionSettings.ts useScopeWaits),
+  // each change written by AIKit's Action aikit.session.settings: Scope's Wait and On no answer (§19.12 Asks), and the levels the session's
+  // task holds — the Agent's Effort (§19.4) and Scope's Tool calls (§19.12), each one level for the whole task. A group's sessions each
+  // keep their own.
+  const scopeWaits = useScopeWaits(transport, track && !track.group ? track.sessionRef : null, rackProject,
+    track?.group ? 'each session of a group keeps its own; choose one of its sessions.' : undefined)
+  const effortLevel = useMemo(() => taskLevelOf('effort', scopeWaits), [scopeWaits])
+  const toolCallsLevel = useMemo(() => taskLevelOf('toolCalls', scopeWaits), [scopeWaits])
   const holds = useChainHolds()
   // The catalogue's designs, and whether each can be hosted on its owner yet (designBindings.ts designWaits).
   const gatewayDesign = useDesign(GATEWAY_DESIGN, true), agentDesign = useDesign(AGENT_DESIGN, true), rackDesign = useDesign(RACK_DESIGN, true)
@@ -242,24 +249,21 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const chain = useMemo(() => agentChainDevices({sessionRef, reading, accepted}, write, designedFaces), [sessionRef, reading, accepted, write, designedFaces])
   const pictures: PictureContext = {reading, sessionRef, onFrames: () => shell.toggleTile('frames'), onThread: () => shell.openThread(sessionRef)}
 
-  // The Gateway: the harness reading's own fields; its settings through the address table's rows (stall-after with the design's
-  // stops as its domain — the device's generic row withholds it for want of one, agentChainDevices.ts GATEWAY_STALL).
+  // The Gateway: the harness reading's own fields; Connect through the address table's row (Transport and Stall after are readings, with
+  // AIKit's words for what owns each).
   const gatewayDesignBinding = useMemo(() => {
     if (waits.gateway) return null
     const rows = chain.find(entry => entry.slot.id === 'gateway')?.device.rows ?? []
-    const stall = agentAddress('gateway', 'stall-after')
-    return gatewayBinding(chainDeviceId('gateway'), {reading, harness: {binding, resolved}}, {
-      transport: rows.find(row => row.key === 'transport'), connect: rows.find(row => row.key === 'connect'),
-      ...(stall ? {stallAfter: {...stall, title: 'Stall after'}} : {}),
-    }, write)
+    return gatewayBinding(chainDeviceId('gateway'), {reading, harness: {binding, resolved}}, {connect: rows.find(row => row.key === 'connect')}, write)
   }, [waits.gateway, chain, reading, binding, resolved, write])
 
-  // The Agent: its rows' own write paths — the address table's (effort, input, heartbeat) and the declared P0 rows
+  // The Agent: its rows' own write paths — the address table's (model, input, heartbeat) and the declared P0 rows
   // (designBindings.ts AGENT_P0_ROWS: interrupt timing and the steer line on Actuation's face, the new task on Software Factory's).
+  // Its Effort is the session's task's (effortLevel, above).
   const agentRows = useMemo((): AgentRows => {
     const rows = chain.find(entry => entry.slot.id === 'agent')?.device.rows ?? []
     return {
-      model: rows.find(row => row.key === 'model'), effort: rows.find(row => row.key === 'effort'), input: rows.find(row => row.key === 'input'),
+      model: rows.find(row => row.key === 'model'), input: rows.find(row => row.key === 'input'),
       heartbeat: rows.find(row => row.key === 'heartbeat'),
       ...AGENT_P0_ROWS,
     }
@@ -296,9 +300,9 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const teamSpace = useTeamSpace(transport, !waits.agent && sessionRef != null)
   const agentOwnBinding = useMemo(() => (waits.agent ? null : agentBinding(chainDeviceId('agent'), {
     sessionRef, track, nowUnixMs: sessions?.nowUnixMs ?? 0, reading, accepted, harness: {binding, resolved}, holds, thread: agentThread, models, harnesses, events: sessions?.events ?? null,
-    ...(context ? {context} : {}), ...(contextOn ? {usage: sessionUsage} : {}),
+    effort: effortLevel, ...(context ? {context} : {}), ...(contextOn ? {usage: sessionUsage} : {}),
   }, agentRows, write, () => steering.current)), [waits.agent, sessionRef, track, sessions?.nowUnixMs, reading, accepted, binding, resolved, holds, agentRows, write, agentThread, models, harnesses,
-    sessions?.events, context, contextOn, sessionUsage])
+    sessions?.events, effortLevel, context, contextOn, sessionUsage])
   const agentDesignBinding = useMemo(() => withTeamCell(agentOwnBinding, teamSpace, sessionRef != null ? track?.agentRef ?? null : null),
     [agentOwnBinding, teamSpace, sessionRef, track?.agentRef])
 
@@ -508,26 +512,22 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   [transport, memberWhy, memberHistory, register])
   const memberDesignBinding = useMemo(() => (memberDevice && rackDesignBinding ? memberBinding(MEMBER_DEVICE_ID, rackDesignBinding.values, chosen, holds, memberPorts) : null),
     [memberDevice, rackDesignBinding, chosen, holds, memberPorts])
-  // Scope: the world row's write path for the write mode; a raised reach held until Confirm; Tool calls, the harness's approvals as the
-  // gateway reads it, through the Gateway slot's approvals row (§19.12 Asks).
+  // Scope: the world row's write path for the write mode; a raised reach held until Confirm; Tool calls, the session's task's level
+  // (toolCallsLevel, above), and where the task inherits it the harness's own approvals as the gateway reads it (§19.12 Asks).
   const writeModeRow = chain.find(entry => entry.slot.id === 'world')?.device.rows.find(row => row.key === 'write-mode')
-  const toolCallsRow = chain.find(entry => entry.slot.id === 'gateway')?.device.rows.find(row => row.key === 'approvals')
   const toolCalls = gatewayDisclosed(reading.gatewayDoc).approvals
   // Calls to other agents: AIKit's rule for the sender kind agent on the session's gateway bindings, as its ecology reads it (the sessions
-  // slice's gateway, Scope's declared `calls`), set on every binding of the session through the kernel's harness_ingress_rule.
+  // slice's gateway, Scope's declared `calls`), set on every binding of the session by AIKit's Action aikit.gateway.ingress.
   const calls = useMemo(() => (sessionRef == null || waits.world ? null : ecology.status === 'answered' ? callsOf(ecology.value, sessionRef)
     : ecology.status === 'refused' ? {refused: ecology.error ?? 'AIKit refused the gateway\'s ecology.'} : null), [ecology, sessionRef, waits.world])
   // One binding at a time: where one refuses, the words say which bindings now answer the new way and what to press next.
   const callsWrite = useMemo(() => (transport.kind === 'unavailable' ? undefined : async (bindings: readonly string[], decision: CallsDecision) => {
     await callsOnEvery(bindings, decision, (ruled, said) => harnessIngressRule(transport, ruled, 'agent', said))
   }), [transport])
-  // Wait and On no answer (§19.12 Asks): the session's own settings in AIKit, which its executor plays at the Wait; a group's sessions each
-  // keep their own.
-  const scopeWaits = useScopeWaits(transport, track && !track.group ? track.sessionRef : null, rackProject,
-    track?.group ? 'each session of a group keeps its own; choose one of its sessions.' : undefined)
+  // Wait and On no answer (§19.12 Asks): the session's own settings in AIKit (scopeWaits, above), which its executor plays at the Wait.
   const scopeDesignBinding = useMemo(() => (waits.world ? null : scopeBinding(chainDeviceId('world'), holds, writeModeRow, write,
-    {toolCalls, toolCallsRow, calls, ...(callsWrite ? {callsWrite} : {}), waits: scopeWaits})),
-  [waits.world, holds, writeModeRow, write, toolCalls, toolCallsRow, calls, callsWrite, scopeWaits])
+    {toolCalls, toolCallsLevel, calls, ...(callsWrite ? {callsWrite} : {}), waits: scopeWaits})),
+  [waits.world, holds, writeModeRow, write, toolCalls, toolCallsLevel, calls, callsWrite, scopeWaits])
   // Where the Device side stands (factoryPlaces.ts): a workcell's return track, a session (or a group), or the Main track.
   const groupTrack = track && track.group ? track : null
   // A lone session: its rack's one chain is its own agent (§19.15 "A session of one agent has a rack of that one chain").

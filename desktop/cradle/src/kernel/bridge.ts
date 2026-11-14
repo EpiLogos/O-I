@@ -217,7 +217,7 @@ const WRITING_OPS: ReadonlySet<string> = new Set(["decide","decision_episode_rev
   "actuation_write"]);
 /** Ops that read or write by their request's verb (`kind`, `operation` or `action`). `receiving` is in neither set: it reads alone
  * (Receiving's List, Read and Document), its writes being Central's Actions (O-I #1002). */
-const MIXED_OPS: ReadonlySet<string> = new Set(["central", "now", "page", "expression", "expression_recovery", "encounter_session_settings", "knowledge", "agent_definition",
+const MIXED_OPS: ReadonlySet<string> = new Set(["central", "now", "page", "expression", "expression_recovery", "knowledge", "agent_definition",
   "encounter", "factory_owner", "routine", "shared_field", "ground", "setup", "a2a_exchange",
   // AIKit's team operation: its `action` reads (`read`) or writes.
   "gateway_team"]);

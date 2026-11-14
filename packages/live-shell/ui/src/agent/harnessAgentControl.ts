@@ -102,9 +102,17 @@ export async function harnessAgentControlOutcome(
 export type IngressSenderKind = 'human' | 'agent' | 'bot' | 'system' | 'unknown'
 export type IngressDecision = 'allow' | 'pair' | 'deny'
 
-/** Who of one kind may reach a gateway binding's conversation (§19.12 Asks, Calls to other agents): AIKit's ingress rule by sender kind
- * (`aikit gateway ingress --binding B --kind K --decision D`; no decision clears it, and the binding's one default decides again), through
- * the kernel's harness_ingress_rule. AIKit's answer, or its refusal in its words, thrown. */
+/** One sender kind's ingress rule on a binding as the registry's Action `aikit.gateway.ingress` takes it (`aikit gateway ingress --binding
+ * B --kind K --decision D`, O-I 1006): `clear` takes the kind's rule away, and the binding's one default decides again. */
+export type HarnessIngressCall = {op: 'act'; action: 'aikit.gateway.ingress'; input: {binding: string; kind: IngressSenderKind; decision: IngressDecision | 'clear'}}
+
+/** The Action one ingress rule is. */
+export const harnessIngressCall = (binding: string, kind: IngressSenderKind, decision: IngressDecision | null): HarnessIngressCall =>
+  ({op: 'act', action: 'aikit.gateway.ingress', input: {binding, kind, decision: decision ?? 'clear'}})
+
+/** Who of one kind may reach a gateway binding's conversation (§19.12 Asks, Calls to other agents): AIKit's ingress rule by sender kind,
+ * through the registry's Action `aikit.gateway.ingress` (no decision clears it, and the binding's one default decides again). AIKit's
+ * answer — the binding's ingress policy as it now stands (its gateway's `ingress-rule-set`) — or its refusal in its words, thrown. */
 export async function harnessIngressRule(
   transport: KernelTransportStatus,
   binding: string,
@@ -113,9 +121,10 @@ export async function harnessIngressRule(
   invoke?: KernelInvoke,
 ): Promise<unknown> {
   if (transport.kind === 'unavailable') throw new Error(transport.reason ?? 'Native transport unavailable')
-  const call = {op: 'harness_ingress_rule' as const, binding, kind, decision}
-  const outcome = invoke ? await invoke(transport, call) : await kernelOp(transport, call)
-  if (outcome.error) throw new Error(outcome.error)
-  if (outcome.outcome?.result !== 'harness_ingress_outcome') throw new Error(`AIKit did not answer the ingress rule: ${outcome.outcome?.result ?? 'no result named'}`)
-  return outcome.outcome.document
+  const call = harnessIngressCall(binding, kind, decision)
+  // The kernel reads the sessions slice again on the Action's receipt (action.rs owner_slices): its gateway ecology names the rule.
+  const answer = ownerDocumentOf(actionData(invoke ? await invoke(transport, call) as KernelOpCall : await kernelOp(transport, call), call.action))
+  const type = answer && typeof answer === 'object' ? (answer as {type?: unknown}).type : undefined
+  if (type !== 'ingress-rule-set') throw new Error(`AIKit did not answer the ingress rule: ${typeof type === 'string' ? `it answered ${type}` : 'its answer names no rule set'}`)
+  return answer
 }

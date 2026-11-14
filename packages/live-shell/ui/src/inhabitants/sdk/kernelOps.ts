@@ -109,7 +109,6 @@ export const KERNEL_OPS = [
   'recording_capability_read',
   'protocol_read',
   'harness_agent_read',
-  'harness_ingress_rule',
   'agency_read',
   'model_roster',
   'agent_definition',

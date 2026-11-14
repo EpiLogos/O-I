@@ -302,18 +302,6 @@ pub enum KernelOp {
     HarnessAgentRead {
         binding: String,
     },
-    /// One sender kind's ingress rule on a harness binding (manual §19.12,
-    /// Scope's Calls to other agents): AIKit's `gateway ingress`, whose
-    /// policy decides a sender by its own id first, then by its kind, then
-    /// by the binding's one default. `decision` is `allow`, `pair` (the
-    /// sender waits for an answer) or `deny`; none clears the kind's rule.
-    /// The gateway's answer, or its named refusal, comes back verbatim.
-    HarnessIngressRule {
-        binding: String,
-        kind: String,
-        #[serde(default)]
-        decision: Option<String>,
-    },
     /// Which contracts this kernel speaks and enforces, derived from the
     /// enforcing modules (see `protocol.rs`): advertised is enforced.
     ProtocolRead,
@@ -682,18 +670,14 @@ pub enum KernelOp {
     /// One session's own settings and its bound task's, through the owner's
     /// `encounter-session-settings` (`aikit.encounter-session-settings/v1`):
     /// the track's Telemetry and Solo, the task's name, colour, activator,
-    /// output style, Launch, Then, Hand off to, Quantize and envelopes. Read
-    /// without `request`; with it, a change made against `expected_revision`
-    /// (absent while the session has none). The session must be attached to
-    /// one of the Project's spaces; the owner's reading or refusal passes
-    /// through verbatim, and the kernel keeps nothing.
+    /// output style, Launch, Then, Quantize and envelopes. A read: a change
+    /// to them is AIKit's Action `aikit.session.settings`, which the kernel's
+    /// `act` carries (O-I #1006). The session must be attached to one of the
+    /// Project's spaces; the owner's reading or refusal passes through
+    /// verbatim, and the kernel keeps nothing.
     EncounterSessionSettings {
         project: String,
         agent_session: String,
-        #[serde(default)]
-        request: Option<serde_json::Value>,
-        #[serde(default)]
-        expected_revision: Option<String>,
     },
     /// Make one session's task through the owner's
     /// `encounter-task-configure` (`aikit.encounter-task/v1`; manual §10.3: a
@@ -1613,13 +1597,6 @@ pub enum KernelOpResult {
     /// The gateway's session reading for one binding, verbatim — or its
     /// named refusal (`{"refused":true, ...}`).
     HarnessAgentReading {
-        binding: String,
-        document: serde_json::Value,
-    },
-    /// The gateway's answer to an ingress rule (`HarnessIngressRule`): the
-    /// binding's ingress policy as it now stands, verbatim — or its named
-    /// refusal.
-    HarnessIngressOutcome {
         binding: String,
         document: serde_json::Value,
     },
@@ -3850,7 +3827,6 @@ impl Kernel {
             | KernelOp::InstanceCommission { .. }
             | KernelOp::EncounterProvision { .. }
             | KernelOp::AgentConversation { .. }
-            | KernelOp::HarnessIngressRule { .. }
             | KernelOp::GroundForm { .. }
             | KernelOp::GroundMusic { .. }
             | KernelOp::GroundAuthority { .. }) => self.apply_owner_write(op),

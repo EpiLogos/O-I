@@ -51,10 +51,14 @@ test('every address names an admitted family, a non-empty device instance, and e
 })
 
 test('writePath is present exactly where a real owner write exists — known-refusal rows disclose instead', () => {
-  // Gateway transport/approvals/stall are declared on the harness controls' Action (aikit.gateway.agent), which refuses them by name.
-  for (const key of ['transport', 'approvals', 'stall-after']) {
-    assert.equal(byKey('gateway', key)?.writePath, 'act:aikit.gateway.agent', key)
+  // REPLACED (O-I 1006): Gateway transport/approvals/stall were declared on the harness controls' Action (aikit.gateway.agent), which
+  // has no operation for them. AIKit names what owns each — the whole gateway's entry mode, the session's task's Tool calls, nothing — so
+  // they are readings that say so in AIKit's words.
+  for (const [key, owner] of [['transport', /aikit gateway setup/], ['approvals', /aikit\.session\.settings/], ['stall-after', /No AIKit operation holds a stall-after/]]) {
+    assert.equal(byKey('gateway', key)?.writePath, undefined, key)
+    assert.match(byKey('gateway', key)?.disclosure ?? '', owner, key)
   }
+  assert.equal(byKey('gateway', 'connect')?.writePath, 'act:aikit.gateway.agent', 'Connect is AIKit\'s pause and resume of the binding')
   // REPLACED (O-I 1006): the git seat wrote through `workcell-cli git commit|push` and `seat land`, which do not exist. Land is Workcell's
   // own landing Action (workcell.lane.land, after workcell.lane.commit and .push); no owner commits on a cadence, and Push and Land as
   // are the hand's: each discloses why it has no writer.
@@ -82,7 +86,8 @@ test('writePath is present exactly where a real owner write exists — known-ref
   assert.equal(byKey('skillset', 'refine.accept')?.family, 'central')
   assert.match(byKey('skillset', 'refine.accept')?.disclosure ?? '', /control\.skills\.revision\.accept[\s\S]*refinement-follow[\s\S]*AIKit keeps/)
   assert.equal(byKey('skillset', 'refine.discard')?.writePath, 'kernel:aikit_write')
-  assert.equal(byKey('skillset', 'refine.run')?.writePath, 'kernel:encounter_session_settings')
+  // REPLACED (O-I 1006): the Test's Repeat was written through the kernel's encounter_session_settings; AIKit's Action writes it.
+  assert.equal(byKey('skillset', 'refine.run')?.writePath, 'act:aikit.session.settings')
   for (const key of ['refine.member', 'refine.why', 'refine.revision', 'refine.test', 'refine.result']) {
     assert.equal(byKey('skillset', key)?.writePath, undefined, key)
     assert.equal(byKey('skillset', key)?.family, 'ai-kit', key)
@@ -159,8 +164,10 @@ test('the chain\'s four devices are declarations: a face of its family, the slic
   load.loadAgentShellFamilies()
   const {CHAIN_DECLARATIONS, CHAIN_SLICES, chainDeclaration, declaredValue} = addresses
   assert.deepEqual(CHAIN_DECLARATIONS.map(declared => declared.device), ['gateway', 'agent', 'world', 'git'], '§16.2: Gateway → Agent → Scope → Git / landing')
-  assert.deepEqual(CHAIN_SLICES, ['sessions', 'agents', 'models', 'workcells'], 'the slices the chain reads, each once')
-  const SLICES = new Set(['worlds', 'day', 'agents', 'sessions', 'models', 'factory', 'workcells', 'sky'])
+  // REPLACED (O-I 1006): the chain read sessions, agents, models and workcells; the session's settings (the Agent's Effort, Scope's Tool
+  // calls, Wait and On no answer) are the scope slice's.
+  assert.deepEqual(CHAIN_SLICES, ['sessions', 'agents', 'models', 'scope', 'workcells'], 'the slices the chain reads, each once')
+  const SLICES = new Set(['worlds', 'day', 'agents', 'sessions', 'models', 'factory', 'workcells', 'sky', 'scope'])
   for (const declared of CHAIN_DECLARATIONS) {
     const [family, face] = declared.face.split(':')
     assert.ok(door.familyManifest(family)?.faces.some(one => one.id === face), `${declared.face}: a face its family's manifest carries`)
@@ -178,6 +185,15 @@ test('the chain\'s four devices are declarations: a face of its family, the slic
     for (const [key, why] of Object.entries(declared.unheld)) assert.ok(why.length > 20, `${declared.device}.${key}: why the World Model holds none, in words`)
   }
   assert.equal(chainDeclaration('skillset'), undefined, 'the Skillset rack reads Central\'s roster and AIKit\'s sets: it is no declaration of the World Model yet')
+  // O-I 1006: the Agent and Scope declare AIKit's Actions — the session's settings for Effort, Tool calls, Wait and On no answer, the
+  // ingress rule for Calls to other agents — and no control names a kernel op that writes outside the registry.
+  const {controls: agent} = chainDeclaration('agent'), {controls: world} = chainDeclaration('world'), {controls: gateway} = chainDeclaration('gateway')
+  assert.deepEqual(agent.effort, {action: 'aikit.session.settings'})
+  for (const key of ['tool-calls', 'wait', 'on-no-answer']) assert.deepEqual(world[key], {action: 'aikit.session.settings'}, key)
+  assert.deepEqual(world.calls, {action: 'aikit.gateway.ingress'})
+  assert.match(agent.input.none, /aikit\.gateway\.send takes it as `handling`/, 'Input is each Communique\'s, in AIKit\'s words')
+  for (const key of ['transport', 'approvals', 'stall-after']) assert.ok('none' in gateway[key], `${key}: not the conversation's, in AIKit's words`)
+  for (const declared of CHAIN_DECLARATIONS) for (const [key, control] of Object.entries(declared.controls)) assert.equal('kernelOp' in control, false, `${declared.device}.${key}`)
   // A field is a path into a slice's value as the kernel holds it (world_model.rs `part`: {state, reading} or {state, why}).
   const values = {sessions: {gateway: {state: 'read', reading: {binding: 'gateway-binding/one', agent: {state: 'read', reading: {state: 'ready', model: 'gpt-5'}}}}}}
   assert.equal(declaredValue(values, chainDeclaration('gateway').fields.binding), 'gateway-binding/one')

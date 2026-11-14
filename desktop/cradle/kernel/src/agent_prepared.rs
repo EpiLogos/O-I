@@ -278,8 +278,6 @@ enum AgentRead {
     },
     Settings {
         agent_session: String,
-        request: Option<Value>,
-        expected_revision: Option<String>,
     },
     /// The owner's task creation (`encounter-task-configure`): a write, its
     /// request verbatim.
@@ -560,21 +558,13 @@ impl PreparedAgent {
                     || self.aikit.task_read(&cwd, agent_session),
                 )?,
             },
-            AgentRead::Settings {
-                agent_session,
-                request,
-                expected_revision,
-            } => {
+            AgentRead::Settings { agent_session } => {
                 let project_ref =
                     project_ref(&self.client, &self.aikit, &self.reads, project, &cwd)?;
                 KernelOpResult::EncounterSessionSettingsReading {
-                    data: self.aikit.session_settings(
-                        &cwd,
-                        &project_ref,
-                        agent_session,
-                        request.as_ref(),
-                        expected_revision.as_deref(),
-                    )?,
+                    data: self
+                        .aikit
+                        .session_settings(&cwd, &project_ref, agent_session)?,
                 }
             }
             AgentRead::TaskConfigure {
@@ -852,14 +842,10 @@ impl Kernel {
             KernelOp::EncounterSessionSettings {
                 project,
                 agent_session,
-                request,
-                expected_revision,
             } => (
                 Some(project.clone()),
                 AgentRead::Settings {
                     agent_session: agent_session.clone(),
-                    request: request.clone(),
-                    expected_revision: expected_revision.clone(),
                 },
             ),
             KernelOp::EncounterTaskConfigure {
@@ -1467,47 +1453,20 @@ else:
         let owner = crate::tests::FakeOwner::spawn_counter("session-settings");
         let aikit = FakeAikit::new("session-settings");
         let mut kernel = owner.kernel_with_agency(aikit.client());
-        let settings = |agent_session: &str, request: Option<Value>, expected: Option<&str>| {
-            KernelOp::EncounterSessionSettings {
-                project: String::new(),
-                agent_session: agent_session.into(),
-                request,
-                expected_revision: expected.map(Into::into),
-            }
+        // A read: a change to the settings is AIKit's Action aikit.session.settings, which the kernel's `act` carries (O-I #1006).
+        let settings = |agent_session: &str| KernelOp::EncounterSessionSettings {
+            project: String::new(),
+            agent_session: agent_session.into(),
         };
-        let read = kernel
-            .apply(settings("agent-session/x", None, None))
-            .unwrap();
+        let read = kernel.apply(settings("agent-session/x")).unwrap();
         assert!(matches!(
             read.result,
             KernelOpResult::EncounterSessionSettingsReading { ref data }
                 if data["agent_session"] == "agent-session/x" && data["request"].is_null()
         ));
-        let change = serde_json::json!({"track": {"solo": true}});
-        let written = kernel
-            .apply(settings(
-                "agent-session/x",
-                Some(change.clone()),
-                Some("session-settings/1"),
-            ))
-            .unwrap();
-        assert!(matches!(
-            written.result,
-            KernelOpResult::EncounterSessionSettingsReading { ref data }
-                if data["request"] == change && data["expected"] == "session-settings/1"
-        ));
-        // Another Project's session and a revision without a change never reach the owner.
-        assert!(kernel
-            .apply(settings("agent-session/elsewhere", Some(change), None))
-            .is_err());
-        assert!(kernel
-            .apply(settings(
-                "agent-session/x",
-                None,
-                Some("session-settings/1")
-            ))
-            .is_err());
-        assert_eq!(aikit.calls("encounter-session-settings"), 2);
+        // Another Project's session never reaches the owner.
+        assert!(kernel.apply(settings("agent-session/elsewhere")).is_err());
+        assert_eq!(aikit.calls("encounter-session-settings"), 1);
         // Many tracks ask once; an empty list and another Project's session never reach the owner.
         let list = |agent_sessions: &[&str]| KernelOp::EncounterSessionSettingsList {
             project: String::new(),
@@ -1525,7 +1484,7 @@ else:
         assert!(kernel
             .apply(list(&["agent-session/x", "agent-session/elsewhere"]))
             .is_err());
-        assert_eq!(aikit.calls("encounter-session-settings"), 3);
+        assert_eq!(aikit.calls("encounter-session-settings"), 2);
     }
 
     #[test]

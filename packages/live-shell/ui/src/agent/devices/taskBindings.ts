@@ -11,8 +11,8 @@
 // (factory.attempt.retry), each pressed where the task stands — the Session grid, and the Agent rack on its chain
 // (agent/factoryTaskActs.ts sessionSetAct). The Tasks device's own ports for them are retired (O-I 804 round 24, ticket 1006). The per-task
 // settings (Mode, Then, Effort, Autonomy, Register, Form here; every setting of the Clip view through TASK_SEAMS) are the
-// session's settings on their owner, AIKit's `encounter-session-settings` (kernel encounter_session_settings, agent/sessionSettings.ts),
-// written against the revision that stands. The task's log is not read: the temporal stream names the session, not the task's
+// session's settings on their owner, AIKit's `encounter-session-settings` (read by the kernel's encounter_session_settings, written by
+// AIKit's Action aikit.session.settings, agent/sessionSettings.ts), written against the revision that stands. The task's log is not read: the temporal stream names the session, not the task's
 // tools along its time.
 //
 // Runs lists a piece of work's attempts. The agency reading names no Factory run for a session, but the take lanes do (T-COVERAGE §1.3):

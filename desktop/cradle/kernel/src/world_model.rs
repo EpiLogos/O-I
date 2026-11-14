@@ -688,13 +688,6 @@ pub fn written_by(op: &KernelOp) -> Vec<Slice> {
             Slice::Factory,
             Slice::Roster,
         ],
-        // A session's own settings in AIKit written (its Wait, On no answer): Scope reads them. A read of them moves nothing.
-        "encounter_session_settings" => match op {
-            KernelOp::EncounterSessionSettings {
-                request: Some(_), ..
-            } => vec![Slice::Scope],
-            _ => Vec::new(),
-        },
         // A skill root adopted, or a Procedure applied or undone, moves the skills an agent carries (census.rs); a capture or a
         // wiki write does not, and is never a reason to start every agent again.
         "aikit_write" => {
@@ -731,9 +724,10 @@ pub fn written_by(op: &KernelOp) -> Vec<Slice> {
         "workcell_write" => vec![Slice::Workcells],
         // A work's edit, open, save or close in the expression store (O-I #1008): settled only by its receipts, so a read moves none.
         "expression" | "expression_world" => vec![Slice::Expressions],
-        // A gateway binding's ingress rule, and a gateway this window starts or stops, are AIKit's gateway, which the sessions slice
-        // carries (its ecology names the rules and the bindings).
-        "harness_ingress_rule" | "gateway_service" => vec![Slice::Sessions],
+        // A gateway this window starts or stops is AIKit's gateway, which the sessions slice carries (its ecology names the bindings). A
+        // binding's ingress rule and a session's own settings are AIKit's Actions (aikit.gateway.ingress, aikit.session.settings: O-I #1006),
+        // whose owner's slices an Action moves above.
+        "gateway_service" => vec![Slice::Sessions],
         _ => Vec::new(),
     }
 }
@@ -791,8 +785,6 @@ pub fn wrote(op_name: &str, outcome: &KernelOpOutcome) -> bool {
                 | "aikit_write"
                 | "client_install"
                 | "encounter_provision"
-                | "encounter_session_settings"
-                | "harness_ingress_rule"
                 | "gateway_service"
         )
 }
@@ -2188,20 +2180,19 @@ mod tests {
             !moved.contains(&Slice::Agents),
             "the census is not read again for a profile: {moved:?}"
         );
-        // A session's settings written move Scope, which reads them; read, they move nothing.
-        let settings = |request: Value| -> KernelOp {
-            serde_json::from_value(json!({"op": "encounter_session_settings", "project": "",
-                "agent_session": "agent-session/a", "request": request}))
-            .unwrap()
-        };
-        assert_eq!(
-            written_by(&settings(json!({"track": {"wait": 60}}))),
-            vec![Slice::Scope]
-        );
+        // A session's settings written are AIKit's Action (O-I #1006), which moves Scope, where they are read; read, they move nothing.
+        let written: KernelOp = serde_json::from_value(json!({"op": "act", "action": "aikit.session.settings",
+            "input": {"agent_session": ["agent-session/a"], "request_json": "{\"track\":{\"wait\":900}}"}}))
+        .unwrap();
         assert!(
-            written_by(&settings(Value::Null)).is_empty(),
-            "a read of the settings"
+            written_by(&written.canonical()).contains(&Slice::Scope),
+            "the settings written"
         );
+        let read: KernelOp = serde_json::from_value(
+            json!({"op": "encounter_session_settings", "project": "", "agent_session": "agent-session/a"}),
+        )
+        .unwrap();
+        assert!(written_by(&read).is_empty(), "a read of the settings");
     }
 
     #[test]

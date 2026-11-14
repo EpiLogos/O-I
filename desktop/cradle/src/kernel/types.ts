@@ -1047,9 +1047,6 @@ export type KernelOp =
   | {op:"protocol_read"}
   /** The AIKit gateway's canonical session surface for one harness binding; the gateway's answer or named refusal passes through verbatim. */
   | {op:"harness_agent_read";binding:string}
-  /** One sender kind's ingress rule on a harness binding (O-I manual §19.12, Scope's Calls to other agents): AIKit's `gateway ingress`,
-   * deciding a sender by its own id, then its kind, then the binding's one default; no decision clears the kind's rule. */
-  | {op:"harness_ingress_rule";binding:string;kind:"human"|"agent"|"bot"|"system"|"unknown";decision?:"allow"|"pair"|"deny"|null}
   | { op: "agency_read"; project: string }
   | { op: "model_roster"; project?: string }
   | { op: "agent_definition"; project: string | null; request: import("../agency/nativeAgent").AgentRequest }
@@ -1069,11 +1066,11 @@ export type KernelOp =
   | { op: "material_read"; target: { receipt: string; state_root: string; endpoint?: string | null; expected_world_ref?: string | null } }
   | { op: "a2a_exchange"; request: Record<string, unknown> }
   | {op:"encounter_task_read";project:string;agent_session:string}
-  /** One session's own settings and its bound task's (AIKit `encounter-session-settings`, aikit.encounter-session-settings/v1):
+  /** One session's own settings and its bound task's (AIKit `encounter-session-settings`, aikit.encounter-session-settings/v1), read:
    * the track's Telemetry and Solo; the task's name, colour, activator, output style, Launch, Then, Hand off to, Quantize and
-   * envelopes. Without `request` it reads; with it, a change made against `expected_revision` (absent while the session has none).
-   * The owner's reading or refusal passes through verbatim. */
-  | {op:"encounter_session_settings";project:string;agent_session:string;request?:EncounterSessionSettingsRequest;expected_revision?:string}
+   * envelopes. A change is AIKit's Action aikit.session.settings through `act` (O-I 1006). The owner's reading or refusal passes
+   * through verbatim. */
+  | {op:"encounter_session_settings";project:string;agent_session:string}
   /** Make one session's task (AIKit `encounter-task-configure`, aikit.encounter-task/v1; manual §10.3: a constellation dropped on a
    * session's track makes "a task in Factory"): the request travels verbatim, against `expected_revision` (absent while the session holds
    * no task). AIKit allocates the task's NOW with Central and has Workcell inspect its boundary; its record (result
@@ -1363,7 +1360,6 @@ export type KernelOpResult =
   | {result:"recording_capability";document:unknown}
   | {result:"protocol";document:unknown}
   | {result:"harness_agent_reading";binding:string;document:unknown}
-  | {result:"harness_ingress_outcome";binding:string;document:unknown}
   | { result: "agency_reading"; project_ref: string; spaces: unknown[]; harness_disclosure?: unknown; observed_at_unix_ms: number }
   | { result: "model_roster_reading"; reading: unknown }
   | { result: "knowledge"; data: unknown }

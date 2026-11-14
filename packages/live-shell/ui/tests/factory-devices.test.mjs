@@ -220,15 +220,20 @@ test('owners write, faces read: a write row reaches its own write path, a readin
   await assert.rejects(() => world.submit([{key: 'write-mode', value: 'draft'}]), /draft awaits its writer/, 'draft has no writer: refused by name, not sent')
   assert.deepEqual(calls.slice(4), [{key: 'write-mode', path: 'shell.setWriteArm', value: true}, {key: 'write-mode', path: 'shell.setWriteArm', value: false}])
 
+  // REPLACED (O-I 1006): Transport was the example of a write the owner refuses; it is a reading now (AIKit: the transport is the whole
+  // gateway's, chosen by `aikit gateway setup`), so Connect, AIKit's pause and resume of the binding's connector, is.
   const refusing = slotOf(chain({write: async row => ({kind: 'refused', channel: 'kernel', writePath: row.writePath, reason: 'the gateway refused the carrier'})}), 'gateway').device
-  await assert.rejects(() => refusing.submit([{key: 'transport', value: 'ws'}]), /the gateway refused the carrier/)
+  await assert.rejects(() => refusing.submit([{key: 'connect', value: false}]), /the gateway refused the carrier/)
+  await assert.rejects(() => refusing.submit([{key: 'transport', value: 'ws'}]), /no owner write is declared/, 'Transport is a reading')
 })
 
-test('a write the table declares but gives no domain for stays a reading in the device — no knob on an invented 0..1', () => {
+// REPLACED (O-I 1006): the table declared Stall after's write (aikit.gateway.agent) with no domain, and the device withheld the knob for
+// want of one. AIKit holds no stall-after at all, so the table declares no write and the row is a reading in AIKit's words.
+test('Stall after is a reading: AIKit holds no stall-after, so the table declares no write and the device draws no knob', () => {
   const stall = slotOf(chain(), 'gateway').device.rows.find(row => row.key === 'stall-after')
-  assert.equal(agentAddress('gateway', 'stall-after').writePath, 'act:aikit.gateway.agent')
+  assert.equal(agentAddress('gateway', 'stall-after').writePath, undefined)
   assert.equal(stall.writePath, undefined)
-  assert.match(stall.disclosure, /no domain/)
+  assert.match(stall.disclosure, /^No AIKit operation holds a stall-after/)
 })
 
 test('the harness\'s document supplies the gateway rows only under the carrier\'s own names and inside the declared choices', () => {

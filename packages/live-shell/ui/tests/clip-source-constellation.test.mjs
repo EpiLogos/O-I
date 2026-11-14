@@ -500,21 +500,28 @@ test('a mode whose owner cannot make its clip of a constellation yet takes the d
   assert.equal(withClipMaker(set, MODE_CLIP_MAKERS.live), set, 'a set that brings its own maker keeps it')
 })
 
-/** AIKit's session settings behind the bridge's fetch (FIXTURE): one session's reading, written against its revision (the owner's CAS) and
- * read back; a write answers the owner's refusal when the revision moved. */
+/** AIKit's session settings behind the bridge's fetch (FIXTURE): one session's reading, read by the kernel's encounter_session_settings and
+ * written by AIKit's Action aikit.session.settings through the kernel's `act` against its revision (the owner's CAS), then read back; a
+ * write answers the owner's refusal when the revision moved. REPLACED (O-I 1006): the kernel's encounter_session_settings wrote it. */
+const SETTINGS_ACTION = 'aikit.session.settings'
+/** The settings writes a fixture kernel was sent, each as AIKit's Action took it: the request and the revision expected. */
+const settingsWrites = sent => sent.filter(body => body.op === 'act' && body.action === SETTINGS_ACTION)
+  .map(body => [JSON.parse(body.input.request_json), body.input.expected_revision])
 function settingsKernel(reading) {
   const sent = []
   let held = reading
   const answer = data => ({json: async () => ({ok: true, outcome: {result: 'encounter_session_settings_reading', data}})})
+  const dispatched = dispatch => ({json: async () => ({ok: true, outcome: {result: 'action_dispatched', dispatch, receipts: []}})})
   const fetch = async (_url, init) => {
     const body = JSON.parse(init.body)
     sent.push(body)
-    if (body.op !== 'encounter_session_settings') return {json: async () => ({ok: false, error: `the fixture kernel answers no ${body.op}`})}
-    if (!body.request) return answer(held)
-    if (body.expected_revision !== held.revision) return {json: async () => ({ok: false, error: 'Session settings revision conflict; read the current settings and write again'})}
-    const source = body.request.task.set.source
+    if (body.op === 'encounter_session_settings') return answer(held)
+    if (body.op !== 'act' || body.action !== SETTINGS_ACTION) return {json: async () => ({ok: false, error: `the fixture kernel answers no ${body.op}`})}
+    if (body.input.expected_revision !== held.revision) return dispatched({state: 'owner_refused', owner_operation: SETTINGS_ACTION,
+      message: 'Session settings revision conflict; read the current settings and write again'})
+    const source = JSON.parse(body.input.request_json).task.set.source
     held = settingsOf(source, {revision: 'session-settings/02'})
-    return answer(held)
+    return dispatched({state: 'invoked', owner_operation: SETTINGS_ACTION, data: held})
   }
   return {sent, fetch}
 }
@@ -525,10 +532,10 @@ test('Factory: a constellation dropped on a session\'s track makes the session\'
   const receipt = await withKernel(aikit, () => factory.makeTaskOf(BRIDGE, session, {ref: LIVED, title: 'The lived-in world'}))
   assert.equal(receipt.ok, true, receipt.error)
   assert.match(receipt.note, /The lived-in world/)
-  const writes = aikit.sent.filter(body => body.request)
-  assert.deepEqual(writes.map(body => [body.request, body.expected_revision]), [[{task: {task_ref: 'task:fixtures', set: {source: LIVED}}}, 'session-settings/01']],
-    'one write: the bound task\'s source, against the revision read')
-  assert.ok(aikit.sent.indexOf(writes[0]) < aikit.sent.length - 1 && !aikit.sent.at(-1).request, 'the source is read back from AIKit after the write')
+  assert.deepEqual(settingsWrites(aikit.sent), [[{task: {task_ref: 'task:fixtures', set: {source: LIVED}}}, 'session-settings/01']],
+    'one write: the bound task\'s source, by AIKit\'s Action, against the revision read')
+  const write = aikit.sent.findIndex(body => body.op === 'act')
+  assert.ok(aikit.sent.slice(write + 1).some(body => body.op === 'encounter_session_settings'), 'the source is read back from AIKit after the write')
   // REPLACED (O-I #768, a fresh task): a session that held no task was refused outright, then given a task on the basis another session's
   // task gave; it asks AIKit's task creation now (the next test), and what answers is the owner's: here a kernel with no task creation, whose
   // words pass through, and nothing is written to the session's settings.
@@ -536,7 +543,7 @@ test('Factory: a constellation dropped on a session\'s track makes the session\'
   const untasked = await withKernel(idle, () => factory.makeTaskOf(BRIDGE, session, {ref: LIVED, title: 'The lived-in world'}))
   assert.equal(untasked.ok, false)
   assert.match(untasked.error, /the fixture kernel answers no encounter_task_configure/)
-  assert.equal(idle.sent.some(body => body.op === 'encounter_session_settings' && body.request), false, 'a session with no task has no settings written')
+  assert.deepEqual(settingsWrites(idle.sent), [], 'a session with no task has no settings written')
   // REPLACED (O-I #1006): the maker the window's Factory set carried (taskMaker), deleted with that set: Factory's Set is the kernel's,
   // which takes the drop and refuses it in its own words (below).
   // The Factory Set the pane draws is the kernel's (O-I #1004), whose acts are Actions of the registry: making the session's task of a
@@ -564,7 +571,7 @@ function factoryKernel({refuse = null} = {}) {
   const fetch = async (_url, init) => {
     const body = JSON.parse(init.body)
     sent.push(body)
-    if (body.op === 'encounter_session_settings' && !body.request) return ok('encounter_session_settings_reading', held.get(body.agent_session))
+    if (body.op === 'encounter_session_settings') return ok('encounter_session_settings_reading', held.get(body.agent_session))
     if (body.op === 'encounter_task_configure') {
       if (refuse) return {json: async () => ({ok: false, error: refuse})}
       const record = {schema: 'aikit.encounter-task/v1', revision: 'task-binding/01JNEW', ready: true, request: body.request}
@@ -600,7 +607,7 @@ test('Factory: a constellation dropped on a session that holds no task makes a n
     'no other session\'s settings or task is read')
   assert.ok(aikit.sent.every(body => body.agent_session === 'ses-215'), 'only the session the drop landed on is asked')
   const at = aikit.sent.indexOf(configured[0])
-  assert.ok(aikit.sent.slice(at + 1).some(body => body.op === 'encounter_session_settings' && body.agent_session === 'ses-215' && !body.request),
+  assert.ok(aikit.sent.slice(at + 1).some(body => body.op === 'encounter_session_settings' && body.agent_session === 'ses-215'),
     'the task\'s source is read back from AIKit after it is made')
   // On AIKit's own record (REAL: the kernel's owner-route fixture, drops through the real kernel, AIKit, Central, Actuation and Workcell
   // boundary on kernel-provisioned sessions): the drop sent only the task's own, and AIKit derived the rest from the session — the agent and

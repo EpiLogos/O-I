@@ -59,14 +59,14 @@ const reading = (key: string) => `${key} is a reading: its owner reports it; not
 
 // ---------------------------------------------------------------------------------------------------------------- the Run
 
-// Telemetry is the session's own setting on AIKit (lane K0 corrected): `encounter-session-settings` `track.telemetry`, written through
-// the kernel's encounter_session_settings against the revision that stands (agent/sessionSettings.ts trackSettingChange) — the Session
+// Telemetry is the session's own setting on AIKit (lane K0 corrected): `encounter-session-settings` `track.telemetry`, written by AIKit's
+// Action aikit.session.settings against the revision that stands (agent/sessionSettings.ts trackSettingChange) — the Session
 // view's mixer is where it is pressed, once Factory's Set (the kernel's, mode_set.rs) carries it as an act. Solo is what you attend to, never what runs
 // (§16.1, §16.6): the shell holds it on the book (agent/AgentShellContext.tsx setSolo), and AIKit's own session Solo, a gate on its
 // executor's launches, is never written. The Run device is handed neither, so it names each route and stands disabled here.
 // AIKit's gateway agent controls (`aikit gateway agent --binding B pause|resume`) address a gateway binding's connector, never a session.
 export const RUN_REFUSE = {
-  telemetry: 'Telemetry: the session\'s own setting on AIKit (encounter_session_settings {track: {telemetry}}, as the Session view\'s mixer writes it); the Run device is not handed the session\'s settings or their writer, so it does not write it here (AIKit).',
+  telemetry: 'Telemetry: the session\'s own setting on AIKit (aikit.session.settings {track: {telemetry}}, as the Session view\'s mixer writes it); the Run device is not handed the session\'s settings or their writer, so it does not write it here (AIKit).',
   solo: 'Solo: what you attend to, which the shell holds on the book (agent/AgentShellContext.tsx setSolo), as the Session view\'s mixer solos it; the Run device is not handed the attention, so it does not solo here (the live shell).',
   take: 'No takes are read: factory_attempt_read needs the run ref of the session\'s work, and the agency reading names none.',
   open: 'No events are read into lanes: the temporal stream names the session, not Messages, Files, Terminal, Web or Graph.',

@@ -87,6 +87,14 @@ const reading = (overrides = {}, revision = 'session-settings/0') => ({
 const takesOf = (trace, n) => ({schema: 'ql-series1-run/0.3', trace_ref: trace, root: `/oi/desktop/takes/${trace}`, manifest_path: `/oi/desktop/takes/${trace}/manifest.json`,
   takes: n, records: [], held_constants_valid: true, determination: 'pending-human-review', provider_mode: 'fixture', human_acceptance: false})
 
+/** AIKit's Action a session's settings are written by, through the kernel's `act` (O-I 1006): its request as JSON, at the revision expected. */
+const SETTINGS_ACTION = 'aikit.session.settings'
+const settingsWrite = op => op.op === 'act' && op.action === SETTINGS_ACTION
+/** The writes the kernel was sent, in order: AIKit's settings Action as it was asked (the Action, its request and the revision expected),
+ * and the other ops as they were sent. */
+const writesOf = kernel => kernel.sent.filter(op => settingsWrite(op) || op.request).map(op => (settingsWrite(op)
+  ? {op: op.action, request: JSON.parse(op.input.request_json), expected_revision: op.input.expected_revision} : op))
+
 /** A scripted kernel: AIKit's settings (a revision per change, takes kept as AIKit keeps them) and Actuation's comparison run. */
 function scriptedKernel(start, comparison = request => ({ok: true, outcome: {result: 'owner_route_reading', route: 'actuation-research comparison.run', data: takesOf(request.trace_ref, 9), receipts: []}})) {
   const kernel = {reading: start, sent: [], revisions: 0}
@@ -94,19 +102,21 @@ function scriptedKernel(start, comparison = request => ({ok: true, outcome: {res
     const op = JSON.parse(init.body)
     kernel.sent.push(op)
     const answer = data => ({json: async () => ({ok: true, outcome: {result: 'encounter_session_settings_reading', data, receipts: []}})})
+    const dispatched = dispatch => ({json: async () => ({ok: true, outcome: {result: 'action_dispatched', dispatch, receipts: []}})})
     if (op.op === 'actuation_write') return {json: async () => comparison(op.request.request)}
-    if (op.op !== 'encounter_session_settings') return {json: async () => ({ok: false, error: `unexpected ${op.op}`})}
-    if (!op.request) return answer(kernel.reading)
-    if ((op.expected_revision ?? null) !== kernel.reading.revision)
-      return {json: async () => ({ok: false, error: 'encounter.runtime: Session settings revision conflict; read the current settings and write again'})}
+    if (op.op === 'encounter_session_settings') return answer(kernel.reading)
+    if (!settingsWrite(op)) return {json: async () => ({ok: false, error: `unexpected ${op.op}`})}
+    if ((op.input.expected_revision ?? null) !== kernel.reading.revision)
+      return dispatched({state: 'owner_refused', owner_operation: SETTINGS_ACTION,
+        message: 'encounter.runtime: Session settings revision conflict; read the current settings and write again'})
     const task = {...kernel.reading.task}
-    const act = op.request.takes
+    const act = JSON.parse(op.input.request_json).takes
     if (act?.start) task.takes = {trace_ref: act.start.trace_ref, started_at_unix_ms: 1, running: true, variable: task.repeat_variable,
       levels: task.repeat_levels, repeats: task.repeat_repeats, stop: task.repeat_stop, ended: null}
     if (act?.end) task.takes = {...task.takes, running: false, ended: {at_unix_ms: 2, outcome: act.end.outcome,
       ...(act.end.takes !== undefined ? {takes: act.end.takes} : {}), ...(act.end.root ? {root: act.end.root} : {}), ...(act.end.reason ? {reason: act.end.reason} : {})}}
     kernel.reading = {...kernel.reading, revision: `session-settings/${++kernel.revisions}`, task}
-    return answer(kernel.reading)
+    return dispatched({state: 'invoked', owner_operation: SETTINGS_ACTION, data: kernel.reading})
   }
   return kernel
 }
@@ -132,10 +142,10 @@ test('Repeat\'s takes: the set starts on AIKit, Actuation\'s comparison run make
   await readSettings()
   const made = await settings.makeTakes(transport, project, 'ses-795', research, () => 1_793_000_000_000)
   assert.equal(made.ok, true, made.error); assert.match(made.note, /9 takes/)
-  const writes = kernel.sent.filter(op => op.request)
+  const writes = writesOf(kernel)
   const trace = writes[0].request.takes.start.trace_ref
   assert.match(trace, /^takes:ses-795:/)
-  assert.deepEqual(writes.map(op => op.op), ['encounter_session_settings', 'actuation_write', 'encounter_session_settings'])
+  assert.deepEqual(writes.map(op => op.op), ['aikit.session.settings', 'actuation_write', 'aikit.session.settings'])
   assert.deepEqual(writes[0].request, {takes: {start: {task_ref: 'task:fixtures', trace_ref: trace}}})
   assert.equal(writes[0].expected_revision, 'session-settings/0', 'started against the revision that stands')
   assert.deepEqual(writes[1].request, {kind: 'comparison-run', request: {trace_ref: trace, repetitions: 3, variable: 'condition',
@@ -153,7 +163,7 @@ test('Repeat\'s variable, levels and stop when are the comparison\'s: a setting 
     await readSettings()
     const made = await settings.makeTakes(transport, project, 'ses-795', research)
     assert.equal(made.ok, true, `${variable}: ${made.error}`)
-    const writes = kernel.sent.filter(op => op.request)
+    const writes = writesOf(kernel)
     assert.deepEqual(writes[1].request.request, {trace_ref: writes[0].request.takes.start.trace_ref, repetitions: 2, variable, levels,
       stop: {when: stop}, run: research.run, basis: research.basis}, variable)
   }
@@ -165,7 +175,7 @@ test('Repeat\'s levels are the comparison\'s conditions; a run that fails ends t
   await readSettings()
   const made = await settings.makeTakes(transport, project, 'ses-795', research)
   assert.equal(made.ok, false); assert.match(made.error, /comparison requires an empty dedicated root/)
-  const writes = kernel.sent.filter(op => op.request)
+  const writes = writesOf(kernel)
   assert.equal(writes[1].request.request.variable, 'condition')
   assert.deepEqual(writes[1].request.request.levels, ['classic', 'ql-deep']); assert.equal(writes[1].request.request.repetitions, 2)
   assert.equal(writes[2].request.takes.end.outcome, 'failed')
@@ -181,7 +191,7 @@ test('Repeat refuses, before any write, what Actuation\'s comparison run cannot 
     await readSettings()
     const made = await settings.makeTakes(transport, project, 'ses-795', research)
     assert.equal(made.ok, false); assert.match(made.error, said)
-    assert.deepEqual(kernel.sent.filter(op => op.request), [], 'nothing is written')
+    assert.deepEqual(writesOf(kernel), [], 'nothing is written')
   }
   // An AIKit before O-I 795's take body hands no run with the settings: the press names what is missing — AIKit's carrier of the
   // session's task and agent — and not Actuation, which runs a session's own task with its agent as the body over any variable.
@@ -195,7 +205,7 @@ test('Repeat refuses, before any write, what Actuation\'s comparison run cannot 
   const refused = await settings.makeTakes(transport, project, 'ses-795', {refused: never})
   assert.equal(refused.ok, false); assert.match(refused.error, /AIKit has no run for this session's takes/)
   assert.ok(refused.error.includes(never), refused.error)
-  assert.deepEqual(kernel.sent.filter(op => op.request), [])
+  assert.deepEqual(writesOf(kernel), [])
 })
 
 /** The run AIKit hands with the session's settings (ai-kit encounter_take_body.rs take_run, as `aikit session-space
@@ -224,8 +234,8 @@ test('Repeat\'s press runs the takes over the run AIKit hands with the session\'
   // The run AIKit hands with the session's settings (takeRunOf), in the session's own register (agent/worldScope.ts).
   const made = await settings.makeTakes(transport, project, 'ses-795', settings.takeRunOf(start.task))
   assert.equal(made.ok, true, made.error)
-  const writes = kernel.sent.filter(op => op.request)
-  assert.deepEqual(writes.map(op => op.op), ['encounter_session_settings', 'actuation_write', 'encounter_session_settings'])
+  const writes = writesOf(kernel)
+  assert.deepEqual(writes.map(op => op.op), ['aikit.session.settings', 'actuation_write', 'aikit.session.settings'])
   assert.deepEqual(writes[1].request.request, {trace_ref: writes[0].request.takes.start.trace_ref, repetitions: 1, variable: 'effort',
     levels: ['low', 'high'], stop: {when: 'turns'}, run: handed.run, basis: handed.basis})
   // Test pass reads the task's own test, and AIKit's run carries none: refused before any write, not after AIKit starts a set.
@@ -234,14 +244,14 @@ test('Repeat\'s press runs the takes over the run AIKit hands with the session\'
   await readSettings()
   const pass = await settings.makeTakes(transport, project, 'ses-795', settings.takeRunOf(passing.task))
   assert.equal(pass.ok, false); assert.match(pass.error, /Test pass[\s\S]*test/)
-  assert.deepEqual(untested.sent.filter(op => op.request), [])
+  assert.deepEqual(writesOf(untested), [])
   // Settings that hand AIKit's refusal: the press says it, before any write.
   const refusing = reading({take_run: {refused: 'The session\'s agent has never opened.'}})
   const quiet = scriptedKernel(refusing)
   await readSettings()
   const said = await settings.makeTakes(transport, project, 'ses-795', settings.takeRunOf(refusing.task))
   assert.equal(said.ok, false); assert.match(said.error, /never opened/)
-  assert.deepEqual(quiet.sent.filter(op => op.request), [])
+  assert.deepEqual(writesOf(quiet), [])
 })
 
 test('Clip view: while the takes run, Repeat\'s fields stand disabled with the manual\'s words, and the takes made stand read', async () => {

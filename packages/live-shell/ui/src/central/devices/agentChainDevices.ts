@@ -7,7 +7,7 @@
 // the cradle's packetSlice.ts, which the cradle's own surfaces of the Packet read through too): no device reads an owner. Search is no
 // chain device (§18.4: a pane, and the line where you type @) — its pane (central/searchPane.tsx) reads it through useSearchDevice.
 import {useEffect, useMemo, useState, useSyncExternalStore} from 'react'
-import type {EncounterSessionSettingsReading, KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
+import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import type {PreparedContext} from '../../../../../../desktop/cradle/src/context/nativeContext'
 import {PROJECT_PACKET, packetFromModel} from '../../../../../../desktop/cradle/src/context/packetSlice'
 import {knowledge} from '../../../../../../desktop/cradle/src/knowledge/client'
@@ -16,9 +16,9 @@ import {rosterFromReading, type RosterAgent} from '../../../../../../desktop/cra
 import type {HumanAgentCard} from '../../../../../../desktop/cradle/src/agency/agentCardReading'
 import type {DesignBinding} from '../../frame/devices/designed'
 import type {ObservedHandle} from '../../agent/devices/EncounterObservers'
-import type {ScopeWaits} from '../../agent/devices/designBindings'
 import type {ChainDeviceDeclaration} from '../../inhabitants/agentParamAddresses'
-import {partOf, projectPartOf, sliceValue, type ModelSliceReading} from '../../owners/model'
+import {partOf, sliceValue, type ModelSliceReading} from '../../owners/model'
+import {PROJECT_SETTINGS, SETTINGS_ACTION, scopeWaitsOf, settingsFromModel} from '../../agent/sessionSettings'
 import {centralDeviceId, type CentralReads} from './centralDeviceModel'
 import {CENTRAL_SCOPE_ID, EFFECTIVE_SOURCES_ACTION, WORLD_RELATIONS_READ, WORLD_RELATIONS_SAVE} from './contextWorldBinding'
 import {DAY_FIELD_RECORD_ACTION, NOT_TODAY} from './dayBinding'
@@ -46,8 +46,9 @@ const message = (cause: unknown): string => (cause instanceof Error ? cause.mess
 
 /** The Packet's reading of the packet slice, and why it holds none of a project it did not know (the cradle's packetSlice.ts). */
 export {PROJECT_PACKET, packetFromModel}
-/** Why the World Model holds no settings of a session in a project's register: the project was not among those it knew when Scope was read. */
-export const PROJECT_SETTINGS = (project: string): string => `the World Model holds the settings of the sessions of your world's root register and of each project it knows (world_model.rs \`scope\`); ${project} was not among them when Scope was read.`
+/** Why the World Model holds no settings of a session in a project's register, and Scope's Wait and On no answer from them: the one
+ * reading of a session's settings in the scope slice (agent/sessionSettings.ts), which Factory's Scope reads too. */
+export {PROJECT_SETTINGS, scopeWaitsOf}
 /** Why no card stands for an agent you have not accepted, or in a World it does not ratify. */
 export const CARD_UNHELD = (agent: string, world: string | null): string => `The World Model holds the card of each agent you accepted, in its home World and each World it ratifies (world_model.rs \`roster\`); it holds none of ${agent}${world ? ` in ${world}` : ''}.`
 
@@ -80,11 +81,12 @@ export const CENTRAL_CHAIN_DECLARATIONS: readonly ChainDeviceDeclaration[] = Obj
     // project; the change horizon is the root's ground, which the Day reads.
     fields: {effective: 'scope:effective', relations: 'scope:relations', settings: 'scope:settings', projects: 'scope:projects', horizon: 'day:ground'},
     unheld: {project: PROJECT_SETTINGS('a project')},
-    // A read place's include or exclude (`r:<place>`) is saved on the world's relations; Wait and On no answer on the session's settings.
+    // A read place's include or exclude (`r:<place>`) is saved on the world's relations; Wait and On no answer on the session's settings,
+    // by AIKit's Action (O-I ticket 1006).
     controls: {
       'r:<place>': {action: WORLD_RELATIONS_SAVE},
-      wait: {none: 'AIKit declares no Action for a session\'s settings.', kernelOp: 'encounter_session_settings'},
-      noAnswer: {none: 'AIKit declares no Action for a session\'s settings.', kernelOp: 'encounter_session_settings'},
+      wait: {action: SETTINGS_ACTION},
+      noAnswer: {action: SETTINGS_ACTION},
     },
   },
   {
@@ -203,34 +205,12 @@ export const useIdentityHolds = (): number => useSyncExternalStore(subscribeHold
 export function scopeFromModel(scope: ModelSliceReading, session: string | null, project: string = ROOT_REGISTER): {
   effective: ActionAnswer
   relations: ActionAnswer
-  settings: {readonly reading: EncounterSessionSettingsReading} | {readonly why: string} | null
+  settings: ReturnType<typeof settingsFromModel>
 } {
-  const held = sliceValue<{effective?: unknown; relations?: unknown; settings?: unknown; projects?: unknown}>(scope)
+  const held = sliceValue<{effective?: unknown; relations?: unknown}>(scope)
   const value = held.ok ? held.value : {}
-  const effective = answerOfPart(scope, value.effective, EFFECTIVE_SOURCES_ACTION)
-  const relations = answerOfPart(scope, value.relations, WORLD_RELATIONS_READ)
-  if (!session || scope.state === 'reading') return {effective, relations, settings: null}
-  if (!held.ok) return {effective, relations, settings: {why: held.reason}}
-  // The root's sessions' settings are a part of the value; a project's part is its sessions' settings, by session.
-  const sessions = project === ROOT_REGISTER ? partOf<Record<string, unknown>>(value.settings)
-    : projectPartOf<Record<string, unknown>>(value, project, PROJECT_SETTINGS)
-  if (!sessions) return {effective, relations, settings: {why: 'the World Model\'s scope holds no session\'s settings.'}}
-  if (!sessions.ok) return {effective, relations, settings: {why: sessions.why}}
-  const own = partOf<EncounterSessionSettingsReading>(sessions.value[session])
-  if (!own) return {effective, relations, settings: {why: `the World Model's scope holds no settings of ${session} yet: AIKit's agency had not listed it when Scope was read.`}}
-  return {effective, relations, settings: own.ok ? {reading: own.value} : {why: `AIKit did not read the session's settings: ${own.why}`}}
-}
-
-/** Scope's Wait and On no answer on the dialogue's session (§19.12 Asks; designBindings.ts ScopeWaits), from its settings as the World
- * Model's scope slice holds them, written against their revision (`write`, agent/sessionSettings.ts writeSessionSettings on the reading
- * held), with the reading itself (`settings`, for Approvals). Pure. */
-export function scopeWaitsOf(session: string | null, held: ReturnType<typeof scopeFromModel>['settings'],
-  write: ((change: {wait?: number; no_answer?: 'hold' | 'deny'}, basis: EncounterSessionSettingsReading) => Promise<unknown>) | null): ScopeWaits & {readonly settings: EncounterSessionSettingsReading | null} {
-  if (!session) return {track: null, why: 'no session stands on this chain, so no settings of one are read.', settings: null}
-  if (!held) return {track: null, settings: null}
-  if ('why' in held) return {track: null, why: held.why, settings: null}
-  const reading = held.reading
-  return {track: reading.track ?? null, settings: reading, ...(write ? {write: (change: {wait?: number; no_answer?: 'hold' | 'deny'}) => write(change, reading)} : {})}
+  return {effective: answerOfPart(scope, value.effective, EFFECTIVE_SOURCES_ACTION), relations: answerOfPart(scope, value.relations, WORLD_RELATIONS_READ),
+    settings: settingsFromModel(scope, session, project)}
 }
 
 // ---------------------------------------------------------------------------------------------------------------- Search

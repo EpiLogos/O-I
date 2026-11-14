@@ -51,6 +51,7 @@ const identity = await import('../src/central/devices/identityBinding.ts')
 const answer = await import('../src/central/devices/answerBinding.ts')
 const world = await import('../src/central/devices/contextWorldBinding.ts')
 const pages = await import('../src/central/devices/pageBindings.ts')
+const settings = await import('../src/agent/sessionSettings.ts')
 const {design: agentDesign} = await import('../src/inhabitants/catalogue/panels/actuation__harness-model.tsx')
 const {design: custodyDesign} = await import('../src/inhabitants/catalogue/panels/agent-custody.tsx')
 const {design: identityDesign} = await import('../src/inhabitants/catalogue/panels/agent-identity.tsx')
@@ -74,6 +75,12 @@ const TRACK = {sessionRef: SESSION, purpose: 'Type-check the three roots', agent
 const ENCOUNTER = {reading: {agent_session: SESSION, more: false, draft: {revision: 1, text: ''}, permissions: [], actions: [],
   blocks: [{id: 1, kind: 'user', text: 'Type-check the roots.'}, {id: 2, kind: 'assistant', text: 'Reading the agent context first.'}]}, status: {state: 'Resident'}}
 const ROSTER = [{ref: 'agent/flint', name: 'Flint', role: 'builder', revision: 'r3', accepted: true}, {ref: 'agent/nara', name: 'Nara', role: 'nara', accepted: true}]
+// The session's own settings as AIKit reports them (aikit.encounter-session-settings/v1): its bound task starts at Effort high.
+const SETTINGS = {schema: 'aikit.encounter-session-settings/v1', agent_session: SESSION, revision: 'r2', track: {telemetry: false, solo: false, set: []},
+  task: {task_ref: 'task:type-check', name: 'Type-check the three roots', colour: null, active: true, register: 'plain', form: 'technical', loop: false,
+    loop_until: 'done', loop_cap: null, launch: 'trigger', then: 'next', quantize: 'global', repeat_variable: 'condition', repeat_levels: [],
+    repeat_repeats: 1, repeat_stop: 'turns', envelope_mode: 'automation', envelope_linked: false, effort: [[0, 'high']], tool_calls: [], set: ['effort']},
+  previous_task: null, standing: 'answered'}
 
 function factoryAgent() {
   bind.resetHolds(); pages.resetHolds()
@@ -81,10 +88,12 @@ function factoryAgent() {
   const own = bind.agentBinding('factory:agent', {
     sessionRef: SESSION, track: TRACK, nowUnixMs: NOW,
     reading: {attached: true, budget: {used: 3, cap: 12}, gatewayAdmitted: false, gatewayDoc: null},
-    accepted: {effort: 'high'}, harness: {binding: 'claude-code', resolved: true}, holds: bind.chainHolds(),
+    // REPLACED (O-I 1006): the Agent's Effort was what the transport's setter had recorded as accepted; it is the session's task's, as
+    // AIKit holds it in the session's settings (sessionSettings.ts taskLevelOf). This chain is handed the reading and no change to it.
+    accepted: {}, effort: settings.taskLevelOf('effort', {track: SETTINGS.track, settings: SETTINGS}),
+    harness: {binding: 'claude-code', resolved: true}, holds: bind.chainHolds(),
     thread: thread.threadJson(ENCOUNTER, 'Flint'), models: ['model:claude-sonnet-4.6'], harnesses: ['claude-code'],
-  }, {effort: {family: 'actuation', deviceInstance: 'agent', key: 'effort', title: 'Effort', type: 'enumerated', writePath: 'shell.setEffort'},
-    model: {family: 'actuation', deviceInstance: 'agent', key: 'model', title: 'Model', type: 'string', writePath: 'act:aikit.gateway.agent'}},
+  }, {model: {family: 'actuation', deviceInstance: 'agent', key: 'model', title: 'Model', type: 'string', writePath: 'act:aikit.gateway.agent'}},
   async (row, value) => { written.push([row.key, value]); return {kind: 'fired', note: 'set'} }, () => true)
   const custody = session.custodyBinding({sessionRef: SESSION, agent: own.values}, null)
   const id = identity.identityBinding('factory:agent/identity', {roster: {agents: ROSTER}, extras: new Map(), talkingTo: 'agent/flint', card: null})
@@ -111,7 +120,7 @@ test('the Agent\'s composed binding carries custody.*, id.* and thread.* from th
   // The Agent's own readings stand.
   assert.equal(v.light, 'lit', 'the task record says the agent is on the session')
   assert.equal(v.agent, 'Flint')
-  assert.equal(v.effort, 'high')
+  assert.equal(v.effort, 'high', 'the session\'s task\'s Effort, as AIKit holds it')
   // Custody: its gate, contact, held items and hand-back have no owner reading, so nothing stands under custody.* — and each control
   // stands disabled with the op it lacks. REPLACED (O-I 787, §19.4 and §19.12): the Agent's Autonomy, which Custody owned here, is
   // retired; Scope's Tool calls took its place, so no Autonomy stands on the Agent.
@@ -146,9 +155,11 @@ test('a page whose owner the chain does not hand stands absent: no prefix key, n
 test('a change goes to the owner of its key: the Agent\'s own row, a carried page\'s refusal in its words, a carried page\'s view hold', async () => {
   const {agent, written} = factoryAgent()
   // REPLACED (lane A wiring): Model is the Agent's own row AIKit's gateway carries (`gateway agent model --model`); Effort it has none for.
+  // REPLACED (O-I 1006): Effort is the session's task's, written by AIKit's Action aikit.session.settings; a chain handed the reading but
+  // no change to it refuses in those words, and nothing is sent.
   await agent.write([{key: 'model', value: 'gpt-5'}])
   assert.deepEqual(written, [['model', 'gpt-5']], 'Model through the Agent\'s own row')
-  await assert.rejects(() => agent.write([{key: 'effort', value: 'max'}]), /Effort: AIKit's gateway has no operation/)
+  await assert.rejects(() => agent.write([{key: 'effort', value: 'max'}]), /^Error: Effort: the session's settings are read, but no kernel stands on this chain to change them\.$/)
   assert.equal(agent.writes('custody.gate'), true)
   await assert.rejects(() => agent.write([{key: 'custody.gate', value: 'diffs'}]), /^Error: Review gate: set when Factory assigns custody/)
   await assert.rejects(() => agent.write([{key: 'autonomy', value: 'auto'}]), /^Error: Autonomy is retired: Scope's Tool calls, on its Asks page/, 'a press that still names the retired Autonomy is refused naming what took its place')
@@ -219,7 +230,11 @@ test('Scope on Central carries Context & world\'s readings in Scope\'s keys; the
   for (const key of ['reach', 'writeMode', ...ASKS, 'writes', 'basis']) assert.equal(scope.values[key], undefined, `${key}: no owner reports it`)
   // REPLACED (round 860): Wait and On no answer were missing ops. They are the dialogue's session's own settings in AIKit now (track wait,
   // track no_answer), which AIKit's executor plays at the Wait; handed no carrier, Central's Scope names it.
-  for (const key of ['reach', 'writeMode', 'toolCalls', 'calls']) assert.match(scope.standing[key].disabled, /no owner operation carries it yet — missing op:/, key)
+  for (const key of ['reach', 'writeMode']) assert.match(scope.standing[key].disabled, /no owner operation carries it yet — missing op:/, key)
+  // REPLACED (O-I 1006): Tool calls and Calls to other agents were missing ops; AIKit names what owns each — the session's task's Tool calls
+  // (aikit.session.settings) and a rule on each gateway binding of the session (aikit.gateway.ingress) — and Central's Scope is handed neither.
+  assert.match(scope.standing.toolCalls.disabled, /^Tool calls: .*aikit\.session\.settings.*not its task/)
+  assert.match(scope.standing.calls.disabled, /^Calls to other agents: .*aikit\.gateway\.ingress.*holds no conversation on AIKit's gateway/)
   assert.equal(scope.standing.wait.disabled, bind.WAIT_REFUSE.wait)
   assert.equal(scope.standing.noAnswer.disabled, bind.WAIT_REFUSE.noAnswer)
   // Handed the session's settings and their write, Central's Scope reads and sets them as Factory's does.

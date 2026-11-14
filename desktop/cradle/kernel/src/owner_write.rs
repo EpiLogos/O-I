@@ -140,7 +140,6 @@ impl PreparedWrite {
             | KernelOp::InstanceCommission { .. }
             | KernelOp::EncounterProvision { .. }
             | KernelOp::AgentConversation { .. }
-            | KernelOp::HarnessIngressRule { .. }
             | KernelOp::Routine { .. } => true,
             // Lane W3 (T-COVERAGE §1.2): the owner routes that write
             // (owner_routes.rs). A team `read` is a prepared read.
@@ -176,10 +175,9 @@ impl PreparedWrite {
             | KernelOp::GroundForm { .. }
             | KernelOp::GroundMusic { .. }
             | KernelOp::GroundAuthority { .. } => false,
-            KernelOp::Central { .. }
-            | KernelOp::HarnessIngressRule { .. }
-            | KernelOp::Page { .. }
-            | KernelOp::NaraJourney { .. } => false,
+            KernelOp::Central { .. } | KernelOp::Page { .. } | KernelOp::NaraJourney { .. } => {
+                false
+            }
             _ => true,
         }
     }
@@ -516,16 +514,6 @@ impl PreparedWrite {
             }
             KernelOp::GroundAuthority { request } => KernelOpResult::GroundAuthorityReading {
                 data: crate::ground_authority::operate(&self.client, request)?,
-            },
-            KernelOp::HarnessIngressRule {
-                binding,
-                kind,
-                decision,
-            } => KernelOpResult::HarnessIngressOutcome {
-                document: self
-                    .agency
-                    .gateway_ingress(binding, kind, decision.as_deref())?,
-                binding: binding.clone(),
             },
             // One field of a page written on the revision read (page.rs):
             // the file owner's write, retiring and disclosing as a file

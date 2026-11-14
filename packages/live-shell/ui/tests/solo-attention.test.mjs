@@ -134,7 +134,8 @@ test('soloing a session asks no owner: the press changes what you attend to, and
   const {set, spies, held} = project([])
   const solo = set.actions.mixer.solo
   assert.equal(solo.op, SOLO_WORDS)
-  assert.doesNotMatch(solo.op, /encounter_session_settings/, 'the op is the shell\'s, never AIKit\'s session Solo')
+  // AIKit's session Solo is written by its Action aikit.session.settings (O-I 1006), read by the kernel's encounter_session_settings.
+  assert.doesNotMatch(solo.op, /encounter_session_settings|aikit\.session\.settings/, 'the op is the shell\'s, never AIKit\'s session Solo')
   assert.match(solo.op, /what you attend to/)
   assert.deepEqual(await solo.run(trackKey(KITE), true), SOLO_ON)
   assert.deepEqual(await solo.run(trackKey(CREW), true), SOLO_ON,
@@ -211,7 +212,7 @@ test('the tiles, the instrument and the rack read the one attention the agent sh
   // REPLACED (O-I #1004): the attention was handed on by the window's Factory hook (useFactoryTracks.ts); the one projection hands it on now.
   const projection = read('frame/tracks/kernelSet.ts')
   assert.match(projection, /const soloed = shell\?\.soloed, setSolo = shell\?\.setSolo/)
-  assert.doesNotMatch(projection, /encounter_session_settings|encounter-session-settings/, 'the tracks write no Solo setting')
+  assert.doesNotMatch(projection, /encounter_session_settings|encounter-session-settings|aikit\.session\.settings/, 'the tracks write no Solo setting')
   // (agent/agentFidelity.ts keeps the reverse-engineered oracle's Solo line verbatim, as agent-shell-status-info requires; nothing draws it.)
   assert.doesNotMatch(read('timeline/factoryTrackAdapter.ts'), /Only soloed sessions may run|aikit\.gateway\.agent \{binding, operation: "solo"/)
   // DLW build ruling 2026-11-05: the Solo tip and the mockup line it is pinned to say §16.1's sense, word for word in both.

@@ -1744,7 +1744,6 @@ else:
             json!({"op": "act", "action": "aikit.gateway.agent", "input": {"binding": "b", "operation": "stop"}}),
             json!({"op": "gateway_service", "on": false}),
             json!({"op": "agent_conversation", "agent_ref": "agent:a"}),
-            json!({"op": "harness_ingress_rule", "binding": "b", "kind": "agent", "decision": "pair"}),
             // Beside the table (lane W3): a file write and a routine's act.
             json!({"op": "act", "action": "central.files.write", "input": {"location": location, "expected_revision": "v", "content": "c"}}),
             json!({"op": "routine", "request": {"action": "run_now", "routine_ref": "routine:r"}}),
@@ -1812,7 +1811,7 @@ else:
         file_read file_resolve files_list flow_changed_since
         gateway_remotes_read gateway_service gateway_team git_diff_read git_repository_read graph
         ground ground_authority ground_form ground_music harness_agent_read
-        harness_auth_describe harness_ingress_rule harness_status inhabitation_read instance_commission
+        harness_auth_describe harness_status inhabitation_read instance_commission
         invoke_action janko_window_read knowledge knowledge_impact live_clip_create
         live_clip_read live_clip_write live_device_descriptors live_device_param_write
         live_device_params_read live_groove_pool_read live_groove_pool_write live_set_act

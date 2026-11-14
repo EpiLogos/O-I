@@ -407,7 +407,7 @@
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
-      "reason": "Built 18 Oct with kernel tests (agent_prepared session_settings_pass_through) and AIKit unit tests. 19 Oct: the settings' own effect (not this kernel op's native candidate walk, still absent) was seen end to end at the AIKit layer against a real CAW-bound task in an isolated AIKit home \u2014 Launch=loop and Quantize=now produced two executor-drafted turns on consecutive TurnEnded events from one human Prompt, and active=false then produced none; required fixing ai-kit#534 (the mint's world_ref), first, since encounter-task-configure refused every task before that. Effort/Autonomy's own effect is still unseen: the installed pi provider exposes neither a reasoning-effort nor a permission-mode selector. No executed native walk through the kernel/candidate shell is recorded here for encounter_session_settings; retain explicit operation-specific coverage debt until a walk names it."
+      "reason": "Built 18 Oct with kernel tests (agent_prepared session_settings_pass_through) and AIKit unit tests. 19 Oct: the settings' own effect (not this kernel op's native candidate walk, still absent) was seen end to end at the AIKit layer against a real CAW-bound task in an isolated AIKit home \u2014 Launch=loop and Quantize=now produced two executor-drafted turns on consecutive TurnEnded events from one human Prompt, and active=false then produced none; required fixing ai-kit#534 (the mint's world_ref), first, since encounter-task-configure refused every task before that. Effort/Autonomy's own effect is still unseen: the installed pi provider exposes neither a reasoning-effort nor a permission-mode selector. 14 Nov (O-I #1006): the op reads only; a change to a session's settings is AIKit's Action aikit.session.settings through the kernel's act. No executed native walk through the kernel/candidate shell is recorded here for encounter_session_settings; retain explicit operation-specific coverage debt until a walk names it."
     },
     {
       "op": "encounter_session_settings_list",
@@ -795,15 +795,6 @@
       "scenarios": [],
       "owner_lane": "BB/native verification",
       "reason": "Its Central answers are replayed from ctrl built from central-47 on fixture roots (kernel ground_music.rs tests), and the walk world's Music was registered with that ctrl; no native walk of the Ground step's Music row yet (#857). Named here as explicit debt, not as coverage."
-    },
-    {
-      "op": "harness_ingress_rule",
-      "native_owner": "kernel/src/agency.rs",
-      "spec_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md \u00a719.12 Asks (Calls to other agents: Allow \u00b7 Ask \u00b7 Deny); AIKit aikit-adapters gateway_runtime.rs (GatewayIngressPolicy kind_rules, GatewayCommand::SetIngressRule) and aikit-cli gateway ingress",
-      "status": "unverified",
-      "scenarios": [],
-      "owner_lane": "A/native verification",
-      "reason": "Built 4 Nov (O-I #745 with #772, lane BA round 859) with a kernel test (agency gateway_agent_tests an_ingress_rule_carries_the_binding_the_kind_and_the_decision: the argv in order, clear for no decision, the policy passed through) and AIKit's own tests of the kind rule deciding after a sender's own id and before the default, and of the CLI's parse. No executed native walk through the candidate shell, and no rule written on a running gateway, is recorded here for harness_ingress_rule; retain explicit operation-specific coverage debt until a walk names it."
     },
     {
       "op": "harness_agent_read",

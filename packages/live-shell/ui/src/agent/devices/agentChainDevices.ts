@@ -223,7 +223,6 @@ interface RowPlan {
   unwritten?: string
 }
 
-const GATEWAY_STALL = 'The table declares the write but no domain for it (the gateway judges the threshold), so no knob is drawn.'
 /** The Refining page's presses where the rack's design waits: the manual draws the rack's Whole as Set and Capture (§19.7 Whole). */
 const REFINING_PRESS = 'The manual draws the Skillset rack\'s Whole as its Set and Capture pages; press it on the rack\'s Refining page, which its own design draws.'
 
@@ -234,7 +233,7 @@ const PLAN: Readonly<Record<string, Readonly<Record<string, RowPlan>>>> = {
     transport: {group: 'Connection', compact: true},
     approvals: {group: 'Connection', compact: true},
     connect: {group: 'Connection', compact: true},
-    'stall-after': {group: 'Connection', unwritten: GATEWAY_STALL},
+    'stall-after': {group: 'Connection'},
     readiness: {group: 'Reading', compact: true},
     frames: {group: 'Reading'},
     spend: {group: 'Reading'},

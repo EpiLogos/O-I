@@ -623,6 +623,9 @@ test('the Packet, the Agent, Scope and the Day are declarations — a slice, its
   assert.equal(day.field.action, DAY_FIELD_RECORD_ACTION)
   assert.equal(day.face.action, receivingOp(null, {kind: 'mutate-field', source_ref: 's', document_id: 'd', expected_revision: 'r', field_id: 'original:meta', value: {face: 1}}).action)
   assert.equal(chain.centralChainDeclaration('scope').controls['r:<place>'].action, world.WORLD_RELATIONS_SAVE)
+  // REPLACED (O-I 1006): Wait and On no answer declared no Action and named the kernel's encounter_session_settings; they are AIKit's
+  // Action aikit.session.settings, and no control names a kernel op that writes it.
+  assert.deepEqual(['wait', 'noAnswer'].map(key => chain.centralChainDeclaration('scope').controls[key]), [{action: 'aikit.session.settings'}, {action: 'aikit.session.settings'}])
 
   // The Packet: the conversation's session's prepared context, else its register's — your world's root, or the project's it stands in.
   const owner = sliceOwner()
