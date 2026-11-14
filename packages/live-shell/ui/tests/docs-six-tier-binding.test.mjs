@@ -237,6 +237,11 @@ test('your world\'s tier 0 is its law: each statement Central indexes, recognise
   assert.deepEqual(adopted, ['Control/agents/governance/craft/plain-words.md'])
   assert.equal(reread, 1, 'the law is read again after the adoption')
   await assert.rejects(binding.write([{key: 'recognise', value: JSON.stringify({source: 'Work/notes.md', provenance: 'human-authored', standing: 'design-commitment'})}]), /is not a statement under Control\/agents\/governance/)
+  // A statement opens in the Document by its own path: your world's sources stand under the ground itself.
+  const opened = []
+  await pages.docsBinding(ID, {name: 'Your world', project: null}, {law: answered(INDEX)}, {open: async path => { opened.push(path) }})
+    .write([{key: 'openSource', value: 'Control/agents/governance/craft/plain-words.md'}])
+  assert.deepEqual(opened, ['Control/agents/governance/craft/plain-words.md'])
   // Without the adoption's carrier, Recognise stands disabled saying so.
   const bare = pages.docsBinding(ID, {name: 'Your world', project: null}, {law: answered(INDEX)}, {central: async () => ({})})
   assert.equal(bare.standing.recognise.disabled, pages.DOCS_NO_CARRIER)
@@ -268,8 +273,16 @@ test('Relate, Recognise, Ensure, Reproject and Initialise root write through Cen
   await assert.rejects(binding.write([{key: 'relate', value: JSON.stringify({as: '1', source: 'nowhere.md'})}]), /nowhere\.md is not among the unbound sources/)
   await assert.rejects(binding.write([{key: 'relate', value: JSON.stringify({as: 'ux', source: gallery})}]), {message: pages.DOCS_RELATE_UX_EX})
   assert.equal(owner.asked.length, 5)
-  // Open stands refused, naming what the Document opens.
-  await assert.rejects(binding.write([{key: 'openSource', value: gallery}]), {message: pages.DOCS_WIRING.refused.openSource})
+  // Open opens the source in the Document by its path under the ground (manual §18.5; CentralDocumentPane.tsx openWorldSource): a
+  // project's source under Work/<project>. Without the Document's carrier it stands disabled, saying so.
+  assert.equal(binding.standing.openSource.disabled, pages.DOCS_NO_CARRIER)
+  const opened = []
+  const opening = pages.docsBinding(ID, OI, READINGS, {central: owner.port, open: async path => { opened.push(path) }})
+  assert.equal(opening.standing?.openSource, undefined, 'Open stands enabled')
+  await opening.write([{key: 'openSource', value: gallery}])
+  assert.deepEqual(opened, [`Work/O-I/${gallery}`])
+  await assert.rejects(opening.write([{key: 'openSource', value: ''}]), /choose a source first/)
+  assert.equal(owner.asked.length, 5, 'Open asks Central for no act')
   // With no carrier, each press stands disabled saying so.
   const bare = pages.docsBinding(ID, OI, READINGS)
   for (const key of ['relate', 'recognise', 'ensure', 'reproject', 'initRoot']) assert.equal(bare.standing[key].disabled, pages.DOCS_NO_CARRIER)

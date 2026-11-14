@@ -23,13 +23,14 @@ import {registerProjectionModule} from '../../../../../../desktop/cradle/src/sur
 import {detectTransport} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import type {CentralLocation, KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {PageFace, type PageLinkTarget} from '../../inhabitants/DocumentPageFace'
-import {openBinding} from '../../../../../../desktop/cradle/src/surface/engine'
-import {listFiles} from '../../../../../../desktop/cradle/src/files/client'
+import {makeSourceBinding, openBinding} from '../../../../../../desktop/cradle/src/surface/engine'
+import {listFiles, readFile} from '../../../../../../desktop/cradle/src/files/client'
+import {detectFormat} from '../../../../../../desktop/cradle/src/material/detect'
 import {readPageOwned} from '../../../../../../desktop/cradle/src/personal/pageOwner'
 import type {DayDocumentStanding} from '../centralVertical'
 import {CentralDayNotice} from '../CentralDayNotice'
 import {Refusal} from '../../../../../../desktop/cradle/src/shared/Refusal'
-import {CENTRAL_DOCUMENT_PANE_KIND, openCentralDocumentAt, parseDocumentSubject} from './centralDocuments'
+import {CENTRAL_DOCUMENT_PANE_KIND, openCentralDocumentAt, parseDocumentSubject, skillOfPath} from './centralDocuments'
 import {readLatestFlow, type FlowReading} from './documentReadings'
 import {useDayAnswer} from '../../owners/day'
 import './centralDocuments.css'
@@ -42,6 +43,8 @@ import {ReadingEncounterContext} from './readingPoint'
 // shell's first frame (O-I #740); until one arrives the pane shows the shell's waiting line for it.
 const DocumentDayDieFace = loadWhenDrawn('The Day', () => import('../../inhabitants/DocumentDayDieFace').then(module => module.DocumentDayDieFace))
 const FlowFace = loadWhenDrawn('The Flow', () => import('../../inhabitants/DocumentFlowFace').then(module => module.FlowFace))
+// A skill's Document (its revision proposed, reviewed and released through Central's and AIKit's acts) loads when a skill is first opened.
+const SkillDocument = loadWhenDrawn('The skill', () => import('./SkillDocument').then(module => module.SkillDocument))
 
 /** A count that advances when the window regains focus or becomes visible: a document that can change outside this shell (a
  * Day initialised elsewhere) is read again then — never polled. */
@@ -79,7 +82,7 @@ export function useLatestFlow(transport: KernelTransportStatus): FlowReading | n
   return held
 }
 
-const Absence = ({form, state, children}: {form: string; state: string; children: ReactNode}) => (
+export const Absence = ({form, state, children}: {form: string; state: string; children: ReactNode}) => (
   <div className="central-document-absence" role="status" data-central-absence={state} data-central-document-form={form}>
     <p className="central-document-eyebrow">{form}</p>
     {children}
@@ -206,13 +209,47 @@ export async function openPageLink(transport: KernelTransportStatus, target: {ki
     write(layout => openBinding(layout, {id: crypto.randomUUID(), kind: 'browser', title: target.url, browser: {url: target.url}}))
     return
   }
-  const cut = target.path.lastIndexOf('/')
-  const folder = await listFiles(transport, target.path.slice(0, cut))
-  const entry = folder.entries.find(item => item.kind === 'file' && item.name === target.path.slice(cut + 1))
-  if (!entry) throw new Error(`The owner lists no ${target.path.slice(cut + 1)} in ${target.path.slice(0, cut)}.`)
-  const page = await readPageOwned(transport, entry.location)
-  write(layout => openCentralDocumentAt(layout, page.form === 'flow' ? {form: 'flow', location: entry.location}
-    : {form: 'page', kind: page.form === 'thing' ? 'thing' : 'being', location: entry.location}))
+  await openWorldSource(transport, target.path)
+}
+
+/** Open a file of the ground by its path, by the owner's own listing of its folder (never a minted ref). A page opens as its page, by the
+ * page owner's reading of its form: a Flow as its Flow, a Being, a Thing or another reference page as its page; the page owner writes each,
+ * a source a tier binds through the source owner's own CAS (kernel page.rs write_on_revision, flow/instances.ts writeFlowInstance). Any
+ * other file opens by the file owner's reading of it, as the cradle's own file route opens one (CradleFrame.tsx openFile): a source a tier
+ * binds (the reading names its source) in a source pane, saved on the source owner's CAS (projectcentral.source.write, through the
+ * kernel's source buffer and document/hostSave.ts); any other file in its file pane, saved by the file owner. Docs' Open (manual §18.5)
+ * and a page's link open through it, so a page bound to a tier saves through Docs (O-I ticket 1005). */
+export async function openWorldSource(transport: KernelTransportStatus, path: string): Promise<void> {
+  const write = documentLayoutWriter()
+  if (!write) throw new Error('No pane tree is mounted to open the source in.')
+  const cut = path.lastIndexOf('/')
+  const folder = await listFiles(transport, path.slice(0, cut))
+  const entry = folder.entries.find(item => item.kind === 'file' && item.name === path.slice(cut + 1))
+  if (!entry?.location) throw new Error(`The owner lists no ${path.slice(cut + 1)} in ${path.slice(0, cut)}.`)
+  const location = entry.location
+  // A skill's text opens as the skill Central keeps (its revision is proposed, reviewed and released there: SkillDocument).
+  const skill = skillOfPath(location.path)
+  if (skill) {
+    write(layout => openCentralDocumentAt(layout, {form: 'skill', skill}))
+    return
+  }
+  // An HTML file with no page island is no page (page.rs read_island), and one whose island is neither a reference page nor a Flow
+  // reads as `unknown` (page.rs form_of): each opens as the file it is.
+  const page = /\.html$/i.test(path) ? await readPageOwned(transport, location).catch((error: unknown) => {
+    if (/is no page/.test(error instanceof Error ? error.message : String(error))) return null
+    throw error
+  }) : null
+  if (page && (page.form as string) !== 'unknown') {
+    write(layout => openCentralDocumentAt(layout, page.form === 'flow' ? {form: 'flow', location}
+      : {form: 'page', kind: page.form === 'thing' ? 'thing' : 'being', location}))
+    return
+  }
+  // Bytes with no text (an image, a PDF, a binary) are no source the owner reads as text: the file pane shows them as they are.
+  const format = detectFormat({path})
+  const reading = format === 'image' || format === 'pdf' || format === 'unsupported' ? null : await readFile(transport, location)
+  const source = reading?.source
+  write(layout => openBinding(layout, source ? makeSourceBinding(layout, source.ref, source.path, reading?.project?.name)
+    : {id: crypto.randomUUID(), kind: 'file', title: entry.name, ref: location.ref, location}))
 }
 
 /** One Being or Thing page, by its owner location; its links open in the shell. */
@@ -239,6 +276,8 @@ export function CentralDocumentPane({transport, subjectRef}: {transport: KernelT
           ? <DayDocument transport={transport} dayRef={subject.dayRef} />
           : subject.form === 'page'
             ? <PageDocument transport={transport} kind={subject.kind} location={subject.location} />
+          : subject.form === 'skill'
+            ? <SkillDocument transport={transport} skill={subject.skill} />
           : subject.location
             ? <FlowDocument transport={transport} location={subject.location} />
             : <LatestFlowDocument transport={transport} />}

@@ -225,6 +225,8 @@ export function useDocsDevice(transport: KernelTransportStatus, id: string, worl
     central: (action, input) => centralWrite(transport, action, input),
     reread: () => { for (const again of readAgain) again() },
     ...(project ? {} : {adopt: (statement: string) => adoptLaw(transport, statement)}),
+    // The Document's pane module loads when a source is first opened, never with the device (O-I #740).
+    open: (path: string) => import('../documents/CentralDocumentPane').then(module => module.openWorldSource(transport, path)),
   }), [transport, readAgain, project])
   return useMemo(() => docsBinding(id, world, {...(project ? {inspect: inspect.answer, ground: ground.answer, plan: plan.answer, meaning, ...(horizonInput ? {horizon: horizon.answer} : {})} : {law: law.answer}),
     doctor: doctor.answer}, ports),

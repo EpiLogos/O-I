@@ -512,6 +512,10 @@ export const DOCS_WIRING: DesignWiring = {
       + 'on the root world, a law statement\'s adoption: control.law.adopt {statement, expected_revision, files} (PERSON_ACTS), the root\'s floor rendered again',
     ensure: 'the person\'s Ensure: projectcentral.docs.ensure {project} (PERSON_ACTS)', reproject: 'the person\'s Reproject: central.world.reproject.apply {project} (PERSON_ACTS)',
     initRoot: 'the person\'s Initialise root: central.init (PERSON_ACTS)', readNow: 'Central\'s readings and AIKit\'s laws and verdicts asked again',
+    openSource: 'Open in the Document (manual §18.5 "Select a source to open it in the Document"): the source at its path under the ground, by the '
+      + 'owner\'s listing of its folder — a page as its page (a Flow as its Flow, a Being or a Thing as its page), any other file in its file pane '
+      + '(central/documents/CentralDocumentPane.tsx openWorldSource). Each saves through its owner\'s route, a source a tier binds through the '
+      + 'source owner\'s own CAS (projectcentral.source.write: flow/instances.ts writeFlowInstance, document/hostSave.ts)',
   },
   local: {
     tier: 'the tier in front (the first that needs you, by default)', show: 'Everything, or Needs you (the default)',
@@ -519,9 +523,7 @@ export const DOCS_WIRING: DesignWiring = {
     standing: 'what a source you would recognise stands as (Design commitment by default): held for Recognise',
     refresh: 'when Docs reads again (On open by default)', source: 'the source chosen', bindAs: 'the tier, experience or return a source is bound as: held for Relate',
   },
-  refused: {
-    openSource: 'Open in the Document: the Document opens a Day, a Flow or a page (central/documents/centralDocuments.ts CentralDocumentTarget), and a world\'s source is none of them — missing op: the Document opening a world source by its ref (Central).',
-  },
+  refused: {},
   absent: {},
 }
 
@@ -545,6 +547,8 @@ export interface DocsPorts {
   readonly reread?: () => Promise<void> | void
   /** The person's adoption of one law statement on the root world's tier 0 (centralDeviceWrites.ts adoptLaw: control.law.adopt). */
   readonly adopt?: (statement: string) => Promise<unknown>
+  /** Open one source in the Document, by its path under the ground (CentralDocumentPane.tsx openWorldSource). */
+  readonly open?: (path: string) => Promise<void>
 }
 
 const docRec = (x: unknown): Record<string, unknown> | null => (x && typeof x === 'object' && !Array.isArray(x) ? x as Record<string, unknown> : null)
@@ -709,15 +713,23 @@ function docsActs(world: TrackWorld | null, readings: DocsReadings, ports: DocsP
       if (!ports.reread) throw new Error(DOCS_NO_CARRIER)
       await ports.reread()
     },
+    // A source's path is its world's (Central's ResolvedDevelopmentSource): under Work/<project> for a project, the ground's own for yours.
+    openSource: async value => {
+      const path = docText(String(value ?? ''))
+      if (!path) throw new Error('Open: choose a source first.')
+      if (!ports.open) throw new Error(DOCS_NO_CARRIER)
+      await ports.open(project ? `Work/${project}/${path}` : path)
+    },
   }
 }
 /** The held Relate is the person's acceptance of the relation (pageGround.ts relateInput's shape). */
 const relateInputOf = (project: string, tier: number, sourceRef: string): Record<string, unknown> => ({project, source_ref: sourceRef, tier, acceptance: 'human-accepted'})
 
-/** Docs' binding: the account on Central's readings, each refusal in its words; the person's acts through Central, each standing disabled
- * where no carrier reaches it; Open refused naming what the Document opens. */
+/** Docs' binding: the account on Central's readings, each refusal in its words; the person's acts through Central, and Open in the
+ * Document, each standing disabled where no carrier reaches it. */
 export function docsBinding(id: string, world: TrackWorld | null, readings: DocsReadings = {}, ports: DocsPorts = {}): DesignBinding {
   const why: Record<string, string> = {}
+  if (!ports.open) why.openSource = DOCS_NO_CARRIER
   if (!ports.central) for (const key of ['relate', 'recognise', 'ensure', 'reproject', 'initRoot']) why[key] = DOCS_NO_CARRIER
   else if (!world?.project) for (const key of ['relate', 'ensure', 'reproject']) why[key] = DOCS_NO_PROJECT
   // On the root world Recognise adopts a law statement: it stands where the adoption reaches Central.
