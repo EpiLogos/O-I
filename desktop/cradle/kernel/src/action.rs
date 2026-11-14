@@ -168,6 +168,9 @@ pub fn owner_slices(action: &str) -> Option<Vec<crate::world_model::Slice>> {
 /// A Control skill's revision that waits in Central (`control.skills.revision.accept` · `discard`, O-I 795): Central writes it as the
 /// skill in use on the person's Accept, and drops it on the person's Discard, admitting each on that authority only (ctrl
 /// control_skills.rs). Proposing one (`control.skills.revision.propose`, AIKit's hand) carries no token.
+/// A law statement written on the root world's tier 0, adopted (`control.law.adopt`, O-I 1005; manual §18.5 "An agent may propose a
+/// statement; it stands only when you adopt it"): Central declares it durable and human-authored on the person's native credential
+/// only, and renders the root's floor again (ctrl control_floor.rs), so the press carries the person's token.
 /// What reached the person from the shared field, recorded into the Day under its field source (`central.day.field.record`,
 /// Central#324): no press of the person's sends it. It carries the person's token because their standing Field setting (the Day's
 /// Sources keep the field On) authorises it, and Central records each as received through the shared field and recorded by the Day
@@ -190,7 +193,7 @@ pub fn owner_slices(action: &str) -> Option<Vec<crate::world_model::Slice>> {
 /// document, and `adopt-db` and `record-adopt` adopt the person's bookmarks. So they are the person's presses here. The scope register
 /// is not among these: no invocation takes it ([`wire_refusal`]), and Setup's Ground step carries the person's token to it by the
 /// press alone (owner_write.rs `GroundMusic`).
-pub const PERSON_ACTS: [&str; 57] = [
+pub const PERSON_ACTS: [&str; 58] = [
     "central.now.lifecycle",
     // The Day opened and closed, and a Return reviewed, included or recovered (O-I #1002: the `central` and `receiving` ops these
     // replace ran them on the person's token, by their press alone).
@@ -242,6 +245,7 @@ pub const PERSON_ACTS: [&str; 57] = [
     "central.world.chain-order",
     "control.skills.revision.accept",
     "control.skills.revision.discard",
+    "control.law.adopt",
     "central.file-map.move-plan",
     "central.file-map.move-apply",
     "central.file-map.move-rollback",
@@ -1152,6 +1156,14 @@ mod tests {
         }
         assert!(!person_act("control.skills.revision.propose"));
         assert!(!person_act("control.skills.revision.read"));
+        // A law statement adopted on the root world's tier 0 (O-I 1005): Central admits it on the person's credential only. Reading
+        // the floors or the index carries nothing.
+        assert!(
+            person_act("control.law.adopt"),
+            "control.law.adopt is the person's press"
+        );
+        assert!(!person_act("control.floor.read"));
+        assert!(!person_act("control.index"));
         // A move of the ground (0G item 4, DLW build ruling 2026-11-09): its plan, its apply and its rollback can bring a project-shaped
         // folder into Work, so each is the person's press; so, since round 54's Central follow-up, is each of the file map's acts that
         // writes the person's ground or what they have adopted. The register is refused; a refresh writes Central's own index only.
