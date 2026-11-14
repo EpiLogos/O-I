@@ -2139,6 +2139,79 @@ fn task_log(world: &World, state: &str, run: &str, attempt: &str) -> Result<Valu
     )
 }
 
+/// The person's answer to what a task's run leaves them (manual §16.2, Approvals on Factory's Main track; §19.12 Asks): each ask
+/// Factory's follower left for the person (its log's `ask` line, "left for you: …") is allowed once as Approvals' Allow answers it:
+/// the ask read from the session's conversation as Approvals reads it (its `permissions`), and the encounter's `permission` sent
+/// with the harness's own one-time choice, under an id no choice of another kind holds (receiptBindings.ts choiceFor,
+/// PermissionCard.tsx ownId). An ask the conversation does not show yet is read again on the next pass. `allowed` holds the asks
+/// answered so far.
+fn allow_what_is_left(
+    world: &World,
+    project: &str,
+    session: &str,
+    log: &Value,
+    allowed: &mut Vec<String>,
+) -> Act {
+    let left: Vec<(&str, &str)> = log["lines"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter(|line| line["kind"] == "ask")
+        .filter_map(|line| Some((line["request_id"].as_str()?, line["answer"].as_str()?)))
+        .filter(|(id, answer)| {
+            answer.starts_with("left for you") && !allowed.iter().any(|done| done == id)
+        })
+        .collect();
+    if left.is_empty() {
+        return Ok(());
+    }
+    let encounter = |request: Value| -> Result<Value, String> {
+        let name = request["action"].as_str().unwrap_or("?").to_owned();
+        let answer =
+            world.send(json!({"op": "encounter", "project": project, "request": request}))?;
+        result_of(&answer, "encounter_reading")
+            .map(|v| v["data"].clone())
+            .map_err(|e| format!("encounter {name} in {project} {e}"))
+    };
+    let view = encounter(json!({"action": "view", "agent_session": session}))?;
+    for (id, why) in left {
+        let Some(ask) = view["permissions"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .find(|ask| ask["native_request_id"] == id)
+        else {
+            continue;
+        };
+        let choices = ask["choices"].as_array().cloned().unwrap_or_default();
+        let own = |choice: &Value| {
+            choices.iter().all(|other| {
+                other["option_id"] != choice["option_id"] || other["kind"] == choice["kind"]
+            })
+        };
+        let once = choices
+            .iter()
+            .find(|choice| choice["kind"] == "allow_once" && own(choice))
+            .and_then(|choice| choice["option_id"].as_str())
+            .ok_or_else(|| {
+                format!(
+                    "the ask {id} the run left for the person offers no one-time allow: {}",
+                    clip(ask)
+                )
+            })?;
+        let decision = json!({"outcome": "selected", "option_id": once});
+        let answer = json!({"action": "permission", "agent_session": session, "request_id": id,
+            "decision": decision});
+        encounter(answer)?;
+        println!(
+            "the person allowed once the ask {id} the run left them ({why}): {}",
+            clip(&ask["tool_call"]["title"])
+        );
+        allowed.push(id.to_owned());
+    }
+    Ok(())
+}
+
 /// A task written on the session and run (the person's press: `factory.task.run` carries their authority). Answers the run's answer
 /// and the task's Run.
 fn write_and_run(
@@ -2349,8 +2422,11 @@ fn run_a_factory_task(world: &World) -> Result<String, String> {
         let task = ran["task_ref"].as_str().unwrap_or_default().to_owned();
         let deadline = Instant::now() + Duration::from_secs(15 * 60);
         let mut seen = Vec::new();
+        // The person stands at Approvals while it runs: what the run leaves them (a command, which only they allow) they allow once.
+        let mut allowed = Vec::new();
         let ended = loop {
             let log = task_log(world, &state, &run, &attempt)?;
+            allow_what_is_left(world, project, session, &log, &mut allowed)?;
             let lines = log["lines"].as_array().map_or(0, Vec::len);
             if seen.last() != Some(&lines) {
                 seen.push(lines);
@@ -2424,7 +2500,8 @@ fn run_a_factory_task(world: &World) -> Result<String, String> {
             ));
         }
         println!(
-            "task {task}: its log streamed {seen:?} lines, {turn} of them the agent's turn; attempt {attempt} returned, its diff {}",
+            "task {task}: its log streamed {seen:?} lines, {turn} of them the agent's turn; the person allowed {} ask(s) it left them; attempt {attempt} returned, its diff {}",
+            allowed.len(),
             git(&checkout, &["diff", "--stat"])?.trim()
         );
 
