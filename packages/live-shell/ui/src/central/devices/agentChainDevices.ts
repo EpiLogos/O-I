@@ -44,10 +44,11 @@ const isObject = (value: unknown): value is Record<string, unknown> => !!value &
 
 // ---------------------------------------------------------------------------------------------------------------- the declarations
 
-/** Why the World Model holds no packet of a session in a project's register: its packet slice is your world's root register's. */
-export const PROJECT_PACKET = (project: string): string => `The World Model holds the packets of your world's root register (AIKit's prepared context, world_model.rs \`packet\`); this conversation is in ${project}'s register, whose packet it does not hold yet.`
-/** Why the World Model holds no settings of a session in a project's register: Scope's slice holds your world's root sessions'. */
-export const PROJECT_SETTINGS = (project: string): string => `the World Model holds the settings of your world's root register's sessions (world_model.rs \`scope\`); this session is in ${project}'s register, whose settings it does not hold yet.`
+/** Why the World Model holds no packet of a conversation in a project's register: the project was not among those it knew (its worlds
+ * slice's root) when the packet was read. */
+export const PROJECT_PACKET = (project: string): string => `The World Model holds the packets of your world's root register and of each project it knows (AIKit's prepared context, world_model.rs \`packet\`); ${project} was not among them when the packet was read.`
+/** Why the World Model holds no settings of a session in a project's register: the project was not among those it knew when Scope was read. */
+export const PROJECT_SETTINGS = (project: string): string => `the World Model holds the settings of the sessions of your world's root register and of each project it knows (world_model.rs \`scope\`); ${project} was not among them when Scope was read.`
 /** Why no card stands for an agent you have not accepted, or in a World it does not ratify. */
 export const CARD_UNHELD = (agent: string, world: string | null): string => `The World Model holds the card of each agent you accepted, in its home World and each World it ratifies (world_model.rs \`roster\`); it holds none of ${agent}${world ? ` in ${world}` : ''}.`
 
@@ -57,8 +58,9 @@ export const CARD_UNHELD = (agent: string, world: string | null): string => `The
 export const CENTRAL_CHAIN_DECLARATIONS: readonly ChainDeviceDeclaration[] = Object.freeze<ChainDeviceDeclaration[]>([
   {
     device: 'packet', face: 'central:packet', slice: 'packet',
-    // AIKit's prepared context of your world's root register (no conversation) and of each of its sessions, by session.
-    fields: {register: 'packet:register', sessions: 'packet:sessions'},
+    // AIKit's prepared context of your world's root register (no conversation) and of each of its sessions, by session; and the same of
+    // each project's register a conversation can stand in, by project.
+    fields: {register: 'packet:register', sessions: 'packet:sessions', projects: 'packet:projects'},
     unheld: {project: PROJECT_PACKET('a project')},
     controls: {
       edit: {none: 'AIKit declares no Action for a prepared context\'s edit: its encounter carries Remove and Empty (context edit).', kernelOp: 'encounter'},
@@ -75,9 +77,9 @@ export const CENTRAL_CHAIN_DECLARATIONS: readonly ChainDeviceDeclaration[] = Obj
   },
   {
     device: 'scope', face: 'software-factory:context-write-mode', slice: 'scope',
-    // Your world's effective sources and authored relations, and each root session's own settings in AIKit; the change horizon is the
-    // root's ground, which the Day reads.
-    fields: {effective: 'scope:effective', relations: 'scope:relations', settings: 'scope:settings', horizon: 'day:ground'},
+    // Your world's effective sources and authored relations, and each session's own settings in AIKit — the root's, and each project's by
+    // project; the change horizon is the root's ground, which the Day reads.
+    fields: {effective: 'scope:effective', relations: 'scope:relations', settings: 'scope:settings', projects: 'scope:projects', horizon: 'day:ground'},
     unheld: {project: PROJECT_SETTINGS('a project')},
     // A read place's include or exclude (`r:<place>`) is saved on the world's relations; Wait and On no answer on the session's settings.
     controls: {
@@ -147,17 +149,30 @@ export function packetDeviceBinding(transport: KernelTransportStatus, reading: {
   })
 }
 
+/** One register's packets as the packet slice holds them (world_model.rs `packet`): its own, and each of its sessions'. */
+type RegisterPackets = {register?: unknown; sessions?: Record<string, unknown>}
+
+/** A project's register as a slice holds it: its part of the value's `projects` (each project the World Model knows, by project); or why
+ * the slice holds none, in its words (`unknown` for a project it did not know when it was read). Pure. */
+function projectPartOf<T>(value: {projects?: unknown}, project: string, unknown: (project: string) => string): {ok: true; value: T} | {ok: false; why: string} {
+  const projects = partOf<Record<string, unknown>>(value.projects)
+  if (!projects) return {ok: false, why: unknown(project)}
+  if (!projects.ok) return projects
+  return partOf<T>(projects.value[project]) ?? {ok: false, why: unknown(project)}
+}
+
 /** The packet the agent will read, from the World Model's packet slice (world_model.rs `packet`): AIKit's prepared context of the
- * conversation's session, or of your world's root register while no conversation stands; or why there is none, in the owner's words.
- * Null while the slice has not answered. A conversation in a project's register is not held (PROJECT_PACKET). Pure. */
+ * conversation's session, or of its register while no conversation stands — your world's root register, or the project's it stands in;
+ * or why there is none, in the owner's words. Null while the slice has not answered. Pure. */
 export function packetFromModel(packet: ModelSliceReading, conversation: {readonly session: string | null; readonly project?: string | null}): {context?: PreparedContext; error?: string} | null {
   if (packet.state === 'reading') return null
   const {session} = conversation, project = conversation.project ?? ROOT_REGISTER
-  if (project !== ROOT_REGISTER) return {error: PROJECT_PACKET(project)}
-  const held = sliceValue<{register?: unknown; sessions?: Record<string, unknown>}>(packet)
+  const held = sliceValue<RegisterPackets & {projects?: unknown}>(packet)
   if (!held.ok) return {error: held.reason}
-  const read = partOf(session ? held.value.sessions?.[session] : held.value.register)
-  if (!read) return {error: session ? `The World Model's packet holds no prepared context of ${session} yet: AIKit's agency had not listed it when the packet was read.` : 'The World Model\'s packet holds no prepared context of your world\'s root register.'}
+  const register = project === ROOT_REGISTER ? {ok: true as const, value: held.value} : projectPartOf<RegisterPackets>(held.value, project, PROJECT_PACKET)
+  if (!register.ok) return {error: register.why}
+  const read = partOf(session ? register.value.sessions?.[session] : register.value.register)
+  if (!read) return {error: session ? `The World Model's packet holds no prepared context of ${session} yet: AIKit's agency had not listed it when the packet was read.` : `The World Model's packet holds no prepared context of ${project === ROOT_REGISTER ? 'your world\'s root register' : `${project}'s register`}.`}
   if (!read.ok) return {error: read.why}
   try {
     assertPreparedContext(read.value, session ?? undefined)
@@ -226,20 +241,22 @@ export const useIdentityHolds = (): number => useSyncExternalStore(subscribeHold
 
 /** What Scope reads of your world, from the World Model's scope slice (world_model.rs `scope`): Central's effective sources and authored
  * relations of the world, as Central's readings (EFFECTIVE_SOURCES_ACTION, WORLD_RELATIONS_READ), and the session's own settings in AIKit
- * (its Wait and On no answer, the reading their write is checked against), or why none. Pure. */
+ * (its Wait and On no answer, the reading their write is checked against), read in its register — your world's root, or the project's
+ * it stands in — or why none. Pure. */
 export function scopeFromModel(scope: ModelSliceReading, session: string | null, project: string = ROOT_REGISTER): {
   effective: ActionAnswer
   relations: ActionAnswer
   settings: {readonly reading: EncounterSessionSettingsReading} | {readonly why: string} | null
 } {
-  const held = sliceValue<{effective?: unknown; relations?: unknown; settings?: unknown}>(scope)
+  const held = sliceValue<{effective?: unknown; relations?: unknown; settings?: unknown; projects?: unknown}>(scope)
   const value = held.ok ? held.value : {}
   const effective = answerOfPart(scope, value.effective, EFFECTIVE_SOURCES_ACTION)
   const relations = answerOfPart(scope, value.relations, WORLD_RELATIONS_READ)
   if (!session || scope.state === 'reading') return {effective, relations, settings: null}
-  if (project !== ROOT_REGISTER) return {effective, relations, settings: {why: PROJECT_SETTINGS(project)}}
   if (!held.ok) return {effective, relations, settings: {why: held.reason}}
-  const sessions = partOf<Record<string, unknown>>(value.settings)
+  // The root's sessions' settings are a part of the value; a project's part is its sessions' settings, by session.
+  const sessions = project === ROOT_REGISTER ? partOf<Record<string, unknown>>(value.settings)
+    : projectPartOf<Record<string, unknown>>(value, project, PROJECT_SETTINGS)
   if (!sessions) return {effective, relations, settings: {why: 'the World Model\'s scope holds no session\'s settings.'}}
   if (!sessions.ok) return {effective, relations, settings: {why: sessions.why}}
   const own = partOf<EncounterSessionSettingsReading>(sessions.value[session])

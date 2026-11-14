@@ -12,10 +12,12 @@
 //! |             |           | what each carries (its model, skill set, and its floor's law: Central)  |               |
 //! | `roster`    | Central   | your world's agent profiles (`agent_definition` roster) and the card of | root          |
 //! |             |           | each one you accepted, in its home World and each it ratifies           |               |
-//! | `packet`    | AIKit     | the prepared context of the root register and of each of its sessions   | aikit, root   |
+//! | `packet`    | AIKit     | the prepared context of each register a conversation can stand in (the  | aikit, root,  |
+//! |             |           | root, each project the worlds hold) and of each of its sessions         | work          |
 //! |             |           | (`encounter` context read)                                              |               |
-//! | `scope`     | Central   | your world's effective sources and authored relations, and each root    | root, aikit   |
-//! |             |           | session's own settings in AIKit (`encounter_session_settings`)          |               |
+//! | `scope`     | Central   | your world's effective sources and authored relations, and the own      | root, aikit,  |
+//! |             |           | settings in AIKit of each session of each register (`encounter_session_ | work          |
+//! |             |           | settings_list`)                                                         |               |
 //! | `sessions`  | AIKit     | the root register's Agent sessions (`agency_read`), and the gateway:    | aikit, root   |
 //! |             |           | its ecology, its conversation binding and that binding's harness reading|               |
 //! | `models`    | AIKit     | the resolved model catalogue (`model_catalogue`)                        | aikit         |
@@ -136,10 +138,10 @@ impl Slice {
             Slice::Sessions => &["aikit", "root"],
             Slice::Workcells => &["seats"],
             Slice::Sky => &["clock"],
-            // The root register's prepared context is AIKit's, kept for the root's sessions.
-            Slice::Packet => &["aikit", "root"],
-            // Your world's sources and relations are the root's; each session's settings are AIKit's.
-            Slice::Scope => &["root", "aikit"],
+            // Each register's prepared context is AIKit's, kept for its sessions: your world's root and each project's (O-I #1005).
+            Slice::Packet => &["aikit", "root", "work"],
+            // Your world's sources and relations are the root's; each session's settings are AIKit's, in its own register.
+            Slice::Scope => &["root", "aikit", "work"],
             // The profiles and each agent's participation are your world's root register's: AIKit's churn does not move them.
             Slice::Roster => &["root"],
         }
@@ -314,15 +316,52 @@ impl Model {
             (held.written(), held.writes)
         };
         let read = if fresh || written {
-            crate::read_cache::with_fresh(|| load(slice, via))
+            crate::read_cache::with_fresh(|| self.load(slice, via))
         } else {
-            load(slice, via)
+            self.load(slice, via)
         };
         let mut held = cell.held.lock().unwrap_or_else(|e| e.into_inner());
         // The writes this read began after are read now; one that landed while it ran keeps the slice due.
         held.read_after = held.read_after.max(writes);
+        let known = (slice == Slice::Worlds).then(|| projects_held(&held).ok());
         let moved = take(&mut held, read, started);
-        moved.then_some(held.version)
+        let version = held.version;
+        let projects_moved = known.is_some_and(|known| known != projects_held(&held).ok());
+        drop(held);
+        // The projects the worlds hold are the registers the packets and Scope read beside the root: a project come or gone (or the
+        // worlds' first read) reads them again.
+        if projects_moved {
+            self.due(READ_BY_PROJECT.to_vec());
+        }
+        moved.then_some(version)
+    }
+
+    /// The projects the World Model knows: those Central discloses in the root its worlds slice holds (`projects_of`), or why it
+    /// knows none yet.
+    fn projects(&self) -> Result<Vec<String>, String> {
+        projects_held(
+            &self
+                .cell(Slice::Worlds)
+                .held
+                .lock()
+                .unwrap_or_else(|e| e.into_inner()),
+        )
+    }
+
+    fn load(&self, slice: Slice, via: Via<'_>) -> Result<Value, String> {
+        match slice {
+            Slice::Worlds => worlds(via),
+            Slice::Day => day(via),
+            Slice::Agents => crate::census::read(via),
+            Slice::Sessions => sessions(via),
+            Slice::Models => payload(ask(via, json!({"op": "model_catalogue"}))?),
+            Slice::Factory => factory(via),
+            Slice::Workcells => workcells(via),
+            Slice::Sky => sky(via),
+            Slice::Packet => packet(via, self.projects()),
+            Slice::Scope => scope(via, self.projects()),
+            Slice::Roster => roster(via),
+        }
     }
 
     /// The slices a change notice naming `scopes` moves.
@@ -677,20 +716,33 @@ pub fn wrote(op_name: &str, outcome: &KernelOpOutcome) -> bool {
 // Reading each slice.
 // ---------------------------------------------------------------------------
 
-fn load(slice: Slice, via: Via<'_>) -> Result<Value, String> {
-    match slice {
-        Slice::Worlds => worlds(via),
-        Slice::Day => day(via),
-        Slice::Agents => crate::census::read(via),
-        Slice::Sessions => sessions(via),
-        Slice::Models => payload(ask(via, json!({"op": "model_catalogue"}))?),
-        Slice::Factory => factory(via),
-        Slice::Workcells => workcells(via),
-        Slice::Sky => sky(via),
-        Slice::Packet => packet(via),
-        Slice::Scope => scope(via),
-        Slice::Roster => roster(via),
+/// The slices that read a register of each project the World Model knows beside your world's root (O-I #1005).
+const READ_BY_PROJECT: [Slice; 2] = [Slice::Packet, Slice::Scope];
+
+/// The projects Central discloses in the root the held worlds carry (`projects_of`), or why the World Model knows none: its worlds
+/// not read yet, or refused before they were ever read.
+fn projects_held(worlds: &Held) -> Result<Vec<String>, String> {
+    match (&worlds.value, &worlds.error) {
+        (Some(worlds), _) => Ok(projects_of(&worlds["root"])),
+        (None, Some(why)) => Err(format!(
+            "the World Model holds none of your world's projects: Central's worlds were refused ({why})"
+        )),
+        (None, None) => Err("the World Model has not read your world's projects yet".to_owned()),
     }
+}
+
+/// The registers beside your world's root a conversation can stand in: each project Central discloses in its root (`work.projects`),
+/// each once, in Central's order (agent/worldScope.ts `projectsOf`, the registers the shell's agency reads).
+pub fn projects_of(root: &Value) -> Vec<String> {
+    let mut names: Vec<String> = Vec::new();
+    for project in root["work"]["projects"].as_array().into_iter().flatten() {
+        if let Some(name) = project["name"].as_str().filter(|name| !name.is_empty()) {
+            if !names.iter().any(|known| known == name) {
+                names.push(name.to_owned());
+            }
+        }
+    }
+    names
 }
 
 /// One owner's reading Action, asked by the kernel's one act path (`act`, O-I #1002): its data, or the owner's words why it gave
@@ -741,20 +793,38 @@ fn each_part<K: Sync>(
     parts
 }
 
-/// The agent sessions of your world's root register, as AIKit's spaces hold them (`agency_read` `spaces[].agent_sessions`;
-/// agencySources.ts `agencyRowsOf`), each once.
-fn root_sessions(via: Via<'_>) -> Result<Vec<String>, String> {
-    let agency = payload(ask(via, json!({"op": "agency_read", "project": ""}))?)?;
-    let mut sessions: Vec<String> = agency["spaces"]
-        .as_array()
-        .into_iter()
-        .flatten()
+/// A register as AIKit's agency lists it (`agency_read`; "" is your world's root register): whether it lists any space (a register
+/// no space stands in holds no conversation), and the agent sessions its spaces hold (`spaces[].agent_sessions`; agencySources.ts
+/// `agencyRowsOf`), each once.
+fn agency_of(via: Via<'_>, project: &str) -> Result<(bool, Vec<String>), String> {
+    let agency = payload(ask(via, json!({"op": "agency_read", "project": project}))?)?;
+    let spaces = agency["spaces"].as_array().map(Vec::as_slice).unwrap_or_default();
+    let mut sessions: Vec<String> = spaces
+        .iter()
         .filter_map(|space| space["agent_sessions"].as_object())
         .flat_map(|sessions| sessions.keys().cloned())
         .collect();
     sessions.sort();
     sessions.dedup();
-    Ok(sessions)
+    Ok((!spaces.is_empty(), sessions))
+}
+
+/// The agent sessions of your world's root register (`agency_of`).
+fn root_sessions(via: Via<'_>) -> Result<Vec<String>, String> {
+    agency_of(via, "").map(|(_, sessions)| sessions)
+}
+
+/// Why a project's register holds no packet: AIKit lists no space in it, so no conversation stands in it.
+fn no_space(project: &str) -> String {
+    format!("AIKit's agency lists no space in {project}'s register, so no conversation stands in it: the World Model reads no packet of it.")
+}
+
+/// Each part of `projects`, read side by side (`each_part`), by project; or why the World Model knows none.
+fn by_project(
+    projects: Result<Vec<String>, String>,
+    read: impl Fn(&String) -> Result<Value, String> + Sync,
+) -> Value {
+    part(projects.map(|projects| Value::Object(each_part(&projects, String::clone, read))))
 }
 
 /// Today's Day of the root register (`day_read`: Central's turn and its reading of the Day, its page and its receipts), and beside
@@ -855,27 +925,41 @@ fn cards(via: Via<'_>, roster: &Value) -> serde_json::Map<String, Value> {
     cards
 }
 
-/// AIKit's prepared context (O-I #1005; manual §18.3, exactly what the agent reads from you), each its own part: your world's
-/// root register's own (`register`), and each of its sessions' (`sessions`, by session), read side by side. The Packet reads the
-/// one its conversation holds.
-fn packet(via: Via<'_>) -> Result<Value, String> {
-    let context = |session: Option<&str>| {
+/// AIKit's prepared context (O-I #1005; manual §18.3, exactly what the agent reads from you), each its own part, in each register a
+/// conversation can stand in: your world's root register's own (`register`) and each of its sessions' (`sessions`, by session),
+/// read side by side; and the same of each project the World Model knows (`projects`, by project, each read in its own register),
+/// where AIKit lists a space. The Packet reads the one its conversation holds.
+fn packet(via: Via<'_>, projects: Result<Vec<String>, String>) -> Result<Value, String> {
+    let context = |project: &str, session: Option<&str>| {
         ask(
             via,
-            json!({"op": "encounter", "project": "", "request": {"action": "context", "agent_session": session,
+            json!({"op": "encounter", "project": project, "request": {"action": "context", "agent_session": session,
                 "request": {"operation": "read"}}}),
         )
         .and_then(payload)
     };
     let sessions = root_sessions(via)?;
-    let by_session = each_part(&sessions, String::clone, |session| context(Some(session)));
-    Ok(json!({"register": part(context(None)), "sessions": by_session}))
+    let by_session = each_part(&sessions, String::clone, |session| {
+        context("", Some(session))
+    });
+    let projects = by_project(projects, |project| {
+        let (spaced, sessions) = agency_of(via, project)?;
+        if !spaced {
+            return Ok(json!({"register": part(Err(no_space(project))), "sessions": {}}));
+        }
+        let by_session: serde_json::Map<String, Value> = sessions
+            .iter()
+            .map(|session| (session.clone(), part(context(project, Some(session)))))
+            .collect();
+        Ok(json!({"register": part(context(project, None)), "sessions": by_session}))
+    });
+    Ok(json!({"register": part(context("", None)), "sessions": by_session, "projects": projects}))
 }
 
 /// What Scope reads of your world (O-I #1005; manual §19.12), each its own part: its effective sources and its authored relations
-/// as Central resolves them (central.world.effective-sources, central.world-relations.read), and each root session's own settings
-/// in AIKit (`encounter_session_settings`: its Wait and On no answer), by session.
-fn scope(via: Via<'_>) -> Result<Value, String> {
+/// as Central resolves them (central.world.effective-sources, central.world-relations.read), each root session's own settings in
+/// AIKit (its Wait and On no answer), by session, and each project's sessions' (`projects`, by project, each read in its own register).
+fn scope(via: Via<'_>, projects: Result<Vec<String>, String>) -> Result<Value, String> {
     let effective = act(
         via,
         "central.world.effective-sources",
@@ -886,16 +970,39 @@ fn scope(via: Via<'_>) -> Result<Value, String> {
         "central.world-relations.read",
         json!({"scope": "root", "ref": "control:root"}),
     );
-    let settings = root_sessions(via).map(|sessions| {
-        Value::Object(each_part(&sessions, String::clone, |session| {
-            ask(
-                via,
-                json!({"op": "encounter_session_settings", "project": "", "agent_session": session}),
-            )
-            .and_then(payload)
-        }))
+    let settings = root_sessions(via).and_then(|sessions| settings_of(via, "", &sessions));
+    let projects = by_project(projects, |project| {
+        let (_, sessions) = agency_of(via, project)?;
+        settings_of(via, project, &sessions)
     });
-    Ok(json!({"effective": part(effective), "relations": part(relations), "settings": part(settings)}))
+    Ok(json!({"effective": part(effective), "relations": part(relations), "settings": part(settings), "projects": projects}))
+}
+
+/// Each of a register's sessions' own settings in AIKit (`encounter_session_settings_list`: one owner read for the register, which
+/// the kernel keeps while AIKit's home and the register stand), by session; a session AIKit refused says so in its part.
+fn settings_of(via: Via<'_>, project: &str, sessions: &[String]) -> Result<Value, String> {
+    if sessions.is_empty() {
+        return Ok(json!({}));
+    }
+    let listed = payload(ask(
+        via,
+        json!({"op": "encounter_session_settings_list", "project": project, "agent_sessions": sessions}),
+    )?)?;
+    let readings = listed["readings"].as_array().map(Vec::as_slice).unwrap_or_default();
+    let by_session = sessions
+        .iter()
+        .map(|session| {
+            let read = match readings.iter().find(|reading| reading["agent_session"] == session.as_str()) {
+                Some(reading) => match reading["refused"].as_str() {
+                    Some(why) => Err(why.to_owned()),
+                    None => Ok(reading.clone()),
+                },
+                None => Err(format!("AIKit's settings list holds no reading of {session}")),
+            };
+            (session.clone(), part(read))
+        })
+        .collect();
+    Ok(Value::Object(by_session))
 }
 
 fn ask(via: Via<'_>, op: Value) -> Result<KernelOpOutcome, String> {
@@ -1437,7 +1544,7 @@ mod tests {
         use crate::action::ActionDispatch;
         use crate::KernelOpResult::{
             ActionDispatched, AgencyReading, AgentCardReading, AgentDefinitionReading,
-            CentralReading, DayReading, EncounterReading, EncounterSessionSettingsReading,
+            CentralReading, DayReading, EncounterReading, EncounterSessionSettingsListReading,
         };
         let asked = Mutex::new(Vec::<Value>::new());
         let via = |op: KernelOp| -> Result<KernelOpOutcome, String> {
@@ -1475,11 +1582,13 @@ mod tests {
                 "encounter" => EncounterReading {
                     data: json!({"scope": {"agent_session": body["request"]["agent_session"]}, "items": []}),
                 },
-                "encounter_session_settings" if body["agent_session"] == "agent-session/b" => {
-                    return Err("AIKit keeps no settings for agent-session/b".into())
-                }
-                "encounter_session_settings" => EncounterSessionSettingsReading {
-                    data: json!({"wait_seconds": 900}),
+                "encounter_session_settings_list" => EncounterSessionSettingsListReading {
+                    data: json!({"schema": "aikit.encounter-session-settings-list/v1", "readings": body["agent_sessions"]
+                        .as_array().unwrap().iter().map(|session| if session == "agent-session/b" {
+                            json!({"agent_session": session, "refused": "AIKit keeps no settings for agent-session/b"})
+                        } else {
+                            json!({"agent_session": session, "wait_seconds": 900})
+                        }).collect::<Vec<_>>()}),
                 },
                 "agent_definition" => AgentDefinitionReading {
                     data: json!({"schema": "central.agent-profile-roster/v1", "profiles": [
@@ -1528,7 +1637,7 @@ mod tests {
             "the root's ground is Central's inspect"
         );
 
-        let packet = packet(&via).expect("the packet reads");
+        let packet = packet(&via, Ok(Vec::new())).expect("the packet reads");
         assert_eq!(
             packet["register"]["reading"]["scope"]["agent_session"],
             Value::Null,
@@ -1541,7 +1650,7 @@ mod tests {
             "agent-session/b"
         );
 
-        let scope = scope(&via).expect("scope reads");
+        let scope = scope(&via, Ok(Vec::new())).expect("scope reads");
         assert_eq!(
             scope["effective"]["reading"],
             json!({"action": "central.world.effective-sources",
@@ -1553,7 +1662,18 @@ mod tests {
         );
         assert_eq!(
             scope["settings"]["reading"]["agent-session/a"],
-            json!({"state": "read", "reading": {"wait_seconds": 900}})
+            json!({"state": "read", "reading": {"agent_session": "agent-session/a", "wait_seconds": 900}})
+        );
+        assert_eq!(
+            asked
+                .lock()
+                .unwrap()
+                .iter()
+                .filter(|op| op["op"] == "encounter_session_settings_list")
+                .map(|op| op["agent_sessions"].clone())
+                .collect::<Vec<_>>(),
+            [json!(["agent-session/a", "agent-session/b"])],
+            "the register's sessions' settings are one owner read"
         );
         assert_eq!(
             scope["settings"]["reading"]["agent-session/b"],
@@ -1576,6 +1696,137 @@ mod tests {
         assert!(
             roster["cards"].get("agent:proposed").is_none(),
             "an agent you have not accepted has no card read"
+        );
+    }
+
+    #[test]
+    fn a_project_conversations_packet_and_settings_are_read_in_its_register() {
+        use crate::KernelOpResult::{
+            ActionDispatched, AgencyReading, EncounterReading, EncounterSessionSettingsListReading,
+        };
+        let asked = Mutex::new(Vec::<Value>::new());
+        let via = |op: KernelOp| -> Result<KernelOpOutcome, String> {
+            let body = serde_json::to_value(&op).expect("an op serialises");
+            asked.lock().unwrap().push(body.clone());
+            let project = body["project"].as_str().unwrap_or_default().to_owned();
+            let result = match body["op"].as_str().unwrap_or_default() {
+                "agency_read" => AgencyReading {
+                    project_ref: format!("project:{project}"),
+                    spaces: match project.as_str() {
+                        "" => json!([{"agent_sessions": {"agent-session/root": {}}}]),
+                        "O-I" => json!([{"agent_sessions": {"agent-session/o-i": {}}}]),
+                        "Bare" => json!([]),
+                        _ => return Err("Project is outside Central's disclosed ground".into()),
+                    },
+                    harness_disclosure: json!({}),
+                    observed_at_unix_ms: 1,
+                },
+                "encounter" => EncounterReading {
+                    data: json!({"scope": {"project": project, "agent_session": body["request"]["agent_session"]}, "items": []}),
+                },
+                "encounter_session_settings_list" => EncounterSessionSettingsListReading {
+                    data: json!({"readings": body["agent_sessions"].as_array().unwrap().iter()
+                        .map(|session| json!({"agent_session": session, "revision": format!("{project}:rev")})).collect::<Vec<_>>()}),
+                },
+                "act" => ActionDispatched {
+                    dispatch: crate::action::ActionDispatch::Invoked {
+                        owner_operation: body["action"].as_str().unwrap_or_default().into(),
+                        data: json!({}),
+                    },
+                    reads_only: true,
+                },
+                other => panic!("the packet and Scope asked {other}"),
+            };
+            Ok(KernelOpOutcome {
+                receipts: Vec::new(),
+                read_scopes: None,
+                result,
+            })
+        };
+        let known = || Ok(vec!["O-I".to_owned(), "Bare".to_owned(), "Gone".to_owned()]);
+
+        let read = packet(&via, known()).expect("the packet reads");
+        let o_i = &read["projects"]["reading"]["O-I"]["reading"];
+        assert_eq!(
+            o_i["sessions"]["agent-session/o-i"]["reading"]["scope"],
+            json!({"project": "O-I", "agent_session": "agent-session/o-i"}),
+            "a project conversation's packet, read in its own register"
+        );
+        assert_eq!(
+            o_i["register"]["reading"]["scope"],
+            json!({"project": "O-I", "agent_session": null}),
+            "and the project's register's own"
+        );
+        assert_eq!(
+            read["projects"]["reading"]["Bare"]["reading"],
+            json!({"register": {"state": "refused", "why": no_space("Bare")}, "sessions": {}}),
+            "a register AIKit lists no space in holds no conversation, and its packet is not read"
+        );
+        assert_eq!(
+            read["projects"]["reading"]["Gone"],
+            json!({"state": "refused", "why": "Project is outside Central's disclosed ground"}),
+            "a register AIKit's agency refused says so beside the others"
+        );
+        assert_eq!(
+            read["sessions"]["agent-session/root"]["reading"]["scope"]["project"],
+            "",
+            "the root register's stand as they did"
+        );
+        assert!(
+            !asked
+                .lock()
+                .unwrap()
+                .iter()
+                .any(|op| op["op"] == "encounter" && op["project"] == "Bare"),
+            "nothing is read in a register no conversation can stand in"
+        );
+
+        let scope = scope(&via, known()).expect("scope reads");
+        assert_eq!(
+            scope["projects"]["reading"]["O-I"]["reading"]["agent-session/o-i"],
+            json!({"state": "read", "reading": {"agent_session": "agent-session/o-i", "revision": "O-I:rev"}}),
+            "a project session's settings, read in its own register"
+        );
+        assert_eq!(
+            scope["projects"]["reading"]["Bare"]["reading"],
+            json!({}),
+            "no session, no settings read"
+        );
+        assert_eq!(
+            scope["settings"]["reading"]["agent-session/root"]["reading"]["revision"],
+            ":rev",
+            "the root register's sessions' settings stand as they did"
+        );
+
+        let unknown = packet(&via, Err("the World Model has not read your world's projects yet".into()))
+            .expect("the root register's packet reads without the projects");
+        assert_eq!(
+            unknown["projects"],
+            json!({"state": "refused", "why": "the World Model has not read your world's projects yet"})
+        );
+        assert!(unknown["register"]["reading"].is_object());
+    }
+
+    #[test]
+    fn the_projects_are_those_centrals_root_discloses_each_once_and_unknown_until_the_worlds_are_read() {
+        let root = json!({"work": {"projects": [{"name": "O-I"}, {"name": ""}, {"name": "QL"}, {"name": "O-I"}, {"path": "x"}]}});
+        assert_eq!(projects_of(&root), ["O-I", "QL"]);
+        let mut worlds = Held::default();
+        assert_eq!(
+            projects_held(&worlds),
+            Err("the World Model has not read your world's projects yet".to_owned())
+        );
+        take(&mut worlds, Err("the map is unreadable".into()), 1);
+        assert!(projects_held(&worlds)
+            .unwrap_err()
+            .contains("Central's worlds were refused (the map is unreadable)"));
+        take(&mut worlds, Ok(json!({"root": root, "worlds": [], "pages": []})), 2);
+        assert_eq!(projects_held(&worlds), Ok(vec!["O-I".to_owned(), "QL".to_owned()]));
+        take(&mut worlds, Err("Central refused".into()), 3);
+        assert_eq!(
+            projects_held(&worlds),
+            Ok(vec!["O-I".to_owned(), "QL".to_owned()]),
+            "a refusal keeps the projects last read"
         );
     }
 
@@ -1754,7 +2005,11 @@ mod tests {
             moved("root"),
             ["worlds", "day", "sessions", "factory", "packet", "scope", "roster"]
         );
-        assert_eq!(moved("project:O-I"), ["worlds", "factory"]);
+        assert_eq!(
+            moved("project:O-I"),
+            ["worlds", "factory", "packet", "scope"],
+            "a project's change moves the packets and Scope, which read its register"
+        );
         assert_eq!(moved("seats"), ["workcells"]);
         assert_eq!(
             moved("aikit"),

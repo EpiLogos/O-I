@@ -1,8 +1,10 @@
 // The World Model's slices as the kernel composes them (kernel world_model.rs `load`), over a fixture kernel's own owner answers: the
 // worlds (`worlds`, `worlds_of`: Central's root from its world browse, each world's pages from its page listing), and what Central's
 // chain reads (O-I ticket 1005) — today's Day (`day`), the packets (`packet`), your world's scope (`scope`) and its roster (`roster`),
-// each part asked of the owner as the kernel asks it, and each refusal the owner's words in its part. For the fixture kernels of tests
-// that drive the shell's real modules; the composition itself is the kernel's, and is tested there (world_model.rs).
+// each part asked of the owner as the kernel asks it, and each refusal the owner's words in its part. The packets and the scope hold
+// each register a conversation can stand in: your world's root, and each project the World Model knows (`projects_of` over its worlds
+// slice's root, which the fixture reads by its own world browse). For the fixture kernels of tests that drive the shell's real modules;
+// the composition itself is the kernel's, and is tested there (world_model.rs).
 
 /** The worlds of Central's root, as the kernel names them: yours first, then each project whose ProjectCentral keeps a human ground and
  * a wiki. */
@@ -48,8 +50,8 @@ export function worldsSliceOf(root, pages = null, version = 1) {
 
 // ── what Central's chain reads (O-I ticket 1005) ──────────────────────────────────────────────────────────────────────────────
 
-const SLICE = {day: {owner: 'Central', scopes: ['root', 'clock']}, packet: {owner: 'AIKit', scopes: ['aikit', 'root']},
-  scope: {owner: 'Central', scopes: ['root', 'aikit']}, roster: {owner: 'Central', scopes: ['root']}}
+const SLICE = {day: {owner: 'Central', scopes: ['root', 'clock']}, packet: {owner: 'AIKit', scopes: ['aikit', 'root', 'work']},
+  scope: {owner: 'Central', scopes: ['root', 'aikit', 'work']}, roster: {owner: 'Central', scopes: ['root']}}
 const isObject = value => typeof value === 'object' && value !== null && !Array.isArray(value)
 
 /** The kernel's answer for `slice`, read (`value`) or refused in the owner's words (`why`), as world_model.rs `answer` gives it. */
@@ -75,12 +77,45 @@ async function actOver(ask, action, input) {
   if (dispatch.state === 'invoked') return {ok: true, value: dispatch.data}
   return {ok: false, why: dispatch.message ?? dispatch.detail ?? `${action} answered ${JSON.stringify(dispatch)}`}
 }
-/** The agent sessions of your world's root register (world_model.rs `root_sessions`: `agency_read` `spaces[].agent_sessions`), each once. */
-async function rootSessionsOver(ask) {
-  const agency = payloadOf(await ask({op: 'agency_read', project: ''}))
+/** A register's spaces and agent sessions as AIKit's agency lists them (world_model.rs `agency_of`: `agency_read` `spaces[].agent_sessions`;
+ * '' is your world's root register): whether it lists any space, and its sessions, each once. */
+async function agencyOver(ask, project) {
+  const agency = payloadOf(await ask({op: 'agency_read', project}))
   if (!agency.ok) return agency
   const spaces = Array.isArray(agency.value?.spaces) ? agency.value.spaces : []
-  return {ok: true, value: [...new Set(spaces.flatMap(space => (isObject(space.agent_sessions) ? Object.keys(space.agent_sessions) : [])))].sort()}
+  return {ok: true, value: {spaced: spaces.length > 0, sessions: [...new Set(spaces.flatMap(space => (isObject(space.agent_sessions) ? Object.keys(space.agent_sessions) : [])))].sort()}}
+}
+
+/** The projects Central discloses in its root (world_model.rs `projects_of`: `work.projects`, each once, in Central's order) — the registers
+ * beside your world's root a conversation can stand in (agent/worldScope.ts projectsOf, the registers the shell's agency reads). */
+export function projectsOfRoot(root) {
+  const names = []
+  for (const project of Array.isArray(root?.work?.projects) ? root.work.projects : []) {
+    if (typeof project?.name === 'string' && project.name && !names.includes(project.name)) names.push(project.name)
+  }
+  return names
+}
+
+/** The projects the World Model knows (world_model.rs `Model::projects`, from its worlds slice), here from the fixture's own world browse;
+ * or why it knows none, in its words. */
+async function projectsOver(ask) {
+  const browse = await ask({op: 'world_browse'})
+  const navigator = browse.ok ? browse.outcome?.snapshot?.navigator : null
+  if (navigator?.root) return {ok: true, value: projectsOfRoot(navigator.root)}
+  const why = browse.ok ? navigator?.error ?? 'Central returned no root disclosure' : browse.error
+  return {ok: false, why: `the World Model holds none of your world's projects: Central's worlds were refused (${why})`}
+}
+
+/** Why a project's register holds no packet (world_model.rs `no_space`): AIKit lists no space in it, so no conversation stands in it. */
+export const NO_SPACE = project => `AIKit's agency lists no space in ${project}'s register, so no conversation stands in it: the World Model reads no packet of it.`
+
+/** Each part of the projects the World Model knows, by project (world_model.rs `by_project`). */
+async function byProjectOver(ask, read) {
+  const known = await projectsOver(ask)
+  if (!known.ok) return known
+  const byProject = {}
+  for (const project of known.value) byProject[project] = part(await read(project))
+  return {ok: true, value: byProject}
 }
 
 /** Today's Day (world_model.rs `day`): `day_read`, and beside it the root's ground (`central` inspect), the Day's settings and today's
@@ -102,29 +137,54 @@ export async function daySliceOver(ask, version = 1) {
   return sliceAnswer('day', {ok: true, value: {...day, ground: part(ground), settings: part(settings), moves: part(moves), field: part(field)}}, version)
 }
 
-/** AIKit's prepared context (world_model.rs `packet`): the root register's own, and each of its sessions', each its own part. */
+/** AIKit's prepared context (world_model.rs `packet`): your world's root register's own and each of its sessions', and the same of each
+ * project the World Model knows (`projects`, by project), each its own part; a project AIKit lists no space in is not read. */
 export async function packetSliceOver(ask, version = 1) {
-  const context = async session => payloadOf(await ask({op: 'encounter', project: '', request: {action: 'context', agent_session: session, request: {operation: 'read'}}}))
-  const sessions = await rootSessionsOver(ask)
-  if (!sessions.ok) return sliceAnswer('packet', sessions, version)
+  const context = async (project, session) => payloadOf(await ask({op: 'encounter', project, request: {action: 'context', agent_session: session, request: {operation: 'read'}}}))
+  const sessionsOf = async (project, sessions) => {
+    const bySession = {}
+    for (const session of sessions) bySession[session] = part(await context(project, session))
+    return bySession
+  }
+  const root = await agencyOver(ask, '')
+  if (!root.ok) return sliceAnswer('packet', root, version)
+  const projects = await byProjectOver(ask, async project => {
+    const agency = await agencyOver(ask, project)
+    if (!agency.ok) return agency
+    if (!agency.value.spaced) return {ok: true, value: {register: part({ok: false, why: NO_SPACE(project)}), sessions: {}}}
+    return {ok: true, value: {register: part(await context(project, null)), sessions: await sessionsOf(project, agency.value.sessions)}}
+  })
+  return sliceAnswer('packet', {ok: true, value: {register: part(await context('', null)), sessions: await sessionsOf('', root.value.sessions), projects: part(projects)}}, version)
+}
+
+/** Each of a register's sessions' own settings in AIKit (world_model.rs `settings_of`: one `encounter_session_settings_list` for the
+ * register), by session; a session AIKit refused says so in its part. */
+async function settingsOver(ask, project, sessions) {
+  if (!sessions.length) return {ok: true, value: {}}
+  const listed = payloadOf(await ask({op: 'encounter_session_settings_list', project, agent_sessions: sessions}))
+  if (!listed.ok) return listed
+  const readings = Array.isArray(listed.value?.readings) ? listed.value.readings : []
   const bySession = {}
-  for (const session of sessions.value) bySession[session] = part(await context(session))
-  return sliceAnswer('packet', {ok: true, value: {register: part(await context(null)), sessions: bySession}}, version)
+  for (const session of sessions) {
+    const reading = readings.find(one => one?.agent_session === session)
+    bySession[session] = part(!reading ? {ok: false, why: `AIKit's settings list holds no reading of ${session}`}
+      : typeof reading.refused === 'string' ? {ok: false, why: reading.refused} : {ok: true, value: reading})
+  }
+  return {ok: true, value: bySession}
 }
 
 /** What Scope reads of your world (world_model.rs `scope`): its effective sources and its authored relations as Central resolves them,
- * and each root session's own settings in AIKit, by session. */
+ * each root session's own settings in AIKit, by session, and each project's sessions' (`projects`, by project). */
 export async function scopeSliceOver(ask, version = 1) {
   const effective = await actOver(ask, 'central.world.effective-sources', {scope: 'root', world_ref: 'control:root'})
   const relations = await actOver(ask, 'central.world-relations.read', {scope: 'root', ref: 'control:root'})
-  const sessions = await rootSessionsOver(ask)
-  let settings = sessions
-  if (sessions.ok) {
-    const bySession = {}
-    for (const session of sessions.value) bySession[session] = part(payloadOf(await ask({op: 'encounter_session_settings', project: '', agent_session: session})))
-    settings = {ok: true, value: bySession}
-  }
-  return sliceAnswer('scope', {ok: true, value: {effective: part(effective), relations: part(relations), settings: part(settings)}}, version)
+  const root = await agencyOver(ask, '')
+  const settings = root.ok ? await settingsOver(ask, '', root.value.sessions) : root
+  const projects = await byProjectOver(ask, async project => {
+    const agency = await agencyOver(ask, project)
+    return agency.ok ? settingsOver(ask, project, agency.value.sessions) : agency
+  })
+  return sliceAnswer('scope', {ok: true, value: {effective: part(effective), relations: part(relations), settings: part(settings), projects: part(projects)}}, version)
 }
 
 /** Your world's roster (world_model.rs `roster`, `cards`): Central's agent profiles of the root register, and the card of each agent you
