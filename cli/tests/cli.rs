@@ -521,3 +521,118 @@ fn docs_resolves_quaternal_logic_to_the_live_ql_mef_repository() {
     assert!(result.status.success());
     assert!(text(&result.stdout).contains("EpiLogos/QL-MEF"));
 }
+
+/// O-I ticket 1006: `oi --version` names the revision built, and a commit that changes no file of this package (one that changes
+/// only the kernel it depends on by path) still changes what is built. So the stamp's build script runs again whenever HEAD moves,
+/// and only then: a crate built by that same script answers each HEAD it is built at, and a build with HEAD where it was rebuilds
+/// nothing.
+#[test]
+fn the_build_stamp_follows_head_and_only_head() {
+    let probe = TempDir::new().unwrap();
+    let root = probe.path();
+    fs::create_dir_all(root.join("src")).unwrap();
+    fs::write(
+        root.join("Cargo.toml"),
+        "[package]\nname = \"stamp-probe\"\nversion = \"0.0.0\"\nedition = \"2021\"\npublish = false\n\n[workspace]\n",
+    )
+    .unwrap();
+    fs::copy(
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("build.rs"),
+        root.join("build.rs"),
+    )
+    .unwrap();
+    fs::write(
+        root.join("src/main.rs"),
+        "fn main() {\n    print!(\"{}\", env!(\"SUITE_BUILD_REVISION\"));\n}\n",
+    )
+    .unwrap();
+    fs::write(root.join(".gitignore"), "/target/\n").unwrap();
+    // The probe's own repository, whatever repository or hook the test runs under.
+    let unhooked = |command: &mut Command| {
+        for name in [
+            "GIT_DIR",
+            "GIT_WORK_TREE",
+            "GIT_INDEX_FILE",
+            "GIT_COMMON_DIR",
+            "GIT_CEILING_DIRECTORIES",
+            "SUITE_BUILD_REVISION",
+        ] {
+            command.env_remove(name);
+        }
+    };
+    let git = |args: &[&str]| -> String {
+        let mut command = Command::new("git");
+        command
+            .current_dir(root)
+            .args([
+                "-c",
+                "user.name=stamp",
+                "-c",
+                "user.email=stamp@local",
+                "-c",
+                "commit.gpgsign=false",
+            ])
+            .args(args);
+        unhooked(&mut command);
+        let done = output(&mut command);
+        assert!(
+            done.status.success(),
+            "git {args:?}: {}",
+            text(&done.stderr)
+        );
+        text(&done.stdout).trim().to_owned()
+    };
+    let built = root.join("target/debug/stamp-probe");
+    let stamped = || -> String {
+        let mut command =
+            Command::new(std::env::var("CARGO").unwrap_or_else(|_| "cargo".to_owned()));
+        command
+            .current_dir(root)
+            .args(["build", "--quiet", "--offline"])
+            .env("CARGO_TARGET_DIR", root.join("target"));
+        unhooked(&mut command);
+        let done = output(&mut command);
+        assert!(done.status.success(), "{}", text(&done.stderr));
+        text(&output(&mut Command::new(&built)).stdout)
+    };
+    git(&["init", "-q", "-b", "main"]);
+    git(&["add", "--all"]);
+    git(&["commit", "-qm", "first"]);
+    assert_eq!(stamped(), git(&["rev-parse", "--short=12", "HEAD"]));
+
+    // HEAD where it was: nothing is built again.
+    let at = fs::metadata(&built).unwrap().modified().unwrap();
+    stamped();
+    assert_eq!(
+        fs::metadata(&built).unwrap().modified().unwrap(),
+        at,
+        "a build with HEAD unmoved rebuilt the probe"
+    );
+
+    // A commit moves the branch HEAD names; a detached switch moves HEAD itself; neither changes a file of the package.
+    git(&["commit", "-q", "--allow-empty", "-m", "second"]);
+    assert_eq!(
+        stamped(),
+        git(&["rev-parse", "--short=12", "HEAD"]),
+        "a commit's HEAD"
+    );
+    git(&["pack-refs", "--all"]);
+    git(&[
+        "commit",
+        "-q",
+        "--allow-empty",
+        "-m",
+        "third, on a packed branch",
+    ]);
+    assert_eq!(
+        stamped(),
+        git(&["rev-parse", "--short=12", "HEAD"]),
+        "a commit on a branch git had packed"
+    );
+    git(&["switch", "-q", "--detach", "HEAD~2"]);
+    assert_eq!(
+        stamped(),
+        git(&["rev-parse", "--short=12", "HEAD"]),
+        "a detached HEAD"
+    );
+}
