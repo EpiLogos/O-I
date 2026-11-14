@@ -263,12 +263,15 @@ pub fn person_act(action: &str) -> bool {
 }
 
 /// Factory's acts that present the person's authority (factory.rs `OwnerRequest::person_act`: an attempt launched, retried or
-/// cancelled, its return carried into receiving), as the registry holds them: by the person's press the host's token goes to
-/// `oi act invoke`, which hands it to Factory; by a wire the act is refused in words before Factory is asked.
-pub const REGISTRY_PERSON_ACTS: [&str; 3] = [
+/// cancelled, its return carried into receiving; a session's task run and stopped, O-I #1006), as the registry holds them: by the
+/// person's press the host's token goes to `oi act invoke`, which hands it to Factory; by a wire the act is refused in words
+/// before Factory is asked.
+pub const REGISTRY_PERSON_ACTS: [&str; 5] = [
     "factory.attempt.launch",
     "factory.attempt.action",
     "factory.attempt.receiving",
+    "factory.task.run",
+    "factory.task.stop",
 ];
 
 /// Whether one invocation is the person's own press: a person act by its id, or by what it carries — a Day document made
@@ -686,6 +689,15 @@ fn invoke_registry(
         .iter()
         .map(std::ffi::OsString::from)
         .collect();
+    // A person act by the press (`REGISTRY_PERSON_ACTS`; the client is the person's only then): the variable flow.rs's door
+    // names (`CentralClient::person_env`), as factory.rs hands it to Factory.
+    let mut env: Vec<(&'static str, &str)> = person.into_iter().collect();
+    // The seat instrument resolves the machine's own register unless CENTRAL_ROOT names another (Control/user/workcell/seat
+    // `central_root`): a seat Action runs in the World the window stands in, HOME's Central as the host sets it (O-I #1006).
+    let world_root = seat_world_root(action);
+    if let Some(root) = world_root.as_deref() {
+        env.push(("CENTRAL_ROOT", root));
+    }
     match crate::material::invoke_in(
         &executable,
         &args,
@@ -693,9 +705,7 @@ fn invoke_registry(
         Some(cwd),
         REGISTRY_LIMIT,
         &REGISTRY_WITHHELD,
-        // A person act by the press (`REGISTRY_PERSON_ACTS`; the client is the person's only then): the variable flow.rs's door
-        // names (`CentralClient::person_env`), as factory.rs hands it to Factory.
-        &person.into_iter().collect::<Vec<_>>(),
+        &env,
     ) {
         Ok(data) => ActionDispatch::Invoked {
             owner_operation: action.to_owned(),
@@ -714,6 +724,16 @@ fn invoke_registry(
             message: refusal_words(&error.message),
         },
     }
+}
+
+/// The World a seat Action (`workcell.seat.*`) is run in: the window's own World, the Central root this process's owners read and
+/// its watch watches (`watch::Roots`: `OI_CENTRAL_ROOT`, else `~/Central`), as the seat status read hands it (owner_read.rs
+/// `seat_status`). Left to itself the instrument resolves the computer's own user's register. `None` for every other Action.
+fn seat_world_root(action: &str) -> Option<String> {
+    if !action.starts_with("workcell.seat.") {
+        return None;
+    }
+    crate::watch::Roots::resolve(None).map(|roots| roots.central.to_string_lossy().into_owned())
 }
 
 /// An owner's refusal in its own words: a refusal in an owner's JSON envelope (`{ok: false, error: {message}}`, as AIKit and the
