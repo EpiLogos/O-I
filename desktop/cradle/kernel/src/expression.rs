@@ -148,6 +148,12 @@ pub struct Scene {
     /// Scene written before this field stays byte-identical; changes only through `Change::ScenePrivate`.
     #[serde(default, skip_serializing_if = "is_false")]
     pub private: bool,
+    /// The Studio's takes of this Scene (O-I #1008; manual §20.1, "Arm the Expression and press Play, and Play records a take"): the
+    /// values the Studio's devices wrote while it played armed, each stamped by the kernel, on a take lane of its own until it is kept
+    /// into the Scene's main lane (`expression_studio::keep`). Omitted when there are none, so a Scene written before this field stays
+    /// byte-identical; changes only through `Change::StudioTakeSet`.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub studio_takes: Vec<crate::expression_studio::StudioTake>,
 }
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
@@ -631,6 +637,12 @@ pub enum Change {
         scene_ref: String,
         private: bool,
     },
+    /// Lay a Studio take on its Scene, or replace the take of the same ref (O-I #1008): a take closed by the transport, or one
+    /// marked kept once its stretch lies in the main lane.
+    StudioTakeSet {
+        scene_ref: String,
+        take: crate::expression_studio::StudioTake,
+    },
     SubjectBind {
         entity_ref: String,
         binding: SubjectBinding,
@@ -727,6 +739,10 @@ impl Request {
 pub enum Request {
     Capabilities,
     List,
+    /// The store as the World Model's `expressions` slice holds it (O-I #1008; world_model.rs): each open work with its Scenes, each
+    /// Scene's saved state and its takes, the Studio values of the Scene each work has selected, the works that live only as their
+    /// files in the works home, and the playback. It reads only, and a works home Central cannot list is said, never a refusal.
+    Reading,
     Inspect {
         expression_ref: String,
     },
@@ -989,6 +1005,8 @@ pub struct Application {
     offers: std::collections::VecDeque<TriggerOffer>,
     /// The count the next offer's ref is made from.
     offered: u64,
+    /// What plays, what is armed and what records (O-I #1008; expression_playback.rs): in memory only, never saved.
+    pub(crate) playback: crate::expression_playback::Playback,
 }
 /// How many trigger offers stand at once; the oldest goes first.
 const OFFERS: usize = 64;
@@ -1125,11 +1143,84 @@ fn action_cwd(client: &CentralClient, project: Option<&str>) -> Result<std::path
     })
 }
 
+/// The schema of the store's reading (`Request::Reading`), which the World Model's `expressions` slice holds.
+pub const READING_SCHEMA: &str = "oi.expression-reading/v1";
+/// How many open works, and how many Scenes of each, the reading carries.
+const READING_WORKS: usize = 64;
+const READING_SCENES: usize = 256;
+
+/// A Scene's save, as the Clip panel says it (field-studies-journeys sceneWorkflow.ts `sceneSaveState`): `never` until it is
+/// saved, `saved` while what it holds is what was saved, else `changed`. Where a Scene sits in its Expression (its timeline facts),
+/// its toolbelt and its pointer's scope are not what it holds.
+pub(crate) fn saved_state(scene: &Scene) -> &'static str {
+    const NOT_HELD: [&str; 7] = [
+        "toolbelt",
+        "pointerScope",
+        "duration",
+        "transition",
+        "entryOffset",
+        "transitionSpec",
+        "breakAtEnd",
+    ];
+    let held = |material: &Value| -> Value {
+        match material {
+            Value::Object(fields) => Value::Object(
+                fields
+                    .iter()
+                    .filter(|(key, _)| !NOT_HELD.contains(&key.as_str()))
+                    .map(|(key, value)| (key.clone(), value.clone()))
+                    .collect(),
+            ),
+            other => other.clone(),
+        }
+    };
+    match scene.presentation.as_ref() {
+        Some(crate::expression_scene::Presentation {
+            scene: material,
+            saved: Some(saved),
+            ..
+        }) => {
+            if held(saved) == held(material) {
+                "saved"
+            } else {
+                "changed"
+            }
+        }
+        _ => "never",
+    }
+}
+
+/// A Scene's Torus takes as the reading names them: each on its take lane, in seconds of the performance's transport, kept where a
+/// stretch of it is comped into the main lane.
+fn torus_takes(performance: &crate::expression_performance::Performance) -> Vec<Value> {
+    let rate = f64::from(performance.sample_rate.max(1));
+    performance
+        .torus_takes
+        .iter()
+        .map(|record| {
+            let lane_ref = performance
+                .layers
+                .get(usize::from(record.layer))
+                .map(|layer| layer.layer_ref.as_str());
+            let (start, end) = (record.at_sample.0, record.end().unwrap_or(record.at_sample.0));
+            let kept = performance.torus_comp.iter().find(|comp| {
+                Some(comp.lane_ref.as_str()) == lane_ref
+                    && comp.start_sample.0 >= start
+                    && comp.end_sample.0 <= end
+            });
+            json!({"take_ref": record.take.take_ref, "kind": "torus", "lane": record.layer, "lane_ref": lane_ref,
+                "start_s": start as f64 / rate, "seconds": record.take.frames.0 as f64 / rate, "binds": [], "points": 0,
+                "state": "returned",
+                "kept": kept.map(|comp| json!({"from_s": comp.start_sample.0 as f64 / rate, "to_s": comp.end_sample.0 as f64 / rate}))})
+        })
+        .collect()
+}
+
 pub fn capabilities() -> Value {
     json!({"schema":"oi.expression-capabilities/v1", "document_schema":SCHEMA,
-        "operations":["capabilities","list","inspect","inspect_file","create","open","open_file","fork","edit","propose","review","export","save","save_as","invoke","delete","trigger","trigger_offer",
+        "operations":["capabilities","list","reading","inspect","inspect_file","create","open","open_file","fork","edit","propose","review","export","save","save_as","invoke","delete","trigger","trigger_offer",
             "profile_define","profile_define_many","profile_inspect","profile_resolve","edition_create","edition_inspect","index","asset_admit","asset_traverse","asset_subject","restore","close"],
-        "changes":["rename","composition_set","scene_performance_set","scene_performance_edit","scene_performance_clear","scene_material_set","scene_material_clear","scene_blueprint_bind","scene_blueprint_transform","scene_blueprint_release","scene_rename","scene_remove","scene_create","scene_reorder","scene_compose","entity_add","entity_remove","entity_pin","scene_private","subject_bind","subject_unbind","relation_bind","relation_remove","focus","relation_focus","parameter_set","parameter_automate","parameter_manual","representation_bind",
+        "changes":["rename","composition_set","scene_performance_set","scene_performance_edit","scene_performance_clear","scene_material_set","scene_material_clear","scene_blueprint_bind","scene_blueprint_transform","scene_blueprint_release","scene_rename","scene_remove","scene_create","scene_reorder","scene_compose","entity_add","entity_remove","entity_pin","scene_private","studio_take_set","subject_bind","subject_unbind","relation_bind","relation_remove","focus","relation_focus","parameter_set","parameter_automate","parameter_manual","representation_bind",
             "scene_body_set","scene_body_clear","scene_trigger_attach","scene_trigger_detach","profile_adopt","profile_release","collections_set","reuse_set","reuse_clear"],
         "reuse":{"schema":REUSE_SCHEMA,"kinds":["character","scene","expression","gesture"],"accepts":["agent","object","text","value"],
             "law":"reusable material is an ordinary Expression document; roles are placeholders in Scene material (entities/text layers carrying role); refs must name this Expression's Scenes, entities and text layers",
@@ -1373,6 +1464,7 @@ impl Document {
             if let Some(performance) = &s.performance {
                 performance.validate()?;
             }
+            crate::expression_studio::validate_takes(&s.scene_ref, &s.studio_takes)?;
             if let Some(body) = &s.body {
                 crate::expression_carrier::validate_body(body, &self.expression_ref)?;
             }
@@ -1566,6 +1658,7 @@ impl Document {
                     body: None,
                     triggers: vec![],
                     private: false,
+                    studio_takes: vec![],
                 });
             }
             Change::SceneRename { scene_ref, title } => {
@@ -1718,6 +1811,13 @@ impl Document {
             }
             Change::ScenePrivate { scene_ref, private } => {
                 self.scene(&scene_ref)?.private = private;
+            }
+            Change::StudioTakeSet { scene_ref, take } => {
+                let takes = &mut self.scene(&scene_ref)?.studio_takes;
+                match takes.iter_mut().find(|held| held.take_ref == take.take_ref) {
+                    Some(held) => *held = take,
+                    None => takes.push(take),
+                }
             }
             Change::EntityRemove { entity_ref } => {
                 if self.entities.remove(&entity_ref).is_none() {
@@ -2043,6 +2143,95 @@ impl Application {
             .get(r)
             .ok_or_else(|| "Expression is not open".into())
     }
+    /// Whether an open work holds changes its file does not (`dirty` as `inspect` and `list` say it).
+    pub(crate) fn dirty(&self, r: &str) -> bool {
+        self.documents
+            .get(r)
+            .is_some_and(|d| self.saved.get(r) != Some(&d.revision))
+    }
+    /// The file an open work was last saved to or opened from: its location and revision, as `inspect` says it.
+    pub(crate) fn file_of(&self, r: &str) -> Option<&Value> {
+        self.file_bindings.get(r)
+    }
+    /// The store as the `expressions` slice holds it (`Request::Reading`).
+    fn reading(&self, client: &CentralClient) -> Value {
+        let now = crate::expression_actions::now_unix_ms();
+        let mut entries: Vec<&Document> = self.documents.values().collect();
+        entries.sort_by_key(|d| {
+            std::cmp::Reverse(self.touched.get(&d.expression_ref).copied().unwrap_or(0))
+        });
+        let open = self.documents.keys().map(String::as_str).collect();
+        let home = crate::expression_home::list(client, &open);
+        let mut works: Vec<Value> = entries
+            .iter()
+            .take(READING_WORKS)
+            .map(|d| self.work_reading(d, now))
+            .collect();
+        works.extend(home.closed);
+        json!({"schema": READING_SCHEMA, "home": home.home, "unreadable": home.unreadable, "works": works,
+            "playback": self.playback.reading(now)})
+    }
+    /// One open work as the reading gives it.
+    fn work_reading(&self, d: &Document, now: u64) -> Value {
+        let r = d.expression_ref.as_str();
+        let composition = d
+            .presentation
+            .as_ref()
+            .and_then(|p| serde_json::to_value(p).ok());
+        let shared = d.presentation.as_ref().and_then(|p| p.shared.as_ref());
+        let mix = composition.as_ref().map(|c| &c["mix"]);
+        let file = self.file_bindings.get(r);
+        let recording = self
+            .playback
+            .recording
+            .get(r)
+            .map(|recording| (recording.scene_ref.as_str(), &recording.take));
+        let scenes: Vec<Value> = d.scenes.iter().take(READING_SCENES).enumerate().map(|(index, s)| {
+            let material = s.presentation.as_ref().map(|p| &p.scene);
+            let mut takes: Vec<Value> = s
+                .studio_takes
+                .iter()
+                .map(|take| crate::expression_studio::take_summary(take, false))
+                .collect();
+            if let Some((_, take)) = recording.filter(|(scene, _)| *scene == s.scene_ref) {
+                takes.push(crate::expression_studio::take_summary(take, true));
+            }
+            if let Some(performance) = &s.performance {
+                takes.extend(torus_takes(performance));
+            }
+            json!({"scene_ref": s.scene_ref, "title": s.title, "index": index, "revision": s.revision,
+                "duration": material.map(|m| &m["duration"]), "transition": material.map(|m| &m["transition"]),
+                "entry": material.map(|m| &m["entryOffset"]).filter(|v| !v.is_null()),
+                "quantize": crate::expression_playback::scene_quantize(material, composition.as_ref()),
+                "saved": saved_state(s),
+                "material": match material {
+                    Some(_) => json!({"available": true}),
+                    None => json!({"available": false, "reason": "This Scene holds no material of the field yet."}),
+                },
+                "takes": takes})
+        }).collect();
+        let selected = d
+            .scenes
+            .iter()
+            .find(|s| s.scene_ref == d.selection.scene_ref)
+            .or(d.scenes.first());
+        let studio = selected.and_then(|s| {
+            s.presentation
+                .as_ref()
+                .map(|p| crate::expression_studio::studio(&s.scene_ref, &p.scene, shared))
+        });
+        json!({"expression_ref": r, "title": d.title, "revision": d.revision, "open": true,
+            "dirty": self.saved.get(r) != Some(&d.revision), "saved_revision": self.saved.get(r),
+            "description": composition.as_ref().map(|c| &c["description"]).filter(|v| v.as_str().is_some_and(|t| !t.is_empty())),
+            "colour": composition.as_ref().map(|c| &c["colour"]).filter(|v| !v.is_null()),
+            "location": file.map(|f| &f["location"]), "file_revision": file.map(|f| &f["revision"]),
+            "last_touched_unix": self.touched.get(r).copied().unwrap_or(0),
+            "mix": {"active": mix.map(|m| m["active"] != false).unwrap_or(true), "solo": mix.is_some_and(|m| m["solo"] == true),
+                "level": mix.and_then(|m| m["level"].as_f64()).unwrap_or(1.0)},
+            "main_level": mix.and_then(|m| m["main"].as_f64()),
+            "selected_scene_ref": selected.map(|s| &s.scene_ref),
+            "scenes": scenes, "studio": studio, "now_unix_ms": now})
+    }
     fn inspect(&self, r: &str) -> Result<Value, String> {
         let d = self.document(r)?;
         Ok(
@@ -2151,6 +2340,7 @@ impl Application {
                 expressions.extend(home.closed);
                 json!({"schema":"oi.expression-list/v1","expressions":expressions,"unreadable":home.unreadable,"home":home.home})
             }
+            Request::Reading => self.reading(client),
             Request::Inspect { expression_ref } => self.inspect(&expression_ref)?,
             Request::Create {
                 expression_ref,
@@ -2173,6 +2363,7 @@ impl Application {
                         body: None,
                         triggers: vec![],
                         private: false,
+                        studio_takes: vec![],
                     }],
                     entities: BTreeMap::new(),
                     relations: BTreeMap::new(),
@@ -2959,6 +3150,8 @@ impl Application {
                 let file = self.file_bindings.remove(&expression_ref);
                 self.offers
                     .retain(|offer| offer.expression_ref != expression_ref);
+                // Nothing of a work let go of plays, is armed or records (O-I #1008).
+                self.playback.forget(&expression_ref);
                 json!({"state":"closed","expression_ref":expression_ref,"revision":revision,"file":file})
             }
             Request::Delete {
@@ -3114,6 +3307,8 @@ impl Application {
                 self.file_bindings.remove(&expression_ref);
                 self.offers
                     .retain(|offer| offer.expression_ref != expression_ref);
+                // Nothing of a work let go of plays, is armed or records (O-I #1008).
+                self.playback.forget(&expression_ref);
                 // A settled Delete knows the revision trashed, which Central's restore brings back, though its receipt was lost.
                 let recover = match &settled {
                     None => receipt["recover"].clone(),

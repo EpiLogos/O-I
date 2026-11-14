@@ -13,7 +13,7 @@ import type {KernelOutcome, KernelReceipt, KernelTransportStatus, ModelSliceAnsw
 
 export const MODEL_CHANGED_EVENT = 'model_changed'
 
-const SLICES: ReadonlySet<string> = new Set(['worlds', 'day', 'agents', 'sessions', 'models', 'factory', 'workcells', 'sky', 'packet', 'scope', 'roster'])
+const SLICES: ReadonlySet<string> = new Set(['worlds', 'day', 'agents', 'sessions', 'models', 'factory', 'workcells', 'sky', 'packet', 'scope', 'roster', 'expressions'])
 
 /** A slice as the window holds it: being asked for, the kernel's answer (whatever its own state), or why the kernel gave none. */
 export type ModelSliceReading =

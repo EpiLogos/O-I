@@ -25,6 +25,9 @@
 //! |             |           | each one's journeys and runs, each run's reading and attempt field      |               |
 //! | `workcells` | Workcell  | the seats and the workcells (`seat_status_read`, `workcell_status_read`)| seats         |
 //! | `sky`       | QL        | the dated sky now, as seen from Earth (`nara_identity` transit)         | clock         |
+//! | `expressions` | Expressions | the kernel's expression store (`expression` reading): each open work, | root          |
+//! |             |           | its Scenes, their saves, Studio values and takes, the works home's      |               |
+//! |             |           | closed works, and the playback (O-I #1008)                              |               |
 //!
 //! A slice is read through the kernel's own ops (`Via`, the kernel's dispatch), so every owner reading still goes the one read
 //! path (read_cache.rs) and the model is a projection over it, never a second cache of owner answers. It is loaded once at
@@ -65,6 +68,7 @@ pub enum Slice {
     Packet,
     Scope,
     Roster,
+    Expressions,
 }
 
 /// When the clock moves a slice.
@@ -79,7 +83,7 @@ enum Grain {
 }
 
 impl Slice {
-    pub const ALL: [Slice; 11] = [
+    pub const ALL: [Slice; 12] = [
         Slice::Worlds,
         Slice::Day,
         Slice::Agents,
@@ -91,6 +95,7 @@ impl Slice {
         Slice::Packet,
         Slice::Scope,
         Slice::Roster,
+        Slice::Expressions,
     ];
 
     /// The wire name.
@@ -107,6 +112,7 @@ impl Slice {
             Slice::Packet => "packet",
             Slice::Scope => "scope",
             Slice::Roster => "roster",
+            Slice::Expressions => "expressions",
         }
     }
 
@@ -123,6 +129,7 @@ impl Slice {
             Slice::Factory => "Factory",
             Slice::Workcells => "Workcell",
             Slice::Sky => "QL",
+            Slice::Expressions => "Expressions",
         }
     }
 
@@ -144,6 +151,8 @@ impl Slice {
             Slice::Scope => &["root", "aikit", "work"],
             // The profiles and each agent's participation are your world's root register's: AIKit's churn does not move them.
             Slice::Roster => &["root"],
+            // The works home is your world's root's (Control/user/flows): a work saved there by anyone moves the slice.
+            Slice::Expressions => &["root"],
         }
     }
 
@@ -419,6 +428,11 @@ impl Model {
             Slice::Packet => packet(via, self.projects()),
             Slice::Scope => scope(via, self.projects()),
             Slice::Roster => roster(via),
+            // The store answers from its memory, and lists the works home's closed works by Central's own files route.
+            Slice::Expressions => payload(ask(
+                via,
+                json!({"op": "expression", "request": {"operation": "reading"}}),
+            )?),
         }
     }
 
@@ -710,6 +724,8 @@ pub fn written_by(op: &KernelOp) -> Vec<Slice> {
             vec![Slice::Agents, Slice::Models, Slice::Sessions]
         }
         "workcell_write" => vec![Slice::Workcells],
+        // A work's edit, open, save or close in the expression store (O-I #1008): settled only by its receipts, so a read moves none.
+        "expression" | "expression_world" => vec![Slice::Expressions],
         // A gateway binding's ingress rule, and a gateway this window starts or stops, are AIKit's gateway, which the sessions slice
         // carries (its ecology names the rules and the bindings).
         "harness_ingress_rule" | "gateway_service" => vec![Slice::Sessions],
@@ -2250,7 +2266,16 @@ mod tests {
         };
         assert_eq!(
             moved("root"),
-            ["worlds", "day", "sessions", "factory", "packet", "scope", "roster"]
+            [
+                "worlds",
+                "day",
+                "sessions",
+                "factory",
+                "packet",
+                "scope",
+                "roster",
+                "expressions"
+            ]
         );
         assert_eq!(
             moved("project:O-I"),
@@ -2263,7 +2288,7 @@ mod tests {
             ["sessions", "models", "packet", "scope"],
             "AIKit's churn never starts the agents again, nor reads your roster's cards"
         );
-        assert_eq!(moved("all").len(), 11);
+        assert_eq!(moved("all").len(), 12);
         assert!(
             moved("clock").is_empty(),
             "a minute moves neither today's Day, the census, nor a sky read just now"

@@ -1,0 +1,2100 @@
+{
+ "schema": "oi.expression-studio-table/v1",
+ "source": "Generated from the TypeScript owners named in packages/expressions-boundary/tests/studio-table.test.mjs, which holds it equal to them. Do not edit.",
+ "binds": [
+  {
+   "key": "sizeBias",
+   "bind": "field.params.sizeBias",
+   "path": "material.sizeBias",
+   "label": "Size Distribution",
+   "group": "material",
+   "hardMin": 0.1,
+   "hardMax": 12,
+   "defaultValue": 0.2,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "opacity",
+   "bind": "field.params.opacity",
+   "path": "material.opacity",
+   "label": "Ink Opacity",
+   "group": "material",
+   "hardMin": 0,
+   "hardMax": 1,
+   "defaultValue": 0,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "roundness",
+   "bind": "field.params.roundness",
+   "path": "material.roundness",
+   "label": "Mark Roundness",
+   "group": "material",
+   "hardMin": 0,
+   "hardMax": 1,
+   "defaultValue": 0,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "softness",
+   "bind": "field.params.softness",
+   "path": "material.softness",
+   "label": "Edge Softness",
+   "group": "material",
+   "hardMin": 0,
+   "hardMax": 1,
+   "defaultValue": 0,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "irregularity",
+   "bind": "field.params.irregularity",
+   "path": "material.irregularity",
+   "label": "Imperfect Edges",
+   "group": "material",
+   "hardMin": 0,
+   "hardMax": 1,
+   "defaultValue": 0,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "elongation",
+   "bind": "field.params.elongation",
+   "path": "material.elongation",
+   "label": "Elongation",
+   "group": "material",
+   "hardMin": 0,
+   "hardMax": 12,
+   "defaultValue": 0,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "orientation",
+   "bind": "field.params.orientation",
+   "path": "material.orientation",
+   "label": "Mark Orientation",
+   "group": "material",
+   "hardMin": -36000,
+   "hardMax": 36000,
+   "defaultValue": -180,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "contrast",
+   "bind": "field.params.contrast",
+   "path": "material.contrast",
+   "label": "Density Contrast",
+   "group": "material",
+   "hardMin": 0,
+   "hardMax": 1,
+   "defaultValue": 0,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "densityScale",
+   "bind": "field.params.densityScale",
+   "path": "material.densityScale",
+   "label": "Density Band Scale",
+   "group": "material",
+   "hardMin": 0.01,
+   "hardMax": 100,
+   "defaultValue": 0.1,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "densityPhase",
+   "bind": "field.params.densityPhase",
+   "path": "material.densityPhase",
+   "label": "Density Band Phase",
+   "group": "material",
+   "hardMin": -1000,
+   "hardMax": 1000,
+   "defaultValue": 0,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "edgeWeight",
+   "bind": "field.params.edgeWeight",
+   "path": "material.edgeWeight",
+   "label": "Edge Emphasis",
+   "group": "material",
+   "hardMin": 0,
+   "hardMax": 5,
+   "defaultValue": 0,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "halo",
+   "bind": "field.params.halo",
+   "path": "material.halo",
+   "label": "Peripheral Ink",
+   "group": "material",
+   "hardMin": 0,
+   "hardMax": 1,
+   "defaultValue": 0,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "grain",
+   "bind": "field.params.grain",
+   "path": "paperGrain",
+   "label": "Paper Grain",
+   "group": "color",
+   "hardMin": 0,
+   "hardMax": 1,
+   "defaultValue": 0,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_color__fieldCenterOffset__0",
+   "bind": "field.params.native_color__fieldCenterOffset__0",
+   "path": "color.fieldCenterOffset.0",
+   "label": "Palette Centre X",
+   "group": "color",
+   "hardMin": -20,
+   "hardMax": 20,
+   "defaultValue": 0,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_color__fieldCenterOffset__1",
+   "bind": "field.params.native_color__fieldCenterOffset__1",
+   "path": "color.fieldCenterOffset.1",
+   "label": "Palette Centre Y",
+   "group": "color",
+   "hardMin": -20,
+   "hardMax": 20,
+   "defaultValue": 0,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_relational__attractorCount",
+   "bind": "field.params.native_relational__attractorCount",
+   "path": "relational.attractorCount",
+   "label": "Relational Centre Count",
+   "group": "relational",
+   "hardMin": 1,
+   "hardMax": 10,
+   "defaultValue": 3,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_cymatics__driveScale",
+   "bind": "field.params.native_cymatics__driveScale",
+   "path": "cymatics.driveScale",
+   "label": "Intensity Field Scale",
+   "group": "resonance",
+   "hardMin": 0,
+   "hardMax": 100,
+   "defaultValue": 1,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "recovery",
+   "bind": "field.params.recovery",
+   "path": "fluid.returnSpeed",
+   "label": "Return Spring",
+   "group": "motion",
+   "hardMin": -100,
+   "hardMax": 500,
+   "defaultValue": 1.1,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_fluid__viscosity",
+   "bind": "field.params.native_fluid__viscosity",
+   "path": "fluid.viscosity",
+   "label": "Viscosity Damp",
+   "group": "motion",
+   "hardMin": 0,
+   "hardMax": 1.2,
+   "defaultValue": 0.94,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "circulation",
+   "bind": "field.params.circulation",
+   "path": "fluid.vortexStrength",
+   "label": "Vortex Force",
+   "group": "motion",
+   "hardMin": -500,
+   "hardMax": 500,
+   "defaultValue": 1.4,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "turbulenceScale",
+   "bind": "field.params.turbulenceScale",
+   "path": "fluid.curlScale",
+   "label": "Curl Scale",
+   "group": "motion",
+   "hardMin": 0,
+   "hardMax": 200,
+   "defaultValue": 1.2,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "speed",
+   "bind": "field.params.speed",
+   "path": "fluid.curlSpeed",
+   "label": "Curl Speed",
+   "group": "motion",
+   "hardMin": -200,
+   "hardMax": 200,
+   "defaultValue": 0.6,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "turbulence",
+   "bind": "field.params.turbulence",
+   "path": "fluid.turbulence",
+   "label": "Turbulence",
+   "group": "motion",
+   "hardMin": -100,
+   "hardMax": 500,
+   "defaultValue": 1,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "dispersion",
+   "bind": "field.params.dispersion",
+   "path": "fluid.dispersion",
+   "label": "Dispersion",
+   "group": "motion",
+   "hardMin": -100,
+   "hardMax": 500,
+   "defaultValue": 0.65,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "snapRigidity",
+   "bind": "field.params.snapRigidity",
+   "path": "fluid.snapRigidity",
+   "label": "Snap Rigidity",
+   "group": "physics",
+   "hardMin": -20,
+   "hardMax": 100,
+   "defaultValue": 1,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "densityTether",
+   "bind": "field.params.densityTether",
+   "path": "fluid.densityTether",
+   "label": "Density Tether",
+   "group": "physics",
+   "hardMin": 0,
+   "hardMax": 10,
+   "defaultValue": 1,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "curlDepth",
+   "bind": "field.params.curlDepth",
+   "path": "fluid.curlDepth",
+   "label": "Curl Depth (Z)",
+   "group": "physics",
+   "hardMin": 0,
+   "hardMax": 50,
+   "defaultValue": 0.57,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "vortexRadius",
+   "bind": "field.params.vortexRadius",
+   "path": "fluid.vortexRadius",
+   "label": "Vortex Radius",
+   "group": "physics",
+   "hardMin": 0.0125,
+   "hardMax": 50,
+   "defaultValue": 1.125,
+   "factor": 400,
+   "whole": false
+  },
+  {
+   "key": "gravityX",
+   "bind": "field.params.gravityX",
+   "path": "fluid.gravityX",
+   "label": "Gravity X",
+   "group": "physics",
+   "hardMin": -1000,
+   "hardMax": 1000,
+   "defaultValue": 0,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "gravityY",
+   "bind": "field.params.gravityY",
+   "path": "fluid.gravityY",
+   "label": "Gravity Y",
+   "group": "physics",
+   "hardMin": -1000,
+   "hardMax": 1000,
+   "defaultValue": 0,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "gravityZ",
+   "bind": "field.params.gravityZ",
+   "path": "fluid.gravityZ",
+   "label": "Gravity Z",
+   "group": "physics",
+   "hardMin": -1000,
+   "hardMax": 1000,
+   "defaultValue": 0,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "quadraticDrag",
+   "bind": "field.params.quadraticDrag",
+   "path": "fluid.quadraticDrag",
+   "label": "Quadratic Drag",
+   "group": "physics",
+   "hardMin": 0,
+   "hardMax": 1000,
+   "defaultValue": 0,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "thermalJitter",
+   "bind": "field.params.thermalJitter",
+   "path": "fluid.thermalJitter",
+   "label": "Thermal Jitter",
+   "group": "physics",
+   "hardMin": 0,
+   "hardMax": 1000,
+   "defaultValue": 0,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "speedLimit",
+   "bind": "field.params.speedLimit",
+   "path": "fluid.maxSpeed",
+   "label": "Speed Limit",
+   "group": "physics",
+   "hardMin": 0.025,
+   "hardMax": 25000,
+   "defaultValue": 87.5,
+   "factor": 400,
+   "whole": false
+  },
+  {
+   "key": "zConfinement",
+   "bind": "field.params.zConfinement",
+   "path": "fluid.zConfinement",
+   "label": "Z Confinement",
+   "group": "physics",
+   "hardMin": 0,
+   "hardMax": 10,
+   "defaultValue": 1,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "timeScale",
+   "bind": "field.params.timeScale",
+   "path": "fluid.timeScale",
+   "label": "Time Scale",
+   "group": "physics",
+   "hardMin": -10,
+   "hardMax": 100,
+   "defaultValue": 1,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "count",
+   "bind": "field.params.count",
+   "path": "particleCount",
+   "label": "Particle Count",
+   "group": "material",
+   "hardMin": 64,
+   "hardMax": 4000000,
+   "defaultValue": 200000,
+   "factor": 1,
+   "whole": true
+  },
+  {
+   "key": "native_particleSize__min",
+   "bind": "field.params.native_particleSize__min",
+   "path": "particleSize.min",
+   "label": "Min Size",
+   "group": "material",
+   "hardMin": 0.001,
+   "hardMax": 500,
+   "defaultValue": 0.16,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "size",
+   "bind": "field.params.size",
+   "path": "particleSize.max",
+   "label": "Max Size",
+   "group": "material",
+   "hardMin": 0.001,
+   "hardMax": 1000,
+   "defaultValue": 1.6,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_morphProgress",
+   "bind": "field.params.native_morphProgress",
+   "path": "morphProgress",
+   "label": "A→B Scrub",
+   "group": "morph",
+   "hardMin": 0,
+   "hardMax": 1,
+   "defaultValue": 0,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "thetaRate",
+   "bind": "morph.thetaRate",
+   "path": "toroidalMorph.oscillationSpeed",
+   "label": "Toroidal Rate",
+   "group": "morph",
+   "hardMin": -100,
+   "hardMax": 100,
+   "defaultValue": 0.8,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "phiRate",
+   "bind": "morph.phiRate",
+   "path": "toroidalMorph.poloidalRate",
+   "label": "Poloidal Rate",
+   "group": "morph",
+   "hardMin": -100,
+   "hardMax": 100,
+   "defaultValue": 0.35,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "thetaOffset",
+   "bind": "morph.thetaOffset",
+   "path": "toroidalMorph.toroidalPhase",
+   "label": "Toroidal Phase",
+   "group": "morph",
+   "hardMin": -159.15494309189535,
+   "hardMax": 159.15494309189535,
+   "defaultValue": 0,
+   "factor": 6.283185307179586,
+   "whole": false
+  },
+  {
+   "key": "phiOffset",
+   "bind": "morph.phiOffset",
+   "path": "toroidalMorph.poloidalPhase",
+   "label": "Poloidal Phase",
+   "group": "morph",
+   "hardMin": -159.15494309189535,
+   "hardMax": 159.15494309189535,
+   "defaultValue": 0,
+   "factor": 6.283185307179586,
+   "whole": false
+  },
+  {
+   "key": "native_toroidalMorph__oscillationAmplitude",
+   "bind": "field.params.native_toroidalMorph__oscillationAmplitude",
+   "path": "toroidalMorph.oscillationAmplitude",
+   "label": "Breathing Amp",
+   "group": "morph",
+   "hardMin": -50,
+   "hardMax": 100,
+   "defaultValue": 1.2,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_toroidalMorph__breathRate",
+   "bind": "field.params.native_toroidalMorph__breathRate",
+   "path": "toroidalMorph.breathRate",
+   "label": "Breathing Rate",
+   "group": "morph",
+   "hardMin": -100,
+   "hardMax": 100,
+   "defaultValue": 0.35,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_toroidalMorph__breathDepth",
+   "bind": "field.params.native_toroidalMorph__breathDepth",
+   "path": "toroidalMorph.breathDepth",
+   "label": "Breathing Depth",
+   "group": "morph",
+   "hardMin": 0,
+   "hardMax": 10,
+   "defaultValue": 0.35,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "morphDepth",
+   "bind": "morph.depth",
+   "path": "toroidalMorph.driveDepth",
+   "label": "Drive Depth",
+   "group": "morph",
+   "hardMin": -10,
+   "hardMax": 10,
+   "defaultValue": 1,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "morphDwell",
+   "bind": "morph.dwell",
+   "path": "toroidalMorph.holdRatio",
+   "label": "Dwell Ratio",
+   "group": "morph",
+   "hardMin": 0,
+   "hardMax": 0.99,
+   "defaultValue": 0,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_toroidalMorph__fiberPhaseOffset",
+   "bind": "field.params.native_toroidalMorph__fiberPhaseOffset",
+   "path": "toroidalMorph.fiberPhaseOffset",
+   "label": "Fiber Δψ",
+   "group": "morph",
+   "hardMin": -1000,
+   "hardMax": 1000,
+   "defaultValue": 0,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_toroidalMorph__chiralCoupling",
+   "bind": "field.params.native_toroidalMorph__chiralCoupling",
+   "path": "toroidalMorph.chiralCoupling",
+   "label": "Chiral Coupling",
+   "group": "morph",
+   "hardMin": -100,
+   "hardMax": 100,
+   "defaultValue": 0.75,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_toroidalMorph__toroidalWinding",
+   "bind": "field.params.native_toroidalMorph__toroidalWinding",
+   "path": "toroidalMorph.toroidalWinding",
+   "label": "Toroidal Winding p",
+   "group": "morph",
+   "hardMin": 0,
+   "hardMax": 512,
+   "defaultValue": 3,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_toroidalMorph__poloidalWinding",
+   "bind": "field.params.native_toroidalMorph__poloidalWinding",
+   "path": "toroidalMorph.poloidalWinding",
+   "label": "Poloidal Winding q",
+   "group": "morph",
+   "hardMin": 0,
+   "hardMax": 512,
+   "defaultValue": 2,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_toroidalMorph__manifoldRadius",
+   "bind": "field.params.native_toroidalMorph__manifoldRadius",
+   "path": "toroidalMorph.manifoldRadius",
+   "label": "Manifold Radius",
+   "group": "morph",
+   "hardMin": 1,
+   "hardMax": 20000,
+   "defaultValue": 180,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "depth",
+   "bind": "field.params.depth",
+   "path": "toroidalMorph.volumetricDepthScale",
+   "label": "Volumetric Depth",
+   "group": "morph",
+   "hardMin": 0,
+   "hardMax": 100,
+   "defaultValue": 1,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "pointerClickStrength",
+   "bind": "engine.pointerClickStrength",
+   "path": "interaction.clickStrength",
+   "label": "Click Strength",
+   "group": "pointer",
+   "hardMin": 0.01,
+   "hardMax": 20,
+   "defaultValue": 0.2,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "pointerClickRadius",
+   "bind": "engine.pointerClickRadius",
+   "path": "interaction.clickRadius",
+   "label": "Click Radius",
+   "group": "pointer",
+   "hardMin": 0.01,
+   "hardMax": 10,
+   "defaultValue": 0.05,
+   "factor": 400,
+   "whole": false
+  },
+  {
+   "key": "pointerRadius",
+   "bind": "field.params.pointerRadius",
+   "path": "interaction.radius",
+   "label": "Cursor Radius",
+   "group": "pointer",
+   "hardMin": 0,
+   "hardMax": 125,
+   "defaultValue": 0.45,
+   "factor": 400,
+   "whole": false
+  },
+  {
+   "key": "pointerStrength",
+   "bind": "field.params.pointerStrength",
+   "path": "interaction.strength",
+   "label": "Cursor Force",
+   "group": "pointer",
+   "hardMin": -1000,
+   "hardMax": 1000,
+   "defaultValue": 1.2,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_interaction__velocityInfluence",
+   "bind": "field.params.native_interaction__velocityInfluence",
+   "path": "interaction.velocityInfluence",
+   "label": "Velocity Inject",
+   "group": "pointer",
+   "hardMin": -100,
+   "hardMax": 100,
+   "defaultValue": 1,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "pointerFalloff",
+   "bind": "field.params.pointerFalloff",
+   "path": "interaction.falloffPower",
+   "label": "Falloff Power",
+   "group": "pointer",
+   "hardMin": 0,
+   "hardMax": 50,
+   "defaultValue": 2,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_relational__attractorGravity",
+   "bind": "field.params.native_relational__attractorGravity",
+   "path": "relational.attractorGravity",
+   "label": "Gravity Pull",
+   "group": "relational",
+   "hardMin": -10000,
+   "hardMax": 10000,
+   "defaultValue": 1.6,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_relational__orbitSpeed",
+   "bind": "field.params.native_relational__orbitSpeed",
+   "path": "relational.orbitSpeed",
+   "label": "Orbit Speed",
+   "group": "relational",
+   "hardMin": -1000,
+   "hardMax": 1000,
+   "defaultValue": 0.8,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_relational__orbitRadius",
+   "bind": "field.params.native_relational__orbitRadius",
+   "path": "relational.orbitRadius",
+   "label": "Orbit Radius",
+   "group": "relational",
+   "hardMin": 0,
+   "hardMax": 100000,
+   "defaultValue": 240,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_relational__relationalSpin",
+   "bind": "field.params.native_relational__relationalSpin",
+   "path": "relational.relationalSpin",
+   "label": "Relational Spin",
+   "group": "relational",
+   "hardMin": -1000,
+   "hardMax": 1000,
+   "defaultValue": 1.4,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_relational__chaosFactor",
+   "bind": "field.params.native_relational__chaosFactor",
+   "path": "relational.chaosFactor",
+   "label": "Chaos Factor",
+   "group": "relational",
+   "hardMin": -1000,
+   "hardMax": 1000,
+   "defaultValue": 0.2,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_relational__wanderSpeed",
+   "bind": "field.params.native_relational__wanderSpeed",
+   "path": "relational.wanderSpeed",
+   "label": "Wander Speed",
+   "group": "relational",
+   "hardMin": -100,
+   "hardMax": 100,
+   "defaultValue": 0.5,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "gravitySoftening",
+   "bind": "field.params.gravitySoftening",
+   "path": "relational.gravitySoftening",
+   "label": "Gravity Softening",
+   "group": "relational",
+   "hardMin": 0.0025,
+   "hardMax": 250,
+   "defaultValue": 0.1125,
+   "factor": 400,
+   "whole": false
+  },
+  {
+   "key": "gravityFalloff",
+   "bind": "field.params.gravityFalloff",
+   "path": "relational.gravityFalloff",
+   "label": "Gravity Falloff",
+   "group": "relational",
+   "hardMin": 0.1,
+   "hardMax": 10,
+   "defaultValue": 1.45,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "swirlRadius",
+   "bind": "field.params.swirlRadius",
+   "path": "relational.swirlRadius",
+   "label": "Swirl Radius",
+   "group": "relational",
+   "hardMin": 0.0125,
+   "hardMax": 250,
+   "defaultValue": 1.25,
+   "factor": 400,
+   "whole": false
+  },
+  {
+   "key": "native_pairwise__radius",
+   "bind": "field.params.native_pairwise__radius",
+   "path": "pairwise.radius",
+   "label": "Collision Radius",
+   "group": "pairwise",
+   "hardMin": 0.5,
+   "hardMax": 500,
+   "defaultValue": 2.2,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_pairwise__stiffness",
+   "bind": "field.params.native_pairwise__stiffness",
+   "path": "pairwise.stiffness",
+   "label": "Collision Stiffness",
+   "group": "pairwise",
+   "hardMin": 0,
+   "hardMax": 100,
+   "defaultValue": 1,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_pairwise__restitution",
+   "bind": "field.params.native_pairwise__restitution",
+   "path": "pairwise.restitution",
+   "label": "Restitution",
+   "group": "pairwise",
+   "hardMin": 0,
+   "hardMax": 1,
+   "defaultValue": 0.12,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_pairwise__viscosity",
+   "bind": "field.params.native_pairwise__viscosity",
+   "path": "pairwise.viscosity",
+   "label": "Pairwise Viscosity",
+   "group": "pairwise",
+   "hardMin": 0,
+   "hardMax": 1,
+   "defaultValue": 0.06,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_pairwise__extent",
+   "bind": "field.params.native_pairwise__extent",
+   "path": "pairwise.extent",
+   "label": "Grid Extent",
+   "group": "pairwise",
+   "hardMin": 50,
+   "hardMax": 20000,
+   "defaultValue": 1400,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_color__cycleSpeed",
+   "bind": "field.params.native_color__cycleSpeed",
+   "path": "color.cycleSpeed",
+   "label": "Cycle Speed",
+   "group": "color",
+   "hardMin": -1000,
+   "hardMax": 1000,
+   "defaultValue": 0,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_color__hueShiftSpeed",
+   "bind": "field.params.native_color__hueShiftSpeed",
+   "path": "color.hueShiftSpeed",
+   "label": "Hue Shift Speed",
+   "group": "color",
+   "hardMin": -1000,
+   "hardMax": 1000,
+   "defaultValue": 0,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_color__waveFrequency",
+   "bind": "field.params.native_color__waveFrequency",
+   "path": "color.waveFrequency",
+   "label": "Wave Frequency",
+   "group": "color",
+   "hardMin": 0,
+   "hardMax": 1000,
+   "defaultValue": 1.8,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_color__angle",
+   "bind": "field.params.native_color__angle",
+   "path": "color.angle",
+   "label": "Gradient Angle",
+   "group": "color",
+   "hardMin": -36000,
+   "hardMax": 36000,
+   "defaultValue": 45,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_color__speedReactiveIntensity",
+   "bind": "field.params.native_color__speedReactiveIntensity",
+   "path": "color.speedReactiveIntensity",
+   "label": "Velocity React",
+   "group": "color",
+   "hardMin": -100,
+   "hardMax": 100,
+   "defaultValue": 0,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_color__turbulenceModulation",
+   "bind": "field.params.native_color__turbulenceModulation",
+   "path": "color.turbulenceModulation",
+   "label": "Turbulence Mod",
+   "group": "color",
+   "hardMin": -100,
+   "hardMax": 100,
+   "defaultValue": 0,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_color__densityWeight",
+   "bind": "field.params.native_color__densityWeight",
+   "path": "color.densityWeight",
+   "label": "Density Weight",
+   "group": "color",
+   "hardMin": -10,
+   "hardMax": 10,
+   "defaultValue": 0,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_color__contrast",
+   "bind": "field.params.native_color__contrast",
+   "path": "color.contrast",
+   "label": "Contrast",
+   "group": "color",
+   "hardMin": 0,
+   "hardMax": 100,
+   "defaultValue": 1,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_backgroundGlowIntensity",
+   "bind": "field.params.native_backgroundGlowIntensity",
+   "path": "backgroundGlowIntensity",
+   "label": "Glow Intensity",
+   "group": "color",
+   "hardMin": 0,
+   "hardMax": 100,
+   "defaultValue": 0.45,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "frequency",
+   "bind": "field.params.frequency",
+   "path": "cymatics.frequencyHz",
+   "label": "Drive Frequency",
+   "group": "resonance",
+   "hardMin": 1,
+   "hardMax": 100000,
+   "defaultValue": 396,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "dominance",
+   "bind": "field.params.dominance",
+   "path": "cymatics.dominance",
+   "label": "Dominance",
+   "group": "resonance",
+   "hardMin": 0,
+   "hardMax": 1,
+   "defaultValue": 1,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_cymatics__dampingQFactor",
+   "bind": "field.params.native_cymatics__dampingQFactor",
+   "path": "cymatics.dampingQFactor",
+   "label": "Q Factor",
+   "group": "resonance",
+   "hardMin": 0.01,
+   "hardMax": 10000,
+   "defaultValue": 4.5,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "excitation",
+   "bind": "field.params.excitation",
+   "path": "cymatics.driveStrength",
+   "label": "Drive Strength",
+   "group": "resonance",
+   "hardMin": 0,
+   "hardMax": 100,
+   "defaultValue": 1,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_cymatics__transportGain",
+   "bind": "field.params.native_cymatics__transportGain",
+   "path": "cymatics.transportGain",
+   "label": "Transport Gain",
+   "group": "resonance",
+   "hardMin": 0,
+   "hardMax": 1000,
+   "defaultValue": 1,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_cymatics__agitation",
+   "bind": "field.params.native_cymatics__agitation",
+   "path": "cymatics.agitation",
+   "label": "Agitation",
+   "group": "resonance",
+   "hardMin": 0,
+   "hardMax": 200,
+   "defaultValue": 0.3,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_cymatics__plateSize",
+   "bind": "field.params.native_cymatics__plateSize",
+   "path": "cymatics.plateSize",
+   "label": "Plate Size",
+   "group": "resonance",
+   "hardMin": 10,
+   "hardMax": 20000,
+   "defaultValue": 700,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_cymatics__modeCount",
+   "bind": "field.params.native_cymatics__modeCount",
+   "path": "cymatics.modeCount",
+   "label": "Mode Count",
+   "group": "resonance",
+   "hardMin": 1,
+   "hardMax": 64,
+   "defaultValue": 64,
+   "factor": 1,
+   "whole": true
+  },
+  {
+   "key": "native_cymatics__boundaryStrength",
+   "bind": "field.params.native_cymatics__boundaryStrength",
+   "path": "cymatics.boundaryStrength",
+   "label": "Boundary Strength",
+   "group": "resonance",
+   "hardMin": 0,
+   "hardMax": 1000,
+   "defaultValue": 6,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_cymatics__baseFrequency",
+   "bind": "field.params.native_cymatics__baseFrequency",
+   "path": "cymatics.baseFrequency",
+   "label": "Resonator f0",
+   "group": "resonance",
+   "hardMin": 0.5,
+   "hardMax": 2000,
+   "defaultValue": 40,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_cymatics__sweepSpeed",
+   "bind": "field.params.native_cymatics__sweepSpeed",
+   "path": "cymatics.sweepSpeed",
+   "label": "Sweep Period",
+   "group": "resonance",
+   "hardMin": 0.01,
+   "hardMax": 100000,
+   "defaultValue": 8,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_cymatics__sweep__glideS",
+   "bind": "field.params.native_cymatics__sweep__glideS",
+   "path": "cymatics.sweep.glideS",
+   "label": "Sweep Glide",
+   "group": "resonance",
+   "hardMin": 0.01,
+   "hardMax": 3600,
+   "defaultValue": 8,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_cymatics__sweep__dwellS",
+   "bind": "field.params.native_cymatics__sweep__dwellS",
+   "path": "cymatics.sweep.dwellS",
+   "label": "Sweep Dwell",
+   "group": "resonance",
+   "hardMin": 0,
+   "hardMax": 3600,
+   "defaultValue": 2,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_medium__pressure",
+   "bind": "field.params.native_medium__pressure",
+   "path": "medium.pressure",
+   "label": "Medium Pressure",
+   "group": "medium",
+   "hardMin": 0,
+   "hardMax": 200,
+   "defaultValue": 4,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_medium__coupling",
+   "bind": "field.params.native_medium__coupling",
+   "path": "medium.coupling",
+   "label": "Medium Coupling",
+   "group": "medium",
+   "hardMin": 0,
+   "hardMax": 20,
+   "defaultValue": 0.8,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_medium__persistence",
+   "bind": "field.params.native_medium__persistence",
+   "path": "medium.persistence",
+   "label": "Medium Persistence",
+   "group": "medium",
+   "hardMin": 0,
+   "hardMax": 1,
+   "defaultValue": 0.97,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_medium__iterations",
+   "bind": "field.params.native_medium__iterations",
+   "path": "medium.iterations",
+   "label": "Pressure Iterations",
+   "group": "medium",
+   "hardMin": 1,
+   "hardMax": 64,
+   "defaultValue": 4,
+   "factor": 1,
+   "whole": true
+  },
+  {
+   "key": "native_medium__gridRes",
+   "bind": "field.params.native_medium__gridRes",
+   "path": "medium.gridRes",
+   "label": "Medium Grid",
+   "group": "medium",
+   "hardMin": 16,
+   "hardMax": 1024,
+   "defaultValue": 192,
+   "factor": 1,
+   "whole": true
+  },
+  {
+   "key": "native_medium__splatGain",
+   "bind": "field.params.native_medium__splatGain",
+   "path": "medium.splatGain",
+   "label": "Splat Gain",
+   "group": "medium",
+   "hardMin": 0,
+   "hardMax": 20,
+   "defaultValue": 1,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_medium__extent",
+   "bind": "field.params.native_medium__extent",
+   "path": "medium.extent",
+   "label": "Medium Extent",
+   "group": "medium",
+   "hardMin": 50,
+   "hardMax": 20000,
+   "defaultValue": 1400,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_collision__restitution",
+   "bind": "field.params.native_collision__restitution",
+   "path": "collision.restitution",
+   "label": "Restitution",
+   "group": "collision",
+   "hardMin": 0,
+   "hardMax": 1,
+   "defaultValue": 0.35,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_collision__friction",
+   "bind": "field.params.native_collision__friction",
+   "path": "collision.friction",
+   "label": "Contact Friction",
+   "group": "collision",
+   "hardMin": 0,
+   "hardMax": 1,
+   "defaultValue": 0.1,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_collision__band",
+   "bind": "field.params.native_collision__band",
+   "path": "collision.band",
+   "label": "Contact Band",
+   "group": "collision",
+   "hardMin": 1,
+   "hardMax": 2000,
+   "defaultValue": 40,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_collision__strength",
+   "bind": "field.params.native_collision__strength",
+   "path": "collision.strength",
+   "label": "Wall Strength",
+   "group": "collision",
+   "hardMin": 0,
+   "hardMax": 200,
+   "defaultValue": 4,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_collision__integrity",
+   "bind": "field.params.native_collision__integrity",
+   "path": "collision.integrity",
+   "label": "Integrity Weakening",
+   "group": "collision",
+   "hardMin": 0,
+   "hardMax": 20,
+   "defaultValue": 0.5,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_glyphVolume__depth",
+   "bind": "field.params.native_glyphVolume__depth",
+   "path": "glyphVolume.depth",
+   "label": "Body Depth",
+   "group": "volume",
+   "hardMin": 0,
+   "hardMax": 4000,
+   "defaultValue": 90,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_glyphVolume__wallShare",
+   "bind": "field.params.native_glyphVolume__wallShare",
+   "path": "glyphVolume.wallShare",
+   "label": "Flank Share",
+   "group": "volume",
+   "hardMin": 0,
+   "hardMax": 1,
+   "defaultValue": 0.34,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_glyphVolume__faceBias",
+   "bind": "field.params.native_glyphVolume__faceBias",
+   "path": "glyphVolume.faceBias",
+   "label": "Face Share",
+   "group": "volume",
+   "hardMin": 0,
+   "hardMax": 1,
+   "defaultValue": 0.55,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_glyphVolume__interiorFill",
+   "bind": "field.params.native_glyphVolume__interiorFill",
+   "path": "glyphVolume.interiorFill",
+   "label": "Interior Fill",
+   "group": "volume",
+   "hardMin": 0,
+   "hardMax": 1,
+   "defaultValue": 0.25,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_glyphVolume__surfaceThickness",
+   "bind": "field.params.native_glyphVolume__surfaceThickness",
+   "path": "glyphVolume.surfaceThickness",
+   "label": "Surface Sheet",
+   "group": "volume",
+   "hardMin": 0,
+   "hardMax": 2000,
+   "defaultValue": 6,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_glyphVolume__wallBand",
+   "bind": "field.params.native_glyphVolume__wallBand",
+   "path": "glyphVolume.wallBand",
+   "label": "Contour Band",
+   "group": "volume",
+   "hardMin": 0.5,
+   "hardMax": 1000,
+   "defaultValue": 42,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_glyphVolume__outsideTaper",
+   "bind": "field.params.native_glyphVolume__outsideTaper",
+   "path": "glyphVolume.outsideTaper",
+   "label": "Spray Taper",
+   "group": "volume",
+   "hardMin": 0,
+   "hardMax": 100,
+   "defaultValue": 0.6,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_glyphVolume__referenceFalloff",
+   "bind": "field.params.native_glyphVolume__referenceFalloff",
+   "path": "glyphVolume.referenceFalloff",
+   "label": "Profile Reach",
+   "group": "volume",
+   "hardMin": 0.05,
+   "hardMax": 100,
+   "defaultValue": 1,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_glyphVolume__densityDepth",
+   "bind": "field.params.native_glyphVolume__densityDepth",
+   "path": "glyphVolume.densityDepth",
+   "label": "Density → Depth",
+   "group": "volume",
+   "hardMin": -1,
+   "hardMax": 1,
+   "defaultValue": 0.35,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_glyphVolume__jitter",
+   "bind": "field.params.native_glyphVolume__jitter",
+   "path": "glyphVolume.jitter",
+   "label": "Depth Jitter",
+   "group": "volume",
+   "hardMin": 0,
+   "hardMax": 2000,
+   "defaultValue": 2,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_depth__fov",
+   "bind": "field.params.native_depth__fov",
+   "path": "depth.fov",
+   "label": "Field of View",
+   "group": "depth",
+   "hardMin": 4,
+   "hardMax": 120,
+   "defaultValue": 38,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_depth__distance",
+   "bind": "field.params.native_depth__distance",
+   "path": "depth.distance",
+   "label": "Orbit Distance",
+   "group": "depth",
+   "hardMin": 10,
+   "hardMax": 100000,
+   "defaultValue": 800,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_depth__sizeAttenuation",
+   "bind": "field.params.native_depth__sizeAttenuation",
+   "path": "depth.sizeAttenuation",
+   "label": "Size Attenuation",
+   "group": "depth",
+   "hardMin": 0,
+   "hardMax": 10,
+   "defaultValue": 1,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_depth__sizeAttenuationCurve",
+   "bind": "field.params.native_depth__sizeAttenuationCurve",
+   "path": "depth.sizeAttenuationCurve",
+   "label": "Attenuation Curve",
+   "group": "depth",
+   "hardMin": 0.01,
+   "hardMax": 20,
+   "defaultValue": 1,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_depth__sizeDepthBias",
+   "bind": "field.params.native_depth__sizeDepthBias",
+   "path": "depth.sizeDepthBias",
+   "label": "Depth Size Bias",
+   "group": "depth",
+   "hardMin": -1,
+   "hardMax": 1,
+   "defaultValue": 0,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_depth__aerialFade",
+   "bind": "field.params.native_depth__aerialFade",
+   "path": "depth.aerialFade",
+   "label": "Aerial Fade",
+   "group": "depth",
+   "hardMin": 0,
+   "hardMax": 1,
+   "defaultValue": 0.55,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_depth__aerialRange",
+   "bind": "field.params.native_depth__aerialRange",
+   "path": "depth.aerialRange",
+   "label": "Aerial Reach",
+   "group": "depth",
+   "hardMin": 0.1,
+   "hardMax": 100,
+   "defaultValue": 2.2,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_depth__depthTintWeight",
+   "bind": "field.params.native_depth__depthTintWeight",
+   "path": "depth.depthTintWeight",
+   "label": "Depth Tint",
+   "group": "depth",
+   "hardMin": 0,
+   "hardMax": 1,
+   "defaultValue": 0,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "focusDwell",
+   "bind": "composition.focusDwell",
+   "path": "composition.orchestration.dwell",
+   "label": "Focus Dwell",
+   "group": "composition",
+   "hardMin": 0,
+   "hardMax": 3600,
+   "defaultValue": 0,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "focusGlide",
+   "bind": "composition.focusDuration",
+   "path": "composition.orchestration.glide",
+   "label": "Focus Glide",
+   "group": "composition",
+   "hardMin": 0.01,
+   "hardMax": 3600,
+   "defaultValue": 2.4,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_composition__entityTintWeight",
+   "bind": "field.params.native_composition__entityTintWeight",
+   "path": "composition.entityTintWeight",
+   "label": "Entity Tint Weight",
+   "group": "composition",
+   "hardMin": 0,
+   "hardMax": 1,
+   "defaultValue": 1,
+   "factor": 1,
+   "whole": false
+  },
+  {
+   "key": "native_composition__orchestration__focusTintWeight",
+   "bind": "field.params.native_composition__orchestration__focusTintWeight",
+   "path": "composition.orchestration.focusTintWeight",
+   "label": "Focus Tint Weight",
+   "group": "composition",
+   "hardMin": 0,
+   "hardMax": 1,
+   "defaultValue": 0.35,
+   "factor": 1,
+   "whole": false
+  }
+ ],
+ "pointer_paths": [
+  "engine.pointerMode",
+  "engine.pointerClick",
+  "engine.pointerClickStrength",
+  "engine.pointerClickRadius",
+  "engine.pointerClickStrength",
+  "engine.pointerClickRadius",
+  "field.params.pointerRadius",
+  "field.params.pointerStrength",
+  "field.params.native_interaction__velocityInfluence",
+  "field.params.pointerFalloff"
+ ],
+ "settings": {
+  "field-setting": {
+   "mediumEnabled": {
+    "path": "engine.mediumEnabled",
+    "values": [
+     false,
+     true
+    ]
+   },
+   "resonanceEnabled": {
+    "path": "engine.resonanceEnabled",
+    "values": [
+     false,
+     true
+    ]
+   },
+   "collisionEnabled": {
+    "path": "engine.collisionEnabled",
+    "values": [
+     false,
+     true
+    ]
+   },
+   "pairwiseEnabled": {
+    "path": "engine.pairwiseEnabled",
+    "values": [
+     false,
+     true
+    ]
+   },
+   "mediumDimension": {
+    "path": "engine.mediumDimension",
+    "values": [
+     "2D",
+     "3D"
+    ]
+   },
+   "mediumPlane": {
+    "path": "engine.mediumPlane",
+    "values": [
+     "vertical",
+     "horizontal"
+    ]
+   },
+   "collisionMode": {
+    "path": "engine.collisionMode",
+    "values": [
+     "obstacle",
+     "vessel"
+    ]
+   }
+  },
+  "morph-setting": {
+   "morphEnabled": {
+    "path": "engine.morphEnabled",
+    "values": [
+     false,
+     true
+    ]
+   },
+   "autoOscillate": {
+    "path": "engine.autoOscillate",
+    "values": [
+     false,
+     true
+    ]
+   },
+   "trajectory": {
+    "path": "engine.trajectory",
+    "values": [
+     "linear",
+     "toroidalHopf",
+     "vortexSpiral",
+     "quantumInterference"
+    ]
+   },
+   "driveShape": {
+    "path": "engine.driveShape",
+    "values": [
+     "sine",
+     "triangle",
+     "smooth",
+     "pulse"
+    ]
+   },
+   "law": {
+    "path": "morph.law",
+    "values": [
+     "theta",
+     "product",
+     "sum",
+     "beat"
+    ]
+   }
+  },
+  "colour-setting": {
+   "colorEnabled": {
+    "path": "engine.colorEnabled",
+    "values": [
+     false,
+     true
+    ]
+   },
+   "colorMode": {
+    "path": "engine.colorMode",
+    "values": [
+     "linearGradient",
+     "radialGradient",
+     "angularSweep",
+     "velocityThermal",
+     "densityDepth",
+     "waveInterference",
+     "rainbowSpectral",
+     "monochrome"
+    ]
+   }
+  },
+  "panel-setting": {
+   "backgroundMode": {
+    "path": "engine.backgroundMode",
+    "values": [
+     "solid",
+     "vignette",
+     "ambientGlow",
+     "adaptive"
+    ]
+   },
+   "grainProfile": {
+    "path": "engine.grainProfile",
+    "values": [
+     false,
+     true
+    ]
+   },
+   "dotShape": {
+    "path": "engine.dotShape",
+    "values": [
+     "circle",
+     "square"
+    ]
+   },
+   "volumeEnabled": {
+    "path": "engine.volumeEnabled",
+    "values": [
+     false,
+     true
+    ]
+   },
+   "volumeProfile": {
+    "path": "engine.volumeProfile",
+    "values": [
+     "slab",
+     "bevel",
+     "round",
+     "dome",
+     "taper"
+    ]
+   },
+   "depthPerspective": {
+    "path": "engine.depthPerspective",
+    "values": [
+     false,
+     true
+    ]
+   },
+   "depthOcclusion": {
+    "path": "engine.depthOcclusion",
+    "values": [
+     false,
+     true
+    ]
+   },
+   "vortex3d": {
+    "path": "engine.vortex3d",
+    "min": 0,
+    "max": 1
+   },
+   "dispersion3d": {
+    "path": "engine.dispersion3d",
+    "min": 0,
+    "max": 1
+   },
+   "pointerMode": {
+    "path": "engine.pointerMode",
+    "values": [
+     "attract",
+     "repel",
+     "vortex"
+    ]
+   },
+   "pointerClick": {
+    "path": "engine.pointerClick",
+    "values": [
+     "pulse",
+     "implode",
+     "vortex",
+     "shove",
+     "off"
+    ]
+   },
+   "pointerScope": {
+    "path": "pointerScope",
+    "values": [
+     "global",
+     "local"
+    ]
+   },
+   "relationalEnabled": {
+    "path": "engine.relationalEnabled",
+    "values": [
+     false,
+     true
+    ]
+   },
+   "relationalMode": {
+    "path": "engine.relationalMode",
+    "values": [
+     "orbital",
+     "nbody",
+     "chaos"
+    ]
+   },
+   "frequencyDriver": {
+    "path": "composition.frequencyDriver",
+    "values": [
+     "torus",
+     "manual",
+     "focus",
+     "automation"
+    ]
+   },
+   "keySource": {
+    "path": "composition.keySource",
+    "values": [
+     "torus",
+     "sky",
+     "manual"
+    ]
+   },
+   "symbolVoices": {
+    "path": "composition.symbolVoices",
+    "values": [
+     false,
+     true
+    ]
+   },
+   "collisionsStrike": {
+    "path": "composition.collisionsStrike",
+    "values": [
+     false,
+     true
+    ]
+   },
+   "pulse": {
+    "path": "composition.pulse",
+    "values": [
+     false,
+     true
+    ]
+   },
+   "fieldLevel": {
+    "path": "composition.fieldLevel",
+    "min": -60,
+    "max": 0
+   },
+   "autoSweep": {
+    "path": "engine.autoSweep",
+    "values": [
+     false,
+     true
+    ]
+   },
+   "sweepDirection": {
+    "path": "engine.sweepDirection",
+    "values": [
+     "ascent",
+     "descent",
+     "pingpong"
+    ]
+   },
+   "templateDimension": {
+    "path": "engine.templateDimension",
+    "values": [
+     "2D",
+     "3D"
+    ]
+   },
+   "resonatorMode": {
+    "path": "engine.resonatorMode",
+    "values": [
+     "resonator",
+     "template"
+    ]
+   },
+   "focus": {
+    "path": "composition.focus",
+    "values": [
+     "parallel",
+     "travelling"
+    ]
+   },
+   "focusOrder": {
+    "path": "engine.focusOrder",
+    "values": [
+     "listed",
+     "reverse",
+     "pingpong"
+    ]
+   },
+   "carryTint": {
+    "path": "composition.carryTint",
+    "values": [
+     false,
+     true
+    ]
+   },
+   "carryStation": {
+    "path": "composition.carryStation",
+    "values": [
+     false,
+     true
+    ]
+   },
+   "plane": {
+    "path": "composition.plane",
+    "values": [
+     "XY",
+     "XZ",
+     "YZ"
+    ]
+   },
+   "layout": {
+    "path": "composition.layout",
+    "values": [
+     "line",
+     "column",
+     "ring",
+     "grid",
+     "spiral",
+     "align-x",
+     "align-y",
+     "distribute-x",
+     "distribute-y",
+     "laminate"
+    ]
+   },
+   "autoFitSizes": {
+    "path": "engine.autoFitSizes",
+    "values": [
+     false,
+     true
+    ]
+   }
+  }
+ },
+ "carry_tint_bind": "field.params.native_composition__orchestration__focusTintWeight",
+ "blank_scene": {
+  "toolbelt": [
+   {
+    "id": "speed",
+    "scope": "field",
+    "key": "timeScale"
+   },
+   {
+    "id": "spring",
+    "scope": "field",
+    "key": "recovery"
+   },
+   {
+    "id": "viscosity",
+    "scope": "field",
+    "key": "native_fluid__viscosity"
+   },
+   {
+    "id": "flow",
+    "scope": "field",
+    "key": "turbulence"
+   },
+   {
+    "id": "transition",
+    "scope": "selected",
+    "key": "sequence.transition"
+   },
+   {
+    "id": "blend",
+    "scope": "field",
+    "key": "native_morphProgress"
+   }
+  ],
+  "engine": {
+   "paletteSource": "custom",
+   "grainProfile": true,
+   "backgroundMode": "solid",
+   "resonatorMode": "resonator",
+   "focusOrder": "listed",
+   "dotShape": "circle",
+   "autoFitSizes": true,
+   "mediumEnabled": false,
+   "collisionEnabled": false,
+   "collisionMode": "obstacle",
+   "pairwiseEnabled": false,
+   "fontFamily": "system-ui, -apple-system, sans-serif",
+   "fontWeight": 900,
+   "resonanceEnabled": true,
+   "morphEnabled": false,
+   "trajectory": "toroidalHopf",
+   "driveShape": "sine",
+   "autoOscillate": true,
+   "relationalEnabled": false,
+   "relationalMode": "orbital",
+   "pointerMode": "repel",
+   "pointerClick": "pulse",
+   "pointerClickStrength": 2.2,
+   "pointerClickRadius": 0.45,
+   "colorMode": "linearGradient",
+   "colorEnabled": true,
+   "mediumPlane": "vertical",
+   "mediumDimension": "2D",
+   "autoSweep": false,
+   "sweepDirection": "ascent"
+  },
+  "id": "",
+  "name": "Untitled scene",
+  "character": "An arrangement, waiting to happen.",
+  "duration": 12,
+  "transition": 1.5,
+  "view": {
+   "mode": "2d",
+   "yaw": 0,
+   "pitch": 0,
+   "zoom": 1,
+   "panX": 0,
+   "panY": 0
+  },
+  "field": {
+   "background": "#f4f2eb",
+   "palette": [
+    "#252720",
+    "#252720"
+   ],
+   "material": "ink",
+   "params": {
+    "count": 62000,
+    "size": 2.8,
+    "sizeBias": 1.6,
+    "opacity": 0.92,
+    "roundness": 0.95,
+    "softness": 0.15,
+    "irregularity": 0.35,
+    "elongation": 0.04,
+    "orientation": 0,
+    "contrast": 0.93,
+    "densityScale": 1,
+    "densityPhase": 0.3,
+    "edgeWeight": 0,
+    "halo": 0.13,
+    "speed": 0.7,
+    "circulation": 1,
+    "turbulence": 0.22,
+    "turbulenceScale": 1.2,
+    "recovery": 1.1,
+    "dispersion": 0.09,
+    "pointerStrength": 0.8,
+    "pointerRadius": 0.23,
+    "pointerFalloff": 2,
+    "depth": 0.12,
+    "grain": 0.035,
+    "snapRigidity": 1,
+    "densityTether": 1,
+    "curlDepth": 0.2,
+    "vortexRadius": 0.4,
+    "gravityX": 0,
+    "gravityY": 0,
+    "gravityZ": 0,
+    "quadraticDrag": 0.2,
+    "thermalJitter": 0,
+    "speedLimit": 3,
+    "zConfinement": 1,
+    "timeScale": 1,
+    "gravitySoftening": 0.1,
+    "gravityFalloff": 2,
+    "swirlRadius": 0.4,
+    "frequency": 220,
+    "dominance": 0,
+    "excitation": 0.6
+   }
+  },
+  "entities": [],
+  "text": [],
+  "composition": {
+   "layout": "free",
+   "plane": "XY",
+   "focus": "parallel",
+   "focusDuration": 4,
+   "carryTint": true,
+   "carryStation": false,
+   "frequencyDriver": "torus",
+   "keySource": "torus"
+  },
+  "morph": {
+   "thetaRate": 0.08,
+   "phiRate": 0.13,
+   "thetaOffset": 0,
+   "phiOffset": 0,
+   "law": "theta",
+   "depth": 1,
+   "dwell": 0.3
+  },
+  "automation": []
+ }
+}

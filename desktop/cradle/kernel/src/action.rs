@@ -140,6 +140,9 @@ pub fn owner_slices(action: &str) -> Option<Vec<crate::world_model::Slice>> {
         vec![Slice::Agents, Slice::Sessions]
     } else if action.starts_with("ql.") {
         vec![Slice::Sky]
+    } else if action.starts_with(crate::expression_actions::PREFIX) {
+        // Expressions' works, Scenes, Studio values, takes and playback are the expression store's (O-I #1008).
+        vec![Slice::Expressions]
     } else {
         return None;
     };

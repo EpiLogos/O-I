@@ -622,8 +622,11 @@ impl Serialize for SceneMetadata<'_> {
             body,
             triggers,
             private: _,
+            studio_takes,
         } = self.0;
-        let mut out = s.serialize_map(Some(5 + usize::from(presentation.is_some())))?;
+        let mut out = s.serialize_map(Some(
+            5 + usize::from(presentation.is_some()) + usize::from(!studio_takes.is_empty()),
+        ))?;
         if let Some(presentation) = presentation {
             out.serialize_entry("presentation", presentation)?;
         }
@@ -632,6 +635,11 @@ impl Serialize for SceneMetadata<'_> {
         out.serialize_entry("entity_refs", entity_refs)?;
         out.serialize_entry("body", body)?;
         out.serialize_entry("triggers", triggers)?;
+        // A Scene's Studio takes (O-I #1008) travel with its metadata, so a document restored from its Act keeps them; a Scene
+        // without any writes the bytes it wrote before.
+        if !studio_takes.is_empty() {
+            out.serialize_entry("studio_takes", studio_takes)?;
+        }
         out.end()
     }
 }

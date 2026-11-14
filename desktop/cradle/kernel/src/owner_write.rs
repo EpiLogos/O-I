@@ -113,7 +113,12 @@ impl PreparedWrite {
             KernelOp::InvokeAction { invocation, .. } => {
                 // The decision actions are the decision form's (decision.rs)
                 // and its ordered arm's: they act on kernel-held authority.
+                // Expressions' are the expression store's, answered in its
+                // ordered arm under the lock (expression_actions.rs).
                 !invocation.action.starts_with("action:decision.")
+                    && !invocation
+                        .action
+                        .starts_with(crate::expression_actions::PREFIX)
             }
             KernelOp::CredentialSetup { .. }
             | KernelOp::CredentialRotate { .. }

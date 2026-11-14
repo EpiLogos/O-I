@@ -240,7 +240,8 @@ mod tests {
                 "sky",
                 "packet",
                 "scope",
-                "roster"
+                "roster",
+                "expressions"
             ]
         );
         for slice in &document.world_model.slices {

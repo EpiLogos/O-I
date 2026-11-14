@@ -11,7 +11,9 @@
 //! |               |                                 | tasks as clips on the session that executes them (else on their Run's     |
 //! |               |                                 | track), their attempts as takes, the workcells as return tracks          |
 //! | `techne`      | sky                             | the dated sky now, as seen from Earth, as one track                       |
-//! | `expressions` | none                            | its owner (the native field) is no slice of the World Model yet (#1008)  |
+//! | `expressions` | expressions                     | each work as a track (a closed one opens from its file), its Scenes as   |
+//! |               |                                 | clips on the rows (Moment n: each work's n-th Scene), their takes, the   |
+//! |               |                                 | Studio's values of each open work's Scene, and the playback (O-I #1008)  |
 //! | `live`        | none                            | its owner (the open set and its sound engine) is no slice yet (#1010)    |
 //!
 //! A slice that is unread or refused is never an empty success: the track or row it would make stands with that slice's words as
@@ -76,7 +78,8 @@ impl Mode {
             Mode::Central => &[Slice::Worlds, Slice::Day, Slice::Workcells],
             Mode::Factory => &[Slice::Sessions, Slice::Factory, Slice::Workcells],
             Mode::Techne => &[Slice::Sky],
-            Mode::Expressions | Mode::Live => &[],
+            Mode::Expressions => &[Slice::Expressions],
+            Mode::Live => &[],
         }
     }
 
@@ -89,7 +92,7 @@ impl Mode {
             Mode::Factory => {
                 "Factory and AIKit · the Agent sessions, Factory's tasks and their attempts"
             }
-            Mode::Expressions => "Expressions · the native composition",
+            Mode::Expressions => "Expressions · its works, their Scenes and the Studio, in the kernel's expression store",
             Mode::Techne => "Technē · QL's dated sky",
             Mode::Live => "Live · the open set's owner",
         }
@@ -158,6 +161,9 @@ pub struct Ruler {
 pub struct Row {
     pub id: String,
     pub name: String,
+    /// The row's own acts: Expressions' `launch` plays each work's Scene on the row (Live's scene launch).
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub acts: BTreeMap<String, Act>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
@@ -190,6 +196,36 @@ pub struct Track {
     pub works_in: Option<String>,
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub acts: BTreeMap<String, Act>,
+    /// Expressions' Studio of the track's work: the values of the field and the settings of the Scene it has selected, each
+    /// written by `act` (O-I #1008).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub studio: Option<Studio>,
+    /// The track's mixer as its owner keeps it, where the owner keeps one per track (an Expression's Volume, Activator, Solo and Arm).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub mix: Option<Mix>,
+}
+
+/// One track's mixer as its owner keeps it: each control the owner holds, and nothing it does not.
+#[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
+pub struct Mix {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub volume: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub activator: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub solo: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub arm: Option<bool>,
+}
+
+/// The Studio a device draws from (manual §20.2): the Scene's values of the field by bind, its device settings by `<kind>:<key>`,
+/// and the one Action each control writes with, given the bind (or setting) and the value the person gives.
+#[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
+pub struct Studio {
+    pub scene_ref: String,
+    pub values: BTreeMap<String, Value>,
+    pub settings: BTreeMap<String, Value>,
+    pub act: Act,
 }
 
 /// An instant, or a stretch from one instant to another, in unix ms. No end: it runs on (a running clip's open edge).
@@ -447,10 +483,7 @@ pub fn build(mode: Mode, answers: &[Value]) -> ModeSet {
         Mode::Central => central(&read(0), &read(1), &read(2)),
         Mode::Factory => factory(&read(0), &read(1), &read(2)),
         Mode::Techne => techne(&read(0)),
-        Mode::Expressions => ModeSet {
-            absent: Some("Expressions' owner, the native field and the Expression it presents, is no slice of the World Model yet, so the kernel builds no Set of it: its tracks are the open work's scenes, read by the window until O-I #1008.".into()),
-            ..ModeSet::default()
-        },
+        Mode::Expressions => expressions(&read(0)),
         Mode::Live => ModeSet {
             absent: Some("Live's owner, the open set and its sound engine, is no slice of the World Model yet, so the kernel builds no Set of it: its tracks are the open set's parts, read by the window until O-I #1010.".into()),
             ..ModeSet::default()
@@ -986,11 +1019,13 @@ fn central(worlds: &Read, day: &Read, cells: &Read) -> ModeSet {
         .map(|(id, name, _)| Row {
             id: format!("central:row:{id}"),
             name: name.clone(),
+            ..Row::default()
         })
         .collect();
     rows.extend((0..slots).map(|i| Row {
         id: format!("central:slot:{}", i + 1),
         name: format!("{}", named.len() + i + 1),
+        ..Row::default()
     }));
     let clip_of = |world: &str, page: &Page, row: String| {
         Clip {
@@ -1990,6 +2025,7 @@ fn factory(sessions: &Read, field: &Read, cells: &Read) -> ModeSet {
         .map(|n| Row {
             id: format!("batch:{n}"),
             name: n.to_string(),
+            ..Row::default()
         })
         .collect();
 
@@ -2107,6 +2143,525 @@ fn factory(sessions: &Read, field: &Read, cells: &Read) -> ModeSet {
                 .iter()
                 .map(|link| (*link).to_owned())
                 .collect(),
+        }),
+        mixer,
+        lanes_absent,
+        acts,
+        waiting,
+        ..ModeSet::default()
+    }
+}
+
+// ------------------------------------------------------------------ Expressions
+
+/// The id of the n-th row of Expressions' grid, from 1: a stop, each open Expression's n-th Scene (manual §20.1, The Main track: "each
+/// row is a moment across several Expressions").
+pub fn expression_row(n: usize) -> String {
+    format!("expressions:stop:{n}")
+}
+
+/// The track that says why the works home, or a file of it, gives no work.
+pub const EXPRESSIONS_HOME_TRACK: &str = "expressions:home";
+
+/// Expressions' mixer row (manual §20.1, The mixer row): Volume, the Activator, Solo and Arm are each one Expression's, written by
+/// one Action on its track; Monitor is none.
+fn expressions_mixer() -> BTreeMap<String, Control> {
+    let mut mixer = BTreeMap::new();
+    mixer.insert(
+        "volume".into(),
+        Control {
+            grain: Some(
+                "from silence (0) to +6 dB (2); 1 is the level the Expression was made at".into(),
+            ),
+            ..control("The level of the Expression's sound (expressions.mix.set, its level)")
+        },
+    );
+    mixer.insert("activator".into(), control("The Expression plays, or it does not: off, its Scenes do not launch and its track is dimmed (expressions.mix.set, active)"));
+    mixer.insert("solo".into(), control("Lets you hear only this Expression's sound: another's Solo silences the ones not soloed, and nothing stops (expressions.mix.set, solo)"));
+    mixer.insert("arm".into(), control("Arms the Expression for a take: with Arm on, Play records the Studio as a take of the Scene it launches (expressions.arm)"));
+    mixer.insert("monitor".into(), Control {
+        disabled: Some("None in Expressions (manual §20.1): an Expression's sound goes to the Main track as its field plays it.".into()),
+        ..control("Monitor")
+    });
+    mixer
+}
+
+/// What Expressions' acts no single Action carries wait for, by the op the menu names.
+fn expressions_waiting() -> BTreeMap<String, String> {
+    words(&[
+        ("track.rename", "an Expression's title: the store renames a work (its rename change), and no Action of the registry carries it yet — missing op: expressions.rename (Expressions)"),
+        ("clip.edit", "a Scene's Clip and Launch panels, its name, duration, transition, Quantize and follow action: no Action of the registry carries them yet — missing op: expressions.scene.edit (Expressions)"),
+        ("clip.delete", "a Scene taken out of its Expression: the store removes one (its scene_remove change), and no Action of the registry carries it yet — missing op: expressions.scene.remove (Expressions)"),
+        ("take.unkeep", "a kept take given back: keeping writes its values into the Scene's lanes, and no Action restores what they replaced yet — missing op: expressions.take.unkeep (Expressions)"),
+        ("take.lane", "a take moved onto another take lane: no Action of the registry carries it yet — missing op: expressions.take.lane (Expressions)"),
+        ("lane.draw", "a lane of the Studio drawn by hand: no Action of the registry carries it yet — missing op: expressions.lane.draw (Expressions)"),
+        ("studio.reenable", "a value given back to the lane that holds it (the hand-back light): no Action of the registry carries it yet — missing op: expressions.studio.reenable (Expressions)"),
+    ])
+}
+
+fn expressions_lanes_absent() -> BTreeMap<String, String> {
+    words(&[
+        ("automation", "An Expression's automation is each Scene's own lanes, which Clip view edits; the Set lays none under the track."),
+        ("events", "Expressions keeps no events beside its Scenes and their takes."),
+    ])
+}
+
+/// A number of seconds as the Set says it.
+fn seconds(value: &Value) -> String {
+    let seconds = value.as_f64().unwrap_or(0.0);
+    let rounded = (seconds * 10.0).round() / 10.0;
+    format!("{rounded} s")
+}
+
+/// One take of a Scene as the Set lays it (the store's reading: expression.rs `work_reading`, expression_studio.rs `take_summary`).
+fn expression_take(
+    work: &str,
+    scene_ref: &str,
+    take: &Value,
+    recording: Option<&Value>,
+) -> Option<Take> {
+    let take_ref = text(&take["take_ref"])?;
+    let running = take["state"] == "running";
+    let kept = take["kept"].is_object();
+    let lane = take["lane"].as_u64().unwrap_or(0);
+    let (name, mut words) = if take["kind"] == "torus" {
+        (
+            format!("Torus take {}", lane + 1),
+            format!(
+                "a take of the Torus, {} from {} of its performance",
+                seconds(&take["seconds"]),
+                seconds(&take["start_s"])
+            ),
+        )
+    } else {
+        let binds = take["binds"].as_array().map_or(0, Vec::len);
+        (
+            format!("Take {lane}"),
+            format!(
+                "a take of the Studio on lane {lane}: {}, {} over {}",
+                plural(binds, "value", "values"),
+                plural(
+                    take["points"].as_u64().unwrap_or(0) as usize,
+                    "point",
+                    "points"
+                ),
+                seconds(&take["seconds"])
+            ),
+        )
+    };
+    if running {
+        words.push_str(" · recording now");
+    }
+    if kept {
+        words.push_str(&format!(
+            " · kept from {} to {} into the main lane",
+            seconds(&take["kept"]["from_s"]),
+            seconds(&take["kept"]["to_s"])
+        ));
+    }
+    let mut acts = BTreeMap::new();
+    if !running && !kept {
+        acts.insert(
+            "choose".to_owned(),
+            done(
+                act(
+                    "expressions.take.keep",
+                    json!({"expression_ref": work, "scene_ref": scene_ref, "take_ref": take_ref}),
+                    None,
+                    "Expressions' expressions.take.keep: the take kept, whole, into its Scene's main lane",
+                ),
+                format!("{name} is kept into the main lane."),
+            ),
+        );
+    }
+    Some(Take {
+        id: take_ref.to_owned(),
+        clip: scene_ref.to_owned(),
+        track: work.to_owned(),
+        name,
+        state: if running { "running" } else { "returned" }.into(),
+        standing: kept,
+        at: recording
+            .filter(|_| running)
+            .and_then(|recording| recording["started_at_unix_ms"].as_u64())
+            .map(|start| Span {
+                start_unix_ms: start,
+                end_unix_ms: None,
+            }),
+        words,
+        acts,
+        ..Take::default()
+    })
+}
+
+/// Expressions' Set (manual §20.1): each work of the expression store a track, the open ones holding their Scenes as clips on the
+/// rows (a row is a stop: each open work's n-th Scene) with the takes under them and the Studio of the Scene each has selected, the
+/// closed ones (the works home's) each opened from its file; every act is an `expressions.*` Action.
+fn expressions(store: &Read) -> ModeSet {
+    let mixer = expressions_mixer();
+    let lanes_absent = expressions_lanes_absent();
+    let waiting = expressions_waiting();
+    let Some(value) = store.value else {
+        return ModeSet {
+            tracks: vec![Track {
+                id: "expressions:works".into(),
+                name: "Expressions".into(),
+                kind: "the works of the expression store: the open ones, then the works home's"
+                    .into(),
+                absent: Some(format!("The Expressions are unread: {}", store.why())),
+                ..Track::default()
+            }],
+            mixer,
+            lanes_absent,
+            waiting,
+            ..ModeSet::default()
+        };
+    };
+    let playback = &value["playback"];
+    let by_work = |list: &'static str| -> BTreeMap<String, Value> {
+        playback[list]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .filter_map(|entry| Some((text(&entry["expression_ref"])?.to_owned(), entry.clone())))
+            .collect()
+    };
+    let launched = by_work("launched");
+    let recordings = by_work("recordings");
+    let armed: std::collections::BTreeSet<&str> = playback["armed"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(Value::as_str)
+        .collect();
+    let mut tracks: Vec<Track> = Vec::new();
+    let mut clips: Vec<Clip> = Vec::new();
+    let mut takes: Vec<Take> = Vec::new();
+    // Each stop's launches: every open work's n-th Scene that holds material, on a work whose Activator is on.
+    let mut stops: Vec<Vec<Value>> = Vec::new();
+    for work in value["works"].as_array().into_iter().flatten() {
+        let Some(reference) = text(&work["expression_ref"]) else {
+            continue;
+        };
+        let title = text(&work["title"]).unwrap_or(reference).to_owned();
+        let color = text(&work["colour"]).map(str::to_owned);
+        let location = &work["location"];
+        let path = text(&location["path"]);
+        if work["open"] != true {
+            let mut acts = BTreeMap::new();
+            if location.is_object() {
+                acts.insert("open".to_owned(), done(
+                    act("expressions.open", json!({"location": location, "expected_file_revision": work["file_revision"]}), None,
+                        "Expressions' expressions.open: the Expression opened from its file, as its file holds it"),
+                    format!("{title} is open: its Scenes are on its track."),
+                ));
+                acts.insert("delete".to_owned(), done(
+                    act("expressions.delete", json!({"expression_ref": reference, "location": location,
+                        "expected_file_revision": work["file_revision"]}), None,
+                        "Expressions' expressions.delete: the Expression's file taken to Central's trash, from where its history brings it back"),
+                    format!("{title} is in Central's trash."),
+                ));
+            }
+            tracks.push(Track {
+                id: reference.to_owned(),
+                name: title,
+                kind: match path {
+                    Some(path) => format!(
+                        "an Expression, closed · its file {path} · open it to play its Scenes"
+                    ),
+                    None => "an Expression, closed".into(),
+                },
+                color,
+                acts,
+                ..Track::default()
+            });
+            continue;
+        }
+        let active = work["mix"]["active"] != false;
+        let solo = work["mix"]["solo"] == true;
+        let level = work["mix"]["level"].as_f64().unwrap_or(1.0);
+        let playing = launched.get(reference);
+        let recording = recordings.get(reference);
+        let scenes = work["scenes"].as_array().map(Vec::as_slice).unwrap_or(&[]);
+        let mut kind = vec![format!(
+            "an Expression · {}",
+            plural(scenes.len(), "Scene", "Scenes")
+        )];
+        kind.push(match path {
+            Some(path) => format!("its file {path}"),
+            None => "not saved to a file yet".into(),
+        });
+        if work["dirty"] == true {
+            kind.push("changed since it was saved".into());
+        }
+        if let Some(playing) = playing {
+            let scene = scenes
+                .iter()
+                .find(|scene| scene["scene_ref"] == playing["scene_ref"]);
+            let named = scene
+                .and_then(|scene| text(&scene["title"]))
+                .unwrap_or("a Scene");
+            kind.push(if playing["saved"] == true {
+                format!("plays the saved version of {named}")
+            } else {
+                format!("plays {named}")
+            });
+        }
+        if let Some(recording) = recording {
+            kind.push(format!(
+                "records {}",
+                text(&recording["take_ref"]).unwrap_or("a take")
+            ));
+        } else if armed.contains(reference) {
+            kind.push("armed: Play records a take".into());
+        }
+        if !active {
+            kind.push("its Activator is off: its Scenes do not launch".into());
+        }
+        let work_input = json!({"expression_ref": reference});
+        let mix_act = |key: &str, words: &str| {
+            act(
+                "expressions.mix.set",
+                json!({"expression_ref": reference, "key": key}),
+                Some("value"),
+                words,
+            )
+        };
+        let mut acts = BTreeMap::from([
+            ("arm".to_owned(), act("expressions.arm", work_input.clone(), Some("on"),
+                "Expressions' expressions.arm: armed, Play records the Studio as a take; disarmed, the take it records is closed and laid on its Scene")),
+            ("activator".to_owned(), mix_act("active", "Expressions' expressions.mix.set: the Activator, on or off")),
+            ("solo".to_owned(), mix_act("solo", "Expressions' expressions.mix.set: Solo, on or off")),
+            ("volume".to_owned(), mix_act("level", "Expressions' expressions.mix.set: the Expression's level, from silence (0) to +6 dB (2)")),
+            ("save".to_owned(), done(
+                act("expressions.save", work_input.clone(), None, "Expressions' expressions.save: the Expression saved to its file, or into the works home when it has none"),
+                format!("{title} is saved."),
+            )),
+            ("duplicate".to_owned(), done(
+                act("expressions.duplicate", work_input.clone(), None, "Expressions' expressions.duplicate: a copy under a fresh ref and a title the works do not use yet, saved into the works home"),
+                format!("A copy of {title} is open and saved."),
+            )),
+            ("delete".to_owned(), done(
+                act("expressions.delete", work_input.clone(), None, "Expressions' expressions.delete: the Expression's file taken to Central's trash, from where its history brings it back"),
+                format!("{title} is in Central's trash."),
+            )),
+        ]);
+        if playing.is_some() || recording.is_some() {
+            acts.insert("stopTrack".to_owned(), done(
+                act("expressions.scene.stop", work_input.clone(), None, "Expressions' expressions.scene.stop: the Expression stopped; a take it records is closed and laid on its Scene"),
+                format!("{title} stopped."),
+            ));
+        }
+        let studio = work["studio"].as_object().and_then(|studio| {
+            let scene_ref = studio.get("scene_ref").and_then(Value::as_str)?;
+            let map = |key: &str| -> BTreeMap<String, Value> {
+                studio
+                    .get(key)
+                    .and_then(Value::as_object)
+                    .map(|map| map.iter().map(|(key, value)| (key.clone(), value.clone())).collect())
+                    .unwrap_or_default()
+            };
+            Some(Studio {
+                scene_ref: scene_ref.to_owned(),
+                values: map("values"),
+                settings: map("settings"),
+                act: act(
+                    "expressions.studio.set",
+                    json!({"expression_ref": reference, "scene_ref": scene_ref}),
+                    Some("value"),
+                    "Expressions' expressions.studio.set: a value of the field (bind) or a device setting (setting) written into the Scene by the law the devices write with, and recorded on the take while the Expression records",
+                ),
+            })
+        });
+        for (index, scene) in scenes.iter().enumerate() {
+            let Some(scene_ref) = text(&scene["scene_ref"]) else {
+                continue;
+            };
+            let label = text(&scene["title"]).unwrap_or(scene_ref).to_owned();
+            let material = scene["material"]["available"] == true;
+            let here = playing.filter(|playing| playing["scene_ref"] == scene_ref);
+            let records = recording.is_some_and(|recording| recording["scene_ref"] == scene_ref);
+            let scene_input = json!({"expression_ref": reference, "scene_ref": scene_ref});
+            let mut acts = BTreeMap::new();
+            if material {
+                if active {
+                    acts.insert("launch".to_owned(), done(
+                        act("expressions.scene.launch", json!({"launches": [scene_input]}), None,
+                            "Expressions' expressions.scene.launch: the Scene plays, landing on its Quantize; an armed Expression records a take from where it lands"),
+                        format!("{label} is launched."),
+                    ));
+                    if scene["saved"] != "never" {
+                        acts.insert("playSaved".to_owned(), done(
+                            act("expressions.scene.launch", json!({"launches": [scene_input], "saved": true}), None,
+                                "Expressions' expressions.scene.launch: the Scene's saved version plays, landing on its Quantize"),
+                            format!("The saved version of {label} is launched."),
+                        ));
+                    }
+                    if stops.len() <= index {
+                        stops.resize(index + 1, Vec::new());
+                    }
+                    stops[index].push(scene_input.clone());
+                }
+                acts.insert("save".to_owned(), done(
+                    act("expressions.scene.save", scene_input.clone(), None,
+                        "Expressions' expressions.scene.save: what the Scene holds kept as its saved version, and the Expression saved to its file"),
+                    format!("{label} is saved."),
+                ));
+                if recording.is_none() {
+                    acts.insert("capture".to_owned(), done(
+                        act("expressions.scene.capture", scene_input.clone(), None,
+                            "Expressions' expressions.scene.capture: the Scene kept as it stands as its saved version, and the next Scene started from it, after it"),
+                        format!("{label} is kept, and the next Scene starts from it."),
+                    ));
+                }
+            }
+            let note = if material {
+                format!(
+                    "{} · lands on {}",
+                    seconds(&scene["duration"]),
+                    text(&scene["quantize"]).unwrap_or("1 bar")
+                )
+            } else {
+                text(&scene["material"]["reason"])
+                    .unwrap_or("This Scene holds no material of the field yet.")
+                    .to_owned()
+            };
+            clips.push(Clip {
+                id: scene_ref.to_owned(),
+                track: reference.to_owned(),
+                row: expression_row(index + 1),
+                label,
+                subject: Some(scene_ref.to_owned()),
+                status: if records {
+                    Some("recording".into())
+                } else {
+                    here.map(|_| "running".into())
+                },
+                state: text(&scene["saved"]).map(str::to_owned),
+                at: here
+                    .and_then(|playing| playing["lands_at_unix_ms"].as_u64())
+                    .map(|start| Span {
+                        start_unix_ms: start,
+                        end_unix_ms: None,
+                    }),
+                note: Some(note),
+                acts,
+            });
+            for take in scene["takes"].as_array().into_iter().flatten() {
+                takes.extend(expression_take(reference, scene_ref, take, recording));
+            }
+        }
+        tracks.push(Track {
+            id: reference.to_owned(),
+            name: title,
+            kind: kind.join(" · "),
+            color,
+            acts,
+            studio,
+            mix: Some(Mix {
+                volume: Some(level),
+                activator: Some(active),
+                solo: Some(solo),
+                arm: Some(armed.contains(reference)),
+            }),
+            ..Track::default()
+        });
+    }
+    // The works home: why it, or a file of it, gives no work.
+    let home = &value["home"];
+    let unreadable: Vec<String> = value["unreadable"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .map(|file| {
+            format!(
+                "{} ({})",
+                text(&file["name"]).unwrap_or("a file"),
+                text(&file["error"]).unwrap_or("it does not read")
+            )
+        })
+        .collect();
+    if home["state"] == "unavailable" || !unreadable.is_empty() {
+        let folder = text(&home["path"]).unwrap_or("the works home");
+        tracks.push(Track {
+            id: EXPRESSIONS_HOME_TRACK.into(),
+            name: "Works home".into(),
+            kind: if unreadable.is_empty() {
+                format!("the works home, {folder}")
+            } else {
+                format!(
+                    "the works home, {folder} · {} that give no work: {}",
+                    plural(unreadable.len(), "file", "files"),
+                    unreadable.join("; ")
+                )
+            },
+            read_only: true,
+            absent: (home["state"] == "unavailable").then(|| {
+                format!(
+                    "The works home is unread: {}",
+                    text(&home["error"]).unwrap_or("Central gave no reason")
+                )
+            }),
+            ..Track::default()
+        });
+    }
+    if let Some(stale) = store.stale() {
+        for track in tracks.iter_mut() {
+            track.kind = format!("{} · {stale}", track.kind);
+        }
+    }
+    let mut rows: Vec<Row> = stops
+        .iter()
+        .enumerate()
+        .map(|(index, launches)| Row {
+            id: expression_row(index + 1),
+            name: (index + 1).to_string(),
+            acts: if launches.is_empty() {
+                BTreeMap::new()
+            } else {
+                BTreeMap::from([("launch".to_owned(), done(
+                    act("expressions.scene.launch", json!({"launches": launches}), None,
+                        "Expressions' expressions.scene.launch: the stop launched, the Scene in its row playing on every Expression in it"),
+                    format!("Stop {} is launched.", index + 1),
+                ))])
+            },
+        })
+        .collect();
+    // A row is every open work's n-th Scene, even one no Scene of which launches.
+    let deepest = clips
+        .iter()
+        .filter_map(|clip| {
+            clip.row
+                .strip_prefix("expressions:stop:")?
+                .parse::<usize>()
+                .ok()
+        })
+        .max()
+        .unwrap_or(0);
+    rows.extend((rows.len() + 1..=deepest).map(|n| Row {
+        id: expression_row(n),
+        name: n.to_string(),
+        ..Row::default()
+    }));
+    let acts = BTreeMap::from([
+        ("new".to_owned(), done(
+            act("expressions.new", json!({}), Some("title"), "Expressions' expressions.new: an Expression of one blank Scene, the field's own, saved into the works home"),
+            "The new Expression is open and saved.".into(),
+        )),
+        ("stopAll".to_owned(), done(
+            act("expressions.scene.stop", json!({}), None, "Expressions' expressions.scene.stop: every Expression stopped (Stop All); the takes they record are closed and laid on their Scenes"),
+            "Every Expression stopped.".into(),
+        )),
+    ]);
+    ModeSet {
+        rows,
+        tracks,
+        clips,
+        takes,
+        main: Some(Main {
+            track: None,
+            name: "Main".into(),
+            chain: vec!["Stops".into(), "Sound".into()],
         }),
         mixer,
         lanes_absent,
@@ -2973,16 +3528,12 @@ mod tests {
 
     #[test]
     fn a_mode_no_slice_serves_says_why_and_technes_holds_the_sky() {
-        for mode in [Mode::Expressions, Mode::Live] {
-            let set = build(mode, &[]);
-            assert!(
-                set.absent
-                    .as_deref()
-                    .is_some_and(|why| why.contains("no slice of the World Model")),
-                "{mode:?}"
-            );
-            assert!(set.tracks.is_empty());
-        }
+        let live = build(Mode::Live, &[]);
+        assert!(live
+            .absent
+            .as_deref()
+            .is_some_and(|why| why.contains("no slice of the World Model")));
+        assert!(live.tracks.is_empty());
         let sky = build(
             Mode::Techne,
             &[answer(
@@ -2996,6 +3547,208 @@ mod tests {
         assert!(sky.tracks[0].kind.contains("at 2026-11-13T10:00:00Z"));
         let unread_sky = build(Mode::Techne, &[unread(Slice::Sky)]);
         assert!(unread_sky.tracks[0].absent.is_some());
+    }
+
+    /// The expression store's reading (expression.rs `reading`): one open work of two Scenes, the first launched and recording on an
+    /// armed work, the second holding a returned take; one closed work in the works home.
+    fn store(active: bool) -> Value {
+        let location = |path: &str| json!({"schema": "central.path-ref/v1", "ref": format!("central:path:/c:{path}"), "root": "/c", "path": path});
+        answer(
+            Slice::Expressions,
+            "read",
+            json!({"schema": "oi.expression-reading/v1", "home": {"path": "Control/user/flows", "state": "listed"}, "unreadable": [],
+                "works": [
+                    {"expression_ref": "expression:authored-a", "title": "Dawn", "revision": 7, "open": true, "dirty": true,
+                     "location": location("Control/user/flows/dawn-a.expression.json"), "file_revision": "f1",
+                     "mix": {"active": active, "solo": false, "level": 0.5}, "selected_scene_ref": "expression:authored-a:scene:main",
+                     "scenes": [
+                        {"scene_ref": "expression:authored-a:scene:main", "title": "Opening", "index": 0, "duration": 12, "quantize": "1 bar",
+                         "saved": "changed", "material": {"available": true},
+                         "takes": [{"take_ref": "expression:authored-a:scene:main:take:1", "kind": "studio", "lane": 1, "start_s": 0.0,
+                            "seconds": 0.0, "binds": ["field.params.timeScale"], "points": 2, "state": "running", "kept": null}]},
+                        {"scene_ref": "expression:authored-a:scene:two", "title": "Turn", "index": 1, "duration": 8, "quantize": "1/4",
+                         "saved": "never", "material": {"available": true},
+                         "takes": [{"take_ref": "expression:authored-a:scene:two:take:1", "kind": "studio", "lane": 1, "start_s": 0.0,
+                            "seconds": 4.5, "binds": ["field.params.timeScale", "field.params.turbulence"], "points": 6, "state": "returned",
+                            "kept": null}]}],
+                     "studio": {"scene_ref": "expression:authored-a:scene:main", "values": {"field.params.timeScale": 1.25},
+                        "settings": {"field-setting:law": "drift"}}},
+                    {"expression_ref": "expression:authored-b", "title": "Dusk", "revision": 2, "open": false, "dirty": false,
+                     "location": location("Control/user/flows/dusk-b.expression.json"), "file_revision": "f9"}],
+                "playback": {"state": "recording", "epoch": 3,
+                    "launched": [{"expression_ref": "expression:authored-a", "scene_ref": "expression:authored-a:scene:main",
+                        "launched_at_unix_ms": 1000, "lands_at_unix_ms": 2500, "saved": false}],
+                    "armed": ["expression:authored-a"],
+                    "recordings": [{"expression_ref": "expression:authored-a", "scene_ref": "expression:authored-a:scene:main",
+                        "take_ref": "expression:authored-a:scene:main:take:1", "started_at_unix_ms": 2500, "at_s": 1.0}]}}),
+            None,
+        )
+    }
+
+    #[test]
+    fn expressions_set_lays_each_work_its_scenes_and_takes_and_the_studio_each_act_an_expressions_action(
+    ) {
+        let set = build(Mode::Expressions, &[store(true)]);
+        assert!(set.absent.is_none());
+        let dawn = &set.tracks[0];
+        assert_eq!(
+            (dawn.id.as_str(), dawn.name.as_str()),
+            ("expression:authored-a", "Dawn")
+        );
+        assert!(
+            dawn.kind.contains("plays Opening")
+                && dawn
+                    .kind
+                    .contains("records expression:authored-a:scene:main:take:1"),
+            "{}",
+            dawn.kind
+        );
+        assert_eq!(
+            dawn.mix,
+            Some(Mix {
+                volume: Some(0.5),
+                activator: Some(true),
+                solo: Some(false),
+                arm: Some(true)
+            })
+        );
+        assert_eq!(
+            dawn.acts["stopTrack"].input,
+            json!({"expression_ref": "expression:authored-a"})
+        );
+        assert_eq!(dawn.acts["arm"].takes.as_deref(), Some("on"));
+        assert_eq!(
+            dawn.acts["volume"].input,
+            json!({"expression_ref": "expression:authored-a", "key": "level"})
+        );
+        let studio = dawn.studio.as_ref().expect("the open work's Studio");
+        assert_eq!(studio.scene_ref, "expression:authored-a:scene:main");
+        assert_eq!(studio.values["field.params.timeScale"], json!(1.25));
+        assert_eq!(studio.act.action, "expressions.studio.set");
+        assert_eq!(
+            studio.act.input,
+            json!({"expression_ref": "expression:authored-a", "scene_ref": "expression:authored-a:scene:main"})
+        );
+        // The closed work opens from its file.
+        let dusk = &set.tracks[1];
+        assert_eq!(dusk.acts["open"].action, "expressions.open");
+        assert_eq!(
+            dusk.acts["open"].input["location"]["path"],
+            "Control/user/flows/dusk-b.expression.json"
+        );
+        assert!(dusk.studio.is_none() && dusk.mix.is_none());
+        // The Scenes are clips on the stops; the launched one plays from where it lands, and records.
+        let rows: Vec<&str> = set.rows.iter().map(|row| row.id.as_str()).collect();
+        assert_eq!(rows, ["expressions:stop:1", "expressions:stop:2"]);
+        assert_eq!(
+            set.rows[0].acts["launch"].input,
+            json!({"launches": [{"expression_ref": "expression:authored-a", "scene_ref": "expression:authored-a:scene:main"}]})
+        );
+        let opening = &set.clips[0];
+        assert_eq!(
+            (
+                opening.row.as_str(),
+                opening.status.as_deref(),
+                opening.state.as_deref()
+            ),
+            ("expressions:stop:1", Some("recording"), Some("changed"))
+        );
+        assert_eq!(
+            opening.at,
+            Some(Span {
+                start_unix_ms: 2500,
+                end_unix_ms: None
+            })
+        );
+        assert!(
+            !opening.acts.contains_key("capture"),
+            "no Capture while the work records"
+        );
+        let turn = &set.clips[1];
+        assert_eq!(
+            (turn.status.as_deref(), turn.state.as_deref()),
+            (None, Some("never"))
+        );
+        assert!(
+            turn.acts.contains_key("launch") && !turn.acts.contains_key("playSaved"),
+            "a Scene never saved has no saved version to play"
+        );
+        // The takes: the running one reaches now from where it started, and only the returned one is kept.
+        let running = set
+            .takes
+            .iter()
+            .find(|take| take.state == "running")
+            .expect("the running take");
+        assert_eq!(
+            running.at,
+            Some(Span {
+                start_unix_ms: 2500,
+                end_unix_ms: None
+            })
+        );
+        assert!(running.acts.is_empty());
+        let returned = set
+            .takes
+            .iter()
+            .find(|take| take.state == "returned")
+            .expect("the returned take");
+        assert_eq!(
+            (returned.clip.as_str(), returned.name.as_str()),
+            ("expression:authored-a:scene:two", "Take 1")
+        );
+        assert_eq!(returned.acts["choose"].action, "expressions.take.keep");
+        assert_eq!(
+            returned.acts["choose"].input["take_ref"],
+            "expression:authored-a:scene:two:take:1"
+        );
+        assert_eq!(set.acts["new"].takes.as_deref(), Some("title"));
+        assert_eq!(set.acts["stopAll"].input, json!({}));
+        // Every act is one of Expressions' Actions.
+        let all = set
+            .acts
+            .values()
+            .chain(set.rows.iter().flat_map(|row| row.acts.values()))
+            .chain(set.tracks.iter().flat_map(|track| {
+                track
+                    .acts
+                    .values()
+                    .chain(track.studio.iter().map(|studio| &studio.act))
+            }))
+            .chain(set.clips.iter().flat_map(|clip| clip.acts.values()))
+            .chain(set.takes.iter().flat_map(|take| take.acts.values()));
+        for act in all {
+            assert!(
+                crate::expression_actions::holds(&act.action),
+                "{} is an Action of Expressions",
+                act.action
+            );
+        }
+        assert_eq!(
+            set.main.as_ref().map(|main| main.chain.clone()),
+            Some(vec!["Stops".to_owned(), "Sound".to_owned()])
+        );
+        assert!(set.mixer["monitor"].disabled.is_some());
+        let roundtrip: ModeSet = serde_json::from_value(serde_json::to_value(&set).unwrap())
+            .expect("the Set round-trips");
+        assert_eq!(roundtrip, set);
+    }
+
+    #[test]
+    fn an_expression_whose_activator_is_off_launches_nothing_and_an_unread_store_says_why() {
+        let set = build(Mode::Expressions, &[store(false)]);
+        assert!(set
+            .clips
+            .iter()
+            .all(|clip| !clip.acts.contains_key("launch")));
+        assert_eq!(set.rows.len(), 2, "the stops stand, with nothing to launch");
+        assert!(set.rows.iter().all(|row| row.acts.is_empty()));
+        assert!(set.tracks[0].kind.contains("its Activator is off"));
+        let unread = build(Mode::Expressions, &[unread(Slice::Expressions)]);
+        assert_eq!(unread.tracks.len(), 1);
+        assert!(unread.tracks[0]
+            .absent
+            .as_deref()
+            .is_some_and(|why| why.starts_with("The Expressions are unread")));
     }
 
     #[test]

@@ -47,6 +47,7 @@ pub mod events;
 pub mod expression;
 mod expression_act_storage;
 pub mod expression_act_store;
+pub mod expression_actions;
 pub mod expression_asset;
 pub mod expression_blueprint;
 pub mod expression_carrier;
@@ -66,9 +67,11 @@ pub mod expression_performance_recording;
 pub mod expression_performance_reservation;
 pub mod expression_performance_source_asset;
 pub mod expression_performance_storage;
+pub mod expression_playback;
 pub mod expression_profile;
 pub mod expression_recovery;
 pub mod expression_scene;
+pub mod expression_studio;
 pub mod expression_transport;
 pub mod expression_trigger;
 pub mod factory;
@@ -3360,6 +3363,15 @@ impl Kernel {
                     },
                     _=>Err("Unknown decision Action; authority issuance is available only through native confirmation".into()),
                 }
+            }
+            // Expressions' Actions (O-I #1008): the kernel's expression store answers them under the lock, as the decision
+            // Actions are answered (expression_actions.rs).
+            KernelOp::InvokeAction {
+                project,
+                invocation,
+                channel,
+            } if invocation.action.starts_with(expression_actions::PREFIX) => {
+                expression_actions::apply(self, project, invocation, channel)
             }
             KernelOp::GitRepositoryRead { project } => Ok(KernelOpOutcome {
                 read_scopes: None,

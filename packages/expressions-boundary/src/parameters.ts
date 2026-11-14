@@ -6,7 +6,7 @@
 export {PARAM_REGISTRY, PARAM_GROUPS, getParamDef, entityParamDefs} from '../../../desktop/cradle/expressions-app/src/engine/paramRegistry';
 export type {ParamDef} from '../../../desktop/cradle/expressions-app/src/engine/paramRegistry';
 export {
-  NATIVE_BINDINGS, WORLD_SCALE, nativeBinding, baseValue, bindValue,
+  NATIVE_BINDINGS, WORLD_SCALE, nativeBinding, baseValue, bindValue, CARRY_TINT_BIND,
   entityTargets, automationTarget, automationTargets, stableNativeTarget,
   pinCycleClockId, entityCycleGroups,
 } from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/nativeParameters';

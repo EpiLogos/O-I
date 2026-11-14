@@ -106,7 +106,7 @@ export interface SharedFieldChangedReceipt extends KernelReceipt {
 }
 
 /** The World Model's slices (kernel world_model.rs; docs/architecture/world-shell.md §9.2 layer 2; O-I #1001). */
-export type ModelSliceName = "worlds" | "day" | "agents" | "sessions" | "models" | "factory" | "workcells" | "sky" | "packet" | "scope" | "roster";
+export type ModelSliceName = "worlds" | "day" | "agents" | "sessions" | "models" | "factory" | "workcells" | "sky" | "packet" | "scope" | "roster" | "expressions";
 
 /** One slice as the kernel holds it (`oi.world-model-slice/v1`): its owner and scopes, the version that moves exactly when its state
  * or its owner's refusal changes, and its state: `read` (a value), `refused` (the owner's words, no value yet), `stale` (the owner's
@@ -167,6 +167,27 @@ export interface ModeSetTrack {
   absent?: string;
   works_in?: string;
   acts?: Record<string, ModeSetAct>;
+  /** Expressions' Studio of the track's work (O-I #1008): the values and settings of the Scene it has selected, each written by `act`. */
+  studio?: ModeSetStudio;
+  /** The track's mixer as its owner keeps it, where the owner keeps one per track (an Expression's Volume, Activator, Solo and Arm). */
+  mix?: ModeSetMix;
+}
+
+/** The Studio a device draws from (manual §20.2; kernel mode_set.rs `Studio`): the Scene's values of the field by bind, its device
+ * settings by `<kind>:<key>`, and the one Action each control writes with, given the bind (or setting) and the value. */
+export interface ModeSetStudio {
+  scene_ref: string;
+  values: Record<string, unknown>;
+  settings: Record<string, unknown>;
+  act: ModeSetAct;
+}
+
+/** One track's mixer as its owner keeps it: each control the owner holds, and nothing it does not. */
+export interface ModeSetMix {
+  volume?: number;
+  activator?: boolean;
+  solo?: boolean;
+  arm?: boolean;
 }
 
 export interface ModeSetClip {
@@ -214,7 +235,8 @@ export interface ModeSet {
   absent?: string;
   /** How the Arrangement lays the Set's instants: `day`, the minutes of one UTC day (`date`); `clock`, seconds from `origin_unix_ms`. */
   ruler?: {kind: "day" | "clock"; unit: string; date?: string; origin_unix_ms?: number};
-  rows: {id: string; name: string}[];
+  /** The rows of the Session grid; a row's own acts (Expressions' `launch`: each work's Scene on the row plays, Live's scene launch). */
+  rows: {id: string; name: string; acts?: Record<string, ModeSetAct>}[];
   tracks: ModeSetTrack[];
   clips: ModeSetClip[];
   takes: ModeSetTake[];

@@ -43,8 +43,11 @@ export function baseValue(scene:Scene,key:string):number {
  const b=nativeBinding(key), value=b?readPath(scene,b.bind):scene.field.params[key];
  return typeof value==='number'&&Number.isFinite(value)?value:b?.defaultValue??0;
 }
+/** The one side rule of a Studio value (kernel expression_studio.rs reads it from the generated table): a focus tint above 0 carries the
+ * tint, so the Scene's composition carries it too. */
+export const CARRY_TINT_BIND='field.params.native_composition__orchestration__focusTintWeight';
 export function bindValue(scene:Scene,path:string,value:unknown){
- if(path==='field.params.native_composition__orchestration__focusTintWeight'&&typeof value==='number'&&value>0)scene.composition.carryTint=true;
+ if(path===CARRY_TINT_BIND&&typeof value==='number'&&value>0)scene.composition.carryTint=true;
  const keys=path.split('.');if(keys.some(k=>['__proto__','prototype','constructor'].includes(k)))throw new Error('Unsafe document path');
  let o:any=scene;for(const k of keys.slice(0,-1))o=o[k]??(o[k]={});o[keys.at(-1)!]=value;
 }
