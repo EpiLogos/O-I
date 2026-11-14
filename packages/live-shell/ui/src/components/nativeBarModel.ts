@@ -43,7 +43,9 @@ export function barPointer(reading: NativeEditorReading | null, state: HostedApp
 export type EngineLightKind = 'recording' | 'held' | 'running' | 'unknown'
 export interface EngineLight {kind: EngineLightKind; label: string; title: string}
 /** The CPU-light slot: what the engine is doing now, read-only. Recording outranks held, held outranks running. */
-export function barEngineLight(state: HostedAppState | null, playback: {field_paused: boolean} | null | undefined): EngineLight {
+export function barEngineLight(state: HostedAppState | null, playback: {field_paused: boolean} | null | undefined, takeRecording = false): EngineLight {
+  // A take of the Studio records in the kernel (O-I ticket 1008): the Set says so, not the frame.
+  if (takeRecording) return {kind: 'recording', label: 'Recording', title: 'A take of the Studio is recording.'}
   if (state?.propertyRecording) return {kind: 'recording', label: 'Recording', title: 'A property take is recording the chosen controls.'}
   if (state?.recording) return {kind: 'recording', label: 'Recording', title: 'The stage is recording video.'}
   if (!playback) return {kind: 'unknown', label: 'Engine', title: 'The engine state is not reported yet.'}
