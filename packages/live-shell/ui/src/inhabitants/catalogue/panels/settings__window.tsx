@@ -579,9 +579,10 @@ function Carries({h, span}: {h: Rec; span: number}) {
         data-i={`Skill set|${h.sets === undefined ? txt(h.skillsWhy) ?? NONE : `${sets.length ? `Skill Sets ${sets.join(', ')}` : 'No Skill Set is selected'}${skills.length ? `: ${skills.join(', ')}` : ''}.`}`}>
         {h.sets === undefined ? txt(h.skillsWhy) ?? NONE : sets.length ? sets.join(', ') : 'none selected'}{skills.length > 0 && <small>{skills.length} skill{skills.length === 1 ? '' : 's'}</small>}</dd></div>
       <div><dt>Law</dt><dd className={law?.length ? undefined : 'st-dim'}
-        data-i={`Law${file ? ` · ${file}` : ''}|${law?.length ? law.map(s => `${txt(s.topic) ?? NONE} (${txt(s.file) ?? NONE}, ${txt(s.standing) ?? NONE})`).join('; ') : txt(h.lawWhy) ?? 'Its floor carries no statement.'}${txt(h.lawReach) ? ` — ${h.lawReach}` : ''}`}>
+        data-i={`Law${file ? ` · ${file}` : ''}|${law?.length ? law.map(s => `${txt(s.topic) ?? NONE} (${txt(s.file) ?? NONE}, ${txt(s.standing) ?? NONE})`).join('; ') : txt(h.lawWhy) ?? 'Its floor carries no statement.'}${txt(h.lawReach) ? ` — ${h.lawReach}` : ''}${txt(h.lawHomeWhy) ? ` — ${h.lawHomeWhy}` : ''}`}>
         {law?.length ? law.map(s => txt(s.topic) ?? txt(s.file)).join(' · ') : txt(h.lawWhy) ?? 'no statement'}{file && <small>{file}{txt(h.lawState) && h.lawState !== 'rendered' ? ` · ${h.lawState}` : ''}{h.lawRootOnly === true ? ' · only at your world\'s root' : ''}</small>}
-        {txt(h.lawReach) && <small className="st-dim" data-law-reach={h.lawEverywhere === true ? 'everywhere' : h.lawRootOnly === true ? 'root' : 'unknown'}>{txt(h.lawReach)}</small>}</dd></div>
+        {txt(h.lawReach) && <small className="st-dim" data-law-reach={h.lawEverywhere === true ? 'everywhere' : h.lawRootOnly === true ? 'root' : 'unknown'}>{txt(h.lawReach)}</small>}
+        {txt(h.lawHomeWhy) && <small className="st-dim" data-law-home>{txt(h.lawHomeWhy)}</small>}</dd></div>
     </dl>
   </td></tr>
 }

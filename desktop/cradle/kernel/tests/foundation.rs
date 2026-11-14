@@ -909,15 +909,22 @@ fn law_holds(world: &World, starting: &[(String, String)]) -> Act {
         .as_array()
         .cloned()
         .unwrap_or_default();
-    let said = |slug: &str| -> Value {
+    let client_of = |slug: &str| -> Value {
         clients
             .iter()
             .find(|client| match client["harness"].as_str() {
                 Some(harness) => harness == slug,
                 None => client["client"] == slug,
             })
-            .map(|client| client["project_guidance"].clone())
+            .cloned()
             .unwrap_or(Value::Null)
+    };
+    let said = |slug: &str| -> Value { client_of(slug)["project_guidance"].clone() };
+    // And the files AIKit says it reads in every session, wherever it works (`guidance`).
+    let reads_always = |slug: &str, file: &str| -> bool {
+        client_of(slug)["guidance"]
+            .as_array()
+            .is_some_and(|names| names.iter().any(|name| name == file))
     };
     // The instruction file each agent reads, as AIKit names it and the census carries it.
     let rows = census_afresh(world)?;
@@ -995,6 +1002,7 @@ fn law_holds(world: &World, starting: &[(String, String)]) -> Act {
     // Central's own reading of each floor, and the census asked afresh.
     let reading = central_owner(world, "control.floor.read", json!({"files": files}))?;
     let floors = reading["floors"].as_array().cloned().unwrap_or_default();
+    let homes = reading["homes"].as_array().cloned().unwrap_or_default();
     let rows = census_afresh(world)?;
     for (slug, _) in starting {
         let law = row_of(&rows, slug)?["carries"]["law"].clone();
@@ -1010,11 +1018,17 @@ fn law_holds(world: &World, starting: &[(String, String)]) -> Act {
                     clip(&reading)
                 )
             })?;
-        // The census carries Central's reading of that floor, and how far the floor reaches the agent beside it.
+        // The census carries Central's reading of that floor, how far the floor reaches the agent, and Central's block in a file
+        // the agent reads in every session, beside it.
         let mut read = law.clone();
-        let reach = read
+        let (reach, home) = read
             .as_object_mut()
-            .and_then(|fields| fields.remove("reach"))
+            .map(|fields| {
+                (
+                    fields.remove("reach").unwrap_or_default(),
+                    fields.remove("home"),
+                )
+            })
             .unwrap_or_default();
         if &read != floor {
             return Err(format!(
@@ -1023,19 +1037,51 @@ fn law_holds(world: &World, starting: &[(String, String)]) -> Act {
                 clip(&law)
             ));
         }
+        if let Some(home) = &home {
+            let kept = home["file"].as_str().unwrap_or_default();
+            if !homes.iter().any(|row| row == home) {
+                return Err(format!(
+                    "the census carries Central's block in {kept} for {slug} as {}; Central reads its homes as {}",
+                    clip(home),
+                    clip(&reading["homes"])
+                ));
+            }
+            if !reads_always(slug, kept) {
+                return Err(format!(
+                    "the census carries Central's block in {kept} for {slug}, and AIKit names no such file {slug} reads in every session"
+                ));
+            }
+        }
         let Some(reaches) = reach["why"].as_str() else {
             return Err(format!(
                 "the census says nothing of how far {file} reaches {slug}: {}",
                 clip(&law)
             ));
         };
-        // How far it reaches is AIKit's to say: how far up from where it works the agent looks for its files.
-        let looks = said(slug)["reach"].clone();
-        if reach["scope"] != looks {
-            return Err(format!(
-                "the census says {file} reaches {slug} as {}, and AIKit says it looks as far as {looks}",
-                reach["scope"]
-            ));
+        if reach["scope"] == "home" {
+            // Everywhere, only through a block of the floor Central keeps, current, in a file AIKit says the agent reads in every
+            // session.
+            let current = home.as_ref().is_some_and(|home| {
+                home["file"] == reach["file"]
+                    && home["state"] == "rendered"
+                    && home["current"] == true
+            });
+            if !current {
+                return Err(format!(
+                    "the census says the floor reaches {slug} everywhere through {}, and Central's block there is not the floor it renders now: {}",
+                    reach["file"],
+                    home.as_ref().map_or_else(|| "no block".to_owned(), clip)
+                ));
+            }
+        } else {
+            // How far it reaches is AIKit's to say: how far up from where it works the agent looks for its files.
+            let looks = said(slug)["reach"].clone();
+            if reach["scope"] != looks {
+                return Err(format!(
+                    "the census says {file} reaches {slug} as {}, and AIKit says it looks as far as {looks}",
+                    reach["scope"]
+                ));
+            }
         }
         let carried = floor["statements"].as_array().cloned().unwrap_or_default();
         if floor["state"] != "rendered"

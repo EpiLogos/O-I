@@ -304,7 +304,8 @@ export function searchStep(count: number, hit: number, key: string): {hit: numbe
  * `modelWhy`; `sets` and `skills` the skill set it gets, or `skillsWhy`; `lawFile` the instruction file its floor is, `law` [{topic, file,
  * standing}] the statements that floor carries with `lawState` (rendered, foreign or absent), `lawReach` how far that floor reaches it
  * (`lawEverywhere` when in every project of the world, `lawRootOnly` when only at the world's root, neither for a reach this window
- * does not know), and `lawWhy` why it carries none. Pure. */
+ * does not know), `lawHomeWhy` why the block Central keeps in a file it reads in every session does not carry the floor there, and
+ * `lawWhy` why it carries none. Pure. */
 export function carriesValues(carries: AgentCarries | undefined): Record<string, unknown> {
   if (!carries) return {}
   const {model, skills, law} = carries
@@ -313,8 +314,9 @@ export function carriesValues(carries: AgentCarries | undefined): Record<string,
     ...('sets' in skills ? {sets: skills.sets, skills: skills.skills} : {skillsWhy: skills.why}),
     ...(law.file ? {lawFile: law.file} : {}),
     ...('state' in law ? {lawState: law.state, ...(law.renderer ? {lawRenderer: law.renderer} : {}), law: law.statements.map(row => ({topic: row.topic, file: row.file, standing: row.standing}))} : {}),
-    ...('state' in law && law.reach ? {lawReach: law.reach.why, lawEverywhere: law.reach.scope === 'ancestors',
+    ...('state' in law && law.reach ? {lawReach: law.reach.why, lawEverywhere: law.reach.scope === 'ancestors' || law.reach.scope === 'home',
       lawRootOnly: law.reach.scope === 'repository' || law.reach.scope === 'workdir'} : {}),
+    ...('state' in law && law.home?.why ? {lawHomeWhy: law.home.why} : {}),
     ...(law.why ? {lawWhy: law.why} : 'state' in law && law.state === 'absent' ? {lawWhy: `There is no ${law.file} at your world's root: no law reaches it.`} : {}),
   }
 }

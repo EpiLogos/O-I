@@ -2043,6 +2043,31 @@ test('CODE-DERIVED — Harnesses & models shows what each agent that starts carr
   assert.ok(!page.includes('data-carries="gemini"'), 'nothing carried is drawn for an agent that does not start')
 })
 
+test('CODE-DERIVED — A floor Central keeps in a file an agent reads in every session reaches it everywhere; a block that does not stand says why, and the reach stays its project\'s', async () => {
+  const {censusOf} = await import('../../../../desktop/cradle/src/agency/census.ts')
+  const floor = {file: 'AGENTS.md', state: 'rendered', statements: [{file: 'craft/plain-words.md', topic: 'Plain words', standing: 'durable'}]}
+  const agent = (slug, law) => ({slug, harness_ref: `harness/${slug}`, executable: `/x/${slug}`, starts: true, talks: true, version: '1.0', aikit: {client: slug, harness: slug},
+    carries: {model: {own: true, why: `AIKit holds no model default for ${slug}`}, skills: {sets: [], skills: []}, law: {...floor, ...law}}})
+  const current = {file: '~/.codex/AGENTS.md', state: 'rendered', current: true, renderer: 'central control.floor.render'}
+  const answer = {schema: 'oi.world-model-slice/v1', slice: 'agents', owner: 'kernel', scopes: ['machine'], version: 1, state: 'read', error: null, read_at_unix_ms: 1, value: {agents: [
+    // Central's block in ~/.codex/AGENTS.md stands and is current (census.rs law_of): codex carries the floor wherever it works.
+    agent('codex', {home: current, reach: {scope: 'home', file: '~/.codex/AGENTS.md',
+      why: 'codex reads ~/.codex/AGENTS.md in every session wherever it works, and Central keeps the world\'s floor there, so this floor reaches it in every project of the world'}}),
+    // No block where it reads in every session: the reach is its project's (the root only), and Central's why is said beside it.
+    agent('kimi', {home: {file: '~/.kimi/AGENTS.md', state: 'absent', current: false, why: 'no Kimi folder (~/.kimi) at this home'},
+      reach: {scope: 'workdir', why: 'kimi reads AGENTS.md only in the folder it works in, so this floor reaches it only when it works at the world\'s root'}})]}}
+  const census = censusOf({state: 'held', answer})
+  assert.deepEqual(census.agents[0].carries.law.home, current)
+  assert.equal(census.agents[0].carries.law.reach.file, '~/.codex/AGENTS.md')
+  const rows = Object.fromEntries(JSON.parse(win.harnessValues(null, null, census).harnesses).map(row => [row.agent, row]))
+  assert.deepEqual([rows.codex.lawEverywhere, rows.codex.lawRootOnly, rows.codex.lawHomeWhy, rows.kimi.lawEverywhere, rows.kimi.lawRootOnly, rows.kimi.lawHomeWhy],
+    [true, false, undefined, false, true, 'no Kimi folder (~/.kimi) at this home'])
+  const page = drawn({harnesses: win.harnessValues(null, null, census).harnesses}, 'harnesses')
+  for (const shown of ['data-law-reach="everywhere"', 'data-law-reach="root"', 'data-law-home', escaped('no Kimi folder (~/.kimi) at this home'),
+    escaped('codex reads ~/.codex/AGENTS.md in every session wherever it works')]) assert.ok(page.includes(shown), `drawn: ${shown}`)
+  assert.equal(page.split('data-law-home').length - 1, 1, 'only the block that does not stand says why')
+})
+
 test('CODE-DERIVED — Sign in is each harness\'s own login as AIKit declares it: a runnable one runs its command (Claude Code\'s claude auth login as Codex\'s codex login), one that signs in inside itself says so in its own words and offers no button, a login that cannot be read affects that harness alone', async () => {
   const asked = []
   const logins = await settingsPages.harnessLogins(loginAdapter(LOGIN_STATUS, asked)).read()
