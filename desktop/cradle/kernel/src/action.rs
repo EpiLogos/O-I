@@ -127,9 +127,11 @@ pub fn owner_slices(action: &str) -> Option<Vec<crate::world_model::Slice>> {
         // The floor each agent reads: the census says which law statements it carries (census.rs, O-I #1003).
         vec![Slice::Worlds, Slice::Day, Slice::Agents]
     } else if central_action(action) {
-        vec![Slice::Worlds, Slice::Day]
+        // Your world's sources and relations are Central's, and Scope reads them (O-I #1005).
+        vec![Slice::Worlds, Slice::Day, Slice::Scope]
     } else if action.starts_with("aikit.") {
-        vec![Slice::Sessions, Slice::Models]
+        // A session's prepared context and its settings are AIKit's: the packet and the scope read them (O-I #1005).
+        vec![Slice::Sessions, Slice::Models, Slice::Packet, Slice::Scope]
     } else if action.starts_with("factory.") {
         vec![Slice::Factory, Slice::Sessions]
     } else if action.starts_with("workcell.") {

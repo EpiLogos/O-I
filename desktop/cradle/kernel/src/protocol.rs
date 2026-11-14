@@ -237,7 +237,10 @@ mod tests {
                 "models",
                 "factory",
                 "workcells",
-                "sky"
+                "sky",
+                "packet",
+                "scope",
+                "roster"
             ]
         );
         for slice in &document.world_model.slices {

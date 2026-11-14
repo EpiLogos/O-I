@@ -6,9 +6,16 @@
 //! | slice       | owner     | read from                                                               | scopes        |
 //! |-------------|-----------|-------------------------------------------------------------------------|---------------|
 //! | `worlds`    | Central   | the root's disclosure (`world_browse`), and each world's pages (`page`) | root, work    |
-//! | `day`       | Central   | today's Day of the root register (`day_read`)                           | root, clock   |
+//! | `day`       | Central   | today's Day of the root register (`day_read`), with the root's ground   | root, clock   |
+//! |             |           | (`central` inspect), the Day's settings, and today's moves and field    |               |
 //! | `agents`    | Actuation | the census (census.rs): detection, a start of each, AIKit's detail and  | clock (a day) |
 //! |             |           | what each carries (its model, skill set, and its floor's law: Central)  |               |
+//! | `roster`    | Central   | your world's agent profiles (`agent_definition` roster) and the card of | root          |
+//! |             |           | each one you accepted, in its home World and each it ratifies           |               |
+//! | `packet`    | AIKit     | the prepared context of the root register and of each of its sessions   | aikit, root   |
+//! |             |           | (`encounter` context read)                                              |               |
+//! | `scope`     | Central   | your world's effective sources and authored relations, and each root    | root, aikit   |
+//! |             |           | session's own settings in AIKit (`encounter_session_settings`)          |               |
 //! | `sessions`  | AIKit     | the root register's Agent sessions (`agency_read`), and the gateway:    | aikit, root   |
 //! |             |           | its ecology, its conversation binding and that binding's harness reading|               |
 //! | `models`    | AIKit     | the resolved model catalogue (`model_catalogue`)                        | aikit         |
@@ -53,6 +60,9 @@ pub enum Slice {
     Factory,
     Workcells,
     Sky,
+    Packet,
+    Scope,
+    Roster,
 }
 
 /// When the clock moves a slice.
@@ -67,7 +77,7 @@ enum Grain {
 }
 
 impl Slice {
-    pub const ALL: [Slice; 8] = [
+    pub const ALL: [Slice; 11] = [
         Slice::Worlds,
         Slice::Day,
         Slice::Agents,
@@ -76,6 +86,9 @@ impl Slice {
         Slice::Factory,
         Slice::Workcells,
         Slice::Sky,
+        Slice::Packet,
+        Slice::Scope,
+        Slice::Roster,
     ];
 
     /// The wire name.
@@ -89,6 +102,9 @@ impl Slice {
             Slice::Factory => "factory",
             Slice::Workcells => "workcells",
             Slice::Sky => "sky",
+            Slice::Packet => "packet",
+            Slice::Scope => "scope",
+            Slice::Roster => "roster",
         }
     }
 
@@ -99,9 +115,9 @@ impl Slice {
     /// The product that holds this slice's state.
     pub fn owner(self) -> &'static str {
         match self {
-            Slice::Worlds | Slice::Day => "Central",
+            Slice::Worlds | Slice::Day | Slice::Scope | Slice::Roster => "Central",
             Slice::Agents => "Actuation",
-            Slice::Sessions | Slice::Models => "AIKit",
+            Slice::Sessions | Slice::Models | Slice::Packet => "AIKit",
             Slice::Factory => "Factory",
             Slice::Workcells => "Workcell",
             Slice::Sky => "QL",
@@ -120,6 +136,12 @@ impl Slice {
             Slice::Sessions => &["aikit", "root"],
             Slice::Workcells => &["seats"],
             Slice::Sky => &["clock"],
+            // The root register's prepared context is AIKit's, kept for the root's sessions.
+            Slice::Packet => &["aikit", "root"],
+            // Your world's sources and relations are the root's; each session's settings are AIKit's.
+            Slice::Scope => &["root", "aikit"],
+            // The profiles and each agent's participation are your world's root register's: AIKit's churn does not move them.
+            Slice::Roster => &["root"],
         }
     }
 
@@ -207,7 +229,7 @@ type Telling = Arc<dyn Fn(Slice, u64) + Send + Sync>;
 
 /// The process's World Model.
 pub struct Model {
-    cells: [Cell; 8],
+    cells: [Cell; Slice::ALL.len()],
     queue: Queue,
     running: OnceLock<(Asking, Telling)>,
 }
@@ -532,15 +554,36 @@ pub fn written_by(op: &KernelOp) -> Vec<Slice> {
         | "encounter_session_attach"
         | "encounter_session_group"
         | "encounter_session_hot_swap"
-        | "encounter_session_drag_out"
-        | "agent_definition" => {
-            vec![Slice::Sessions, Slice::Models, Slice::Factory]
+        | "encounter_session_drag_out" => {
+            // A session's prepared context and its place in the root register are AIKit's: the packet and the scope read them.
+            vec![
+                Slice::Sessions,
+                Slice::Models,
+                Slice::Factory,
+                Slice::Packet,
+                Slice::Scope,
+            ]
         }
+        // An agent's definition is your world's roster (O-I #1005); it starts no agent, so the census is not read again for it.
+        "agent_definition" => vec![
+            Slice::Sessions,
+            Slice::Models,
+            Slice::Factory,
+            Slice::Roster,
+        ],
+        // A session's own settings in AIKit written (its Wait, On no answer): Scope reads them. A read of them moves nothing.
+        "encounter_session_settings" => match op {
+            KernelOp::EncounterSessionSettings {
+                request: Some(_), ..
+            } => vec![Slice::Scope],
+            _ => Vec::new(),
+        },
         // A skill root adopted, or a Procedure applied or undone, moves the skills an agent carries (census.rs); a capture or a
         // wiki write does not, and is never a reason to start every agent again.
         "aikit_write" => {
             use crate::owner_routes::AikitWrite;
-            let mut slices = vec![Slice::Sessions, Slice::Models, Slice::Factory];
+            // A capture lands in the packet it was made for.
+            let mut slices = vec![Slice::Sessions, Slice::Models, Slice::Factory, Slice::Packet];
             if let KernelOp::AikitWrite {
                 request:
                     AikitWrite::Adopt { .. }
@@ -624,6 +667,7 @@ pub fn wrote(op_name: &str, outcome: &KernelOpOutcome) -> bool {
                 | "aikit_write"
                 | "client_install"
                 | "encounter_provision"
+                | "encounter_session_settings"
                 | "harness_ingress_rule"
                 | "gateway_service"
         )
@@ -636,14 +680,222 @@ pub fn wrote(op_name: &str, outcome: &KernelOpOutcome) -> bool {
 fn load(slice: Slice, via: Via<'_>) -> Result<Value, String> {
     match slice {
         Slice::Worlds => worlds(via),
-        Slice::Day => payload(ask(via, json!({"op": "day_read"}))?),
+        Slice::Day => day(via),
         Slice::Agents => crate::census::read(via),
         Slice::Sessions => sessions(via),
         Slice::Models => payload(ask(via, json!({"op": "model_catalogue"}))?),
         Slice::Factory => factory(via),
         Slice::Workcells => workcells(via),
         Slice::Sky => sky(via),
+        Slice::Packet => packet(via),
+        Slice::Scope => scope(via),
+        Slice::Roster => roster(via),
     }
+}
+
+/// One owner's reading Action, asked by the kernel's one act path (`act`, O-I #1002): its data, or the owner's words why it gave
+/// none. A reading moves nothing, so asking it marks no slice written.
+fn act(via: Via<'_>, action: &str, input: Value) -> Result<Value, String> {
+    let outcome = ask(via, json!({"op": "act", "action": action, "input": input}))?;
+    let value = serde_json::to_value(&outcome.result).map_err(|error| error.to_string())?;
+    let dispatch = &value["dispatch"];
+    if dispatch["state"] == "invoked" {
+        return Ok(dispatch["data"].clone());
+    }
+    Err(dispatch["message"]
+        .as_str()
+        .or(dispatch["detail"].as_str())
+        .map(str::to_owned)
+        .unwrap_or_else(|| format!("{action} answered {dispatch}")))
+}
+
+/// How many owner reads of one slice run at once: each is an owner process.
+const SIDE_BY_SIDE: usize = 8;
+
+/// `read` of each key, side by side, a few at a time: each its own part, by its key, in the keys' order.
+fn each_part<K: Sync>(
+    keys: &[K],
+    name: impl Fn(&K) -> String,
+    read: impl Fn(&K) -> Result<Value, String> + Sync,
+) -> serde_json::Map<String, Value> {
+    let mut parts = serde_json::Map::new();
+    for chunk in keys.chunks(SIDE_BY_SIDE) {
+        let read = &read;
+        let answers: Vec<Value> = std::thread::scope(|scope| {
+            let reads: Vec<_> = chunk
+                .iter()
+                .map(|key| scope.spawn(crate::read_cache::carried(move || part(read(key)))))
+                .collect();
+            reads
+                .into_iter()
+                .map(|read| {
+                    read.join()
+                        .unwrap_or_else(|_| part(Err("this read stopped before it answered".into())))
+                })
+                .collect()
+        });
+        for (key, answer) in chunk.iter().zip(answers) {
+            parts.insert(name(key), answer);
+        }
+    }
+    parts
+}
+
+/// The agent sessions of your world's root register, as AIKit's spaces hold them (`agency_read` `spaces[].agent_sessions`;
+/// agencySources.ts `agencyRowsOf`), each once.
+fn root_sessions(via: Via<'_>) -> Result<Vec<String>, String> {
+    let agency = payload(ask(via, json!({"op": "agency_read", "project": ""}))?)?;
+    let mut sessions: Vec<String> = agency["spaces"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(|space| space["agent_sessions"].as_object())
+        .flat_map(|sessions| sessions.keys().cloned())
+        .collect();
+    sessions.sort();
+    sessions.dedup();
+    Ok(sessions)
+}
+
+/// Today's Day of the root register (`day_read`: Central's turn and its reading of the Day, its page and its receipts), and beside
+/// it what the Day device reads of Central (O-I #1005), each its own part: the root's ground (`central` inspect: the civil-time
+/// policy, the Day's pointer, the register's NOW and the change horizon), the Day's settings (central.day.settings.read), and
+/// today's moves and field (central.day.moves.read, central.day.field.read). Today's Day refused (a ground with no civil-time policy
+/// yet) leaves the other parts, and says why in Central's words (`refused`); only when the ground refuses too is the slice refused.
+fn day(via: Via<'_>) -> Result<Value, String> {
+    let read = ask(via, json!({"op": "day_read"})).and_then(payload);
+    let ground = ask(
+        via,
+        json!({"op": "central", "project": null, "request": {"kind": "inspect"}}),
+    )
+    .and_then(payload);
+    let mut day = match (read, &ground) {
+        (Ok(day @ Value::Object(_)), _) => day,
+        (Ok(other), _) => json!({"refused": format!("Central's reading of today's Day is no object: {other}")}),
+        (Err(day_why), Err(ground_why)) => return Err(format!("{day_why}; {ground_why}")),
+        (Err(why), Ok(_)) => json!({"refused": why}),
+    };
+    let today = day["day_ref"].as_str().map(str::to_owned);
+    let settings = act(via, "central.day.settings.read", json!({"project": null}));
+    let of_today = |action: &str| match &today {
+        Some(day_ref) => act(via, action, json!({"project": null, "day_ref": day_ref})),
+        None => Err("Central's reading of today's Day names no day_ref".to_owned()),
+    };
+    let (moves, field) = (
+        of_today("central.day.moves.read"),
+        of_today("central.day.field.read"),
+    );
+    if let Some(object) = day.as_object_mut() {
+        object.insert("ground".to_owned(), part(ground));
+        object.insert("settings".to_owned(), part(settings));
+        object.insert("moves".to_owned(), part(moves));
+        object.insert("field".to_owned(), part(field));
+    }
+    Ok(day)
+}
+
+/// Your world's roster of agents (O-I #1005; manual §18.15, "The roster is yours"): Central's agent profiles of the root register
+/// (`agent_definition` roster, central.agent-profile-roster/v1), and the card (`agent_card`, oi.human-agent-card/v1) of each agent
+/// you accepted, in its home World and in each World it ratifies, by agent and then by World (`home`), each its own part. The
+/// Agent's Identity page reads it here. The census (the agents slice) is not read again for it: a profile written starts no agent.
+fn roster(via: Via<'_>) -> Result<Value, String> {
+    let roster = payload(ask(
+        via,
+        json!({"op": "agent_definition", "project": null, "request": {"action": "roster"}}),
+    )?)?;
+    let cards = cards(via, &roster);
+    Ok(json!({"roster": roster, "cards": cards}))
+}
+
+/// The card of each agent the roster says you accepted, in its home World and in each World it ratifies (`ratified_world_refs`),
+/// by agent, then by World.
+fn cards(via: Via<'_>, roster: &Value) -> serde_json::Map<String, Value> {
+    let asked: Vec<(String, Option<String>)> = roster["profiles"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter(|entry| entry["accepted"] == true)
+        .filter_map(|entry| {
+            let profile = &entry["profile"];
+            let agent = profile["agent_ref"].as_str()?.to_owned();
+            let worlds: Vec<Option<String>> = std::iter::once(None)
+                .chain(
+                    profile["ratified_world_refs"]
+                        .as_array()
+                        .into_iter()
+                        .flatten()
+                        .filter_map(|world| world.as_str().map(|world| Some(world.to_owned()))),
+                )
+                .collect();
+            Some(worlds.into_iter().map(move |world| (agent.clone(), world)))
+        })
+        .flatten()
+        .collect();
+    let read = each_part(
+        &asked,
+        |(agent, world)| format!("{agent}\n{}", world.as_deref().unwrap_or("home")),
+        |(agent, world)| {
+            ask(
+                via,
+                json!({"op": "agent_card", "agent_ref": agent, "world_ref": world}),
+            )
+            .and_then(payload)
+        },
+    );
+    let mut cards = serde_json::Map::new();
+    for (key, card) in read {
+        let (agent, world) = key.split_once('\n').unwrap_or((key.as_str(), "home"));
+        let by_world = cards
+            .entry(agent.to_owned())
+            .or_insert_with(|| json!({}));
+        if let Some(by_world) = by_world.as_object_mut() {
+            by_world.insert(world.to_owned(), card);
+        }
+    }
+    cards
+}
+
+/// AIKit's prepared context (O-I #1005; manual §18.3, exactly what the agent reads from you), each its own part: your world's
+/// root register's own (`register`), and each of its sessions' (`sessions`, by session), read side by side. The Packet reads the
+/// one its conversation holds.
+fn packet(via: Via<'_>) -> Result<Value, String> {
+    let context = |session: Option<&str>| {
+        ask(
+            via,
+            json!({"op": "encounter", "project": "", "request": {"action": "context", "agent_session": session,
+                "request": {"operation": "read"}}}),
+        )
+        .and_then(payload)
+    };
+    let sessions = root_sessions(via)?;
+    let by_session = each_part(&sessions, String::clone, |session| context(Some(session)));
+    Ok(json!({"register": part(context(None)), "sessions": by_session}))
+}
+
+/// What Scope reads of your world (O-I #1005; manual §19.12), each its own part: its effective sources and its authored relations
+/// as Central resolves them (central.world.effective-sources, central.world-relations.read), and each root session's own settings
+/// in AIKit (`encounter_session_settings`: its Wait and On no answer), by session.
+fn scope(via: Via<'_>) -> Result<Value, String> {
+    let effective = act(
+        via,
+        "central.world.effective-sources",
+        json!({"scope": "root", "world_ref": "control:root"}),
+    );
+    let relations = act(
+        via,
+        "central.world-relations.read",
+        json!({"scope": "root", "ref": "control:root"}),
+    );
+    let settings = root_sessions(via).map(|sessions| {
+        Value::Object(each_part(&sessions, String::clone, |session| {
+            ask(
+                via,
+                json!({"op": "encounter_session_settings", "project": "", "agent_session": session}),
+            )
+            .and_then(payload)
+        }))
+    });
+    Ok(json!({"effective": part(effective), "relations": part(relations), "settings": part(settings)}))
 }
 
 fn ask(via: Via<'_>, op: Value) -> Result<KernelOpOutcome, String> {
@@ -1181,6 +1433,215 @@ mod tests {
     }
 
     #[test]
+    fn the_day_packet_scope_and_roster_carry_what_centrals_chain_reads_each_its_own_part() {
+        use crate::action::ActionDispatch;
+        use crate::KernelOpResult::{
+            ActionDispatched, AgencyReading, AgentCardReading, AgentDefinitionReading,
+            CentralReading, DayReading, EncounterReading, EncounterSessionSettingsReading,
+        };
+        let asked = Mutex::new(Vec::<Value>::new());
+        let via = |op: KernelOp| -> Result<KernelOpOutcome, String> {
+            let body = serde_json::to_value(&op).expect("an op serialises");
+            asked.lock().unwrap().push(body.clone());
+            let action = body["action"].as_str().unwrap_or_default().to_owned();
+            let result = match body["op"].as_str().unwrap_or_default() {
+                "day_read" => DayReading {
+                    data: json!({"day_ref": "day:1", "temporal": {"civil_date": "2026-11-14"}}),
+                },
+                "central" => CentralReading {
+                    data: json!({"time": {"state": "ready"}}),
+                },
+                "act" => ActionDispatched {
+                    dispatch: if action == "central.day.field.read" {
+                        ActionDispatch::OwnerRefused {
+                            owner_operation: action.clone(),
+                            message: "the Day's settings name no field source".into(),
+                        }
+                    } else {
+                        ActionDispatch::Invoked {
+                            owner_operation: action.clone(),
+                            data: json!({"action": action, "input": body["input"]}),
+                        }
+                    },
+                    reads_only: true,
+                },
+                "agency_read" => AgencyReading {
+                    project_ref: "project:root".into(),
+                    spaces: json!([{"definition": {"id": "space/a"},
+                        "agent_sessions": {"agent-session/b": {}, "agent-session/a": {}}}]),
+                    harness_disclosure: json!({}),
+                    observed_at_unix_ms: 1,
+                },
+                "encounter" => EncounterReading {
+                    data: json!({"scope": {"agent_session": body["request"]["agent_session"]}, "items": []}),
+                },
+                "encounter_session_settings" if body["agent_session"] == "agent-session/b" => {
+                    return Err("AIKit keeps no settings for agent-session/b".into())
+                }
+                "encounter_session_settings" => EncounterSessionSettingsReading {
+                    data: json!({"wait_seconds": 900}),
+                },
+                "agent_definition" => AgentDefinitionReading {
+                    data: json!({"schema": "central.agent-profile-roster/v1", "profiles": [
+                        {"accepted": true, "profile": {"agent_ref": "agent:fizz", "ratified_world_refs": ["project:QL"]}},
+                        {"accepted": false, "profile": {"agent_ref": "agent:proposed"}}]}),
+                },
+                "agent_card" => AgentCardReading {
+                    data: json!({"agent": body["agent_ref"], "world": body["world_ref"]}),
+                },
+                other => panic!("Central's chain asked {other}"),
+            };
+            Ok(KernelOpOutcome {
+                receipts: Vec::new(),
+                read_scopes: None,
+                result,
+            })
+        };
+
+        let day = day(&via).expect("today's Day reads");
+        assert_eq!(day["day_ref"], "day:1", "the Day's reading stands as Central gave it");
+        assert_eq!(
+            day["ground"],
+            json!({"state": "read", "reading": {"time": {"state": "ready"}}})
+        );
+        assert_eq!(
+            day["settings"]["reading"],
+            json!({"action": "central.day.settings.read", "input": {"project": null}}),
+            "the Day's settings are the root register's"
+        );
+        assert_eq!(
+            day["moves"]["reading"]["input"],
+            json!({"project": null, "day_ref": "day:1"}),
+            "today's moves are today's Day's"
+        );
+        assert_eq!(
+            day["field"],
+            json!({"state": "refused", "why": "the Day's settings name no field source"}),
+            "one part refused is that part's alone"
+        );
+        assert!(
+            asked
+                .lock()
+                .unwrap()
+                .iter()
+                .any(|op| op["op"] == "central" && op["request"]["kind"] == "inspect"),
+            "the root's ground is Central's inspect"
+        );
+
+        let packet = packet(&via).expect("the packet reads");
+        assert_eq!(
+            packet["register"]["reading"]["scope"]["agent_session"],
+            Value::Null,
+            "the root register's own prepared context"
+        );
+        let sessions: Vec<&String> = packet["sessions"].as_object().unwrap().keys().collect();
+        assert_eq!(sessions, ["agent-session/a", "agent-session/b"]);
+        assert_eq!(
+            packet["sessions"]["agent-session/b"]["reading"]["scope"]["agent_session"],
+            "agent-session/b"
+        );
+
+        let scope = scope(&via).expect("scope reads");
+        assert_eq!(
+            scope["effective"]["reading"],
+            json!({"action": "central.world.effective-sources",
+                "input": {"scope": "root", "world_ref": "control:root"}})
+        );
+        assert_eq!(
+            scope["relations"]["reading"]["action"],
+            "central.world-relations.read"
+        );
+        assert_eq!(
+            scope["settings"]["reading"]["agent-session/a"],
+            json!({"state": "read", "reading": {"wait_seconds": 900}})
+        );
+        assert_eq!(
+            scope["settings"]["reading"]["agent-session/b"],
+            json!({"state": "refused", "why": "AIKit keeps no settings for agent-session/b"}),
+            "a session AIKit keeps no settings for says so beside the others"
+        );
+
+        let roster = roster(&via).expect("the roster reads");
+        assert_eq!(roster["roster"]["profiles"].as_array().unwrap().len(), 2);
+        assert_eq!(
+            roster["cards"]["agent:fizz"]["home"],
+            json!({"state": "read", "reading": {"agent": "agent:fizz", "world": null}}),
+            "the card in its home World"
+        );
+        assert_eq!(
+            roster["cards"]["agent:fizz"]["project:QL"]["reading"]["world"],
+            "project:QL",
+            "and in each World it ratifies"
+        );
+        assert!(
+            roster["cards"].get("agent:proposed").is_none(),
+            "an agent you have not accepted has no card read"
+        );
+    }
+
+    #[test]
+    fn todays_day_refused_keeps_the_ground_beside_it_and_both_refused_refuse_the_slice() {
+        use crate::KernelOpResult::{ActionDispatched, CentralReading};
+        let ground_answers = std::sync::atomic::AtomicBool::new(true);
+        let via = |op: KernelOp| -> Result<KernelOpOutcome, String> {
+            let body = serde_json::to_value(&op).expect("an op serialises");
+            let result = match body["op"].as_str().unwrap_or_default() {
+                "day_read" => return Err("Central keeps no civil-time policy for this ground".into()),
+                "central" if ground_answers.load(std::sync::atomic::Ordering::SeqCst) => CentralReading {
+                    data: json!({"time": {"state": "unavailable"}}),
+                },
+                "central" => return Err("Central's ground is unreadable".into()),
+                "act" => ActionDispatched {
+                    dispatch: crate::action::ActionDispatch::Invoked {
+                        owner_operation: "central.day.settings.read".into(),
+                        data: json!({"revision": "absent"}),
+                    },
+                    reads_only: true,
+                },
+                other => panic!("the Day asked {other}"),
+            };
+            Ok(KernelOpOutcome {
+                receipts: Vec::new(),
+                read_scopes: None,
+                result,
+            })
+        };
+        let held = day(&via).expect("the ground answers, so the slice holds it");
+        assert_eq!(
+            held["refused"],
+            "Central keeps no civil-time policy for this ground"
+        );
+        assert_eq!(held["ground"]["state"], "read", "the ground stands beside the refusal");
+        assert_eq!(held["settings"]["state"], "read");
+        assert_eq!(
+            held["moves"]["why"],
+            "Central's reading of today's Day names no day_ref"
+        );
+        ground_answers.store(false, std::sync::atomic::Ordering::SeqCst);
+        let refused = day(&via).expect_err("neither answers");
+        assert!(refused.contains("civil-time policy") && refused.contains("unreadable"), "{refused}");
+    }
+
+    #[test]
+    fn a_profile_written_moves_the_roster_and_starts_no_agent_again() {
+        let op: KernelOp = serde_json::from_value(
+            json!({"op": "agent_definition", "project": null, "request": {"action": "roster"}}),
+        )
+        .unwrap();
+        let moved = written_by(&op);
+        assert!(moved.contains(&Slice::Roster), "{moved:?}");
+        assert!(!moved.contains(&Slice::Agents), "the census is not read again for a profile: {moved:?}");
+        // A session's settings written move Scope, which reads them; read, they move nothing.
+        let settings = |request: Value| -> KernelOp {
+            serde_json::from_value(json!({"op": "encounter_session_settings", "project": "",
+                "agent_session": "agent-session/a", "request": request}))
+            .unwrap()
+        };
+        assert_eq!(written_by(&settings(json!({"track": {"wait": 60}}))), vec![Slice::Scope]);
+        assert!(written_by(&settings(Value::Null)).is_empty(), "a read of the settings");
+    }
+
+    #[test]
     fn the_factory_slice_carries_each_located_sources_runs_with_their_tasks_and_attempts() {
         use crate::KernelOpResult::{FactoryAttemptReading, FactoryDevelopmentReading};
         let asked = Mutex::new(Vec::new());
@@ -1289,15 +1750,18 @@ mod tests {
                 .map(Slice::name)
                 .collect()
         };
-        assert_eq!(moved("root"), ["worlds", "day", "sessions", "factory"]);
+        assert_eq!(
+            moved("root"),
+            ["worlds", "day", "sessions", "factory", "packet", "scope", "roster"]
+        );
         assert_eq!(moved("project:O-I"), ["worlds", "factory"]);
         assert_eq!(moved("seats"), ["workcells"]);
         assert_eq!(
             moved("aikit"),
-            ["sessions", "models"],
-            "AIKit's churn never starts the agents again"
+            ["sessions", "models", "packet", "scope"],
+            "AIKit's churn never starts the agents again, nor reads your roster's cards"
         );
-        assert_eq!(moved("all").len(), 8);
+        assert_eq!(moved("all").len(), 11);
         assert!(
             moved("clock").is_empty(),
             "a minute moves neither today's Day, the census, nor a sky read just now"
