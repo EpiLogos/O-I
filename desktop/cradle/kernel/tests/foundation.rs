@@ -903,31 +903,63 @@ fn law_holds(world: &World, starting: &[(String, String)]) -> Act {
             .cloned()
             .ok_or_else(|| format!("the census does not list {slug}, which starts"))
     };
+    // What AIKit says each agent reads in a project (its client status' `project_guidance`): the files, and how far up it looks.
+    let status = owner(world, "OI_AIKIT_BIN", "aikit", &["--json", "client", "status"])?;
+    let clients = status["data"]["clients"]
+        .as_array()
+        .cloned()
+        .unwrap_or_default();
+    let said = |slug: &str| -> Value {
+        clients
+            .iter()
+            .find(|client| match client["harness"].as_str() {
+                Some(harness) => harness == slug,
+                None => client["client"] == slug,
+            })
+            .map(|client| client["project_guidance"].clone())
+            .unwrap_or(Value::Null)
+    };
     // The instruction file each agent reads, as AIKit names it and the census carries it.
     let rows = census_afresh(world)?;
     let mut files = Vec::new();
     let mut unread = Vec::new();
     for (slug, _) in starting {
         let law = row_of(&rows, slug)?["carries"]["law"].clone();
-        match (law["file"].as_str(), law["home"].as_array()) {
-            (Some(file), _) => files.push(file.to_owned()),
-            // An agent that reads only a file in its own home carries no world's floor, and the census says so in AIKit's terms.
-            (None, Some(home)) if !home.is_empty() => println!(
-                "{slug} reads only {} in its own home: {}",
-                home.iter()
-                    .filter_map(Value::as_str)
-                    .collect::<Vec<_>>()
-                    .join(", "),
-                law["why"].as_str().unwrap_or_default()
-            ),
-            (None, _) => unread.push(format!(
-                "{slug} shows no law: {}",
+        let in_project = said(slug);
+        let markdown = in_project["files"].as_array().is_some_and(|names| {
+            names
+                .iter()
+                .any(|name| name.as_str().is_some_and(|name| name.ends_with(".md")))
+        });
+        match (law["file"].as_str(), markdown) {
+            (Some(file), true) => files.push(file.to_owned()),
+            (Some(file), false) => unread.push(format!(
+                "the census gives {slug} the floor {file}, and AIKit names no Markdown file it reads in a project ({in_project})"
+            )),
+            (None, true) => unread.push(format!(
+                "{slug} shows no law, and AIKit says it reads {} in a project: {}",
+                in_project["files"],
                 law["why"].as_str().unwrap_or("the census names no file")
             )),
+            // AIKit does not say what it reads in a project, or names no Markdown file: the census claims no floor, and says why.
+            (None, false) => match law["why"].as_str() {
+                Some(why) => println!("{slug}: {why}"),
+                None => unread.push(format!(
+                    "{slug} shows no law and no why: {}",
+                    clip(&law)
+                )),
+            },
         }
     }
     files.sort();
     files.dedup();
+    // An act that verified no agent's law has not shown that any agent carries one.
+    if files.is_empty() {
+        return Err(format!(
+            "no agent that starts reads a floor AIKit names in a project, so no agent's law was verified ({} start)",
+            starting.len()
+        ));
+    }
     // A statement on tier 0, written as a person writes one, and its revision as Central reads it.
     let central = world.central();
     let statement = "craft/plain-words.md";
@@ -997,6 +1029,14 @@ fn law_holds(world: &World, starting: &[(String, String)]) -> Act {
                 clip(&law)
             ));
         };
+        // How far it reaches is AIKit's to say: how far up from where it works the agent looks for its files.
+        let looks = said(slug)["reach"].clone();
+        if reach["scope"] != looks {
+            return Err(format!(
+                "the census says {file} reaches {slug} as {}, and AIKit says it looks as far as {looks}",
+                reach["scope"]
+            ));
+        }
         let carried = floor["statements"].as_array().cloned().unwrap_or_default();
         if floor["state"] != "rendered"
             || !carried

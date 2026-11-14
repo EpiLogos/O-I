@@ -2014,7 +2014,12 @@ test('CODE-DERIVED — Harnesses & models shows what each agent that starts carr
     {slug: 'kimi', harness_ref: 'harness/kimi', executable: '/x/kimi', starts: true, talks: true, version: 'kimi, version 1.6', aikit: {client: 'kimi', harness: 'kimi'},
       carries: {model: {own: true, why: 'AIKit holds no model default for kimi: a new chat opens with its own model'}, skills: {sets: [], skills: []},
         law: {file: 'AGENTS.md', state: 'rendered', statements: [{file: 'craft/plain-words.md', topic: 'Plain words', standing: 'durable'}],
-          reach: {scope: 'workdir', why: 'kimi reads AGENTS.md only in the folder it works in, so this floor reaches it only when it works at the world\'s root'}}}}]}}
+          reach: {scope: 'workdir', why: 'kimi reads AGENTS.md only in the folder it works in, so this floor reaches it only when it works at the world\'s root'}}}},
+    // A reach the window does not know is said in the census's words, and claimed neither everywhere nor only at the root.
+    {slug: 'opencode', harness_ref: 'harness/opencode', executable: '/x/opencode', starts: true, talks: true, version: '2.0.32', aikit: {client: 'opencode', harness: 'opencode'},
+      carries: {model: {own: true, why: 'AIKit holds no model default for opencode: a new chat opens with its own model'}, skills: {sets: [], skills: []},
+        law: {file: 'AGENTS.md', state: 'rendered', statements: [{file: 'craft/plain-words.md', topic: 'Plain words', standing: 'durable'}],
+          reach: {scope: 'sideways', why: 'AIKit says opencode looks for AGENTS.md in a way Central does not know (sideways)'}}}}]}}
   const census = censusOf({state: 'held', answer})
   assert.deepEqual(census.agents[0].carries, {model: {id: 'claude-opus-5-5', name: 'Claude Opus 5.5'}, skills: {sets: ['foundation'], skills: ['engineering-methodology', 'wayfinder']},
     law: {file: 'CLAUDE.md', state: 'rendered', renderer: 'control.floor.render', statements: [{file: 'authorship-and-return/propose-not-write.md', topic: 'Authorship', standing: 'adopted'},
@@ -2025,11 +2030,16 @@ test('CODE-DERIVED — Harnesses & models shows what each agent that starts carr
     ['Claude Opus 5.5', ['foundation'], ['Authorship', 'Shape of the world'], 'CLAUDE.md'])
   assert.deepEqual([rows.codex.model, rows.codex.modelWhy, rows.codex.sets, rows.codex.law, rows.codex.lawWhy],
     [undefined, 'AIKit holds no model default for codex: a new chat opens with its own model', [], undefined, 'Central did not read the floor: no control.floor.read here'])
-  assert.deepEqual([rows['claude-code'].lawEverywhere, rows.kimi.lawEverywhere, rows.kimi.law.map(row => row.topic)], [true, false, ['Plain words']])
+  assert.deepEqual([rows['claude-code'].lawEverywhere, rows['claude-code'].lawRootOnly, rows.kimi.lawEverywhere, rows.kimi.lawRootOnly, rows.kimi.law.map(row => row.topic)],
+    [true, false, false, true, ['Plain words']])
   assert.ok(rows.kimi.lawReach.includes('only when it works at the world\'s root'), rows.kimi.lawReach)
+  assert.deepEqual([rows.opencode.lawEverywhere, rows.opencode.lawRootOnly], [false, false], 'a reach the window does not know is claimed neither way')
   const page = drawn({harnesses: win.harnessValues(null, null, census).harnesses}, 'harnesses')
   for (const shown of ['Claude Opus 5.5', 'foundation', 'Authorship · Shape of the world', 'CLAUDE.md', escaped('AIKit holds no model default for codex'),
-    escaped('so this floor reaches it in every project of the world'), escaped('AGENTS.md · only at your world\'s root'), 'data-law-reach="root"']) assert.ok(page.includes(shown), `drawn: ${shown}`)
+    escaped('so this floor reaches it in every project of the world'), escaped('AGENTS.md · only at your world\'s root'), 'data-law-reach="root"', 'data-law-reach="unknown"',
+    // The law's tooltip carries the reach too: the row's line may clip it.
+    escaped('Shape of the world (world/shape-of-the-world.md, adopted) — claude-code reads CLAUDE.md where it works and in every folder above')]) assert.ok(page.includes(shown), `drawn: ${shown}`)
+  assert.equal(page.split(escaped('only at your world\'s root')).length - 1, 1, 'only kimi, whose reach is the root, is marked as reached only there')
   assert.ok(!page.includes('data-carries="gemini"'), 'nothing carried is drawn for an agent that does not start')
 })
 
