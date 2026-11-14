@@ -837,9 +837,9 @@ impl Kernel {
     pub fn prepare_agent_read(&mut self, op: &KernelOp) -> Result<Option<PreparedAgent>, String> {
         let (project, read) = match op {
             KernelOp::AgencyRead { project } => (Some(project.clone()), AgentRead::Agency),
-            KernelOp::Encounter { project, request } => {
-                (Some(project.clone()), AgentRead::Encounter(request.clone()))
-            }
+            KernelOp::Encounter {
+                project, request, ..
+            } => (Some(project.clone()), AgentRead::Encounter(request.clone())),
             KernelOp::EncounterTaskRead {
                 project,
                 agent_session,
@@ -1427,6 +1427,7 @@ else:
                 after: 0,
                 limit: 8,
             },
+            channel: Default::default(),
         };
         let answered = kernel.prepare_agent_read(&read).unwrap().unwrap().execute();
         assert!(!kernel.encounter_refs.contains_key("agent-session/x"));
@@ -1444,6 +1445,7 @@ else:
             request: agency::EncounterRequest::Status {
                 agent_session: "agent-session/elsewhere".into(),
             },
+            channel: Default::default(),
         };
         assert!(kernel.apply(outside).is_err());
         assert_eq!(aikit.calls("encounter"), 1);

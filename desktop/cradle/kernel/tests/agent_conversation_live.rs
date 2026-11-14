@@ -17,6 +17,7 @@ fn reading(kernel: &mut Kernel, request: EncounterRequest) -> Value {
         .apply(KernelOp::Encounter {
             project: String::new(),
             request,
+            channel: Default::default(),
         })
         .expect("encounter op");
     let KernelOpResult::EncounterReading { data } = outcome.result else {

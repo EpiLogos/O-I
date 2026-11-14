@@ -312,13 +312,14 @@ impl Receipt {
                 request:
                     crate::agency::EncounterRequest::Prompt { agent_session, .. }
                     | crate::agency::EncounterRequest::PromptContext { agent_session, .. },
+                channel,
                 ..
             } => Some(Self {
                 act: "encounter.prompt".into(),
                 owner: "AIKit".into(),
                 input: Value::Null,
                 subject: Some(agent_session.clone()),
-                channel: crate::flow::Channel::Wire,
+                channel: *channel,
             }),
             crate::KernelOp::FactoryOwner {
                 request, channel, ..
@@ -540,6 +541,59 @@ mod tests {
             laid.lines().collect::<Vec<_>>(),
             ["person-token"],
             "the press's receipt on the person's credential, and none asked for the wire's"
+        );
+    }
+
+    /// A passage the person sends to an agent comes by the shell window's channel as the host's press command takes it (`person_press`,
+    /// O-I #1005), so its receipt is laid on their credential; the same passage read from a wire lays none, and an encounter's reads
+    /// and drafts are not the person's press.
+    #[test]
+    fn a_passage_the_person_sends_lays_its_receipt_on_their_credential() {
+        let (client, dir) = central_laying_receipts("passage");
+        let encounter = |request: Value| -> crate::KernelOp {
+            serde_json::from_value(json!({"op": "encounter", "project": "", "request": request}))
+                .unwrap()
+        };
+        let prompt =
+            json!({"action": "prompt", "agent_session": "agent-session/x", "draft_revision": 2});
+        let with_context = json!({"action": "prompt-context", "agent_session": "agent-session/x", "draft_revision": 3,
+            "context": {"packet": "the selected words"}});
+        let sent = |op: crate::KernelOp| {
+            Receipt::of(&op)
+                .expect("a passage sent lays a receipt")
+                .lay(
+                    &client,
+                    &Ok(crate::KernelOpOutcome {
+                        receipts: Vec::new(),
+                        read_scopes: None,
+                        result: crate::KernelOpResult::EncounterReading {
+                            data: json!({"agent_session": "agent-session/x"}),
+                        },
+                    }),
+                )
+        };
+        sent(
+            crate::person_press(encounter(prompt.clone())).expect("the press takes a passage sent"),
+        );
+        sent(
+            crate::person_press(encounter(with_context))
+                .expect("the press takes a passage sent with its context"),
+        );
+        sent(encounter(prompt));
+        for read in [
+            json!({"action": "view", "agent_session": "agent-session/x", "before": null}),
+            json!({"action": "draft", "agent_session": "agent-session/x", "basis": 1, "text": "words"}),
+        ] {
+            assert!(
+                crate::person_press(encounter(read.clone())).is_err(),
+                "{read}"
+            );
+        }
+        let laid = std::fs::read_to_string(dir.join("laid")).unwrap_or_default();
+        let _ = std::fs::remove_dir_all(&dir);
+        assert_eq!(
+            laid.lines().collect::<Vec<_>>(),
+            ["person-token", "person-token"]
         );
     }
 }

@@ -879,6 +879,11 @@ pub enum KernelOp {
     Encounter {
         project: String,
         request: agency::EncounterRequest,
+        /// The way it came (flow.rs `Channel`): no wire carries it, and only the host's press command (`person_press`) marks a passage
+        /// the person sends (`prompt`, `prompt-context`) the shell window's. By that alone its Day receipt is laid on the person's
+        /// credential (central.rs `Receipt`, O-I #1005); the encounter itself runs as it does by any channel, and no token goes to AIKit.
+        #[serde(skip)]
+        channel: flow::Channel,
     },
     /// Provision ONE fresh chat conversation for a project and open it — the
     /// desktop's new-chat first Send. The kernel replays the owner's own
@@ -5252,7 +5257,20 @@ pub fn person_press(op: KernelOp) -> Result<KernelOp, String> {
             request,
             channel: press,
         }),
-        _ => Err("Only the person's own acts come by the shell window's press channel (a Delete, a trigger's press, an Action, a document's write, a Day's ensure, make or close, a page's Launch, Stop or Delete, Factory's acts on the person's grant, Setup's Keep of your Music folder): send this one as any other request".into()),
+        // A passage the person sends to an agent (O-I #1005): its Day receipt is laid on their credential (central.rs `Receipt`). The
+        // encounter runs as it does by any channel; its reads and drafts are not presses.
+        KernelOp::Encounter {
+            project,
+            request:
+                request @ (agency::EncounterRequest::Prompt { .. }
+                | agency::EncounterRequest::PromptContext { .. }),
+            ..
+        } => Ok(KernelOp::Encounter {
+            project,
+            request,
+            channel: press,
+        }),
+        _ => Err("Only the person's own acts come by the shell window's press channel (a Delete, a trigger's press, an Action, a document's write, a Day's ensure, make or close, a page's Launch, Stop or Delete, Factory's acts on the person's grant, Setup's Keep of your Music folder, a passage you send to an agent): send this one as any other request".into()),
     }
 }
 

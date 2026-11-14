@@ -101,7 +101,8 @@ function normaliseOutcome(outcome: KernelOutcome): KernelOutcome {
  * file's save and restore among them (O-I #1002) — and the person's acts that are the kernel's own ops (round 896, 0R-authority.1, item
  * 0.2): a page's Launch, Stop and Delete, Factory's acts on the person's grant (round 896 item 4, `factoryPersonAct`), and
  * Setup's Keep of the world's Music folder, which Central registers on the person's grant (round 54's Central follow-up, DLW build ruling
- * 2026-11-09). The `receiving` op reads alone, so it takes no press. The channel is the shell window's, not proof that the person
+ * 2026-11-09), and a passage the person sends to an agent, whose Day receipt the kernel lays on their credential (O-I ticket 1005). The
+ * `receiving` op reads alone, so it takes no press. The channel is the shell window's, not proof that the person
  * pressed: the shell sends by it what it sends as the person's (flow.rs `Channel`). A Delete and a trigger's Run go by `kernelPress`. */
 export function byShellWindow(op: KernelOp): boolean {
   switch (op.op) {
@@ -109,6 +110,7 @@ export function byShellWindow(op: KernelOp): boolean {
     case "page": return op.request.operation === "launch" || op.request.operation === "stop" || op.request.operation === "trash";
     case "factory_owner": return factoryPersonAct(op.request);
     case "ground_music": return op.request.operation === "keep";
+    case "encounter": return op.request.action === "prompt" || op.request.action === "prompt-context";
     default: return false;
   }
 }

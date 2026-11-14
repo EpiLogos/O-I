@@ -147,6 +147,11 @@ test('0R-authority.1: the shell\'s acts by the channel are the kernel\'s, read f
   assert.ok(press.includes('request: request @ ground_music::Request::Keep { .. }'), 'the kernel takes the Keep by the channel')
   assert.equal(by({op: 'ground_music', request: {operation: 'keep', acceptance_ref: 'a', expected_digest: 'd'}}), true, 'keep')
   assert.equal(by({op: 'ground_music', request: {operation: 'preview'}}), false, 'preview')
+  // A passage the person sends to an agent (O-I ticket 1005): the kernel lays its Day receipt on their credential, so the send goes by the
+  // channel as the kernel takes it there; the encounter's reads and drafts do not.
+  assert.ok(press.includes('KernelOp::Encounter {'), 'the kernel takes a passage sent by the channel')
+  for (const action of ['prompt', 'prompt-context']) assert.equal(by({op: 'encounter', project: '', request: {action}}), true, action)
+  for (const action of ['view', 'read', 'draft', 'status', 'cancel', 'context', 'open']) assert.equal(by({op: 'encounter', project: '', request: {action}}), false, action)
   for (const op of ['world_read', 'native_expression', 'hosted_native', 'file_bytes']) assert.equal(by({op}), false, op)
 })
 
