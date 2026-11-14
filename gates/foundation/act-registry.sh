@@ -15,10 +15,13 @@
 # Owners come from OI_BIN, OI_CENTRAL_CTRL_BIN, OI_AIKIT_BIN, OI_FACTORY_BIN, … (else the installed suite). The exit status is the
 # number of Actions that did not hold.
 #
-# Not here yet: Factory's session start and stop and its approve are composed in the kernel (`factory_owner`), and seat join and
-# release need a Workcell the fresh World declares. They become Factory's and Workcell's own Actions under O-I #1006, which adds
-# them to this script. The seat instrument resolves the machine's own register unless CENTRAL_ROOT names another, so this script
-# never runs it.
+# Workcell and Factory's sessions (O-I #1006): the fresh World declares its first workcell (workcell.declare), and its seat is
+# joined and released by the seat instrument's own Actions with CENTRAL_ROOT naming this World — the instrument resolves the
+# machine's own register unless CENTRAL_ROOT names another, so no seat Action here runs without it. Factory's session start, a
+# task written, run, stopped (paused, then cancelled) and its log read, and the session's end are Factory's own Actions; the
+# task's run sends the agent one prompt, cancelled at once. The agent is FOUNDATION_AGENT, else the first the census lists that
+# starts. Choosing a take (factory.attempt.receiving) carries a Return into the Flow page a Run was made from, and a session's
+# task is made from no page, so it is not run here.
 set -uo pipefail
 
 keep=0
@@ -37,6 +40,7 @@ home="$root/home"
 mkdir -p "$home" "$root/t"
 home="$(cd "$home" && pwd -P)"
 if [ "$keep" = 1 ]; then echo "act-registry: the fresh World stays at $home"; else trap 'rm -rf "$root"' EXIT; fi
+real_home="$HOME"
 export HOME="$home" TMPDIR="$root/t" HISTFILE=/dev/null OI_WORLD_FOLDER="$home"
 unset CENTRAL_NATIVE_TOKEN OI_CENTRAL_ROOT CENTRAL_ROOT AIKIT_HOME OI_HOME XDG_CONFIG_HOME OI_EXPRESSION_HOME OI_CENTRAL_PROJECT_QUERY
 # A GIT_* exported around a run aims its git at the wrong repository.
@@ -207,6 +211,123 @@ if [ -n "$run_ref" ] && attempts="$(act factory.attempt.list "$(jq -nc --arg s "
   holds factory.attempt.list "$run_ref has $(jq -r '.totalTasks // 0' <<<"$attempts") attempt task(s), nothing executed"
 else
   fails factory.attempt.list "no attempt reading for the commissioned Run"
+fi
+
+echo "act-registry: Workcell and Factory's sessions"
+# --- A workcell: the World's first, declared by Workcell, for a project whose primary stands on main --------------------------------
+# Factory's state stays out of the project's history (it is state, not source), so a checkout of the project carries none.
+( cd "$world/Work/$project" && printf '# Field notes\n' > NOTES.md && printf '.factory/\n' > .gitignore && git init -q -b main && git add --all \
+  && git -c user.name=act-registry -c user.email=act-registry@local commit -qm "Field notes begin" ) || ground "the project's repository"
+register="$world/Control/machines/workcells.register.json"
+checkout=""
+if declared="$(act workcell.declare "$(jq -nc --arg w "$world" --arg p "$project" '{world:$w, project:$p}')")" \
+  && checkout="$(jq -r .checkout <<<"$declared")" && [ -d "$checkout/.git" ] \
+  && [ "$(jq -r '.workcells[0].seats[0].state' "$register")" = "free" ]; then
+  holds workcell.declare "env-1 holds a checkout of $project, its seat free in this World's register"
+else
+  fails workcell.declare "no workcell declared in this World"
+fi
+seat() { CENTRAL_ROOT="$world" act "$@"; }
+if [ -n "$checkout" ] && seat workcell.seat.join "$(jq -nc --arg p "$project" --arg a "$principal" \
+    '{workcell:"env-1", product:$p, actor:$a, branch:"act-registry"}')" >/dev/null \
+  && [ "$(jq -r '.workcells[0].seats[0].state' "$register")" != "free" ]; then
+  holds workcell.seat.join "env-1's $project seat held, in this World's register"
+else
+  fails workcell.seat.join "the seat is not held in this World's register"
+fi
+
+# --- What a task needs: the project's world in the person's standing grant, a practice the agent carries, AIKit's NOW service ------
+aikit="${OI_AIKIT_BIN:-$suite/aikit}"
+setup() { "$aikit" --json "$@" >/dev/null 2>&1 || ground "aikit $*"; }
+act actuation.authority.grant-world "$(jq -nc --arg h "$principal" --arg p "project:$project" '{holder:$h, world:["control:root", $p]}')" \
+  >/dev/null || ground "the project's world was not granted"
+mkdir -p "$home/.agents/skills/notes-keeper"
+printf -- "---\nname: notes-keeper\ndescription: Keep a project's notes file short.\n---\n\nKeep NOTES.md short.\n" \
+  >"$home/.agents/skills/notes-keeper/SKILL.md"
+setup init
+digest="$("$aikit" --json adopt "$home/.agents/skills" --namespace registry 2>/dev/null | jq -r '.data.review_digest // empty')"
+[ -n "$digest" ] || ground "AIKit's adoption plan"
+setup adopt "$home/.agents/skills" --namespace registry --yes --expect-digest "$digest"
+skill=skill/registry/notes-keeper
+setup set create registry
+setup set add registry "$skill"
+setup compose repertoire --set registry --scope global --apply
+setup enable "$skill" --scope global --apply
+setup trust record "$skill"
+port="$(python3 -c 'import socket; s = socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1]); s.close()')"
+setup now-context service provision --port "$port"
+setup now-context service start
+stop_now() { "$aikit" --json now-context service stop >/dev/null 2>&1 || true; }
+# The owner processes this World's Actions started (a session's encounter server outlives its end): every process whose command
+# line names this World's root, each stopped by its pid, never by a pattern.
+stop_owners() {
+  local pid
+  for pid in $(ps -axww -o pid=,command= | awk -v root="$root" -v me="$$" 'index($0, root) && $1 != me {print $1}'); do
+    kill -TERM "$pid" 2>/dev/null || continue
+    for _ in 1 2 3 4 5 6 7 8 9 10; do kill -0 "$pid" 2>/dev/null || break; sleep 0.5; done
+    kill -KILL "$pid" 2>/dev/null || true
+  done
+}
+trap 'stop_now; stop_owners; [ "$keep" = 1 ] || rm -rf "$root"' EXIT
+# The agents' own sign-in, never their state (as gates/foundation/run.sh links it): Claude Code's login keychain, Codex's and Pi's
+# auth.json, linked from the person's home into this one.
+for file in Library/Keychains/login.keychain-db .codex/auth.json .pi/agent/auth.json; do
+  if [ -f "$real_home/$file" ] && [ ! -e "$home/$file" ]; then mkdir -p "$(dirname "$home/$file")" && ln -s "$real_home/$file" "$home/$file"; fi
+done
+agent="${FOUNDATION_AGENT:-}"
+[ -n "$agent" ] || agent="$("$aikit" --json client status 2>/dev/null | jq -r '[.data.clients[]? | .harness // empty] | first // empty')"
+
+# --- Session start: an agent of the census seated on a track, in the checkout the seat holds ----------------------------------------
+session=""
+if opened="$(act factory.session.start "$(jq -nc --arg a "$agent" --arg w "$world" --arg p "$project" '{agent:$a, world:$w, project:$p}')")" \
+  && session="$(jq -r '.session // empty' <<<"$opened")" && [ -n "$session" ] && [ "$(jq -r .checkout <<<"$opened")" = "$checkout" ]; then
+  holds factory.session.start "$agent seated on $(jq -r .track <<<"$opened")"
+else
+  fails factory.session.start "no session opened in the seat's checkout"
+fi
+
+# --- A task written, run, stopped twice and its log read ------------------------------------------------------------------------
+task_state="" task_run="" attempt=""
+if [ -n "$session" ] && written="$(act factory.task.write "$(jq -nc --arg w "$world" --arg p "$project" --arg s "$session" \
+    '{world:$w, project:$p, session:$s, instruction:"Read NOTES.md and say what it holds. Change nothing."}')")" \
+  && task_state="$(jq -r .factory_state <<<"$written")" && task_run="$(jq -r .run_ref <<<"$written")" \
+  && [ "$(jq -r .state <<<"$written")" = "written" ]; then
+  holds factory.task.write "$task_run written on $session"
+else
+  fails factory.task.write "no task written"
+fi
+task() { jq -nc --arg st "$task_state" --arg r "$task_run" --arg a "$attempt" '{state:$st, run_ref:$r, attempt_ref:$a}'; }
+if [ -n "$task_run" ] && ran="$(keyed factory.task.run "$(jq -nc --arg st "$task_state" --arg r "$task_run" --arg s "$session" \
+    '{state:$st, run_ref:$r, session:$s}')")" && attempt="$(jq -r '.attempt_ref // empty' <<<"$ran")" && [ -n "$attempt" ]; then
+  holds factory.task.run "$attempt running, its log at $(jq -r .log <<<"$ran")"
+else
+  fails factory.task.run "the task did not run"
+fi
+if [ -n "$attempt" ] && [ "$(keyed factory.task.stop "$(task)" | jq -r .state)" = "paused" ] \
+  && [ "$(keyed factory.task.stop "$(task)" | jq -r .state)" = "cancelled" ]; then
+  holds factory.task.stop "$attempt paused, then cancelled"
+else
+  fails factory.task.stop "the task was not paused and then cancelled"
+fi
+if [ -n "$attempt" ] && log="$(act factory.task.log "$(task)")" \
+  && jq -e '(.lines | length) > 0 and (.attempt.status | test("Cancel"))' <<<"$log" >/dev/null; then
+  holds factory.task.log "$(jq -r '.lines | length' <<<"$log") lines; Factory reads the attempt $(jq -r .attempt.status <<<"$log")"
+else
+  fails factory.task.log "no log, or the attempt not read cancelled"
+fi
+
+# --- Session end, then the seat released ----------------------------------------------------------------------------------------
+if [ -n "$session" ] && ended="$(act factory.session.end "$(jq -nc --arg w "$world" --arg p "$project" --arg s "$session" \
+    '{world:$w, project:$p, session:$s}')")" && [ "$(jq -r .state <<<"$ended")" = "ended" ]; then
+  holds factory.session.end "$session ended, its body released: $(jq -c .released <<<"$ended")"
+else
+  fails factory.session.end "the session did not end"
+fi
+if [ -n "$checkout" ] && seat workcell.seat.release "$(jq -nc --arg p "$project" --arg a "$principal" '{workcell:"env-1", product:$p, actor:$a}')" >/dev/null \
+  && [ "$(jq -r '.workcells[0].seats[0].state' "$register")" = "free" ]; then
+  holds workcell.seat.release "env-1's $project seat free again"
+else
+  fails workcell.seat.release "the seat is not free again"
 fi
 
 echo "act-registry: $held held, $failed did not"
