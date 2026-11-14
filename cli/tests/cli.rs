@@ -547,18 +547,15 @@ fn the_build_stamp_follows_head_and_only_head() {
     )
     .unwrap();
     fs::write(root.join(".gitignore"), "/target/\n").unwrap();
-    // The probe's own repository, whatever repository or hook the test runs under.
+    // The probe's own repository, whatever repository or hook the test runs under: no GIT_* of the caller's reaches its children
+    // (desktop/cradle/tests/conformance/git-env-isolation-896.test.mjs).
     let unhooked = |command: &mut Command| {
-        for name in [
-            "GIT_DIR",
-            "GIT_WORK_TREE",
-            "GIT_INDEX_FILE",
-            "GIT_COMMON_DIR",
-            "GIT_CEILING_DIRECTORIES",
-            "SUITE_BUILD_REVISION",
-        ] {
-            command.env_remove(name);
+        for (name, _) in std::env::vars_os() {
+            if name.to_string_lossy().starts_with("GIT_") {
+                command.env_remove(&name);
+            }
         }
+        command.env_remove("SUITE_BUILD_REVISION");
     };
     let git = |args: &[&str]| -> String {
         let mut command = Command::new("git");
