@@ -139,7 +139,6 @@ export const ROUTE_WORDS = {
   connectionsShow: '`workcell connections show`',
   ecology: '`aikit gateway ecology`',
   replay: '`aikit gateway replay`',
-  realise: '`aikit compose --realise`',
 } as const
 
 /** The desktop's own actor, as the kernel attributes the person's file writes (desktop/cradle/kernel/src/files.rs `oi-desktop-user`), and

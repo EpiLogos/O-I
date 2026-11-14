@@ -194,6 +194,8 @@ export interface ModeSetTake {
   words: string;
   run?: string;
   unit?: string;
+  /** The take's own acts: Factory's `choose` (factory.attempt.choose) on a returned take its Run's Flow can receive. */
+  acts?: Record<string, ModeSetAct>;
 }
 
 /** One control of a Set's mixer row: what it does here, its route, its grain, or why it stands disabled. */
@@ -676,10 +678,10 @@ export type AikitWriteRequest =
   /** `aikit decide invoke --instrument I --request-file - [--agent-session S]` (O-I #843, Factory's Fill heads): the cell's own words and
    * the heads it has chosen (`aikit.instrument-fill-request/v1`) on stdin; answers `aikit.instrument-fill/v1`, the picks as evidence. */
   | {kind:"decide-fill";instrument:string;request:unknown;agent_session?:string|null}
-  /** `aikit compose --session S --realise --model M [--provider P]` (O-I #842, Launch's first reading): AIKit reads the session's own
-   * Agency, the SessionSpace that holds it and its owner, and opens the model on it; answers {agency_admission, composition_scope,
-   * resident_target, realisation}, the realisation (aikit.model-realisation/v2) being what `attempt-launch` carries verbatim. AIKit refuses
-   * a session no space holds, one on the bench, or one with no Agency binding, in its own words. */
+  /** `aikit compose --session S --realise --model M [--provider P]` (O-I #842): AIKit reads the session's own Agency, the SessionSpace
+   * that holds it and its owner, and opens the model on it; answers {agency_admission, composition_scope, resident_target, realisation}
+   * (aikit.model-realisation/v2). AIKit refuses a session no space holds, one on the bench, or one with no Agency binding, in its own
+   * words. No window press asks it since a task runs on its session through Factory's own factory.task.run (O-I #1006). */
   | {kind:"realise";agent_session:string;model:string;provider?:string|null;project?:string|null}
   /** `aikit knowledge forget destination|route|project RESOURCE` or `forget all`: answers `{forgot, preserved}`. `here` (O-I #741) forgets
    * RESOURCE in one world only — `project`'s, or your world's without one — asked in that world's ground. */
@@ -1536,33 +1538,10 @@ export type FactoryPadsPresetsRequest = {kind:"pads-presets";state_path:string}
 export type FactoryPadsPresetSaveRequest = {kind:"pads-preset-save";state_path:string;project_ref:string;name:string;expected_revision:string}
 export type FactoryPadsPresetRecallRequest = {kind:"pads-preset-recall";state_path:string;project_ref:string;name:string;expected_revision:string;preset_revision:string}
 export type FactoryAttemptTaskUnitsRequest = {kind:"attempt-task-units";state_path:string;task_ref:string}
-/** Stop after (kernel/src/factory_retry.rs, O-I #842): `attempt-request-cancellation` asks a unit's current attempt to stop through
- * Factory's own `request-cancellation`, admitted as its `attempt-request-cancellation` action and granted on the person's grant as a
- * retry is; the desk names the Run and the unit. It stops no process: Factory's lifecycle accepts the request. */
-export type FactoryAttemptRequestCancellationRequest = {kind:"attempt-request-cancellation";state_path:string;run_ref:string;workflow_unit_ref:string}
-/** The kernel's answer to a cancellation request: Factory's receipt, or its refusal (or the driver's, named as such) in its words. */
-export interface FactoryAttemptCancellation {
-  contract:"oi.factory-attempt-cancellation/v1"; runRef:string; workflowUnitRef:string
-  status:"cancel-requested"|"already-requested"|"uncertain"|"refused"; changed:boolean; attemptRef:string|null; authorityRef:string|null
-  receipt:unknown; refusal:{source:string;step:string|null;message:string;operationMayHaveRun?:boolean}|null
-}
-/** Launch (kernel/src/factory_retry.rs, O-I #842 round 21): `attempt-launch` starts a unit through Factory's own `factory attempt launch
- * <state> -` (factory.attempt-launch/v1), which assembles its start-serial from the owners' readings; admitted as Factory's `attempt-launch`
- * action and granted on the person's grant as a retry is. The desk names the Run, the unit and the task, and carries the readings verbatim:
- * AIKit's model realisation on the session that carries the unit (`aikit compose --realise --model`, aikit.model-realisation/v2, whose
- * explicit selection names the route, harness and session), and AIKit's praxis receipt with its NOW context and Central's placement where
- * the unit names them. Factory refuses a missing reading in that owner's words. */
-export type FactoryAttemptLaunchRequest = {kind:"attempt-launch";state_path:string;run_ref:string;workflow_unit_ref:string;task_ref:string
-  aikit_realisation:unknown;praxis_receipt?:unknown;now_context_ref?:string;placement?:unknown}
-/** The kernel's answer to a launch: Factory's receipt for the started attempt, or its refusal (or the driver's, named as such) in its words. */
-export interface FactoryAttemptLaunch {
-  contract:"oi.factory-attempt-launch/v1"; runRef:string; workflowUnitRef:string
-  status:"launched"|"already-launched"|"uncertain"|"refused"; changed:boolean; attemptRef:string|null; taskRef:string|null; authorityRef:string|null
-  receipt:unknown; refusal:{source:string;step:string|null;message:string;operationMayHaveRun?:boolean}|null
-}
-/** Every `factory_owner` request: the six above by their shapes, and the kernel's other kinds by name. */
+/** Every `factory_owner` request: the four above by their shapes, and the kernel's other kinds by name. A unit's retry, a task's run and
+ * stop and an attempt's choice are Factory's own Actions, by `act` (O-I #1006), never `factory_owner` kinds. */
 export type FactoryOwnerRequest = FactoryPadsPresetsRequest | FactoryPadsPresetSaveRequest | FactoryPadsPresetRecallRequest | FactoryAttemptTaskUnitsRequest
-  | FactoryAttemptRequestCancellationRequest | FactoryAttemptLaunchRequest | {kind:string;[field:string]:unknown}
+  | {kind:string;[field:string]:unknown}
 /** One unit a task's attempts stand on (factory.attempt-task-units-reading/v1 `units`): its Run, the unit, the unit's current attempt and
  * its leg's status where the current attempt is the task's, how many of the task's attempts it holds, the Run's revision, and whether the
  * Run requires the unit. */

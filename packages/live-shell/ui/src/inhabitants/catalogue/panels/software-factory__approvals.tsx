@@ -29,7 +29,7 @@
 //     (Discard), the Refining page's own;
 //   a request: allowOnce (Approve: the harness's consent, allow once, held), deny (reject once, held), open (where it belongs: a run in
 //     Factory, a Day in Central, an agent in Messages);
-//   a review: confirm (factory_owner AttemptReceiving, held), reviewChanges (Changes), collect (Workcell's collect, which no kernel route
+//   a review: confirm (Factory's factory.attempt.choose, held), reviewChanges (Changes), collect (Workcell's collect, which no kernel route
 //     reaches yet);
 //   a recognition: recognise (factory_owner Recognise), close (factory_owner RunClose, held; it follows a Recognition), continue
 //     (ContinueCommission, whose route the kernel issues only for a Recognition).

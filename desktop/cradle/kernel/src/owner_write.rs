@@ -1053,12 +1053,6 @@ fn factory_action(request: &factory::OwnerRequest) -> &'static str {
         factory::OwnerRequest::ActionInvoke { .. } => "action invoke",
         factory::OwnerRequest::Recognise { .. } => "development mutate",
         factory::OwnerRequest::RunClose { .. } => "run close",
-        factory::OwnerRequest::AttemptReceiving { .. } => "attempt receiving",
-        factory::OwnerRequest::AttemptRetry { .. } => "attempt action retry",
-        factory::OwnerRequest::AttemptRequestCancellation { .. } => {
-            "attempt action request-cancellation"
-        }
-        factory::OwnerRequest::AttemptLaunch { .. } => "attempt launch",
         factory::OwnerRequest::AttemptDecisionSubmit { .. } => "attempt decision submit",
         factory::OwnerRequest::CustodyAssign { .. } => "development custody assign",
         factory::OwnerRequest::CustodyUpdate { .. } => "development custody update",
@@ -1086,12 +1080,9 @@ fn factory_action(request: &factory::OwnerRequest) -> &'static str {
 fn factory_ref(request: &factory::OwnerRequest, data: &Value) -> String {
     use factory::OwnerRequest;
     match request {
-        OwnerRequest::ActionInvoke { run_ref, .. }
-        | OwnerRequest::RunClose { run_ref, .. }
-        | OwnerRequest::AttemptReceiving { run_ref, .. }
-        | OwnerRequest::AttemptRetry { run_ref, .. }
-        | OwnerRequest::AttemptRequestCancellation { run_ref, .. }
-        | OwnerRequest::AttemptLaunch { run_ref, .. } => run_ref.clone(),
+        OwnerRequest::ActionInvoke { run_ref, .. } | OwnerRequest::RunClose { run_ref, .. } => {
+            run_ref.clone()
+        }
         OwnerRequest::Recognise {
             journey_ref,
             state_path,

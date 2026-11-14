@@ -1,10 +1,10 @@
 // T-COVERAGE §1.3, the refusals that were stale: each binding below refused a reading or an act its owner already answers. Each now
 // reads (or writes) through the owner's own route — Central's readings through the kernel's invoke_action (owner_write.rs carries a
-// Central reading as a reading: it retires nothing), the page op, Factory's AttemptReceiving — and draws its catalogue design on it.
+// Central reading as a reading: it retires nothing), the page op, Factory's factory.attempt.choose — and draws its catalogue design on it.
 //   the Day (central:day-die, DLW §18.2)            central.day.settings.read, central.day.moves.read
 //   Ground hygiene (central:ground-hygiene, §18.5)  central.git.census
 //   Beings and Things (central:beings|things)       the page op's mutate_field
-//   Runs (software-factory:attempt-review, §19.1)   the take lanes' reading; Stands through factory_owner AttemptReceiving
+//   Runs (software-factory:attempt-review, §19.1)   the take lanes' reading; Stands through Factory's factory.attempt.choose
 //   Scope (software-factory:context-write-mode)     central.world.effective-sources; a place request waits on the person's route
 //   Wiki (widgets:wiki, §23.7)                      central.wiki.read for the page's links
 //   Search (central:search, §18.4)                  control.search for Your world
@@ -407,13 +407,13 @@ test('a Being with no page read with its revision: every tie stands disabled say
   for (const key of ['world', 'subject', 'kind', 'o1', 'layout', 'ground', 'dropSource']) assert.match(binding.standing[key].disabled, /page op mutate_field.*no page is read here/, key)
 })
 
-// ── Runs: the take lanes' attempts; Stands through AttemptReceiving ──────────────────────────────────────────────────────────────
+// ── Runs: the take lanes' attempts; Stands through factory.attempt.choose ──────────────────────────────────────────────────────────────
 
 const take = (attemptRef, n, extra = {}) => ({sessionRef: 'agent-session/s1', attemptRef, runRef: 'run:R1', statePath: '/factory/state', taskRef: 'task:1', unit: 'inspect-source',
   state: 'returned', startUnixMs: Date.UTC(2026, 9, 21, 8, n * 10), endUnixMs: Date.UTC(2026, 9, 21, 8, n * 10 + 7), summary: `attempt ${n}`, receivingRef: null, ...extra})
 const TAKES = [take('att:2', 2, {receivingRef: 'central:receiving:x'}), take('att:1', 1, {state: 'failed', summary: null}), take('att:3', 3, {state: 'running', endUnixMs: null})]
 
-test('FIXTURE — Runs reads the session\'s takes: its Run, the attempts oldest first, the one Central received standing; Stands writes through AttemptReceiving', async () => {
+test('FIXTURE — Runs reads the session\'s takes: its Run, the attempts oldest first, the one Central received standing; Stands writes through factory.attempt.choose', async () => {
   chainBind.resetHolds()
   const chosen = []
   const runs = {takes: TAKES, choose: async t => { chosen.push(t.attemptRef); return t.attemptRef === 'att:3' ? {ok: false, error: 'the attempt has not returned'} : {ok: true, note: 'proposed'} }, timezone: 'Europe/London'}

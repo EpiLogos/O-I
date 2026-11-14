@@ -112,7 +112,7 @@ export function AgentDockTileBody({id, sessionRef}: {id: AgentTileId; sessionRef
 
 /** The Results tile (DLW §19.1 On the rail; O-I 745, carried from 772; BD round 25): the takes of the selected run of the selected
  * session (taskBindings.ts resultsOf), each with its author and its standing; Accept sends a returned take to review in Approvals through
- * Factory's AttemptReceiving (owners/attemptTakes.ts choose: its Return proposed to Central's receiving field, which Approvals lists);
+ * Factory's factory.attempt.choose (owners/attemptTakes.ts choose: its Return proposed to Central's receiving field, which Approvals lists);
  * beside them the outputs Workcell collected from each take's world, and Collect asks Workcell again. Run and Show are the tile's own. */
 export function ResultsTile({transport, track}: {transport: KernelTransportStatus; track: AgentSessionTrack | null}) {
   const [run, setRun] = useState<string | null>(null)

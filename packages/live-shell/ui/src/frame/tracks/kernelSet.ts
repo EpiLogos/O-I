@@ -74,8 +74,9 @@ export function attendedOf(tracks: readonly {readonly id: string; readonly paren
 
 /** The acts the views call on one clip, by their key in the Set (and in WorldTrackActions). */
 const CLIP_ACTS = ['openFile', 'revealFile', 'launch'] as const
-/** The acts the views call on one track; `renameTrack` takes the name the person gives. */
-const TRACK_ACTS = ['openFolder', 'revealFolder', 'stopTrack', 'endSession'] as const
+/** The acts the views call on one track; `renameTrack` takes the name the person gives. A track's `retry` is lit where its task stalled
+ * (manual §19.1 "When a task on the track stalls, the track lights a retry"). */
+const TRACK_ACTS = ['openFolder', 'revealFolder', 'stopTrack', 'retry', 'endSession'] as const
 
 const refused = (error: string): WorldActionReceipt => ({ok: false, error})
 /** The ref a census row of the browser carries before an agent's slug (frame/browser/places.ts `harness:<slug>`). */
@@ -121,8 +122,9 @@ const inputOf = (act: ModeSetAct, value?: unknown): Record<string, unknown> => {
   return input
 }
 
-/** The act run: the shell's setter for its own namespace, else the Action through the kernel's `act`; its answer in the views' words. */
-async function runAct(runner: SetActRunner | undefined, act: ModeSetAct, value?: unknown): Promise<WorldActionReceipt> {
+/** The act run: the shell's setter for its own namespace, else the Action through the kernel's `act`; its answer in the views' words.
+ * Wherever a Set's act is pressed (the Session grid, the Agent rack's chain), it is run here. */
+export async function runAct(runner: SetActRunner | undefined, act: ModeSetAct, value?: unknown): Promise<WorldActionReceipt> {
   if (act.action.startsWith('shell.')) {
     if (!runner) return refused(`${act.action}: no shell setter reaches this pane.`)
     return runner.shell(act.action, value)
@@ -252,6 +254,15 @@ function actionsOf(set: ModeSet, runner: SetActRunner | undefined, attention: Se
     try { drag = parseAgentChainDrag(JSON.parse(payload)) } catch { drag = null }
     if (drag?.family !== 'agent') return refused('Only an agent takes a seat here: drag one of your agents from the browser onto the empty track.')
     return runAct(runner, seat, drag.ref.startsWith(CENSUS_ROW) ? drag.ref.slice(CENSUS_ROW.length) : drag.ref)
+  }}
+  // Choosing a take that stands (manual §19.1 "Choosing a take that stands sends it to review in Approvals"): the take's own `choose`,
+  // where the Set lays one. Factory receives a whole attempt, so a stretch chosen across a take chooses the take.
+  const takesBy = new Map(set.takes.map(take => [take.id, take]))
+  const chooses = set.takes.find(take => take.acts?.choose)?.acts?.choose
+  if (chooses) actions.comp = {op: chooses.words, run: (_trackId: string, takeId: string) => {
+    const act = takesBy.get(takeId)?.acts?.choose
+    return act ? runAct(runner, act) : refused(`"${takeId}" carries no ${chooses.action} here: ${takesBy.has(takeId)
+      ? 'only a returned take whose Return its Run\'s Flow has not received is chosen' : 'it is no take of this Set'}.`)
   }}
   const arm = set.acts.arm
   if (arm) actions.mixer = {arm: {op: arm.words, run: (_trackId: string, on: boolean) => runAct(runner, arm, on)}}

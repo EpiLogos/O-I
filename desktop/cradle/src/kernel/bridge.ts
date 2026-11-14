@@ -114,12 +114,12 @@ export function byShellWindow(op: KernelOp): boolean {
 }
 
 /** Factory's requests that present the person's authority, the human grant the host's token holds (the kernel's factory.rs
- * `OwnerRequest::person_act`, O-I #747 round 896 item 4): a Run's close, a Return received, a unit retried, stopped or launched, a pad
- * written, a preset saved or recalled, a rack's macros turned, a hold taken or given back, a Run's plan set. The kernel gives them the
- * person's token by the shell window's channel alone, and refuses one that came by a wire in words before Factory is asked. */
+ * `OwnerRequest::person_act`, O-I #747 round 896 item 4): a Run's close, a pad written, a preset saved or recalled, a rack's macros
+ * turned, a hold taken or given back, a Run's plan set. A unit retried, a task stopped or run and an attempt chosen are Factory's own
+ * Actions, by `act` (O-I #1006). The kernel gives them the person's token by the shell window's channel alone, and refuses one that came
+ * by a wire in words before Factory is asked. */
 const FACTORY_PERSON_KINDS: ReadonlySet<string> = new Set([
-  "run-close", "attempt-receiving", "attempt-retry", "attempt-request-cancellation", "attempt-launch", "pads-write", "pads-preset-save",
-  "pads-preset-recall", "rack-macros-write", "custody-hold", "wave-act",
+  "run-close", "pads-write", "pads-preset-save", "pads-preset-recall", "rack-macros-write", "custody-hold", "wave-act",
 ]);
 /** Every act on a task offered at a star the kernel names (factory.rs `task_offer_verb`), and whether it presents a capability of the
  * person's: an offer made, revoked, accepted or taken up. The others (a receipt, a revocation or a take the field told, an agent's return,

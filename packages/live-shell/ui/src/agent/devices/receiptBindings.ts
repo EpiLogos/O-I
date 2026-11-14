@@ -357,10 +357,10 @@ export const APPROVE_UNWIRED = 'Approve: this chain does not carry Central\'s pr
  * through invoke_action as every answer to a return is (centralWrite), but this chain does not pass it. */
 export const REJECT_UNWIRED = 'Deny: this chain does not carry Central\'s projectcentral.source.return_reject to the return (no rejecting port is passed here).'
 /** The answers to a review and a recognition (§19.14 "What waits"), each refused with what Approvals is not handed or the op it lacks: no
- * review row stands in the queue (the take you choose to stand is chosen in the take lanes, through Factory's factory_owner
- * attempt-receiving: owners/attemptTakes.ts, factoryTakes.ts), and no recognition row (the Run's return is the journey reading the Run map
+ * review row stands in the queue (the take you choose to stand is chosen in the take lanes, through Factory's factory.attempt.choose:
+ * owners/attemptTakes.ts, factoryTakes.ts), and no recognition row (the Run's return is the journey reading the Run map
  * reads, which carries Recognise and Close: runMapBinding.ts). */
-const NO_REVIEW = 'no review waits in this queue: Approvals is not handed the take you chose to stand (the take lanes choose it through Factory\'s factory_owner attempt-receiving, agent/factoryTakes.ts), so no review row stands to answer.'
+const NO_REVIEW = 'no review waits in this queue: Approvals is not handed the take you chose to stand (the take lanes choose it through Factory\'s factory.attempt.choose, agent/factoryTakes.ts), so no review row stands to answer.'
 const NO_RECOGNITION = 'no recognition waits in this queue: Approvals is not handed the journey reading\'s returns (the Run map reads the Run and carries Recognise and Close: agent/devices/runMapBinding.ts).'
 export const APPROVALS_ANSWERS_REFUSED: Readonly<Record<string, string>> = {
   confirm: `Confirm: ${NO_REVIEW}`,

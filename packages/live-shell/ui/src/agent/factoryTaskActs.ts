@@ -5,20 +5,20 @@
 // reads each chain's task (encounter_task_read) and sets the task's Budget through AIKit's encounter-task-budget (encounter_task_budget,
 // O-I #743). Where each rack's macros stand is Software Factory's (factory_owner rack-macros-read, O-I #842), read for the rack and every
 // set it holds, and read again after each write to them.
-// The Agent rack's Launch on its chain's bound task (launchSessionTask): the unit Factory names for the task, started on the model AIKit
-// realises on its session.
+// The Agent rack's Launch, Stop after and Retry on a chain (sessionSetAct) are its session's own acts in Factory's Set, run as the Session
+// grid runs them: the first task written on the session that has not run (its clip's launch, factory.task.run), its track's Stop
+// (factory.task.stop) and its track's Retry (factory.attempt.retry), each Factory's own Action by `act` (O-I ticket 1006).
 import {useEffect, useState} from 'react'
 import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
 import {encounter} from '../../../../../desktop/cradle/src/encounter/client'
 import {readNativeModel, type NativeModelReading} from '../../../../../desktop/cradle/src/encounter/nativeModel'
-import type {KernelOp, KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
+import type {KernelOp, KernelTransportStatus, ModeSet, ModeSetAct} from '../../../../../desktop/cradle/src/kernel/types'
 import {readTaskOf, settingsReadingEntry, taskReadingEntry} from '../owners/readers'
 import {onOwnerChanged, tellOwnerChanged} from '../owners/notices'
+import {windowSets, type ModeSetStore} from '../owners/modeSets'
+import {runAct, setActRunner} from '../frame/tracks/kernelSet'
 import type {ChainModelReading, RackMacrosAnswer, SessionModelSelect, TaskBudgetWrite} from './devices/sessionChainBindings'
 import {rackMacrosReadingOf} from '../inhabitants/sdk/chains'
-import {launchTask, type LaunchAt, type Launched} from './devices/taskBindings'
-import {ROUTE_WORDS, aikitWriteOp, factoryOwnerWrite, ownerRouteWrite} from './devices/ownerRoutes'
-import {catalogueRead} from './devices/useModelCatalogue'
 
 const text = (cause: unknown) => cause instanceof Error ? cause.message : String(cause)
 
@@ -125,15 +125,37 @@ export function useRackMacrosReadings(transport: KernelTransportStatus, where: {
   return {readings: key ? readings : null, refresh: () => ask(n => n + 1)}
 }
 
-/** A task's Launch wherever it is pressed (§19.1 Trigger: "starts the task when you press its launch"): the unit Factory names for the task,
- * started on the model AIKit realises on its session (devices/taskBindings.ts launchTask: aikit_write realise, then factory_owner
- * attempt-launch, under the project's factory.attempt.launch grant, which the kernel resolves and the owner gives). Factory's answer, or the
- * owners' refusals thrown in their words. */
-export function launchSessionTask(transport: KernelTransportStatus, at: LaunchAt): Promise<Launched> {
-  return launchTask({
-    owner: request => factoryOwnerWrite(transport, request, `factory_owner ${request.kind}`),
-    model: () => sessionModelRead(transport, at.project, at.session),
-    catalogue: () => catalogueRead(transport),
-    realise: request => ownerRouteWrite(transport, aikitWriteOp(request), ROUTE_WORDS.realise).then(answer => answer.data),
-  }, at)
+/** A session's own acts in Factory's Set that the Agent rack presses on its chain (§19.15): Launch, its first written task that has not
+ * run (that clip's `launch`); Stop after, its track's Stop (`stopTrack`); Retry, its track's retry (`retry`). */
+export type SessionSetActKey = 'launch' | 'stopTrack' | 'retry'
+
+const ACT_NAME: Readonly<Record<SessionSetActKey, string>> = {launch: 'Launch', stopTrack: 'Stop after', retry: 'Retry'}
+
+/** Why a session's track carries no such act now, in words: Factory's Set lays an act only where it stands. */
+export const SESSION_ACT_ABSENT: Readonly<Record<SessionSetActKey, (session: string) => string>> = {
+  launch: session => `Launch: no task written on ${session} waits to run (Factory's Set lays none on its track that has not run): drop a message on its track to write one; one that ran runs again from its track's retry.`,
+  stopTrack: session => `Stop after: no task of ${session} is running (Factory's Set gives its track no Stop), so nothing is stopped.`,
+  retry: session => `Retry: no task of ${session} has stalled (Factory's Set lights no retry on its track), so nothing runs again.`,
+}
+
+/** A session's act in Factory's Set: on the session's track (`<space>:<session>`, kernel mode_set.rs session_track), or for Launch on the
+ * first clip of that track that carries one (the tasks lie in the order they were written); null where none stands. Pure. */
+export function sessionActOf(set: ModeSet, session: string, key: SessionSetActKey): ModeSetAct | null {
+  const track = set.tracks.find(track => track.id.endsWith(`:${session}`))
+  if (!track) return null
+  if (key !== 'launch') return track.acts?.[key] ?? null
+  return set.clips.find(clip => clip.track === track.id && clip.acts?.launch)?.acts?.launch ?? null
+}
+
+/** A session's act in Factory's Set pressed from the Agent rack (§19.15: a chain's task row is its session's track's): the Set as the
+ * window holds it now (asked again when a newer one is named), the act on the session's track, run as the Session grid runs it (kernelSet.ts
+ * runAct, by `act`). Its words when Factory answered; Factory's refusal, the kernel's, or why the track carries no such act, thrown in words. */
+export async function sessionSetAct(transport: KernelTransportStatus, session: string, key: SessionSetActKey, store: ModeSetStore = windowSets): Promise<string> {
+  const reading = await store.read(transport, 'factory')
+  if (reading.state !== 'held') throw new Error(`${ACT_NAME[key]}: Factory's Set is unread, so no act of ${session} is found: ${reading.state === 'unavailable' ? reading.reason : 'the kernel has not answered yet'}.`)
+  const act = sessionActOf(reading.answer.set, session, key)
+  if (!act) throw new Error(SESSION_ACT_ABSENT[key](session))
+  const receipt = await runAct(setActRunner(transport), act)
+  if (!receipt.ok) throw new Error(receipt.error)
+  return receipt.note ?? `${ACT_NAME[key]}: Factory answered.`
 }

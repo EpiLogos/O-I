@@ -5,15 +5,16 @@ import {register} from 'node:module'
 // Factory's attempts as takes on their session's track (lock §9.1 Factory row: takes = attempts; manual §3: "Takes stack under a clip
 // so you can choose the one that stands"). On the track, the takes are the kernel's Factory Set (kernel mode_set.rs, O-I #1004), drawn
 // through the one projection (frame/tracks/kernelSet.ts). For the devices, AIKit says which attempts a session's task serves
-// (`encounter_task_attempts_list`), Factory says what each is (`factory_attempt_read`), and choosing one is Factory's own op
-// (`factory_owner` attempt-receiving).
+// (`encounter_task_attempts_list`), Factory says what each is (`factory_attempt_read`), and choosing one is Factory's own Action
+// (factory.attempt.choose, by the kernel's `act`, O-I #1006).
 //
 // Channels (each claim below is carried by exactly one):
 // - FIXTURE: AIKit's readings in the shape of aikit.encounter-task-attempts-list/v1 and Factory's attempt records in the shape of
 //   factory.attempt-reading/v1 (camelCase, as attempt_runtime.rs serialises them); the kernel's Factory Set in the shape of
 //   oi.mode-set/v1 (tests/support/modeSetFixture.mjs).
-// - SCRIPTED: a kernel behind the bridge's fetch that answers each op from those fixtures and the receiving envelope the kernel's
-//   own tests pin (kernel/src/factory_receiving.rs); the shared views rendered to static markup or pressed as stateless functions.
+// - SCRIPTED: a kernel behind the bridge's fetch that answers each op from those fixtures, and `act` with Factory's choose answer in the
+//   shape Factory's `session choose` gives (factory.session-task/v1) or its refusal as the kernel carries an owner's (owner_refused); the
+//   shared views rendered to static markup or pressed as stateless functions.
 // No computer-use pass here; the native candidate's screen pass is recorded with the wave's evidence.
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
 register(`data:text/javascript,${encodeURIComponent(`
@@ -186,13 +187,30 @@ test('an attempt whose owner disclosed no admission time has a lane with no stre
   assert.deepEqual(set.lanes.comp ?? [], [], 'a take with no place has no stretch on the main lane either')
 })
 
-test('the lanes say why they are absent in the Set\'s own words, and no take is chosen from the window yet', () => {
+test('the lanes say why they are absent in the Set\'s own words, and a take is chosen only where the Set lays its choose', async () => {
   const words = 'No task Factory holds has an attempt yet: Factory records each attempt it dispatches on its task.'
   const none = sets.kernelSetTracks(factorySet({takes: [], lanes_absent: {takes: words}}), {nowMs: NOW})
   assert.equal(none.lanes.takes, undefined)
   assert.equal(none.lanes.absent.takes, words)
-  // Choosing a take is Factory's attempt-receiving, which the Set carries no Action for yet (O-I #1006): no comp is offered.
+  // REPLACED (O-I #1006): was "Choosing a take is Factory's attempt-receiving, which the Set carries no Action for yet: no comp is offered".
+  // Choosing a take is Factory's factory.attempt.choose, which the kernel lays on a returned take its Run's Flow has not received (kernel
+  // mode_set.rs): where none is laid, no comp is offered.
   assert.equal(sets.kernelSetTracks(factorySet(), {nowMs: NOW}).actions.comp, undefined)
+  const choose = {action: 'factory.attempt.choose', input: {state: STATE, run_ref: RUN, attempt_ref: 'attempt:A2'},
+    words: 'Factory\'s factory.attempt.choose: the take chosen to stand, its Return proposed to Central\'s receiving field, where Approvals lists it',
+    done: 'The take is chosen to stand: its Return waits for you in Approvals.'}
+  const sent = []
+  const runner = {act: async (action, input, project) => { sent.push({action, input, project}); return {contract: 'factory.session-task/v1', state: 'received'} },
+    shell: async () => ({ok: false, error: 'no shell act here'})}
+  const offered = sets.kernelSetTracks(factorySet({takes: [take(1, 'returned', span(50, 35), 'returned and chosen (receiving:R1)', {standing: true}),
+    take(2, 'returned', span(30, 20), 'returned, not yet chosen', {acts: {choose}})]}), {nowMs: NOW, runner})
+  assert.equal(offered.actions.comp.op, choose.words)
+  // Factory receives a whole attempt: the stretch chosen across the take chooses the take.
+  assert.deepEqual(await offered.actions.comp.run(LEAD, 'factory:attempt:attempt:A2', {start: 0, end: 1}), {ok: true, note: choose.done})
+  assert.deepEqual(sent, [{action: 'factory.attempt.choose', input: choose.input, project: undefined}], 'the take\'s own Action, by act')
+  assert.match((await offered.actions.comp.run(LEAD, 'factory:attempt:attempt:A1', {start: 0, end: 1})).error,
+    /carries no factory\.attempt\.choose here: only a returned take whose Return its Run's Flow has not received is chosen/)
+  assert.equal(sent.length, 1)
 })
 
 test('the Arrangement draws the take lanes with the one that stands marked, and Return on a take presses nothing the owner does not carry', () => {
@@ -225,8 +243,8 @@ const leadTakes = () => takes.takesBySession(takes.servedBySession(servedList), 
 
 // ---------------------------------------------------------------------------------------------------------------- the owners
 
-/** A scripted kernel behind the bridge: it answers AIKit's list and Factory's Run reading from the fixtures, and a receiving
- * from the envelope the kernel's own tests pin. It keeps every op it was sent. */
+/** A scripted kernel behind the bridge: it answers AIKit's list and Factory's Run reading from the fixtures, and Factory's choose
+ * (`act factory.attempt.choose`) with its answer, or its refusal as the kernel carries an owner's. It keeps every op it was sent. */
 function scriptedKernel({list = servedList, attempts = attemptReading, receiving} = {}) {
   const kernel = {sent: []}
   globalThis.fetch = async (_url, init) => {
@@ -236,7 +254,8 @@ function scriptedKernel({list = servedList, attempts = attemptReading, receiving
     const refused = error => ({json: async () => ({ok: false, error})})
     if (op.op === 'encounter_task_attempts_list') return list instanceof Error ? refused(list.message) : answered('encounter_task_attempts_list_reading', list)
     if (op.op === 'factory_attempt_read') return attempts instanceof Error ? refused(attempts.message) : answered('factory_attempt_reading', attempts)
-    if (op.op === 'factory_owner' && op.request.kind === 'attempt-receiving') return receiving instanceof Error ? refused(receiving.message) : answered('factory_development_reading', receiving)
+    if (op.op === 'act' && op.action === 'factory.attempt.choose') return {json: async () => ({ok: true, outcome: {result: 'action_dispatched', receipts: [],
+      dispatch: receiving instanceof Error ? {state: 'owner_refused', message: receiving.message} : {state: 'invoked', data: receiving}}})}
     return refused(`unexpected ${op.op}`)
   }
   return kernel
@@ -262,36 +281,30 @@ test('the hook\'s read asks AIKit once for every session, Factory once for each 
   assert.deepEqual([...(await owner.readAttemptTakes(call, 'O-I', [])).keys()], [], 'no sessions, no read')
 })
 
-const receiving = (status, extra = {}) => ({contract: 'oi.factory-attempt-receiving/v1', runRef: RUN, attemptRef: 'attempt:A2', status, changed: status !== 'refused',
-  target: {sourceRef: 'central:source:flow-a', documentId: 'doc:flow-a', sourceRevision: 'rev:9', root: '/Users/test/Central'}, authorityRef: 'central:native-action-authority#human',
-  receipt: {receivingRef: 'receiving:R2'}, refusal: null, ...extra})
+const receiving = (state, extra = {}) => ({contract: 'factory.session-task/v1', state, run_ref: RUN, attempt_ref: 'attempt:A2', ...extra})
 const second = () => leadTakes().get('ses-lead')[1]
 
-test('choosing sends the attempt alone: the kernel assembles the rest, and the owner\'s answer comes back in its words', async () => {
-  const kernel = scriptedKernel({receiving: receiving('received')})
+test('choosing sends the attempt alone, by Factory\'s own Action, and the owner\'s answer comes back in its words', async () => {
+  const kernel = scriptedKernel({receiving: receiving('received', {receipt: {contract: 'factory.attempt-receiving-receipt/v1', needsReconciliation: false}})})
   const answer = await owner.chooseAttempt(transport, second())
   assert.equal(answer.ok, true)
-  assert.match(answer.note, /^Chosen: this attempt's Return was proposed to Central's receiving field in the Flow doc:flow-a \(receiving:R2\)\.$/)
-  assert.deepEqual(kernel.sent, [{op: 'factory_owner', request: {kind: 'attempt-receiving', state_path: STATE, run_ref: RUN, attempt_ref: 'attempt:A2'}}],
-    'no grant, token, caller or target travels from the desk')
-  scriptedKernel({receiving: receiving('already-received', {changed: false})})
+  assert.equal(answer.note, 'Chosen: this attempt\'s Return was proposed to Central\'s receiving field, into the Flow its Run belongs to.')
+  assert.deepEqual(kernel.sent, [{op: 'act', action: 'factory.attempt.choose', input: {state: STATE, run_ref: RUN, attempt_ref: 'attempt:A2'}}],
+    'no grant, token, caller or target travels from the desk: Factory reads the person\'s grant and the Run\'s Flow')
+  scriptedKernel({receiving: receiving('already-received', {receiving_ref: 'receiving:R2'})})
   assert.match((await owner.chooseAttempt(transport, second())).note, /^Already chosen: Central holds this attempt's Return as receiving:R2/)
 })
 
-test('a refusal, an unconfirmed call and an unreachable owner each come back as a refusal in the owner\'s own words', async () => {
-  scriptedKernel({receiving: receiving('refused', {changed: false, receipt: null, refusal: {source: 'driver', step: null,
-    message: 'action not granted: the grant does not list central.receiving.submit.'}})})
-  assert.deepEqual(await owner.chooseAttempt(transport, second()), {ok: false, error: 'action not granted: the grant does not list central.receiving.submit.'},
-    'the driver\'s own refusal is shown in its words alone')
-  scriptedKernel({receiving: receiving('refused', {changed: false, receipt: null, refusal: {source: 'owner', step: 'receiving', message: 'stale Factory state revision'}})})
-  assert.deepEqual(await owner.chooseAttempt(transport, second()), {ok: false, error: 'The owner refused the choice: stale Factory state revision'})
-  scriptedKernel({receiving: receiving('needs-reconciliation', {receipt: {replayed: false}})})
+test('a refusal, an unconfirmed call and an answer about another attempt each come back as a refusal in the owner\'s own words', async () => {
+  // Factory's own refusals, as `act` carries them: no grant, and a Run that belongs to no Flow (a task written on a session's track).
+  scriptedKernel({receiving: new Error('action not granted: the grant does not list central.receiving.submit.')})
+  assert.deepEqual(await owner.chooseAttempt(transport, second()), {ok: false, error: 'action not granted: the grant does not list central.receiving.submit.'})
+  const NO_FLOW = `${RUN} belongs to no Central Flow, so its Return has nowhere to be received: a task written on a session's track is commissioned from your words, with no Flow, and its difference stays in the session's checkout, where Git / landing lands it`
+  scriptedKernel({receiving: new Error(NO_FLOW)})
+  assert.deepEqual(await owner.chooseAttempt(transport, second()), {ok: false, error: NO_FLOW})
+  scriptedKernel({receiving: receiving('needs-reconciliation', {receipt: {needsReconciliation: true}})})
   assert.match((await owner.chooseAttempt(transport, second())).error, /Central's answer is not confirmed/)
-  scriptedKernel({receiving: receiving('uncertain', {refusal: {source: 'owner', step: 'receiving', message: 'the owner did not answer in time', operationMayHaveRun: true}})})
-  assert.match((await owner.chooseAttempt(transport, second())).error, /did not answer and may have run: the owner did not answer in time/)
-  scriptedKernel({receiving: new Error('Factory owner request failed')})
-  assert.deepEqual(await owner.chooseAttempt(transport, second()), {ok: false, error: 'Factory owner request failed'})
   // An answer about another attempt is not an answer to this press.
-  scriptedKernel({receiving: receiving('received', {attemptRef: 'attempt:OTHER'})})
-  assert.match((await owner.chooseAttempt(transport, second())).error, /did not answer this attempt's receiving/)
+  scriptedKernel({receiving: receiving('received', {attempt_ref: 'attempt:OTHER'})})
+  assert.match((await owner.chooseAttempt(transport, second())).error, /did not answer this attempt's choice/)
 })

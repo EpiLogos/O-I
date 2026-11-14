@@ -652,7 +652,7 @@
     ],
     "formats": {},
     "invariant": {
-      "generatesAbsent": "The Run map writes through Factory: Retry through factory_owner attempt-retry (the attempt `retry` under the unit's retry grant); Recognise and Close stand in Approvals; the development mutate for ContinueCommission has no kernel route yet (T-COVERAGE §1.2)."
+      "generatesAbsent": "The Run map writes through Factory: Retry through Factory's factory.attempt.retry (the attempt `retry` under the unit's retry grant); Recognise and Close stand in Approvals; the development mutate for ContinueCommission has no kernel route yet (T-COVERAGE §1.2)."
     },
     "writePaths": [],
     "heldBy": [],

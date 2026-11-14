@@ -241,6 +241,9 @@ pub struct Take {
     pub run: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub unit: Option<String>,
+    /// The take's own acts: Factory's lays `choose` on a returned take its Run's Flow can receive.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub acts: BTreeMap<String, Act>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
@@ -1219,6 +1222,7 @@ fn take_words(attempt: &Attempt) -> String {
         "prepared" => "prepared, not yet dispatched".into(),
         "running" => "running".into(),
         "failed" => "failed".into(),
+        "cancelled" => "stopped: its cancellation accepted".into(),
         _ => match &attempt.receiving {
             Some(receipt) => format!("returned and chosen ({receipt})"),
             None => "returned, not yet chosen".into(),
@@ -1269,7 +1273,7 @@ const SOLO_UNHANDED: &str = "Solo: no owner operation carries it yet — missing
 fn factory_waiting() -> BTreeMap<String, String> {
     const SESSION_ACT: &str = "an act on the session's own settings or task at AIKit (the encounter's ops), which no Action of the registry carries yet";
     words(&[
-        ("clip.launch", "a task run from its clip: factory.task.run runs a task Factory ran on a session seated in a project of this World; a task of a Run that names no such session has no session to run on"),
+        ("clip.launch", "a task run from its clip: factory.task.run runs a task written on a session seated in a project of this World and not yet run; a task that ran and stalled runs again from its track's retry (factory.attempt.retry), and a task of a Run that names no such session has no session to run on"),
         ("row.launch", "a batch row launched: the n-th task of every track at once, which no Action carries"),
         ("track.stop", "a running task's stop: factory.task.stop, on the track whose task is running (it pauses the turn; pressed again it cancels the attempt); this track runs none"),
         ("set.stop-all", "every running task stopped at once: each track's Stop carries factory.task.stop for its own task, and no Action stops them all"),
@@ -1308,6 +1312,24 @@ struct Task {
     track: String,
     /// The Factory state that keeps it.
     state: String,
+    /// Written on a session Factory started and not yet run: the session it runs on (factory.task.run).
+    session: Option<String>,
+    /// The person's words it was written from, as Factory's record of the session keeps them.
+    words: Option<String>,
+    /// Its place among the tasks written on its session, in the order they were written.
+    rank: Option<usize>,
+    /// Its Run belongs to a Central Flow (the run reading's `flowAssociations`), so a returned attempt's Return has somewhere to be received.
+    flowed: bool,
+}
+
+/// A task as Factory's record of a session keeps it (`factory session list`): written on the session, run or not.
+struct Written {
+    run: String,
+    words: Option<String>,
+    track: String,
+    session: String,
+    state: String,
+    rank: usize,
 }
 
 /// The World and the project a Factory state stands in (`<World>/Work/<project>/.factory/<state>`, session.rs `place`).
@@ -1321,14 +1343,19 @@ fn world_project(state: &str) -> Option<(String, String)> {
     ))
 }
 
-/// A session Factory ran a task on in a project of this World, which the sessions slice (the root register's SessionSpaces) does not
-/// list: its track is laid from Factory's own record of the attempt.
+/// A session Factory started or ran a task on in a project of this World, which the sessions slice (the root register's SessionSpaces)
+/// does not list: its track is laid from Factory's own record of the session (`factory session list`, from its start), else of the
+/// attempt.
 struct Seated {
     space: String,
     session: String,
     harness: Option<String>,
+    /// The agent seated on it, by its census slug, as Factory's record of the session names it.
+    agent: Option<String>,
     world: String,
     project: String,
+    /// Open: its End session and a message dropped on it stand. An ended session keeps its track only while it holds tasks.
+    open: bool,
 }
 
 fn factory(sessions: &Read, field: &Read, cells: &Read) -> ModeSet {
@@ -1390,6 +1417,7 @@ fn factory(sessions: &Read, field: &Read, cells: &Read) -> ModeSet {
 
     // Factory's tasks and their attempts, from each located source's runs.
     let mut tasks: Vec<Task> = Vec::new();
+    let mut written: Vec<Written> = Vec::new();
     let mut seated: BTreeMap<String, Seated> = BTreeMap::new();
     let mut run_tracks: Vec<Track> = Vec::new();
     match field.value {
@@ -1425,6 +1453,54 @@ fn factory(sessions: &Read, field: &Read, cells: &Read) -> ModeSet {
                 let project = text(&source["project"]).map(str::to_owned);
                 let state_path = text(&source["state_path"]).unwrap_or_default().to_owned();
                 let place = world_project(&state_path);
+                // The sessions Factory started in this project (`factory session list`, O-I #1006): each its own track from its start,
+                // open with its acts, or ended; each task written on it a clip on that track before it runs.
+                for kept in source["sessions"]["reading"]["sessions"]
+                    .as_array()
+                    .into_iter()
+                    .flatten()
+                {
+                    let (Some(space), Some(session)) =
+                        (text(&kept["space"]), text(&kept["session"]))
+                    else {
+                        continue;
+                    };
+                    let id = session_track(space, session);
+                    let (Some(world), Some(project)) = (
+                        text(&kept["world"])
+                            .map(str::to_owned)
+                            .or_else(|| place.as_ref().map(|(world, _)| world.clone())),
+                        text(&kept["project"])
+                            .map(str::to_owned)
+                            .or_else(|| place.as_ref().map(|(_, project)| project.clone())),
+                    ) else {
+                        continue;
+                    };
+                    if !tracks.iter().any(|t| t.id == id) {
+                        seated.entry(id.clone()).or_insert_with(|| Seated {
+                            space: space.to_owned(),
+                            session: session.to_owned(),
+                            harness: None,
+                            agent: text(&kept["agent"]).map(str::to_owned),
+                            world,
+                            project,
+                            open: kept["state"] == "open",
+                        });
+                    }
+                    for (rank, task) in kept["tasks"].as_array().into_iter().flatten().enumerate() {
+                        let Some(run) = text(&task["run_ref"]) else {
+                            continue;
+                        };
+                        written.push(Written {
+                            run: run.to_owned(),
+                            words: text(&task["task"]).map(str::to_owned),
+                            track: id.clone(),
+                            session: session.to_owned(),
+                            state: state_path.clone(),
+                            rank,
+                        });
+                    }
+                }
                 if source["journeys"]["state"] == "refused" {
                     run_tracks.push(Track {
                         id: format!(
@@ -1450,6 +1526,9 @@ fn factory(sessions: &Read, field: &Read, cells: &Read) -> ModeSet {
                         continue;
                     };
                     let lifecycle = text(&run["run"]["reading"]["lifecycle"]).map(str::to_owned);
+                    let flowed = run["run"]["reading"]["flowAssociations"]
+                        .as_array()
+                        .is_some_and(|flows| !flows.is_empty());
                     let executions: HashMap<String, String> = run["run"]["reading"]["executions"]
                         .as_array()
                         .into_iter()
@@ -1477,14 +1556,31 @@ fn factory(sessions: &Read, field: &Read, cells: &Read) -> ModeSet {
                         ));
                     }
                     let mut placed_on_run = false;
+                    let legs = &run["attempts"]["reading"]["legs"];
                     for record in run["attempts"]["reading"]["attempts"]
                         .as_array()
                         .into_iter()
                         .flatten()
                     {
-                        let Some(attempt) = attempt_of(record) else {
+                        let Some(mut attempt) = attempt_of(record) else {
                             continue;
                         };
+                        // A stopped attempt: the leg of its unit, where it is the unit's current one, says its cancellation was accepted
+                        // or its process ended, which its record alone does not.
+                        if attempt.state == "running" {
+                            let leg = attempt.unit_ref.as_deref().map(|unit| &legs[unit]);
+                            let current = text(&record["executionRef"])
+                                .or_else(|| text(&record["reservedExecutionRef"]));
+                            if leg.is_some_and(|leg| {
+                                text(&leg["executionRef"]) == current
+                                    && matches!(
+                                        leg["status"].as_str(),
+                                        Some("cancellation_accepted" | "process_terminated")
+                                    )
+                            }) {
+                                attempt.state = "cancelled";
+                            }
+                        }
                         // On the session that executes it, as the Run's executions name it; else on the session Factory's own record
                         // of the attempt names (a session Factory ran it on, O-I #1006), laid from that record when the root
                         // register's sessions do not list it.
@@ -1499,13 +1595,19 @@ fn factory(sessions: &Read, field: &Read, cells: &Read) -> ModeSet {
                                 let id = session_track(space, session);
                                 if !tracks.iter().any(|t| t.id == id) {
                                     let (world, project) = place.clone()?;
-                                    seated.entry(id.clone()).or_insert_with(|| Seated {
-                                        space: space.clone(),
-                                        session: session.clone(),
-                                        harness: attempt.harness.clone(),
-                                        world,
-                                        project,
-                                    });
+                                    let entry =
+                                        seated.entry(id.clone()).or_insert_with(|| Seated {
+                                            space: space.clone(),
+                                            session: session.clone(),
+                                            harness: None,
+                                            agent: None,
+                                            world,
+                                            project,
+                                            open: true,
+                                        });
+                                    if entry.harness.is_none() {
+                                        entry.harness.clone_from(&attempt.harness);
+                                    }
                                 }
                                 Some(id)
                             });
@@ -1529,6 +1631,10 @@ fn factory(sessions: &Read, field: &Read, cells: &Read) -> ModeSet {
                                     attempts: vec![attempt],
                                     track,
                                     state: state_path.clone(),
+                                    session: None,
+                                    words: None,
+                                    rank: None,
+                                    flowed,
                                 });
                             }
                         }
@@ -1576,53 +1682,87 @@ fn factory(sessions: &Read, field: &Read, cells: &Read) -> ModeSet {
             track.kind = format!("{} · {stale}", track.kind);
         }
     }
-    // The sessions Factory ran a task on in a project of this World that the root register does not list: each its own track, laid
-    // from Factory's record, its menu's End session ending it (factory.session.end; manual §19.1), and a message dropped on it written
-    // as its next task (factory.task.write, its words the instruction; §19.24 "To turn one into work, drag it onto the agent's track").
+    // A task written on a session and not yet run is a clip on the session's track before it runs; one that ran keeps the person's
+    // words it was written from. The tasks of a session lie in the order they were written.
+    for kept in written {
+        match tasks.iter_mut().find(|task| task.run == kept.run) {
+            Some(task) => {
+                task.words = kept.words.or(task.words.take());
+                task.rank = Some(kept.rank);
+            }
+            None => tasks.push(Task {
+                task: kept.run.clone(),
+                run: kept.run,
+                attempts: Vec::new(),
+                track: kept.track,
+                state: kept.state,
+                session: Some(kept.session),
+                words: kept.words,
+                rank: Some(kept.rank),
+                flowed: false,
+            }),
+        }
+    }
+    tasks.sort_by_key(|task| task.rank.unwrap_or(usize::MAX));
+    // The sessions Factory started or ran a task on in a project of this World that the root register does not list: each its own
+    // track, laid from Factory's record. An open one's menu ends it (End session: factory.session.end; manual §19.1), and a message
+    // dropped on it is written as its next task (factory.task.write, its words the instruction; §19.24 "To turn one into work, drag it
+    // onto the agent's track"). An ended one keeps its track while it holds tasks, and takes neither.
     for (id, seated) in &seated {
+        if !seated.open && !tasks.iter().any(|task| &task.track == id) {
+            continue;
+        }
         let harness = seated
             .harness
             .as_deref()
-            .map(|harness| harness.trim_start_matches("harness/").to_owned());
+            .map(|harness| harness.trim_start_matches("harness/").to_owned())
+            .or_else(|| seated.agent.clone());
         let name = harness.clone().unwrap_or_else(|| {
             let session = seated.session.rsplit('/').next().unwrap_or(&seated.session);
             session.chars().take(16).collect()
         });
+        let mut acts = BTreeMap::new();
+        if seated.open {
+            acts.insert(
+                "endSession".to_owned(),
+                done(
+                    act(
+                        "factory.session.end",
+                        json!({"world": seated.world, "project": seated.project, "session": seated.session}),
+                        None,
+                        "Factory's factory.session.end: the session ended — a running turn stopped, its record closed, its body released",
+                    ),
+                    format!("{name}'s session has ended: its record is closed."),
+                ),
+            );
+            acts.insert(
+                "writeTask".to_owned(),
+                done(
+                    act(
+                        "factory.task.write",
+                        json!({"world": seated.world, "project": seated.project, "session": seated.session}),
+                        Some("instruction"),
+                        "Factory's factory.task.write: the words dropped on the session's track written as its next task, a Run Factory commissions for it",
+                    ),
+                    format!("A task is written on {name}'s session: run it from its clip."),
+                ),
+            );
+        }
         tracks.push(Track {
             id: id.clone(),
             name: name.clone(),
             kind: format!(
-                "an Agent session seated in {} · {} · laid from Factory's record of its tasks (its SessionSpace {} is no root register's)",
+                "an Agent session seated in {} · {} · {} (its SessionSpace {} is no root register's)",
                 seated.project,
                 harness.map_or_else(|| "its harness unnamed".to_owned(), |harness| format!("its harness {harness}")),
+                if seated.open {
+                    "open, laid from Factory's record of it"
+                } else {
+                    "ended: its record is closed, and its tasks stay"
+                },
                 seated.space
             ),
-            acts: BTreeMap::from([
-                (
-                    "endSession".to_owned(),
-                    done(
-                        act(
-                            "factory.session.end",
-                            json!({"world": seated.world, "project": seated.project, "session": seated.session}),
-                            None,
-                            "Factory's factory.session.end: the session ended — a running turn stopped, its record closed, its body released",
-                        ),
-                        format!("{name}'s session has ended: its record is closed."),
-                    ),
-                ),
-                (
-                    "writeTask".to_owned(),
-                    done(
-                        act(
-                            "factory.task.write",
-                            json!({"world": seated.world, "project": seated.project, "session": seated.session}),
-                            Some("instruction"),
-                            "Factory's factory.task.write: the words dropped on the session's track written as its next task, a Run Factory commissions for it",
-                        ),
-                        format!("A task is written on {name}'s session: run it from its clip."),
-                    ),
-                ),
-            ]),
+            acts,
             ..Track::default()
         });
     }
@@ -1650,6 +1790,37 @@ fn factory(sessions: &Read, field: &Read, cells: &Read) -> ModeSet {
                         "Factory's factory.task.stop: the running task paused (AIKit cancels the turn); pressed again, its attempt cancelled",
                     ),
                     format!("{}'s task is stopped: paused, or cancelled when it was paused already.", track.name),
+                ),
+            );
+        }
+    }
+    // A task whose last attempt failed has stalled, and its track lights a retry (manual §19.1 "When a task on the track stalls, the
+    // track lights a retry. Retry starts again from the last good step, on the same basis"): Factory's factory.attempt.retry, a new
+    // attempt under the retry grant the failed one consumed, run again on its session. The track's latest stalled task is the one it
+    // retries; a cancelled task is not retried (Factory's engine), nor a task on a session that has ended.
+    for task in &tasks {
+        let Some(unit) = task
+            .attempts
+            .last()
+            .filter(|attempt| attempt.state == "failed")
+            .and_then(|attempt| attempt.unit_ref.as_ref())
+        else {
+            continue;
+        };
+        if task.state.is_empty() || seated.get(&task.track).is_some_and(|seated| !seated.open) {
+            continue;
+        }
+        if let Some(track) = tracks.iter_mut().find(|track| track.id == task.track) {
+            track.acts.insert(
+                "retry".into(),
+                done(
+                    act(
+                        "factory.attempt.retry",
+                        json!({"state": task.state, "run_ref": task.run, "unit_ref": unit}),
+                        None,
+                        "Factory's factory.attempt.retry: the stalled task run again on the same basis, a new attempt under the retry grant its failed one consumed",
+                    ),
+                    format!("{}'s stalled task runs again: a new attempt, its earlier one kept as a take.", track.name),
                 ),
             );
         }
@@ -1690,6 +1861,29 @@ fn factory(sessions: &Read, field: &Read, cells: &Read) -> ModeSet {
             if let Some(start) = attempt.start {
                 origin = Some(origin.map_or(start, |at| at.min(start)));
             }
+            // A returned take whose Return Central has not received is chosen to stand (manual §19.1 "Choosing a take that stands sends
+            // it to review in Approvals"): Factory's factory.attempt.choose, into the Flow its Run belongs to. A Run that belongs to no
+            // Flow — a task written on a session's track — has nowhere to receive a Return, so its takes offer no choice: their
+            // difference stays in the session's checkout, which Git / landing lands.
+            let mut take_acts = BTreeMap::new();
+            if attempt.state == "returned"
+                && attempt.receiving.is_none()
+                && task.flowed
+                && !task.state.is_empty()
+            {
+                take_acts.insert(
+                    "choose".to_owned(),
+                    done(
+                        act(
+                            "factory.attempt.choose",
+                            json!({"state": task.state, "run_ref": task.run, "attempt_ref": attempt.reference}),
+                            None,
+                            "Factory's factory.attempt.choose: the take chosen to stand, its Return proposed to Central's receiving field, where Approvals lists it",
+                        ),
+                        "The take is chosen to stand: its Return waits for you in Approvals.".to_owned(),
+                    ),
+                );
+            }
             takes.push(Take {
                 id: attempt_take(&attempt.reference),
                 clip: id.clone(),
@@ -1715,27 +1909,25 @@ fn factory(sessions: &Read, field: &Read, cells: &Read) -> ModeSet {
                 },
                 run: Some(task.run.clone()),
                 unit: attempt.unit_ref.clone(),
+                acts: take_acts,
             });
         }
-        // A task Factory ran on a session runs again from its clip (factory.task.run on its Run, on that session), unless it runs now.
+        // A task written on a session and not yet run runs from its clip (factory.task.run on its Run, on that session). One that ran
+        // does not run again from here: a stalled one runs again from its track's retry, on the same basis.
         let mut clip_acts = BTreeMap::new();
-        if let Some((last, (_, session))) =
-            last.and_then(|last| Some((last, last.session.as_ref()?)))
-        {
-            if last.state != "running" && !task.state.is_empty() {
-                clip_acts.insert(
-                    "launch".to_owned(),
-                    done(
-                        act(
-                            "factory.task.run",
-                            json!({"state": task.state, "run_ref": task.run, "session": session}),
-                            None,
-                            "Factory's factory.task.run: the task run on its session under your grant, its log streaming, its end an attempt with its diff",
-                        ),
-                        format!("Task {} is running on its session.", task.task),
+        if let (None, Some(session)) = (last, &task.session) {
+            clip_acts.insert(
+                "launch".to_owned(),
+                done(
+                    act(
+                        "factory.task.run",
+                        json!({"state": task.state, "run_ref": task.run, "session": session}),
+                        None,
+                        "Factory's factory.task.run: the task run on its session under your grant, its log streaming, its end an attempt with its diff",
                     ),
-                );
-            }
+                    format!("Task {} is running on its session.", task.words.as_deref().unwrap_or(&task.run)),
+                ),
+            );
         }
         clips.push(Clip {
             id,
@@ -1743,7 +1935,7 @@ fn factory(sessions: &Read, field: &Read, cells: &Read) -> ModeSet {
             row: format!("batch:{n}"),
             subject: Some(task.task.clone()),
             acts: clip_acts,
-            label: unit.unwrap_or_else(|| {
+            label: task.words.clone().or(unit).unwrap_or_else(|| {
                 format!(
                     "Task {}",
                     task.task
@@ -1755,13 +1947,16 @@ fn factory(sessions: &Read, field: &Read, cells: &Read) -> ModeSet {
                         .collect::<String>()
                 )
             }),
-            status: last.and_then(|a| match a.state {
-                "returned" => Some("done".to_owned()),
-                "running" => Some("running".to_owned()),
-                "prepared" => Some("waiting".to_owned()),
-                _ => None,
-            }),
-            state: last.map(|a| a.state.to_owned()),
+            // A stalled task lights its track's retry; one written and not yet run waits for its launch.
+            status: match last.map(|a| a.state) {
+                Some("returned") => Some("done".to_owned()),
+                Some("running") => Some("running".to_owned()),
+                Some("prepared") | None => Some("waiting".to_owned()),
+                Some("failed") => Some("stalled".to_owned()),
+                Some("cancelled") => Some("stopped".to_owned()),
+                Some(_) => None,
+            },
+            state: Some(last.map_or("written", |a| a.state).to_owned()),
             at: start.map(|start| Span {
                 start_unix_ms: start,
                 end_unix_ms: if ended {
@@ -1770,13 +1965,19 @@ fn factory(sessions: &Read, field: &Read, cells: &Read) -> ModeSet {
                     None
                 },
             }),
-            note: Some(format!(
-                "Factory's task {} in run {} · {} · the latest {}",
-                task.task,
-                task.run,
-                plural(task.attempts.len(), "attempt", "attempts"),
-                last.map(take_words).unwrap_or_default()
-            )),
+            note: Some(match last {
+                Some(last) => format!(
+                    "Factory's task {} in run {} · {} · the latest {}",
+                    task.task,
+                    task.run,
+                    plural(task.attempts.len(), "attempt", "attempts"),
+                    take_words(last)
+                ),
+                None => format!(
+                    "Factory's task in run {}, written on its session and not yet run: its launch runs it there",
+                    task.run
+                ),
+            }),
         });
     }
     let row_count = ordinal
@@ -2384,6 +2585,60 @@ mod tests {
     }
 
     #[test]
+    fn a_returned_take_its_runs_flow_can_receive_is_chosen_by_factorys_choose_and_no_other_take_is()
+    {
+        let attempts = json!({"state": "read", "reading": {"attempts": [
+            {"attemptRef": "attempt:1", "taskRef": "task:t", "workflowUnitRef": "workflow-unit:build",
+             "attemptRecordedAt": "2026-11-13T10:00:00Z", "returnRecordedAt": "2026-11-13T10:05:00Z", "readableReturn": {"summary": "First"}},
+            {"attemptRef": "attempt:2", "taskRef": "task:t", "workflowUnitRef": "workflow-unit:build",
+             "attemptRecordedAt": "2026-11-13T10:10:00Z", "returnRecordedAt": "2026-11-13T10:20:00Z",
+             "readableReturn": {"summary": "Second", "receivingRef": "receiving:9"}},
+            {"attemptRef": "attempt:3", "taskRef": "task:t", "workflowUnitRef": "workflow-unit:build",
+             "attemptRecordedAt": "2026-11-13T10:30:00Z", "failureRecordedAt": "2026-11-13T10:35:00Z", "failureEvidenceRefs": ["e"]},
+        ]}});
+        let flowed = json!({"run_ref": "run:flowed", "run": {"state": "read", "reading": {"lifecycle": "active",
+            "flowAssociations": [{"runRef": "run:flowed", "flow": {"documentId": "doc:flow"}}]}}, "attempts": attempts});
+        let alone = json!({"run_ref": "run:alone", "run": {"state": "read", "reading": {"lifecycle": "active"}},
+            "attempts": {"state": "read", "reading": {"attempts": [
+                {"attemptRef": "attempt:9", "taskRef": "task:s", "workflowUnitRef": "workflow-unit:task",
+                 "attemptRecordedAt": "2026-11-13T11:00:00Z", "returnRecordedAt": "2026-11-13T11:05:00Z", "readableReturn": {"summary": "Mine"}}]}}});
+        let set = build(
+            Mode::Factory,
+            &[
+                agency(json!([])),
+                field(
+                    json!([{"project": null, "state_path": "/c/.factory/s.json", "project_ref": "project:root", "journeys": {"state": "read"},
+                        "runs": [flowed, alone]}]),
+                    json!([]),
+                ),
+                seats(json!([])),
+            ],
+        );
+        let chosen: Vec<(&str, Option<&Act>)> = set
+            .takes
+            .iter()
+            .map(|take| (take.id.as_str(), take.acts.get("choose")))
+            .collect();
+        assert_eq!(chosen.len(), 4);
+        let choose = chosen[0]
+            .1
+            .expect("a returned take its Run's Flow has not received is chosen");
+        assert_eq!(choose.action, "factory.attempt.choose");
+        assert_eq!(
+            choose.input,
+            json!({"state": "/c/.factory/s.json", "run_ref": "run:flowed", "attempt_ref": "attempt:1"})
+        );
+        assert!(choose
+            .done
+            .as_deref()
+            .is_some_and(|done| done.contains("Approvals")));
+        assert!(
+            chosen[1..].iter().all(|(_, act)| act.is_none()),
+            "a take Central received already, a failed one, and a take of a Run that belongs to no Flow offer no choice: {chosen:?}"
+        );
+    }
+
+    #[test]
     fn a_session_factory_ran_a_task_on_is_its_track_with_its_end_stop_and_run_and_the_set_seats_an_agent(
     ) {
         let state = "/w/Central/Work/atelier/.factory/development-state.json";
@@ -2461,27 +2716,13 @@ mod tests {
             .filter(|clip| clip.track == track)
             .collect();
         assert_eq!(on.len(), 2, "both tasks lie on the session that ran them");
-        let again = on
-            .iter()
-            .find(|clip| clip.subject.as_deref() == Some("task:a"))
-            .unwrap();
-        assert_eq!(
-            (
-                again.acts["launch"].action.as_str(),
-                &again.acts["launch"].input
-            ),
-            (
-                "factory.task.run",
-                &json!({"state": state, "run_ref": "run:a", "session": "agent-session/atelier-chat-1"})
-            )
+        assert!(
+            on.iter().all(|clip| !clip.acts.contains_key("launch")),
+            "a task that ran does not run again from its clip: a stalled one runs again from its track's retry"
         );
         assert!(
-            on.iter()
-                .find(|clip| clip.subject.as_deref() == Some("task:b"))
-                .unwrap()
-                .acts
-                .is_empty(),
-            "a running task does not launch again"
+            !seated.acts.contains_key("retry"),
+            "no task on the track has stalled"
         );
         let seat = &set.acts["seat"];
         assert_eq!(
@@ -2508,6 +2749,136 @@ mod tests {
             free.waiting["track.seat"].contains("no project of this World holds one"),
             "{}",
             free.waiting["track.seat"]
+        );
+    }
+
+    #[test]
+    fn a_session_factory_started_is_a_track_from_its_start_its_written_task_launches_and_a_stalled_one_lights_its_retry(
+    ) {
+        let state = "/w/Central/Work/atelier/.factory/development-state.json";
+        let body = json!({"sessionSpaceRef": "session-space/atelier-chat-2", "agentSessionRef": "agent-session/atelier-chat-2",
+            "harnessRef": "harness/codex"});
+        let run = |run: &str, unit: &str, attempt: Value, status: &str| {
+            let mut record = attempt.as_object().unwrap().clone();
+            record.insert("taskRef".into(), json!(format!("task:{run}")));
+            record.insert("workflowUnitRef".into(), json!(unit));
+            record.insert("disposition".into(), json!({"body": body}));
+            json!({"run_ref": run, "run": {"state": "read", "reading": {"executions": []}},
+                "attempts": {"state": "read", "reading": {"attempts": [record],
+                "legs": {unit: {"executionRef": attempt["executionRef"], "status": status}}}}})
+        };
+        let failed = run(
+            "run:f",
+            "workflow-unit:f",
+            json!({"attemptRef": "attempt:f", "executionRef": "execution:f", "attemptRecordedAt": "2026-11-14T10:00:00Z",
+                "failureRecordedAt": "2026-11-14T10:01:00Z", "failureEvidenceRefs": ["aikit-delivery:d"]}),
+            "failed",
+        );
+        let cancelled = run(
+            "run:x",
+            "workflow-unit:x",
+            json!({"attemptRef": "attempt:x", "executionRef": "execution:x", "attemptRecordedAt": "2026-11-14T10:02:00Z"}),
+            "cancellation_accepted",
+        );
+        let session = |n: u32, agent: &str, state: &str, tasks: Value| {
+            json!({"contract": "factory.session/v1", "state": state, "session": format!("agent-session/atelier-chat-{n}"),
+                "space": format!("session-space/atelier-chat-{n}"), "agent": agent, "world": "/w/Central", "project": "atelier",
+                "tasks": tasks})
+        };
+        let sessions = json!({"state": "read", "reading": {"contract": "factory.session-list/v1", "sessions": [
+            session(2, "codex", "open", json!([
+                {"run_ref": "run:w", "unit_ref": "workflow-unit:w", "task": "Write the notes"},
+                {"run_ref": "run:f", "unit_ref": "workflow-unit:f", "task": "Check the notes"},
+                {"run_ref": "run:x", "unit_ref": "workflow-unit:x", "task": "Summarise them"},
+            ])),
+            session(3, "claude-code", "open", json!([])),
+            session(4, "codex", "ended", json!([])),
+        ]}});
+        let located =
+            json!([{"project": "atelier", "root": "/w/Central/Work/atelier", "state": "located"}]);
+        let held = json!([{"name": "env-1", "seats": [{"product": "atelier", "state": "held", "live_branch": "atelier-work"}]}]);
+        let set = build(
+            Mode::Factory,
+            &[
+                agency(json!([])),
+                field(
+                    json!([{"project": "atelier", "state_path": state, "project_ref": "project:atelier",
+                    "journeys": {"state": "read"}, "runs": [failed, cancelled], "sessions": sessions}]),
+                    located,
+                ),
+                seats(held),
+            ],
+        );
+        let track_of =
+            |n: u32| format!("session-space/atelier-chat-{n}:agent-session/atelier-chat-{n}");
+        let busy = set
+            .tracks
+            .iter()
+            .find(|t| t.id == track_of(2))
+            .expect("the session is a track, laid from Factory's record of it");
+        assert_eq!(busy.name, "codex");
+        assert!(busy.acts.contains_key("endSession") && busy.acts.contains_key("writeTask"));
+        assert!(
+            !busy.acts.contains_key("stopTrack"),
+            "a cancelled task runs no more, so there is nothing to stop"
+        );
+        let retry = &busy.acts["retry"];
+        assert_eq!(
+            (retry.action.as_str(), &retry.input),
+            (
+                "factory.attempt.retry",
+                &json!({"state": state, "run_ref": "run:f", "unit_ref": "workflow-unit:f"})
+            ),
+            "the stalled task's track lights its retry"
+        );
+        let on: Vec<&Clip> = set
+            .clips
+            .iter()
+            .filter(|clip| clip.track == track_of(2))
+            .collect();
+        let laid: Vec<(&str, &str, Option<&str>, Option<&str>)> = on
+            .iter()
+            .map(|clip| {
+                (
+                    clip.row.as_str(),
+                    clip.label.as_str(),
+                    clip.status.as_deref(),
+                    clip.state.as_deref(),
+                )
+            })
+            .collect();
+        assert_eq!(
+            laid,
+            [
+                ("batch:1", "Write the notes", Some("waiting"), Some("written")),
+                ("batch:2", "Check the notes", Some("stalled"), Some("failed")),
+                ("batch:3", "Summarise them", Some("stopped"), Some("cancelled")),
+            ],
+            "the tasks lie in the order they were written, each named by the words it was written from"
+        );
+        let launch = &on[0].acts["launch"];
+        assert_eq!(
+            (launch.action.as_str(), &launch.input),
+            (
+                "factory.task.run",
+                &json!({"state": state, "run_ref": "run:w", "session": "agent-session/atelier-chat-2"})
+            ),
+            "a task written and not yet run runs from its clip"
+        );
+        assert!(on[1..].iter().all(|clip| clip.acts.is_empty()));
+        let fresh = set
+            .tracks
+            .iter()
+            .find(|t| t.id == track_of(3))
+            .expect("a session with no task yet is a track from its start");
+        assert_eq!(fresh.name, "claude-code");
+        assert_eq!(
+            fresh.acts.keys().map(String::as_str).collect::<Vec<_>>(),
+            ["endSession", "writeTask"]
+        );
+        assert!(
+            !set.tracks.iter().any(|t| t.id == track_of(4)),
+            "an ended session that holds no task keeps no track"
         );
     }
 
@@ -2543,7 +2914,12 @@ mod tests {
             );
             assert_eq!(
                 seat.done.as_deref(),
-                Some(format!("The agent is seated on a new track in {project}: its session is open.").as_str())
+                Some(
+                    format!(
+                        "The agent is seated on a new track in {project}: its session is open."
+                    )
+                    .as_str()
+                )
             );
         }
     }

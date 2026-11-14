@@ -206,8 +206,9 @@ test('the Agentset rack: a group\'s sessions as its chains, each named by its ag
   await assert.rejects(() => binding.write([{key: `solo:${HELPER.sessionRef}`, value: true}]), {message: own.AGENTSET_REFUSE.solo})
   // REPLACED (lane K0): Factory's retry is routed (factory_owner attempt-retry), and the rack holds no Run or unit for a member.
   // REPLACED (BD r19, C26 6311e404c): Factory names a task's units (factory_owner attempt-task-units), so the rack's Retry reads them and
-  // retries the chosen chain's unit; a rack handed no carrier says so.
-  assert.match(binding.standing.retry.disabled, /no carrier to Factory's attempt-task-units and attempt-retry stands on this rack/)
+  // retries the chosen chain's unit. REPLACED (O-I 1006): the rack's Retry is the chosen chain's session's retry act in Factory's Set
+  // (factory.attempt.retry); a rack handed no carrier says so.
+  assert.match(binding.standing.retry.disabled, /^Retry: no carrier to Factory's Set stands on this rack, .*\(Software Factory's factory\.attempt\.retry\)\.$/)
   await assert.rejects(() => binding.write([{key: 'retry', value: 1}]), {message: own.AGENTSET_REFUSE.retry})
   await assert.rejects(() => binding.write([{key: own.memberDeviceKey(HELPER.sessionRef, 'actuation:harness-model'), value: '{"effort":"max"}'}]), {message: own.AGENTSET_REFUSE.dev})
   assert.match(own.AGENTSET_REFUSE.dev, /a message to that session through Messages' delegate/)
@@ -302,7 +303,7 @@ test('(BD r19) the Group card carries its type, Discard removes the proposal, Re
   assert.deepEqual(calls.at(-1), ['remove', {scope: 'root', ref: 'agent-set:check-the-release-x1', expected_revision: 'r1'}])
   assert.equal(bind.viewHolds(bind.chainHolds(), own.AGENTSET_ID)['new.proposal'], undefined, 'the card lets the proposal go')
   await assert.rejects(() => rack().write([{key: 'new.discard', value: true}]), {message: own.GROUP_REFUSE.noProposal})
-  // Retry: the chosen chain's session, whose task's units Factory names; the carrier reads them and retries the unit (taskBindings.ts retryTask).
+  // Retry: the chosen chain's session's own retry act in Factory's Set (factory.attempt.retry), run by `act` (factoryTaskActs.ts sessionSetAct).
   assert.equal(rack().standing.retry, undefined, 'Retry stands with its carrier')
   await assert.rejects(() => rack().write([{key: 'retry', value: true}]), {message: own.CHAIN_LIST_REFUSE.noneChosen('Retry')})
   rack().local.member(H.sessionRef)
@@ -321,8 +322,8 @@ test('(BD r19) the Group card carries its type, Discard removes the proposal, Re
 })
 
 // Round 870 (DLW build ruling 2026-11-05): Stop after's face sits beside Retry on the chain's task row, as Live keeps a Clip Stop button in
-// every track's slots (§19.4). Its carrier asks Software Factory to stop the chosen chain's task's current attempt (taskBindings.ts
-// stopAfterTask, factory_owner attempt-request-cancellation); it lights while the chain is at work.
+// every track's slots (§19.4). Its carrier presses the chosen chain's session's own Stop in Factory's Set (factory.task.stop, by `act`;
+// factoryTaskActs.ts sessionSetAct, O-I 1006); it lights while the chain is at work.
 test('(r870) Stop after stands beside Retry on the chosen chain: its carrier stops the task\'s current attempt, drawn and written down', async () => {
   bind.resetHolds()
   const calls = []
@@ -330,7 +331,7 @@ test('(r870) Stop after stands beside Retry on the chosen chain: its carrier sto
   const tracks = [GROUP, L, H, IDLE, OTHER]
   const rack = ports => own.agentsetBinding({group: GROUP, tracks, holds: bind.chainHolds()}, ports)
   assert.equal(rack({}).standing.stopAfter?.disabled, own.AGENTSET_REFUSE.stopAfter, 'no carrier: dark, saying why')
-  assert.match(own.AGENTSET_REFUSE.stopAfter, /^Stop after: no carrier to Factory's attempt-task-units and attempt-request-cancellation stands on this rack/)
+  assert.match(own.AGENTSET_REFUSE.stopAfter, /^Stop after: no carrier to Factory's Set stands on this rack, .*\(Software Factory's factory\.task\.stop\)\.$/)
   const ports = {stopAfter: async input => { calls.push(['stopAfter', input]); return {status: 'cancel-requested'} }}
   assert.equal(rack(ports).standing.stopAfter, undefined, 'Stop after stands with its carrier')
   await assert.rejects(() => rack(ports).write([{key: 'stopAfter', value: true}]), {message: own.CHAIN_LIST_REFUSE.noneChosen('Stop after')})
@@ -344,9 +345,9 @@ test('(r870) Stop after stands beside Retry on the chosen chain: its carrier sto
   assert.match(face, /\{retryAction\(p, chosen\)\}\n\s*\{stopAfterAction\(p, chosen\)\}/, 'beside Retry')
   assert.match(face, /label="Stop after" does=\{SAYS\.stopAfter\}/)
   assert.match(face, /can = chosen\?\.state === 'working'/, 'it lights while the chain is at work')
-  // The chain wires the carrier: the chosen chain's bound task, its current unit asked to stop.
+  // The chain wires the carrier: the chosen chain's session's Stop act in Factory's Set, the one the Session grid's track Stop presses.
   const view = read('agent/devices/FactoryDeviceChain.tsx')
-  assert.match(view, /await stopAfterTask\(request => factoryOwnerWrite\(transport, request, `factory_owner \$\{request\.kind\}`\), custodyState, await boundTaskOf\(transport, project, agent_session, 'Stop after'\)\)/)
+  assert.match(view, /stopAfter: \(\{agent_session\}\) => sessionSetAct\(transport, agent_session, 'stopTrack'\)/)
   // The manual's line (§19.4 Rules).
   const manual = readFileSync(new URL('../../../../ProjectCentral/docs/1-vision/dlw/DLW.md', import.meta.url), 'utf8')
   const agent = manual.slice(manual.indexOf('### 19.4 Agent'), manual.indexOf('### 19.5 Experiment'))
@@ -355,8 +356,9 @@ test('(r870) Stop after stands beside Retry on the chosen chain: its carrier sto
 })
 
 // BD round 23 (DLW build ruling 2026-11-05): Launch is the press on the chain's task row, before Retry and Stop after, as a clip's launch
-// stands in Live's slot beside its Stop: AIKit realises the chosen chain's session on its own model and Factory starts the unit Factory names
-// for its task (taskBindings.ts launchTask). Factory's answer stands in the row in its words; a refusal is the owner's, on the Info line.
+// stands in Live's slot beside its Stop: the chosen chain's session's first written task runs through Factory's factory.task.run, its clip's
+// launch act in Factory's Set (factoryTaskActs.ts sessionSetAct, O-I 1006). Factory's answer stands in the row in its words; a refusal is the
+// owner's, on the Info line.
 test('(BD r23) Launch stands on the chosen chain\'s task row: its carrier starts the task\'s unit, and Factory\'s answer stands in the row', async () => {
   bind.resetHolds()
   const calls = []
@@ -364,7 +366,7 @@ test('(BD r23) Launch stands on the chosen chain\'s task row: its carrier starts
   const tracks = [GROUP, L, H, IDLE, OTHER]
   const rack = ports => own.agentsetBinding({group: GROUP, tracks, holds: bind.chainHolds()}, ports)
   assert.equal(rack({}).standing.launch?.disabled, own.AGENTSET_REFUSE.launch, 'no carrier: dark, saying why')
-  assert.match(own.AGENTSET_REFUSE.launch, /^Launch: no carrier to AIKit's realisation and Factory's attempt-launch stands on this rack/)
+  assert.match(own.AGENTSET_REFUSE.launch, /^Launch: no carrier to Factory's Set stands on this rack, .*\(Software Factory's factory\.task\.run\)\.$/)
   const said = 'Software Factory launched unit:build of run:r1 for central:task:t1 as attempt:desk-launch:01, on model:claude-opus-5 as AIKit realised it on agent-session/fx.'
   const ports = {launch: async input => { calls.push(['launch', input]); return {status: 'launched', attemptRef: 'attempt:desk-launch:01', said} }}
   assert.equal(rack(ports).standing.launch, undefined, 'Launch stands with its carrier')
@@ -385,14 +387,14 @@ test('(BD r23) Launch stands on the chosen chain\'s task row: its carrier starts
   assert.match(face, /label="Launch" does=\{SAYS\.launch\}/)
   assert.match(face, /can = !!chosen && chosen\.state !== 'working'/, 'it lights while the chain is not at work')
   assert.match(face, /label="Launched"/)
-  // The chain wires the carrier: the chosen chain's bound task, AIKit's model reading and catalogue, the realisation and Factory's launch.
-  // REPLACED (BD r24, O-I 804): the rack built launchTask's ports inline. They are the one task Launch now (agent/factoryTaskActs.ts
-  // launchSessionTask), which the Session grid's ▶ on a Factory task presses too.
+  // The chain wires the carrier: the chosen chain's session's launch act in Factory's Set, the clip ▶ the Session grid presses.
+  // REPLACED (BD r24, O-I 804): the rack built launchTask's ports inline. REPLACED (O-I 1006): one task Launch composed AIKit's realisation and
+  // Factory's attempt-launch in the window (launchSessionTask); Factory's own factory.task.run runs the task now, pressed from its Set.
   const view = read('agent/devices/FactoryDeviceChain.tsx')
-  assert.match(view, /return launchSessionTask\(transport, \{statePath: custodyState, taskRef: await boundTaskOf\(transport, project, agent_session, 'Launch'\), session: agent_session, project\}\)/)
+  assert.match(view, /launch: async \(\{agent_session\}\) => \(\{status: 'launched', said: await sessionSetAct\(transport, agent_session, 'launch'\)\}\)/)
   const acts = read('agent/factoryTaskActs.ts')
-  assert.match(acts, /launchTask\(\{\s*owner: request => factoryOwnerWrite\(transport, request, `factory_owner \$\{request\.kind\}`\),/)
-  assert.match(acts, /realise: request => ownerRouteWrite\(transport, aikitWriteOp\(request\), ROUTE_WORDS\.realise\)\.then\(answer => answer\.data\)/)
+  assert.match(acts, /const act = sessionActOf\(reading\.answer\.set, session, key\)\s*if \(!act\) throw new Error\(SESSION_ACT_ABSENT\[key\]\(session\)\)\s*const receipt = await runAct\(setActRunner\(transport\), act\)/)
+  assert.doesNotMatch(acts, /launchTask|factoryOwnerWrite|ROUTE_WORDS\.realise/, 'the window composes no launch of its own')
   bind.resetHolds()
 })
 
@@ -442,7 +444,7 @@ test('(BD r19, Central #318) the chain is the agent\'s profile: Rename on the Ag
   assert.match(chain, /reorder: async \(refs: readonly string\[\]\) => \{ const asked = orderRequest\(chainProfile, refs\); await profileAct\(asked\.action, asked\.input\) \}/,
     'the rack\'s Sets move through Central\'s chain-order')
   assert.match(chain, /removeSet: input => setAct\(transport, 'central\.agent-set\.remove', input\)/)
-  assert.match(chain, /await retryTask\(request => factoryOwnerWrite\(transport, request/)
+  assert.match(chain, /retry: \(\{agent_session\}\) => sessionSetAct\(transport, agent_session, 'retry'\)/)
   // Another chain's device: a message sent to its agent's Position, then delegated into its task, both through AIKit's gateway (Messages' own
   // route); the chain never reaches the rail's Messages device for it (tests/agent-rail-devices.test.mjs "one publisher").
   assert.match(chain, /gatewayWriteOp\(\{kind: 'send', \.\.\.scope, to: position, body: words\}\), ROUTE_WORDS\.send\)/)

@@ -262,16 +262,18 @@ pub fn person_act(action: &str) -> bool {
     PERSON_ACTS.contains(&action) || REGISTRY_PERSON_ACTS.contains(&action)
 }
 
-/// Factory's acts that present the person's authority (factory.rs `OwnerRequest::person_act`: an attempt launched, retried or
-/// cancelled, its return carried into receiving; a session's task run and stopped, O-I #1006), as the registry holds them: by the
-/// person's press the host's token goes to `oi act invoke`, which hands it to Factory; by a wire the act is refused in words
+/// Factory's acts that present the person's authority (an attempt launched, acted on or carried into receiving; a session's task
+/// run, stopped or retried, and the attempt you choose proposed to Central's receiving, O-I #1006), as the registry holds them: by
+/// the person's press the host's token goes to `oi act invoke`, which hands it to Factory; by a wire the act is refused in words
 /// before Factory is asked.
-pub const REGISTRY_PERSON_ACTS: [&str; 5] = [
+pub const REGISTRY_PERSON_ACTS: [&str; 7] = [
     "factory.attempt.launch",
     "factory.attempt.action",
     "factory.attempt.receiving",
     "factory.task.run",
     "factory.task.stop",
+    "factory.attempt.retry",
+    "factory.attempt.choose",
 ];
 
 /// Whether one invocation is the person's own press: a person act by its id, or by what it carries — a Day document made

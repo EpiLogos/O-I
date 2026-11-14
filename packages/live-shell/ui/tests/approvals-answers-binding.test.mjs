@@ -73,7 +73,7 @@ test('a review\'s and a recognition\'s answers stand refused, each naming what A
     assert.equal(binding.standing[key]?.disabled, rec.APPROVALS_ANSWERS_REFUSED[key], `${key} stands disabled with its reason`)
     await assert.rejects(binding.write([{key, value: 'x'}]), {message: rec.APPROVALS_ANSWERS_REFUSED[key]})
   }
-  assert.match(rec.APPROVALS_ANSWERS_REFUSED.confirm, /attempt-receiving/)
+  assert.match(rec.APPROVALS_ANSWERS_REFUSED.confirm, /factory\.attempt\.choose/)
   assert.match(rec.APPROVALS_ANSWERS_REFUSED.recognise, /Recognise/)
   assert.match(rec.APPROVALS_ANSWERS_REFUSED.continue, /missing op/)
 })

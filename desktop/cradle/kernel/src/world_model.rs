@@ -771,11 +771,17 @@ fn factory(via: Via<'_>) -> Result<Value, String> {
     Ok(json!({"located": located, "sources": sources}))
 }
 
-/// One located Factory source: its journeys, and each of its runs with its tasks and attempts.
+/// One located Factory source: its journeys, each of its runs with its tasks and attempts, and the sessions Factory started in
+/// it, open or ended, each with the tasks written on it (`factory session list`, O-I #1006).
 fn factory_source(via: Via<'_>, project: &Value, state_path: &str, project_ref: &str) -> Value {
     let reading = ask(
         via,
         json!({"op": "factory_development_read", "state_path": state_path, "read": "project", "subject": project_ref}),
+    )
+    .and_then(payload);
+    let sessions = ask(
+        via,
+        json!({"op": "factory_owner", "request": {"kind": "session-list", "state_path": state_path}}),
     )
     .and_then(payload);
     let run_refs = reading.as_ref().map(run_refs_of).unwrap_or_default();
@@ -813,7 +819,7 @@ fn factory_source(via: Via<'_>, project: &Value, state_path: &str, project_ref: 
     });
     json!({
         "project": project, "state_path": state_path, "project_ref": project_ref,
-        "journeys": part(reading), "runs": runs,
+        "journeys": part(reading), "runs": runs, "sessions": part(sessions),
     })
 }
 
@@ -1005,6 +1011,13 @@ mod tests {
             let body = serde_json::to_value(&op).expect("an op serialises");
             asked.lock().unwrap().push(body.clone());
             let result = match body["op"].as_str().unwrap_or_default() {
+                "factory_owner" if body["request"]["kind"] == "session-list" => {
+                    FactoryDevelopmentReading {
+                        data: json!({"contract": "factory.session-list/v1", "sessions": [
+                            {"contract": "factory.session/v1", "state": "open", "session": "agent-session/s1", "tasks": []},
+                        ]}),
+                    }
+                }
                 "factory_owner" => FactoryDevelopmentReading {
                     data: json!({"contract": "oi.factory-source-discovery/v1", "locations": [
                         {"project": null, "root": "/c", "state": "located",
@@ -1048,6 +1061,10 @@ mod tests {
         let source = &sources[0];
         assert_eq!(source["state_path"], "/c/.factory/development-state.json");
         assert_eq!(source["journeys"]["state"], "read");
+        assert_eq!(
+            source["sessions"]["reading"]["sessions"][0]["session"], "agent-session/s1",
+            "the sessions Factory started in the source are carried, open before any task ran"
+        );
         let runs: Vec<&str> = source["runs"]
             .as_array()
             .expect("runs")
@@ -1069,8 +1086,8 @@ mod tests {
         );
         assert_eq!(
             asked.lock().unwrap().len(),
-            1 + 1 + 2 * 2,
-            "one discovery, one project, a run reading and an attempt field per run"
+            1 + 1 + 1 + 2 * 2,
+            "one discovery, one project, its sessions, a run reading and an attempt field per run"
         );
     }
 

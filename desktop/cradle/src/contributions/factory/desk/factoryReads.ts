@@ -6,7 +6,7 @@
  * Central's own roots), every reading is the owner's document verbatim, and a
  * refusal comes back in the owner's own words.
  */
-import {kernelOp} from "../../../kernel/bridge";
+import {kernelAct, kernelOp} from "../../../kernel/bridge";
 import type {FactoryAttemptArtifacts, KernelTransportStatus} from "../../../kernel/types";
 import {developmentRead, ownerRefusalText} from "../development";
 import type {Scope} from "../../../workspace/scope";
@@ -33,7 +33,6 @@ export type FactoryOwnerRequest =
   | {kind: "recognise"; state_path: string; journey_ref: string; subject_ref: string; basis_refs?: string[]}
   | {kind: "run-close"; state_path: string; run_ref: string; recognition_ref: string; next_unit?: unknown; authority_grant?: string}
   | {kind: "attempt-admission"}
-  | {kind: "attempt-receiving"; state_path: string; run_ref: string; attempt_ref: string; authority_grant?: string}
   | {kind: "inhabitation"; state_path: string; run_ref?: string; position_ref?: string}
   | {kind: "current-work"; state_path: string; position_ref: string};
 
@@ -151,48 +150,42 @@ export async function closeRun(transport: KernelTransportStatus, target: RunClos
   return readRunClose(answer, {runRef: target.runRef, recognitionRef: target.recognitionRef});
 }
 
-/** Choosing an attempt: its Return proposed to Central's receiving field, in the Central Flow the Run is associated with.
- * The kernel assembles the request from Factory's own admission reading and the host's grant; the desk names the attempt only.
- * The document is checked against this Run and this attempt before anything shows it. */
-export interface AttemptReceivingTarget {statePath: string; runRef: string; attemptRef: string}
-export const ATTEMPT_RECEIVING_CONTRACT = "oi.factory-attempt-receiving/v1";
-const RECEIVING_STATUSES = ["received", "already-received", "needs-reconciliation", "uncertain", "refused"] as const;
-export interface AttemptReceivingReceipt {
-  contract: typeof ATTEMPT_RECEIVING_CONTRACT;
-  runRef: string;
-  attemptRef: string;
-  status: typeof RECEIVING_STATUSES[number];
-  /** Whether something may have moved at Central or in Factory. */
-  changed: boolean;
-  target: {sourceRef: string; documentId: string; sourceRevision: string; root: string} | null;
-  authorityRef: string | null;
-  receipt: {receivingRef?: string; [field: string]: unknown} | null;
-  refusal: {source: "owner" | "driver"; step?: string | null; message: string; operationMayHaveRun?: boolean} | null;
+/** Choosing an attempt (manual §19.1 "Choosing a take that stands sends it to review in Approvals"; §19.14): Factory's own Action
+ * `factory.attempt.choose` by `act` (O-I #1006), under the person's grant (`central.receiving.submit`): the attempt's Return proposed
+ * to Central's receiving field, into the Central Flow its Run belongs to. A Run that belongs to no Flow — a task written on a session's
+ * track, commissioned from the person's words — has nowhere to receive a Return, and Factory refuses it in those words: its difference
+ * stays in the session's checkout, which Git / landing lands. The answer is read only for the Run and the attempt it names. */
+export interface AttemptChoiceTarget {statePath: string; runRef: string; attemptRef: string}
+export const ATTEMPT_CHOICE_CONTRACT = "factory.session-task/v1";
+const CHOICE_STATES = ["received", "already-received", "needs-reconciliation"] as const;
+export interface AttemptChoice {
+  contract: typeof ATTEMPT_CHOICE_CONTRACT;
+  state: typeof CHOICE_STATES[number];
+  run_ref: string;
+  attempt_ref: string;
+  /** The receiving Central holds the Return as, where Factory names it (an attempt chosen already). */
+  receiving_ref?: string;
+  /** Factory's receiving receipt, verbatim (a choice made now). */
+  receipt?: unknown;
 }
-export function readAttemptReceiving(value: unknown, expect: {runRef: string; attemptRef: string}): AttemptReceivingReceipt {
+export function readAttemptChoice(value: unknown, expect: {runRef: string; attemptRef: string}): AttemptChoice {
   const row = value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : undefined;
-  const refusal = row?.refusal && typeof row.refusal === "object" ? row.refusal as Record<string, unknown> : undefined;
-  if (row?.contract !== ATTEMPT_RECEIVING_CONTRACT || row.runRef !== expect.runRef || row.attemptRef !== expect.attemptRef
-    || !RECEIVING_STATUSES.includes(row.status as typeof RECEIVING_STATUSES[number]) || typeof row.changed !== "boolean"
-    // A refusal carries its reason and nothing else does; an uncertain answer carries the owner's silence as its reason.
-    || (["refused", "uncertain"].includes(row.status as string)) !== (refusal !== undefined)
-    || (refusal !== undefined && (!["owner", "driver"].includes(refusal.source as string) || typeof refusal.message !== "string" || !refusal.message.trim())))
-    throw new Error("Factory did not answer this attempt's receiving.");
-  return value as AttemptReceivingReceipt;
+  if (row?.contract !== ATTEMPT_CHOICE_CONTRACT || row.run_ref !== expect.runRef || row.attempt_ref !== expect.attemptRef
+    || !CHOICE_STATES.includes(row.state as typeof CHOICE_STATES[number]) || (row.receiving_ref !== undefined && typeof row.receiving_ref !== "string"))
+    throw new Error("Factory did not answer this attempt's choice.");
+  return value as AttemptChoice;
 }
-export async function receiveAttempt(transport: KernelTransportStatus, target: AttemptReceivingTarget): Promise<AttemptReceivingReceipt> {
-  const answer = await factoryOwner(transport, {kind: "attempt-receiving", state_path: target.statePath, run_ref: target.runRef, attempt_ref: target.attemptRef});
-  return readAttemptReceiving(answer, {runRef: target.runRef, attemptRef: target.attemptRef});
+/** Choose an attempt through Factory's `factory.attempt.choose`: its answer for this attempt, or Factory's refusal thrown in its words. */
+export async function chooseAttemptOf(transport: KernelTransportStatus, target: AttemptChoiceTarget): Promise<AttemptChoice> {
+  const answer = await kernelAct(transport, "factory.attempt.choose", {state: target.statePath, run_ref: target.runRef, attempt_ref: target.attemptRef});
+  return readAttemptChoice(answer, {runRef: target.runRef, attemptRef: target.attemptRef});
 }
-/** The words for a choice, the owner's own where it gave them: the shell shows them where the press was. */
-export function attemptReceivingWords(receipt: AttemptReceivingReceipt): {ok: boolean; line: string} {
-  const where = receipt.target ? ` in the Flow ${receipt.target.documentId}` : "";
-  switch (receipt.status) {
-    case "received": return {ok: true, line: `Chosen: this attempt's Return was proposed to Central's receiving field${where}${receipt.receipt?.receivingRef ? ` (${receipt.receipt.receivingRef})` : ""}.`};
-    case "already-received": return {ok: true, line: `Already chosen: Central holds this attempt's Return${receipt.receipt?.receivingRef ? ` as ${receipt.receipt.receivingRef}` : ""}.`};
-    case "needs-reconciliation": return {ok: false, line: `Factory kept the call${where}, but Central's answer is not confirmed; it needs reconciling before the choice stands.`};
-    case "uncertain": return {ok: false, line: `The owner did not answer and may have run: ${receipt.refusal?.message ?? "no reason given"}. Read the attempt again before choosing it a second time.`};
-    default: return {ok: false, line: receipt.refusal?.source === "driver" ? receipt.refusal.message : `The owner refused the choice: ${receipt.refusal?.message ?? "no reason given"}`};
+/** The words for a choice: the shell shows them where the press was. */
+export function attemptChoiceWords(choice: AttemptChoice): {ok: boolean; line: string} {
+  switch (choice.state) {
+    case "received": return {ok: true, line: "Chosen: this attempt's Return was proposed to Central's receiving field, into the Flow its Run belongs to."};
+    case "already-received": return {ok: true, line: `Already chosen: Central holds this attempt's Return${choice.receiving_ref ? ` as ${choice.receiving_ref}` : ""}.`};
+    default: return {ok: false, line: "Factory kept the call, but Central's answer is not confirmed; it needs reconciling before the choice stands."};
   }
 }
 

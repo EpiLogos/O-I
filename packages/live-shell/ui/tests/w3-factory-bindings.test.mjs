@@ -310,7 +310,7 @@ test('7 · the member\'s Trust records the review with AIKit (`aikit trust recor
   bind.resetHolds()
 })
 
-test('the family manifests say what is wired: Messages sends through the Action aikit.gateway.send, the Run map retries through attempt-retry', async () => {
+test('the family manifests say what is wired: Messages sends through the Action aikit.gateway.send, the Run map retries through factory.attempt.retry', async () => {
   const {aiKitFamilyManifest} = await import('../src/inhabitants/aiKitFamilyManifest.ts')
   const {softwareFactoryFamilyManifest} = await import('../src/inhabitants/softwareFactoryFamilyManifest.ts')
   const face = (manifest, id) => manifest().faces.find(entry => entry.id === id).invariant.generatesAbsent
@@ -320,8 +320,9 @@ test('the family manifests say what is wired: Messages sends through the Action 
   assert.match(read('agent/devices/AgentRailDevices.tsx'), /gateway: \(request: GatewayWriteRequest\) => ownerRouteWrite\(transport, gatewayWriteOp\(request\)/, 'and that route is the one the rail binds')
   const runMap = face(softwareFactoryFamilyManifest, 'run-map')
   assert.doesNotMatch(runMap, /attempt retry[^.]*no kernel route/, 'Retry has a kernel route')
-  assert.match(runMap, /attempt-retry/, 'it names the route Retry takes')
-  assert.match(read('agent/devices/runMapBinding.ts'), /owner\(\{kind: 'attempt-retry'/, 'and that route is the one the Run map writes')
+  assert.match(runMap, /factory\.attempt\.retry/, 'it names the Action Retry takes')
+  assert.match(read('agent/devices/runMapBinding.ts'), /await retry\(\{state: run\.statePath, run_ref: run\.runRef, unit_ref: unit\}\)/, 'the Run map writes the unit through its retry port')
+  assert.match(read('agent/devices/FactoryDeviceChain.tsx'), /\{retry: input => kernelAct\(transport, 'factory\.attempt\.retry', input\)\}/, 'and that port is the Action by act')
   // The reviewed registry snapshot carries the same words (tests/live-semantics.test.mjs locks it to the manifests).
   const registry = JSON.parse(readFileSync(new URL('../src/inhabitants/sdk/semantic-registry.json', import.meta.url), 'utf8'))
   assert.equal(registry.find(entry => entry.family === 'ai-kit' && entry.face === 'messages').invariant.generatesAbsent, messages)

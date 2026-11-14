@@ -433,8 +433,10 @@ test('item 4: Factory\'s acts on the person\'s grant go by the shell window\'s c
   assert.ok(kinds.length >= 50 && kinds.includes('task-offer-act') && kinds.includes('pads-read'), `the kernel's Factory requests are read (${kinds.length})`)
   const personAct = factory.slice(factory.indexOf('pub fn person_act(&self)'), factory.indexOf('\n    }\n', factory.indexOf('pub fn person_act(&self)')))
   const persons = [...personAct.matchAll(/OwnerRequest::(\w+) \{ \.\. \}/g)].map(match => kebab(match[1])).sort()
-  assert.deepEqual(persons, ['attempt-launch', 'attempt-receiving', 'attempt-request-cancellation', 'attempt-retry', 'custody-hold', 'pads-preset-recall',
-    'pads-preset-save', 'pads-write', 'rack-macros-write', 'run-close', 'wave-act'], 'the kernel\'s Factory acts on the person\'s grant')
+  // REPLACED (O-I 1006): a unit launched, stopped or retried and a Return received were Factory acts the kernel composed on the person's
+  // grant (attempt-launch, attempt-request-cancellation, attempt-retry, attempt-receiving); they are Factory's own Actions now, by `act`.
+  assert.deepEqual(persons, ['custody-hold', 'pads-preset-recall', 'pads-preset-save', 'pads-write', 'rack-macros-write', 'run-close', 'wave-act'],
+    'the kernel\'s Factory acts on the person\'s grant')
   assert.match(personAct, /OwnerRequest::TaskOfferAct \{ verb, \.\. \} => match task_offer_verb\(verb\) \{\s*Some\(\(command, Some\(_\), _\)\) => command,/, 'a task offer\'s act is one where it presents a capability')
   const verbs = factory.slice(factory.indexOf('pub fn task_offer_verb('), factory.indexOf('\n}\n', factory.indexOf('pub fn task_offer_verb(')))
   // Every arm of the match, counted loosely: each `"…" =>` before the catch-all `_ =>` (1Z.1 item 3, the review's finding 2: a verb the
@@ -470,10 +472,9 @@ test('item 4: Factory\'s acts on the person\'s grant go by the shell window\'s c
   }}}
   try {
     await factoryOwner(TAURI, {kind: 'run-close', state_path: '/s.json', run_ref: 'run:1', recognition_ref: 'recognition:1'})
-    await factoryOwner(TAURI, {kind: 'attempt-receiving', state_path: '/s.json', run_ref: 'run:1', attempt_ref: 'attempt:1'})
     await factoryOwner(TAURI, {kind: 'workflow-inspect', state_path: '/s.json', run_ref: 'run:1'})
     await factoryOwner(TAURI, {kind: 'recognise', state_path: '/s.json', journey_ref: 'j', subject_ref: 's'})
-    for (const kind of persons.filter(kind => kind !== 'run-close' && kind !== 'attempt-receiving')) await factoryOwnerWrite(TAURI, {kind, state_path: '/s.json'}, kind)
+    for (const kind of persons.filter(kind => kind !== 'run-close')) await factoryOwnerWrite(TAURI, {kind, state_path: '/s.json'}, kind)
     for (const verb of ['offer-make', 'offer-revoke', 'offer-accept', 'offer-take', 'offer-check', 'offer-return', 'offer-receive', 'offer-revoked']) {
       await factoryOwnerWrite(TAURI, {kind: 'task-offer-act', state_path: '/s.json', verb, request: {}}, verb)
     }
@@ -482,8 +483,7 @@ test('item 4: Factory\'s acts on the person\'s grant go by the shell window\'s c
     if (prior === undefined) delete globalThis.window; else globalThis.window = prior
   }
   assert.deepEqual(sent, [
-    ['kernel_press', 'run-close'], ['kernel_press', 'attempt-receiving'], ['kernel_op', 'workflow-inspect'], ['kernel_op', 'recognise'],
-    ['kernel_press', 'attempt-launch'], ['kernel_press', 'attempt-request-cancellation'], ['kernel_press', 'attempt-retry'], ['kernel_press', 'custody-hold'],
+    ['kernel_press', 'run-close'], ['kernel_op', 'workflow-inspect'], ['kernel_op', 'recognise'], ['kernel_press', 'custody-hold'],
     ['kernel_press', 'pads-preset-recall'], ['kernel_press', 'pads-preset-save'], ['kernel_press', 'pads-write'], ['kernel_press', 'rack-macros-write'],
     ['kernel_press', 'wave-act'],
     ['kernel_press', 'task-offer-act offer-make'], ['kernel_press', 'task-offer-act offer-revoke'], ['kernel_press', 'task-offer-act offer-accept'],

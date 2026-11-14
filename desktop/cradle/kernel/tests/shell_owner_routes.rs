@@ -2880,23 +2880,6 @@ fn factorys_acts_on_the_persons_grant_run_on_their_token_only_by_the_press() {
             json!({"kind": "run-close", "state_path": state, "run_ref": "run:1", "recognition_ref": "recognition:1"}),
         ),
         (
-            "factory attempt receiving",
-            json!({"kind": "attempt-receiving", "state_path": state, "run_ref": "run:1", "attempt_ref": "attempt:1"}),
-        ),
-        (
-            "factory attempt action retry",
-            json!({"kind": "attempt-retry", "state_path": state, "run_ref": "run:1", "workflow_unit_ref": "unit:1"}),
-        ),
-        (
-            "factory attempt action request-cancellation",
-            json!({"kind": "attempt-request-cancellation", "state_path": state, "run_ref": "run:1", "workflow_unit_ref": "unit:1"}),
-        ),
-        (
-            "factory attempt launch",
-            json!({"kind": "attempt-launch", "state_path": state, "run_ref": "run:1", "workflow_unit_ref": "unit:1",
-            "task_ref": "task:1", "aikit_realisation": {"schema": "aikit.model-realisation/v2", "selected": true}}),
-        ),
-        (
             "factory development pads-write",
             json!({"kind": "pads-write", "state_path": state, "project_ref": "project:demo", "index": 3,
             "expected_revision": "absent", "pad": {"prompt": "Tidy the seats"}}),
@@ -2942,6 +2925,13 @@ fn factorys_acts_on_the_persons_grant_run_on_their_token_only_by_the_press() {
             json!({"kind": "task-offer-act", "state_path": state, "verb": "offer-take", "request": {"offer_ref": "offer:01"}}),
         ),
     ];
+    // Each act by its command, so the list reads as it stands.
+    let named = |command: &str| {
+        acts.iter()
+            .find(|(act, _)| *act == command)
+            .map(|(_, request)| request.clone())
+            .unwrap()
+    };
     factory.answer(&json!({"schema": "factory.wave-receipt/v1", "act": "lock", "revision": "blake3:ff", "changed": true}));
     for (act, request) in &acts {
         factory.forget();
@@ -2976,7 +2966,9 @@ fn factorys_acts_on_the_persons_grant_run_on_their_token_only_by_the_press() {
     factory.forget();
     let (outcome, _) = dispatched(
         no_central(&dir),
-        pressed(op(json!({"op": "factory_owner", "request": acts[10].1}))),
+        pressed(op(
+            json!({"op": "factory_owner", "request": named("factory development wave act")}),
+        )),
     );
     outcome.unwrap();
     assert_eq!(
@@ -3009,7 +3001,9 @@ fn factorys_acts_on_the_persons_grant_run_on_their_token_only_by_the_press() {
     factory.forget();
     let (outcome, _) = dispatched(
         no_central(&dir),
-        pressed(op(json!({"op": "factory_owner", "request": acts[5].1}))),
+        pressed(op(
+            json!({"op": "factory_owner", "request": named("factory development pads-write")}),
+        )),
     );
     assert!(outcome
         .unwrap_err()
@@ -5695,176 +5689,10 @@ fn aikit_issues_a_hook_bypass_and_names_the_id_it_lists() {
     let _ = fs::remove_dir_all(&dir);
 }
 
-#[test]
-fn a_units_retry_is_a_factory_write_refused_while_factory_admits_no_desktop_retry() {
-    let _held = hold();
-    let dir = scratch("factory-retry");
-    let factory = Fake::new(&dir, "factory");
-    let _bin = Bound::set("OI_FACTORY_BIN", &factory.bin);
-    // An older Factory's admission reading (REAL, `factory attempt admission
-    // --json`, 22 Oct 2026): it admits attempt-receiving only. It is asked for
-    // the Run's own state, as Factory now names the Run's project there.
-    factory.answer(&json!({
-        "contract": "factory.attempt-admission/v1", "nativeOwner": "factory",
-        "capabilityRef": "capability/factory/operate-attempt",
-        "desktopCaller": {"callerRef": "oi:desktop", "lineage": ["oi:desktop"], "projectionKind": "desktop-human"},
-        "actions": [{"actionRef": "attempt-receiving", "actorKind": "human",
-            "command": "factory attempt receiving <state> <request-json|->",
-            "contract": "factory.attempt-receiving-action/v1", "nativeAction": "central.receiving.submit",
-            "scopeRef": "project:Factory"}],
-        "standing": "A reading of what Factory expects of a desktop caller. It grants nothing: the grant is the owner's, in the contract named here."
-    }));
-    let (outcome, form) = by_the_press(
-        || no_central(&dir),
-        &factory,
-        op(
-            json!({"op": "factory_owner", "request": {"kind": "attempt-retry",
-            "state_path": dir.join("state").display().to_string(), "run_ref": "run:one",
-            "workflow_unit_ref": "unit:inspect-source"}}),
-        ),
-    );
-    let outcome = outcome.unwrap();
-    assert_eq!(form, "owner-write", "a retry is the person's write");
-    let KernelOpResult::FactoryDevelopmentReading { data } = &outcome.result else {
-        panic!("not Factory's document: {:?}", outcome.result)
-    };
-    assert_eq!(data["contract"], "oi.factory-attempt-retry/v1");
-    assert_eq!(data["status"], "refused");
-    assert_eq!(data["refusal"]["step"], "admission");
-    assert!(
-        data["refusal"]["message"]
-            .as_str()
-            .unwrap()
-            .contains("names no attempt-retry action, only attempt-receiving"),
-        "{data}"
-    );
-    assert_eq!(
-        factory.asked(),
-        [format!(
-            "attempt admission {} --json",
-            dir.join("state").display()
-        )],
-        "the admission is asked for the Run's state, and nothing is read or acted on past it"
-    );
-    assert!(outcome.receipts.is_empty(), "a refusal moves nothing");
-    let _ = fs::remove_dir_all(&dir);
-}
-
-#[test]
-fn a_units_stop_after_is_a_factory_write_refused_while_factory_admits_no_desktop_cancellation() {
-    let _held = hold();
-    let dir = scratch("factory-cancel");
-    let factory = Fake::new(&dir, "factory");
-    let _bin = Bound::set("OI_FACTORY_BIN", &factory.bin);
-    // The installed Factory's admission before round 20 (factory attempt_admission.rs at 4243956): receiving and retry only.
-    factory.answer(&json!({
-        "contract": "factory.attempt-admission/v1", "nativeOwner": "factory",
-        "capabilityRef": "capability/factory/operate-attempt",
-        "desktopCaller": {"callerRef": "oi:desktop", "lineage": ["oi:desktop"], "projectionKind": "desktop-human"},
-        "actions": [{"actionRef": "attempt-receiving", "actorKind": "human",
-            "contract": "factory.attempt-receiving-action/v1", "nativeAction": "central.receiving.submit",
-            "scopeRef": "project:Factory"},
-            {"actionRef": "attempt-retry", "actorKind": "human", "contract": "factory.attempt-action/v1",
-            "operation": "retry", "nativeAction": "factory.attempt.retry", "scopeRef": "project:Factory"}],
-    }));
-    let (outcome, form) = by_the_press(
-        || no_central(&dir),
-        &factory,
-        op(
-            json!({"op": "factory_owner", "request": {"kind": "attempt-request-cancellation",
-            "state_path": dir.join("state").display().to_string(), "run_ref": "run:one",
-            "workflow_unit_ref": "unit:inspect-source"}}),
-        ),
-    );
-    let outcome = outcome.unwrap();
-    assert_eq!(
-        form, "owner-write",
-        "a cancellation request is the person's write"
-    );
-    let KernelOpResult::FactoryDevelopmentReading { data } = &outcome.result else {
-        panic!("not Factory's document: {:?}", outcome.result)
-    };
-    assert_eq!(data["contract"], "oi.factory-attempt-cancellation/v1");
-    assert_eq!(data["status"], "refused");
-    assert_eq!(data["refusal"]["step"], "admission");
-    assert!(
-        data["refusal"]["message"].as_str().unwrap().contains(
-            "names no attempt-request-cancellation action, only attempt-receiving, attempt-retry"
-        ),
-        "{data}"
-    );
-    assert_eq!(
-        factory.asked(),
-        [format!(
-            "attempt admission {} --json",
-            dir.join("state").display()
-        )],
-        "nothing is read or acted on past the admission"
-    );
-    assert!(outcome.receipts.is_empty(), "a refusal moves nothing");
-    let _ = fs::remove_dir_all(&dir);
-}
-
-#[test]
-fn a_units_launch_is_a_factory_write_refused_while_factory_admits_no_desktop_launch() {
-    let _held = hold();
-    let dir = scratch("factory-launch");
-    let factory = Fake::new(&dir, "factory");
-    let _bin = Bound::set("OI_FACTORY_BIN", &factory.bin);
-    // The installed Factory's admission after round 20 (factory f36c65e): receiving, retry and the cancellation request.
-    factory.answer(&json!({
-        "contract": "factory.attempt-admission/v1", "nativeOwner": "factory",
-        "capabilityRef": "capability/factory/operate-attempt",
-        "desktopCaller": {"callerRef": "oi:desktop", "lineage": ["oi:desktop"], "projectionKind": "desktop-human"},
-        "actions": [{"actionRef": "attempt-receiving", "actorKind": "human",
-            "contract": "factory.attempt-receiving-action/v1", "nativeAction": "central.receiving.submit",
-            "scopeRef": "project:Factory"},
-            {"actionRef": "attempt-retry", "actorKind": "human", "contract": "factory.attempt-action/v1",
-            "operation": "retry", "nativeAction": "factory.attempt.retry", "scopeRef": "project:Factory"},
-            {"actionRef": "attempt-request-cancellation", "actorKind": "human", "contract": "factory.attempt-action/v1",
-            "operation": "request-cancellation", "nativeAction": "factory.attempt.request-cancellation",
-            "scopeRef": "project:Factory"}],
-    }));
-    let (outcome, form) = by_the_press(
-        || no_central(&dir),
-        &factory,
-        op(
-            json!({"op": "factory_owner", "request": {"kind": "attempt-launch",
-            "state_path": dir.join("state").display().to_string(), "run_ref": "run:one",
-            "workflow_unit_ref": "unit:inspect-source", "task_ref": "task:inspect",
-            "aikit_realisation": {"schema": "aikit.model-realisation/v2", "selected": true}}}),
-        ),
-    );
-    let outcome = outcome.unwrap();
-    assert_eq!(form, "owner-write", "a launch is the person's write");
-    let KernelOpResult::FactoryDevelopmentReading { data } = &outcome.result else {
-        panic!("not Factory's document: {:?}", outcome.result)
-    };
-    assert_eq!(data["contract"], "oi.factory-attempt-launch/v1");
-    assert_eq!(data["status"], "refused");
-    assert_eq!(data["refusal"]["step"], "admission");
-    assert!(
-        data["refusal"]["message"].as_str().unwrap().contains(
-            "names no attempt-launch action, only attempt-receiving, attempt-retry, attempt-request-cancellation"
-        ),
-        "{data}"
-    );
-    assert_eq!(
-        factory.asked(),
-        [format!(
-            "attempt admission {} --json",
-            dir.join("state").display()
-        )],
-        "nothing is read or launched past the admission"
-    );
-    assert!(outcome.receipts.is_empty(), "a refusal moves nothing");
-    let _ = fs::remove_dir_all(&dir);
-}
-
-/// Launch's first reading (O-I #842): AIKit's model realisation on the session that carries the unit, asked as
-/// `aikit compose --session S --realise --model M [--provider P]`. The desk names the session and the model; AIKit reads
-/// the session's own Agency, space and owner. The answer is AIKit's realisation (aikit.model-realisation/v2, DERIVED
-/// from ai-kit model_resident.rs `realise`), the reading `attempt-launch` carries verbatim.
+/// AIKit's model realisation on a session (O-I #842), asked as `aikit compose --session S --realise --model M
+/// [--provider P]`. The desk names the session and the model; AIKit reads the session's own Agency, space and owner. The
+/// answer is AIKit's realisation (aikit.model-realisation/v2, DERIVED from ai-kit model_resident.rs `realise`), carried
+/// verbatim.
 #[test]
 fn a_launch_asks_aikit_to_realise_the_session_and_carries_its_realisation() {
     let _held = hold();

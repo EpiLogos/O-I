@@ -72,7 +72,7 @@ import {
 import {agentDataI} from '../agentFidelity'
 import {fireWritePath} from '../agentNativeDispatch'
 import {harnessAgentControl, harnessIngressRule} from '../harnessAgentControl'
-import {chainListAct, chainTaskBudget, chainTaskRead, launchSessionTask, sessionModelRead, sessionModelSelect, useChainModelReadings, useRackMacrosReadings} from '../factoryTaskActs'
+import {chainListAct, chainTaskBudget, chainTaskRead, sessionModelRead, sessionModelSelect, sessionSetAct, useChainModelReadings, useRackMacrosReadings} from '../factoryTaskActs'
 import {RefusalCard, safeJson} from '../RefusalCard'
 import {CHAIN_DEVICE_IDS, SOURCES_DESIGN, SOURCES_DEVICE_IDS, agentChainDevices, chainDeviceId, gatewayDisclosed, rackMemberDevice, type ChainWrite} from './agentChainDevices'
 import {chainPicture, type PictureContext} from './AgentDevicePictures'
@@ -108,7 +108,6 @@ import {
 import {familyFaceDevice} from './mainTrackBindings'
 import {publishChainHead} from '../../shell/modeDetails'
 import {openInReader} from '../../frame/browser/constellationActs'
-import {retryTask, stopAfterTask} from './taskBindings'
 import {APPROVALS_DESIGN, APPROVALS_ID, approvalsAwayBinding, receiptDevices} from './receiptBindings'
 import {CARRIER_DESIGN, CARRIER_ID, carrierBinding, connectionLabels, gitBinding, planRunOf, runDemandOf, seatBinding, seatDropRefusal, workcellDevices, type SeatPorts} from './workcellBindings'
 import {ROUTE_WORDS, aikitWriteOp, centralRevisionWrite, communiqueRefOf, deskActorOf, factoryOwnerWrite, gatewayWriteOp, ownerRouteWrite, refinementWrite, refusalWords, seatWriteOp} from './ownerRoutes'
@@ -119,7 +118,7 @@ import {AGENT_SLOTS, ON_ITS_TRACK, RACK_CHAIN, SOURCES_OFF_DRAG, chainSlots, fac
   type RackChainName, type Reach} from './factoryPlaces'
 import {useOwnerOp} from '../../owners/ownerCall'
 import type {AikitWriteRequest, KernelOp} from '../../../../../../desktop/cradle/src/kernel/types'
-import {kernelOp} from '../../../../../../desktop/cradle/src/kernel/bridge'
+import {kernelAct, kernelOp} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import {DECISION_HELPER_ID, decisionHelperBinding, decisionHelperDevice} from './decisionHelperBinding'
 import {captureSkillBinding, type CaptureSkillPorts} from './captureSkillBinding'
 import {useSongClipFocus} from '../songClips'
@@ -593,9 +592,6 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
       personNow: () => currentIdentity()?.reading.person_ref ?? null}
     : {}), [transport])
   const currentPerson = currentIdentity()?.reading.person_ref ?? null
-  // Factory's custody of the session's work (W11): the project's Factory state (located for the pads), its custody list, the Position the
-  // session's agent holds (AIKit's population: Custody sits on the Agent, §19.4), and the session's bound task as its work.
-  const custodyState = padsWhere && 'projectRef' in padsWhere ? padsWhere.statePath : null
   // The session's custody (sessionCustody.ts): the same readings the Clip view's edits take their hold through and the transport's
   // Re-enable gives back through. Hand back (§19.4; BD r20) is Factory's custody hold, the person's, and the custody list is read again
   // after it (its hand_back is the light).
@@ -690,25 +686,13 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
       // Unmap, Store, the variations and where each macro stands: Factory's rack macros, the person's, on the rack's revision.
       ...(macrosWhere ? {rackMacros: input => factoryOwnerWrite(transport, {kind: 'rack-macros-write', state_path: macrosWhere.statePath, project_ref: macrosWhere.projectRef, ...input},
         '`factory development rack-macros-write`').finally(refreshMacros)} : {}),
-      // Retry: the chosen chain's bound task (AIKit's task record), its units read in Factory and its unit retried (taskBindings.ts retryTask).
-      retry: async ({project, agent_session}) => {
-        if (!custodyState) throw Error('Retry: Factory keeps no state for this project here (`factory development locate`), so no unit of the task is read.')
-        await retryTask(request => factoryOwnerWrite(transport, request, `factory_owner ${request.kind}`), custodyState, await boundTaskOf(transport, project, agent_session, 'Retry'))
-      },
-      // Stop after, beside Retry (§19.4; round 870): the chosen chain's bound task, the unit its current attempt stands on asked to stop
-      // (taskBindings.ts stopAfterTask, factory_owner attempt-request-cancellation).
-      stopAfter: async ({project, agent_session}) => {
-        if (!custodyState) throw Error('Stop after: Factory keeps no state for this project here (`factory development locate`), so no unit of the task is read.')
-        await stopAfterTask(request => factoryOwnerWrite(transport, request, `factory_owner ${request.kind}`), custodyState, await boundTaskOf(transport, project, agent_session, 'Stop after'))
-      },
-      // Launch, before Retry (O-I 842 round 23): the chosen chain's bound task, the unit Factory names for it started on the model AIKit
-      // realises on the chain's session (factoryTaskActs.ts launchSessionTask, the Session grid's ▶ on a Factory task's own: taskBindings.ts
-      // launchTask, aikit_write realise, then factory_owner attempt-launch, under the project's factory.attempt.launch grant, which the kernel
-      // resolves and the owner gives). Factory's answer comes back in its words.
-      launch: async ({project, agent_session}) => {
-        if (!custodyState) throw Error('Launch: Factory keeps no state for this project here (`factory development locate`), so no unit of the task is read.')
-        return launchSessionTask(transport, {statePath: custodyState, taskRef: await boundTaskOf(transport, project, agent_session, 'Launch'), session: agent_session, project})
-      },
+      // Launch, Stop after and Retry on the chain's task row (§19.15; O-I 842 round 23, round 870): the chosen chain's session's own acts in
+      // Factory's Set, run as the Session grid runs them (factoryTaskActs.ts sessionSetAct, by `act`): the first task written on the session
+      // that has not run (its clip's launch, factory.task.run), its track's Stop (factory.task.stop: paused, pressed again its attempt
+      // cancelled) and its track's retry (factory.attempt.retry, lit where its task stalled). Factory's answer comes back in its words.
+      launch: async ({agent_session}) => ({status: 'launched', said: await sessionSetAct(transport, agent_session, 'launch')}),
+      stopAfter: ({agent_session}) => sessionSetAct(transport, agent_session, 'stopTrack'),
+      retry: ({agent_session}) => sessionSetAct(transport, agent_session, 'retry'),
       // A device of another session's chain (DLW build ruling 2026-11-05): a message to that session's agent's Position (AIKit's gateway send),
       // turned into work on its task by Messages' own route, the one a message dropped on a track takes (`aikit gateway delegate`, O-I ticket
       // 757). The chain writes both through the kernel itself: Messages is the rail's, never the chain's to reach.
@@ -724,7 +708,7 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
           reason: `Asked from the Agent rack: a change of ${device} on this session's chain.`}), ROUTE_WORDS.delegate)
       },
     } : {}),
-  }), [transport, oneAgent, shell.setSolo, macrosWhere, refreshMacros, custodyState, custodyPopulation])
+  }), [transport, oneAgent, shell.setSolo, macrosWhere, refreshMacros, custodyPopulation])
   // The Decision helper (§19.20, T-AGENCY K5): a device of its own, a chain of the group's Agent rack in place of an Agent, on AIKit's
   // decision provider and QL's team space — read only where the group's space names its helper (AIKit's `decision_helper`, round 860). The
   // rack lists it among its chains.
@@ -777,7 +761,7 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
       return typeof row.id === 'string' && typeof row.semanticRef === 'string' ? [[row.id, row.semanticRef]] : []
     }))
     return runMapBinding(holds, {statePath: mapTake.statePath, runRef: mapTake.runRef, units},
-      transport.kind !== 'unavailable' ? {owner: request => factoryOwnerWrite(transport, request, '`factory attempt retry`')} : {},
+      transport.kind !== 'unavailable' ? {retry: input => kernelAct(transport, 'factory.attempt.retry', input)} : {},
       {status: mapChain.status, value, error: mapChain.error})
   }, [holds, mapTake, mapChain, transport])
   // A workcell's devices (§19.23): Git / landing's Seat group (the seat instrument), starting at the selected workcell's seat of the project;
