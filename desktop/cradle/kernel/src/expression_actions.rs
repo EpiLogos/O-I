@@ -55,8 +55,8 @@ const ACTIONS: [Spec; 18] = [
     Spec {
         id: "expressions.studio.set",
         title: "Set a Studio value",
-        description: "Write a value of the field (`bind`, as a lane binds it: field.params.<key>; Tempo is field.params.timeScale, Tempo ÷ 96) or a device setting (`setting`: {kind, key}) into a Scene, by the law the devices write with. While the Expression records, the value is recorded on its take at the instant the kernel stamps. `changes` writes several at once.",
-        inputs: &[WORK, SCENE, ("bind", "string", false), ("setting", "object", false), ("value", "json", false), ("observed", "number", false), ("changes", "array", false)],
+        description: "Write a value of the field (`bind`, as a lane binds it: field.params.<key>; Tempo is field.params.timeScale, Tempo ÷ 96) or a device setting (`setting`: {kind, key}) into a Scene, by the law the devices write with. While the Expression records, the value is recorded on its take at the instant the kernel stamps. `changes` writes several at once. A drag's samples while a take records (`gesture`: \"sample\") land in the take alone: the Scene is written once, by the value the drag is released on.",
+        inputs: &[WORK, SCENE, ("bind", "string", false), ("setting", "object", false), ("value", "json", false), ("observed", "number", false), ("changes", "array", false), ("gesture", "string", false)],
     },
     Spec {
         id: "expressions.scene.save",
@@ -693,9 +693,20 @@ impl Act<'_> {
         };
         let (expression_ref, scene_ref) = (field("expression_ref")?, field("scene_ref")?);
         let mut rest = raw.clone();
+        let mut sample = false;
         if let Some(fields) = rest.as_object_mut() {
             fields.remove("expression_ref");
             fields.remove("scene_ref");
+            sample = match fields.remove("gesture") {
+                None => false,
+                Some(Value::String(gesture)) if gesture == "sample" => true,
+                Some(other) => {
+                    return Err(format!(
+                        "{} takes gesture \"sample\" alone (a drag's sample while a take records), not {other}",
+                        self.action
+                    ))
+                }
+            };
             if let Some(unknown) = fields.keys().find(|key| {
                 !["bind", "setting", "value", "observed", "changes"].contains(&key.as_str())
             }) {
@@ -706,6 +717,9 @@ impl Act<'_> {
         let document = self.document(&expression_ref)?;
         let scene = scene_of(document, &scene_ref)?;
         let presentation = material_of(scene)?.clone();
+        if sample {
+            return self.studio_sample(&expression_ref, &scene_ref, &presentation, &writes);
+        }
         // A value an enabled automation lane drives is held where it was put, off its lane, until Re-enable gives it back.
         let held: Vec<String> = writes
             .iter()
@@ -772,6 +786,55 @@ impl Act<'_> {
             json!({"ref": scene_ref, "expression_ref": expression_ref, "scene_ref": scene_ref, "revision": revision,
             "written": moved.written, "take_ref": recorded.as_ref().map(|r| &r["take_ref"]),
             "recorded_at_s": recorded.as_ref().map(|r| &r["at_s"]), "held": held}),
+        )
+    }
+
+    /// A drag's samples while a take records on the Scene: each value lands in the take at the instant the kernel stamps, by the law
+    /// the Scene is written with, and the Scene itself is not written (its revision stands). The drag's release writes it once, with the
+    /// one receipt the person's act lays (central.rs `Receipt::of` lays none for a sample). A sample with no take recording, or of a
+    /// setting, is refused in words: it would be a write no one could find.
+    fn studio_sample(
+        &mut self,
+        expression_ref: &str,
+        scene_ref: &str,
+        presentation: &crate::expression_scene::Presentation,
+        writes: &[crate::expression_studio::Write],
+    ) -> Result<Value, String> {
+        if writes.iter().any(|write| write.recorded().is_none()) {
+            return Err(format!(
+                "{}: a sample is a value of the field; a setting is written once, when it is chosen",
+                self.action
+            ));
+        }
+        let document = self.document(expression_ref)?;
+        let revision = document.revision;
+        let shared = document
+            .presentation
+            .as_ref()
+            .and_then(|p| p.shared.as_ref());
+        // Refused here as the release would be: out of range, not a number, a shared value.
+        crate::expression_studio::write(&presentation.scene, shared, writes)?;
+        let title = document.title.clone();
+        let now = now_unix_ms();
+        let Some(recording) = self
+            .kernel
+            .expressions
+            .playback
+            .recording_on(expression_ref, scene_ref)
+        else {
+            return Err(format!(
+                "{}: a drag's samples land in a take that records, and {title} records none on this Scene. Arm it and press Play to record; a value is written when the drag is released.",
+                self.action
+            ));
+        };
+        for write in writes {
+            if let Some((bind, value)) = write.recorded() {
+                recording.record(bind, value, now)?;
+            }
+        }
+        Ok(
+            json!({"ref": scene_ref, "expression_ref": expression_ref, "scene_ref": scene_ref, "revision": revision,
+            "sampled": writes.len(), "take_ref": recording.take.take_ref, "recorded_at_s": recording.time_at(now)}),
         )
     }
 
@@ -3029,6 +3092,115 @@ mod tests {
         );
         assert!(press(&kernel, "expressions.take.lane", json!({"expression_ref": work, "scene_ref": main, "lane_ref": "lane:1", "enabled": true, "solo": false}))
             .unwrap_err().contains("holds no performance"));
+    }
+
+    #[test]
+    fn a_drag_s_samples_land_in_the_take_alone_and_its_release_writes_the_scene_once() {
+        let kernel = kernel();
+        let work = made(&kernel);
+        let main = format!("{work}:scene:main");
+        let bind = &crate::expression_studio::binds()[0];
+        let at = |share: f64| bind.hard_min + (bind.hard_max - bind.hard_min) * share;
+        let sample = |value: f64| json!({"expression_ref": work, "scene_ref": main, "bind": bind.bind, "value": value, "gesture": "sample"});
+        let revision = || {
+            kernel
+                .lock()
+                .unwrap()
+                .expressions
+                .document(&work)
+                .unwrap()
+                .revision
+        };
+        let before = revision();
+        // No take records: a sample would be a write no one could find.
+        let refused = press(&kernel, "expressions.studio.set", sample(at(0.1))).unwrap_err();
+        assert!(refused.contains("records none on this Scene"), "{refused}");
+        press(
+            &kernel,
+            "expressions.arm",
+            json!({"expression_ref": work, "on": true}),
+        )
+        .unwrap();
+        press(
+            &kernel,
+            "expressions.scene.launch",
+            json!({"launches": [{"expression_ref": work, "scene_ref": main}]}),
+        )
+        .unwrap();
+        let armed = revision();
+        for step in 1..=5 {
+            let answer = press(
+                &kernel,
+                "expressions.studio.set",
+                sample(at(step as f64 / 10.0)),
+            )
+            .unwrap();
+            assert_eq!(answer["sampled"], 1);
+            assert!(answer["take_ref"].is_string());
+            std::thread::sleep(std::time::Duration::from_millis(5));
+        }
+        assert_eq!(revision(), armed, "a sample writes no Scene");
+        let setting = press(&kernel, "expressions.studio.set", json!({"expression_ref": work, "scene_ref": main,
+            "setting": {"kind": "panel-setting", "key": "pulse"}, "value": true, "gesture": "sample"})).unwrap_err();
+        assert!(setting.contains("a setting is written once"), "{setting}");
+        let other = press(
+            &kernel,
+            "expressions.studio.set",
+            json!({"expression_ref": work, "scene_ref": main, "bind": bind.bind,
+            "value": at(0.5), "gesture": "drag"}),
+        )
+        .unwrap_err();
+        assert!(other.contains("takes gesture \"sample\" alone"), "{other}");
+        let outside = press(
+            &kernel,
+            "expressions.studio.set",
+            sample(bind.hard_max + 1.0),
+        )
+        .unwrap_err();
+        assert!(
+            !outside.is_empty() && revision() == armed,
+            "an out-of-range sample is refused by the law the release is: {outside}"
+        );
+        // The release writes the Scene once.
+        press(
+            &kernel,
+            "expressions.studio.set",
+            json!({"expression_ref": work, "scene_ref": main, "bind": bind.bind, "value": at(0.6)}),
+        )
+        .unwrap();
+        assert_eq!(revision(), armed + 1);
+        let stopped = press(
+            &kernel,
+            "expressions.scene.stop",
+            json!({"expression_ref": work}),
+        )
+        .unwrap();
+        let take = stopped["take_ref"]
+            .as_str()
+            .expect("the take closed")
+            .to_owned();
+        let held = kernel.lock().unwrap();
+        let document = held.expressions.document(&work).unwrap();
+        let laid = document.scenes[0]
+            .studio_takes
+            .iter()
+            .find(|t| t.take_ref == take)
+            .expect("the take laid on its Scene");
+        let lane = laid
+            .tracks
+            .iter()
+            .find(|t| t.bind == bind.bind)
+            .expect("the bind's lane");
+        let values: Vec<f64> = lane.points.iter().map(|p| p.value.0).collect();
+        assert!(
+            values.len() >= 6,
+            "five samples and the release: {values:?}"
+        );
+        assert!(
+            values.windows(2).all(|w| w[0] <= w[1]),
+            "in the order dragged: {values:?}"
+        );
+        assert_eq!(armed, before, "arming and launching write no Scene");
     }
 
     #[test]

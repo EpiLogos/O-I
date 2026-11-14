@@ -2617,11 +2617,12 @@ fn expressions(store: &Read) -> ModeSet {
                 scene_ref: scene_ref.to_owned(),
                 values: map("values"),
                 settings: map("settings"),
+                // The control gives its write whole (`*`): `{bind | setting, value}`, a gesture's `changes`, or a drag's sample.
                 act: act(
                     "expressions.studio.set",
                     json!({"expression_ref": reference, "scene_ref": scene_ref}),
-                    Some("value"),
-                    "Expressions' expressions.studio.set: a value of the field (bind) or a device setting (setting) written into the Scene by the law the devices write with, and recorded on the take while the Expression records",
+                    Some("*"),
+                    "Expressions' expressions.studio.set: a value of the field (bind) or a device setting (setting) written into the Scene by the law the devices write with, and recorded on the take while the Expression records; a drag's samples (gesture: sample) land in the take alone",
                 ),
                 held: held.clone(),
             })
@@ -3900,6 +3901,7 @@ mod tests {
         assert_eq!(studio.scene_ref, "expression:authored-a:scene:main");
         assert_eq!(studio.values["field.params.timeScale"], json!(1.25));
         assert_eq!(studio.act.action, "expressions.studio.set");
+        assert_eq!(studio.act.takes.as_deref(), Some("*"));
         assert_eq!(
             studio.act.input,
             json!({"expression_ref": "expression:authored-a", "scene_ref": "expression:authored-a:scene:main"})
