@@ -695,7 +695,8 @@ fn invoke_registry(
     // names (`CentralClient::person_env`), as factory.rs hands it to Factory.
     let mut env: Vec<(&'static str, &str)> = person.into_iter().collect();
     // The seat instrument resolves the machine's own register unless CENTRAL_ROOT names another (Control/user/workcell/seat
-    // `central_root`): a seat Action runs in the World the window stands in (`seat_world_root`, O-I #1006).
+    // `central_root`), and Workcell's landing reads its World there: a seat's Action runs in the World the window stands in
+    // (`seat_world_root`, O-I #1006).
     let world_root = seat_world_root(action);
     if let Some(root) = world_root.as_deref() {
         env.push(("CENTRAL_ROOT", root));
@@ -728,11 +729,12 @@ fn invoke_registry(
     }
 }
 
-/// The World a seat Action (`workcell.seat.*`) is run in: the window's own World, the Central root this process's owners read and
-/// its watch watches (`watch::Roots`: `OI_CENTRAL_ROOT`, else `~/Central`), as the seat status read hands it (owner_read.rs
-/// `seat_status`). Left to itself the instrument resolves the computer's own user's register. `None` for every other Action.
+/// The World a seat Action (`workcell.seat.*`) or a held seat's landing (`workcell.lane.*`, Workcell's) is run in: the window's own
+/// World, the Central root this process's owners read and its watch watches (`watch::Roots`: `OI_CENTRAL_ROOT`, else `~/Central`),
+/// as the seat status read hands it (owner_read.rs `seat_status`). Left to itself the instrument resolves the computer's own user's
+/// register, and a landing names none. `None` for every other Action.
 fn seat_world_root(action: &str) -> Option<String> {
-    if !action.starts_with("workcell.seat.") {
+    if !action.starts_with("workcell.seat.") && !action.starts_with("workcell.lane.") {
         return None;
     }
     crate::watch::Roots::resolve(None).map(|roots| roots.central.to_string_lossy().into_owned())
@@ -904,6 +906,33 @@ fn invoke_aikit_open(cwd: &Path, target_ref: &str) -> ActionDispatch {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_seats_landing_runs_in_the_world_its_seat_actions_run_in() {
+        // Workcell's landing reads its World where the seat instrument reads it (CENTRAL_ROOT): the window's own (O-I #1006).
+        assert!(
+            seat_world_root("workcell.lane.land").is_some(),
+            "a landing names the window's World"
+        );
+        for id in [
+            "workcell.lane.commit",
+            "workcell.lane.push",
+            "workcell.lane.land",
+        ] {
+            assert_eq!(
+                seat_world_root(id),
+                seat_world_root("workcell.seat.join"),
+                "{id}"
+            );
+        }
+        for id in ["workcell.status", "workcell.declare", "factory.task.run"] {
+            assert_eq!(
+                seat_world_root(id),
+                None,
+                "{id} names its World itself, if it takes one"
+            );
+        }
+    }
 
     #[test]
     fn central_namespaces_route_to_central_and_no_other_spelling_does() {
