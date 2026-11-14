@@ -110,7 +110,6 @@ import {openInReader} from '../../frame/browser/constellationActs'
 import {APPROVALS_DESIGN, APPROVALS_ID, approvalsAwayBinding, receiptDevices} from './receiptBindings'
 import {CARRIER_DESIGN, CARRIER_ID, carrierBinding, connectionLabels, gitBinding, planRunOf, runDemandOf, seatBinding, seatDropRefusal, workcellDevices, type SeatPorts} from './workcellBindings'
 import {ROUTE_WORDS, aikitWriteOp, centralRevisionWrite, deskActorOf, factoryOwnerWrite, ownerRouteWrite, refinementWrite, refusalWords, seatWriteOp} from './ownerRoutes'
-import {encounterSessionOf} from '../../../../../../desktop/cradle/src/encounter/session'
 import {worldsOf} from './workcellMaterial'
 import {currentIdentity} from '../../../../../../desktop/cradle/src/nara/identity/current'
 import {WORKCELL_RACK_ID, chosenWorld, workcellGitReading} from './workcellRackBinding'
@@ -677,10 +676,14 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
       stopAfter: ({agent_session}) => sessionSetAct(transport, agent_session, 'stopTrack'),
       retry: ({agent_session}) => sessionSetAct(transport, agent_session, 'retry'),
       // A device of another session's chain (DLW build ruling 2026-11-05): the words are that session's next turn, through the one send
-      // (desktop/cradle encounter/session.ts encounterSessionOf … submit, O-I ticket 1003), the session every presenter of it shares.
+      // (desktop/cradle encounter/session.ts encounterSessionOf … submit, O-I ticket 1003), the session every presenter of it shares. The
+      // session module instruments the walk harness where it loads, so it loads when a device asks, as the encounter observer's does.
       // REPLACED (O-I ticket 1006): a message to its agent's Position (AIKit's gateway send), then delegated onto its task (`aikit gateway
       // delegate`), a second send beside the conversation's. Messages is the rail's, never the chain's to reach.
-      ask: ({project, agent_session, words}) => encounterSessionOf(transport, {project, ref: agent_session}).submit(words),
+      ask: async ({project, agent_session, words}) => {
+        const {encounterSessionOf} = await import('../../../../../../desktop/cradle/src/encounter/session')
+        return encounterSessionOf(transport, {project, ref: agent_session}).submit(words)
+      },
     } : {}),
   }), [transport, oneAgent, shell.setSolo, macrosWhere, refreshMacros])
   // The Decision helper (§19.20, T-AGENCY K5): a device of its own, a chain of the group's Agent rack in place of an Agent, on AIKit's

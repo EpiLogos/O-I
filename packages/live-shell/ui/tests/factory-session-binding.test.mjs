@@ -449,7 +449,8 @@ test('(BD r19, Central #318) the chain is the agent\'s profile: Rename on the Ag
   // Another chain's device: the words are that session's next turn through the one send (encounter/session.ts, O-I 1003), the session
   // every presenter of it shares. REPLACED (O-I 1006): a message sent to its agent's Position, then delegated into its task, both through
   // AIKit's gateway. The chain never reaches the rail's Messages device for it (tests/agent-rail-devices.test.mjs "one publisher").
-  assert.match(chain, /ask: \(\{project, agent_session, words\}\) => encounterSessionOf\(transport, \{project, ref: agent_session\}\)\.submit\(words\)/)
+  assert.match(chain, /ask: async \(\{project, agent_session, words\}\) => \{\n\s+const \{encounterSessionOf\} = await import\('[./]+desktop\/cradle\/src\/encounter\/session'\)\n\s+return encounterSessionOf\(transport, \{project, ref: agent_session\}\)\.submit\(words\)/,
+    'loaded where a device asks: the session module instruments the walk harness where it loads')
   assert.doesNotMatch(chain, /gatewayWriteOp|communiqueRefOf|boundTaskOf/, 'no second send beside the conversation\'s')
   assert.doesNotMatch(chain, /publishedDevice\(MESSAGES_ID\)/)
   assert.match(chain, /acts: padsActs/, 'the pads\' head carries Save as preset and Hot-swap')
