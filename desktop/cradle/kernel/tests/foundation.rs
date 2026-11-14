@@ -1467,10 +1467,179 @@ fn keep_the_answer(
     Ok(kept)
 }
 
+/// AIKit's encounter owner asked through the kernel, as the window asks it (`encounter`, your world's root register): its reading.
+fn encounter_reading(world: &World, request: Value) -> Result<Value, String> {
+    let name = request["action"].as_str().unwrap_or("?").to_owned();
+    let answer = world.send(json!({"op": "encounter", "project": "", "request": request}))?;
+    result_of(&answer, "encounter_reading")
+        .map(|v| v["data"].clone())
+        .map_err(|e| format!("encounter {name} {e}"))
+}
+
+/// Now in UTC, as the window stamps a capture (`new Date().toISOString()`).
+fn utc_now() -> String {
+    let since = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default();
+    let secs = since.as_secs() as i64;
+    let (days, rest) = (secs.div_euclid(86_400), secs.rem_euclid(86_400));
+    // Days since 1970-01-01 to the civil date (proleptic Gregorian).
+    let z = days + 719_468;
+    let era = z.div_euclid(146_097);
+    let doe = z - era * 146_097;
+    let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let day = doy - (153 * mp + 2) / 5 + 1;
+    let month = if mp < 10 { mp + 3 } else { mp - 9 };
+    let year = yoe + era * 400 + i64::from(month <= 2);
+    format!(
+        "{year:04}-{month:02}-{day:02}T{:02}:{:02}:{:02}.{:03}Z",
+        rest / 3600,
+        rest % 3600 / 60,
+        rest % 60,
+        since.subsec_millis()
+    )
+}
+
+/// A passage selected in the page and carried to the Packet as the window carries it (O-I #1005; world-shell.md §9.3 Capture,
+/// selection → packet). The person's entry holds the passage; the page's packet is cleared as its own Clear clears it and the
+/// selected words put in it as its own To packet puts them (ql-flow.html `toPacket`, which the transport's Capture presses across
+/// the host bridge), saved through Central's file door and read back from Central. Then AIKit's prepared context for the
+/// conversation is brought to the page's packet as the Send's provider brings it (documentPacketContext.ts prepareDocumentPacket:
+/// `encounter` context edit, the item as packetSelectionOf shapes it), and the Packet read from the World Model's packet slice, as
+/// the Packet device reads it. Answers what the Send carries (nativeContext.ts contextExpectation: the Packet's scope, revision,
+/// digest and the items reviewed) and the code only the selected words hold.
+fn capture_a_passage(
+    world: &World,
+    page: &SavedPage,
+    agent: &str,
+    session: &str,
+) -> Result<(Value, String), String> {
+    let nanos = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .subsec_nanos();
+    let code = format!(
+        "QX-{:06}",
+        (u64::from(nanos) ^ u64::from(std::process::id())) % 1_000_000
+    );
+    let selected = format!("the code for {agent} is {code}");
+    let read = central_owner(
+        world,
+        "central.files.read",
+        json!({"location": page.location}),
+    )?;
+    let html = read["content"]
+        .as_str()
+        .or_else(|| read["text"].as_str())
+        .unwrap_or_default()
+        .to_owned();
+    let revision = read["revision"].as_str().unwrap_or_default().to_owned();
+    let (start, end, mut doc) = island_of(&html)?;
+    let entry = format!("foundation-{}-passage-{agent}", std::process::id());
+    let entries = doc["entries"]
+        .as_array_mut()
+        .ok_or("the page's island has no entries")?;
+    entries.push(json!({"id": entry, "author": "H", "at": utc_now(),
+        "html": format!("<p>A passage written for {agent}: {selected}.</p>"), "replyTo": null, "touched": false}));
+    let label = format!("entry {} (H)", entries.len());
+    let at = utc_now();
+    doc["packet"] = json!([{"id": format!("{entry}-packet"), "entryId": entry, "scope": "selection",
+        "label": label, "text": selected, "at": at}]);
+    doc["meta"]["revision"] = json!(doc["meta"]["revision"].as_u64().unwrap_or(0) + 1);
+    let title = doc["meta"]["title"].as_str().unwrap_or("Flow").to_owned();
+    let next = format!("{}{}{}", &html[..start], doc, &html[end..]);
+    action(
+        world,
+        "central.files.write",
+        json!({"location": page.location, "expected_revision": revision, "content": next}),
+    )
+    .map_err(|e| format!("saving the page's packet: {e}"))?;
+    let back = central_owner(
+        world,
+        "central.files.read",
+        json!({"location": page.location}),
+    )?;
+    let saved = back["revision"].as_str().unwrap_or_default().to_owned();
+    let (_, _, held) = island_of(
+        back["content"]
+            .as_str()
+            .or_else(|| back["text"].as_str())
+            .unwrap_or_default(),
+    )?;
+    let in_page = held["packet"]
+        .as_array()
+        .is_some_and(|items| items.iter().any(|item| item["text"] == selected.as_str()));
+    if !in_page {
+        return Err(format!(
+            "Central reads the page's packet without the selected passage `{selected}`: {}",
+            clip(&held["packet"])
+        ));
+    }
+    // The Send's provider: AIKit's prepared context brought to the page's packet, through the owner's own edit.
+    let context = encounter_reading(
+        world,
+        json!({"action": "context", "agent_session": session, "request": {"operation": "read"}}),
+    )?;
+    let basis = context["revision"]
+        .as_u64()
+        .ok_or_else(|| format!("the Packet named no revision: {}", clip(&context)))?;
+    let path = page.location["path"].as_str().unwrap_or_default();
+    let selection = json!({"source_ref": page.location["ref"], "source_revision": saved, "source_project": null,
+        "title": format!("{title} · {label}"), "owner": "oi.document-packet", "binding_id": page.location["ref"],
+        "text": selected, "working_copy": false, "captured_at": at,
+        "anchor": {"kind": "observation", "document_id": path, "key": "packet:0", "selector": "#ql-doc packet[0]",
+            "role": "selection", "node_ref": path, "url": null}});
+    encounter_reading(
+        world,
+        json!({"action": "context", "agent_session": session,
+            "request": {"operation": "edit", "basis": basis, "mutation": {"operation": "add", "selection": selection}}}),
+    )
+    .map_err(|e| format!("bringing the Packet to the page's packet: {e}"))?;
+    // The Packet as the device reads it: the World Model's packet slice, this conversation's part.
+    let answer = world.send(json!({"op": "model_subscribe", "slice": "packet", "fresh": true}))?;
+    let slice = result_of(&answer, "model_slice")
+        .map_err(|e| format!("model_subscribe packet {e}"))?["data"]
+        .clone();
+    if slice["state"] != "read" {
+        return Err(format!(
+            "the World Model's packet slice is {}: {}",
+            slice["state"],
+            slice["error"].as_str().unwrap_or("no state")
+        ));
+    }
+    let part = &slice["value"]["sessions"][session];
+    if part["state"] != "read" {
+        return Err(format!(
+            "the World Model's packet slice holds no Packet for {session}: {}",
+            clip(part)
+        ));
+    }
+    let packet = &part["reading"];
+    let items = packet["items"].as_array().cloned().unwrap_or_default();
+    let holds = items.iter().any(|item| {
+        item["selection"]["text"] == selected.as_str()
+            && item["selection"]["source_ref"] == page.location["ref"]
+    });
+    if !holds {
+        return Err(format!(
+            "the Packet does not hold the selected passage `{selected}`: {}",
+            clip(packet)
+        ));
+    }
+    let reviewed: Vec<Value> = items.iter().map(|item| item["id"].clone()).collect();
+    let expectation = json!({"scope": packet["scope"], "revision": packet["revision"], "digest": packet["digest"],
+        "reviewed": reviewed});
+    Ok((expectation, code))
+}
+
 /// A passage of a page sent to an agent the way the window sends one: a conversation provisioned with the census agent
-/// (`encounter_provision` `agent`), the passage put in its draft and prompted (session.ts `EncounterSession.submit`), the answer
-/// read back from the conversation's view (AIKit's encounter owner, as the window reads it), and kept in the page. Answers the
-/// session.
+/// (`encounter_provision` `agent`), the passage selected in the page carried to the Packet (Capture, `capture_a_passage`), the
+/// ask put in its draft and prompted with the Packet (session.ts `EncounterSession.submit`: `prompt-context` with the context the
+/// Packet shows), the answer read back from the conversation's view (AIKit's encounter owner, as the window reads it) — it names
+/// the code only the selected words hold, and AIKit's receipt names the page's item as carried — and kept in the page. Answers
+/// the session.
 fn send_a_passage(world: &World, page: &SavedPage, agent: &str) -> Result<String, String> {
     let marker = format!("foundation answer {} {agent}", std::process::id() % 100_000);
     let provisioned = world
@@ -1492,28 +1661,29 @@ fn send_a_passage(world: &World, page: &SavedPage, agent: &str) -> Result<String
             clip(&provisioned)
         ));
     }
-    let encounter = |request: Value| -> Result<Value, String> {
-        let name = request["action"].as_str().unwrap_or("?").to_owned();
-        let answer = world.send(json!({"op": "encounter", "project": "", "request": request}))?;
-        result_of(&answer, "encounter_reading")
-            .map(|v| v["data"].clone())
-            .map_err(|e| format!("encounter {name} {e}"))
-    };
+    let encounter = |request: Value| encounter_reading(world, request);
+    let (expectation, code) = capture_a_passage(world, page, agent, &session)?;
     let view = encounter(json!({"action": "view", "agent_session": session}))?;
     let basis = view["draft"]["revision"].as_u64().unwrap_or(0);
-    let passage = format!("{}\n\nReply with exactly: {marker}", page.words);
+    let passage = format!(
+        "{}\n\nThe packet holds a passage I selected in this page. Reply with exactly: {marker}, then the code that passage names.",
+        page.words
+    );
     let draft = encounter(
         json!({"action": "draft", "agent_session": session, "basis": basis, "text": passage}),
     )?;
     let revision = draft["revision"]
         .as_u64()
         .ok_or_else(|| format!("the draft named no revision: {}", clip(&draft)))?;
-    encounter(json!({"action": "prompt", "agent_session": session, "draft_revision": revision}))?;
+    encounter(json!({"action": "prompt-context", "agent_session": session, "draft_revision": revision,
+        "context": expectation}))
+    .map_err(|e| format!("sending with the Packet: {e}"))?;
+    let code_said = code.to_lowercase();
     let deadline = Instant::now() + Duration::from_secs(300);
     let answer = loop {
         if Instant::now() > deadline {
             return Err(format!(
-                "{agent} gave no answer with `{marker}` within 300 s"
+                "{agent} gave no answer with `{marker}` and the passage's code {code} within 300 s"
             ));
         }
         std::thread::sleep(Duration::from_secs(2));
@@ -1526,7 +1696,8 @@ fn send_a_passage(world: &World, page: &SavedPage, agent: &str) -> Result<String
             .filter(|block| block["kind"] == "assistant")
             .filter_map(|block| block["text"].as_str())
             .collect();
-        if said.to_lowercase().contains(&marker) {
+        let lower = said.to_lowercase();
+        if lower.contains(&marker) && lower.contains(&code_said) {
             break said;
         }
         if let Some(end) = blocks.iter().rev().find(|block| {
@@ -1541,18 +1712,40 @@ fn send_a_passage(world: &World, page: &SavedPage, agent: &str) -> Result<String
                 said.trim().to_owned()
             };
             return Err(format!(
-                "{agent}'s turn ended {} without `{marker}`: {}",
+                "{agent}'s turn ended {} without `{marker}` and the passage's code {code}: {}",
                 end["kind"].as_str().unwrap_or("?"),
                 words.chars().take(400).collect::<String>()
             ));
         }
     };
+    // AIKit's own record of the Send: the prompt carried the Packet the device showed, the page's item in it.
+    let view = encounter(json!({"action": "view", "agent_session": session}))?;
+    let carried = view["prepared_context_receipts"]
+        .as_array()
+        .is_some_and(|receipts| {
+            receipts.iter().any(|receipt| {
+                receipt["revision"] == expectation["revision"]
+                    && receipt["digest"] == expectation["digest"]
+                    && receipt["items"].as_array().is_some_and(|items| {
+                        items
+                            .iter()
+                            .any(|item| item["source_ref"] == page.location["ref"])
+                    })
+            })
+        });
+    if !carried {
+        return Err(format!(
+            "AIKit keeps no receipt that the Send carried the Packet: {}",
+            clip(&view["prepared_context_receipts"])
+        ));
+    }
     keep_the_answer(world, page, agent, &session, &answer)?;
     Ok(session)
 }
 
 /// Act 3: send a passage to each agent that starts and get each answer in the page, read back from the conversation's view
-/// and from Central.
+/// and from Central. The passage the person selects in the page goes into the Packet first (Capture), and the Send carries it:
+/// the answer names the code only the selected words hold (O-I #1005).
 #[test]
 #[ignore = "foundation act: runs the installed owners in a fresh home and spends a provider prompt per agent"]
 fn act_3_send_a_passage_and_get_the_answer() {
