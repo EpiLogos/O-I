@@ -3805,6 +3805,116 @@ pub(crate) fn grant_held_by(
     ))
 }
 
+/// The action of Factory's admission (`factory attempt admission <state>`) one of Factory's session acts is admitted as, on the
+/// person's grant (O-I #1006): a task run is a launch, its stop a request to cancel, a retry Factory's retry, and a choice the
+/// receiving of its Return. None: no session act.
+pub(crate) fn session_admission(action: &str) -> Option<&'static str> {
+    Some(match action {
+        "factory.task.run" => "attempt-launch",
+        "factory.task.stop" => "attempt-request-cancellation",
+        "factory.attempt.retry" => "attempt-retry",
+        "factory.attempt.choose" => "attempt-receiving",
+        _ => return None,
+    })
+}
+
+/// The person's grant one of Factory's session acts presents, resolved by the host on their press: the human grant the host's
+/// token holds in the native action authority contract above the Run's Factory state, for the native action, scope and actor
+/// kind Factory's admission names for the act. Factory is handed the grant's ref and reads no token.
+pub(crate) fn session_grant(
+    state: &Path,
+    action: &str,
+    token: Option<&AuthorityToken>,
+) -> Result<String, String> {
+    let (executable, suite_route) = owner_executable();
+    session_grant_at(
+        &executable,
+        suite_route,
+        state,
+        action,
+        token,
+        std::env::var_os("OI_CENTRAL_ROOT").map(PathBuf::from),
+        now_unix_seconds(),
+    )
+}
+
+/// [`session_grant`] through the given Factory executable, under the given Central root, at the given time.
+fn session_grant_at(
+    executable: &Path,
+    suite_route: bool,
+    state: &Path,
+    action: &str,
+    token: Option<&AuthorityToken>,
+    central_root: Option<PathBuf>,
+    now: u64,
+) -> Result<String, String> {
+    let admitted_as = session_admission(action).ok_or_else(|| {
+        format!("{action} is no session act Factory admits on the person's grant.")
+    })?;
+    let token = token.ok_or_else(|| {
+        format!("{action} presents the person's grant, and the host holds no native action token (CENTRAL_NATIVE_TOKEN or ~/.central/native-token), so nothing was asked of Factory.")
+    })?;
+    // What Factory admits the act as, for this Run's state: the native action, the scope and the actor kind a grant must carry.
+    let reading = owner_call_at(
+        executable,
+        suite_route,
+        &[
+            "attempt".into(),
+            "admission".into(),
+            path_arg(state),
+            "--json".into(),
+        ],
+        None,
+        &[],
+    )
+    .and_then(|reading| expect_contract(reading, &[ADMISSION_CONTRACT]))
+    .map_err(|error| {
+        format!(
+            "Factory's admission for {action} cannot be read: {}",
+            error.message
+        )
+    })?;
+    let admitted = reading["actions"]
+        .as_array()
+        .and_then(|actions| {
+            actions
+                .iter()
+                .find(|entry| entry["actionRef"] == admitted_as)
+        })
+        .ok_or_else(|| {
+            format!("Factory's admission names no {admitted_as} action for {action}.")
+        })?;
+    let named = |key: &str| {
+        admitted[key]
+            .as_str()
+            .filter(|text| !text.trim().is_empty())
+            .ok_or_else(|| format!("Factory's {admitted_as} admission names no {key}."))
+    };
+    let (native_action, scope, actor_kind) = (
+        named("nativeAction")?,
+        named("scopeRef")?,
+        named("actorKind")?,
+    );
+    let contract = read_authority_contract(authority_under(state, central_root).as_deref())?;
+    let grant = grant_held_by(&contract, token, actor_kind).ok_or_else(|| {
+        format!("No native action authority grant names the host: no one {actor_kind} principal in the contract holds the host's token, so {action} was not asked of Factory.")
+    })?;
+    match grant_refusal(
+        &contract,
+        &grant,
+        Some(token),
+        now,
+        &Wanted {
+            action: native_action,
+            scope,
+            actor_kind: Some(actor_kind),
+        },
+    ) {
+        Some(reason) => Err(reason),
+        None => Ok(grant),
+    }
+}
+
 /// Close a Run's own lifecycle after the person's Recognition. Returns the
 /// close document: `finished` (moves made to Finished), `already-finished` (no
 /// move needed), `next-unit-started`, or `refused` with the owner's (or the
@@ -4158,6 +4268,104 @@ mod owner_tests {
             ],
             "receiving {receiving:?}, write {write:?}, read {read:?}"
         );
+    }
+
+    /// O-I #1006 (review F8): the grant a session act presents is the host's, resolved here as Factory's admission names it for
+    /// the act; Factory is handed its ref. A token that holds no human grant, a grant that does not list the act's native action
+    /// or cover the Run's scope, and no token at all are refused before Factory is asked to act.
+    #[test]
+    fn a_session_act_s_grant_is_the_human_grant_the_host_s_token_holds_for_what_factory_admits() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = std::env::temp_dir().join(format!("oi-f8-grant-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        let world = dir.join("Central");
+        let state = world.join("Work/notes/.factory/development-state.json");
+        std::fs::create_dir_all(world.join("Control/user")).unwrap();
+        let grant = |actions: &[&str]| {
+            serde_json::json!({
+                "schema": AUTHORITY_CONTRACT_SCHEMA,
+                "grants": [{"principal_ref": "human:owner", "actor_kind": "human",
+                    "token_sha256": token_sha256("the-person-s-token"), "actions": actions,
+                    "scope_refs": ["control:root", "project:notes"], "expires_at_unix_seconds": 4_000_000_000u64}],
+            })
+        };
+        let contract = world.join(AUTHORITY_CONTRACT_REL);
+        // Factory's own admission for the Run's state, as `factory attempt admission <state> --json` answers it.
+        let fake = dir.join("factory");
+        let admission = dir.join("admission.json");
+        let admitted = |scope: &str| {
+            let action = |reference: &str, native: &str| {
+                serde_json::json!({"actionRef": reference, "nativeAction": native, "scopeRef": scope,
+                    "actorKind": "human"})
+            };
+            serde_json::json!({"contract": ADMISSION_CONTRACT, "actions": [
+                action("attempt-receiving", "central.receiving.submit"),
+                action("attempt-retry", "factory.attempt.retry"),
+                action("attempt-request-cancellation", "factory.attempt.request-cancellation"),
+                action("attempt-launch", "factory.attempt.launch"),
+            ]})
+        };
+        std::fs::write(
+            &fake,
+            format!(
+                "#!/bin/sh\nprintf '%s\\n' \"$*\" >> \"{}/calls.txt\"\ncat \"{}\"\n",
+                dir.display(),
+                admission.display()
+            ),
+        )
+        .unwrap();
+        std::fs::set_permissions(&fake, std::fs::Permissions::from_mode(0o755)).unwrap();
+        crate::test_stub::settle_stub(&fake);
+        let token = AuthorityToken::for_test("the-person-s-token");
+        let resolve = |action: &str, token: Option<&AuthorityToken>| {
+            session_grant_at(&fake, false, &state, action, token, None, 1_000)
+        };
+
+        std::fs::write(&admission, admitted("project:notes").to_string()).unwrap();
+        std::fs::write(
+            &contract,
+            grant(&[
+                "factory.attempt.launch",
+                "factory.attempt.request-cancellation",
+                "factory.attempt.retry",
+                "central.receiving.submit",
+            ])
+            .to_string(),
+        )
+        .unwrap();
+        for action in [
+            "factory.task.run",
+            "factory.task.stop",
+            "factory.attempt.retry",
+            "factory.attempt.choose",
+        ] {
+            assert_eq!(
+                resolve(action, token.as_ref()),
+                Ok("central:native-action-authority#human:owner".to_owned()),
+                "{action}"
+            );
+        }
+        let calls = std::fs::read_to_string(dir.join("calls.txt")).unwrap_or_default();
+        assert!(
+            calls
+                .lines()
+                .all(|call| call == format!("attempt admission {} --json", state.display())),
+            "Factory is asked its admission for the Run's state, and nothing else: {calls}"
+        );
+
+        let refused = |action: &str, token: Option<&AuthorityToken>| {
+            resolve(action, token).expect_err("refused before Factory acts")
+        };
+        assert!(refused("factory.task.run", None).contains("no native action token"));
+        let stranger = AuthorityToken::for_test("someone-else-s-token");
+        assert!(refused("factory.task.run", stranger.as_ref()).contains("holds the host's token"));
+        std::fs::write(&contract, grant(&["factory.attempt.launch"]).to_string()).unwrap();
+        assert!(refused("factory.attempt.retry", token.as_ref())
+            .contains("action not granted: the grant does not list factory.attempt.retry"));
+        std::fs::write(&admission, admitted("project:elsewhere").to_string()).unwrap();
+        assert!(refused("factory.task.run", token.as_ref())
+            .contains("scope not granted: the grant does not cover project:elsewhere"));
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     fn strings(args: Vec<std::ffi::OsString>) -> Vec<String> {

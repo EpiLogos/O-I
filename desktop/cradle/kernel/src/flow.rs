@@ -691,6 +691,13 @@ impl CentralClient {
             .map(|token| ("CENTRAL_NATIVE_TOKEN", token.as_str()))
     }
 
+    /// The person's token this client carries (`for_person`), for the grant the host resolves from it for one of Factory's session
+    /// acts (action.rs `invoke_registry`, factory.rs `session_grant`; O-I #1006): handed on at the token's one door, so no other
+    /// source makes a token from its string.
+    pub(crate) fn person_token(&self) -> Option<&crate::factory::AuthorityToken> {
+        self.person.as_ref()
+    }
+
     /// The client one of the person's own acts runs on, by the same rule, where the act is not an Action but an op of the kernel's
     /// (O-I #747 round 896, 0R-authority.1, item 0.2): Receiving's acts on a document (owner_write.rs `receiving_person_act`) and a
     /// page's Launch, Stop and Delete. By the shell window's channel it runs on the

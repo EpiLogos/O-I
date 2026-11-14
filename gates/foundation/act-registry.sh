@@ -7,7 +7,9 @@
 #
 # Authority. The fresh World's own key, which Setup's Ground step makes, is the only authority any act carries. Central's
 # authenticated Actions (the Day, Receiving) run with it in CENTRAL_NATIVE_TOKEN, as the shell's host supplies it; an agent's
-# proposal is carried the same way and names the agent as its declared producer. A page an agent saves names the agent.
+# proposal is carried the same way and names the agent as its declared producer. A page an agent saves names the agent. Factory's
+# session acts (a task run, stopped, retried) take the person's grant as the host resolves it from that key, by its ref
+# (`authority`: the World's human principal in the native action authority contract), and no key: Factory reads none.
 #
 #   gates/foundation/act-registry.sh           every core Action, then a line per Action and the count
 #   gates/foundation/act-registry.sh --keep    the same, keeping the fresh World (its path is printed)
@@ -309,9 +311,12 @@ if [ -n "$task_run" ] && listed="$(act factory.session.list "$(jq -nc --arg st "
 else
   fails factory.session.list "the session is not listed open with its task"
 fi
+# The person's grant as the host resolves it from this World's key: its human principal's, by ref.
+grant="central:native-action-authority#$principal"
 task() { jq -nc --arg st "$task_state" --arg r "$task_run" --arg a "$attempt" '{state:$st, run_ref:$r, attempt_ref:$a}'; }
-if [ -n "$task_run" ] && ran="$(keyed factory.task.run "$(jq -nc --arg st "$task_state" --arg r "$task_run" --arg s "$session" \
-    '{state:$st, run_ref:$r, session:$s}')")" && attempt="$(jq -r '.attempt_ref // empty' <<<"$ran")" && [ -n "$attempt" ]; then
+if [ -n "$task_run" ] && ran="$(act factory.task.run "$(jq -nc --arg st "$task_state" --arg r "$task_run" --arg s "$session" \
+    --arg g "$grant" '{state:$st, run_ref:$r, session:$s, authority:$g}')")" && attempt="$(jq -r '.attempt_ref // empty' <<<"$ran")" \
+  && [ -n "$attempt" ]; then
   holds factory.task.run "$attempt running, its log at $(jq -r .log <<<"$ran")"
 else
   fails factory.task.run "the task did not run"
@@ -333,7 +338,8 @@ fi
 prior="$attempt"
 attempt=""
 if [ "${ended#*Fail}" != "$ended" ] && [ -n "$unit" ] \
-  && retried="$(keyed factory.attempt.retry "$(jq -nc --arg st "$task_state" --arg r "$task_run" --arg u "$unit" '{state:$st, run_ref:$r, unit_ref:$u}')")" \
+  && retried="$(act factory.attempt.retry "$(jq -nc --arg st "$task_state" --arg r "$task_run" --arg u "$unit" --arg g "$grant" \
+    '{state:$st, run_ref:$r, unit_ref:$u, authority:$g}')")" \
   && [ "$(jq -r '.prior_attempt_ref // empty' <<<"$retried")" = "$prior" ] && attempt="$(jq -r '.attempt_ref // empty' <<<"$retried")" \
   && [ -n "$attempt" ] && [ "$attempt" != "$prior" ]; then
   holds factory.attempt.retry "$prior failed; $attempt $(jq -r .state <<<"$retried") under the unit's grant"
@@ -341,8 +347,8 @@ else
   attempt=""
   fails factory.attempt.retry "the failed attempt's unit was not retried"
 fi
-if [ -n "$attempt" ] && [ "$(keyed factory.task.stop "$(task)" | jq -r .state)" = "paused" ] \
-  && [ "$(keyed factory.task.stop "$(task)" | jq -r .state)" = "cancelled" ] && log="$(act factory.task.log "$(task)")" \
+stop_task() { act factory.task.stop "$(task | jq -c --arg g "$grant" '. + {authority:$g}')" | jq -r .state; }
+if [ -n "$attempt" ] && [ "$(stop_task)" = "paused" ] && [ "$(stop_task)" = "cancelled" ] && log="$(act factory.task.log "$(task)")" \
   && jq -e '.attempt.status | test("Cancel")' <<<"$log" >/dev/null; then
   holds factory.task.stop "$attempt paused, then cancelled; Factory reads it $(jq -r .attempt.status <<<"$log")"
 else

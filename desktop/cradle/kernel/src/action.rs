@@ -266,8 +266,9 @@ pub fn person_act(action: &str) -> bool {
 
 /// Factory's acts that present the person's authority (an attempt launched, acted on or carried into receiving; a session's task
 /// run, stopped or retried, and the attempt you choose proposed to Central's receiving, O-I #1006), as the registry holds them: by
-/// the person's press the host's token goes to `oi act invoke`, which hands it to Factory; by a wire the act is refused in words
-/// before Factory is asked.
+/// the person's press the host's token goes to `oi act invoke`, which hands it to Factory, except for a session's act, which
+/// goes with the grant the host resolved from it (`invoke_registry_at`); by a wire the act is refused in words before Factory is
+/// asked.
 pub const REGISTRY_PERSON_ACTS: [&str; 7] = [
     "factory.attempt.launch",
     "factory.attempt.action",
@@ -649,7 +650,7 @@ pub fn invoke(
         );
     }
     if registry_action(action) {
-        return invoke_registry(cwd, action, invocation.input.as_ref(), client.person_env());
+        return invoke_registry(cwd, action, invocation.input.as_ref(), client);
     }
     ActionDispatch::UnknownOwner {
         action: action.to_owned(),
@@ -677,9 +678,33 @@ fn invoke_registry(
     cwd: &Path,
     action: &str,
     input: Option<&Value>,
-    person: Option<(&'static str, &str)>,
+    client: &CentralClient,
 ) -> ActionDispatch {
-    let input = match input {
+    invoke_registry_at(
+        &crate::agent_card::oi_executable(),
+        cwd,
+        action,
+        input,
+        client,
+        &|state, token| crate::factory::session_grant(state, action, token),
+    )
+}
+
+/// The person's grant for one of Factory's session acts, resolved by the host for the Run's Factory state
+/// (`factory::session_grant`).
+type SessionGrant<'a> =
+    &'a dyn Fn(&Path, Option<&crate::factory::AuthorityToken>) -> Result<String, String>;
+
+/// [`invoke_registry`] through the given `oi`, a session act's grant resolved by `grant`.
+fn invoke_registry_at(
+    executable: &std::path::PathBuf,
+    cwd: &Path,
+    action: &str,
+    input: Option<&Value>,
+    client: &CentralClient,
+    grant: SessionGrant<'_>,
+) -> ActionDispatch {
+    let mut input = match input {
         None => Value::Object(serde_json::Map::new()),
         Some(input @ Value::Object(_)) => input.clone(),
         Some(other) => {
@@ -688,7 +713,31 @@ fn invoke_registry(
             }
         }
     };
-    let executable = crate::agent_card::oi_executable();
+    let mut person = client.person_env();
+    // One of Factory's session acts on the person's grant (O-I #1006): the host resolves the grant for the Run's state, as
+    // Factory's admission names it, and hands Factory its ref as the act's `authority`; Factory reads no token. Only a choice
+    // carries the token on, to Central's receiving, which authenticates the proposal itself.
+    if crate::factory::session_admission(action).is_some() {
+        let Some(state) = input["state"].as_str().map(std::path::PathBuf::from) else {
+            return ActionDispatch::MalformedRef {
+                detail: format!(
+                    "`{action}` names no Factory state (`state`), so the person's grant has no Run to be resolved for"
+                ),
+            };
+        };
+        match grant(&state, client.person_token()) {
+            Ok(grant) => input["authority"] = Value::String(grant),
+            Err(message) => {
+                return ActionDispatch::OwnerRefused {
+                    owner_operation: action.to_owned(),
+                    message,
+                }
+            }
+        }
+        if action != "factory.attempt.choose" {
+            person = None;
+        }
+    }
     let args: Vec<std::ffi::OsString> = ["act", "invoke", action, "--input", "-", "--json"]
         .iter()
         .map(std::ffi::OsString::from)
@@ -704,7 +753,7 @@ fn invoke_registry(
         env.push(("CENTRAL_ROOT", root));
     }
     match crate::material::invoke_in(
-        &executable,
+        executable,
         &args,
         Some(input.to_string().into_bytes()),
         Some(cwd),
@@ -908,6 +957,119 @@ fn invoke_aikit_open(cwd: &Path, target_ref: &str) -> ActionDispatch {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// O-I #1006 (review F8): a session act goes to Factory with the grant the host resolved for its Run's state as its
+    /// `authority`, and without the host's token, which Factory never reads; only a choice carries the token on, to Central's
+    /// receiving, which authenticates it. A grant the host cannot resolve refuses the act before Factory is asked; a person act
+    /// that is no session act goes as it went.
+    #[cfg(unix)]
+    #[test]
+    fn a_session_act_carries_the_grant_the_host_resolved_and_only_a_choice_carries_the_token() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = std::env::temp_dir().join(format!("oi-f8-registry-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let calls = dir.join("calls.txt");
+        let fake = dir.join("oi");
+        std::fs::write(
+            &fake,
+            format!(
+                "#!/bin/sh\nprintf '%s | %s | %s\\n' \"$3\" \"${{CENTRAL_NATIVE_TOKEN-UNSET}}\" \"$(cat)\" >> \"{}\"\necho '{{}}'\n",
+                calls.display()
+            ),
+        )
+        .unwrap();
+        std::fs::set_permissions(&fake, std::fs::Permissions::from_mode(0o755)).unwrap();
+        crate::test_stub::settle_stub(&fake);
+        let state = dir.join("Work/notes/.factory/development-state.json");
+        let grant = "central:native-action-authority#human:owner";
+        let asked = std::cell::RefCell::new(Vec::new());
+        let resolve = |at: &Path, token: Option<&crate::factory::AuthorityToken>| {
+            asked.borrow_mut().push((
+                at.to_path_buf(),
+                token.map(|token| token.as_str().to_owned()),
+            ));
+            Ok(grant.to_owned())
+        };
+        let person = CentralClient::with(fake.clone(), None, "o-i".to_owned())
+            .with_person_token("the-person-s-token");
+        let input = serde_json::json!({"state": state, "run_ref": "run:1"});
+        for action in [
+            "factory.task.run",
+            "factory.task.stop",
+            "factory.attempt.retry",
+            "factory.attempt.choose",
+            "factory.attempt.launch",
+        ] {
+            let dispatch = invoke_registry_at(&fake, &dir, action, Some(&input), &person, &resolve);
+            assert!(
+                matches!(dispatch, ActionDispatch::Invoked { .. }),
+                "{action}: {dispatch:?}"
+            );
+        }
+        let refused = invoke_registry_at(
+            &fake,
+            &dir,
+            "factory.task.run",
+            Some(&input),
+            &person,
+            &|_, _| Err("no human grant holds the host's token".into()),
+        );
+        let made: Vec<(String, String, Value)> = std::fs::read_to_string(&calls)
+            .unwrap_or_default()
+            .lines()
+            .map(|line| {
+                let mut parts = line.splitn(3, " | ");
+                let mut part = || parts.next().unwrap_or_default().to_owned();
+                (
+                    part(),
+                    part(),
+                    serde_json::from_str(&part()).unwrap_or(Value::Null),
+                )
+            })
+            .collect();
+        let _ = std::fs::remove_dir_all(&dir);
+        assert_eq!(
+            refused,
+            ActionDispatch::OwnerRefused {
+                owner_operation: "factory.task.run".into(),
+                message: "no human grant holds the host's token".into(),
+            }
+        );
+        let granted = |action: &str| {
+            let mut input = input.clone();
+            input["authority"] = Value::from(grant);
+            (action.to_owned(), input)
+        };
+        assert_eq!(
+            made.iter()
+                .map(|(action, token, input)| (action.clone(), token.clone(), input.clone()))
+                .collect::<Vec<_>>(),
+            [
+                ("factory.task.run", "UNSET"),
+                ("factory.task.stop", "UNSET"),
+                ("factory.attempt.retry", "UNSET"),
+                ("factory.attempt.choose", "the-person-s-token"),
+            ]
+            .into_iter()
+            .map(|(action, token)| {
+                let (action, input) = granted(action);
+                (action, token.to_owned(), input)
+            })
+            .chain([(
+                "factory.attempt.launch".to_owned(),
+                "the-person-s-token".to_owned(),
+                input.clone()
+            )])
+            .collect::<Vec<_>>(),
+            "each act as Factory was asked it; the refused one never was"
+        );
+        assert_eq!(
+            asked.into_inner(),
+            vec![(state.clone(), Some("the-person-s-token".to_owned())); 4],
+            "the grant is resolved for each session act's Run state, on the person's token"
+        );
+    }
 
     #[test]
     fn a_seats_landing_runs_in_the_world_its_seat_actions_run_in() {
