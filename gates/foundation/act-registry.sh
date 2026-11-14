@@ -27,6 +27,9 @@
 # FOUNDATION_AGENT, else the first the census lists that starts. Choosing a take (factory.attempt.choose) proposes an attempt's
 # Return into the Central Flow its Run belongs to, and a session's task is commissioned from the person's words with no Flow:
 # Factory refuses it in those words, its difference staying in the session's checkout for Git / landing, so it is not run here.
+# Git / landing is Workcell's own Actions on the held seat: the seat's work committed on its lane (workcell.lane.commit), the lane
+# pushed to the project's remote (workcell.lane.push), and landed as a merge into the remote's main (workcell.lane.land), each read
+# back from git. The project's remote is a bare repository this run keeps beside the World.
 set -uo pipefail
 
 keep=0
@@ -220,9 +223,13 @@ fi
 
 echo "act-registry: Workcell and Factory's sessions"
 # --- A workcell: the World's first, declared by Workcell, for a project whose primary stands on main --------------------------------
-# Factory's state stays out of the project's history (it is state, not source), so a checkout of the project carries none.
-( cd "$world/Work/$project" && printf '# Field notes\n' > NOTES.md && printf '.factory/\n' > .gitignore && git init -q -b main && git add --all \
-  && git -c user.name=act-registry -c user.email=act-registry@local commit -qm "Field notes begin" ) || ground "the project's repository"
+# Factory's state stays out of the project's history (it is state, not source), so a checkout of the project carries none. The
+# repository names its own identity, which Workcell's landing commits under, and its remote is a bare repository beside the World,
+# where the project's main stands and its lanes land.
+remote="$root/remote/$project.git"
+( cd "$world/Work/$project" && printf '# Field notes\n' > NOTES.md && printf '.factory/\n' > .gitignore && git init -q -b main \
+  && git config user.name act-registry && git config user.email act-registry@local && git add --all && git commit -qm "Field notes begin" \
+  && git init -q --bare -b main "$remote" && git remote add origin "$remote" && git push -q origin main ) || ground "the project's repository"
 register="$world/Control/machines/workcells.register.json"
 checkout=""
 # The seat is a linked checkout of the project's primary, as every seat of the machine is (its .git a file the primary keeps).
@@ -234,6 +241,7 @@ if declared="$(act workcell.declare "$(jq -nc --arg w "$world" --arg p "$project
 else
   fails workcell.declare "no workcell declared in this World"
 fi
+# The seat's Actions, and its lane's landing, run in this World (CENTRAL_ROOT), as the kernel's `act` runs them in the window's.
 seat() { CENTRAL_ROOT="$world" act "$@"; }
 if [ -n "$checkout" ] && seat workcell.seat.join "$(jq -nc --arg p "$project" --arg a "$principal" \
     '{workcell:"env-1", product:$p, actor:$a, branch:"act-registry"}')" >/dev/null \
@@ -362,6 +370,38 @@ if [ -n "$session" ] && ended="$(act factory.session.end "$(jq -nc --arg w "$wor
   holds factory.session.end "$session ended, its body released: $(jq -c .released <<<"$ended")"
 else
   fails factory.session.end "the session did not end"
+fi
+
+# --- Git / landing: the seat's lane landed through Workcell's own Actions --------------------------------------------------------
+# The seat's work (a file written into its checkout here) committed on its lane, the lane pushed to the project's remote, and landed
+# as a merge into the remote's main, fast-forward only. Each is read back from git: the commit on the lane holding that file and
+# nothing else (no state or link of the seat's), the remote's branch at the lane's head, then the remote's main there. Land as a draft
+# or a merge request opens one on GitHub, which this World's remote is not.
+at="$(jq -nc --arg p "$project" '{workcell:"env-1", product:$p}')"
+head="" branch="" committed="" files=""
+if [ -n "$checkout" ] && printf 'Landed by the act registry.\n' >"$checkout/LANDING.md" \
+  && committed="$(seat workcell.lane.commit "$(jq -c '. + {message:"The act registry lands its seat"}' <<<"$at")")" \
+  && head="$(jq -r '.head // empty' <<<"$committed")" && branch="$(jq -r '.branch // empty' <<<"$committed")" \
+  && [ -n "$head" ] && [ "$head" = "$(git -C "$checkout" rev-parse HEAD)" ] \
+  && files="$(git -C "$checkout" show --name-only --format= HEAD)" && [ "$files" = LANDING.md ] \
+  && [ "$(jq -r .files <<<"$committed")" = 1 ]; then
+  holds workcell.lane.commit "$files committed on $branch at ${head:0:12}, the lane's one file"
+else
+  head=""
+  fails workcell.lane.commit "the seat's one file was not committed alone on its lane (the commit holds: ${files:-nothing})"
+fi
+if [ -n "$head" ] && pushed="$(seat workcell.lane.push "$at")" \
+  && [ "$(git -C "$remote" rev-parse --verify --quiet "refs/heads/$branch")" = "$head" ]; then
+  holds workcell.lane.push "$branch on the project's remote at ${head:0:12}, its upstream $(jq -r .upstream <<<"$pushed")"
+else
+  fails workcell.lane.push "the lane is not on the project's remote at its head"
+fi
+if [ -n "$head" ] && landed="$(seat workcell.lane.land "$(jq -c '. + {as:"merge"}' <<<"$at")")" \
+  && [ "$(jq -r '.merged_into // empty' <<<"$landed")" = "origin/main" ] \
+  && [ "$(git -C "$remote" rev-parse --verify --quiet refs/heads/main)" = "$head" ]; then
+  holds workcell.lane.land "$branch merged into the remote's main, which now reads ${head:0:12}"
+else
+  fails workcell.lane.land "the lane did not land in the remote's main"
 fi
 if [ -n "$checkout" ] && seat workcell.seat.release "$(jq -nc --arg p "$project" --arg a "$principal" '{workcell:"env-1", product:$p, actor:$a}')" >/dev/null \
   && [ "$(jq -r '.workcells[0].seats[0].state' "$register")" = "free" ]; then
