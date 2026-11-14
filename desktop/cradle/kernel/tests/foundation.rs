@@ -9,6 +9,7 @@
 //! 3. Send a passage to one and get the answer in the page.
 //! 4. Run a Factory task to its end.
 //! 5. See the Day hold all of it, the day's sessions on its face 2, and close.
+//! 6. Make an Expression, play it and keep a take, and reopen it after a relaunch.
 //!
 //! Ignored by default: they start real owners, and acts 3 and 5 spend a provider prompt. `gates/foundation/run.sh` runs one act per
 //! process and checks the outcome against `gates/foundation/acts.json`:
@@ -3314,4 +3315,595 @@ fn act_5_the_day_holds_it_and_closes() {
         the_close_filed(world, &day_ref, &held)?;
         factory.map(|_| ())
     });
+}
+
+// ------------------------------------------------------------------------------------------------------------------------------------
+// Act 6: make an Expression and keep a take (O-I #1008).
+// ------------------------------------------------------------------------------------------------------------------------------------
+
+/// The kernel's expression store asked directly (`expression`), as the frame asks it: what the store itself holds.
+fn expression(world: &World, request: Value) -> Result<Value, String> {
+    let operation = request["operation"].as_str().unwrap_or("?").to_owned();
+    let answer = world.send(json!({"op": "expression", "request": request}))?;
+    let answer =
+        result_of(&answer, "expression").map_err(|e| format!("expression {operation} {e}"))?;
+    Ok(answer["data"].clone())
+}
+
+/// One slice of the World Model read past what the model holds (`fresh`), as a window opened after a relaunch reads it.
+fn fresh_model(world: &World, slice: &str) -> Result<Value, String> {
+    let answer = world.send(json!({"op": "model_subscribe", "slice": slice, "fresh": true}))?;
+    let data = result_of(&answer, "model_slice")
+        .map_err(|e| format!("model_subscribe {slice} {e}"))?["data"]
+        .clone();
+    if data["state"] != "read" {
+        return Err(format!(
+            "the World Model's {slice} slice is {}: {}",
+            data["state"],
+            data["error"].as_str().unwrap_or("no state")
+        ));
+    }
+    Ok(data)
+}
+
+/// One mode's Set built from its slices read past what the model holds (`fresh`).
+fn fresh_set(world: &World, mode: &str) -> Result<Value, String> {
+    let answer = world.send(json!({"op": "set_subscribe", "mode": mode, "fresh": true}))?;
+    let answer = result_of(&answer, "mode_set").map_err(|e| format!("set_subscribe {mode} {e}"))?;
+    Ok(answer["data"]["set"].clone())
+}
+
+/// The World's kernel started again on the same home, as a relaunch starts it: a kernel whose expression store holds no working
+/// copy and whose playback is stopped. The change watch and the World Model hold the same handle, so they reach the new kernel.
+fn relaunch(world: &World) {
+    *world.kernel.lock().unwrap_or_else(|e| e.into_inner()) = Kernel::discover();
+}
+
+/// An open work's document as the store gives it (`inspect`).
+fn inspect(world: &World, expression_ref: &str) -> Result<Value, String> {
+    let data = expression(
+        world,
+        json!({"operation": "inspect", "expression_ref": expression_ref}),
+    )?;
+    if data["state"] != "ready" {
+        return Err(format!("inspect {expression_ref} answered {}", clip(&data)));
+    }
+    Ok(data["document"].clone())
+}
+
+/// A Scene of a document, by its ref.
+fn scene_in<'a>(document: &'a Value, scene_ref: &str) -> Result<&'a Value, String> {
+    document["scenes"]
+        .as_array()
+        .and_then(|scenes| scenes.iter().find(|scene| scene["scene_ref"] == scene_ref))
+        .ok_or_else(|| format!("{} holds no Scene {scene_ref}", document["expression_ref"]))
+}
+
+/// One row of a Set's list (`tracks`, `clips`, `takes`) by its id.
+fn row_in<'a>(set: &'a Value, list: &str, id: &str) -> Result<&'a Value, String> {
+    set[list]
+        .as_array()
+        .and_then(|rows| rows.iter().find(|row| row["id"] == id))
+        .ok_or_else(|| {
+            let ids: Vec<&str> = set[list]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .filter_map(|row| row["id"].as_str())
+                .collect();
+            format!("Expressions' Set has no {list} row {id}; it has {ids:?}")
+        })
+}
+
+/// A work's file read back from Central (`central.files.read`), decoded as the store decodes it: its revision, its text and its
+/// document.
+fn work_file(world: &World, location: &Value) -> Result<(String, String, Value), String> {
+    let reading = central_owner(world, "central.files.read", json!({"location": location}))?;
+    let revision = reading["revision"]
+        .as_str()
+        .ok_or_else(|| {
+            format!(
+                "Central's reading of the work's file names no revision: {}",
+                clip(&reading)
+            )
+        })?
+        .to_owned();
+    if reading["content_encoding"] != "utf-8" && reading["content_encoding"] != "utf8" {
+        return Err(format!(
+            "Central gave the work's file as {}, not as text",
+            reading["content_encoding"]
+        ));
+    }
+    let content = reading["content"].as_str().unwrap_or_default().to_owned();
+    let document = oi_cradle_kernel::expression_file::decode(&content)
+        .map_err(|e| format!("the work's file does not decode as an Expression: {e}"))?;
+    let document = serde_json::to_value(&document).map_err(|e| e.to_string())?;
+    Ok((revision, content, document))
+}
+
+/// The points of a lane as (time, value) pairs.
+fn points_of(lane: &Value) -> Vec<(f64, f64)> {
+    lane["points"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .map(|point| {
+            (
+                point["time"].as_f64().unwrap_or(f64::NAN),
+                point["value"].as_f64().unwrap_or(f64::NAN),
+            )
+        })
+        .collect()
+}
+
+fn unix_ms_now() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_millis() as u64
+}
+
+/// Act 6's steps, each read back from the expression store (`list`, `inspect`, `reading`), Central's file and the disk, then from
+/// the World Model and the Set the views draw.
+fn make_an_expression_and_keep_a_take(world: &World) -> Act {
+    // Two values of the field the Studio table lists (expression_studio.json): Turbulence and Curl Speed.
+    const A: &str = "field.params.turbulence";
+    const B: &str = "field.params.speed";
+    let (v1, v2, v3, v4) = (2.5, 1.75, 3.25, 4.5);
+    let at = |step: u32| move |e: String| format!("step {step}: {e}");
+
+    // 0. A fresh World: the expression store is a slice of the World Model, and Expressions' Set is built from it.
+    let model = world.model("expressions").map_err(at(0))?;
+    if model["value"]["schema"] != "oi.expression-reading/v1" {
+        return Err(format!(
+            "step 0: the expressions slice holds no reading of the expression store: {}",
+            clip(&model)
+        ));
+    }
+    let set = world.set("expressions").map_err(at(0))?;
+    if let Some(absent) = set["absent"].as_str() {
+        return Err(format!("step 0: Expressions' Set is absent: {absent}"));
+    }
+    if set["sources"][0]["slice"] != "expressions" || set["sources"][0]["state"] != "read" {
+        return Err(format!(
+            "step 0: Expressions' Set is not built from the read expressions slice: {}",
+            clip(&set["sources"])
+        ));
+    }
+
+    // 1. New: a work of one blank Scene, saved into the works home.
+    let made = action(world, "expressions.new", json!({"title": "Gate act six"})).map_err(at(1))?;
+    let (Some(r), Some(scene_ref)) = (made["expression_ref"].as_str(), made["scene_ref"].as_str())
+    else {
+        return Err(format!(
+            "step 1: expressions.new named no work and Scene: {}",
+            clip(&made)
+        ));
+    };
+    let (r, scene_ref) = (r.to_owned(), scene_ref.to_owned());
+    let location = made["file"]["location"].clone();
+    let path = location["path"].as_str().unwrap_or_default().to_owned();
+    if !path.starts_with("Control/user/flows/") || !path.ends_with(".expression.json") {
+        return Err(format!(
+            "step 1: the new work was not saved into the works home: {}",
+            clip(&made["file"])
+        ));
+    }
+    let listed = expression(world, json!({"operation": "list"})).map_err(at(1))?;
+    let row = listed["expressions"]
+        .as_array()
+        .and_then(|rows| rows.iter().find(|row| row["expression_ref"] == r.as_str()))
+        .ok_or_else(|| format!("step 1: the store lists no {r}: {}", clip(&listed)))?;
+    if row["open"] != true || row["dirty"] != false {
+        return Err(format!(
+            "step 1: the store lists {r} as {}, not open and saved",
+            clip(row)
+        ));
+    }
+    let (first_revision, _, stored) = work_file(world, &location).map_err(at(1))?;
+    if stored["expression_ref"] != r.as_str() {
+        return Err(format!(
+            "step 1: {path} holds {}, not {r}",
+            stored["expression_ref"]
+        ));
+    }
+    if !world.central().join(&path).is_file() {
+        return Err(format!("step 1: no file at {path} on disk"));
+    }
+    let model = world.model("expressions").map_err(at(1))?;
+    if !model["value"]["works"].as_array().is_some_and(|works| {
+        works
+            .iter()
+            .any(|work| work["expression_ref"] == r.as_str() && work["open"] == true)
+    }) {
+        return Err(format!(
+            "step 1: the expressions slice holds no open {r}: {}",
+            clip(&model["value"]["works"])
+        ));
+    }
+    let set = world.set("expressions").map_err(at(1))?;
+    let track = row_in(&set, "tracks", &r).map_err(at(1))?.clone();
+    let clips_of_r = set["clips"].as_array().map_or(0, |clips| {
+        clips
+            .iter()
+            .filter(|clip| clip["track"] == r.as_str())
+            .count()
+    });
+    if clips_of_r != 1 {
+        return Err(format!(
+            "step 1: the new work's track holds {clips_of_r} clips, not its one Scene"
+        ));
+    }
+    println!("step 1: {r} made, its Scene {scene_ref}, saved to {path}");
+
+    // 2. Compose with the Studio, as its device writes: by the act the Set declares on the track's Studio.
+    let studio_act = track["studio"]["act"].clone();
+    let Some(studio_action) = studio_act["action"]
+        .as_str()
+        .filter(|id| *id == "expressions.studio.set")
+    else {
+        return Err(format!(
+            "step 2: the track's Studio declares no expressions.studio.set: {}",
+            clip(&track["studio"])
+        ));
+    };
+    let studio_action = studio_action.to_owned();
+    let press = |bind: &str, value: f64| -> Result<Value, String> {
+        let mut input = studio_act["input"].clone();
+        input["bind"] = json!(bind);
+        input["value"] = json!(value);
+        action(world, &studio_action, input)
+    };
+    press(A, v1).map_err(at(2))?;
+    press(B, v2).map_err(at(2))?;
+    let document = inspect(world, &r).map_err(at(2))?;
+    let material = scene_in(&document, &scene_ref).map_err(at(2))?["presentation"]["scene"].clone();
+    for (key, value) in [("turbulence", v1), ("speed", v2)] {
+        if material["field"]["params"][key].as_f64() != Some(value) {
+            return Err(format!(
+                "step 2: the store's Scene holds {key} {}, not {value}",
+                material["field"]["params"][key]
+            ));
+        }
+    }
+    let set = world.set("expressions").map_err(at(2))?;
+    let values = &row_in(&set, "tracks", &r).map_err(at(2))?["studio"]["values"];
+    if values[A].as_f64() != Some(v1) || values[B].as_f64() != Some(v2) {
+        return Err(format!(
+            "step 2: the Set's Studio holds {A} {} and {B} {}, not {v1} and {v2}",
+            values[A], values[B]
+        ));
+    }
+
+    // 3. Save the Scene: what it holds is its saved version, and the work's file moves.
+    action(
+        world,
+        "expressions.scene.save",
+        json!({"expression_ref": r, "scene_ref": scene_ref}),
+    )
+    .map_err(at(3))?;
+    let document = inspect(world, &r).map_err(at(3))?;
+    let presentation = &scene_in(&document, &scene_ref).map_err(at(3))?["presentation"];
+    if presentation["saved"].is_null() || presentation["saved"] != presentation["scene"] {
+        return Err(
+            "step 3: the store's Scene keeps no saved version equal to what it holds".into(),
+        );
+    }
+    let (saved_revision, _, stored) = work_file(world, &location).map_err(at(3))?;
+    if saved_revision == first_revision {
+        return Err(format!(
+            "step 3: the work's file did not move from {first_revision}"
+        ));
+    }
+    if scene_in(&stored, &scene_ref).map_err(at(3))?["presentation"]["saved"].is_null() {
+        return Err("step 3: the work's file keeps no saved version of the Scene".into());
+    }
+    let set = world.set("expressions").map_err(at(3))?;
+    let state = &row_in(&set, "clips", &scene_ref).map_err(at(3))?["state"];
+    if state != "saved" {
+        return Err(format!("step 3: the Set's clip says {state}, not saved"));
+    }
+
+    // 4. Play: the kernel's playback holds the launch, and the clip runs from where it lands.
+    let launch = json!({"launches": [{"expression_ref": r, "scene_ref": scene_ref}]});
+    action(world, "expressions.scene.launch", launch.clone()).map_err(at(4))?;
+    let reading = expression(world, json!({"operation": "reading"})).map_err(at(4))?;
+    let playback = &reading["playback"];
+    let launched = playback["launched"].as_array().and_then(|launched| {
+        launched
+            .iter()
+            .find(|entry| entry["expression_ref"] == r.as_str())
+    });
+    if playback["state"] != "playing"
+        || launched.is_none_or(|entry| {
+            entry["scene_ref"] != scene_ref.as_str() || !entry["lands_at_unix_ms"].is_u64()
+        })
+    {
+        return Err(format!(
+            "step 4: the store's playback is {}",
+            clip(playback)
+        ));
+    }
+    let model = world.model("expressions").map_err(at(4))?;
+    if model["value"]["playback"]["launched"] != playback["launched"] {
+        return Err(format!(
+            "step 4: the slice's playback {} is not the store's {}",
+            clip(&model["value"]["playback"]),
+            clip(playback)
+        ));
+    }
+    let set = world.set("expressions").map_err(at(4))?;
+    let clip_row = row_in(&set, "clips", &scene_ref).map_err(at(4))?;
+    if clip_row["status"] != "running" || !clip_row["at"]["start_unix_ms"].is_u64() {
+        return Err(format!("step 4: the Set's clip is {}", clip(clip_row)));
+    }
+
+    // 5. Record a take: armed, Play records the Studio from where the Scene lands.
+    action(
+        world,
+        "expressions.arm",
+        json!({"expression_ref": r, "on": true}),
+    )
+    .map_err(at(5))?;
+    let reading = expression(world, json!({"operation": "reading"})).map_err(at(5))?;
+    if !reading["playback"]["armed"]
+        .as_array()
+        .is_some_and(|armed| armed.iter().any(|one| one == r.as_str()))
+    {
+        return Err(format!(
+            "step 5: the store's playback arms nothing of {r}: {}",
+            clip(&reading["playback"])
+        ));
+    }
+    let relaunched = action(world, "expressions.scene.launch", launch.clone()).map_err(at(5))?;
+    let Some(take_ref) = relaunched["take_ref"].as_str().map(str::to_owned) else {
+        return Err(format!(
+            "step 5: the armed launch records no take: {}",
+            clip(&relaunched)
+        ));
+    };
+    let reading = expression(world, json!({"operation": "reading"})).map_err(at(5))?;
+    if reading["playback"]["state"] != "recording"
+        || reading["playback"]["recording"]["take_ref"] != take_ref.as_str()
+    {
+        return Err(format!(
+            "step 5: the store's playback is {}",
+            clip(&reading["playback"])
+        ));
+    }
+    // What is pressed before the launch lands lies at the take's start: wait for the landing, as the person hears it.
+    let lands_at = relaunched["launched"][0]["lands_at_unix_ms"]
+        .as_u64()
+        .unwrap_or(0);
+    let wait = lands_at.saturating_sub(unix_ms_now()) + 100;
+    std::thread::sleep(Duration::from_millis(wait));
+    press(A, v3).map_err(at(5))?;
+    std::thread::sleep(Duration::from_millis(300));
+    press(A, v4).map_err(at(5))?;
+    std::thread::sleep(Duration::from_millis(300));
+    action(
+        world,
+        "expressions.scene.stop",
+        json!({"expression_ref": r}),
+    )
+    .map_err(at(5))?;
+    let document = inspect(world, &r).map_err(at(5))?;
+    let take = scene_in(&document, &scene_ref).map_err(at(5))?["studio_takes"]
+        .as_array()
+        .and_then(|takes| {
+            takes
+                .iter()
+                .find(|take| take["take_ref"] == take_ref.as_str())
+        })
+        .cloned()
+        .ok_or_else(|| format!("step 5: the Scene keeps no take {take_ref}"))?;
+    let lane = take["tracks"]
+        .as_array()
+        .and_then(|lanes| lanes.iter().find(|lane| lane["bind"] == A))
+        .cloned()
+        .ok_or_else(|| format!("step 5: the take keeps no lane on {A}: {}", clip(&take)))?;
+    let points = points_of(&lane);
+    let in_order = points.windows(2).all(|pair| pair[0].0 < pair[1].0);
+    let values: Vec<f64> = points.iter().map(|point| point.1).collect();
+    if points.len() < 3
+        || !in_order
+        || values[0] != v3
+        || values[1] != v4
+        || values[values.len() - 1] != v4
+    {
+        return Err(format!(
+            "step 5: the take's lane on {A} is {points:?}, not {v3} then {v4} in time, ending on {v4}"
+        ));
+    }
+    if !take["kept"].is_null() {
+        return Err("step 5: the take is kept before anyone kept it".into());
+    }
+    let reading = expression(world, json!({"operation": "reading"})).map_err(at(5))?;
+    if reading["playback"]["state"] != "stopped" {
+        return Err(format!(
+            "step 5: the store's playback is {} after Stop",
+            reading["playback"]["state"]
+        ));
+    }
+    let set = world.set("expressions").map_err(at(5))?;
+    let take_row = row_in(&set, "takes", &take_ref).map_err(at(5))?;
+    if take_row["clip"] != scene_ref.as_str()
+        || take_row["state"] != "returned"
+        || take_row["standing"] == true
+    {
+        return Err(format!("step 5: the Set's take is {}", clip(take_row)));
+    }
+    println!(
+        "step 5: {take_ref} recorded, {} points on {A}",
+        points.len()
+    );
+
+    // 6. Keep the take: its values are the Scene's main lane, by the act the Set lays on the take.
+    let choose = take_row["acts"]["choose"].clone();
+    if choose["action"] != "expressions.take.keep" {
+        return Err(format!(
+            "step 6: the Set's take lays no expressions.take.keep: {}",
+            clip(take_row)
+        ));
+    }
+    action(world, "expressions.take.keep", choose["input"].clone()).map_err(at(6))?;
+    let document = inspect(world, &r).map_err(at(6))?;
+    let scene = scene_in(&document, &scene_ref).map_err(at(6))?;
+    let main_lane = scene["presentation"]["scene"]["propertyTracks"]
+        .as_array()
+        .and_then(|lanes| lanes.iter().find(|lane| lane["bind"] == A))
+        .ok_or_else(|| format!("step 6: the Scene's main lane holds nothing on {A}"))?;
+    if points_of(main_lane) != points {
+        return Err(format!(
+            "step 6: the Scene's lane on {A} is {:?}, not the take's {points:?}",
+            points_of(main_lane)
+        ));
+    }
+    let kept = scene["studio_takes"]
+        .as_array()
+        .and_then(|takes| {
+            takes
+                .iter()
+                .find(|take| take["take_ref"] == take_ref.as_str())
+        })
+        .map(|take| take["kept"].clone())
+        .unwrap_or(Value::Null);
+    let (from, to) = (kept["from_s"].as_f64(), kept["to_s"].as_f64());
+    if !matches!((from, to), (Some(from), Some(to)) if from <= points[0].0 && to >= points[points.len() - 1].0)
+    {
+        return Err(format!(
+            "step 6: the take is kept over {}, not over its points",
+            clip(&kept)
+        ));
+    }
+    let set = world.set("expressions").map_err(at(6))?;
+    if row_in(&set, "takes", &take_ref).map_err(at(6))?["standing"] != true {
+        return Err("step 6: the Set's take does not stand".into());
+    }
+
+    // 7. Save the work: the file holds the saved Scene, its take kept and its lane.
+    action(world, "expressions.save", json!({"expression_ref": r})).map_err(at(7))?;
+    let (kept_revision, content, stored) = work_file(world, &location).map_err(at(7))?;
+    if kept_revision == saved_revision {
+        return Err(format!(
+            "step 7: the work's file did not move from {saved_revision}"
+        ));
+    }
+    let stored_scene = scene_in(&stored, &scene_ref).map_err(at(7))?.clone();
+    let stored_take = stored_scene["studio_takes"].as_array().and_then(|takes| {
+        takes
+            .iter()
+            .find(|take| take["take_ref"] == take_ref.as_str())
+    });
+    if stored_scene["presentation"]["saved"].is_null()
+        || stored_take.is_none_or(|take| take["kept"].is_null())
+        || !stored_scene["presentation"]["scene"]["propertyTracks"]
+            .as_array()
+            .is_some_and(|lanes| lanes.iter().any(|lane| lane["bind"] == A))
+    {
+        return Err(
+            "step 7: the work's file lacks the saved Scene, the kept take or its lane".into(),
+        );
+    }
+    let on_disk = std::fs::read_to_string(world.central().join(&path))
+        .map_err(|e| format!("step 7: {path}: {e}"))?;
+    if on_disk != content {
+        return Err(format!("step 7: {path} on disk is not what Central reads"));
+    }
+
+    // 8. Relaunch: a kernel started again holds no working copy; the work reopens from its file as it was kept.
+    relaunch(world);
+    let listed = expression(world, json!({"operation": "list"})).map_err(at(8))?;
+    let row = listed["expressions"]
+        .as_array()
+        .and_then(|rows| rows.iter().find(|row| row["expression_ref"] == r.as_str()))
+        .ok_or_else(|| {
+            format!(
+                "step 8: after the relaunch the store lists no {r}: {}",
+                clip(&listed)
+            )
+        })?;
+    if row["open"] != false || row["location"]["path"] != path.as_str() {
+        return Err(format!(
+            "step 8: after the relaunch the store lists {r} as {}",
+            clip(row)
+        ));
+    }
+    let model = fresh_model(world, "expressions").map_err(at(8))?;
+    if !model["value"]["works"].as_array().is_some_and(|works| {
+        works
+            .iter()
+            .any(|work| work["expression_ref"] == r.as_str() && work["open"] == false)
+    }) {
+        return Err(format!(
+            "step 8: the slice holds no closed {r}: {}",
+            clip(&model["value"]["works"])
+        ));
+    }
+    let set = fresh_set(world, "expressions").map_err(at(8))?;
+    let open = row_in(&set, "tracks", &r).map_err(at(8))?["acts"]["open"].clone();
+    let Some(open_action) = open["action"]
+        .as_str()
+        .filter(|id| *id == "expressions.open")
+    else {
+        return Err(format!(
+            "step 8: the closed track lays no expressions.open: {}",
+            clip(&open)
+        ));
+    };
+    action(world, open_action, open["input"].clone()).map_err(at(8))?;
+    let document = inspect(world, &r).map_err(at(8))?;
+    let reopened = scene_in(&document, &scene_ref).map_err(at(8))?;
+    for part in ["presentation", "studio_takes"] {
+        if reopened[part] != stored_scene[part] {
+            return Err(format!(
+                "step 8: the reopened Scene's {part} is not what was kept at step 7"
+            ));
+        }
+    }
+    let reading = expression(world, json!({"operation": "reading"})).map_err(at(8))?;
+    if reading["playback"]["state"] != "stopped"
+        || !reading["playback"]["armed"]
+            .as_array()
+            .is_some_and(Vec::is_empty)
+    {
+        return Err(format!(
+            "step 8: the relaunched store plays {}",
+            clip(&reading["playback"])
+        ));
+    }
+    let set = world.set("expressions").map_err(at(8))?;
+    row_in(&set, "clips", &scene_ref).map_err(at(8))?;
+    if row_in(&set, "takes", &take_ref).map_err(at(8))?["standing"] != true {
+        return Err("step 8: the reopened take does not stand in the Set".into());
+    }
+    let values = &row_in(&set, "tracks", &r).map_err(at(8))?["studio"]["values"];
+    if values[A].as_f64() != Some(v4) || values[B].as_f64() != Some(v2) {
+        return Err(format!(
+            "step 8: the reopened Studio holds {A} {} and {B} {}, not {v4} and {v2}",
+            values[A], values[B]
+        ));
+    }
+    let (reopened_revision, _, _) = work_file(world, &location).map_err(at(8))?;
+    if reopened_revision != kept_revision {
+        return Err(format!(
+            "step 8: opening the work moved its file from {kept_revision} to {reopened_revision}"
+        ));
+    }
+    println!("step 8: {r} reopened after the relaunch with {take_ref} kept");
+    Ok(())
+}
+
+/// Act 6 (O-I #1008; manual §20.1, Takes and Arrangement lanes): on a fresh World a new Expression, a Scene composed with the
+/// Studio by the act its device declares and saved, played, a take recorded and kept into its main lane, the work saved; then the
+/// kernel started again, and the work reopened from its file as it was kept. Every step is an `expressions.*` Action at the
+/// kernel's act door, read back from the expression store, Central's file and the disk, then from the World Model and the Set.
+/// It spends no provider prompt.
+#[test]
+#[ignore = "foundation act: runs the installed owners in a fresh home"]
+fn act_6_make_an_expression_and_keep_a_take() {
+    run(
+        "make-an-expression-and-keep-a-take",
+        make_an_expression_and_keep_a_take,
+    );
 }
