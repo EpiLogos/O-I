@@ -133,7 +133,7 @@ export function BarPointerGroup({reading, state, apply, disabled}: {reading: Nat
 }
 
 /** The CPU-light slot: read-only engine status. */
-export function BarEngineLight({state, playback}: {state: HostedAppState | null; playback: {field_paused: boolean} | null | undefined}) {
-  const light: EngineLight = barEngineLight(state, playback)
+export function BarEngineLight({state, playback, recording = false}: {state: HostedAppState | null; playback: {field_paused: boolean} | null | undefined; recording?: boolean}) {
+  const light: EngineLight = barEngineLight(state, playback, recording)
   return <output className="bar-engine" data-kind={light.kind} title={light.title} aria-label={`Engine: ${light.label}`}><i aria-hidden="true" />{light.label}</output>
 }
