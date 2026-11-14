@@ -97,8 +97,7 @@ import {actionAnswerOf, centralActionOp} from '../../central/devices/centralActi
 import {useAtSearch} from '../../central/searchPane'
 import {useModelCatalogue} from './useModelCatalogue'
 import {useAttemptTakes} from '../../owners/attemptTakes'
-import {readTaskOf, useWorkcellAnswer} from '../../owners/readers'
-import {usePopulationAnswer} from './usePopulationAnswer'
+import {useWorkcellAnswer} from '../../owners/readers'
 import {factoryLocateOp, useSessionCustody} from './sessionCustody'
 import {
   AGENTSET_DESIGN, AGENTSET_ID, PROFILE_REFUSE, agentChainSessions, agentsetBinding, chainProfileOf, custodyBinding, orderRequest, pinSourceRequest,
@@ -110,7 +109,8 @@ import {publishChainHead} from '../../shell/modeDetails'
 import {openInReader} from '../../frame/browser/constellationActs'
 import {APPROVALS_DESIGN, APPROVALS_ID, approvalsAwayBinding, receiptDevices} from './receiptBindings'
 import {CARRIER_DESIGN, CARRIER_ID, carrierBinding, connectionLabels, gitBinding, planRunOf, runDemandOf, seatBinding, seatDropRefusal, workcellDevices, type SeatPorts} from './workcellBindings'
-import {ROUTE_WORDS, aikitWriteOp, centralRevisionWrite, communiqueRefOf, deskActorOf, factoryOwnerWrite, gatewayWriteOp, ownerRouteWrite, refinementWrite, refusalWords, seatWriteOp} from './ownerRoutes'
+import {ROUTE_WORDS, aikitWriteOp, centralRevisionWrite, deskActorOf, factoryOwnerWrite, ownerRouteWrite, refinementWrite, refusalWords, seatWriteOp} from './ownerRoutes'
+import {encounterSessionOf} from '../../../../../../desktop/cradle/src/encounter/session'
 import {worldsOf} from './workcellMaterial'
 import {currentIdentity} from '../../../../../../desktop/cradle/src/nara/identity/current'
 import {WORKCELL_RACK_ID, chosenWorld, workcellGitReading} from './workcellRackBinding'
@@ -158,22 +158,6 @@ async function setAct(transport: Parameters<typeof kernelOp>[0], action: string,
   if (answer.status === 'refused') throw Error(answer.error)
   if (answer.status !== 'answered') throw Error(`${action} did not answer.`)
   return answer.value
-}
-
-/** A session's bound task (AIKit's task record: request.central.task_ref), the task Factory's attempts are dispatched on; refused in words. */
-async function boundTaskOf(transport: Parameters<typeof kernelOp>[0], project: string, session: string, what: string): Promise<string> {
-  const read = await readTaskOf(transport, project, session)()
-  if ('error' in read) throw Error(`${what}: AIKit did not read the session's task: ${read.error}`)
-  const ref = (read.value as {request?: {central?: {task_ref?: unknown}}} | null)?.request?.central?.task_ref
-  if (typeof ref !== 'string' || !ref.trim()) throw Error(`${what}: AIKit's record of the session binds no task, so there is no work to name.`)
-  return ref
-}
-/** The Position an agent occupies in AIKit's population as the window holds it, or null. */
-function positionOf(population: {status: string; value?: unknown}, agentRef: string): string | null {
-  const positions = population.status === 'answered' && population.value && typeof population.value === 'object'
-    && Array.isArray((population.value as {positions?: unknown}).positions) ? (population.value as {positions: {position_ref?: unknown; occupancy?: {agent_ref?: unknown}}[]}).positions : []
-  const row = positions.find(item => item.occupancy?.agent_ref === agentRef && typeof item.position_ref === 'string')
-  return row ? String(row.position_ref) : null
 }
 
 /** The outcome of one drop attempt or one write: the owner's receipt, or the refusal that names the missing operation. */
@@ -599,7 +583,6 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const sessionCustody = useSessionCustody(transport, custodyAt)
   const custodyHoldPorts = useMemo((): CustodyPorts => (sessionCustody.hold ? {...custodyPorts, hold: sessionCustody.hold} : custodyPorts),
     [custodyPorts, sessionCustody.hold])
-  const custodyPopulation = usePopulationAnswer(transport, register)
   const custodyRead = sessionCustody.read ?? undefined
   const custodyDesignBinding = useMemo(() => custodyBinding({sessionRef, agent: agentDesignBinding?.values ?? {}, holds, grants, person: currentPerson,
     custody: custodyRead}, scopeDesignBinding, custodyHoldPorts), [sessionRef, agentDesignBinding, scopeDesignBinding, holds, grants, currentPerson, custodyRead, custodyHoldPorts])
@@ -693,22 +676,13 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
       launch: async ({agent_session}) => ({status: 'launched', said: await sessionSetAct(transport, agent_session, 'launch')}),
       stopAfter: ({agent_session}) => sessionSetAct(transport, agent_session, 'stopTrack'),
       retry: ({agent_session}) => sessionSetAct(transport, agent_session, 'retry'),
-      // A device of another session's chain (DLW build ruling 2026-11-05): a message to that session's agent's Position (AIKit's gateway send),
-      // turned into work on its task by Messages' own route, the one a message dropped on a track takes (`aikit gateway delegate`, O-I ticket
-      // 757). The chain writes both through the kernel itself: Messages is the rail's, never the chain's to reach.
-      ask: async ({project, agent_session, agent_ref, device, words}) => {
-        const position = positionOf(custodyPopulation, agent_ref)
-        if (!position) throw Error(`Devices: AIKit's population places ${agent_ref} at no Position, so no message reaches its session.`)
-        const work = await boundTaskOf(transport, project, agent_session, 'Devices')
-        const scope = project ? {project} : {}
-        const sent = await ownerRouteWrite(transport, gatewayWriteOp({kind: 'send', ...scope, to: position, body: words}), ROUTE_WORDS.send)
-        const communique = communiqueRefOf(sent)
-        if (!communique) throw Error('Devices: AIKit took the message but named no Communique, so it could not be turned into work.')
-        await ownerRouteWrite(transport, gatewayWriteOp({kind: 'delegate', ...scope, communique, work,
-          reason: `Asked from the Agent rack: a change of ${device} on this session's chain.`}), ROUTE_WORDS.delegate)
-      },
+      // A device of another session's chain (DLW build ruling 2026-11-05): the words are that session's next turn, through the one send
+      // (desktop/cradle encounter/session.ts encounterSessionOf … submit, O-I ticket 1003), the session every presenter of it shares.
+      // REPLACED (O-I ticket 1006): a message to its agent's Position (AIKit's gateway send), then delegated onto its task (`aikit gateway
+      // delegate`), a second send beside the conversation's. Messages is the rail's, never the chain's to reach.
+      ask: ({project, agent_session, words}) => encounterSessionOf(transport, {project, ref: agent_session}).submit(words),
     } : {}),
-  }), [transport, oneAgent, shell.setSolo, macrosWhere, refreshMacros, custodyPopulation])
+  }), [transport, oneAgent, shell.setSolo, macrosWhere, refreshMacros])
   // The Decision helper (§19.20, T-AGENCY K5): a device of its own, a chain of the group's Agent rack in place of an Agent, on AIKit's
   // decision provider and QL's team space — read only where the group's space names its helper (AIKit's `decision_helper`, round 860). The
   // rack lists it among its chains.

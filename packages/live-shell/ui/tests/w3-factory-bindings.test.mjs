@@ -103,20 +103,25 @@ const routeReading = (route, data) => ({outcome: {result: 'owner_route_reading',
 const dispatched = (action, data) => ({outcome: {result: 'action_dispatched', dispatch: {state: 'invoked', owner_operation: action, data}}})
 const envelope = message => JSON.stringify({kind: 'owner-refused-or-failed', message, operation_may_have_run: false})
 
+// REPLACED (O-I 1006): the routes were shown on the window's `aikit.gateway.send`, which is retired: the window's words reach an agent only
+// as its conversation's next turn (encounter/session.ts, the one send). The delegation, the gateway's other write, shows them.
 test('the owner routes: a write through kernelOp carries the owner\'s request as its Action and answers its document; a refusal is the owner\'s words, never the envelope', async () => {
-  const kernel = fakeKernel(op => (op.input?.to === 'nobody' ? {error: envelope('aikit gateway send: no Position named nobody')}
-    : op.input?.to === 'down' ? {outcome: {result: 'action_dispatched', dispatch: {state: 'owner_refused', owner_operation: 'aikit.gateway.send', message: 'aikit gateway send: the gateway is down'}}}
-    : dispatched('aikit.gateway.send', {ok: true, schema: 1, data: {communique: {schema: 'aikit.communique/v1', communique_ref: 'communique:1'}}})))
+  const delegation = work => ({kind: 'delegate', communique: 'communique:1', work, reason: 'Take this on.'})
+  const kernel = fakeKernel(op => (op.input?.work === 'work:nobody' ? {error: envelope('aikit gateway delegate: no Communique named communique:1')}
+    : op.input?.work === 'work:down' ? {outcome: {result: 'action_dispatched', dispatch: {state: 'owner_refused', owner_operation: 'aikit.gateway.delegate', message: 'aikit gateway delegate: the gateway is down'}}}
+    : dispatched('aikit.gateway.delegate', {ok: true, schema: 1, data: {delegation: {communique_ref: 'communique:1', work_ref: 'work:dlw/w3'}}})))
   try {
-    const answer = await routes.ownerRouteWrite(kernel.transport, routes.gatewayWriteOp({kind: 'send', project: 'O-I', to: GUARDIAN, body: 'hello'}), routes.ROUTE_WORDS.send)
-    assert.deepEqual(kernel.ops[0], {op: 'act', action: 'aikit.gateway.send', input: {to: GUARDIAN, body: 'hello'}, project: 'O-I'})
-    assert.equal(answer.route, routes.ROUTE_WORDS.send)
-    assert.equal(answer.data.communique.communique_ref, 'communique:1', 'AIKit\'s document, out of its {ok, data} envelope')
-    await assert.rejects(() => routes.ownerRouteWrite(kernel.transport, routes.gatewayWriteOp({kind: 'send', to: 'nobody', body: 'x'}), routes.ROUTE_WORDS.send),
-      error => error.message === 'aikit gateway send: no Position named nobody', 'the message, not the wire envelope')
-    await assert.rejects(() => routes.ownerRouteWrite(kernel.transport, routes.gatewayWriteOp({kind: 'send', to: 'down', body: 'x'}), routes.ROUTE_WORDS.send),
-      error => error.message === 'aikit gateway send: the gateway is down', 'an Action its owner refused is the owner\'s words')
+    const answer = await routes.ownerRouteWrite(kernel.transport, routes.gatewayWriteOp({...delegation('work:dlw/w3'), project: 'O-I'}), routes.ROUTE_WORDS.delegate)
+    assert.deepEqual(kernel.ops[0], {op: 'act', action: 'aikit.gateway.delegate', input: {communique: 'communique:1', work: 'work:dlw/w3', reason: 'Take this on.'}, project: 'O-I'})
+    assert.equal(answer.route, routes.ROUTE_WORDS.delegate)
+    assert.equal(answer.data.delegation.work_ref, 'work:dlw/w3', 'AIKit\'s document, out of its {ok, data} envelope')
+    await assert.rejects(() => routes.ownerRouteWrite(kernel.transport, routes.gatewayWriteOp(delegation('work:nobody')), routes.ROUTE_WORDS.delegate),
+      error => error.message === 'aikit gateway delegate: no Communique named communique:1', 'the message, not the wire envelope')
+    await assert.rejects(() => routes.ownerRouteWrite(kernel.transport, routes.gatewayWriteOp(delegation('work:down')), routes.ROUTE_WORDS.delegate),
+      error => error.message === 'aikit gateway delegate: the gateway is down', 'an Action its owner refused is the owner\'s words')
   } finally { kernel.restore() }
+  assert.equal(routes.ROUTE_WORDS.send, undefined, 'the window sends no Communique')
+  assert.equal(routes.communiqueRefOf, undefined)
   assert.deepEqual(routes.gatewayWriteOp({kind: 'service', on: true}), {op: 'gateway_service', on: true}, 'the Service is the kernel\'s own held process, no Action')
   await assert.rejects(() => routes.ownerRouteWrite({kind: 'unavailable', reason: 'no kernel here'}, routes.seatWriteOp({kind: 'release', workcell: 'env-1', product: 'o-i', actor: 'a'}), routes.ROUTE_WORDS.release),
     /kernel carrier is unavailable, so `seat release` cannot be asked: no kernel here/)

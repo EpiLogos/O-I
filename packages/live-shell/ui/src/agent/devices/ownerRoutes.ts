@@ -3,7 +3,7 @@
 // command in plain words, its reading verbatim. A refusal is the owner's words in the kernel's Error envelope, unwrapped to its message
 // (desktop/cradle/src/contributions/factory/development.ts ownerRefusalText) where a person reads it.
 //   - A write goes through kernelOp, never a held read (central/devices/centralDeviceWrites.ts centralWrite is the idiom): an Action (`act`:
-//     a seat's Join and Release, a Communique sent or delegated), workcell_write and aikit_write are writes (desktop/cradle/src/kernel/bridge.ts), so a completed one
+//     a seat's Join and Release, a Communique delegated), workcell_write and aikit_write are writes (desktop/cradle/src/kernel/bridge.ts), so a completed one
 //     retires every held answer of the window, and the kernel's `owner_changed` receipt (owners/notices.ts OWNER_WRITE_RECEIPTS) moves the
 //     temporal field: every reader asks its owner again.
 //   - A read is a held answer for the window (owners/ownerCall.ts useOwnerOp, the knowledge route's idiom), read again on the spine's epoch
@@ -58,14 +58,12 @@ export function actOp(action: string, input: Readonly<Record<string, unknown>>, 
   return {op: 'act', action, input: given, ...(project ? {project} : {})}
 }
 
-/** The gateway's writes: a Communique sent or delegated is AIKit's Action (`aikit.gateway.send`, `aikit.gateway.delegate`); the
- * gateway's Service is the window's own held process, started and stopped by the kernel (`gateway_service`). */
+/** The gateway's writes: a Communique delegated is AIKit's Action (`aikit.gateway.delegate`); the gateway's Service is the window's own
+ * held process, started and stopped by the kernel (`gateway_service`). REPLACED (O-I 1006): the window's Communique sent to a Position
+ * (`aikit.gateway.send`), with what AIKit's answer named (communiqueRefOf). The window's words reach an agent only as its conversation's
+ * next turn, through the one send (desktop/cradle encounter/session.ts, O-I 1003); an agent's body sends its own Communiques. */
 export function gatewayWriteOp(request: GatewayWriteRequest): KernelOp {
   switch (request.kind) {
-    case 'send': {
-      const {kind: _kind, project, ...input} = request
-      return actOp('aikit.gateway.send', input, project)
-    }
     case 'delegate': {
       const {kind: _kind, project, ...input} = request
       return actOp('aikit.gateway.delegate', input, project)
@@ -73,15 +71,6 @@ export function gatewayWriteOp(request: GatewayWriteRequest): KernelOp {
     case 'service':
       return {op: 'gateway_service', on: request.on}
   }
-}
-
-/** The Communique AIKit's send answered with (`aikit gateway send --json`: the route's reading carries `communique`, the record it
- * accepted), by its ref: what a delegation names. Undefined when the answer names none. Pure. */
-export function communiqueRefOf(answer: unknown): string | undefined {
-  const data = typeof answer === 'object' && answer !== null && 'data' in answer ? (answer as {data: unknown}).data : answer
-  const record = typeof data === 'object' && data !== null ? (data as {communique?: unknown}).communique : undefined
-  const ref = typeof record === 'object' && record !== null ? (record as {communique_ref?: unknown}).communique_ref : undefined
-  return typeof ref === 'string' && ref.trim() ? ref : undefined
 }
 
 /** A seat's Join and Release: the seat instrument's own Actions (`workcell.seat.join`, `workcell.seat.release`). */
@@ -130,7 +119,6 @@ export const centralRevisionWrite = (transport: KernelTransportStatus):
 
 /** The plain words of each write, for a refusal that names the command it could not ask. */
 export const ROUTE_WORDS = {
-  send: '`aikit gateway send`',
   delegate: '`aikit gateway delegate`',
   service: '`aikit gateway serve`',
   join: '`seat join`',

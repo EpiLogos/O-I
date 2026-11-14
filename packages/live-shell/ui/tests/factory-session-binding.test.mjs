@@ -172,8 +172,8 @@ test('the Agentset rack: a group\'s sessions as its chains, each named by its ag
   const held = own.agentsetValues({group: GROUP, tracks: TRACKS, holds: bind.chainHolds()})
   assert.equal(held.member, HELPER.sessionRef, 'the chosen member is the view\'s')
   assert.equal('device' in binding.local, false, 'no device of the chain is chosen: the Devices view shows them all')
-  // REPLACED (BD r19; DLW build ruling 2026-11-05): `dev` was a missing op. A device of another session's chain is changed by a message to that
-  // session through Messages' delegate, so a rack handed no carrier names that carrier (the last test).
+  // REPLACED (BD r19; DLW build ruling 2026-11-05): `dev` was a missing op. A device of another session's chain is changed by that session's
+  // next turn, through the one send (O-I 1003; it went through Messages' delegate until O-I 1006), so a rack handed no carrier names it.
   for (const key of ['fanOut', 'depth', 'handBack', 'returnCap', 'solo']) {
     assert.match(binding.standing[key].disabled, /missing op/, key)
     await assert.rejects(() => binding.write([{key, value: 1}]), /missing op/)
@@ -211,7 +211,8 @@ test('the Agentset rack: a group\'s sessions as its chains, each named by its ag
   assert.match(binding.standing.retry.disabled, /^Retry: no carrier to Factory's Set stands on this rack, .*\(Software Factory's factory\.attempt\.retry\)\.$/)
   await assert.rejects(() => binding.write([{key: 'retry', value: 1}]), {message: own.AGENTSET_REFUSE.retry})
   await assert.rejects(() => binding.write([{key: own.memberDeviceKey(HELPER.sessionRef, 'actuation:harness-model'), value: '{"effort":"max"}'}]), {message: own.AGENTSET_REFUSE.dev})
-  assert.match(own.AGENTSET_REFUSE.dev, /a message to that session through Messages' delegate/)
+  assert.match(own.AGENTSET_REFUSE.dev, /goes to that session as its next turn, through the one send/)
+  assert.doesNotMatch(own.AGENTSET_REFUSE.dev, /delegate|gateway send/, 'no second send beside the conversation\'s')
   bind.resetHolds()
 })
 
@@ -280,7 +281,7 @@ test('(BD r19) the Group card carries its type, Discard removes the proposal, Re
     propose: async input => { calls.push(['propose', input]); return {record: {schema: 'central.agent-set/v1', agent_set_ref: input.ref, revision: 'r1', ...(input.type ? {type: input.type} : {})}} },
     removeSet: async input => { calls.push(['remove', input]); return {ref: input.ref} },
     retry: async input => { calls.push(['retry', input]); return {status: 'retried'} },
-    ask: async input => { calls.push(['ask', input]); return {communique: 'communique:c1'} },
+    ask: async input => { calls.push(['ask', input]) },
     suffix: () => 'x1',
   }
   const L = {...LEAD, agentRef: 'agent/aletheia'}, H = {...HELPER, agentRef: 'agent/anima'}
@@ -309,7 +310,7 @@ test('(BD r19) the Group card carries its type, Discard removes the proposal, Re
   rack().local.member(H.sessionRef)
   await rack().write([{key: 'retry', value: true}])
   assert.deepEqual(calls.at(-1), ['retry', {project: H.project ?? '', agent_session: H.sessionRef}])
-  // A device of another session's chain: a message to that session (Messages' delegate), never a write of its binding.
+  // A device of another session's chain: that session's next turn (the one send), never a write of its binding.
   assert.equal(rack().standing.dev, undefined, 'the Devices view stands with its carrier')
   await rack().write([{key: own.memberDeviceKey(H.sessionRef, 'actuation:harness-model'), value: '{"effort":"max"}'}])
   const [kind, asked] = calls.at(-1)
@@ -445,10 +446,11 @@ test('(BD r19, Central #318) the chain is the agent\'s profile: Rename on the Ag
     'the rack\'s Sets move through Central\'s chain-order')
   assert.match(chain, /removeSet: input => setAct\(transport, 'central\.agent-set\.remove', input\)/)
   assert.match(chain, /retry: \(\{agent_session\}\) => sessionSetAct\(transport, agent_session, 'retry'\)/)
-  // Another chain's device: a message sent to its agent's Position, then delegated into its task, both through AIKit's gateway (Messages' own
-  // route); the chain never reaches the rail's Messages device for it (tests/agent-rail-devices.test.mjs "one publisher").
-  assert.match(chain, /gatewayWriteOp\(\{kind: 'send', \.\.\.scope, to: position, body: words\}\), ROUTE_WORDS\.send\)/)
-  assert.match(chain, /gatewayWriteOp\(\{kind: 'delegate', \.\.\.scope, communique, work,/)
+  // Another chain's device: the words are that session's next turn through the one send (encounter/session.ts, O-I 1003), the session
+  // every presenter of it shares. REPLACED (O-I 1006): a message sent to its agent's Position, then delegated into its task, both through
+  // AIKit's gateway. The chain never reaches the rail's Messages device for it (tests/agent-rail-devices.test.mjs "one publisher").
+  assert.match(chain, /ask: \(\{project, agent_session, words\}\) => encounterSessionOf\(transport, \{project, ref: agent_session\}\)\.submit\(words\)/)
+  assert.doesNotMatch(chain, /gatewayWriteOp|communiqueRefOf|boundTaskOf/, 'no second send beside the conversation\'s')
   assert.doesNotMatch(chain, /publishedDevice\(MESSAGES_ID\)/)
   assert.match(chain, /acts: padsActs/, 'the pads\' head carries Save as preset and Hot-swap')
 })

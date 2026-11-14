@@ -616,10 +616,10 @@ export const AGENTSET_REFUSE = {
   delete: 'Delete: no carrier to AIKit\'s detach of a chain\'s session from its space (the kernel\'s encounter_session_detach, as the session track\'s own Delete) stands on this chain.',
   // The Devices view (§19.15 "Change a setting there and you change the agent"): each device of a chain answers to its own owner, and the
   // rack holds each chain's session, never the binding of a device of another session's chain.
-  // A device of another session's chain is that session's (DLW build ruling 2026-11-05): the change goes to it as a message through
-  // Messages' delegate (AIKit's gateway send to its agent's Position, then delegate onto the session's task: the route a message dropped on a
-  // track takes, O-I ticket 757), never a write of another chain's binding.
-  dev: 'Devices: no carrier to Messages\' delegate stands on this rack. A change of a device of another session\'s chain goes as a message to that session through Messages\' delegate (AIKit\'s gateway send, then delegate onto its task).',
+  // A device of another session's chain is that session's (DLW build ruling 2026-11-05): the change goes to it as its conversation's next
+  // turn, through the one send (desktop/cradle encounter/session.ts, O-I ticket 1003), never a write of another chain's binding. REPLACED
+  // (O-I ticket 1006): it went through Messages' delegate (AIKit's gateway send to its agent's Position, then delegate onto its task).
+  dev: 'Devices: no carrier to the session\'s conversation stands on this rack. A change of a device of another session\'s chain goes to that session as its next turn, through the one send (its conversation\'s draft and prompt in AIKit).',
   // Launch, Stop after and Retry on the chain's task row (BD r23, round 870, DLW build ruling 2026-11-05; O-I ticket 1006) are the chosen
   // chain's session's own acts in Factory's Set, as the Session grid presses them on its track (factoryTaskActs.ts sessionSetAct): Launch
   // runs the first task written on the session that has not run (factory.task.run), as a clip's launch stands in Live's slot; Stop after
@@ -747,7 +747,7 @@ export interface AgentRackPorts {
   /** Launch: the chosen chain's session's first written task run (its clip's launch in Factory's Set, factory.task.run): its status and
    * Factory's answer in words. */
   readonly launch?: (input: {project: string; agent_session: string}) => Promise<{readonly status: string; readonly said: string}>
-  /** A device of another session's chain changed: the words go to that session as a message through Messages' delegate. */
+  /** A device of another session's chain changed: the words go to that session as its conversation's next turn (the one send). */
   readonly ask?: (input: {project: string; agent_session: string; agent_ref: string; device: string; change: Readonly<Record<string, unknown>>; words: string}) => Promise<unknown>
   readonly agent?: DesignBinding | null
   readonly suffix?: () => string
@@ -1515,7 +1515,7 @@ export function agentsetBinding(input: AgentRackInput, ports?: AgentRackPorts): 
     const answer = await ports.launch({project: chain.project ?? ROOT_REGISTER, agent_session: chain.sessionRef})
     holdView(AGENTSET_ID, LAUNCHED, JSON.stringify({chain: chain.sessionRef, status: answer.status, said: answer.said}))
   }
-  /** A device of another session's chain (`dev:<chain>@<device>`): the change goes to that session as a message (Messages' delegate), in
+  /** A device of another session's chain (`dev:<chain>@<device>`): the change goes to that session as its conversation's next turn, in
    * words its agent reads; nothing of that chain's binding is written from here. */
   const askChain = async (key: string, value: Value | undefined) => {
     if (!ports?.ask) throw Error(AGENTSET_REFUSE.dev)

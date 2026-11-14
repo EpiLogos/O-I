@@ -533,15 +533,17 @@ test('the design draws the song on the track\'s rack, this task\'s note lit, eve
   assert.match(sources[1], /agents and agent sets/)
 })
 
-// O-I 844 Compose (lead rulings, round 15): Compose is Anima's act through its team. The press sends one Communique to the Position the
-// session's orchestrator occupies (`aikit gateway send`, the Action aikit.gateway.send through the kernel's act) carrying the Intent, the clip's Constellation and
-// its sources, the song's identity and where the answer goes; Anima answers the person (`aikit gateway send --to @owner --propose
-// --reply-to <the ask>`), a proposal Central's receiving ledger holds from its Position. The desk reads the ledger (`receiving` List, Read)
-// for the proposal that answers the ask; QL checks the heads it gives, Factory admits it (`factory workflow edit --check`, factory_owner
+// O-I 844 Compose (lead rulings, round 15): Compose is Anima's act through its team. The press puts one ask to the session's orchestrator
+// as its conversation's next turn, in the session it works on the rack, through the one send (encounter/session.ts, O-I 1003), carrying the
+// Intent, the clip's Constellation and its sources, the song's identity, where the answer goes and the ask's id. REPLACED (O-I 1006): the
+// press sent a Communique to the orchestrator's Position (the Action aikit.gateway.send through the kernel's act), and the answer replied to
+// it. Anima answers the person (`aikit gateway send --to @owner --propose --from-position <its Position> --subject "Compose: <song> · <the
+// ask>"`), a proposal Central's receiving ledger holds from its Position. The desk reads the ledger (`receiving` List, Read of the proposal
+// whose subject names the ask); QL checks the heads it gives, Factory admits it (`factory workflow edit --check`, factory_owner
 // `workflow-edit-check`), and the person's Accept is one act: the proposal accepted in Central and the edit written by Factory. Discard
 // declines it. Channels: Central's agent set and AIKit's population are REAL (tests/fixtures/central-agent-set-anima-2026-10-29.json;
 // workcell-readings-2026-10-21.json, where agent/anima occupies anima-4 over omarchy); a vacant orchestrator is DERIVED from it (its
-// occupancy made vacant). SCRIPTED, as the lead rules: AIKit's send answer and the ledger's proposal (Central's receiving page and
+// occupancy made vacant). SCRIPTED, as the lead rules: the ledger's proposal (Central's receiving page and
 // reading shapes, ctrl continuous_work/receiving.rs) — no body and no model. QL's check is SCRIPTED in its REAL shape (as above); Factory's
 // check receipt is DERIVED from the REAL heads receipt as Factory's `--check` answers it (its own test, factory/tests/workflow_score.rs
 // an_edit_is_admitted_without_being_written…, pins it); Factory's refusal is REAL (ql_spelling). The native walk is UNVERIFIED.
@@ -549,23 +551,28 @@ const SET = JSON.parse(await readFile(new URL('./fixtures/central-agent-set-anim
 const WHO = JSON.parse(await readFile(new URL('./fixtures/workcell-readings-2026-10-21.json', import.meta.url), 'utf8')).population
 const ANIMA = 'central:position:project:O-I:anima-4'
 const REV = REAL.score.song.file.byteRevision
-const ASK = 'aikit:communique:01m3compose0ask0000000000000'
+const ASK = 'compose:0a5c0de1'
 const answered = value => ({status: 'answered', value})
-const ADDRESS = {position: ANIMA, agent: 'agent/anima', set: 'agent-set/anima'}
+// The orchestrator's own session on the rack, in the group's space: Compose asks in its conversation.
+const ANIMA_SESSION = member('ses-anima', 'agent/anima', 'Anima')
+const COMPOSING = [...TRACKS, ANIMA_SESSION]
+const ADDRESS = {position: ANIMA, agent: 'agent/anima', set: 'agent-set/anima', session: 'ses-anima', register: ''}
 const WORDS = {intent: 'The capture list survives a restart', intentWhy: null, constellation: 'wiki:space:capture', sources: ['wiki:page:capture-list', 'wiki:page:restart']}
 const PROPOSAL = {contract: 'factory.workflow-edit/v1', expectedRevision: REV, edits: [{op: 'heads', unit: 'eros-verify', heads: {CS: 'CS3'}},
   {op: 'connect', unit: 'mythos-debug', waitsOn: 'eros-verify'}]}
 const proposalBody = (edit = PROPOSAL) => `Compose: a first score for development-and-knowledge\n\nVerify before debugging.\n\n\`\`\`json\n${JSON.stringify(edit)}\n\`\`\``
 // Central's receiving ledger, SCRIPTED in its own shapes: a page's rows and each Return's reading.
-const ledgerRow = (n, over = {}) => ({return_ref: `central:return:project:O-I:compose-${n}`, revision: `central.content-fnv1a64/v1:${n}:aa`, sequence: n, status: 'pending',
+// The proposal's subject, as Anima is told to give it: the song and the ask it answers (the ledger's page carries it).
+const subjectOf = ask => `Compose: development-and-knowledge · ${ask}`
+const ledgerRow = (n, {ask = ASK, ...over} = {}) => ({return_ref: `central:return:project:O-I:compose-${n}`, revision: `central.content-fnv1a64/v1:${n}:aa`, sequence: n, status: 'pending',
   kind: 'request', source_ref: null, document_id: null, author: {principal_ref: 'native-service:aikit/gateway', actor_kind: 'native-service'},
   declared_producer: {ref: ANIMA, actor_kind: 'agent', attribution: 'verified'}, summary: null,
-  request: {kind: 'proposal', subject: 'Compose: development-and-knowledge', proposed_owner_ref: null, proposal_ref: null}, acknowledged: false,
+  request: {kind: 'proposal', subject: subjectOf(ask), proposed_owner_ref: null, proposal_ref: null}, acknowledged: false,
   received_at_unix_seconds: 1_790_000_100, settled: false, ...over})
-const ledgerReading = (row, replyTo, body = proposalBody(), status = row.status) => ({schema: 'central.receiving-reading/v1', return_ref: row.return_ref, revision: row.revision,
-  record: {...row, status, request: {...row.request, body}, reply_to: replyTo, authority_ref: 'a', authority_revision: 'r', stale_at_arrival: false, review: null},
+const ledgerReading = (row, body = proposalBody(), status = row.status) => ({schema: 'central.receiving-reading/v1', return_ref: row.return_ref, revision: row.revision,
+  record: {...row, status, request: {...row.request, body}, reply_to: null, authority_ref: 'a', authority_revision: 'r', stale_at_arrival: false, review: null},
   included: false, source_changed_by_arrival_or_review: false, automatic_agent_or_model_invocation: false})
-const ASKED = {communique: ASK, position: ANIMA, project: 'O-I', revision: REV, at: 1_790_000_000_000}
+const ASKED = {ask: ASK, position: ANIMA, session: 'ses-anima', project: 'O-I', revision: REV, at: 1_790_000_000_000}
 /** A scripted kernel over the ledger, QL and Factory: every op recorded, each answered as its owner would. */
 function owners({rows = [], readings = {}, ql = 'admitted', factory = 'admitted', reviewed = []} = {}) {
   const asked = []
@@ -598,14 +605,25 @@ function owners({rows = [], readings = {}, ql = 'admitted', factory = 'admitted'
   return {asked, call, reviewed}
 }
 
-test('Compose asks the Position the session\'s orchestrator occupies, from Central\'s agent set and AIKit\'s population, or is refused in words naming how its body starts', () => {
-  // REAL: Central's agent set anima names agent/anima its orchestrator; AIKit's population has it occupy anima-4.
-  const to = score.composeAddressOf(eros, TRACKS, {set: answered(SET), population: answered(WHO)})
+test('Compose asks the session\'s orchestrator in its own session on the rack, at the Position it occupies, from Central\'s agent set and AIKit\'s population, or is refused in words naming how its body starts', () => {
+  // REAL: Central's agent set anima names agent/anima its orchestrator; AIKit's population has it occupy anima-4. Its session stands in the
+  // group's space on the rack.
+  const to = score.composeAddressOf(eros, COMPOSING, {set: answered(SET), population: answered(WHO)})
   assert.deepEqual(to, {state: 'addressed', address: ADDRESS})
+  // Its session in the group's space, before one of its sessions elsewhere; that one where it has none in the group; and the register its
+  // session was read under, its conversation's own.
+  const elsewhere = {...member('ses-anima-solo', 'agent/anima', 'Anima'), parentRef: 'space:solo', spaceRef: 'space:solo'}
+  const ground = {set: answered(SET), population: answered(WHO)}
+  assert.equal(score.composeAddressOf(eros, [group, eros, elsewhere, ANIMA_SESSION], ground).address.session, 'ses-anima')
+  assert.equal(score.composeAddressOf(eros, [group, eros, elsewhere], ground).address.session, 'ses-anima-solo')
+  assert.equal(score.composeAddressOf(eros, [...TRACKS, {...ANIMA_SESSION, project: 'O-I'}], ground).address.register, 'O-I')
+  // No session of the orchestrator on the rack: refused in words, nothing is asked.
+  assert.match(score.composeAddressOf(eros, TRACKS, ground).why,
+    /^Compose: agent\/anima occupies central:position:project:O-I:anima-4, and no session of it stands on this rack: Compose asks in its conversation, so nothing is asked until one does\.$/)
   // DERIVED: no one occupies the orchestrator's Position. The press is refused, naming it and how its body starts; nothing is asked.
   const vacant = structuredClone(WHO)
   Object.assign(vacant.positions.find(row => row.position_ref === ANIMA), {occupancy: {state: 'vacant', observed_via: 'local'}})
-  const refused = score.composeAddressOf(eros, TRACKS, {set: answered(SET), population: answered(vacant)})
+  const refused = score.composeAddressOf(eros, COMPOSING, {set: answered(SET), population: answered(vacant)})
   assert.equal(refused.state, 'refused')
   assert.match(refused.why, /no one occupies central:position:project:O-I:anima-4, where agent\/anima composes for agent-set\/anima: its body starts with `aikit inhabit --position central:position:project:O-I:anima-4`, and nothing is asked until it does/)
   // A session in no agent set, a set not read or naming no orchestrator, and a population not read: each in its owner's words.
@@ -619,29 +637,33 @@ test('Compose asks the Position the session\'s orchestrator occupies, from Centr
     /agent\/nobody, the orchestrator of agent-set\/anima, holds no Position here/)
 })
 
-test('Compose sends one Communique to that Position carrying the Intent, the Constellation\'s sources, the song and where the answer goes, and keeps its id', () => {
-  const {body, revision} = score.composeAskOf(ADDRESS, WORDS, REAL.score, TARGET, 'O-I')
+test('Compose puts one ask to the orchestrator\'s conversation carrying the Intent, the Constellation\'s sources, the song, where the answer goes and its own id, through the one send', async () => {
+  const {body, revision} = score.composeAskOf(ADDRESS, WORDS, REAL.score, TARGET, 'O-I', ASK)
   assert.equal(revision, REV)
   assert.match(body, /^Compose a first score for the song development-and-knowledge, from the task's Intent, through your team \(agent-set\/anima\)\./)
   assert.match(body, /Intent: The capture list survives a restart/)
   assert.match(body, /Sources: wiki:space:capture — wiki:page:capture-list, wiki:page:restart/)
   assert.match(body, /From: no plan is named/)
-  assert.match(body, /`aikit gateway send --to @owner --propose --reply-to <this Communique> --subject "Compose: development-and-knowledge" --project-world O-I --body-file -`/)
+  assert.match(body, /`aikit gateway send --to @owner --propose --from-position central:position:project:O-I:anima-4 --subject "Compose: development-and-knowledge · compose:0a5c0de1" --project-world O-I --body-file -`/)
+  assert.match(body, /Answer the person with one proposal whose subject names this ask, compose:0a5c0de1 /)
   // Anima is told which edits are Factory's: `unit` writes a unit the song does not hold, whole, in the workflow SDK's words.
   assert.match(body, /Your edits are Factory's \(factory\.workflow-edit\/v1\): `unit` writes a unit the song does not hold, whole, in the workflow SDK's words \(`factory workflow schema`\); `allocate`, `connect` and `heads` change the units it holds\./)
   const ask = JSON.parse(body.match(/```json\n([\s\S]*?)\n```/)[1])
-  assert.deepEqual(ask, {schema: 'oi.compose-ask/v1', intent: WORDS.intent, from: null, constellation: WORDS.constellation, sources: WORDS.sources,
+  assert.deepEqual(ask, {schema: 'oi.compose-ask/v1', ask: ASK, intent: WORDS.intent, from: null, constellation: WORDS.constellation, sources: WORDS.sources,
     song: {workflowKey: 'development-and-knowledge', runRef: RUN, statePath: STATE, byteRevision: REV}, set: 'agent-set/anima', map: null,
-    answer: {to: '@owner', propose: true, register: 'O-I', contract: 'factory.workflow-edit/v1', expectedRevision: REV, edits: ['unit', 'allocate', 'connect', 'heads']}})
-  assert.throws(() => score.composeAskOf(ADDRESS, {...WORDS, intent: null, intentWhy: 'Factory did not read the Run\'s Development Field'}, REAL.score, TARGET, 'O-I'),
+    answer: {to: '@owner', propose: true, from: ANIMA, subject: 'Compose: development-and-knowledge · compose:0a5c0de1', register: 'O-I', contract: 'factory.workflow-edit/v1',
+      expectedRevision: REV, edits: ['unit', 'allocate', 'connect', 'heads']}})
+  assert.throws(() => score.composeAskOf(ADDRESS, {...WORDS, intent: null, intentWhy: 'Factory did not read the Run\'s Development Field'}, REAL.score, TARGET, 'O-I', ASK),
     /Compose writes from the task's Intent, and it is not read: Factory did not read/)
-  // One send, to the orchestrator's Position, with no sender: the desk is never an occupant. AIKit's answer names the Communique kept.
-  const op = score.composeSendOp(ADDRESS, body, 'O-I')
-  assert.deepEqual(op, {op: 'act', action: 'aikit.gateway.send', input: {to: ANIMA, body}, project: 'O-I'})
-  assert.equal(writesOwner(op), true)
-  const sent = {communique: {schema: 'aikit.communique/v1', communique_ref: ASK, from_position_ref: null, to_position_ref: ANIMA, attribution: 'unknown', state: 'held'}}
-  assert.deepEqual(score.composeAskedOf(sent, ADDRESS, 'O-I', REV, 7), {communique: ASK, position: ANIMA, project: 'O-I', revision: REV, at: 7})
-  assert.throws(() => score.composeAskedOf({}, ADDRESS, 'O-I', REV, 7), /AIKit's send answered no Communique/)
+  assert.equal(score.composeAskRefOf('0a5c0de1'), ASK, 'the ask\'s id, minted at the press')
+  // The one send (O-I 1003): the ask is the orchestrator's conversation's next turn, in the register its session was read under; the desk
+  // is never an occupant. REPLACED (O-I 1006): one Communique to the Position through AIKit's gateway (composeSendOp), whose answer named the
+  // Communique the desk kept (composeAskedOf).
+  const source = await readFile(new URL('../src/agent/scoreBinding.ts', import.meta.url), 'utf8')
+  assert.match(source, /await encounterSessionOf\(transport, \{project: state\.address\.register, ref: state\.address\.session\}\)\.submit\(body\)\n\s+ASKS\.set\(key, \{ask, position: state\.address\.position, session: state\.address\.session, project, revision, at\}\)/)
+  assert.doesNotMatch(source, /gatewayWriteOp|composeSendOp|composeAskedOf/, 'no second send beside the conversation\'s')
+  assert.equal(score.composeSendOp, undefined)
+  assert.equal(score.composeAskedOf, undefined)
 })
 
 // O-I 844, round 16: "The spec a song answers to stands in the Intent panel's From. When the work is a project's development, the
@@ -692,7 +714,7 @@ test('the From is the plan the Run answers to, and where it names an issue Compo
 
 test('Compose from a map asks for one unit per ticket, keyed as the map keys it and waiting on its blockers, its parts the ticket\'s; the proposal\'s new units stand dashed until Accept', async () => {
   const words = {...WORDS, from: MAP_REF}
-  const {body} = score.composeAskOf(ADDRESS, words, REAL.score, TARGET, 'O-I', {state: 'read', reading: MAP})
+  const {body} = score.composeAskOf(ADDRESS, words, REAL.score, TARGET, 'O-I', ASK, {state: 'read', reading: MAP})
   assert.match(body, /From: github:EpiLogos\/O-I:issue:706/)
   // The prose names how many tickets and waves; the keys stand only in the JSON block, so a 46-ticket map reads in a paragraph.
   assert.match(body, /The song answers to the map github:EpiLogos\/O-I:issue:706 \(\[MAP\] The DLW: built from the manual, walked from four worlds\): give each of its 2 open tickets one unit with `unit`, in its 2 waves \(1 and 1 tickets\), keyed as the map keys it and waiting on the tickets that block it \(blockedBy\); the tickets, their keys and their waves stand in the JSON block below\./)
@@ -703,7 +725,7 @@ test('Compose from a map asks for one unit per ticket, keyed as the map keys it 
   assert.equal(ask.from, MAP_REF)
   assert.deepEqual(ask.map, {ticket: MAP_REF, title: MAP.map.title, url: MAP.map.url, units: MAP.units, waves: MAP.waves})
   // An issue that is no map: the ask says so, and composes from the Intent.
-  const plain = score.composeAskOf(ADDRESS, {...words, from: 'github:EpiLogos/O-I:issue:844'}, REAL.score, TARGET, 'O-I', {state: 'none', why: 'EpiLogos/O-I#844 carries no wayfinder:map label: it is not a map'})
+  const plain = score.composeAskOf(ADDRESS, {...words, from: 'github:EpiLogos/O-I:issue:844'}, REAL.score, TARGET, 'O-I', ASK, {state: 'none', why: 'EpiLogos/O-I#844 carries no wayfinder:map label: it is not a map'})
   assert.match(plain.body, /No map gives this song its units \(EpiLogos\/O-I#844 carries no wayfinder:map label: it is not a map\): compose them from the Intent\./)
   assert.equal(JSON.parse(plain.body.match(/```json\n([\s\S]*?)\n```/)[1]).map, null)
   // Anima's answer: one unit per ticket, written whole; the second's composition gives heads QL checks, under their own cell.
@@ -733,31 +755,33 @@ test('Compose from a map asks for one unit per ticket, keyed as the map keys it 
   assert.equal(drawn.units.length, REAL.score.units.length + 2, 'the song\'s own units stand as Factory read them')
 })
 
-test('Anima\'s answer is the proposal Central\'s ledger holds from that Position replying to the ask; another ask\'s, a second, or one that is no edit is not taken, in words', async () => {
-  // Waiting: the Position proposed something else since the ask, and another Position proposed too.
-  const other = ledgerRow(1), stranger = ledgerRow(2, {declared_producer: {ref: 'central:position:project:O-I:central-guardian', actor_kind: 'agent', attribution: 'verified'}})
-  const waiting = owners({rows: [other, stranger], readings: {[other.return_ref]: ledgerReading(other, 'aikit:communique:another-ask')}})
+test('Anima\'s answer is the proposal Central\'s ledger holds from that Position whose subject names the ask; another ask\'s, a second, or one that is no edit is not taken, in words', async () => {
+  // Waiting: the Position proposed for another ask since, and another Position proposed too. The page names each proposal's ask (its
+  // subject), so none is read until one names this one.
+  const other = ledgerRow(1, {ask: 'compose:an0ther00'}), stranger = ledgerRow(2, {declared_producer: {ref: 'central:position:project:O-I:central-guardian', actor_kind: 'agent', attribution: 'verified'}})
+  const waiting = owners({rows: [other, stranger]})
   const none = await score.composeAnswerOf(waiting.call, ASKED)
   assert.deepEqual(none, {state: 'waiting', others: 1})
-  assert.deepEqual(waiting.asked.map(op => Object.keys(op.request)[0]), ['List', 'Read'], 'only the proposals from the Position asked are read')
+  assert.deepEqual(waiting.asked.map(op => Object.keys(op.request)[0]), ['List'], 'the page is read; no proposal is read until one names the ask')
   assert.ok(waiting.asked.every(op => op.op === 'receiving' && op.project === 'O-I' && writesOwner(op) === false), 'the ledger is read, never written')
   assert.match(score.composeStatusOf({state: 'asked', asked: ASKED, others: 1}).why,
-    /Compose asked central:position:project:O-I:anima-4 \(aikit:communique:01m3compose0ask0000000000000\): no proposal in Central's receiving ledger answers it yet\. 1 proposal from it since then answers another Communique and is not taken\./)
-  // Answered: the first proposal replying to the ask is taken; a second replying to it is not.
+    /Compose asked central:position:project:O-I:anima-4 in its session ses-anima \(compose:0a5c0de1\): no proposal in Central's receiving ledger answers it yet\. 1 proposal from it since then answers another ask and is not taken\./)
+  // Answered: the first proposal naming the ask is read and taken; a second naming it is not, nor read.
   const first = ledgerRow(3), second = ledgerRow(4)
-  const both = owners({rows: [other, first, second], readings: {[other.return_ref]: ledgerReading(other, 'aikit:communique:another-ask'),
-    [first.return_ref]: ledgerReading(first, ASK), [second.return_ref]: ledgerReading(second, ASK, proposalBody({...PROPOSAL, edits: [{op: 'heads', unit: 'eros-verify', heads: {CS: 'CS4'}}]}))}})
+  const both = owners({rows: [other, first, second], readings: {[first.return_ref]: ledgerReading(first),
+    [second.return_ref]: ledgerReading(second, proposalBody({...PROPOSAL, edits: [{op: 'heads', unit: 'eros-verify', heads: {CS: 'CS4'}}]}))}})
   const taken = await score.composeAnswerOf(both.call, ASKED)
   assert.equal(taken.state, 'answered')
   assert.equal(taken.returnRef, first.return_ref)
   assert.deepEqual(taken.proposal, PROPOSAL)
   assert.equal(taken.later, 1)
+  assert.deepEqual(both.asked.filter(op => 'Read' in op.request).map(op => op.request.Read.return_ref), [first.return_ref], 'only the proposal taken is read')
   // Its body is no edit, or an edit against another revision: not taken, said so.
-  const prose = owners({rows: [first], readings: {[first.return_ref]: ledgerReading(first, ASK, 'Compose: I would split the debug unit in two.')}})
+  const prose = owners({rows: [first], readings: {[first.return_ref]: ledgerReading(first, 'Compose: I would split the debug unit in two.')}})
   const notEdit = await score.composeAnswerOf(prose.call, ASKED)
   assert.equal(notEdit.state, 'refused')
   assert.match(notEdit.why, /Anima's proposal \(central:return:project:O-I:compose-3\) holds no factory\.workflow-edit\/v1, so it is not taken/)
-  const stale = owners({rows: [first], readings: {[first.return_ref]: ledgerReading(first, ASK, proposalBody({...PROPOSAL, expectedRevision: 'blake3:old'}))}})
+  const stale = owners({rows: [first], readings: {[first.return_ref]: ledgerReading(first, proposalBody({...PROPOSAL, expectedRevision: 'blake3:old'}))}})
   assert.ok((await score.composeAnswerOf(stale.call, ASKED)).why.includes(`is against revision blake3:old, and the song was asked at ${REV}`))
   // The ledger not answering is Central's words.
   await assert.rejects(score.composeAnswerOf(async () => ({error: 'central.receiving_unavailable: the receiving owner store is locked'}), ASKED),
@@ -789,7 +813,7 @@ test('Accept is one act — the proposal accepted in Central\'s ledger, then Fac
   const first = ledgerRow(3)
   const answer = {returnRef: first.return_ref, revision: first.revision, status: 'pending', proposal: PROPOSAL}
   const edits = []
-  const ledger = owners({readings: {[first.return_ref]: ledgerReading(first, ASK)}})
+  const ledger = owners({readings: {[first.return_ref]: ledgerReading(first)}})
   await score.acceptComposed(ledger.call, 'O-I', answer, async request => { edits.push(request) })
   assert.deepEqual(ledger.reviewed, [{project: 'O-I', return_ref: first.return_ref, expected_return_revision: first.revision, disposition: 'accepted',
     note: 'Accepted on the task\'s clip: Factory writes it into the song.'}])
@@ -800,11 +824,11 @@ test('Accept is one act — the proposal accepted in Central\'s ledger, then Fac
   await score.acceptComposed(again.call, 'O-I', {...answer, status: 'accepted'}, async request => { edits.push(request) })
   assert.deepEqual(again.asked, [])
   // Factory refuses after Central accepted it: said so, in Factory's words.
-  await assert.rejects(score.acceptComposed(owners({readings: {[first.return_ref]: ledgerReading(first, ASK)}}).call, 'O-I', answer, async () => { throw new Error('workflow.edit_stale: The song\'s file changed since it was read') }),
+  await assert.rejects(score.acceptComposed(owners({readings: {[first.return_ref]: ledgerReading(first)}}).call, 'O-I', answer, async () => { throw new Error('workflow.edit_stale: The song\'s file changed since it was read') }),
     /Central holds Anima's proposal accepted \(central:return:project:O-I:compose-3\), and Factory did not write it: workflow\.edit_stale/)
   await assert.rejects(score.acceptComposed(owners().call, 'O-I', {...answer, status: 'rejected'}, async () => {}), /The person declined Anima's proposal in Central/)
   // Discard declines a proposal that waits; one Central settled is only forgotten.
-  const declined = owners({readings: {[first.return_ref]: ledgerReading(first, ASK)}})
+  const declined = owners({readings: {[first.return_ref]: ledgerReading(first)}})
   await score.declineComposed(declined.call, 'O-I', answer)
   assert.equal(declined.reviewed[0].disposition, 'rejected')
   const settled = owners()
@@ -827,7 +851,7 @@ test('on the clip: Compose shows where it asks, then asked and waiting in words,
   assert.ok(draw(unaddressed).includes('aikit inhabit --position central:position:project:O-I:anima-4'), 'the refusal is drawn where Compose asks')
   // Ready: where it asks; the press sends the ask.
   const ready = bindingOf({...port(read(REAL.score)).port, compose: composing({state: 'ready', address: ADDRESS})})
-  assert.equal(ready.values['gen.asks'], 'central:position:project:O-I:anima-4 · agent/anima, the orchestrator of agent-set/anima')
+  assert.equal(ready.values['gen.asks'], 'central:position:project:O-I:anima-4 · agent/anima, the orchestrator of agent-set/anima, in its session ses-anima')
   assert.equal(ready.standing['gen.asks'], undefined)
   await ready.write([{key: 'gen.press', value: 1}])
   assert.equal(acts.asks, 1)
