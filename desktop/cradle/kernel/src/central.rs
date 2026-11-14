@@ -266,20 +266,32 @@ pub fn operate(
 
 /// Central's record of one act laid into the Day (`central.day.receipt.record`, Central's continuous_work/day_turn.rs).
 const RECEIPT_RECORD: &str = "central.day.receipt.record";
+/// Central's filing of what a session yielded at its end, as a proposal that waits on today's face 2 (`central.day.session.yield`,
+/// Central's continuous_work/day_turn.rs `session_yield`, EpiLogos/Central#364).
+const SESSION_YIELD: &str = "central.day.session.yield";
+/// The Actions that end a session: Factory's End session, and the End of a session AIKit opened for a conversation.
+const SESSION_ENDS: [&str; 2] = ["factory.session.end", "aikit.session.end"];
 /// Where a receipt's owner answer is kept whole; past it, only its plain fields are kept.
 const RECEIPT_ANSWER_BYTES: usize = 12 * 1024;
+/// How many receipts wait at most for the person's credential (`Receipt::lay`); past it the oldest is dropped, and said.
+const RECEIPTS_HELD: usize = 256;
 
 /// What one act lays into the Day of the civil date it happened on (manual §18.2 "a write arrives with its receipt"; O-I #1005
 /// for the gate's act 5, the whole of it O-I #1007): an Action that writes, a passage sent to an agent, a Factory act. Taken from
 /// the op before it runs, laid once its owner answered; a refused act lays none, and an Action the kernel took as a reading lays
-/// none. Central lays a receipt only on a credential that grants it (Central #362), so it goes as the act came (flow.rs `Channel`):
-/// an act of the person's own press lays its receipt on their credential, and one that came by a wire carries no one's, so its
-/// receipt is not asked for (an agent's own acts lay theirs on the agent's credential: O-I #1007).
+/// none. Each names its act, the product that did it, what it moved (its subject), where it stands (its source: the owner's own
+/// ref for it, else the World it was made in) and, where it names one, the session it was made in. Central lays a receipt only on
+/// a credential that grants it (Central #362), so it goes as the act came (flow.rs `Channel`): an act of the person's own press
+/// lays its receipt on their credential, and one that came by a wire carries no one's, so its receipt is not asked for (an
+/// agent's own acts would lay theirs on the agent's credential, which no wire carries yet: Central#361).
 pub(crate) struct Receipt {
     act: String,
     owner: String,
     input: Value,
     subject: Option<String>,
+    session: Option<String>,
+    /// The World the act was made in, as Central spells it (`project:<id>`, else your world's root register, `control:root`).
+    world: String,
     channel: crate::flow::Channel,
 }
 
@@ -288,12 +300,14 @@ impl Receipt {
     pub(crate) fn of(op: &crate::KernelOp) -> Option<Self> {
         match op {
             crate::KernelOp::InvokeAction {
+                project,
                 invocation,
                 channel,
-                ..
             } => {
                 let action = invocation.action.as_str();
-                if matches!(action, TURN | RECEIPT_RECORD) || action.starts_with("action:decision.")
+                // The Day's own records (its turn, a receipt, a session's yield) are no acts laid into it.
+                if matches!(action, TURN | RECEIPT_RECORD | SESSION_YIELD)
+                    || action.starts_with("action:decision.")
                 {
                     return None;
                 }
@@ -303,22 +317,26 @@ impl Receipt {
                     owner: owner_of(action).to_owned(),
                     subject: subject_of(&input)
                         .or_else(|| Some(invocation.target_ref.clone()).filter(|r| !r.is_empty())),
+                    session: session_of(&input),
+                    world: world_of(&input, project.as_deref()),
                     input,
                     channel: *channel,
                 })
             }
-            // A passage sent to an agent, with or without the context it carries.
+            // A passage sent to an agent, with or without the context it carries: made in the session it went to.
             crate::KernelOp::Encounter {
+                project,
                 request:
                     crate::agency::EncounterRequest::Prompt { agent_session, .. }
                     | crate::agency::EncounterRequest::PromptContext { agent_session, .. },
                 channel,
-                ..
             } => Some(Self {
                 act: "encounter.prompt".into(),
                 owner: "AIKit".into(),
                 input: Value::Null,
                 subject: Some(agent_session.clone()),
+                session: Some(agent_session.clone()),
+                world: world_of(&Value::Null, Some(project)),
                 channel: *channel,
             }),
             crate::KernelOp::FactoryOwner {
@@ -329,6 +347,8 @@ impl Receipt {
                     act: format!("factory.{}", input["kind"].as_str().unwrap_or("act")),
                     owner: "Factory".into(),
                     subject: subject_of(&input),
+                    session: session_of(&input),
+                    world: world_of(&input, None),
                     input,
                     channel: *channel,
                 })
@@ -339,7 +359,11 @@ impl Receipt {
 
     /// Lay it into today's Day of the root register, once its owner answered, on the credential its channel carries
     /// (`CentralClient::by_channel`). An act that came by a wire lays none, and a Central whose catalogue names no receipt record is
-    /// not asked; a receipt Central refuses is said on the host's log and leaves the act as it was.
+    /// not asked; a receipt Central refuses is said on the host's log and leaves the act as it was. An act of the person's press
+    /// made before their credential exists (Setup's first acts, the time policy and the ground's placement adopted before the
+    /// Ground Accept keeps their grant) waits here with its true instant, and is laid, in the order it came, ahead of the first act
+    /// that carries the credential: Central lays an act of today or of the Day that just ended at its own instant. An act that ends
+    /// a session (`SESSION_ENDS`) then files what the session yielded, through Central's own filing (`central.day.session.yield`).
     pub(crate) fn lay(
         self,
         client: &CentralClient,
@@ -362,9 +386,11 @@ impl Receipt {
         if client.mutation_class(RECEIPT_RECORD).is_none() {
             return;
         }
-        let Some(subject) = self.subject.or_else(|| subject_of(&answer)) else {
+        // What it moved, as its owner answered (the attempt a task's run made, the session a seat opened), else as it was asked.
+        let Some(subject) = subject_of(&answer).or(self.subject) else {
             return;
         };
+        let session = session_of(&answer).or(self.session);
         static LAID: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
         let at = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
@@ -375,15 +401,102 @@ impl Receipt {
             at.as_nanos(),
             LAID.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
         );
-        let source = source_of(&self.input).or_else(|| source_of(&answer));
-        let input = json!({"project": null, "receipt_id": receipt_id, "act": self.act, "owner": self.owner,
+        let source = source_of(&self.input)
+            .or_else(|| source_of(&answer))
+            .unwrap_or(self.world);
+        let mut input = json!({"project": null, "receipt_id": receipt_id, "act": self.act, "owner": self.owner,
             "subject": subject, "source": source, "receipt": bounded(answer),
             "occurred_at_unix_seconds": at.as_secs()});
-        match client.by_channel(self.channel).run(RECEIPT_RECORD, input) {
-            Ok(_) => crate::world_model::Model::global().written(&[crate::world_model::Slice::Day]),
-            Err(error) => eprintln!("the Day's receipt of {} was not laid: {error}", self.act),
+        if let Some(session) = &session {
+            input["session"] = json!(session);
+        }
+        let on = client.by_channel(self.channel);
+        let held = held_for(client);
+        let mut waiting = held.lock().unwrap_or_else(|e| e.into_inner());
+        if on.person_token().is_none() {
+            if waiting.len() >= RECEIPTS_HELD {
+                let dropped = waiting.remove(0);
+                eprintln!(
+                    "the Day's receipt of {} was dropped: {RECEIPTS_HELD} receipts wait for the person's credential",
+                    dropped["act"]
+                );
+            }
+            waiting.push(input);
+            return;
+        }
+        let mut laid = false;
+        for receipt in waiting.drain(..).chain(std::iter::once(input)) {
+            match on.run(RECEIPT_RECORD, receipt.clone()) {
+                Ok(_) => laid = true,
+                Err(error) => eprintln!(
+                    "the Day's receipt of {} was not laid: {error}",
+                    receipt["act"]
+                ),
+            }
+        }
+        drop(waiting);
+        if let Some(session) = session.filter(|_| SESSION_ENDS.contains(&self.act.as_str())) {
+            if client.mutation_class(SESSION_YIELD).is_some() {
+                match on.run(SESSION_YIELD, json!({"project": null, "session": session})) {
+                    Ok(_) => laid = true,
+                    Err(error) => {
+                        eprintln!("what the session {session} yielded was not filed: {error}")
+                    }
+                }
+            }
+        }
+        if laid {
+            crate::world_model::Model::global().written(&[crate::world_model::Slice::Day]);
         }
     }
+}
+
+/// The receipts that wait for the person's credential (`Receipt::lay`), kept in this process for the Central `client` names (its
+/// executable, root and project, never its credential): they are laid in that Central's Day once the credential comes.
+fn held_for(client: &CentralClient) -> std::sync::Arc<std::sync::Mutex<Vec<Value>>> {
+    type Held = std::collections::BTreeMap<String, std::sync::Arc<std::sync::Mutex<Vec<Value>>>>;
+    static HELD: std::sync::Mutex<Held> = std::sync::Mutex::new(Held::new());
+    HELD.lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .entry(format!("{:?}", client.without_person()))
+        .or_default()
+        .clone()
+}
+
+/// The World an act was made in, as Central spells it: the project it names (`project:<id>`, a project's id being its Work
+/// member's name), else the World its Run's Factory state stands in (factory.rs `run_scope`: a Factory act names the state it
+/// moves), else your world's root register (`control:root`).
+fn world_of(input: &Value, project: Option<&str>) -> String {
+    let named = input["project"]
+        .as_str()
+        .or(project)
+        .map(str::trim)
+        .filter(|project| !project.is_empty());
+    if let Some(project) = named {
+        return if project.contains(':') {
+            project.to_owned()
+        } else {
+            format!("project:{project}")
+        };
+    }
+    input["state"]
+        .as_str()
+        .map(std::path::Path::new)
+        .filter(|state| state.is_absolute())
+        .and_then(|state| {
+            let contract = crate::factory::authority_contract_for(state)?;
+            crate::factory::run_scope(state, &contract).ok()
+        })
+        .unwrap_or_else(|| "control:root".to_owned())
+}
+
+/// The session an act was made in, where it names one: the session a Factory act names, or the agent session a passage went to.
+fn session_of(value: &Value) -> Option<String> {
+    ["session", "agent_session"]
+        .iter()
+        .find_map(|key| value[*key].as_str())
+        .filter(|session| !session.trim().is_empty())
+        .map(str::to_owned)
 }
 
 /// The product an Action id belongs to, by its own spelling.
@@ -401,9 +514,10 @@ fn owner_of(action: &str) -> &str {
     }
 }
 
-/// What an act acted on, by the owner's own spelling: a file's path, else the first ref it names.
+/// What an act acted on, by the owner's own spelling: a file's path, else the first ref it names (a task's attempt before its Run,
+/// a Run before the session it runs on).
 fn subject_of(value: &Value) -> Option<String> {
-    const REFS: [&str; 17] = [
+    const REFS: [&str; 19] = [
         "path",
         "source_ref",
         "document_id",
@@ -421,6 +535,8 @@ fn subject_of(value: &Value) -> Option<String> {
         "agent_session",
         "statement",
         "ref",
+        "unit_ref",
+        "session",
     ];
     value
         .pointer("/location/path")
@@ -594,6 +710,311 @@ mod tests {
         assert_eq!(
             laid.lines().collect::<Vec<_>>(),
             ["person-token", "person-token"]
+        );
+    }
+
+    /// Central as the Day's records reach it (O-I #1007): its catalogue names the receipt record and a session's yield, and each
+    /// call is written down whole, with the credential it came with: (action, credential, input).
+    fn central_recording(tag: &str) -> (CentralClient, std::path::PathBuf) {
+        let dir = std::env::temp_dir().join(format!(
+            "oi-kernel-day-records-{tag}-{}",
+            std::process::id()
+        ));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(
+            dir.join("list.json"),
+            r#"{"ok":true,"data":{"actions":[{"id":"central.day.receipt.record","mutation_class":"locally-mutating"},{"id":"central.day.session.yield","mutation_class":"locally-mutating"}]}}"#,
+        )
+        .unwrap();
+        let path = dir.join("central-fake");
+        std::fs::write(
+            &path,
+            format!(
+                "#!/bin/sh\ncase \"$4\" in\n  action.list) cat '{d}/list.json' ;;\n  *) printf '%s\\t%s\\t%s\\n' \"$4\" \"${{CENTRAL_NATIVE_TOKEN:-none}}\" \"$5\" >> '{d}/calls'; echo '{{\"ok\":true,\"data\":{{\"recorded\":true}}}}' ;;\nesac\n",
+                d = dir.display()
+            ),
+        )
+        .unwrap();
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o755)).unwrap();
+        }
+        (CentralClient::with(path, None, "o-i".to_owned()), dir)
+    }
+
+    /// The calls Central was asked, in order: (action, credential, input).
+    fn calls(dir: &std::path::Path) -> Vec<(String, String, Value)> {
+        std::fs::read_to_string(dir.join("calls"))
+            .unwrap_or_default()
+            .lines()
+            .map(|line| {
+                let mut parts = line.splitn(3, '\t');
+                let (action, token, input) = (parts.next(), parts.next(), parts.next());
+                (
+                    action.unwrap_or_default().to_owned(),
+                    token.unwrap_or_default().to_owned(),
+                    serde_json::from_str(input.unwrap_or("null")).unwrap_or(Value::Null),
+                )
+            })
+            .collect()
+    }
+
+    /// One Action as the shell's `act` invokes it by the person's press, and its owner's answer.
+    fn pressed(action: &str, input: Value) -> crate::KernelOp {
+        crate::KernelOp::InvokeAction {
+            project: None,
+            invocation: crate::action::ActionInvocation {
+                action: action.into(),
+                target_ref: action.into(),
+                input: Some(input),
+            },
+            channel: Channel::PersonPress,
+        }
+    }
+
+    fn answering(data: Value) -> Result<crate::KernelOpOutcome, String> {
+        Ok(crate::KernelOpOutcome {
+            receipts: Vec::new(),
+            read_scopes: None,
+            result: crate::KernelOpResult::ActionDispatched {
+                dispatch: crate::action::ActionDispatch::Invoked {
+                    owner_operation: "owner".into(),
+                    data,
+                },
+                reads_only: false,
+            },
+        })
+    }
+
+    /// Each receipt names its act, the product that did it, what it moved as its owner answered (the session a seat opened, the
+    /// attempt a task's run made), where it stands (the owner's own ref for it, else the World it was made in: the project it
+    /// names, the project its Run's Factory state stands in, else the root) and the session it was made in (O-I #1007).
+    #[test]
+    fn each_receipt_names_its_act_subject_source_and_session() {
+        let (client, dir) = central_recording("names");
+        let client = client.with_person_token("person-token");
+        // A World with a project, as Central keeps one: its manifest, and the authority contract at the World's root.
+        let world = dir.join("world");
+        std::fs::create_dir_all(world.join("Control/user")).unwrap();
+        std::fs::write(
+            world.join("Control/user/native-action-authority.json"),
+            "{}",
+        )
+        .unwrap();
+        std::fs::create_dir_all(world.join("Work/atelier/ProjectCentral")).unwrap();
+        std::fs::write(
+            world.join("Work/atelier/ProjectCentral/project.json"),
+            r#"{"project_id":"atelier"}"#,
+        )
+        .unwrap();
+        let state = world.join("Work/atelier/.factory/state");
+        let lay = |op: crate::KernelOp, answer: Value| {
+            Receipt::of(&op)
+                .expect("the act lays a receipt")
+                .lay(&client, &answering(answer))
+        };
+        lay(
+            pressed(
+                "factory.session.start",
+                json!({"world": world, "project": "atelier", "agent": "claude-code"}),
+            ),
+            json!({"contract": "factory.session/v1", "state": "open", "session": "agent-session/seat",
+                "track": "session-space/seat:agent-session/seat", "project": "atelier"}),
+        );
+        lay(
+            pressed(
+                "factory.task.run",
+                json!({"state": state, "run_ref": "run:1", "session": "agent-session/seat"}),
+            ),
+            json!({"state": "running", "run_ref": "run:1", "unit_ref": "unit:1", "attempt_ref": "attempt:1",
+                "task_ref": "task:1", "session": "agent-session/seat"}),
+        );
+        lay(
+            pressed(
+                "central.files.write",
+                json!({"project": null, "location": {"path": "Control/user/flows/page.html", "ref": "central:source:control:root:Control/user/flows/page.html"}}),
+            ),
+            json!({"revision": "r2"}),
+        );
+        lay(
+            pressed("central.time.policy.adopt", json!({"actor_kind": "human"})),
+            json!({"adopted": true, "source_ref": "central:source:control:root:Control/config/time.json"}),
+        );
+        let laid = calls(&dir);
+        let _ = std::fs::remove_dir_all(&dir);
+        let entries: Vec<(&str, &str, &str, &Value)> = laid
+            .iter()
+            .map(|(action, token, input)| {
+                assert_eq!(action, RECEIPT_RECORD);
+                assert_eq!(token, "person-token");
+                (
+                    input["act"].as_str().unwrap_or_default(),
+                    input["subject"].as_str().unwrap_or_default(),
+                    input["source"].as_str().unwrap_or_default(),
+                    &input["session"],
+                )
+            })
+            .collect();
+        assert_eq!(
+            entries,
+            [
+                (
+                    "factory.session.start",
+                    "agent-session/seat",
+                    "project:atelier",
+                    &json!("agent-session/seat")
+                ),
+                (
+                    "factory.task.run",
+                    "attempt:1",
+                    "project:atelier",
+                    &json!("agent-session/seat")
+                ),
+                (
+                    "central.files.write",
+                    "Control/user/flows/page.html",
+                    "central:source:control:root:Control/user/flows/page.html",
+                    &Value::Null
+                ),
+                (
+                    "central.time.policy.adopt",
+                    "central:source:control:root:Control/config/time.json",
+                    "central:source:control:root:Control/config/time.json",
+                    &Value::Null
+                ),
+            ]
+        );
+        assert_eq!(laid[0].2["owner"], "Factory");
+        assert_eq!(laid[3].2["owner"], "Central");
+    }
+
+    /// An act of the person's press made before their credential exists (Setup's time policy and placement, adopted before the
+    /// Ground Accept keeps their grant) waits, and is laid with its own instant ahead of the first act that carries the credential
+    /// (O-I #1007): Central refuses a receipt on no credential, so none is asked for meanwhile.
+    #[test]
+    fn a_receipt_made_before_the_persons_credential_waits_and_is_laid_at_its_own_instant() {
+        let (client, dir) = central_recording("held");
+        let lay = |client: &CentralClient, action: &str| {
+            Receipt::of(&pressed(
+                action,
+                json!({"location": {"path": format!("Control/user/{action}.json")}}),
+            ))
+            .expect("the act lays a receipt")
+            .lay(client, &answering(json!({})))
+        };
+        lay(&client, "central.time.policy.adopt");
+        lay(&client, "central.ground.placement.adopt");
+        assert!(
+            calls(&dir).is_empty(),
+            "no receipt is asked for on no credential"
+        );
+        std::thread::sleep(std::time::Duration::from_millis(1100));
+        let client = client.with_person_token("person-token");
+        lay(&client, "central.day.settings.write");
+        let laid = calls(&dir);
+        let _ = std::fs::remove_dir_all(&dir);
+        let acts: Vec<(&str, &str)> = laid
+            .iter()
+            .map(|(_, token, input)| (input["act"].as_str().unwrap_or_default(), token.as_str()))
+            .collect();
+        assert_eq!(
+            acts,
+            [
+                ("central.time.policy.adopt", "person-token"),
+                ("central.ground.placement.adopt", "person-token"),
+                ("central.day.settings.write", "person-token"),
+            ]
+        );
+        let at = |n: usize| laid[n].2["occurred_at_unix_seconds"].as_u64().unwrap();
+        assert!(
+            at(0) <= at(1) && at(1) < at(2),
+            "each laid at the instant it was made: {} {} {}",
+            at(0),
+            at(1),
+            at(2)
+        );
+    }
+
+    /// A session's end files what it yielded (manual §18.2, R36; O-I #1007): after the end's own receipt, Central's filing of the
+    /// session's yield, on the same credential, for the session the end names, whether Factory ended it or AIKit's End did. No
+    /// other act files a yield, and an end that came by a wire files none.
+    #[test]
+    fn a_sessions_end_files_what_it_yielded() {
+        let (client, dir) = central_recording("yield");
+        let client = client.with_person_token("person-token");
+        let lay = |op: crate::KernelOp, answer: Value| {
+            Receipt::of(&op)
+                .expect("the act lays a receipt")
+                .lay(&client, &answering(answer))
+        };
+        lay(
+            pressed(
+                "factory.task.write",
+                json!({"project": "atelier", "session": "agent-session/seat", "instruction": "words"}),
+            ),
+            json!({"state": "written", "run_ref": "run:1", "session": "agent-session/seat"}),
+        );
+        lay(
+            pressed(
+                "factory.session.end",
+                json!({"project": "atelier", "session": "agent-session/seat"}),
+            ),
+            json!({"state": "ended", "session": "agent-session/seat"}),
+        );
+        lay(
+            pressed(
+                "aikit.session.end",
+                json!({"agent_session": "agent-session/chat"}),
+            ),
+            json!({"schema": "aikit.encounter-end/v1", "agent_session": "agent-session/chat",
+                "session_ref": "aikit:session:claude:agent-session/chat", "ended": true}),
+        );
+        let mut by_wire = pressed(
+            "aikit.session.end",
+            json!({"agent_session": "agent-session/other"}),
+        );
+        if let crate::KernelOp::InvokeAction { channel, .. } = &mut by_wire {
+            *channel = Channel::Wire;
+        }
+        lay(
+            by_wire,
+            json!({"agent_session": "agent-session/other", "ended": true}),
+        );
+        let laid = calls(&dir);
+        let _ = std::fs::remove_dir_all(&dir);
+        let asked: Vec<(&str, &str)> = laid
+            .iter()
+            .map(|(action, _, input)| {
+                (
+                    action.as_str(),
+                    input["act"]
+                        .as_str()
+                        .or_else(|| input["session"].as_str())
+                        .unwrap_or_default(),
+                )
+            })
+            .collect();
+        assert_eq!(
+            asked,
+            [
+                (RECEIPT_RECORD, "factory.task.write"),
+                (RECEIPT_RECORD, "factory.session.end"),
+                (SESSION_YIELD, "agent-session/seat"),
+                (RECEIPT_RECORD, "aikit.session.end"),
+                (SESSION_YIELD, "agent-session/chat"),
+            ]
+        );
+        assert!(laid.iter().all(|(_, token, _)| token == "person-token"));
+        assert_eq!(laid[0].2["subject"], "run:1");
+        assert_eq!(laid[0].2["session"], "agent-session/seat");
+        assert_eq!(laid[3].2["subject"], "agent-session/chat");
+        assert_eq!(laid[3].2["session"], "agent-session/chat");
+        assert_eq!(laid[2].2["session"], "agent-session/seat");
+        assert!(
+            laid[2].2["project"].is_null(),
+            "filed in your world's root register"
         );
     }
 }
