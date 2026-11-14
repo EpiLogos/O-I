@@ -329,13 +329,11 @@ export interface GatewayRemotesReading { schema: "aikit.gateway-remotes/v1"; rem
 /** One declared remote: its token's location, never the token. */
 export interface GatewayRemote { workcell_ref: string; websocket_bind: string; websocket_path: string; token_location: string }
 
-/** The window's gateway writes (live-shell agent/devices/ownerRoutes.ts `gatewayWriteOp`). A send and a delegation are AIKit's Actions
- * through the kernel's `act` (O-I #1002), their fields AIKit's own input names; `project` is a Central project NAME, which the kernel
- * runs the Action in (Central discloses its location), never a path of the caller's. */
+/** The window's gateway writes (live-shell agent/devices/ownerRoutes.ts `gatewayWriteOp`). A delegation is AIKit's Action through the
+ * kernel's `act` (O-I #1002), its fields AIKit's own input names; `project` is a Central project NAME, which the kernel runs the Action in
+ * (Central discloses its location), never a path of the caller's. The window sends no Communique (O-I #1006): its words reach an agent
+ * as its conversation's next turn, through the one send (encounter/session.ts). */
 export type GatewayWriteRequest =
-  /** `aikit.gateway.send` (`aikit gateway send --to P --body-file -`: the words reach AIKit on stdin, never in argv); `handling` is where
-   * they land while the recipient works (`--handling`: queue waits for its next turn, steer reaches the turn that runs). */
-  | {kind:"send";project?:string|null;to:string;body:string;reply_to?:string|null;from_position?:string|null;instance?:string|null;require_workcell?:string|null;at?:string|null;handling?:"queue"|"steer"|null}
   /** `aikit.gateway.delegate` (`aikit gateway delegate --communique C --work W --reason R`): Factory assigns custody to the
    * Communique's recipient. */
   | {kind:"delegate";project?:string|null;communique:string;work:string;reason:string;run?:string|null;journey?:string|null;workflow_unit?:string|null;at?:string|null}
