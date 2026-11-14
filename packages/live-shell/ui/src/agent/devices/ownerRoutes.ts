@@ -112,9 +112,12 @@ async function centralAct(transport: KernelTransportStatus, action: string, inpu
 }
 
 export const centralRevisionWrite = (transport: KernelTransportStatus):
-  ((verb: 'accept' | 'discard', handed: {readonly scope: string; readonly name: string; readonly proposedDigest: string}) => Promise<unknown>) | undefined =>
+  ((verb: 'accept' | 'discard', handed: {readonly scope: string; readonly name: string; readonly proposedDigest: string; readonly machine?: string
+    readonly project?: string}) => Promise<unknown>) | undefined =>
   transport.kind !== 'unavailable'
-    ? (verb, handed) => centralAct(transport, CENTRAL_REVISION_ACTS[verb], {scope: handed.scope, name: handed.name, expected_proposed_digest: handed.proposedDigest})
+    // A machine's or a project's skill is named with its machine or project (ctrl control_skills.rs resolve_skill_location).
+    ? (verb, handed) => centralAct(transport, CENTRAL_REVISION_ACTS[verb], {scope: handed.scope, name: handed.name, expected_proposed_digest: handed.proposedDigest,
+      ...(handed.machine ? {machine: handed.machine} : {}), ...(handed.project ? {project: handed.project} : {})})
     : undefined
 
 /** The plain words of each write, for a refusal that names the command it could not ask. */

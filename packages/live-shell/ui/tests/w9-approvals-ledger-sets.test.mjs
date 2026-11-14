@@ -696,7 +696,8 @@ test('17 · a Control skill\'s revision: Accept hands it to Central, where the p
   // Central's own acts, through the kernel's invoke_action with the person's own authority, at the digest the person reviewed.
   const routes = read('agent/devices/ownerRoutes.ts')
   assert.match(routes, /accept: 'control\.skills\.revision\.accept', discard: 'control\.skills\.revision\.discard'/)
-  assert.match(routes, /centralAct\(transport, CENTRAL_REVISION_ACTS\[verb\], \{scope: handed\.scope, name: handed\.name, expected_proposed_digest: handed\.proposedDigest\}\)/)
+  // A machine's or a project's skill is named with its machine or project (ctrl control_skills.rs resolve_skill_location; O-I ticket 1005).
+  assert.match(routes, /centralAct\(transport, CENTRAL_REVISION_ACTS\[verb\], \{scope: handed\.scope, name: handed\.name, expected_proposed_digest: handed\.proposedDigest,\s*\.\.\.\(handed\.machine \? \{machine: handed\.machine\} : \{\}\), \.\.\.\(handed\.project \? \{project: handed\.project\} : \{\}\)\}\)/)
   // REPLACED (parity D-09): Approvals was composed by Factory's chain, published only while it stood; the rail claims its tile in every mode, so
   // the rail's publisher (AgentRailDevices.tsx) composes and publishes it in every mode, and the Main track draws that door entry.
   const chain = read('agent/devices/FactoryDeviceChain.tsx')
