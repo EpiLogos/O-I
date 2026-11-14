@@ -20,6 +20,9 @@
 //   diff            ChangedFile[]     the files of that reading: path, status, adds, dels, patch
 //   commits         Commit[]          the branch's commits, newest first: sha, subject
 //   checks          Check[]           the remote's checks of the branch: name, state (passed | failed | running)
+//   landed          Landed            what the last Land's commit did, in Workcell's answer (workcellBindings.ts Landed): {committed,
+//                                     regions, left_outside} — the files it left outside the lane's regions — or {said}, Workcell's words
+//                                     where it found none of the lane's work and Land went on to push
 // Settings: commit-policy ('per turn' | 'per task' | 'manual'), push-policy ('off' | 'on land'), landAs ('draft' | 'mr' | 'merge').
 // Acts, each on its own key: land. Held by the hand (no reading): sel (the file shown in the pane).
 //
@@ -72,6 +75,21 @@ function list<T>(v: V, key: string, keep: (row: Record<string, unknown>) => bool
   return rows.filter((row): row is Record<string, unknown> => !!row && typeof row === 'object' && keep(row as Record<string, unknown>)) as unknown as T[]
 }
 const text = (x: unknown): x is string => typeof x === 'string' && x.length > 0
+/** What the last Land's commit left outside the lane's regions: the files Workcell named, or its words where it committed none of the
+ * lane's work (every file with no commit lies outside then). Undefined before a Land, or where Workcell named neither. */
+function leftOf(v: V): {files?: string[]; said?: string} | undefined {
+  const landed = json<unknown>(v, 'landed', undefined)
+  if (!landed || typeof landed !== 'object' || Array.isArray(landed)) return undefined
+  const {said, left_outside: left} = landed as {said?: unknown; left_outside?: unknown}
+  if (text(said)) return {said}
+  return Array.isArray(left) ? {files: left.filter(text)} : undefined
+}
+const leftText = (left: ReturnType<typeof leftOf>): string | undefined => (!left ? undefined : left.said ? 'all'
+  : `${left.files!.length} ${left.files!.length === 1 ? 'file' : 'files'}`)
+const leftDoes = (left: ReturnType<typeof leftOf>): string => (!left ? 'What the last Land left outside the lane\'s regions. No Land has answered yet.'
+  : left.said ? `Land committed none of the lane's work and went on to push it. Workcell: ${left.said}`
+  : left.files!.length ? `Land committed only the lane's regions and left these as they are: ${left.files!.join(', ')}.`
+  : 'Land left nothing outside the lane\'s regions.')
 const commitsOf = (v: V) => list<Commit>(v, 'commits', r => text(r.sha) && typeof r.subject === 'string')
 const checksOf = (v: V) => list<Check>(v, 'checks', r => text(r.name) && (r.state === 'passed' || r.state === 'failed' || r.state === 'running'))
 const diffOf = (v: V) => list<Changed>(v, 'diff', r => text(r.path) && text(r.status))
@@ -320,7 +338,7 @@ const SIGN = {hunk: '', context: ' ', add: '+', delete: '−', note: ''} as cons
 const leaf = (path: string) => path.split('/').slice(-2).join('/')
 
 function Pane({p}: {p: ViewProps}) {
-  const v = p.v, commits = commitsOf(v), checks = checksOf(v), diff = diffOf(v), files = numOf(v, 'files')
+  const v = p.v, commits = commitsOf(v), checks = checksOf(v), diff = diffOf(v), files = numOf(v, 'files'), left = leftOf(v)
   const sel = diff?.find(f => f.path === strOf(v, 'sel')) ?? diff?.[0]
   const lines = sel?.patch ? patchLines(sel.patch) : []
   const more = diff && files !== undefined && files > diff.length ? files - diff.length : 0
@@ -346,6 +364,12 @@ function Pane({p}: {p: ViewProps}) {
             : <ul className="gs-list">{checks.map(c => <li key={c.name} className="gs-check" data-i={`${c.name}|${c.state}. The remote reports it.`}>
               <span className="dp-lamp" data-light={c.state === 'running' ? 'unknown' : 'lit'} data-tone={c.state === 'failed' ? 'stall' : 'green'} /><span>{c.name}</span><i>{c.state}</i></li>)}</ul>}
         </div>
+        {left && <div className="gs-block">
+          <h4>Left out by Land<b>{leftText(left)}</b></h4>
+          {left.said ? <p className="gs-none">{left.said}</p>
+            : !left.files!.length ? <p className="gs-none">Land left nothing outside the lane's regions.</p>
+            : <ul className="gs-list">{left.files!.map(path => <li key={path} data-i={`${path}|Outside the lane's regions: Land left it as it is.`}><span>{path}</span></li>)}</ul>}
+        </div>}
         <div className="gs-block" data-grow="true">
           <h4>Files<b>{files === undefined ? NONE : files}</b></h4>
           {diff === undefined ? <p className="gs-none">No reading of the changes.</p>
@@ -465,6 +489,7 @@ export const design: DesignedDevice = {
 
   whole: p => {
     const v = p.v, checks = checksOf(v), uncommitted = numOf(v, 'uncommitted'), files = numOf(v, 'files'), branch = strOf(v, 'branch'), seat = seatOf(p)
+    const left = leftOf(v)
     return <Panel title="Git / landing" view="whole" light={light(p)} onFold={p.nav.fold} onFull={p.nav.full}>
       <Band>
         <Section width={206}>
@@ -492,6 +517,7 @@ export const design: DesignedDevice = {
           <Reading label="removed" does="Lines removed against main." value={numOf(v, 'removed') === undefined ? undefined : `−${numOf(v, 'removed')}`} tone="rec" />
           <LandAction p={p} />
           <Reading label="files" does="Files changed against main." value={files === undefined ? undefined : `${files}`} />
+          <Reading label="left out" does={leftDoes(left)} value={leftText(left)} tone={left?.said || left?.files?.length ? 'accent' : undefined} />
         </Section>
         <Section grow>
           <Rows label={checks ? `Checks · ${checkText(checks)}` : 'Checks'} does="The checks the remote runs on the branch. Green passed; hollow still runs; orange failed. The device does not make them up." items={checkRows(v)} empty="The remote runs no checks on the branch." size={7} />

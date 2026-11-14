@@ -138,6 +138,58 @@ test('Git / landing reads the chain\'s git reading; Land runs Workcell\'s landin
   bind.resetHolds()
 })
 
+test('Land commits only the lane\'s regions: Workcell\'s "nothing to commit" goes on to push and land, and the device answers what the commit left outside (Workcell#130)', async () => {
+  // Workcell's commit takes only the changes inside the lane's claimed regions (every zone's regions on the register seat; the whole seat
+  // where no zone names one) and answers `regions` and `left_outside`; with no change inside them it refuses, "nothing to commit: …",
+  // naming what lies outside, left as it is. The seat's `uncommitted` counts the whole seat, so Land asks for the commit and, on that
+  // refusal, goes on: the lane's commits are pushed and landed, and the other work stays. Any other refusal of the commit stops Land.
+  bind.resetHolds()
+  host.resetHost()
+  const seat = {workcell: 'env-1', product: 'O-I', held: true}
+  const reading = {...model.INITIAL_READING, gitAdmitted: true, gitRepo: {branch: 'dlw/build', uncommitted: 4, ahead: 2, behind: 0}, gitSeat: seat}
+  cell.gitBinding(reading, bind.chainHolds()).local['push-policy']('on land')
+  const asked = []
+  const outside = 'nothing to commit: /w/o-i holds no change inside the lane\'s regions (crates/a, docs) on dlw/build; outside them, left as they are: .env.local, README.md'
+  const nothingInside = {lane: async (action, input) => {
+    asked.push([action, input])
+    if (action === 'workcell.lane.commit') throw Error(outside)
+    return {route: cell.LANE_WORDS[action], data: {schema: 'workcell.landing/v1', act: action.slice('workcell.lane.'.length)}}
+  }}
+  await cell.gitBinding(reading, bind.chainHolds(), nothingInside).write([{key: 'land', value: true}])
+  const at = {workcell: 'env-1', product: 'O-I'}
+  assert.deepEqual(asked.map(([action]) => action), ['workcell.lane.commit', 'workcell.lane.push', 'workcell.lane.land'], 'the push and the landing go on')
+  assert.deepEqual(asked.slice(1), [['workcell.lane.push', at], ['workcell.lane.land', {...at, as: 'draft'}]])
+  assert.deepEqual(JSON.parse(cell.gitValues(reading, bind.chainHolds()).landed), {said: outside}, 'the device answers in Workcell\'s words')
+  let drawn = hosted(gitDesign, cell.gitBinding(reading, bind.chainHolds(), nothingInside))
+  assert.ok(drawn[2].includes('left out') && drawn[2].includes(escaped(outside)), 'Whole draws what was left out, in Workcell\'s words')
+  assert.ok(drawn[3].includes(escaped(outside)), 'the pane draws it')
+
+  // A commit that took the lane's files answers what it left outside, which the device lists.
+  host.resetHost()
+  const committing = {lane: async action => ({route: cell.LANE_WORDS[action], data: action === 'workcell.lane.commit'
+    ? {schema: 'workcell.landing/v1', act: 'commit', files: 2, regions: ['crates/a', 'docs'], left_outside: ['.env.local', 'README.md']}
+    : {schema: 'workcell.landing/v1'}})}
+  await cell.gitBinding(reading, bind.chainHolds(), committing).write([{key: 'land', value: true}])
+  assert.deepEqual(JSON.parse(cell.gitValues(reading, bind.chainHolds()).landed),
+    {committed: 2, regions: ['crates/a', 'docs'], left_outside: ['.env.local', 'README.md']})
+  drawn = hosted(gitDesign, cell.gitBinding(reading, bind.chainHolds(), committing))
+  assert.ok(drawn[2].includes('2 files'), 'Whole counts the files left out')
+  assert.ok(drawn[3].includes('.env.local') && drawn[3].includes('README.md'), 'the pane lists them')
+  for (const markup of drawn) assert.doesNotMatch(markup, /\bNaN\b|undefined/)
+
+  // Any other refusal of the commit is the press's: nothing after it is asked.
+  asked.length = 0
+  const merging = {lane: async action => {
+    asked.push(action)
+    if (action === 'workcell.lane.commit') throw Error('the seat\'s checkout is in the middle of a merge (MERGE_HEAD): conclude or abort it first')
+    return {route: '', data: {}}
+  }}
+  await assert.rejects(() => cell.gitBinding(reading, bind.chainHolds(), merging).write([{key: 'land', value: true}]), /middle of a merge/)
+  assert.deepEqual(asked, ['workcell.lane.commit'])
+  bind.resetHolds()
+  host.resetHost()
+})
+
 test('the Seat on the instrument\'s own reading: its rows and disk; a free seat\'s leftover zones are no claim; the product and seat start where the reading puts them', () => {
   bind.resetHolds()
   const read = cell.seatReading(REAL.seatStatus)

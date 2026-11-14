@@ -113,8 +113,29 @@ export interface GitPorts {
   readonly lane?: (action: LaneAction, input: Readonly<Record<string, unknown>>) => Promise<unknown>
 }
 
+/** Workcell's refusal of a commit that finds none of the lane's work (Workcell's pull request 130, landing.rs lane_commit): no change inside the lane's
+ * regions — the union of every zone's regions on the register seat, the whole seat where no zone names one — or none at all but the seat's
+ * own link. The seat's `uncommitted` counts the whole seat, so Land asks for the commit, and on these words goes on to push what the lane
+ * has committed; the work outside the regions stays as it is, and the words name it. */
+export const NOTHING_TO_COMMIT = /^nothing to commit: /
+
+/** What Land's commit did, as the device answers it (`landed`): from Workcell's answer, the files it committed, the lane's regions and what
+ * it left outside them (`left_outside`), each only where Workcell names it; or Workcell's words where it found none of the lane's work. */
+export type Landed =
+  | {readonly committed?: number; readonly regions?: readonly string[]; readonly left_outside?: readonly string[]}
+  | {readonly said: string}
+
+/** The device's answer from Workcell's commit answer (ownerRoutes.ts OwnerRouteAnswer: its `data` is workcell.landing/v1). Pure. */
+export function landedOf(answer: unknown): Landed {
+  const doc = isObj(answer) && isObj(answer.data) ? answer.data : isObj(answer) ? answer : {}
+  const paths = (value: unknown) => (Array.isArray(value) ? value.filter((path): path is string => typeof path === 'string') : undefined)
+  const committed = num(doc.files), regions = paths(doc.regions), leftOutside = paths(doc.left_outside)
+  return {...(committed !== undefined ? {committed} : {}), ...(regions ? {regions} : {}), ...(leftOutside ? {left_outside: leftOutside} : {})}
+}
+
 /** Git / landing's values: the chain's git reading — its light, the seat's branch, its files with no commit and its commits against
- * main — and the hand's Push, Land as and file shown. The commits, the diff's sums and the checks have no reading a kernel op reaches here. */
+ * main — the hand's Push, Land as and file shown, and what the last Land's commit left outside the lane's regions (`landed`, the view's
+ * until the next Land). The commits, the diff's sums and the checks have no reading a kernel op reaches here. */
 export function gitValues(reading: Pick<AgentChainReading, 'gitAdmitted' | 'gitRepo'>, holds: ChainHolds): Values {
   const values: Record<string, Value> = {}
   if (reading.gitAdmitted === true) values.light = 'lit'
@@ -125,6 +146,7 @@ export function gitValues(reading: Pick<AgentChainReading, 'gitAdmitted' | 'gitR
   put(values, 'behind', reading.gitRepo.behind)
   const view = viewHolds(holds, GIT_ID)
   for (const key of GIT_LOCAL) put(values, key, view[key] ?? GIT_DEFAULTS[key])
+  put(values, 'landed', view.landed)
   return values
 }
 
@@ -155,10 +177,26 @@ export function gitBinding(git: Pick<AgentChainReading, 'gitAdmitted' | 'gitRepo
       for (const {key} of changes) {
         if (key !== 'land') throw Error(GIT_REFUSE[key as keyof typeof GIT_REFUSE] ?? reading(key))
         if (landWhy) throw Error(landWhy)
-        // What the hand holds when it presses (the holds as they stand then); each step waits on the one before it.
+        // What the hand holds when it presses (the holds as they stand then); each step waits on the one before it. The commit's answer
+        // is the device's as soon as it comes, so a push refused after it still leaves what the commit left outside drawn.
         const now = gitValues(git, chainHolds())
         if (now['push-policy'] !== 'on land') throw Error(LAND_REFUSE.push)
-        for (const step of landSteps(now, seat!)) await ports.lane!(step.action, step.input)
+        holdView(GIT_ID, 'landed', undefined)
+        for (const step of landSteps(now, seat!)) {
+          if (step.action !== 'workcell.lane.commit') {
+            await ports.lane!(step.action, step.input)
+            continue
+          }
+          let landed: Landed
+          try {
+            landed = landedOf(await ports.lane!(step.action, step.input))
+          } catch (cause) {
+            const words = cause instanceof Error ? cause.message : String(cause)
+            if (!NOTHING_TO_COMMIT.test(words)) throw cause
+            landed = {said: words}
+          }
+          holdView(GIT_ID, 'landed', JSON.stringify(landed))
+        }
       }
     },
   }
