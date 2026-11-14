@@ -139,6 +139,20 @@ export interface StudioDragHost {
 /** How long a release waits for the field to read its write before the preview is let go all the same. */
 export const SHOWN_WITHIN_MS = 1500
 
+/** Resolves once `revision` reads past `from` (the field has read the work again since a write), or SHOWN_WITHIN_MS passes: what a
+ * gesture waits for before it lets its preview go, so the field never draws the old value between the write and its reading. */
+export function readPast(revision: () => number | null, from: number, clock: LiveSessionClock = REAL_CLOCK, interval = LIVE_INTERVAL_MS): Promise<void> {
+  return new Promise<void>(resolve => {
+    const until = clock.now() + SHOWN_WITHIN_MS
+    const look = () => {
+      const now = revision()
+      if (now === null || now > from || clock.now() >= until) resolve()
+      else clock.after(interval, look)
+    }
+    look()
+  })
+}
+
 /** A field device's drag, with the release's write told to it (`settled`) so the preview is let go only once that write has answered. */
 export type StudioDrag = FieldDeviceDrag & {settled(write: Promise<unknown>): void}
 
@@ -169,16 +183,7 @@ export function studioDrag(host: () => StudioDragHost, clock: LiveSessionClock =
       quiet(runAct(work.runner, work.studio.act, writes.length === 1 ? {...writes[0], gesture: 'sample'} : {changes: writes, gesture: 'sample'}))
     }
   }
-  /** Resolves once the field shows a revision past `from`, or SHOWN_WITHIN_MS passes. */
-  const shown = (from: number) => new Promise<void>(resolve => {
-    const until = clock.now() + SHOWN_WITHIN_MS
-    const look = () => {
-      const now = host().revision?.() ?? null
-      if (now === null || now > from || clock.now() >= until) resolve()
-      else clock.after(interval, look)
-    }
-    look()
-  })
+  const shown = (from: number) => readPast(() => host().revision?.() ?? null, from, clock, interval)
   const end = async (mine: number, ending: {write: Promise<unknown>; from: number | null} | null, values: Map<string, number>) => {
     if (ending) {
       const ok = await ending.write.then(reply => (reply as {ok?: unknown} | null)?.ok !== false, () => false)

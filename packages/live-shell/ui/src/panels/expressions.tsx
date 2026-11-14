@@ -39,6 +39,8 @@ import {frameActs} from '../components/nativeExpressionCommands'
 import {publishFrameTakeLink} from '../native/frameTakes'
 import {holdsToFollow, studioHolds} from '../components/devices/fieldDeviceSend'
 import {useWorkStudio} from '../components/devices/ExpressionsDeviceView'
+import {useModeSet} from '../owners/modeSets'
+import {createNativeContentActions, playbackToFollow, readNativeExpressionsContent} from '../shell/nativeContent'
 import {publishHostedChrome, publishHostedExpressions, useFramePlacement} from '../projections/expressionsPaneHost'
 import {followFrame} from '../projections/framePlacement'
 import {registerExpressionsPaneHost} from '../projections/expressionsPane'
@@ -205,6 +207,35 @@ export function ExpressionsPanel() {
     if (!host.current || !frame?.nativeScene) return
     for (const command of holdsToFollow(JSON.parse(kernelHolds) as {target: string; value: number}[], frame.automationHolds ?? [])) void stageRun(command).catch(() => {})
   }, [kernelHolds, shownScene?.expression_ref, shownScene?.scene_ref])
+  // And plays what the kernel plays (design §4.6): the Set's playing or recording clip of the presented work starts its Scene in the field
+  // where the kernel lands it (the scene channel's play-scene), and the kernel's stop rewinds the field and holds it. Told once per change of
+  // the kernel's playback; the frame no longer decides it.
+  const expressionsSet = useModeSet(workspace.transport, 'expressions')
+  const playsKey = (() => {
+    if (expressionsSet.state !== 'held' || !shownScene) return null
+    const clip = expressionsSet.answer.set.clips.find(row => row.track === shownScene.expression_ref && (row.status === 'running' || row.status === 'recording'))
+    return JSON.stringify(clip ? {scene_ref: clip.id, at: clip.at?.start_unix_ms ?? 0} : null)
+  })()
+  const told = useRef<string | null>(null)
+  const editorReady = !!workspace.editor && workspace.editorReading?.basis.expression_ref === shownScene?.expression_ref
+  useEffect(() => {
+    if (playsKey === null || !editorReady || told.current === playsKey) return
+    const plays = JSON.parse(playsKey) as {scene_ref: string; at: number} | null
+    const tell = () => {
+      const editor = workspaceRef.current.editor, reading = workspaceRef.current.editorReading
+      if (!editor || !reading?.playback) return
+      let actions: ReturnType<typeof createNativeContentActions>
+      try {actions = createNativeContentActions(readNativeExpressionsContent(reading), editor)} catch {return}
+      told.current = playsKey
+      const action = playbackToFollow(plays, reading.playback)
+      // A Scene with no working length to rewind is held where it stands.
+      if (action) void actions.scene(action).then(reply => reply.ok || action.action !== 'seek' ? reply : actions.scene({action: 'pause'})).catch(() => {})
+    }
+    const wait = plays ? plays.at - Date.now() : 0
+    if (wait <= 0) {tell(); return}
+    const timer = setTimeout(tell, wait)
+    return () => clearTimeout(timer)
+  }, [playsKey, editorReady])
 
   useEffect(() => {
     if (!qualified || !workspaceRef.current.accessReady) return

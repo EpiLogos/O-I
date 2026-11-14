@@ -82,5 +82,6 @@ test('r885: the transport\'s Metronome is the open scene\'s Pulse: lit while On,
   assert.deepEqual(sent, [true, false])
   const transport = readFileSync(new URL('../src/shell/transports/useExpressionsTransport.tsx', import.meta.url), 'utf8')
   assert.match(transport, /metro: \(\(\) => \{\n\s+const slot = pulseSlot\(\{on: pulseOn, reason: ready \? null : 'The native editor is busy or not attached\.'/)
-  assert.match(transport, /actions\.applyChanges\(\[expressionsSettingChange\('field', 'pulse', on\)\]\)/)
+  // O-I ticket 1008: the Pulse is a setting of the Studio, written through the Studio's act (the transport's studioApply), not the frame's editor.
+  assert.match(transport, /studioApply\(\[expressionsSettingChange\('field', 'pulse', on\)\]\)/)
 })

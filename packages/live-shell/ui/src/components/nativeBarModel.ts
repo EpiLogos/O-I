@@ -46,7 +46,6 @@ export interface EngineLight {kind: EngineLightKind; label: string; title: strin
 export function barEngineLight(state: HostedAppState | null, playback: {field_paused: boolean} | null | undefined, takeRecording = false): EngineLight {
   // A take of the Studio records in the kernel (O-I ticket 1008): the Set says so, not the frame.
   if (takeRecording) return {kind: 'recording', label: 'Recording', title: 'A take of the Studio is recording.'}
-  if (state?.propertyRecording) return {kind: 'recording', label: 'Recording', title: 'A property take is recording the chosen controls.'}
   if (state?.recording) return {kind: 'recording', label: 'Recording', title: 'The stage is recording video.'}
   if (!playback) return {kind: 'unknown', label: 'Engine', title: 'The engine state is not reported yet.'}
   return playback.field_paused
@@ -109,20 +108,6 @@ export function stepBarValue(value: number, parameter: Pick<BarParameter, 'step'
 export function formatBarValue(value: number, parameter: Pick<BarParameter, 'step' | 'decimals'>): string {
   const decimals = parameter.decimals ?? Math.min(4, Math.max(0, Math.ceil(-Math.log10(parameter.step || 1))))
   return value.toFixed(decimals)
-}
-
-export type PlayRoute = 'take-start' | 'take-stop' | 'play'
-/** Arm automation + Play starts a property take; Stop finishes it. Arm alone records nothing, and Record is never an immediate-record button.
- * A take that cannot start (no chosen properties, another Scene presented, video running) never blocks Play: the Scene plays and the reason is shown. */
-export function barPlayRoute(input: {armed: boolean; recording: boolean; startReason: string | null}): {route: PlayRoute; blockedReason: string | null} {
-  if (input.recording) return {route: 'take-stop', blockedReason: null}
-  if (!input.armed) return {route: 'play', blockedReason: null}
-  return input.startReason === null ? {route: 'take-start', blockedReason: null} : {route: 'play', blockedReason: input.startReason}
-}
-/** Re-enable automation (the orange button): visible only while a manual live gesture holds parameters off their automation. */
-export function barResume(state: HostedAppState | null): {visible: boolean; count: number} {
-  const count = state?.automationHeld ?? 0
-  return {visible: count > 0, count}
 }
 
 // Round 885 (O-I #747; DLW build ruling 2026-11-06, the lead's derivation): the Expressions transport's Tempo is the field's speed read in

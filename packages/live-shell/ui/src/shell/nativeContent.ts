@@ -151,6 +151,13 @@ export function readNativeExpressionsContent(reading: NativeEditorReading): Nati
 type SceneAction<T> = T extends NativeSceneEditorRequest ? Omit<T, 'operation' | 'basis' | 'intent_epoch'> : never;
 export type NativeSceneAction = SceneAction<NativeSceneEditorRequest>;
 
+/** What the field is told so that it plays what the kernel plays (O-I ticket 1008): the Scene the kernel plays or records is started where
+ * the field does not play it, and the field is rewound and held where the kernel plays nothing; nothing where the two agree. Pure. */
+export function playbackToFollow(kernel: {scene_ref: string} | null, field: {scene_ref: string; scene_playing: boolean}): NativeSceneAction | null {
+  if (kernel) return field.scene_playing && field.scene_ref === kernel.scene_ref ? null : {action: 'play-scene', scene_ref: kernel.scene_ref};
+  return field.scene_playing ? {action: 'seek', scene_ref: field.scene_ref, seconds: 0, sequence: 'working'} : null;
+}
+
 /** The acts a gesture of several owner steps takes (a constellation dropped on a track adds a scene, then sets its body:
  * components/expressions/clip/clipBinding.ts makeSceneOf): each step stands on the reading the step before it was answered with. */
 export interface NativeSceneGestureActions {

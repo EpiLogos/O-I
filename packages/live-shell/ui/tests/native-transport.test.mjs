@@ -193,6 +193,17 @@ test('the content adapter sends each transport control as one owner request on i
   assert.equal(sent.length, 5)
 })
 
+// O-I ticket 1008 (design §4.6): the frame plays what the kernel plays. The Expressions panel tells the field once per change of the kernel's
+// playback, through the scene channel, and the field decides no playback of its own.
+test('the field is told to play the Scene the kernel plays, and rewound where the kernel plays nothing; nothing where they agree', () => {
+  const field = (scene_ref, scene_playing) => ({scene_ref, scene_playing})
+  assert.deepEqual(C.playbackToFollow({scene_ref: 'scene:b'}, field('scene:a', false)), {action: 'play-scene', scene_ref: 'scene:b'})
+  assert.deepEqual(C.playbackToFollow({scene_ref: 'scene:b'}, field('scene:a', true)), {action: 'play-scene', scene_ref: 'scene:b'}, 'another Scene plays')
+  assert.equal(C.playbackToFollow({scene_ref: 'scene:a'}, field('scene:a', true)), null, 'it plays already')
+  assert.deepEqual(C.playbackToFollow(null, field('scene:a', true)), {action: 'seek', scene_ref: 'scene:a', seconds: 0, sequence: 'working'}, 'Stop rewinds it')
+  assert.equal(C.playbackToFollow(null, field('scene:a', false)), null)
+})
+
 test('the loop toggle is the Scene editor loop intent on the captured selection', async () => {
   const reading = ownerReading(false)
   const content = C.readNativeExpressionsContent(reading)
@@ -227,10 +238,11 @@ test('the bar keeps what has a slot (R2 retired the Scene\'s Clip-side column; a
   // The bar binds the rest: play, stop, the scrub and Scene time, the time scale, the tool rail, Map, the engine light, arm, take mode, loop.
   const bindings = bound(source(reading, content, actions))
   for (const id of ['play', 'stop', 'position', 'tempo', 'draw', 'key-map', 'cpu', 'arm', 'overdub', 'loop']) assert.ok(bindings[id], `${id} is bound on the one bar`)
-  assert.equal(bindings.record.press, undefined, 'Record is never an immediate-record button (no Expressions frame is linked in this render)')
-  assert.match(bindings.record.title, /Arm automation, then press Play/)
-  assert.equal(bindings['re-enable'].press, undefined, 'the orange return is live only while something is held')
-  assert.match(bindings.overdub.title, /Replace last take/)
+  assert.equal(bindings.record.press, undefined, 'Record is never an immediate-record button (no kernel Set is read in this render)')
+  assert.match(bindings.record.title, /Arm, then press Play/)
+  assert.equal(bindings['re-enable'].press, undefined, 'the orange return is live only while the kernel holds a value')
+  // O-I ticket 1008: every take lies on a lane of its own, so Overdub has no mode to choose; it says so.
+  assert.match(bindings.overdub.refused, /Takes are lanes/)
 })
 
 // The Arrangement's loop chip (nativeArrangementTimeline.tsx) showed the same value; the Arrangement it stood in was drawn by nothing
