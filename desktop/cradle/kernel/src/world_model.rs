@@ -172,8 +172,18 @@ struct Held {
     value: Option<Value>,
     error: Option<String>,
     read_at: Option<u64>,
-    /// Read again before it is answered: an op of the kernel's wrote to its owner since it was read.
-    written: bool,
+    /// The writes ops of the kernel's made to the slice's owners, counted, and how many of them the last read to end had begun
+    /// after. A read under way is not counted until it ends, so a subscriber who asks meanwhile waits for it rather than being
+    /// answered from before the write, and a write that lands while a read runs leaves the slice due when that read ends.
+    writes: u64,
+    read_after: u64,
+}
+
+impl Held {
+    /// Read again before it is answered: an op of the kernel's wrote to its owner after the last read that ended had begun.
+    fn written(&self) -> bool {
+        self.writes > self.read_after
+    }
 }
 
 #[derive(Default)]
@@ -233,7 +243,7 @@ impl Model {
     /// the caller records), if it did.
     pub fn subscribe(&self, slice: Slice, via: Via<'_>, fresh: bool) -> (Value, Option<u64>) {
         let held = self.held(slice);
-        if !fresh && held.read_at.is_some() && !held.written {
+        if !fresh && held.read_at.is_some() && !held.written() {
             return (answer(slice, &held), None);
         }
         let moved = self.read_once(slice, via, !fresh, fresh);
@@ -273,20 +283,21 @@ impl Model {
         let cell = self.cell(slice);
         let _reading = cell.reading.lock().unwrap_or_else(|e| e.into_inner());
         let started = now_ms();
-        if only_if_due {
+        let (written, writes) = {
             let held = cell.held.lock().unwrap_or_else(|e| e.into_inner());
-            if held.read_at.is_some() && !held.written {
+            if only_if_due && held.read_at.is_some() && !held.written() {
                 return None;
             }
-        }
-        let written =
-            std::mem::take(&mut cell.held.lock().unwrap_or_else(|e| e.into_inner()).written);
+            (held.written(), held.writes)
+        };
         let read = if fresh || written {
             crate::read_cache::with_fresh(|| load(slice, via))
         } else {
             load(slice, via)
         };
         let mut held = cell.held.lock().unwrap_or_else(|e| e.into_inner());
+        // The writes this read began after are read now; one that landed while it ran keeps the slice due.
+        held.read_after = held.read_after.max(writes);
         let moved = take(&mut held, read, started);
         moved.then_some(held.version)
     }
@@ -337,7 +348,7 @@ impl Model {
                 .held
                 .lock()
                 .unwrap_or_else(|e| e.into_inner())
-                .written = true;
+                .writes += 1;
         }
         self.due(slices.to_vec());
     }
@@ -1181,6 +1192,72 @@ mod tests {
         );
         assert_eq!(moved, Some(2));
         assert_eq!(asked.load(std::sync::atomic::Ordering::SeqCst), 2);
+    }
+
+    #[test]
+    fn a_subscriber_who_asks_while_a_written_slice_is_read_again_waits_for_that_read() {
+        // The model's own thread reads a written slice again (`read_again`), and that read can be slow (a world's pages ask
+        // Central for its effective sources). A subscriber who asks while it runs is answered from after the write, never
+        // from the reading the write retired: the foundation gate's act 1 was once answered the worlds slice's version 1,
+        // without the page it had just saved, while that read was still running (O-I ticket 1005, 14 Nov 2026).
+        let model = Model::new();
+        let asked = std::sync::atomic::AtomicU64::new(0);
+        let started = std::sync::Barrier::new(2);
+        let release = std::sync::Barrier::new(2);
+        let via = |_op: KernelOp| -> Result<KernelOpOutcome, String> {
+            let n = asked.fetch_add(1, std::sync::atomic::Ordering::SeqCst) + 1;
+            if n == 2 {
+                started.wait();
+                release.wait();
+            }
+            Ok(KernelOpOutcome {
+                receipts: Vec::new(),
+                read_scopes: None,
+                result: crate::KernelOpResult::ModelCatalogueReading {
+                    data: json!({"n": n}),
+                },
+            })
+        };
+        let (first, _) = model.subscribe(Slice::Models, &via, false);
+        assert_eq!(first["value"], json!({"n": 1}));
+        model.written(&[Slice::Models]);
+        std::thread::scope(|scope| {
+            let again = scope.spawn(|| model.read_again(Slice::Models, &via));
+            started.wait();
+            let asker = scope.spawn(|| model.subscribe(Slice::Models, &via, false));
+            // Time enough for the subscriber to be answered, if it were answered from what is held.
+            std::thread::sleep(Duration::from_millis(200));
+            release.wait();
+            let (answer, _) = asker.join().expect("the subscriber is answered");
+            assert_eq!(again.join().expect("the read again ends"), Some(2));
+            assert_eq!(
+                answer["value"],
+                json!({"n": 2}),
+                "answered from the read the write started, not from before the write"
+            );
+        });
+        assert_eq!(
+            asked.load(std::sync::atomic::Ordering::SeqCst),
+            2,
+            "the subscriber took that read and asked the owner nothing itself"
+        );
+        // A write that lands while a read is under way leaves the slice due: that read may have been answered before it.
+        model.written(&[Slice::Models]);
+        let during = std::sync::atomic::AtomicBool::new(false);
+        let via_during = |op: KernelOp| -> Result<KernelOpOutcome, String> {
+            if !during.swap(true, std::sync::atomic::Ordering::SeqCst) {
+                model.written(&[Slice::Models]);
+            }
+            via(op)
+        };
+        assert_eq!(model.read_again(Slice::Models, &via_during), Some(3));
+        let (after, moved) = model.subscribe(Slice::Models, &via, false);
+        assert_eq!(
+            after["value"],
+            json!({"n": 4}),
+            "read again: a write came during the last read"
+        );
+        assert_eq!(moved, Some(4));
     }
 
     #[test]
