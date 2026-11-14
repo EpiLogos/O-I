@@ -693,7 +693,7 @@ fn invoke_registry(
     // names (`CentralClient::person_env`), as factory.rs hands it to Factory.
     let mut env: Vec<(&'static str, &str)> = person.into_iter().collect();
     // The seat instrument resolves the machine's own register unless CENTRAL_ROOT names another (Control/user/workcell/seat
-    // `central_root`): a seat Action runs in the World the window stands in, HOME's Central as the host sets it (O-I #1006).
+    // `central_root`): a seat Action runs in the World the window stands in (`seat_world_root`, O-I #1006).
     let world_root = seat_world_root(action);
     if let Some(root) = world_root.as_deref() {
         env.push(("CENTRAL_ROOT", root));

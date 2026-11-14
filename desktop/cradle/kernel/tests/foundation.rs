@@ -1350,7 +1350,8 @@ fn run_a_factory_task(world: &World) -> Result<String, String> {
     .and_then(|()| std::fs::write(work.join("NOTES.md"), "# Notes\n"))
     .map_err(|e| format!("the project's files: {e}"))?;
     git(&work, &["init", "--quiet", "--initial-branch", "main"])?;
-    git(&work, &["add", "README.md", "NOTES.md"])?;
+    // The project's whole folder, its ProjectCentral with it: a checkout of it is the project wherever it stands (AIKit's seat rule).
+    git(&work, &["add", "--all"])?;
     git(&work, &["commit", "--quiet", "-m", "The atelier begins"])?;
     // A session's Agency is minted in the project's world: the person's standing grant names it beside the World's root.
     action(
