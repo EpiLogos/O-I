@@ -6,7 +6,7 @@ const config=ts.readConfigFile('tsconfig.json',ts.sys.readFile),parsed=ts.parseJ
 const diagnostics=ts.getPreEmitDiagnostics(ts.createProgram(parsed.fileNames,parsed.options));
 if(diagnostics.length){console.error(ts.formatDiagnosticsWithColorAndContext(diagnostics,{getCanonicalFileName:x=>x,getCurrentDirectory:()=>root,getNewLine:()=> '\n'}));process.exit(1);}
 const rcRoot=path.resolve(root,'../vendor/research-canvas');
-const aliases=Object.fromEntries(['schema','domain','desktop-api','geography','viewers','node-document'].map(name=>[`@research-canvas/${name}`,path.join(rcRoot,`packages/${name}/src/index.ts`)]));
+const aliases=Object.fromEntries(['schema','domain','desktop-api','viewers','node-document'].map(name=>[`@research-canvas/${name}`,path.join(rcRoot,`packages/${name}/src/index.ts`)]));
 // Shared chrome lives outside this package; bind it to this application's
 // existing React runtime, including JSX/client/server subpaths.
 aliases.react=path.resolve(root,'../node_modules/react');
@@ -14,19 +14,12 @@ aliases['react-dom']=path.resolve(root,'../node_modules/react-dom');
 aliases['@research-canvas/exporter']=path.join(rcRoot,'browserExporter.ts');
 const assets={'.woff':'dataurl','.woff2':'dataurl','.ttf':'dataurl','.svg':'dataurl','.png':'dataurl','.jpg':'dataurl','.webp':'dataurl'};
 const sourceAssets={name:'research-canvas-source-assets',setup(builder){
- builder.onResolve({filter:/\?(raw|url)$/},args=>{
-  const [file,kind]=args.path.split('?');
-  const resolved=file.startsWith('.')?path.resolve(args.resolveDir,file):require.resolve(file);
-  return {path:resolved,namespace:kind==='raw'?'oi-raw-source':'oi-worker-source'};
+ // `?raw` sources load as text. The `?url` worker bundler went with MapLibre, its one user (O-I #1009: Places is the shell's Earth atlas).
+ builder.onResolve({filter:/\?raw$/},args=>{
+  const file=args.path.slice(0,-'?raw'.length);
+  return {path:file.startsWith('.')?path.resolve(args.resolveDir,file):require.resolve(file),namespace:'oi-raw-source'};
  });
  builder.onLoad({filter:/.*/,namespace:'oi-raw-source'},args=>({contents:fs.readFileSync(args.path,'utf8'),loader:'text'}));
- builder.onLoad({filter:/.*/,namespace:'oi-worker-source'},async args=>{
-  // MapLibre's module worker imports a shared module. A raw source Blob loses
-  // that relative module base in the native protocol; bundle the real worker
-  // and its dependencies before giving it an offline Blob URL.
-  const worker=await build({entryPoints:[args.path],bundle:true,write:false,platform:'browser',format:'iife',target:'es2022',minify:true});
-  return {contents:`export default URL.createObjectURL(new Blob([${JSON.stringify(worker.outputFiles[0].text)}],{type:'text/javascript'}));`,loader:'js'};
- });
 }};
 
 // A real dependency-aware bundle includes the existing engine and Three.js, offline.

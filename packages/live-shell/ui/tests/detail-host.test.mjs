@@ -4,6 +4,7 @@ import {readFile} from 'node:fs/promises'
 import {register} from 'node:module'
 import {createElement} from 'react'
 import {renderToStaticMarkup} from 'react-dom/server'
+import {modeSetOf, setClip, setTrack} from './support/modeSetFixture.mjs'
 
 // The one detail host (manual §16.4–§16.5; FOUNDATION F4): Clip view over Device view; Device view under its head line, drawn from
 // the mode's registration; one rule for the Clip side in every mode — while nothing is selected, one line saying what it waits for
@@ -40,7 +41,7 @@ const {MODE_DETAILS} = await import('../src/shell/modeDetails.tsx')
 const {publishTimelineReading} = await import('../src/projections/timelinePaneHost.ts')
 const {publishShownTracks} = await import('../src/frame/tracks/tracksDoor.ts')
 const {selectedClipOf} = await import('../src/frame/detail/ClipBox.tsx')
-const {factoryTrackAdapter} = await import('../src/timeline/factoryTrackAdapter.ts')
+const {kernelSetTracks} = await import('../src/frame/tracks/kernelSet.ts')
 const {StatusBar} = await import('../src/components/StatusBar.tsx')
 // The frame's lazy parts (a mode's bodies, its transport and tracks, a device's face) load when first drawn (shell/loadWhenDrawn.ts;
 // O-I #740); a server render cannot wait for a module, so they are fetched first and every body renders itself.
@@ -54,7 +55,9 @@ const track = {sessionRef: 'ses-214', purpose: 'correlate occurrences', agentRef
   budget: {used: 2, max: 12}, disclosure: null, tasks: [
     {n: 1, title: 'correlate occurrences', state: 'running', startUnixMs: T(13, 41), lastActivityUnixMs: T(14, 24), softStop: false, disclosure: null},
     {n: 2, title: null, state: 'unknown', startUnixMs: null, lastActivityUnixMs: null, softStop: true, disclosure: null}]}
-const set = factoryTrackAdapter.project({tracks: [track], nowUnixMs: T(14, 30)})
+// Factory's Set as the kernel gives it (kernel mode_set.rs): the session's track, named by its purpose, and its task as a clip on it.
+const set = kernelSetTracks(modeSetOf({rows: [{id: 'batch:1', name: '1'}], tracks: [setTrack('space:lead:ses-214', 'correlate occurrences', {kind: 'an Agent session', depth: 1})],
+  clips: [setClip('space:lead:ses-214#task/1', 'space:lead:ses-214', 'batch:1', 'correlate occurrences', {status: 'running'})]}), {nowMs: T(14, 30)})
 const taskRef = set.clips[0].id
 
 const reading = (mode, overrides = {}) => ({mode, transport: UNAVAILABLE, world: null, worldCut: false, centralSubject: null,
@@ -106,7 +109,7 @@ test('the Device side\'s head: the session\'s path in Factory, the focused instr
     // REPLACED (#725): "the Experiment and Approvals" — the Experiment was retired (§19.5: a task launched with Repeat, its takes compared); the
     // Main track is the Run map, Approvals and the prompt pads (§16.2, §19.1).
     {name: 'Main', line: 'Factory\'s Main track: the Run map, Approvals and the prompt pads'}, 'no selection, no session — the Main track, as the chain says')
-  // A workcell's return track (frame/tracks/returnTracks.ts `workcell:<name>`; lane W1-Factory): its name and its chain.
+  // A workcell's return track (`workcell:<name>`, the kernel's Set's; lane W1-Factory): its name and its chain.
   assert.deepEqual(MODE_DETAILS.factory.head.device({detail: reading('factory'), selected: {...none, ref: 'workcell:env-2'}, instrument: null}),
     {name: 'env-2', line: 'the workcell\'s chain: Gateway → Remote carrier → Git / landing, with its Seat'}, 'a workcell selected: its chain')
   assert.deepEqual(MODE_DETAILS.factory.head.device({detail: reading('factory'), selected: none, instrument: 'techne:m2'}),

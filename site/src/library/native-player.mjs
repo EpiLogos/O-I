@@ -1,11 +1,13 @@
 /** Browser host of the same production adapter used by the native Expressions
  * instrument. No document mutation API; camera/clock/selection are view state. */
-import { ProductionAdapter } from '@epilogos/oi-design-system/expressions-engine/oi/retained.mjs';
-import { blankScene, validateJourney } from '@epilogos/oi-design-system/expressions-engine/shell/model.mjs';
-import { nativeExport, nativeSnapshotToJourney } from '@epilogos/oi-design-system/expressions-engine/shell/nativeBridge.mjs';
-import { defaultCamera, project, unproject } from '@epilogos/oi-design-system/expressions-engine/shell/camera.mjs';
-// Paths are resolved by Vite's native-engine alias; renderer ownership is unchanged.
+import { ProductionAdapter } from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/production.ts';
+import { blankScene, validateJourney } from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/model.ts';
+import { nativeExport, nativeSnapshotToJourney } from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/nativeBridge.ts';
+import { defaultCamera, project, unproject } from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/camera.ts';
+// The engine is the Expressions application's own source; renderer ownership is unchanged.
 const base=nativeExport(blankScene()).config;
+/** The instrument's own validation of an `oi.journey` body (model.ts), for a page that checks a published body before the field takes it. */
+export function validateNativeJourney(value) {return validateJourney(value);}
 export async function loadNativeJourney(descriptor) {
  if(!descriptor)return null;
  if(descriptor.schema!=='oi.native-expression-body/v1'||descriptor.source_schema!=='oi.journey'||typeof descriptor.path!=='string'||descriptor.digest?.algorithm!=='sha256'||!/^[a-f0-9]{64}$/.test(descriptor.digest.value)||!descriptor.scene_map||typeof descriptor.scene_map!=='object'||!descriptor.entity_map||typeof descriptor.entity_map!=='object')throw new Error('The published native Expression body descriptor is invalid.');

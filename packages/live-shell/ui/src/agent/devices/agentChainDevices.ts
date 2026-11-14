@@ -1,8 +1,8 @@
 // Factory's agent chain as devices of the runtime (manual §6, §10.4; lock §2.3; ticket T-DEVICES-FACTORY): gateway → agent →
 // skills → scope → landing, each one a DeviceInstance the three sizes draw. Pure: the rows are the verified address table's
 // (inhabitants/agentParamAddresses.ts:67-105, reused unchanged), the slots and their Live semantics are the admitted
-// manifests' (inhabitants/agentDeviceCatalogue.ts:33-85), the readings are the owners' (the chain's reads, ported to
-// useAgentChainReading.ts), and a write goes where the row's own write path says, through the one resolver
+// manifests' (inhabitants/agentDeviceCatalogue.ts:33-85), the readings are the owners' (the World Model's slices the chain's declarations
+// name, designBindings.ts chainFromModel), and a write goes where the row's own write path says, through the one resolver
 // (agentNativeDispatch.ts:66, injected here as `write`). A row without a write path is a reading; a light is the owner's
 // reading and dark when unknown; nothing here invents a value, a default or a control. The shell's own flags (effort, steer,
 // heartbeat, write arm — agent/AgentShellContext.tsx) are the shell's presentation of a press with the defaults it starts
@@ -52,6 +52,14 @@ export interface SkillChain {
   carriedBy: readonly string[]
 }
 
+/** A seat as Workcell's landing Actions name it (workcell.lane.*: `--workcell`, `--product`), and whether a lane holds it: a free seat
+ * holds no lane to land. */
+export interface LandingSeat {
+  readonly workcell: string
+  readonly product: string
+  readonly held: boolean
+}
+
 export interface AgentChainReading {
   gateway: OwnerReading
   /** The harness answered the read (the gateway lamp is earned by an answered reading, never assumed). Null while reading. */
@@ -61,7 +69,11 @@ export interface AgentChainReading {
   git: OwnerReading
   /** The workcell seat answered. Null while reading. */
   gitAdmitted: boolean | null
-  gitRepo: {branch?: string; uncommitted?: number}
+  /** The seat's branch, its files with no commit, and the commits it holds that main does not and the reverse (`ahead_main`,
+   * `behind_main`). */
+  gitRepo: {branch?: string; uncommitted?: number; ahead?: number; behind?: number}
+  /** The seat Git / landing lands from, as the seat instrument names it; absent where no seat is named. */
+  gitSeat?: LandingSeat | null
   /** Who each unlit lamp waits on (P0-R4): the owner of the refused reading, or null while reading / once admitted. */
   waitingOn: {gateway: string | null; skillset: string | null; git: string | null}
   /** The roster's skill chains. Null while the roster is being read. */
@@ -175,16 +187,6 @@ export function taskReading(data: unknown): {used?: number; cap?: number} {
   }
 }
 
-/** The git seat's branch and uncommitted files, as the repository owner discloses them (the cradle reads the same op:
- * desktop/cradle/src/git/RepositoryContext.tsx:5 — head_branch, and per worktree dirty_files). */
-export function gitRepoReading(doc: unknown): {branch?: string; uncommitted?: number} {
-  if (!isObj(doc)) return {}
-  const branch = typeof doc.head_branch === 'string' && doc.head_branch ? doc.head_branch : undefined
-  const here = Array.isArray(doc.worktrees) ? doc.worktrees.find(tree => isObj(tree) && tree.path === doc.repo_root) : undefined
-  const dirty = isObj(here) && typeof here.dirty_files === 'number' ? here.dirty_files : undefined
-  return {...(branch ? {branch} : {}), ...(dirty !== undefined ? {uncommitted: dirty} : {})}
-}
-
 /** The gateway rows' values, only where the harness's own document discloses them under the carrier's own field names
  * (harnessAgentControl.ts:14-25) and inside the row's declared choices. Anything else stays unknown. */
 export function gatewayDisclosed(doc: unknown): Record<string, ParamValue> {
@@ -276,11 +278,15 @@ const PLAN: Readonly<Record<string, Readonly<Record<string, RowPlan>>>> = {
     'write-mode': {group: 'Writes', compact: true},
     'write-receipts': {group: 'Writes'},
   },
+  // The manual's four macros (§19.16 Compact: Commit, Push, Land as, Land).
   git: {
     branch: {group: 'Seat'},
     uncommitted: {group: 'Seat'},
+    ahead: {group: 'Seat'},
+    behind: {group: 'Seat'},
     'commit-policy': {group: 'Policy', compact: true},
     'push-policy': {group: 'Policy', compact: true},
+    landAs: {group: 'Policy', compact: true},
     land: {group: 'Policy', compact: true},
   },
 }
@@ -295,6 +301,7 @@ const LABELS: Readonly<Record<string, string>> = {
   'write-receipts': 'Receipts',
   'commit-policy': 'Commit',
   'push-policy': 'Push',
+  landAs: 'Land as',
 }
 export const rowTitle = (key: string): string => LABELS[key] ?? key.charAt(0).toUpperCase() + key.slice(1)
 

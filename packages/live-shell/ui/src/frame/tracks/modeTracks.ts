@@ -1,6 +1,7 @@
 // Each mode's tracks for the one Session and Arrangement (FOUNDATION F3), by registration: the mode's adapter over the
 // reading the frame publishes. A table, never a branch in the frame. Live's adapter is the reference (the open set);
-// Central's are its workspaces, with the Day as the Main track (useCentralTracks.ts, R3); Factory's its agent sessions and their tasks (useFactoryTracks.ts);
+// Central's and Factory's are their Sets in the kernel (kernelSet.ts, O-I #1004): Central's its worlds and their pages, with the Day as the
+// Main track; Factory's its agent sessions, Factory's tasks on them and their attempts as takes, with the workcells as return tracks;
 // Technē's its native streams with the walks' stops as rows (useTechneTracks.ts); Expressions' the open work's scenes.
 // The three modes whose tracks are the World cut (shell/modeFrames.ts MODE_TRACK_SOURCES 'world') are wrapped by `worldCut`
 // (useWorldCut.ts): their sets also carry the time spine's cron firings, the occasion stood in and the rails' stop focus, as the
@@ -38,13 +39,10 @@ import {backToArrangementInEngine, liveEngineState, sessionInEngine, subscribeLi
 import type {ClipLaneStanding, ClipLanesStanding, RowSlot} from '../../live/clipPlayer'
 import {frameSoundReading, noteSolo, type ExpressionMixIntent, readStudioArm, setExpressionActive, setExpressionLevel, setExpressionSolo, setMainLevel, syncSoloSilenced} from '../../native/frameSound'
 import {expressionsTrackAdapter} from '../../timeline/expressionsTrackAdapter'
-import {FACTORY_WAITING} from '../../timeline/factoryTrackAdapter'
-import {CENTRAL_WAITING} from '../../timeline/centralTrackAdapter'
-import {withTaskActs} from '../../agent/factoryTaskActs'
 import {TECHNE_WAITING} from '../../timeline/techneTrackAdapter'
-import {useFactoryTracks} from './useFactoryTracks'
-import {useCentralTracks} from './useCentralTracks'
 import {useTechneTracks} from './useTechneTracks'
+import {kernelModeTracks} from './kernelSet'
+import {withWorldDocs} from '../../central/worldDocsHeads'
 import {worldCut} from './useWorldCut'
 import {withClipMaker} from './clipMakers'
 import {sceneMaker} from '../../components/expressions/clip/clipBinding'
@@ -378,9 +376,9 @@ export const MODE_TRACKS: Readonly<Record<SurfMode, UseModeTracks>> = {
   // hook: the engine's reading is read as it stands when the pane draws (Volume and Pan as the engine applied them, O-I #849), and the
   // pane draws again whenever it moves (MODE_REDRAWS).
   live: reading => reading.set ? liveTracks(reading.set, reading.document, reading.colors, undefined, liveEngineState().reading, laneStanding) : null,
-  base: worldCut(useCentralTracks),
-  // A session's and its task's own acts on AIKit (O-I #743: Delete, Paste, Insert, a session's Rename and Delete), over the carrier.
-  factory: worldCut(withTaskActs(useFactoryTracks)),
+  // Central's and Factory's Sets are the kernel's (kernelSet.ts): each world's head opens its Docs (central/worldDocsHeads.ts).
+  base: worldCut(withWorldDocs(kernelModeTracks('central'))),
+  factory: worldCut(kernelModeTracks('factory')),
   techne: worldCut(useTechneTracks),
   expressions: expressionsTracks,
 }
@@ -476,19 +474,15 @@ export function liveTracks(set: SetSummary, document: SetDocument | null, colors
 }
 
 /** What each mode's acts no owner op carries wait for (O-I #743, round three), by the op the menu names: a registration, never a branch.
- * A mode's set may say more of its own (its `actions.waiting`, which stands over these). */
+ * A mode's set may say more of its own (its `actions.waiting`, which stands over these); a kernel Set says all of its own. */
 export const MODE_WAITING: Readonly<Partial<Record<SurfMode, Readonly<Record<string, string>>>>> = {
-  base: CENTRAL_WAITING,
-  factory: FACTORY_WAITING,
   techne: TECHNE_WAITING,
 }
 
 /** Whose operations each mode's object acts are, in the words a missing act names (manual §10.9; each mode's action table,
- * §17.1–§21.1). A registration, never a branch. */
-export const MODE_OWNERS: Readonly<Record<SurfMode, string>> = {
+ * §17.1–§21.1). A registration, never a branch; a kernel Set names its own owner. */
+export const MODE_OWNERS: Readonly<Partial<Record<SurfMode, string>>> = {
   live: 'kernel · live-set, the open set\'s owner',
-  base: 'Central · the page owner, kernel/src/page.rs, and today\'s set in the Day, central/daySet.ts',
-  factory: 'AIKit · the encounter\'s session settings, and Factory',
   techne: 'Technē · the reading\'s owner',
   expressions: 'Expressions · the native composition',
 }

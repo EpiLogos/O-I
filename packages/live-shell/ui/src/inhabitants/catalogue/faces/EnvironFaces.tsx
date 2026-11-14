@@ -1,12 +1,12 @@
 // The environs of the process devices (manual §25.6 "Process types, read in time"), each drawn in the kit's well (sdk/panel Display) from
-// its reading (environReadings.ts): the Gateway's river, the NOWs' seasons, the Seats page's succession, and the erosion of the Seats
+// its reading (environReadings.ts): the Gateway's river, the Seats page's succession, and the erosion of the Seats
 // page and of Docs. The approvals queue's lake (software-factory__approvals.tsx QueueWell) is the first of them, and these draw as it does:
 // the kit's inks and the shell's tokens, lines and not blobs, the ground keeping its record. A picture is the state now and nothing else:
 // it does not move (§25.6 Rules: "a face or a ground moves only for something the run did"), no part of it stands for a reading the owner
 // did not give, and while a reading is missing the well says, in the picture, which reading it waits on.
 import type {ReactNode} from 'react'
 import {Display} from '../../sdk/panel'
-import {isAbsent, type EnvironAbsent, type ErosionReading, type ErosionStretch, type RiverReading, type SeasonsReading, type SuccessionReading} from './environReadings'
+import {isAbsent, type EnvironAbsent, type ErosionReading, type ErosionStretch, type RiverReading, type SuccessionReading} from './environReadings'
 import './faces.css'
 
 const clamp = (lo: number, hi: number, x: number) => Math.max(lo, Math.min(hi, x))
@@ -82,58 +82,6 @@ export function RiverEnviron({reading, w, h, why}: {reading: RiverReading | Envi
       {flow !== 'flowing' && <Words words={reading.why} w={w} y={(top + foot) / 2 - (reading.why.length > (w - 16) / 5.2 ? 6 : -3)} cls={flow === 'dry' ? 'dp-ink' : 'dp-ink-dim'} max={3} />}
       {flow === 'flowing' && <text x={w - 6} y={h - 5} className="dp-axis" textAnchor="end">{reading.why}</text>}
     </g>
-  </Well>
-}
-
-// ---------------------------------------------------------------- the seasons
-
-const SEASONS_DOES = 'The NOW field\'s year. Each clearing in growth stands as a stalk in ear, each quiescent one bends dormant; the closed ones lie harvested as sheaves at the right, and the archived ones lie in the soil, one mark each, the record.'
-
-export function SeasonsEnviron({reading, w, h}: {reading: SeasonsReading | EnvironAbsent; w: number; h: number}) {
-  const ground = h * 0.64
-  if (isAbsent(reading)) return <Well kind="seasons" w={w} h={h} label="The seasons" does={`${SEASONS_DOES} ${reading.waits}`} state="waiting">
-    <path d={`M0 ${f1(ground)}H${w}`} className="dp-faint" strokeDasharray="3 3" />
-    <Words words={reading.waits} w={w} y={ground / 2} />
-  </Well>
-  const field = w * 0.74, pad = 6, n = reading.standing.length, step = (field - pad * 2) / Math.max(n, 1), tall = (ground - 8) * 0.8
-  const {growth, dormant, harvested, record} = reading.counts
-  const sheaves = harvested ?? 0, shown = Math.min(sheaves, 5)
-  const sheafX = (i: number) => field + 10 + i * Math.max(9, (w - field - 18) / 5)
-  // The record lies in the soil: one mark for each clearing archived, row on row, as many rows as the soil holds.
-  const soil = h - ground - 16, area = Math.max(1, (w - 8) * soil)
-  const cols = Math.max(1, Math.min(Math.floor((w - 8) / 4), Math.ceil(Math.sqrt((record ?? 0) * (w - 8) / Math.max(soil, 1)))))
-  const rows = Math.max(1, Math.min(Math.floor(soil / 4), Math.ceil((record ?? 0) / cols)))
-  const marks = area > 0 ? Math.min(record ?? 0, cols * rows) : 0, colW = (w - 8) / cols, rowH = soil / rows
-  const words = [`${growth ?? '—'} in growth`, `${dormant ?? '—'} dormant`, `${harvested ?? '—'} harvested`, record === null ? 'the record unread' : `${record} in the record`].join(' · ')
-  return <Well kind="seasons" w={w} h={h} label="The seasons" does={`${SEASONS_DOES} Now: ${words}.`} corner={growth === null ? undefined : `${growth} in growth`} state="live">
-    <rect x={0} y={f1(ground)} width={w} height={f1(h - ground - 14)} fill="var(--text-faint)" opacity={0.14} />
-    {Array.from({length: marks}, (_, i) => {
-      const r = Math.floor(i / cols), c = i % cols, jitter = ((i * 37) % 11) / 11 - 0.5
-      const x = 4 + (c + 0.5 + (r % 2) * 0.5 + jitter * 0.4) * colW, y = ground + 2 + (r + 0.5 + jitter * 0.3) * rowH
-      return <path key={i} d={`M${f1(x - 1.5)} ${f1(y + 1)}l3 -2`} stroke="var(--text-dim)" strokeWidth={1} opacity={0.5} />
-    })}
-    <path d={`M0 ${f1(ground)}H${w}`} className="dp-faint" />
-    {n === 0 && <text x={field / 2} y={ground - 10} textAnchor="middle" className="dp-ink-dim">Fallow: nothing in growth</text>}
-    {reading.standing.map((c, i) => {
-      const x = pad + (i + 0.5) * step
-      if (c.season === 'growth') return <g key={c.ref} data-season="growth"><title>{c.purpose}</title>
-        <path d={`M${f1(x)} ${f1(ground)}V${f1(ground - tall)}`} stroke="var(--green)" strokeWidth={1.3} />
-        <path d={`M${f1(x)} ${f1(ground - tall * 0.45)}q-3 -2 -4 -6M${f1(x)} ${f1(ground - tall * 0.62)}q3 -2 4 -6`} fill="none" stroke="var(--green)" strokeWidth={0.9} opacity={0.8} />
-        <ellipse cx={f1(x)} cy={f1(ground - tall - 3.6)} rx={1.7} ry={4} fill="var(--green)" />
-      </g>
-      return <g key={c.ref} data-season="dormant" opacity={0.7}><title>{c.purpose}</title>
-        <path d={`M${f1(x)} ${f1(ground)}Q${f1(x)} ${f1(ground - tall * 0.3)} ${f1(x + 3)} ${f1(ground - tall * 0.42)}`} fill="none" stroke="var(--text-faint)" strokeWidth={1.1} />
-      </g>
-    })}
-    {Array.from({length: shown}, (_, i) => {
-      const x = sheafX(i), s = Math.min(16, tall * 0.55)
-      return <g key={i} data-season="harvested" stroke="var(--dp-on)" strokeWidth={1} fill="none">
-        {[-3, -1.5, 0, 1.5, 3].map(dx => <path key={dx} d={`M${f1(x + dx * 0.6)} ${f1(ground)}L${f1(x + dx * 1.3)} ${f1(ground - s)}`} />)}
-        <path d={`M${f1(x - 2.6)} ${f1(ground - s * 0.45)}H${f1(x + 2.6)}`} strokeWidth={1.6} />
-      </g>
-    })}
-    {sheaves > shown && <text x={w - 4} y={ground - 4} textAnchor="end" className="dp-axis">+{sheaves - shown}</text>}
-    <text x={6} y={h - 4} className="dp-axis">{words}</text>
   </Well>
 }
 

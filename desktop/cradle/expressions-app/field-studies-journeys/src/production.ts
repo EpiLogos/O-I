@@ -1,5 +1,5 @@
-import {ExpressionConnectionLayer,type ConnectionBinding} from '../../../../../packages/oi-design-system/expressions-engine/oi/expressionBindings.mjs';
-import {withRetainedField} from "../../../../../packages/oi-design-system/expressions-engine/oi/retained-capability.mjs";
+import {ExpressionConnectionLayer,type ConnectionBinding} from './expressionBindings.mjs';
+import {withRetainedField} from './retainedField.mjs';
 import {MAX_FORMATIONS,MAX_PINS} from '../../src/engine/fieldModel';
 import {TransportState} from '../../src/engine/transportState';
 import {stateSource} from './sourceState';
@@ -34,7 +34,10 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
  private contextOwner:PointCloudField|null=null;
  private connections:ExpressionConnectionLayer|null=null;
  private connectionRows:readonly ConnectionBinding[]|undefined;
- private selectedConnection:string|null|undefined;
+ private connectionKey='';
+ /** The relations a host binds itself (setExpressionBindings: the stage, the published player): drawn while its frames carry none of
+  * their own (`frame.connections`), the frame's selection selecting among them. Once this field has drawn them it stays their reader. */
+ private hostBindings:readonly ConnectionBinding[]=[];private hostBound=false;
  private width=innerWidth;private height=innerHeight;private dpr=devicePixelRatio||1;
  private dirty=false;private signature='';private sceneId='';private target:PointCloudConfig|null=null;
  private from:PointCloudConfig|null=null;private transitionStart=0;private duration=0;
@@ -168,13 +171,18 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
   const config=this.nativeConfig(this.configuration(frame));
   // E11b: a wipe holds the outgoing frame, captured before the new configuration reaches the GPU.
   if(this.holdDue){this.holdDue=false;this.engine?.captureTransitionHold(transitionColourOf(this.from?.backgroundColor));}
-  if(!this.engine){this.engine=new PointCloudField(this.canvas,config,true);this.engine.onWakeFailed(this.stepFailed);this.engine.setTorusPlay(this.torusPlay);this.engine.setPlateBody(this.nativeDomain);this.contextOwner=this.engine;this.connections=new ExpressionConnectionLayer(this.engine);this.connectionRows=undefined;this.selectedConnection=undefined;this.seedRecoveredSources=true;}
+  if(!this.engine){this.engine=new PointCloudField(this.canvas,config,true);this.engine.onWakeFailed(this.stepFailed);this.engine.setTorusPlay(this.torusPlay);this.engine.setPlateBody(this.nativeDomain);this.contextOwner=this.engine;this.connections=new ExpressionConnectionLayer(this.engine);this.connectionRows=undefined;this.connectionKey='';this.hostBound=false;this.seedRecoveredSources=true;}
   else if(config!==this.applied)this.engine.replaceConfig(config);
   this.engine.setTransitionOverlay(this.overlay);this.engine.setForceEmitterProjection(this.forceProjection(frame.forceEmitterProjection??null));this.engine.setLocalizedResonanceProjection(frame.localizedResonanceProjection??null);this.engine.setFormationGeometryProjection(frame.formationGeometryProjection??null);
   if(config!==this.applied){this.syncSources(frame.scene);this.soundScene=frame.scene.entities.some(e=>e.sound?.enabled)?frame.scene:null;}this.applied=config;
-  if(frame.connections!==this.connectionRows||frame.selectedConnection!==this.selectedConnection){
-   this.connectionRows=frame.connections;this.selectedConnection=frame.selectedConnection;
-   this.connections?.configure(frame.connections??[],frame.selectedConnection?[frame.selectedConnection]:[]);
+  // The relations drawn: the frame's own (the application's, its one selected connection), else those the host bound, under the frame's
+  // selection. Configured when they or their selection change; the field keeps them between (ConnectionRuntime).
+  const hosted=frame.connections===undefined&&(this.hostBound||this.hostBindings.length>0);
+  const rows=hosted?this.hostBindings:frame.connections,selected=hosted?frame.selectedIds:frame.selectedConnection?[frame.selectedConnection]:[];
+  const key=rows===undefined?'':selected.join('\n');
+  if(rows!==this.connectionRows||key!==this.connectionKey){
+   this.connectionRows=rows;this.connectionKey=key;this.hostBound||=hosted;
+   this.connections?.configure(rows??[],rows===undefined?[]:selected);
   }
   this.engine.setSelection(frame.selectedIds);this.engine.setGridMode(frame.scaffold??'off');
   const {a,b}=basis(frame.camera),o=stageCentre(this.width,this.height);
@@ -207,6 +215,17 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
   const harmonies=symbolHarmonies(scene.entities,plan,classes,reading?.body?bodyOf(reading.body.influence):null,steps,id=>this.formOf(id),this.symbolVoices.sampleRate()??48000);
   this.symbolVoices.sync({...none,plan,catalogue:store.catalogue,catalogueWhy:store.why,places,harmonies});
  }
+ /** The relations the host draws on this field (the stage's, a page's: its Expression's correspondence); none, the field draws none. */
+ setExpressionBindings(bindings:readonly ConnectionBinding[]=[]){this.hostBindings=bindings;this.dirty=true;}
+ /** What a host's pointer is on, from the evaluated poses and the drawn relations: the nearest symbol within 12 px, else a relation
+  * within 7 px, else nothing. */
+ hitTestExpression(x:number,y:number){
+  if(!this.engine||this.contextLost)return null;
+  const member=this.connections?.nearestEntity(x,y,12);
+  return member?{kind:'entity' as const,entity_ref:member.entityId,distance:member.distance}:this.connections?.hitTest(x,y)??null;
+ }
+ /** The host's relations as this field draws them; before it has drawn them, every one unavailable. */
+ expressionBindingSnapshot(){return this.hostBound&&this.connections?this.connections.inspect():{rendered:[] as string[],unavailable:this.hostBindings.map(binding=>binding.binding_ref)};}
  hitEntity(x:number,y:number){return this.connections?.pickEntity(x,y)??null;}
  hitConnection(x:number,y:number){return this.connections?.hitTest(x,y)??null;}
  inspectConnections(){return { ...this.connections?.inspect(),paths:this.connections?.paths.map(path=>({binding_ref:path.binding.binding_ref,points:path.points.map(p=>this.engine?.projectWorldToScreen(p.x,p.y,p.z))}))??[]};}
@@ -267,4 +286,6 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
  dispose(){this.symbolVoices.dispose();this.releaseVoiceWatch();this.canvas.removeEventListener('webglcontextlost',this.lost);this.connections?.dispose();this.connections=null;this.contextOwner?.destroy({releaseContext:true});this.engine=null;this.contextOwner=null;}
 }
 
+/** The production engine: the one adapter the application, the candidate's stage and the published player all run. */
 export const ProductionAdapter = withRetainedField(EmbeddedProductionAdapter, WORLD_SCALE);
+export type ProductionAdapter = InstanceType<typeof ProductionAdapter>;

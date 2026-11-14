@@ -9,13 +9,14 @@
 // its tile is claimed in every mode, and Factory's Main track draws this same entry; AIKit's instrument (§19.26) publishes itself beside
 // these (AikitRailDevice.tsx), its widget the rail's AIKit tile.
 //
-// Every read is the window's shared held reading, the same one the chain reads, so publishing here doubles no owner call: the chain's
-// readings (useAgentChainReading.ts — harness_agent_read and git_repository_read go through the kernel's held-read holder,
-// owners/ownerCall.ts installKernelReadHolder; the roster and Workcell's status are owners/readers.ts answers), AIKit's population
-// (usePopulationAnswer.ts) and the open agent's conversation (useConversationAnswer.ts), Central's ground (central/devices/useCentralReadings.ts
+// Every read is the window's shared held reading, the same one the chain reads, so publishing here doubles no owner call: the gateway the
+// chain's Gateway declares (the World Model's sessions slice, owners/model.ts useModelSlice, composed by designBindings.ts chainFromModel —
+// the slice carries AIKit's gateway, its binding and that binding's harness reading), the roster and Workcell's status (owners/readers.ts
+// answers; a kernelRead from an effect goes through owners/ownerCall.ts installKernelReadHolder), AIKit's population
+// (usePopulationAnswer.ts) and the open agent's conversation (its occupant's session, EncounterObservers.tsx), Central's ground (central/devices/useCentralReadings.ts
 // useCentralGroundAnswer), the seat instrument (workcellReads.ts useSeatStatusAnswer — slow, so asked only while the Workcells tile is open
-// or a workcell's return track is selected), AIKit's own gateway journal (workcellReads.ts useGatewayEcology and useGatewayReplays: the
-// Frames monitor's frames, lane W6). Messages' Send and a drop onto a track write through the kernel's gateway_write (lane W3, ownerRoutes.ts). The bindings are the devices' own: messagesBinding.ts, mainTrackBindings.ts (rackBinding,
+// or a workcell's return track is selected), AIKit's own gateway journal (the sessions slice's gateway ecology, and workcellReads.ts
+// useGatewayReplays: the Frames monitor's frames, lane W6). Messages' Send is the open agent's conversation's next turn through the one encounter session (O-I #1003), and a drop onto a track AIKit's Action aikit.gateway.delegate (the kernel's act, ownerRoutes.ts). The bindings are the devices' own: messagesBinding.ts, mainTrackBindings.ts (rackBinding,
 // agencyBinding, framesBinding), receiptBindings.ts ledgerBinding, workcellRackBinding.ts — Workcell's instrument, which changes none of its
 // connections' settings (§19.23) and carries the seat instrument, Ground hygiene's census, the Remote carrier's plan and Central's machine
 // readings as its Seats and Machine pages (oneAgentBinding.ts carryPages).
@@ -35,29 +36,28 @@ import {useAgentShellOptional} from '../AgentShellContext'
 import {fireWritePath} from '../agentNativeDispatch'
 import {trackKey} from '../agentRunModel'
 import {chainDeviceId, slotRows} from './agentChainDevices'
-import {gatewayBinding, holdView, openRefinement, useChainHolds, viewHolds} from './designBindings'
+import {chainFromModel, gatewayBinding, holdView, openRefinement, useChainHolds, viewHolds} from './designBindings'
 import {FRAMES_ID, FRAMES_VIEW, framesBinding, journalAsks, journalSessions, mainDevices, rackBinding} from './mainTrackBindings'
 import {CARRIER_PAGE, CHECKOUTS_PAGE, GATEWAYS_PAGE, LEFT_BEHIND_PAGE, MACHINE_PAGE, SEAT_PAGE, carryPages} from './oneAgentBinding'
-import {AGENT_ROSTER, MESSAGES_ID, PERSON_ACTS, acceptedProfilesOf, handlingAdvertisedOf, isRosterAgent, madeOf, messagesBinding, messagesDevice, positionRefs, sentOf, type MessagesPorts} from './messagesBinding'
+import {AGENT_ROSTER, MESSAGES_ID, MESSAGES_REFUSE, PERSON_ACTS, acceptedProfilesOf, isRosterAgent, madeOf, messagesBinding, messagesDevice, occupantOf, positionRefs, type MessagesPorts} from './messagesBinding'
+import {observedState, useEncounterSessions} from './EncounterObservers'
 import {runStateOfSession} from './runFaces'
 import {hostState} from '../../frame/devices/deviceHost'
 import {kernelOp} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import type {GatewayWriteRequest, KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {APPROVALS_ID, LEDGER_ID, approvalsBinding, ledgerBinding, ledgerReceiptSession, receiptDevices, withNoticeReasons} from './receiptBindings'
-import {useAgentChainReading} from './useAgentChainReading'
-import {useConversationAnswer} from './useConversationAnswer'
 import {useAgentConversation} from './useAgentConversation'
 import {ROUTE_WORDS, centralRevisionWrite, gatewayWriteOp, ownerRouteWrite, refinementWrite, refusalWords, workcellWriteOp} from './ownerRoutes'
 import {usePopulationAnswer} from './usePopulationAnswer'
-import {projectOfSession, registerOf, returnProjectOf, ROOT_REGISTER, useWorldReturns} from '../worldScope'
+import {gitRepositoryAbsence, projectOfSession, registerOf, returnProjectOf, ROOT_REGISTER, useWorldReturns} from '../worldScope'
+import {useModelSlice} from '../../owners/model'
+import {useWorkspace} from '../../shell/workspaceContext'
 import {CARRIER_ID, carrierBinding, carrierChainState, carrierValues, gitValues, planRunOf, runDemandOf, seatBinding} from './workcellBindings'
 import {worldsOf} from './workcellMaterial'
 import {useMachineDevice} from '../../central/devices/machineDevice'
 import {WORKCELL_RACK_ID, chosenWorld, workcellGitReading, workcellRackBinding, workcellRackDevice} from './workcellRackBinding'
-import {useActuationRead, useAikitRead, useGatewayEcology, useGatewayReplays, useInstanceUsages, useSeatStatusAnswer, useSourceReturnsAnswer, useWorkcellRead} from './workcellReads'
-import {useHeardAnswer} from './useHeardAnswer'
+import {useActuationRead, useAikitRead, useGatewayReplays, useInstanceUsages, useSeatStatusAnswer, useSourceReturnsAnswer, useWorkcellRead} from './workcellReads'
 import {AikitRailDevice} from './AikitRailDevice'
-import {observedState, useEncounterSessions} from './EncounterObservers'
 import {shownSession} from './threadBinding'
 import {useUnitDecisions, waitingDecisions} from './unitDecisions'
 import {threadTrackOf} from '../threadTrack'
@@ -88,8 +88,6 @@ export async function centralAct(transport: KernelTransportStatus, action: strin
 /** Central's agent-set listing (ctrl agent_set_actions.rs): a reading, scope root or project. */
 export const AGENT_SET_LIST = 'central.agent-set.list'
 const ROOT_SETS = {scope: 'root'} as const
-/** The running gateway's protocol answer (aikit_read {gateway-protocol}): the features it keeps. */
-const GATEWAY_PROTOCOL = {kind: 'gateway-protocol'} as const
 /** AIKit's proposed revisions (`aikit source refine list`), the one held reading the Skillset rack's Refining page reads too. */
 const REFINEMENT_LIST = {kind: 'refinement-list'} as const
 const NO_INPUT: Readonly<Record<string, unknown>> = Object.freeze({})
@@ -106,7 +104,13 @@ export function AgentRailDevices() {
   const shell = useAgentShellOptional()
   const sessions = useAgentSessionsOptional()
   const continuity = useOptionalContinuity()
-  const {reading, transport, binding, resolved} = useAgentChainReading(null)
+  const {transport} = useWorkspace()
+  // The gateways and the Frames read the gateway as the chain's Gateway does (inhabitants/agentParamAddresses.ts CHAIN_DECLARATIONS): the
+  // World Model's sessions slice carries it — its conversation binding, that binding's harness reading and its ecology.
+  const sessionsSlice = useModelSlice(transport, 'sessions')
+  const {reading, binding, resolved, ecology} = useMemo(() => chainFromModel({slices: {sessions: sessionsSlice}, sessionRef: null, project: ROOT_REGISTER,
+    absent: gitRepositoryAbsence(null, ROOT_REGISTER), unreachable: transport.kind === 'unavailable' ? transport.reason ?? 'Transport unavailable' : null}),
+  [sessionsSlice, transport])
   const holds = useChainHolds()
   // The rail's register (agent/worldScope.ts): the selected session's own, else your world's root register. Messages read the world's
   // whole population (no project world names it); the Ledger, your groups and the workcell's seat follow the selected session.
@@ -124,10 +128,9 @@ export function AgentRailDevices() {
     if (shown) selectDevice(shown)
   }, [])
   const gateways = useMemo(() => rackBinding({reading, holds, carrier}, {show: showChain}), [reading, holds, carrier, showChain])
-  // The Frames monitor's frames (lane W6): AIKit's own gateway journal — its ecology names the sessions and their Streams, and each Stream of
-  // the session chosen is replayed from where its last Keep frames begin. Refusals are AIKit's words (the installed AIKit may not carry
-  // `gateway replay` yet), drawn as the reason.
-  const ecology = useGatewayEcology(transport, true)
+  // The Frames monitor's frames (lane W6): AIKit's own gateway journal — its ecology (the sessions slice's gateway) names the sessions and
+  // their Streams, and each Stream of the session chosen is replayed from where its last Keep frames begin. Refusals are AIKit's words (the
+  // installed AIKit may not carry `gateway replay` yet), drawn as the reason.
   const framesView = viewHolds(holds, FRAMES_ID)
   const asks = useMemo(() => journalAsks((ecology.status === 'answered' ? journalSessions(ecology.value) : null) ?? [], framesView.session ?? FRAMES_VIEW.session,
     framesView.keep ?? FRAMES_VIEW.keep), [ecology, framesView.session, framesView.keep])
@@ -167,7 +170,7 @@ export function AgentRailDevices() {
   const shownTrack = shown ? tracks?.find(item => item.sessionRef === shown && !item.group) ?? null : null
   const observedShown = useMemo(() => (shownTrack ? [{ref: shownTrack.sessionRef, space: shownTrack.spaceRef, project: shownTrack.project ?? ROOT_REGISTER}] : []),
     [shownTrack?.sessionRef, shownTrack?.spaceRef, shownTrack?.project]) // eslint-disable-line react-hooks/exhaustive-deps
-  const {handles: shownHandles, observers} = useEncounterSessions(observedShown)
+  const {handles: shownHandles, observers: shownObservers} = useEncounterSessions(observedShown)
   const shownHandle = shown ? shownHandles[shown] : undefined
   const worldReturns = useWorldReturns(transport, null)
   const shownTakes = useAttemptTakes(transport, shownTrack ? [shownTrack.sessionRef] : [], shownTrack?.project ?? ROOT_REGISTER)
@@ -217,19 +220,48 @@ export function AgentRailDevices() {
       {opened: openedOf(viewHolds(holds, APPROVALS_ID).opened), hold: ids => holdView(APPROVALS_ID, 'opened', openedHold(ids))}), ownerRequests)
   }, [shownHandle, shownTrack, holds, worldReturns, tracks, sessions?.nowUnixMs, transport, person, units, agentDraft, agentWrite, ownerRequests, refinements, refineWrite, centralRevision, shownSettings])
 
-  // Messages: AIKit's population, the Agency gateway's answer, and the open agent's conversation (read while an agent of the population is
-  // open).
+  // Messages: AIKit's population, the Agency gateway's answer, and the open agent's conversation (O-I #1003), observed through the one
+  // encounter session — the Thread's rows, and where Send's words go: the session its Position's occupant works (the agency's track whose
+  // agent is the occupant), or, for an agent of your roster at no Position (§19.24), its own conversation, opened once by the kernel
+  // (useAgentConversation.ts) and observed in every session it holds, oldest first (a harness that cannot resume continues it in the next).
   const population = usePopulationAnswer(transport, registerOf(ROOT_REGISTER))
-  const positions = useMemo(() => positionRefs(population.status === 'answered' ? population.value : null), [population])
-  const opened = viewHolds(holds, MESSAGES_ID).open
-  const conversation = useConversationAnswer(transport, registerOf(ROOT_REGISTER), typeof opened === 'string' && positions.includes(opened) ? opened : null, positions)
-  // An agent of your roster at no Position: its direct conversation through AIKit's encounter owner (useAgentConversation.ts).
-  const {chat, say} = useAgentConversation(transport, isRosterAgent(opened) && !positions.includes(opened) ? opened : null)
-  // Heard (O-I #741): AIKit's desk read of the line you last sent, by the Communique ref its send answered; and where Input starts — Steer
-  // where the running gateway advertises it keeps one (`aikit gateway protocol`, `communique-handling`), Queue otherwise.
-  const heard = useHeardAnswer(transport, registerOf(ROOT_REGISTER), sentOf(viewHolds(holds, MESSAGES_ID).sent)?.ref ?? null)
-  const protocol = useAikitRead(transport, GATEWAY_PROTOCOL)
-  const handlingAdvertised = protocol.status === 'answered' ? handlingAdvertisedOf(protocol.value) : undefined
+  const known = population.status === 'answered' ? population.value : null
+  const positions = useMemo(() => positionRefs(known), [known])
+  const held = viewHolds(holds, MESSAGES_ID).open
+  const opened = typeof held === 'string' && (positions.includes(held) || isRosterAgent(held)) ? held : null
+  const occupant = opened && positions.includes(opened) ? occupantOf(known, opened) : undefined
+  const occupantTrack = useMemo(() => (occupant ? tracks?.find(track => !track.group && track.agentRef === occupant) ?? null : null), [occupant, tracks])
+  const ownConversation = useAgentConversation(transport, opened && !positions.includes(opened) ? opened : null)
+  const ownOpened = ownConversation?.status === 'opened' ? ownConversation.opened : null
+  const observed = useMemo(() => (occupantTrack ? [{ref: occupantTrack.sessionRef, space: occupantTrack.spaceRef,
+    ...(occupantTrack.project !== undefined ? {project: occupantTrack.project} : {})}]
+    : ownOpened ? ownOpened.sessions.map(ref => ({ref, space: ownOpened.space})) : []), [occupantTrack, ownOpened])
+  const {handles, observers} = useEncounterSessions(observed)
+  const sessionRef = occupantTrack?.sessionRef ?? ownOpened?.agent_session
+  const handle = sessionRef ? handles[sessionRef] : undefined
+  // Its last check-in: seconds since its track's needle on the agency's temporal reading (-1 read and none), as the Thread reads it.
+  const conversationTrack = occupantTrack ?? (ownOpened ? tracks?.find(track => !track.group && track.sessionRef === ownOpened.agent_session) ?? null : null)
+  const needle = conversationTrack?.needle, readAt = sessions?.nowUnixMs ?? 0
+  const age = needle ? (needle.atUnixMs == null ? -1 : Math.max(0, Math.round((readAt - needle.atUnixMs) / 1000))) : undefined
+  const conversation = useMemo(() => {
+    if (!opened) return undefined
+    const agent = occupantTrack?.agentName ?? null
+    if (ownConversation) {
+      if (ownConversation.status === 'refused') return {agent, why: ownConversation.error}
+      if (ownConversation.status === 'opening') return {agent}
+    } else {
+      if (!occupant) return {agent, why: MESSAGES_REFUSE.unseated}
+      if (!occupantTrack) return {agent, why: tracks ? MESSAGES_REFUSE.noSession : MESSAGES_REFUSE.sessionsUnread}
+    }
+    if (handle && 'error' in handle) return {agent, why: handle.error}
+    const state = observedState(handle)
+    // A renewed conversation's earlier sessions stand first, as their own observers read them.
+    const earlier = ownOpened ? ownOpened.sessions.filter(ref => ref !== ownOpened.agent_session)
+      .flatMap(ref => observedState(handles[ref])?.reading?.blocks ?? []) : []
+    const reading = state?.reading && earlier.length ? {...state.reading, blocks: [...earlier, ...state.reading.blocks]} : state?.reading
+    return {agent, ...(reading ? {reading} : {}), ...(state?.status ? {status: state.status} : {}), ...(age !== undefined ? {age} : {})}
+  }, [opened, occupant, occupantTrack, ownConversation, ownOpened, tracks, handle, handles, age])
+  const session = handle && 'actions' in handle ? handle.actions : null
   // Making an agent (§19.24, lane W2): the proposal Make wrote, read back through Central's review; the person's acts through invoke_action,
   // which carries the person's authority for them (desktop/cradle/kernel/src/action.rs PERSON_ACTS). Every answer is Central's own.
   const made = madeOf(viewHolds(holds, MESSAGES_ID).made)
@@ -239,16 +271,21 @@ export function AgentRailDevices() {
   // Which of your agents Central has accepted (agent-profile.roster, a reading): the rest of the roster stands proposed (§19.24).
   const roster = useCentralAction(transport, AGENT_ROSTER, ROOT_SETS)
   const accepted = useMemo(() => acceptedProfilesOf(roster.status === 'answered' ? roster.value : null), [roster])
-  // AIKit's gateway writes (lane W3): Send and a drop onto a track through the kernel's route to `aikit gateway send|delegate`.
+  // Send, the one send (O-I #1003): the open agent's conversation's next turn. A drop onto a track and the gateway's Service: AIKit's
+  // Action `aikit gateway delegate` through the kernel's act, and the kernel's held gateway.
   const ports = useMemo((): MessagesPorts => ({
+    ...(session && opened ? {send: async (position: string, words: string) => {
+      if (position !== opened) throw Error('Send: the agent you opened changed before your words were sent. Send them again.')
+      await session.submit(words)
+    }} : {}),
     ...(transport.kind !== 'unavailable' ? {act: (action: string, input: Readonly<Record<string, unknown>>) => centralAct(transport, action, input),
       gateway: (request: GatewayWriteRequest) => ownerRouteWrite(transport, gatewayWriteOp(request), ROUTE_WORDS[request.kind]),
       // Voice: the kernel's local dictation, its transcript into the Thread's composer (agent/useAgentVoice.ts, loaded when first pressed:
       // the capture client stays out of the window's first load).
-      voice: lazyVoicePort(transport), chat: say} : {}),
+      voice: lazyVoicePort(transport)} : {}),
     page: () => hostState(MESSAGES_ID).page,
     suffix: () => globalThis.crypto.randomUUID().slice(0, 8),
-  }), [transport, say])
+  }), [transport, session, opened])
   // The run each agent's session stands in (runFaces.ts), by its agent ref: the posture of an occupied agent's face.
   const nowUnixMs = sessions?.nowUnixMs ?? 0
   const runs = useMemo(() => new Map((tracks ?? []).filter(track => !track.group && track.agentRef).flatMap(track => {
@@ -262,9 +299,9 @@ export function AgentRailDevices() {
   // A session of your world's root register has no project groups: only the root's are read.
   const agentSets = useMemo(() => [{scope: 'root' as const, answer: rootSets}, ...(railRegister === null ? [] : [{scope: 'project' as const, answer: projectSets}])],
     [rootSets, projectSets, railRegister])
-  const messages = useMemo(() => messagesBinding({population, gateway: reading, conversation, chat, review, runs, accepted, ...(railRegister === null ? {} : {project: railRegister}), agentSets, holds,
-    ...(handlingAdvertised === undefined ? {} : {handlingAdvertised}), ...(heard ? {heard} : {})}, ports),
-    [population, reading, conversation, chat, review, runs, accepted, agentSets, holds, ports, railRegister, handlingAdvertised, heard])
+  const messages = useMemo(() => messagesBinding({population, gateway: reading, ...(conversation ? {conversation} : {}), review, runs, accepted,
+    ...(railRegister === null ? {} : {project: railRegister}), agentSets, holds}, ports),
+    [population, reading, conversation, review, runs, accepted, agentSets, holds, ports, railRegister])
 
   // Workcell's instrument: the workcell whose return track is selected, its seats and the chain devices' own values; it sets none of them
   // (§19.23: each is set on its device).
@@ -383,6 +420,7 @@ export function AgentRailDevices() {
   useEffect(() => { publish(APPROVALS_ID, approvals) }, [devices, approvals]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { publish(WORKCELL_RACK_ID, workcell) }, [devices, workcell]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => () => { for (const id of RAIL_AGENT_DEVICE_IDS) publishDevice(id, null) }, [])
-  // The shown session's observer draws nothing; it hands Approvals its handle. AIKit's instrument publishes itself beside these (§19.26).
-  return <>{observers}<AikitRailDevice transport={transport} /></>
+  // The observers draw nothing: the shown session's hands Approvals its handle, the open agent's Messages its conversation. AIKit's
+  // instrument publishes itself beside these (§19.26).
+  return <>{shownObservers}{observers}<AikitRailDevice transport={transport} /></>
 }

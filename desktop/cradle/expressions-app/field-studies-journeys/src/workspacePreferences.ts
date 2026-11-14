@@ -1,4 +1,4 @@
-import {stateLabel,stateSource} from './sourceState';
+import {stateLabel,stateSource} from './sourceState.ts';
 import type {Entity} from './model';
 import type {DeviceWidget} from './sharedSettings';
 

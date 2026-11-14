@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { SpatialChakraNode, SpatialChakraConfig } from './types';
-import { CHAKRA_DEFINITIONS } from './semantics/chakraSemantics';
+import type { SpatialChakraNode, SpatialChakraConfig } from './types';
+import { CHAKRA_DEFINITIONS } from './semantics/chakraSemantics.ts';
 
 export interface ChakraGlyphItem {
   id: string;

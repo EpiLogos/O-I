@@ -1,6 +1,7 @@
 // The field's encounter as a prepared-turn contribution, against a model of the owner's prepared-context contract
-// (aikit.prepared-context/v1 over the kernel `encounter` op: read / edit add|remove, revision + digest, ≤32 items).
-// The model is an in-memory HTTP bridge — it stands in for AIKit, which this test does not run.
+// (aikit.prepared-context/v1 over the kernel `encounter` op: edit add|remove, revision + digest, ≤32 items), read as the kernel's
+// World Model holds it (O-I ticket 1005: its packet slice, world_model.rs `packet`, read fresh before an edit or a Send).
+// The model is an in-memory HTTP bridge — it stands in for AIKit and the kernel, which this test does not run.
 //   node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/field-context.test.mjs
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -9,20 +10,40 @@ import {createHash} from "node:crypto";
 import {fieldApply, freshEncounter} from "../src/field/model.ts";
 import {registerFieldHost, currentFieldContext, fieldOperate, fieldContextReading, fieldContextLines} from "../src/field/fieldHost.ts";
 import {fieldItemStatus, fieldItemGeneration, isFieldItem, prepareFieldContext, withdrawFieldContext, fieldContextProvider, setFieldContextKept, fieldSelector, parseFieldSelector} from "../src/context/fieldContext.ts";
-import {reviewedContext, registerContextProvider, registerSelectionValidator, announceContext} from "../src/context/nativeContext.ts";
+import {registerContextProvider, registerSelectionValidator, announceContext} from "../src/context/nativeContext.ts";
+import {reviewedContext} from "../src/context/packetSlice.ts";
 import {observationIsCurrent} from "../src/context/ComponentSelection.ts";
 import {buildSituationFrame} from "../src/context/situation.ts";
+import {packetSliceOver} from "../../../packages/live-shell/ui/tests/support/worldModelFixture.mjs";
 
 globalThis.window ??= {dispatchEvent() {}, localStorage: {getItem: () => null, setItem() {}}};
 globalThis.CustomEvent ??= class { constructor(type, init) { this.type = type; this.detail = init?.detail; } };
 
+/** AIKit's prepared context of `project`'s conversation `session`, edited through the kernel's `encounter` op, and read as the World
+ * Model's packet slice — composed over the owners' answers as the kernel asks them (packetSliceOver): Central's root discloses
+ * `project`, whose register AIKit lists the conversation in. The log holds each op a surface sent: `packet:fresh` for a read of the
+ * slice, the operation for an edit — a read of AIKit's own (`read`) would be a surface reading the owner itself. */
 function ownerModel(project, session) {
-  const st = {revision: 0, items: [], log: []};
+  const st = {revision: 0, items: [], log: [], version: 0};
   const digest = () => "blake3:" + createHash("sha256").update(JSON.stringify(st.items.map(i => i.id))).digest("hex");
   const ctx = () => ({schema: "aikit.prepared-context/v1", scope: {project, agent_session: session}, revision: st.revision, digest: digest(), items: st.items});
+  const answered = (result, data) => ({ok: true, outcome: {result, data}});
+  const ownerAsk = async op => {
+    if (op.op === "world_browse") return {ok: true, outcome: {result: "world_read", snapshot: {navigator: {root: {work: {projects: [{name: project}]}}}}}};
+    if (op.op === "agency_read") return answered("agency_reading", {spaces: op.project === project ? [{agent_sessions: {[session]: {}}}] : []});
+    if (op.op === "encounter") return answered("encounter_reading", op.project === project && op.request.agent_session === session ? ctx()
+      : {schema: "aikit.prepared-context/v1", scope: {project: op.project, agent_session: null}, revision: 0, digest: "blake3:0", items: []});
+    return {ok: false, error: `the owner model answers no ${op.op}`};
+  };
   const server = createServer((req, res) => {
-    let body = ""; req.on("data", c => body += c); req.on("end", () => {
-      const op = JSON.parse(body), r = op.request.request;
+    let body = ""; req.on("data", c => body += c); req.on("end", async () => {
+      const op = JSON.parse(body);
+      if (op.op === "model_subscribe") {
+        st.log.push(`${op.slice}${op.fresh ? ":fresh" : ""}`);
+        res.end(JSON.stringify(await packetSliceOver(ownerAsk, ++st.version)));
+        return;
+      }
+      const r = op.request.request;
       st.log.push(r.operation + (r.mutation ? ":" + r.mutation.operation : ""));
       if (r.operation === "edit") {
         if (r.basis !== st.revision) { res.end(JSON.stringify({ok: false, error: "stale basis"})); return; }
@@ -93,7 +114,9 @@ test("the delivered context names the generation and every ref by role; a later 
     // preparing an unchanged generation writes nothing
     const before = owner.st.log.length;
     await prepareFieldContext(transport, "P", "S");
-    assert.equal(owner.st.log.length, before + 1, "one read, no edit");
+    assert.deepEqual(owner.st.log.slice(before), ["packet:fresh"], "one read of the World Model's packet, fresh; no edit");
+    // Every read was the World Model's (O-I ticket 1005): AIKit's prepared context is read by no surface itself.
+    assert.deepEqual([...new Set(owner.st.log.filter(entry => !entry.startsWith("edit:")))], ["packet:fresh"]);
   } finally { field.stop(); owner.close(); }
 });
 
@@ -122,6 +145,7 @@ test("kept current: the provider refreshes the field item before a turn reads th
     assert.notDeepEqual(exp1.reviewed, exp2.reviewed);
     await withdrawFieldContext(transport, "P", "S");
     assert.equal(owner.st.items.filter(isFieldItem).length, 0);
+    assert.deepEqual([...new Set(owner.st.log.filter(entry => !entry.startsWith("edit:")))], ["packet:fresh"], "each read before a turn or an edit is the World Model's packet, fresh");
   } finally { stopProvider(); field.stop(); owner.close(); setFieldContextKept(false); }
 });
 

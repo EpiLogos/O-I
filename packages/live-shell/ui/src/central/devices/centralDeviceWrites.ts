@@ -4,31 +4,29 @@
 //   - the Day die turns its open face the way the die's own Save writes a field: the owner's document reading, the
 //     retained draft held by the imported `DayFormSession` (central/dayForm), and one `receiving` `mutate-field` per mapped
 //     field, CAS-checked against the revision the reading gave (inhabitants/DocumentDayDieFace.tsx `saveToNative`; the
-//     owner's own docstring calls this "the die face's write route", receiving/client.ts `mutateField`);
+//     owner's own docstring calls this "the die face's write route", receiving/client.ts `mutateField`: Central's Action
+//     `central.document.mutate`, through the kernel's `act`, O-I 1002);
 //   - the conversation binds the way the encounter surface binds it before a turn: the kernel's `nara_dialogue` op in its
 //     `resolve` operation (`acquireNativeDialogue`, nara/nativeDialogue.ts; nara/NaraSurface.tsx `ensureDialogue`). The
 //     hosted face only looks the binding up (`lookupNativeDialogue`) and names this operation in its unbound notice;
-//   - the Day's "Open today" opens the current Day the way the cradle's Today does (desktop/cradle/src/CradleFrame.tsx:734-754
-//     `openToday`): Central's ground read again; the `central` op `ensure-day` with the civil-time policy's revision when today's Day
-//     is not current; then, when today's Day has no document yet, `initialise-day` from the roster's own Day form
-//     (ql-daily-die.html, read through Central's file route, its revision checked) with the placement policy's revision (T-WORLDS W2
-//     "New Day calls initialise-day"). It is the person's press: nothing calls it on a timer, and it closes no old Day. When the
-//     Day Central named before is closed, the Day made now carries what still plays (daySet.ts carriedSet, written as the set is);
-//   - the Day's "Close now" closes the Day Central names on its exact content and relations revisions (the `central` op
-//     `close-day`, central.day.lifecycle `closed`; the central-day-close method's root close), the person's press as Open today is;
+//   - the Day opens itself on its civil date and closes itself at its turn, by Central's civil clock (`central.day.turn`, run as the
+//     kernel's Day reading is made, O-I 1005): nothing here opens or closes a Day. Close now is the close routine (closeCarry below);
 //   - the Flow takes the person's next entry the way the Flow's own surface writes one: the owner's file read again, the entry
 //     appended through the template's own contract (flow/instance.ts appendEntry, relations and the composing basis on the current
-//     form), and the Flow's revision-checked file write (flow/instances.ts writeFlowInstance — central.files.write, op
-//     file_operation), whose conflict keeps the words and says so (desktop/cradle/src/flow/FlowSurface.tsx:153-165 `save`).
+//     form), and the Flow's revision-checked file write (flow/instances.ts writeFlowInstance — Central's Action central.files.write
+//     through the kernel's `act`), whose conflict keeps the words and says so (desktop/cradle/src/flow/FlowSurface.tsx:153-165 `save`).
 //   - the Day's own settings, a move's press, tomorrow's opening and the close with its carry are Central's actions through the kernel's
 //     invoke_action, which carries the person's own presses (action.rs PERSON_ACTS: central.day.settings.write, move.record, rollover,
 //     close-carry), each on the revision Central gave (centralWrite; W2);
+//   - a law statement written on the root world's tier 0 is adopted on the revision Central gives for it now (adoptLaw: central.files.read,
+//     then control.law.adopt as the person's press), and Central renders the root's floor again (manual §18.5, O-I ticket 1005);
 // A refusal is the owner's own words, thrown as they came; the device keeps the change and says so. Pure of React.
-import {central, readGround} from '../../../../../../desktop/cradle/src/central/client'
-import {kernelOp} from '../../../../../../desktop/cradle/src/kernel/bridge'
-import {DAY_ENTRY_PART_ACTION, DAY_FIELD_RECORD_ACTION, type DayFieldRecord, type DaySettingsPatch} from './dayBinding'
+import type {CentralGroundReading} from '../../../../../../desktop/cradle/src/central/client'
+import {kernelOp, kernelRead} from '../../../../../../desktop/cradle/src/kernel/bridge'
+import {modelSlice, sliceValue, type ModelSliceReading} from '../../owners/model'
+import {readWorlds, type CentralWorldsReading} from '../centralWorlds'
+import {DAY_ENTRY_PART_ACTION, DAY_FIELD_RECORD_ACTION, dayFromModel, type DayFieldRecord, type DaySettingsPatch} from './dayBinding'
 import {actionAnswerOf, centralActionOp} from './centralActions'
-import {listFiles, readFile} from '../../../../../../desktop/cradle/src/files/client'
 import {DayFormSession, isObject, unmappedChanges, validateDocumentBasis} from '../../../../../../desktop/cradle/src/central/dayForm'
 import {receiving} from '../../../../../../desktop/cradle/src/receiving/client'
 import {appendEntry, embedDocument} from '../../../../../../desktop/cradle/src/flow/instance'
@@ -43,12 +41,7 @@ import {currentIdentity} from '../../../../../../desktop/cradle/src/nara/identit
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {conversationGap} from '../centralVertical'
 import {DIE_POSITIONS, dieFaceLabel, dieFaceOf} from './dayDie'
-import {canEnsureDay, centralsOpenToday, currentDayOf, NO_CIVIL_TIME, wantsCivilTime} from './dayBinding'
-import {carriedSet, daySetOf, writeDaySet, type DaySet} from '../daySet'
-import {readWorlds} from '../centralWorlds'
-import {nowReading, type NowListing} from '../../../../../../desktop/cradle/src/receiving/now'
-import {playingOf} from '../../timeline/centralTrackAdapter'
-import type {CentralGroundReading} from '../../../../../../desktop/cradle/src/central/client'
+import {centralsOpenToday, NO_CIVIL_TIME, wantsCivilTime} from './dayBinding'
 import type {CentralWriters} from './centralDeviceModel'
 
 export interface DayDieWriteAperture {
@@ -69,6 +62,17 @@ export function dieFaceOfLabel(label: string): number | null {
   return position ? position.n : null
 }
 
+/** The Day's writes as Central's Actions (O-I ticket 1005): the ids these writes send, and the Day's declaration names
+ * (agentChainDevices.ts CENTRAL_CHAIN_DECLARATIONS `day`). The die's turn goes as `central.document.mutate` through the receiving client
+ * (desktop/cradle/src/receiving/client.ts receivingAction, `mutate-field`), its open face set on the page's revision read. */
+export const DAY_ACTIONS = Object.freeze({
+  face: 'central.document.mutate',
+  closeNow: 'central.day.close-carry',
+  settings: 'central.day.settings.write',
+  begin: 'central.day.move.record',
+  openTomorrow: 'central.day.rollover',
+} as const)
+
 /** Turn the Day die to `face`: write the Day document's open face (`meta.face`) through the owner. Resolves to the revision
  * the owner holds afterwards. Nothing is written when the face is already open; a document whose field map carries no field
  * for the face is refused by name rather than written nowhere. */
@@ -88,118 +92,6 @@ export async function turnDieFace(transport: KernelTransportStatus, day: DayDieW
   return {revision: session.basis.revision, wrote: true}
 }
 
-/** Open today: ensure the current Day through Central when the owner's own reading says that is the act that stands, then make its
- * document from the Day form when it has none. Central's ground is read again first, so each decision is the owner's present one
- * (CradleFrame.tsx:735 reads it before it ensures): a Day someone else already ensured is not ensured twice (`ensured: false`), a
- * document someone else made is not made twice (`initialised: false`). Resolves once the owner has answered; rejects with its
- * words. */
-export async function openToday(transport: KernelTransportStatus): Promise<{ensured: boolean; initialised: boolean; carried: CarriedInto | null}> {
-  let ground = await readGround(transport, null, true)
-  if (wantsCivilTime(ground)) throw new Error(`${NO_CIVIL_TIME}, then press Open today.`)
-  if (ground.time.state !== 'ready' || !ground.time.data) {
-    throw new Error(`Central's civil time is ${ground.time.state}${ground.time.error?.message ? `: ${ground.time.error.message}` : ''}; the current Day cannot be ensured`)
-  }
-  // The Day Central named before this press: when it is an earlier Day, closed, what still plays carries into the Day made now.
-  const closed = closedEarlierDayOf(ground)
-  let ensured = false
-  if (!(ground.day.state === 'ready' && ground.day.data?.temporal.civil_date === ground.time.data.civil_date)) {
-    if (!canEnsureDay(ground)) {
-      throw new Error(`Central's Day reading is ${ground.day.state}${ground.day.error?.message ? `: ${ground.day.error.message}` : ''}; the owner admits no ensure from here`)
-    }
-    await central(transport, null, {kind: 'ensure-day', expected_time_policy_revision: ground.time.data.revision})
-    ensured = true
-    ground = await readGround(transport, null, true)
-  }
-  const day = ground.day.data
-  if (!day || ground.day.state !== 'ready') throw new Error(`Central's Day reading is ${ground.day.state} after the ensure; there is no Day to make a document for`)
-  if (day.document_state === 'ready') return {ensured, initialised: false, carried: null}
-  // The Day's document from the roster's own Day form — never an invented payload (CradleFrame.tsx:744-752). The roster is read
-  // only when a document is to be made (it carries the forms' JSON, which the rest of this module's readers never need).
-  const {DOCUMENT_FORMS, resolveDocumentForm} = await import('../../../../../../desktop/cradle/src/flow/documentForms')
-  const form = DOCUMENT_FORMS.find(candidate => candidate.kind === 'document-42' && candidate.file === 'ql-daily-die.html')
-  if (!form) throw new Error('The Day form is missing from the document roster')
-  if (ground.placement.state !== 'ready' || !ground.placement.data) throw new Error('Central\'s native placement authority is unavailable; the Day document cannot be made')
-  const world = await kernelOp(transport, {op: 'world_browse'})
-  const projects = world.outcome?.result === 'world_read' ? world.outcome.snapshot.navigator?.root?.work.projects : undefined
-  const formLocation = await dayFormLocation(transport, () => resolveDocumentForm(transport, form, projects), form.file)
-  const original = await readFile(transport, formLocation, true)
-  await central(transport, null, {kind: 'initialise-day', day_ref: day.day_ref, document_id: `document:${crypto.randomUUID()}`, expected_revision: day.revision.revision,
-    expected_policy_revision: ground.placement.data.revision, form: formLocation, expected_form_revision: original.revision})
-  const carried = closed ? await carryInto(transport, closed) : null
-  return {ensured, initialised: true, carried}
-}
-
-/** Where today's Day is made from: the Day form the ground's O-I project carries (documentForms.ts, as before), else the one the ground
- * keeps itself (Control/forms, kept by Setup's Ground Accept in a world no O-I project carries it for: O-I #740). Neither: both named,
- * with the way on. */
-async function dayFormLocation(transport: KernelTransportStatus, project: () => Promise<Awaited<ReturnType<typeof readFile>>['location']>, file: string) {
-  let carried: string
-  try { return await project() } catch (cause) { carried = cause instanceof Error ? cause.message : String(cause) }
-  const kept = await listFiles(transport, GROUND_FORMS, true).catch(() => null)
-  const entry = kept?.entries.find(e => e.kind === 'file' && e.name === file && e.retrieval_allowed !== false)
-  if (entry) return entry.location
-  throw new Error(`${carried}; nor does your ground keep the Day's form (${GROUND_FORMS}/${file}). Keep it in Settings › Setup › Ground, then press Open today.`)
-}
-/** Where a ground keeps the document forms Setup gives it (ctrl ground_founding.rs FORMS_DIR). */
-const GROUND_FORMS = 'Control/forms'
-
-/** What the close carried into the Day made now: the closed Day it came from, and what tomorrow's grid holds of it. */
-export interface CarriedInto {
-  readonly from: string
-  readonly worlds: number
-  readonly rows: number
-  readonly pages: number
-}
-
-/** The Day Central's ground names when it is an earlier Day than civil today, closed, with its document: its ref and the set it kept.
- * Any other Day carries nothing (an open earlier Day was never closed: close it first). Pure. */
-export function closedEarlierDayOf(ground: CentralGroundReading): {readonly dayRef: string; readonly set: DaySet} | null {
-  const day = ground.day.data
-  const today = ground.time.state === 'ready' ? ground.time.data?.civil_date ?? null : null
-  if (!day || !today || day.temporal.civil_date === today || day.temporal.lifecycle !== 'closed') return null
-  if (day.document_state !== 'ready' || !day.document) return null
-  const basis = validateDocumentBasis(day.document, day.document.source.ref, day.document.document_id)
-  return {dayRef: day.day_ref, set: daySetOf(basis.payload)}
-}
-
-/** Carry a closed Day's set into the Day Central now names (daySet.ts carriedSet): the pages that still play, read from NOW at your
- * register and at each project world the closed set held; each page's world by the folder that holds it (centralWorlds.ts). Written
- * through the Day's own meta on the revision read, as today's set is written. */
-async function carryInto(transport: KernelTransportStatus, closed: {readonly dayRef: string; readonly set: DaySet}): Promise<CarriedInto> {
-  const ground = await readGround(transport, null, true)
-  const aperture = currentDayOf(ground).aperture
-  if (!aperture) throw new Error('Today\'s Day was made, but Central names no document for it yet; nothing was carried into its set')
-  const worlds = await readWorlds(transport, undefined, true)
-  if (worlds.state !== 'read') throw new Error(`Today's Day was made, but Central's worlds are ${worlds.state}${worlds.state === 'unavailable' ? `: ${worlds.reason}` : ''}; nothing was carried into its set`)
-  const projects = worlds.worlds.filter(world => world.project && closed.set.tracks.some(track => track.world === world.ref)).map(world => world.project!)
-  const listings = await Promise.all([null, ...projects].map(project => nowReading(transport, project, {kind: 'list'})
-    .then(listing => ({project, listing: listing as NowListing}), (cause: unknown) => {
-      throw new Error(`Today's Day was made, but NOW at ${project ?? 'your register'} did not answer (${cause instanceof Error ? cause.message : String(cause)}); nothing was carried into its set`)
-    })))
-  const playing = playingOf(listings).map(item => item.pageRef)
-  const worldOfPage = (pageRef: string) => {
-    const path = pageRef.replace(/^central:path:[^:]*:/, '')
-    const world = worlds.worlds.find(candidate => path.startsWith(`${candidate.folder}/`))
-    return world ? {ref: world.ref, name: world.name, yours: world.kind === 'yours'} : null
-  }
-  const next = carriedSet(closed.set, closed.dayRef, playing, worldOfPage)
-  await writeDaySet(transport, aperture, () => next)
-  return {from: closed.dayRef, worlds: next.tracks.length, rows: next.rows.length, pages: playing.length}
-}
-
-/** Close now (manual §18.2: "Close now: Runs the close routine"): Central closes the Day it names, on its exact content and
- * relations revisions read here (the central-day-close method's root close, central.day.lifecycle `closed`). A Day already closed is
- * refused in words; Central keeps every authored byte, and what still plays carries into the next Day when Open today makes it. */
-export async function closeDay(transport: KernelTransportStatus): Promise<{closed: string; civilDate: string}> {
-  const ground = await readGround(transport, null, true)
-  const day = ground.day.data
-  if (!day) throw new Error(`Central's Day reading is ${ground.day.state}${ground.day.error?.message ? `: ${ground.day.error.message}` : ''}; there is no Day to close`)
-  if (day.temporal.lifecycle === 'closed') throw new Error(`The Day of ${day.temporal.civil_date} is closed already.`)
-  if (!day.relations_revision) throw new Error('Central\'s Day reading carries no relations revision, so the close cannot be checked against it; nothing was closed')
-  await central(transport, null, {kind: 'close-day', day_ref: day.day_ref, expected_revision: day.revision.revision, expected_relations_revision: day.relations_revision})
-  return {closed: day.day_ref, civilDate: day.temporal.civil_date}
-}
-
 /** One Central write through the kernel's invoke_action (the person's own presses carry the host's native token: action.rs PERSON_ACTS,
  * owner_write.rs): Central's data, or its refusal in its own words. Through kernelOp, so the window's held readings retire behind it and
  * are asked again. */
@@ -211,12 +103,59 @@ export async function centralWrite(transport: KernelTransportStatus, action: str
   throw new Error(answer.status === 'refused' ? answer.error : `${action} did not answer.`)
 }
 
-/** Open and Reveal (manual §10.9) live in centralOpenReveal.ts, light enough for the Session grid's set; named here as before. */
-export {CENTRAL_OPEN_ACTS, openOrRevealInCentral} from './centralOpenReveal'
+/** The root world's tier 0: the law statements the person's agents work under (manual §18.5), as Central keeps them. */
+export const LAW_DIR = 'Control/agents/governance'
+/** The floor Central renders at the root from the adopted law; the instruction files the agents read are made links to it. */
+export const LAW_FLOOR = 'AGENTS.md'
+
+/** The instruction files the agents on this machine read at the root (the World Model's agents slice, census.rs: each agent's floor,
+ * `carries.law.file`), each once; none while the slice is not held. Pure. */
+export function lawFilesOf(reading: ModelSliceReading): string[] {
+  const held = sliceValue<{agents?: readonly {carries?: {law?: {file?: unknown}}}[]}>(reading)
+  if (!held.ok) return []
+  return [...new Set((held.value.agents ?? []).flatMap(agent => (typeof agent.carries?.law?.file === 'string' ? [agent.carries.law.file] : [])))]
+}
+
+/** Adopt one law statement written on the root world's tier 0 (manual §18.5: "Adopting it writes it into the instructions every harness
+ * reads"): the statement read through Central at its revision now (central.files.list, then central.files.read — the revision the
+ * adoption is checked against), the agents on this machine read afresh from the World Model (`agents`, the read that precedes a write),
+ * then Central's control.law.adopt as the person's press (action.rs PERSON_ACTS; Central admits it on the person's native credential
+ * only): the statement stands durable and human-authored, and Central renders the root's floor again, each instruction file the agents
+ * read (other than the floor itself) made a link to it. Central's receipt, or its refusal in its words. */
+export async function adoptLaw(transport: KernelTransportStatus, statement: string,
+  agents: () => Promise<ModelSliceReading> = () => modelSlice(transport, 'agents', {fresh: true})): Promise<unknown> {
+  const path = statement.startsWith(`${LAW_DIR}/`) ? statement : `${LAW_DIR}/${statement}`
+  const folder = path.slice(0, path.lastIndexOf('/'))
+  const listed = actionAnswerOf(await readCall(transport, 'central.files.list', {path: folder}), 'central.files.list')
+  if (listed.status !== 'answered') throw new Error(listed.status === 'refused' ? listed.error : 'Central did not list the statement\'s folder.')
+  const entries = (listed.value as {entries?: {kind?: string; location?: CentralLocation}[]} | null)?.entries ?? []
+  const location = entries.find(entry => entry.kind === 'file' && entry.location?.path === path)?.location
+  if (!location) throw new Error(`${path} is not written on tier 0, so there is nothing to adopt: write the statement first.`)
+  const read = actionAnswerOf(await readCall(transport, 'central.files.read', {location}), 'central.files.read')
+  if (read.status !== 'answered') throw new Error(read.status === 'refused' ? read.error : `Central did not read ${path}.`)
+  const revision = (read.value as {revision?: unknown} | null)?.revision
+  if (typeof revision !== 'string' || !revision) throw new Error(`Central read ${path} without its revision, so its adoption cannot be checked against it; nothing was adopted.`)
+  const links = lawFilesOf(await agents()).filter(file => file !== LAW_FLOOR)
+  return centralWrite(transport, 'control.law.adopt', {statement: path, expected_revision: revision, files: links})
+}
+
+/** One of Central's readings asked of Central itself (the read that precedes a write): its data, or its refusal in its own words, thrown. */
+export async function centralRead(transport: KernelTransportStatus, action: string, input: Readonly<Record<string, unknown>>): Promise<unknown> {
+  const answer = actionAnswerOf(await readCall(transport, action, input), action)
+  if (answer.status === 'answered') return answer.value
+  throw new Error(answer.status === 'refused' ? answer.error : `${action} did not answer.`)
+}
+
+/** One of Central's readings through invoke_action, asked of Central itself (the read that precedes a write). */
+async function readCall(transport: KernelTransportStatus, action: string, input: Readonly<Record<string, unknown>>): Promise<Parameters<typeof actionAnswerOf>[0]> {
+  const call = await kernelRead(transport, centralActionOp(action, input), {fresh: true})
+  if (call.error) return {status: 'refused', value: null, error: call.error}
+  return {status: 'answered', value: call.outcome?.result === 'action_dispatched' ? call.outcome : null, error: null}
+}
 
 /** Save settings of the Day's own on the revision read (central.day.settings.write: exact revision, `absent` before the first save). */
 export const writeDaySettings = (transport: KernelTransportStatus, patch: DaySettingsPatch, expectedRevision: string): Promise<unknown> =>
-  centralWrite(transport, 'central.day.settings.write', {expected_revision: expectedRevision, ...patch})
+  centralWrite(transport, DAY_ACTIONS.settings, {expected_revision: expectedRevision, ...patch})
 
 /** Central's answer for one record of a batch (central.day-field-records/v1 `results`): made, kept already (`created: false`), or refused
  * in its words. */
@@ -380,6 +319,14 @@ export function sameEntryLabel(central: string, offered: string): boolean {
   return a.startsWith(b) || b.startsWith(a)
 }
 
+/** Central's root ground read again, as the World Model's day slice holds it (world_model.rs `day`, read fresh): the one reading every
+ * Day write checks its basis against (O-I ticket 1005). A ground the slice does not hold is refused in its words, and nothing is written. */
+export async function groundReadAgain(transport: KernelTransportStatus): Promise<CentralGroundReading> {
+  const model = dayFromModel(await modelSlice(transport, 'day', {fresh: true}))
+  if (!model.ground) throw new Error(model.groundError ?? 'Central\'s ground is not read yet; nothing was written.')
+  return model.ground
+}
+
 /** The press of Show on an entry of today's Day (SF06; DLW build ruling 2026-11-09): Central's ground read again, so the Day must still be
  * the open one Central names as today; the part read on the revision it was offered from; and Central's label compared with the label
  * offered, joiners aside (sameEntryLabel). Central's label is the one passed on. Any of these refused is said in words, and nothing
@@ -387,7 +334,7 @@ export function sameEntryLabel(central: string, offered: string): boolean {
 export async function bringDayEntry(transport: KernelTransportStatus, offered: {readonly dayRef: string; readonly revision: string},
   offer: {readonly kind: string; readonly label: string; readonly select: Readonly<Record<string, string | number>> | null; readonly why?: string}): Promise<{id: string; kind: string; label: string}> {
   if (offer.why || !offer.select) throw new Error(offer.why ?? 'That entry of the Day is not offered to show.')
-  const ground = await readGround(transport, null, true)
+  const ground = await groundReadAgain(transport)
   const day = ground.day.data
   if (centralsOpenToday(ground)?.day_ref !== offered.dayRef) {
     const today = ground.time.state === 'ready' ? ground.time.data?.civil_date : null
@@ -405,25 +352,25 @@ export async function bringDayEntry(transport: KernelTransportStatus, offered: {
 /** A pad's press: the move's begin on the Day named, pressed at `atUnixMs` (central.day.move.record {event begin, trigger press}). Central
  * refuses a move already running, in its words. */
 export const beginDayMove = (transport: KernelTransportStatus, move: string, dayRef: string, atUnixMs = Date.now()): Promise<unknown> =>
-  centralWrite(transport, 'central.day.move.record', {event: 'begin', move, at_unix_ms: atUnixMs, trigger: 'press', day_ref: dayRef})
+  centralWrite(transport, DAY_ACTIONS.begin, {event: 'begin', move, at_unix_ms: atUnixMs, trigger: 'press', day_ref: dayRef})
 
 /** Open tomorrow's Day beside today's (central.day.rollover) on the civil-time policy's revision, read again first. */
 export async function openTomorrow(transport: KernelTransportStatus): Promise<unknown> {
-  const ground = await readGround(transport, null, true)
+  const ground = await groundReadAgain(transport)
   if (wantsCivilTime(ground)) throw new Error(`${NO_CIVIL_TIME}, then open tomorrow's Day.`)
   if (ground.time.state !== 'ready' || !ground.time.data) throw new Error(`Central's civil time is ${ground.time.state}${ground.time.error?.message ? `: ${ground.time.error.message}` : ''}; tomorrow's Day cannot be opened`)
-  return centralWrite(transport, 'central.day.rollover', {expected_time_policy_revision: ground.time.data.revision})
+  return centralWrite(transport, DAY_ACTIONS.openTomorrow, {expected_time_policy_revision: ground.time.data.revision})
 }
 
 /** Close now, the close routine: the Day Central names closed through central.day.close-carry on its content and relations revisions,
  * read again first — face 5's proposal carried into tomorrow's face 0 when Close routine is On (Central opens tomorrow's Day if it must). */
 export async function closeCarry(transport: KernelTransportStatus): Promise<{closed: string; civilDate: string; carry: unknown}> {
-  const ground = await readGround(transport, null, true)
+  const ground = await groundReadAgain(transport)
   const day = ground.day.data
   if (!day) throw new Error(`Central's Day reading is ${ground.day.state}${ground.day.error?.message ? `: ${ground.day.error.message}` : ''}; there is no Day to close`)
   if (day.temporal.lifecycle === 'closed') throw new Error(`The Day of ${day.temporal.civil_date} is closed already.`)
   if (!day.relations_revision) throw new Error('Central\'s Day reading carries no relations revision, so the close cannot be checked against it; nothing was closed')
-  const answer = await centralWrite(transport, 'central.day.close-carry', {day_ref: day.day_ref, expected_revision: day.revision.revision, expected_relations_revision: day.relations_revision}) as {carry?: unknown} | null
+  const answer = await centralWrite(transport, DAY_ACTIONS.closeNow, {day_ref: day.day_ref, expected_revision: day.revision.revision, expected_relations_revision: day.relations_revision}) as {carry?: unknown} | null
   return {closed: day.day_ref, civilDate: day.temporal.civil_date, carry: answer?.carry ?? null}
 }
 
@@ -458,6 +405,96 @@ export async function appendFlowEntry(transport: KernelTransportStatus, location
   const result = await writeFlowInstance(transport, instance.location, instance.revision, html)
   if (result.outcome === 'conflict') throw new Error(`The Flow moved while the entry was written (the owner holds ${result.current?.revision ?? 'a newer revision'}): nothing was overwritten. Re-read the Flow and write the entry again.`)
   return {revision: result.revision ?? null}
+}
+
+/** What Play's answer is kept as in the page (world-shell.md §9.3 Overdub): a new entry, or one that replaces the agent's last entry on the page —
+ * written as its correction, so the Flow keeps both (flow/plural.ts relation `correct`). */
+export type AnswerTake = 'new' | 'replace'
+
+/** Keep an agent's answer in a Flow as its own entry (Play with Arm on, world-shell.md §9.3; the Flow's own keep, FlowSurface.tsx
+ * `appendAgentResponse`): the file read again, the answer appended as the agent's entry — the agent a participant of the page by its session
+ * (the letter it has there, else the first free one), the answer's sources named under it (what the packet carried) — and written with the
+ * owner's revision check, read again once if the page moved. `take` `replace` writes it as the correction of the agent's last entry. Resolves
+ * with the owner's new revision; refuses in words, the answer kept in them, when the page moved twice. */
+export async function keepAgentAnswer(transport: KernelTransportStatus, location: CentralLocation, answer: AgentAnswer): Promise<{revision: string | null; entryId: string | null}> {
+  const text = answer.text.trim()
+  if (!text) throw new Error(`${answer.agent} answered without words; nothing was kept in the page.`)
+  let instance = await readFlowInstance(transport, location)
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const written = agentEntry(instance, text, answer)
+    const result = await writeFlowInstance(transport, instance.location, instance.revision, written.html)
+    if (result.outcome !== 'conflict') return {revision: result.revision ?? null, entryId: written.entryId}
+    instance = await readFlowInstance(transport, location)
+  }
+  throw new Error(`${answer.agent} answered, but the page moved twice while the answer was kept; nothing was overwritten. The answer, unlost:\n\n${text}`)
+}
+
+/** An agent's answer to Play, as the page keeps or is proposed it: its words, the agent and its session, the packet's items it answered
+ * from, and Overdub's take. */
+export interface AgentAnswer {readonly text: string; readonly agent: string; readonly session: string; readonly sources: readonly string[]; readonly take: AnswerTake}
+
+/** The page's bytes with the answer appended as the agent's entry (keepAgentAnswer, proposeAgentAnswer): the agent a participant of the page
+ * by its session (the letter it has there, else the first free one), the answer's sources named under it, and with `take` `replace` the
+ * correction of the agent's last entry. Pure over the page read. */
+function agentEntry(instance: Awaited<ReturnType<typeof readFlowInstance>>, text: string, answer: AgentAnswer): {html: string; entryId: string | null} {
+  const escape = (words: string) => words.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const html = [...text.split(/\n{2,}/).map(part => `<p>${escape(part.trim()).replace(/\n/g, '<br>')}</p>`),
+    ...(answer.sources.length ? [`<p><em>Sources:</em> ${answer.sources.map(escape).join(' · ')}</p>`] : [])].join('')
+  const plural = isCurrentFormat(instance.doc)
+  const participants = (instance.doc.meta.participants ?? []) as PluralParticipant[]
+  const known = participants.find(person => person.kind === 'agent' && person.ref === answer.session)
+  const taken = new Set(participants.map(person => person.initial))
+  const initial = known?.initial ?? ([...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'].find(letter => !taken.has(letter)) ?? 'Z')
+  const participant = known ?? {initial, name: answer.agent, kind: 'agent' as const, ref: answer.session}
+  // The agent's last entry here: by its participant's key on the plural form, by its letter on an earlier one.
+  const last = answer.take === 'replace' && known ? [...instance.doc.entries].reverse()
+    .find(entry => (known.key && (entry as {authorKey?: string}).authorKey === known.key) || entry.author === known.initial) : undefined
+  if (answer.take === 'replace' && !last) throw new Error(`Replace: ${answer.agent} has no entry on this page to replace; switch Overdub to a new entry.`)
+  const relations: Relation[] = plural && last ? [{type: 'correct', entryId: last.id, revision: instance.doc.meta.revision, anchor: null}] : []
+  const written = appendEntry(instance.html, text, {participant, html, ...(plural ? {basisRevision: instance.doc.meta.revision, ...(relations.length ? {relations} : {})} : {})})
+  return {html: written.html, entryId: written.entry?.id ?? null}
+}
+
+/** Propose an agent's answer for a page (Play with Arm off, world-shell.md §9.3 "Arm (direct or proposal)"): the page with the answer as the
+ * agent's entry, filed as Central's source Return on the revision read (projectcentral.source.return: the agent's session its provenance,
+ * the packet's items its evidence), which Approvals lists among Central's source returns and accepts or refuses (return_accept, as the
+ * person's press, or return_reject). Nothing is written in the page. The page's project is the world whose folder holds it (the World Model's
+ * worlds, read afresh); Central keeps Returns for a project's sources only, so a page of your own world is refused in words, the answer kept
+ * in them. Resolves with Central's return ref and the project it waits in. */
+export async function proposeAgentAnswer(transport: KernelTransportStatus, location: CentralLocation, answer: AgentAnswer,
+  worlds: () => Promise<CentralWorldsReading> = () => readWorlds(transport, {fresh: true})): Promise<{returnRef: string | null; project: string}> {
+  const text = answer.text.trim()
+  if (!text) throw new Error(`${answer.agent} answered without words; nothing was proposed for the page.`)
+  const unlost = `The answer, unlost:\n\n${text}`
+  const read = await worlds()
+  if (read.state !== 'read') throw new Error(`${answer.agent} answered, but Central's worlds were not read (${read.state === 'unavailable' ? read.reason : 'still reading'}), so the page's project is not known; nothing was proposed. ${unlost}`)
+  const relative = (folder: string) => (folder.startsWith(`${location.root}/`) ? folder.slice(location.root.length + 1) : folder)
+  const world = read.worlds.find(candidate => candidate.kind === 'project' && candidate.project && location.path.startsWith(`${relative(candidate.folder)}/`))
+  if (!world?.project) throw new Error(`Arm is off, so ${answer.agent}'s answer is a proposal, but ${location.path} is a page of your own world: Central keeps proposals (source Returns, which Approvals lists) for a project's pages only. Nothing was written. ${unlost}`)
+  const project = world.project
+  const horizon = await centralRead(transport, 'projectcentral.change.horizon', {project}).catch((cause: unknown) => {
+    throw new Error(`${cause instanceof Error ? cause.message : String(cause)}; nothing was proposed. ${unlost}`)
+  })
+  const sources = (horizon as {sources?: {binding?: {ref?: unknown; path?: unknown; roles?: unknown}; revision?: {revision?: unknown}}[]} | null)?.sources ?? []
+  // The page as the project's source: its path within the project, the longest that ends the page's path.
+  const source = sources.filter(row => typeof row.binding?.path === 'string' && location.path.endsWith(`/${row.binding.path}`))
+    .sort((a, b) => String(b.binding!.path).length - String(a.binding!.path).length)[0]
+  const sourceRef = typeof source?.binding?.ref === 'string' ? source.binding.ref : null
+  const revision = typeof source?.revision?.revision === 'string' ? source.revision.revision : null
+  if (!sourceRef || !revision) throw new Error(`${location.path} is not among ${project}'s sources in Central's change horizon, so no Return can be filed on it; nothing was proposed. ${unlost}`)
+  const instance = await readFlowInstance(transport, location)
+  if (instance.revision !== revision) throw new Error(`The page moved while the proposal was made (Central's horizon holds ${revision}, the page read ${instance.revision}); nothing was proposed. Play again. ${unlost}`)
+  const proposed = agentEntry(instance, text, answer)
+  // A page of the project's human ground changes only on the person's authenticated acceptance: Central's commissioned-maintenance
+  // Return (v2), which captures the page's binding and is accepted on the person's credential (sourceReturnAccept.ts acceptSourceReturn).
+  const humanGround = Array.isArray(source?.binding?.roles) && source.binding.roles.includes('project-human-source-aperture')
+  const filed = await centralWrite(transport, 'projectcentral.source.return', {project, source_ref: sourceRef, expected_revision: revision, proposed_content: proposed.html,
+    ...(humanGround ? {acceptance: 'commissioned-maintenance'} : {}),
+    reason: `${answer.agent}'s answer to Play, proposed for ${location.path.split('/').pop()} as ${answer.take === 'replace' ? 'the correction of its last entry' : 'a new entry'}`,
+    agent_session_ref: answer.session, evidence_refs: [...answer.sources]}) as {outcome?: unknown; return_ref?: unknown; proposal?: {return_ref?: unknown}} | null
+  if (filed?.outcome === 'conflict') throw new Error(`The page moved before Central filed the proposal; nothing was proposed. Play again. ${unlost}`)
+  const returnRef = typeof filed?.return_ref === 'string' ? filed.return_ref : typeof filed?.proposal?.return_ref === 'string' ? filed.proposal.return_ref : null
+  return {returnRef, project}
 }
 
 /** The controls for the next entry as Clip view holds them for this Flow (manual §18.1 "In a Flow, the controls for the next entry stand

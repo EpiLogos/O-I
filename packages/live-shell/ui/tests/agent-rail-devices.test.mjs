@@ -217,63 +217,108 @@ test('one publisher: the rail\'s own publisher draws it in every mode; Factory\'
   // Workcell's instrument nowhere, so it watches no published entry of it.
   assert.doesNotMatch(chain, /publishedDevice\(WORKCELL_RACK_ID\)/, 'the chain draws no entry of Workcell\'s instrument')
   // REPLACED (lane W11): the chain reads the same held population answer for Custody's Positions (one keyed read for the window).
-  for (const reader of ['useConversationAnswer', 'useCentralGroundAnswer', 'ledgerBinding', 'messagesBinding']) {
+  // REPLACED (O-I ticket 1003, the one send): Messages' conversation is the session its occupant works, which the rail observes itself.
+  for (const reader of ['useCentralGroundAnswer', 'ledgerBinding', 'messagesBinding']) {
     assert.doesNotMatch(chain, new RegExp(`\\b${reader}\\(`), `${reader}: read once, by the rail's publisher`)
   }
-  // The reads are the window's shared ones: the chain's gateway read goes through the kernel's held-read holder, the rest are held answers.
+  // The reads are the window's shared ones: the World Model's slices and the held answers.
   const publisher = read('agent/devices/AgentRailDevices.tsx')
-  for (const shared of ['useAgentChainReading(null)', 'useWorkcellAnswer(transport)', 'useCentralGroundAnswer(transport)', // REPLACED (O-I #740 lane B): Messages read the population of RACK_PROJECT ('O-I'); they read the world's whole population now,
+  // REPLACED (O-I ticket 1006): the rail read the chain's own reading (useAgentChainReading, which asked AIKit's gateway itself); the Gateway
+  // is a declaration over the World Model's sessions slice, which carries the gateway, and the rail composes the same reading from it.
+  for (const shared of ["useModelSlice(transport, 'sessions')", 'chainFromModel({slices: {sessions: sessionsSlice}', 'useWorkcellAnswer(transport)', 'useCentralGroundAnswer(transport)', // REPLACED (O-I #740 lane B): Messages read the population of RACK_PROJECT ('O-I'); they read the world's whole population now,
     // the root register named by no project world (agent/worldScope.ts).
     'usePopulationAnswer(transport, registerOf(ROOT_REGISTER))',
     'useSeatStatusAnswer(transport, asked)']) assert.ok(publisher.includes(shared), shared)
   assert.match(read('owners/ownerCall.ts'), /installKernelReadHolder\(/, 'a kernelRead from an effect is the same held answer')
-  assert.match(read('agent/devices/useAgentChainReading.ts'), /kernelRead\(transport, \{op: 'harness_agent_read', binding\}, gatewayAt \? \{fresh: true\} : \{\}\)/)
+  assert.doesNotMatch(publisher, /harness_agent_read|gateway-ecology|useGatewayEcology/, 'the rail asks AIKit\'s gateway nothing itself: the sessions slice carries it')
   // REPLACED (parity D-09): "Approvals stays Factory's Main track effect" — its rail tile is claimed in every mode, so the rail's publisher
   // publishes it in every mode, and the Main track draws the same door entry.
   assert.match(publisher, /publish\(APPROVALS_ID, approvals\)/, 'Approvals: published by the rail\'s publisher')
+  assert.ok(publisher.includes('useEncounterSessions(observed)'), 'the open agent\'s conversation: the one encounter session, observed by the rail')
 })
 
 const HARNESS_CAPTURE = JSON.parse(readFileSync(new URL('./fixtures/aikit-harness-binding-2026-11-13.json', import.meta.url), 'utf8'))
 
-test('the harness binding is read from the owners\' real shapes: harnesses from client status clients[], the binding from the gateway\'s ecology', async () => {
-  const {foundHarnesses, gatewayBindingOf} = await import('../src/agent/useHarnessBinding.ts')
-  // Client status names harnesses and no binding (the shape `harnesses[{id,binding}]` was never AIKit's).
-  assert.deepEqual(foundHarnesses(HARNESS_CAPTURE.client_status), [], 'no harness is detected in the captured isolated home')
-  assert.deepEqual(foundHarnesses({clients: [{harness: 'pi', detection: 'detected'}, {harness: 'codex', detection: 'not-installed'}]}), ['pi'])
-  assert.equal(gatewayBindingOf(HARNESS_CAPTURE.client_status), null, 'client status names no gateway binding')
-  assert.equal(gatewayBindingOf(HARNESS_CAPTURE.gateway_ecology), 'gateway-binding/lanea', 'the gateway names its binding in its ecology')
-  assert.equal(gatewayBindingOf({type: 'ecology', ecology: {agencies: []}}), null, 'a gateway with no conversation names none')
+/** The World Model's sessions slice as the kernel answers it (world_model.rs `sessions`): the agency reading, and AIKit's gateway — its
+ * ecology (captured from the real AIKit), the conversation binding the kernel finds in it, and that binding's harness reading. */
+const sessionsSlice = gateway => ({schema: 'oi.world-model-slice/v1', slice: 'sessions', owner: 'aikit', scopes: ['machine'], version: 1, state: 'read', error: null,
+  read_at_unix_ms: 1, value: {project_ref: 'project:root', spaces: [], gateway}})
+const GATEWAY_READ = {state: 'read', reading: {ecology: HARNESS_CAPTURE.gateway_ecology, binding: 'gateway-binding/lanea', agent: {state: 'read', reading: {state: 'ready'}}}}
+
+// REPLACED (O-I ticket 1006): the shell read the binding from AIKit's gateway ecology itself (agent/useHarnessBinding.ts); the World Model's
+// sessions slice carries the gateway and the binding it names (the kernel's own test reads it from the ecology: world_model.rs
+// the_sessions_slice_carries_the_gateway_its_binding_and_that_bindings_harness_reading), and the Gateway declares the field it reads.
+test('the harness binding is the one the sessions slice\'s gateway names, and lists no agents: the agents here are the census\'s (O-I ticket 1003)', async () => {
+  for (const gone of ['agent/useHarnessBinding.ts', 'agent/devices/useAgentChainReading.ts', 'agent/devices/useModelCatalogue.ts']) {
+    assert.throws(() => read(gone), {code: 'ENOENT'}, `${gone}: no reader of an owner stands beside the World Model the declarations read`)
+  }
+  const {gatewayBindingIn, chainDeclaration} = await import('../src/inhabitants/agentParamAddresses.ts')
+  assert.equal(chainDeclaration('gateway').fields.binding, 'sessions:gateway.reading.binding', 'the Gateway declares the field its binding reads')
+  assert.equal(chainDeclaration('agent').fields.harnesses, 'agents:agents', 'the Harness chooser\'s agents are the census\'s')
+  assert.equal(gatewayBindingIn(sessionsSlice(GATEWAY_READ).value), 'gateway-binding/lanea', 'the binding the gateway names')
+  assert.equal(gatewayBindingIn(sessionsSlice({state: 'read', reading: {ecology: {type: 'ecology', ecology: {agencies: []}}, binding: null,
+    agent: {state: 'refused', why: 'AIKit\'s gateway names no conversation binding'}}}).value), null, 'a gateway with no conversation names none')
+  assert.equal(gatewayBindingIn(sessionsSlice({state: 'refused', why: 'aikit: no gateway is configured'}).value), null, 'a refused gateway names none')
+  assert.equal(gatewayBindingIn(null), null)
+  assert.doesNotMatch(read('agent/devices/designBindings.ts') + read('inhabitants/agentParamAddresses.ts'), /harness_status/, 'AIKit\'s client status is not read for the binding')
 })
 
-test('the harness binding is read once for the window: the chain and the rail\'s publisher share the held answer (harness_status, harness_agent_read)', async () => {
-  const {useAgentChainReading} = await import('../src/agent/devices/useAgentChainReading.ts')
-  // A counting stand-in for the kernel bridge: each op asked is recorded; the harness answers in its own shapes, every other read refuses.
+// The census as the kernel answers the World Model's agents slice (census.rs): claude-code and prime start, gemini does not. AIKit's client
+// status below marks gemini detected (its binary is found, though it fails its start) and has no client for prime: a list made from it
+// would offer gemini and miss prime.
+const AGENTS_SLICE = {schema: 'oi.world-model-slice/v1', slice: 'agents', owner: 'kernel', scopes: ['machine'], version: 1, state: 'read', error: null, read_at_unix_ms: 1,
+  value: {agents: [
+    {slug: 'claude-code', harness_ref: 'harness/claude-code', executable: '/x/claude', starts: true, talks: true, version: '2.1.323', aikit: {client: 'claude', harness: 'claude-code'}},
+    {slug: 'prime', harness_ref: 'harness/prime', executable: '/x/prime', starts: true, talks: false, why: 'AIKit names no client for prime, so it opens no conversation with it', aikit: null},
+    {slug: 'gemini', harness_ref: 'harness/gemini', executable: '/x/gemini', starts: false, talks: false, why: '/x/gemini --version exited exit status: 1', aikit: null}]}}
+const AIKIT_CLIENTS = {clients: [{client: 'claude', harness: 'claude-code', detection: 'detected'}, {client: 'gemini', harness: 'gemini', detection: 'detected'}]}
+
+// REPLACED (O-I ticket 1006): the chain and the rail each read AIKit's gateway (harness_agent_read on the binding, the ecology) through the
+// kernel's held reads; both read the World Model's sessions slice, which carries the gateway, so neither asks AIKit anything.
+test('the harness binding is read once for the window: the chain and the rail\'s publisher read the World Model\'s slices (the census, the gateway), and ask AIKit nothing; the Harness chooser offers the census\'s agents that start', async () => {
+  const {useModelSlice} = await import('../src/owners/model.ts')
+  const {useWorkspace} = await import('../src/shell/workspaceContext.tsx')
+  const {chainFromModel} = await import('../src/agent/devices/designBindings.ts')
+  // A counting stand-in for the kernel bridge: each op asked is recorded; the kernel answers the slices in its own shapes, every other read
+  // refuses.
   const asked = []
   const realFetch = globalThis.fetch
   globalThis.fetch = async (url, init) => {
     const op = JSON.parse(init.body)
-    asked.push(op.binding ? `${op.op}:${op.binding}` : op.op)
-    // The owners' own shapes, captured from the real AIKit (fixtures/aikit-harness-binding-2026-11-13.json): client status carries clients[]
-    // (harness names, no binding); the gateway's bindings are its ecology's surfaces.
-    const outcome = op.op === 'harness_status' ? {result: 'harness_status_reading', data: HARNESS_CAPTURE.client_status}
-      : op.op === 'aikit_read' && op.request?.kind === 'gateway-ecology' ? {result: 'owner_route_reading', route: 'aikit gateway ecology', data: HARNESS_CAPTURE.gateway_ecology}
-      : op.op === 'harness_agent_read' ? {result: 'harness_agent_reading', binding: op.binding, document: {state: 'ready'}} : null
+    asked.push(op.binding ? `${op.op}:${op.binding}` : op.op === 'model_subscribe' ? `${op.op}:${op.slice}` : op.op === 'aikit_read' ? `${op.op}:${op.request?.kind}` : op.op)
+    // The agents are the World Model's agents slice; the gateway is its sessions slice's (ecology captured from the real AIKit,
+    // fixtures/aikit-harness-binding-2026-11-13.json). AIKit's client status would answer if asked, and is not asked.
+    const outcome = op.op === 'model_subscribe' && op.slice === 'agents' ? {result: 'model_slice', data: AGENTS_SLICE}
+      : op.op === 'model_subscribe' && op.slice === 'sessions' ? {result: 'model_slice', data: sessionsSlice(GATEWAY_READ)}
+        : op.op === 'harness_status' ? {result: 'harness_status_reading', data: AIKIT_CLIENTS} : null
     return {json: async () => (outcome ? {ok: true, outcome} : {ok: false, error: `${op.op} is not answered in this suite`})}
   }
   const bridge = {kind: 'bridge', url: 'http://kernel.test/harness-shared'}
-  /** What the chain reads (FactoryDeviceChain.tsx: useAgentChainReading for its session). */
-  function ChainReads() { useAgentChainReading('agent-session/one'); return null }
+  /** What the chain reads (FactoryDeviceChain.tsx: the slices its declarations name, composed by chainFromModel for its session). */
+  let chain
+  function ChainReads() {
+    const {transport} = useWorkspace()
+    const slices = {sessions: useModelSlice(transport, 'sessions'), workcells: useModelSlice(transport, 'workcells'), agents: useModelSlice(transport, 'agents'),
+      models: useModelSlice(transport, 'models')}
+    chain = chainFromModel({slices, sessionRef: 'agent-session/one', project: 'O-I', absent: null})
+    return null
+  }
+  assert.match(read('agent/devices/FactoryDeviceChain.tsx'), /chainFromModel\(\{\s*slices: \{sessions: sessionsSlice, workcells: workcellsSlice, agents: agentsSlice, models: modelsSlice\}/,
+    'the chain composes the same slices')
   const container = new Element_('div')
   document_.body.appendChild(container)
   const root = createRoot(container)
   try {
     flushSync(() => root.render(createElement(StubWorkspaceProvider, {transport: bridge}, createElement(ChainReads), createElement(rail.AgentRailDevices))))
-    for (let tick = 0; tick < 20 && !asked.includes('harness_agent_read:gateway-binding/lanea'); tick++) await new Promise(resolve => setTimeout(resolve, 10))
+    for (let tick = 0; tick < 20 && !(chain?.harnesses && chain.resolved); tick++) await new Promise(resolve => setTimeout(resolve, 10))
     await settle()
-    assert.equal(asked.filter(op => op === 'harness_status').length, 1, 'harness_status: one ask for both readers')
-    // Each binding is one ask for both readers: the shell's default before the owner names one, then the binding the owner named.
-    assert.equal(asked.filter(op => op === 'harness_agent_read:gateway-binding/lanea').length, 1, 'harness_agent_read on the binding the gateway names: one ask for both readers')
-    assert.ok(asked.filter(op => op === 'harness_agent_read:cursor').length <= 1, 'and on the default, at most one')
+    assert.deepEqual(chain.harnesses, ['claude-code', 'prime'], 'the census\'s agents that start, by slug: not gemini, which does not start, and prime, which AIKit has no client for')
+    assert.equal(chain.binding, 'gateway-binding/lanea', 'the binding the sessions slice\'s gateway names')
+    assert.equal(chain.reading.gatewayAdmitted, true, 'its harness reading lights the Gateway')
+    assert.equal(asked.filter(op => op === 'harness_status').length, 0, 'AIKit\'s client status is not read for a list of agents')
+    assert.equal(asked.filter(op => op === 'model_subscribe:agents').length, 1, 'the census: one ask')
+    assert.equal(asked.filter(op => op === 'model_subscribe:sessions').length, 1, 'the sessions slice: one ask for both readers')
+    assert.deepEqual(asked.filter(op => /^harness_agent_read|^aikit_read:gateway-ecology$/.test(op)), [], 'AIKit\'s gateway is asked nothing by the window: the World Model carries it')
   } finally {
     flushSync(() => root.unmount())
     document_.body.removeChild(container)

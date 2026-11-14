@@ -212,7 +212,6 @@ function Whole({p}: {p: ViewProps}) {
       <Section label="Close" grow>
         {closeRoutine(p)}
         {closeNow(p)}
-        {openToday(p)}
         {closeoutPair(p)}
       </Section>
     </Band>
@@ -295,8 +294,6 @@ function Refusal({v, w, y}: {v: ViewProps['v']; w: number; y: number}) {
 const light = (p: ViewProps) => (strOf(p.owner ?? p.v, 'light') ?? 'unknown') as LightState
 const head = (p: ViewProps) => ({light: light(p), onFold: p.nav.fold, onFull: p.nav.full})
 const shortDate = (v: ViewProps['v'], key: string) => strOf(v, key)?.slice(0, 6) ?? NONE
-const openToday = (p: ViewProps, label = 'Open today') => <Action label={label} does="Asks Central to open today's Day. Used when the Day it points at is stale."
-  onPress={() => p.set('openToday', true)} disabled={on(p.v, 'canOpenToday') ? undefined : 'Today is open, or Central cannot open it now.'} />
 /** Close now (manual §18.2): Central closes the Day; what still plays carries into the next Day. The owner reports `canClose`. */
 const closeNow = (p: ViewProps) => <Action hold label="Close now" does="Closes the Day through Central; what still plays carries into the next Day."
   onPress={() => p.set('closeNow', true)} disabled={on(p.v, 'canClose') ? undefined : 'The Day shown is closed already, or is one you selected.'} />
@@ -374,7 +371,7 @@ export const day: DesignedDevice = {
   fixtures: {
     'A working day': {canClose: true, running_context: true, closeout: JSON.stringify({verified: true, clauses: [{clause: 'continuation-registered', state: 'pass'},
       {clause: 'previous-handoff-superseded', state: 'pass'}, {clause: 'learned-material-recorded', state: 'pass'}, {clause: 'deferred-work-registered', state: 'pass'}]})},
-    'Stale pointer': {light: 'dark', refusal: 'The native today pointer is stale: it names 13 Oct. Open today to move it.', canOpenToday: true, canClose: undefined, face: undefined,
+    'Stale pointer': {light: 'dark', notice: 'Today has not opened yet (the last Day was Tue 13 Oct). Central opens it by itself at the Day\'s turn.', canClose: undefined, face: undefined,
       date: 'Fri 16 Oct', tomorrow: undefined, tomorrowOpen: undefined, c0: undefined, c1: undefined, c1p: undefined, c2done: undefined, c2run: undefined,
       c2queue: undefined, c3: undefined, c3p: undefined, c4: undefined, c5: undefined,
       ...Object.fromEntries(MOVE_KEYS.filter(k => !k.startsWith('prompt_')).map(k => [k, undefined]))},

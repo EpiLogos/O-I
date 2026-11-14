@@ -17,7 +17,9 @@
 import {useEffect, useState} from "react";
 import type {EnumOption, ScopeAddress} from "../../../configuration/contracts";
 import {useScope, scopeProject} from "../../scope";
-import {harnessName, permissionModeEntries, readyHarnesses, titleCase, trustEntries} from "../sectionModel";
+import {harnessName, permissionModeAgents, permissionModeEntries, permissionModeRows, titleCase, trustEntries} from "../sectionModel";
+import {useCensus, type CensusReading} from "../../../agency/census";
+import {useKernel} from "../../../kernel/KernelProvider";
 export {permissionModeEntries, trustEntries};
 import {defaultScope, refreshAll, resolutionKey, watchPair, type SettingEntry, type SettingsSnapshot} from "../settingsData";
 import {settingRowId, stageSetting, stagedChanges, undoChange} from "../changeModel";
@@ -86,10 +88,11 @@ function seenWhen(at: number): string {
 }
 
 /** AIKit's one table setting: connection → one mode id that connection's
- * harness advertises. Each row is a connection this app has seen offering
- * modes (or one already named in the table); its choices are exactly what it
- * offered. Choosing "The harness's own default" removes the row's entry. */
-function ModeTable({entry, data}: {entry: SettingEntry; data: SettingsSnapshot}) {
+ * harness advertises. Each row is an agent of the census a person can talk to
+ * (O-I #1003), or a name the table already holds that is no such agent; its
+ * choices are exactly the modes that agent's sessions were seen offering.
+ * Choosing "The harness's own default" removes the row's entry. */
+function ModeTable({entry, data, census}: {entry: SettingEntry; data: SettingsSnapshot; census: CensusReading}) {
   const {setting} = entry;
   const scope = defaultScope(setting);
   useEffect(() => { void watchPair(setting.setting_ref, scope); }, [setting.setting_ref]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -100,21 +103,24 @@ function ModeTable({entry, data}: {entry: SettingEntry; data: SettingsSnapshot})
   const seen = useAdvertised();
   const change = stagedChanges(data).find((candidate) => candidate.requestKey === resolutionKey(setting.setting_ref, scope));
   const [pendingBypass, setPendingBypass] = useState<{provider: string; label: string; mode: string} | null>(null);
-  const rows = [...seen.filter((row) => row.modes.length > 0 || table[row.provider]),
-    ...Object.keys(table).filter((provider) => !seen.some((row) => row.provider === provider)).map((provider): AdvertisedModes => ({provider, label: titleCase(provider), modes: [], seenAt: 0}))];
+  const rows = permissionModeRows(census, seen, table);
   const stage = (provider: string, mode: string) => {
     const next = {...table};
     if (mode) next[provider] = mode; else delete next[provider];
     void stageSetting({setting_ref: setting.setting_ref, scope: scope as ScopeAddress, value: next, secret_reference: null});
   };
   return <div className="settings-permission-table" role="group" aria-label={setting.title} data-permission-mode={setting.setting_ref}>
-    {rows.length === 0 && <p className="settings-muted" data-permission-mode-empty>A harness names its permission modes when a session opens. Chat with one once, and the modes it offers appear here to choose from.</p>}
+    {census.state === "reading" && <p className="settings-muted" data-permission-mode-agents="reading">Reading the agents on this computer…</p>}
+    {census.state === "unavailable" && <p className="settings-muted" data-permission-mode-agents="unavailable">The agents on this computer are not read, so no agent's default mode can be chosen: {census.why}</p>}
+    {census.state === "read" && rows.length === 0 && <p className="settings-muted" data-permission-mode-empty>No agent on this computer can be talked to, so there is no default permission mode to choose.</p>}
     {rows.map((row) => {
       const current = table[row.provider] ?? "";
       const offered = row.modes.some((mode) => mode.id === current);
-      const description = row.seenAt
-        ? `${row.modes.length ? row.modes.map(optionWord).join(" · ") : "Offers no permission modes"} — seen ${seenWhen(row.seenAt)} on ${row.provider}`
-        : `Not seen offering modes in this app yet — ${row.provider}`;
+      const description = row.stray
+        ? `AIKit's table names ${row.provider}, and no agent on this computer has that name`
+        : row.seenAt
+          ? `${row.modes.length ? row.modes.map(optionWord).join(" · ") : "Offers no permission modes"} — seen ${seenWhen(row.seenAt)} on ${row.provider}`
+          : `A session names its modes when it opens: talk to ${row.label} once in this app to choose one — ${row.provider}`;
       return <Row key={row.provider} id={`${settingRowId(setting.setting_ref)}:${row.provider}`} title={row.label} description={description}
         changed={!!change} onUndo={change ? () => void undoChange(change) : undefined}>
         <select className="settings-select" aria-label={`Default permission mode for ${row.label}`} data-permission-mode-harness={row.provider}
@@ -175,20 +181,21 @@ function TrustKeys({counts}: {counts: {keys: number; states: Record<string, numb
 
 export function PermissionsSection({data}: {data: SettingsSnapshot}) {
   const scope = useScope();
+  // A default permission mode is chosen for the agents a person can talk to: the census's (O-I #1003).
+  const census = useCensus(useKernel().transport);
   const project = (scopeProject(scope) ?? "central").toLowerCase();
   const trust = trustEntries(data);
   if (data.registry.state === "reading") return <Reading/>;
   if (data.registry.state === "failed") return <Unreadable error={data.registry.error} onRetry={() => void refreshAll()}/>;
   const modes = permissionModeEntries(data);
-  const ready = data.suite.state === "ok" ? readyHarnesses(data.suite.value) : [];
   const posture = data.suite.state === "ok" && data.suite.value.disclosure.state === "ok" ? data.suite.value.disclosure.rows.posture : null;
   return <div className="settings-permissions" data-permissions-panel>
     <h3 className="settings-eyebrow">Default permission mode</h3>
     {modes.length > 0
       ? modes.map((entry) => entry.setting.value_schema.type === "table" && entry.setting.writable
-        ? <ModeTable key={entry.setting.setting_ref} entry={entry} data={data}/>
+        ? <ModeTable key={entry.setting.setting_ref} entry={entry} data={data} census={census}/>
         : <ModeRow key={entry.setting.setting_ref} entry={entry} data={data}/>)
-      : <Missing>Choosing a default permission mode for {ready.length ? ready.map((row) => harnessName(row.harness)).join(", ") : "each harness"} needs an AIKit setting that the installed AIKit doesn't have yet.</Missing>}
+      : <Missing>Choosing a default permission mode for {permissionModeAgents(census)} needs an AIKit setting that the installed AIKit doesn't have yet.</Missing>}
     <h3 className="settings-eyebrow">Trust and guardrails</h3>
     {trust.map((entry) => {
       const first = entry.setting.allowed_scopes[0];

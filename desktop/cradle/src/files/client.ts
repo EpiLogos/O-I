@@ -1,4 +1,4 @@
-import {kernelOp,kernelRead} from "../kernel/bridge";
+import {kernelAct,kernelOp,kernelRead} from "../kernel/bridge";
 import type {CentralLocation, KernelTransportStatus, NativeDirectory, NativeFileBytes, NativeFileReading} from "../kernel/types";
 /** A listing is answered from the window's held reading until the kernel says the ground moved (kernel/bridge.ts kernelRead).
  * `fresh` asks the owner again and replaces it — the explicit refresh affordance, not an ordinary expansion. */
@@ -23,15 +23,30 @@ export async function readFileBytes(transport:KernelTransportStatus,location:Cen
   return {location:loc,revision,byte_len,mime_hint,content_base64,source};
 }
 
-export type FileRequest={action:"write";expected_revision:string;content:string}|{action:"history";limit?:number;before?:number}|{action:"recovery_preview"|"restore";expected_revision:string;revision:string};
+/** What the kernel's `file_operation` op takes (kernel files.rs `FileRead`): a file's history and a recovery's preview. */
+export type FileRead={action:"history";limit?:number;before?:number}|{action:"recovery_preview";expected_revision:string;revision:string};
+/** A file's save and restore: Central's own Actions (`central.files.write`, `central.files.restore`; O-I #1002). */
+export type FileMutationRequest={action:"write";expected_revision:string;content:string}|{action:"restore";expected_revision:string;revision:string};
+export type FileRequest=FileRead|FileMutationRequest;
 export interface FileMutation {outcome:"created"|"written"|"unchanged"|"conflict";revision?:string;current?:NativeFileReading}
 export interface FileChange {cursor:number;previous_revision:string;revision:string;actor:string;actor_kind:string;restored_from?:string}
 export interface FileHistory {current_revision:string;entries:FileChange[];more:boolean;next_before:number|null}
 export interface FilePreview {revision:string;expected_revision:string;content:string;current_content:string;changed:boolean}
+/** One file operation: a reading by the kernel's `file_operation`; a save or a restore as Central's Action through `act`, which names
+ * the desktop person its actor when the input names none (kernel files.rs `attributed`). */
 export async function fileOperation<T>(transport:KernelTransportStatus,location:CentralLocation,request:FileRequest):Promise<T> {
+ if(request.action==="write"||request.action==="restore")return fileMutation<T>(transport,location,request);
  const result=await kernelOp(transport,{op:"file_operation",location,request});
  if(result.error||result.outcome?.result!=="file_operation")throw new Error(result.error??"Central did not return a file operation");
  return result.outcome.data as T;
+}
+/** A save or a restore (Central's `central.files.write`, `central.files.restore`), asked of the location as the kernel's `Location`
+ * carries it. The kernel checks Central's answer names this very location and an outcome Central names (files.rs `unsound_mutation`);
+ * a refusal is Central's own words, or the kernel's. */
+function fileMutation<T>(transport:KernelTransportStatus,location:CentralLocation,request:FileMutationRequest):Promise<T> {
+ if(location?.schema!=="central.path-ref/v1"||!location.ref||!location.root)throw new Error("Unsupported native file location");
+ const {schema,ref,root,path}=location,{action,...input}=request;
+ return kernelAct<T>(transport,`central.files.${action}`,{location:{schema,ref,root,path},...input});
 }
 
 /** Native retained resources never grant write, history or restore authority. */

@@ -22,7 +22,7 @@ import {useRosterAgents} from '../../owners/readers'
 import {revealDocumentPane, subjectOf} from '../documents/centralDocuments'
 import {useReachedDocument, type DocumentInPane} from '../documents/documentDoor'
 import {centralDeviceId, type CentralReads} from './centralDeviceModel'
-import {appendFlowEntry, centralWrite, setFlowMeta} from './centralDeviceWrites'
+import {adoptLaw, appendFlowEntry, centralWrite, setFlowMeta} from './centralDeviceWrites'
 import {civilDayName, type DayAperture} from './dayBinding'
 import {DOCS_ACTIONS, docsBinding, docsHorizonInput, readDocsMeaning, documentBinding, flowBinding, highlightBinding, holdsVersion, notesBinding, subscribeHolds, textBinding, workspaceBinding, type BookWorkspace,
   type AikitAsk, type DocsPorts, type TrackWorld, type PageMaterial, type ReachedPage} from './pageBindings'
@@ -215,18 +215,23 @@ export function useDocsDevice(transport: KernelTransportStatus, id: string, worl
   [project, meaningRead.status, meaningRead.value, meaningRead.error])
   const horizonInput = useMemo(() => docsHorizonInput(project, meaning), [project, meaning])
   const horizon = useCentralActionAsked(transport, DOCS_ACTIONS.horizon, horizonInput)
+  // The root world's tier 0 is its law (manual §18.5): Central's index of it; Recognise adopts a statement (adoptLaw).
+  const law = useCentralActionAsked(transport, DOCS_ACTIONS.law, project ? null : NO_INPUT)
   useSyncExternalStore(subscribeHolds, holdsVersion, holdsVersion)
   const holds = holdsVersion()
-  const readAgain = useMemo(() => [inspect.again, ground.again, doctor.again, plan.again, horizon.again, askAgain],
-    [inspect.again, ground.again, doctor.again, plan.again, horizon.again])
+  const readAgain = useMemo(() => [inspect.again, ground.again, doctor.again, plan.again, horizon.again, law.again, askAgain],
+    [inspect.again, ground.again, doctor.again, plan.again, horizon.again, law.again])
   const ports = useMemo((): DocsPorts => (transport.kind === 'unavailable' ? {} : {
     central: (action, input) => centralWrite(transport, action, input),
     reread: () => { for (const again of readAgain) again() },
-  }), [transport, readAgain])
-  return useMemo(() => docsBinding(id, world, {...(project ? {inspect: inspect.answer, ground: ground.answer, plan: plan.answer, meaning, ...(horizonInput ? {horizon: horizon.answer} : {})} : {}),
+    ...(project ? {} : {adopt: (statement: string) => adoptLaw(transport, statement)}),
+    // The Document's pane module loads when a source is first opened, never with the device (O-I #740).
+    open: (path: string) => import('../documents/CentralDocumentPane').then(module => module.openWorldSource(transport, path)),
+  }), [transport, readAgain, project])
+  return useMemo(() => docsBinding(id, world, {...(project ? {inspect: inspect.answer, ground: ground.answer, plan: plan.answer, meaning, ...(horizonInput ? {horizon: horizon.answer} : {})} : {law: law.answer}),
     doctor: doctor.answer}, ports),
   // eslint-disable-next-line react-hooks/exhaustive-deps -- the holds' version re-binds the view's own keys
-  [id, world, project, inspect.answer, ground.answer, doctor.answer, plan.answer, meaning, horizonInput, horizon.answer, ports, holds])
+  [id, world, project, inspect.answer, ground.answer, doctor.answer, plan.answer, meaning, horizonInput, horizon.answer, law.answer, ports, holds])
 }
 const NO_INPUT: Readonly<Record<string, unknown>> = {}
 

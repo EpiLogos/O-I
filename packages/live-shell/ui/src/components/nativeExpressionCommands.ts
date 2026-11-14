@@ -152,9 +152,9 @@ export async function enumerateWorks(channel: ExpressionChannel, publish: (works
 }
 
 /** The parent every new or opened work is saved into: the works home's location as the owner disclosed it on its last list
- * (the home is named once, in the kernel), listed afresh when none is held. A home the owner could not list refuses with
- * the owner's own reason. */
-export async function worksHome(channel: ExpressionChannel): Promise<CentralLocation> {
+ * (the home is named once, in the kernel), listed afresh when none is held; null while the owner lists none, so the save names
+ * no parent and the owner makes the home at that save, refusing in Central's words when it cannot (worksHomeLocation). */
+export async function worksHome(channel: ExpressionChannel): Promise<CentralLocation | null> {
   return worksHomeLocation(listedHome?.location ? listedHome : (await channel({operation: 'list'}) as WorksReading | null)?.home)
 }
 
@@ -212,9 +212,9 @@ export function freshTitle(base: string, taken: readonly string[]): string {
 export interface OpenPorts {
   /** The owner channel, or null while the panel has not attached it. */
   expression: ExpressionChannel | null;
-  /** The owner's works home for a saved work (worksHome: the location the owner's list discloses), or null: the open then
-   * commits and opens the work and saves no file. */
-  parent: (() => Promise<CentralLocation>) | null;
+  /** The owner's works home for a saved work (worksHome: the location the owner's list discloses, or null when it lists none
+   * yet and makes the home at the save), or null: the open then commits and opens the work and saves no file. */
+  parent: (() => Promise<CentralLocation | null>) | null;
   uuid(): string;
   /** False once the native access that began this open is retired. */
   current(): boolean;

@@ -7,9 +7,9 @@ import {execFileSync} from 'node:child_process';
 import {build} from 'esbuild';
 
 const root=fileURLToPath(new URL('../../../',import.meta.url));
-const modulePath=name=>JSON.stringify(path.join(root,'packages/oi-design-system/expressions-engine/shell',name+'.mjs'));
+const modulePath=name=>JSON.stringify(path.join(root,'desktop/cradle/expressions-app/field-studies-journeys/src',name+'.ts'));
 
-test('actual emitted modules preserve source states and the native owner blueprint contract',async()=>{
+test('the engine\'s own modules, bundled, preserve source states and the native owner blueprint contract',async()=>{
  const temporary=mkdtempSync(path.join(tmpdir(),'oi-emitted-formation-'));
  try {
   const output=path.join(temporary,'check.mjs');

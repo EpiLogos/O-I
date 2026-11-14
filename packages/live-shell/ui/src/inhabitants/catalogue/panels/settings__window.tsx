@@ -37,14 +37,21 @@
 //   result      {status, operations: [{ref, title, status, message?}]}  the owners' answer to Apply or Reset (config_apply_reviewed,
 //               config_reset).
 // Harnesses & models (HarnessSource, desktop/cradle/src/configuration/harnessSource.ts, over harness_status and model_catalogue):
-//   providers   [{id, label}]  configured providers; heldDefault the saved chat default (absent: the configured order);
-//               effectiveDefault {provider, rule: owner-choice | pi-row | first-configured}.
-//   harnesses   [{client, harness, installed, detection, reason?, capability, effect?, folder?, gap?, signIn?, signInNote?, signInUnread?,
-//               loginNow?}]  one per harness client: detected or why not, the owner's own effect words, the configuration folder, an
-//               adapter gap's missing contract; and its own login as AIKit declares it (`aikit harness auth <client>`): signIn [{key,
+//   harnesses   [{agent, harness, starts, talks, version?, why?, client?, folderPresent?, capability?, effect?, folder?, gap?, signIn?, signInNote?,
+//               signInUnread?, loginNow?}]  one per agent on this machine, the census (the World Model's agents, O-I #1003): whether it
+//               starts (its version) and whether you can talk to it (it starts and AIKit opens a conversation with it), or why not; what
+//               an agent that starts carries (settings/windowValues.ts carriesValues): model (modelId, modelProvider) or modelWhy, the
+//               Skill Sets it gets (sets) and their skills (skills) or skillsWhy, and the law its floor carries — lawFile, lawState
+//               (rendered | foreign | absent), law [{topic, file, standing}] — or lawWhy; and AIKit's client facts on it when AIKit has a client for it: whether its folder exists, the owner's own
+//               effect words, the configuration folder, an adapter gap's missing contract; and its own login as AIKit declares it
+//               (`aikit harness auth <client>`): signIn [{key,
 //               provider, command}] each one it can run, signInNote the harness's own words when it signs in only inside itself (no
 //               button), signInUnread why its logins could not be read (that harness's alone), loginNow what AIKit finds now
-//               (harness_status's credential leg). loginSaid the result read back after a login's terminal ended.
+//               (harness_status's credential leg). loginSaid the result read back after a login's terminal ended. aikitWhy why AIKit's
+//               facts on the agents could not be read (drawn on its column, the agents standing as the census read them).
+//   launchProjects [project]  the projects of this World a Launch starts a session in: each one Factory's Set offers a seat act for
+//               (set_subscribe factory: `seat`, or `seat:<project>` where several hold a workcell seat; O-I #1003), on this page and on
+//               Setup's Harnesses and skills step; or launchWhy, why none, in the Set's own words.
 //   routes      [{model, name, routes: [{provider, key, standing?}]}]  the catalogue's declared routes (model_catalogue
 //               declared_routes: provider, credential_required as key); standing (unproven | observed | usable) is AIKit's model
 //               field; routesWhy says why it stands unread (AIKit's catalogue is identity only; availability is `aikit compose`).
@@ -67,7 +74,10 @@
 // Setup (manual §10.11; the kernel's `setup` op over native oi's adoption: discover, plan, apply with the plan's review token):
 //               setup [{step: ground | harnesses | credentials | machines | projects, state: found | accepted, items: [{name, where?,
 //               change?, why?, credential?, bound?}]}]  what each step found, the change Accept would make, or why setup leaves it alone
-//               (a Credentials row names the credential it binds, and whether it is bound); setupStep the step shown; setupPlan [text]
+//               (a Credentials row names the credential it binds, and whether it is bound); the Harnesses and skills step adds agents
+//               [{agent, harness, starts, talks, version?, why?, …what it carries, as harnesses}], exactly the census (O-I #1003), or
+//               agentsWhy why it is not read, and tools [{harness, instructions, settings, models}] what AIKit discloses of each agent's
+//               settings (or disclosure, why it did not); setupStep the step shown; setupPlan [text]
 //               the steps the owner would take, in order, once you press Preview. credential (the key the Credentials step binds) and
 //               reference (where it lies in your secure store: a reference, never the key) are your choices there.
 //               folders [{path, title, place: work | elsewhere, finds: none | one | many | unreadable | ground, wikis: [path],
@@ -97,14 +107,17 @@
 // Settings the shell holds: search, hit (the result ↑/↓ marked), scope, focus (the setting a contextual entry or a press opened), details
 //   (the setting whose Details are open), show (Automations: routines | methods | timers | history), context (Automations' work context),
 //   routine, product, owner (System's owner), axes ('disclosure' | 'configuration'), adding (the open form: machine | credential |
-//   routine | profile), rotating (the credential whose reference you replace), new.* (the open form's fields; new.expects and new.scopes
+//   routine | profile), rotating (the credential whose reference you replace), launchIn (the project Launch starts a session in, where
+//   Factory's Set offers more than one), new.* (the open form's fields; new.expects and new.scopes
 //   are JSON lists), Setup's choices, and a local change for each setting
 //   as draft:<ref> (a JSON string for a list or a table); setting draft:<ref> to nothing is its Undo.
 // Acts, each on its own key, with their owners:
 //   plan (config_plan_reviewed) · apply (config_apply_reviewed) · reset <ref> (config_reset) · keep <ref> (re-bases a draft on the
 //   current reading) · discard (drops every local change) · returnToWork (the work Settings was opened from) · reread (every owner read
 //   again) · install <client> (client_install) · reveal <client> (settings_reveal) ·
-//   signIn <client>|<provider> (the harness's own login, run in a terminal in the Workbench, the result read back) · discover (credential_discover) · verify
+//   signIn <client>|<provider> (the harness's own login, run in a terminal in the Workbench, the result read back) · launch <agent>|<project>
+//   (factory.session.start through Factory's Set's seat act for the project in launchIn, by the registry's door; Factory's answer read
+//   back: the session open in its World, project and seat checkout, AIKit's SessionStart hook keeping its record) · discover (credential_discover) · verify
 //   <credential> (credential_verify) · rotate <credential> with new.reference (credential_rotate) · revoke <credential>
 //   (credential_revoke) · bind with new.credential, new.reference (credential_setup) · useProfile <ref> (profile_use_plan: stages its
 //   settings as local changes) · saveProfile with new.name (profile_create, profile_edit) · importProfile (the shell's file picker,
@@ -384,7 +397,7 @@ function makeOptions(f: Rec | undefined, wiki: string | undefined): Option<strin
   const closed = finds === 'unreadable' ? 'Its ProjectCentral cannot be read. Mend its manifest by hand.' : finds === 'ground' ? 'Its ground is in place: nothing to make.' : undefined
   // A made project its making left unfinished (your key and bounds not reaching it, or Factory not keeping its runs and pads): Finish.
   const finish = finds === 'ground' && strs(f?.left).length
-    ? [{value: 'finish', label: 'Finish', does: 'Accept finishes what making it left: you act as you in it and its agents may write inside it, and Factory keeps its runs and pads.'}] : []
+    ? [{value: 'finish', label: 'Finish', does: 'Accept finishes what making it left: you act as you in it, its agents may write inside it on your standing authority, and Factory keeps its runs and pads.'}] : []
   return [...finish,
     {value: 'create', label: 'Create', does: 'ProjectCentral is made round the folder. Nothing in the folder moves.',
       why: closed ?? (finds === 'none' ? undefined : 'The folder keeps a wiki: keep it in place or copy it in.')},
@@ -520,6 +533,8 @@ function CredentialsStep({p, reading}: {p: ViewProps; reading: Rec | undefined})
 function GroundForm({p, reading, items}: {p: ViewProps; reading: Rec | undefined; items: Rec[]}) {
   const v = p.v, making = has(v, 'groundFolder') || has(v, 'groundName') || strOf(v, 'groundFolder') !== undefined
   const ground = items[0], kept = items.slice(1)
+  // Your Day's Close, while it is yours to choose before Accept saves it (O-I ticket 1005): the row names the kind Accept saves.
+  const day = kept.find(r => r.name === 'Your Day' && txt(r.close) !== undefined)
   const standing = txt(ground?.change)?.startsWith('Central keeps it here') === true
   // A ground that stands has something to accept while a row would be kept (its days, bounds or key); else the first reason why not.
   const disabled = txt(reading?.state) === 'accepted' ? 'Accepted.' : txt(ground?.why)
@@ -532,6 +547,8 @@ function GroundForm({p, reading, items}: {p: ViewProps; reading: Rec | undefined
       <Action {...st(p, 'chooseGroundFolder')} label="Choose…" does="Opens the system's folder chooser. Setup then reads the folder: nothing is made until you accept." onPress={() => p.set('chooseGroundFolder', true)} />
       <TextField {...st(p, 'groundName')} label="Name" does="The name you give your ground: the folder Central makes in the one chosen." value={strOf(v, 'groundName') ?? ''} onChange={x => p.set('groundName', x)} />
     </>}
+    {day && <Chooser {...st(p, 'dayClose')} label="Close" does="How your Day closes, which Accept saves in your Day's settings. At Day start, as Setup proposes: the Day closes itself at its turn, and face 5's proposal for tomorrow waits in Approvals. Off: each Day stays open until you close it."
+      value={strOf(v, 'dayClose') ?? txt(day.close) ?? 'day_start'} options={[{value: 'day_start', label: 'At Day start'}, {value: 'off', label: 'Off'}]} onChange={x => p.set('dayClose', x)} />}
     <Action {...st(p, 'acceptStep')} hold label="Accept" does="Central makes your ground here, or adopts the one it finds, and keeps your days, its bounds and your key as shown. Until you accept, nothing you have moves or changes." onPress={() => p.set('acceptStep', 'ground')}
       disabled={disabled} />
   </div>
@@ -551,6 +568,75 @@ function BirthForm({p}: {p: ViewProps}) {
     <Action {...st(p, 'keepBirth')} hold label="Keep" does="Keeps your name and date of birth in your ground, as the Studio's Nara chain keeps your identity. A correction is a new revision of the same identity."
       onPress={() => p.set('keepBirth', true)} disabled={txt(birth.why) ?? (!name || !date ? 'Give your name and date of birth first, or leave them: nothing fills them in your place.' : undefined)} />
   </div>
+}
+
+/** What an agent carries (O-I #1003), under its row: its model, the skill set it gets and the law statements its floor carries, each as
+ * its owner reads it (AIKit, Central), or why not. */
+function Carries({h, span}: {h: Rec; span: number}) {
+  const sets = strs(h.sets), skills = strs(h.skills), law = Array.isArray(h.law) ? h.law.filter(rec) : undefined, file = txt(h.lawFile)
+  const name = txt(h.harness) ?? txt(h.agent) ?? 'This agent'
+  return <tr className="st-sub" data-carries={txt(h.agent)}><td colSpan={span}>
+    <dl className="st-details" aria-label={`${name}: what it carries`}>
+      <div><dt>Model</dt><dd className={txt(h.model) ? undefined : 'st-dim'} data-i={`Model|${txt(h.modelWhy) ?? `${txt(h.modelId) ?? NONE}${txt(h.modelProvider) ? ` · ${h.modelProvider}` : ''}: AIKit asks for it when a chat opens with ${name}.`}`}>
+        {txt(h.model) ?? txt(h.modelWhy) ?? NONE}</dd></div>
+      <div><dt>Skill set</dt><dd className={h.sets === undefined ? 'st-dim' : undefined}
+        data-i={`Skill set|${h.sets === undefined ? txt(h.skillsWhy) ?? NONE : `${sets.length ? `Skill Sets ${sets.join(', ')}` : 'No Skill Set is selected'}${skills.length ? `: ${skills.join(', ')}` : ''}.`}`}>
+        {h.sets === undefined ? txt(h.skillsWhy) ?? NONE : sets.length ? sets.join(', ') : 'none selected'}{skills.length > 0 && <small>{skills.length} skill{skills.length === 1 ? '' : 's'}</small>}</dd></div>
+      <div><dt>Law</dt><dd className={law?.length ? undefined : 'st-dim'}
+        data-i={`Law${file ? ` · ${file}` : ''}|${law?.length ? law.map(s => `${txt(s.topic) ?? NONE} (${txt(s.file) ?? NONE}, ${txt(s.standing) ?? NONE})`).join('; ') : txt(h.lawWhy) ?? 'Its floor carries no statement.'}${txt(h.lawReach) ? ` — ${h.lawReach}` : ''}${txt(h.lawHomeWhy) ? ` — ${h.lawHomeWhy}` : ''}`}>
+        {law?.length ? law.map(s => txt(s.topic) ?? txt(s.file)).join(' · ') : txt(h.lawWhy) ?? 'no statement'}{file && <small>{file}{txt(h.lawState) && h.lawState !== 'rendered' ? ` · ${h.lawState}` : ''}{h.lawRootOnly === true ? ' · only at your world\'s root' : ''}</small>}
+        {txt(h.lawReach) && <small className="st-dim" data-law-reach={h.lawEverywhere === true ? 'everywhere' : h.lawRootOnly === true ? 'root' : 'unknown'}>{txt(h.lawReach)}</small>}
+        {txt(h.lawHomeWhy) && <small className="st-dim" data-law-home>{txt(h.lawHomeWhy)}</small>}</dd></div>
+    </dl>
+  </td></tr>
+}
+
+/** Launch (O-I #1003): the projects of this World a session can start in, as Factory's Set offers them (launchProjects), the one chosen
+ * (launchIn; the only one where it offers one), or why none (launchWhy, in the Set's words). */
+function launchOf(p: ViewProps): {projects: string[]; project?: string; why?: string} {
+  const projects = has(p.v, 'launchProjects') ? strs(json<unknown[]>(p.v, 'launchProjects', [])) : []
+  const chosen = strOf(p.v, 'launchIn')
+  return {projects, project: projects.length === 1 ? projects[0] : chosen && projects.includes(chosen) ? chosen : undefined, why: strOf(p.v, 'launchWhy')}
+}
+
+/** Where Launch starts a session, where Factory's Set offers more than one project: chosen once, for every agent's Launch. */
+function LaunchIn({p}: {p: ViewProps}) {
+  const {projects, project} = launchOf(p)
+  if (projects.length < 2) return null
+  return <Chooser label="Sessions start in" does="The project of this World a Launch starts its session in. Each holds a workcell seat, and Factory seats the agent on a new track there."
+    value={project ?? ''} options={projects.map(x => ({value: x, label: x}))} onChange={value => p.set('launchIn', value)} />
+}
+
+/** Launch, beside an agent you can talk to (O-I #1003): Factory seats it on a new track in the project chosen, its session opened with
+ * this World, that project and today's Day (factory.session.start through Factory's Set's seat act, whose session AIKit opens: an
+ * agent that starts but that AIKit opens no conversation with has no Launch, its why on its row); what Factory answered is read back. */
+function LaunchPress({p, h}: {p: ViewProps; h: Rec}) {
+  const agent = txt(h.agent), name = txt(h.harness) ?? agent ?? NONE
+  if (h.talks !== true || !agent) return null
+  const {projects, project, why} = launchOf(p), standing = st(p, 'launch')
+  return <Action {...standing} label="Launch" does={`Starts a session of ${name}${project ? ` in ${project}` : ''}: Factory seats it on a new track there, with this World, the project and today's Day.`}
+    disabled={standing.disabled ?? why ?? (project ? undefined : projects.length ? 'Choose the project it starts in first.' : 'Factory\'s Set is being read.')}
+    onPress={() => p.set('launch', `${agent}|${project ?? ''}`)} />
+}
+
+/** The agents on this machine in Setup's Harnesses and skills step: exactly the census (O-I #1003), each with whether it starts, what
+ * it carries, and Launch beside each one you can talk to. */
+function SetupAgents({p, reading}: {p: ViewProps; reading: Rec | undefined}) {
+  const agents = Array.isArray(reading?.agents) ? reading!.agents.filter(rec) : undefined
+  return <>
+    <LaunchIn p={p} />
+    <table className="st-tbl" aria-label="The agents on this machine">
+      <Cols w={[150, undefined, 90]} />
+      <thead><tr><th>Agent</th><th>Starts</th><th /></tr></thead>
+      <tbody>{agents === undefined ? <tr><td colSpan={3} className="st-none">{txt(reading?.agentsWhy) ?? NONE}</td></tr>
+        : agents.length === 0 ? <tr><td colSpan={3} className="st-none">There is no agent on this computer.</td></tr>
+        : agents.flatMap(h => [<tr key={txt(h.agent)} data-census-agent={txt(h.agent)} data-read={h.starts === true ? undefined : 'true'}>
+          <td><b>{txt(h.harness) ?? txt(h.agent) ?? NONE}</b></td>
+          <td data-i={h.starts !== true && txt(h.why) ? `Doesn't start|${h.why}` : undefined}>{h.starts === true ? txt(h.version) ?? 'yes' : txt(h.why) ?? 'no'}</td>
+          <td className="st-acts"><LaunchPress p={p} h={h} /></td>
+        </tr>, ...(h.starts === true ? [<Carries key={`${txt(h.agent)}:carries`} h={h} span={3} />] : [])])}</tbody>
+    </table>
+  </>
 }
 
 /** What AIKit reads of each tool besides its skills (its disclosure): where its instructions and settings lie and the providers its
@@ -586,6 +672,7 @@ function SetupPage({p}: {p: ViewProps}) {
         <Lamp state={steps ? STEP_LIGHT[txt(r?.state) ?? ''] ?? 'unknown' : 'unknown'} tone="green" /><i>{i + 1}</i>{s.label}</button>
     })}</nav>
     {at === 'projects' ? <ProjectsStep p={p} /> : at === 'credentials' ? <CredentialsStep p={p} reading={reading} /> : <>
+      {at === 'harnesses' && reading && <SetupAgents p={p} reading={reading} />}
       <table className="st-tbl">
         <Cols w={[150, 210, undefined]} />
         <thead><tr><th>Found {pager}</th><th>Where</th><th>The change Accept makes</th></tr></thead>
@@ -611,36 +698,30 @@ function SetupPage({p}: {p: ViewProps}) {
 
 // ---------------------------------------------------------------- Harnesses & models
 
-const RULE: Readonly<Record<string, string>> = {'owner-choice': 'your saved choice', 'pi-row': 'the pi provider row', 'first-configured': 'the first configured provider'}
 function HarnessesPage({p}: {p: ViewProps}) {
-  const v = p.v, providers = list(v, 'providers'), harnesses = list(v, 'harnesses'), routes = list(v, 'routes')
-  const eff = json<Rec | null>(v, 'effectiveDefault', null)
-  const label = (id: string | undefined) => (id ? txt(providers?.find(r => r.id === id)?.label) ?? id : undefined)
+  const v = p.v, harnesses = list(v, 'harnesses'), routes = list(v, 'routes')
   const [shownRoutes, pager] = usePaged(routes ?? [], 2), routesOpen = strOf(v, 'focus') === 'routes'
   return <>
-    {/* The provider a new chat starts with is O:I's chat-default setting, one row like every owner's: change it there, and Review
-      changes… applies it; Reset on the row withdraws your saved choice (settings/chatDefaultSetting.ts; O-I #744). */}
-    <OwnerRows p={p} category="agents" size={3} title="New conversations">
-      <div className="st-line">
-        <Readout {...st(p, 'effectiveDefault')} label="in effect" does="The provider new chats use now, and the rule that chose it." value={eff ? `${label(txt(eff.provider)) ?? NONE} · ${RULE[txt(eff.rule) ?? ''] ?? NONE}` : undefined} />
-      </div>
-    </OwnerRows>
+    {/* Which agent a new chat talks to is chosen in the chat itself, among these agents (O-I #1003): there is no saved default here. */}
+    <OwnerRows p={p} category="agents" size={3} title="Agent settings" />
     <section className="st-sec">
-      <h4>Harnesses<small>{harnesses ? `${harnesses.filter(h => h.installed === true).length} of ${harnesses.length} installed` : 'no reading of the harnesses'}</small></h4>
+      <h4>Agents on this machine<small>{harnesses ? `${harnesses.filter(h => h.talks === true).length} of ${harnesses.length} you can talk to` : <Unread p={p} k="harnesses" what="the agents on this machine" />}</small></h4>
+      {harnesses && <LaunchIn p={p} />}
       {harnesses && <table className="st-tbl">
-        <Cols w={[118, 50, 128, 64, undefined, 150]} />
-        <thead><tr><th>Harness</th><th>Installed</th><th>Detected</th><th>Capability</th><th>After a change</th><th /></tr></thead>
-        <tbody>{harnesses.map(h => {
+        <Cols w={[118, 150, 50, 64, undefined, 150]} />
+        <thead><tr><th>Agent</th><th>Starts</th><th>AIKit{strOf(v, 'aikitWhy') && <i className="st-why" data-i={`AIKit|${strOf(v, 'aikitWhy')}`}>!</i>}</th><th>Capability</th><th>After a change</th><th /></tr></thead>
+        <tbody>{harnesses.flatMap(h => {
           const client = txt(h.client) ?? '', gap = rec(h.gap) ? h.gap : undefined, logins = Array.isArray(h.signIn) ? h.signIn.filter(rec) : []
-          return <tr key={client} data-read={h.installed === true ? undefined : 'true'}>
-            <td><b>{txt(h.harness) ?? client}</b>{gap && <i className="st-why" data-i={`Adapter gap|${txt(gap.contract) ?? 'A contract is missing.'}${txt(gap.skill) ? ` Its authoring skill: ${gap.skill}.` : ''}`}>!</i>}</td>
-            <td>{h.installed === true ? 'yes' : h.installed === false ? 'no' : NONE}</td>
-            <td data-i={txt(h.reason) ? `Detection|${h.reason}` : undefined}>{h.detection === 'detected' ? 'yes' : txt(h.reason) ?? txt(h.detection) ?? NONE}</td>
+          return [<tr key={txt(h.agent) ?? client} data-census-agent={txt(h.agent)} data-read={h.talks === true ? undefined : 'true'}>
+            <td><b>{txt(h.harness) ?? txt(h.agent) ?? NONE}</b>{gap && <i className="st-why" data-i={`Adapter gap|${txt(gap.contract) ?? 'A contract is missing.'}${txt(gap.skill) ? ` Its authoring skill: ${gap.skill}.` : ''}`}>!</i>}</td>
+            <td data-i={h.starts !== true && txt(h.why) ? `Doesn't start|${h.why}` : undefined}>{h.starts === true ? txt(h.version) ?? 'yes' : txt(h.why) ?? 'no'}{h.starts === true && h.talks !== true && <i className="st-why" data-i={`You cannot talk to it here|${txt(h.why) ?? 'AIKit opens no conversation with it.'}`}>!</i>}</td>
+            <td data-i={h.folderPresent === false ? 'AIKit|No configuration folder for it yet: Install makes it and puts AIKit\'s skills there.' : undefined}>{h.folderPresent === true ? 'its folder' : h.folderPresent === false ? 'no folder' : NONE}</td>
             <td>{txt(h.capability) ?? NONE}</td>
             <td className="st-dim" data-i={txt(h.effect) ? `After a change|${h.effect}` : undefined}>{txt(h.effect) ?? NONE}</td>
             <td className="st-acts">
-              {h.installed === false && <Action {...st(p, 'install')} label="Install" does="The native owner installs this harness client. Read detection again before you start work." onPress={() => p.set('install', client)} />}
-              {txt(h.folder) && <Action {...st(p, 'reveal')} label="Folder" does={`Shows its configuration folder in Finder: ${h.folder}.`} onPress={() => p.set('reveal', client)} />}
+              <LaunchPress p={p} h={h} />
+              {client && h.folderPresent === false && <Action {...st(p, 'install')} label="Install" does="The native owner installs this harness client. Read detection again before you start work." onPress={() => p.set('install', client)} />}
+              {client && txt(h.folder) && <Action {...st(p, 'reveal')} label="Folder" does={`Shows its configuration folder in Finder: ${h.folder}.`} onPress={() => p.set('reveal', client)} />}
               {/* Sign in runs the harness's own login in a terminal, where you answer it, and the page reads the result back; one that signs in
                 only inside itself says so, in its own words when you point at it, and offers no button (manual §10.10 Rules). */}
               {logins.map(l => <Action key={txt(l.key) ?? ''} {...st(p, 'signIn')} label={logins.length > 1 ? `Sign in · ${txt(l.provider) ?? NONE}…` : 'Sign in…'}
@@ -649,14 +730,14 @@ function HarnessesPage({p}: {p: ViewProps}) {
               {txt(h.signInNote) && <small className="st-dim" data-i={`Sign in|${h.signInNote}`}>Signs in inside itself</small>}
               {txt(h.signInUnread) && <i className="st-why" data-i={`Sign in|${h.signInUnread}`}>!</i>}
             </td>
-          </tr>
+          </tr>, ...(h.starts === true ? [<Carries key={`${txt(h.agent) ?? client}:carries`} h={h} span={6} />] : [])]
         })}</tbody>
       </table>}
       <LoginSaid v={v} />
     </section>
     <section className="st-sec">
       <h4><button type="button" className="st-link st-open" aria-expanded={routesOpen} onClick={() => p.set('focus', routesOpen ? undefined : 'routes')}>Model routes {routesOpen ? '▾' : '▸'}</button>
-        <small>{routes ? `${routes.length} models in the catalogue` : 'no reading of the catalogue'}</small>{routesOpen && pager}</h4>
+        <small>{routes ? `${routes.length} models in the catalogue` : <Unread p={p} k="routes" what="the catalogue" />}</small>{routesOpen && pager}</h4>
       {routes && routesOpen && <table className="st-tbl">
         <Cols w={[200, undefined, 150]} />
         <thead><tr><th>Model</th><th>Routes</th><th>Standing</th></tr></thead>
@@ -1263,10 +1344,6 @@ const SETTINGS = [
   {ref: 'central:policy:civil-time.day-boundary-minutes', category: 'inspection', owner: 'central', section: 'policy', title: 'Day boundary offset', kind: 'number', writable: false, from: 'inherited', timing: 'none', effective: 240},
   {ref: 'quaternal-logic:kernel:kernel.version', category: 'inspection', owner: 'quaternal-logic', section: 'kernel', title: 'Kernel version', kind: 'text', writable: false, from: 'inherited', timing: 'none', effective: '0.9.4'},
   {ref: 'actuation:return:return.modes', category: 'inspection', owner: 'actuation', section: 'return', title: 'Return policy modes', kind: 'list', writable: false, from: 'inherited', timing: 'none', rows: [{item: 'propose'}, {item: 'draft'}, {item: 'write'}]},
-  // O:I's chat default (settings/chatDefaultSetting.ts): one row, changed through Review changes…; Reset withdraws the saved choice.
-  {ref: 'oi:harness:chat.default', category: 'agents', owner: 'oi', section: 'harness', title: 'Default provider', kind: 'choice', writable: true, from: 'here', timing: 'session-restart-required',
-    effective: 'claude', at: 'This machine', effect: 'New chats start with this provider; a conversation keeps its own once it starts.',
-    options: [{value: 'claude', title: 'Claude'}, {value: 'pi', title: 'Pi'}, {value: 'codex', title: 'Codex'}]},
   // The presentation owner's theme (settings/presentationSetting.ts): one row, changed as every owner's setting is, through Review changes….
   {ref: 'oi:presentation:theme', category: 'appearance', owner: 'oi', section: 'presentation', title: 'Theme', kind: 'choice', writable: true, from: 'here', timing: 'value-change', effective: 'system', at: 'This machine',
     effect: 'The presentation owner saves the appearance, and the window redraws in it.',
@@ -1307,7 +1384,14 @@ const SYSTEM = [
 // Setup on this Mac: four steps accepted, and the Projects step reading the folders of work it found (§10.11).
 const SETUP_DONE = [
   {step: 'ground', state: 'accepted', items: [{name: 'Your ground', where: '~/Central', change: 'adopted where it is'}]},
-  {step: 'harnesses', state: 'accepted', items: [
+  {step: 'harnesses', state: 'accepted', agents: [
+    {agent: 'claude-code', harness: 'Claude Code', starts: true, talks: true, version: '2.1.323 (Claude Code)', model: 'claude-opus-5-5', modelId: 'claude-opus-5-5',
+      sets: ['foundation'], skills: ['engineering-methodology', 'wayfinder'], lawFile: 'CLAUDE.md', lawState: 'rendered',
+      law: [{topic: 'Authorship', file: 'authorship-and-return/propose-not-write.md', standing: 'adopted'}]},
+    {agent: 'codex', harness: 'Codex', starts: true, talks: true, version: 'codex-cli 0.155.1', modelWhy: 'AIKit holds no model default for codex: a new chat opens with its own model',
+      sets: ['foundation'], skills: [], lawFile: 'AGENTS.md', lawState: 'rendered', law: [{topic: 'Authorship', file: 'authorship-and-return/propose-not-write.md', standing: 'adopted'}]},
+    {agent: 'gemini', harness: 'Gemini CLI', starts: false, talks: false, why: 'gemini did not start: its node runtime could not load a library.'}],
+  items: [
     {name: 'Claude Code', where: '~/.claude', change: 'connected through its adapter · its skills keep working'},
     {name: 'Codex', where: '~/.codex', change: 'connected through its adapter'},
     {name: 'pi', where: '~/.pi', change: 'connected through its adapter'},
@@ -1335,18 +1419,22 @@ const DEFAULTS = {
   scopes: dump([{kind: 'machine', ref: null, title: 'This machine'}, {kind: 'world', ref: null, title: 'World'}, {kind: 'project', ref: 'O-I', title: 'Project · O-I'}, {kind: 'workcell', ref: 'env-1', title: 'Workcell · env-1'}]),
   settings: dump(SETTINGS), conflicts: dump([]),
   elsewhere: dump([{ref: 'live:delay:time', title: 'Delay time', where: 'the Delay on its chain'}, {ref: 'techne:timeline:zoom', title: 'Timeline zoom', where: 'the Timeline'}]),
-  providers: dump([{id: 'anthropic', label: 'Anthropic'}, {id: 'openai', label: 'OpenAI'}, {id: 'pi', label: 'pi (local)'}]),
-  effectiveDefault: dump({provider: 'anthropic', rule: 'first-configured'}),
   harnesses: dump([
-    {client: 'claude-code', harness: 'Claude Code', installed: true, detection: 'detected', capability: 'agent', effect: 'Restart Claude to read new settings.', folder: '~/.claude',
+    {agent: 'claude-code', harness: 'Claude Code', starts: true, talks: true, version: '2.1.323 (Claude Code)', client: 'claude-code', folderPresent: true, capability: 'agent', effect: 'Restart Claude to read new settings.', folder: '~/.claude',
+      model: 'claude-opus-5-5', modelId: 'claude-opus-5-5', sets: ['foundation'], skills: ['engineering-methodology', 'wayfinder'], lawFile: 'CLAUDE.md', lawState: 'rendered',
+      law: [{topic: 'Authorship', file: 'authorship-and-return/propose-not-write.md', standing: 'adopted'}, {topic: 'Shape of the world', file: 'world/shape-of-the-world.md', standing: 'adopted'}],
       signIn: [{key: 'claude-code|provider:anthropic', provider: 'anthropic', command: 'claude auth login'}], loginNow: 'AIKit finds what claude-code needs to sign in.'},
-    {client: 'codex', harness: 'Codex', installed: true, detection: 'detected', capability: 'agent', effect: 'Next session only.', folder: '~/.codex',
+    {agent: 'codex', harness: 'Codex', starts: true, talks: true, version: 'codex-cli 0.155.1', client: 'codex', folderPresent: true, capability: 'agent', effect: 'Next session only.', folder: '~/.codex',
+      modelWhy: 'AIKit holds no model default for codex: a new chat opens with its own model', sets: ['foundation'], skills: [], lawFile: 'AGENTS.md', lawState: 'rendered',
+      law: [{topic: 'Authorship', file: 'authorship-and-return/propose-not-write.md', standing: 'adopted'}, {topic: 'Shape of the world', file: 'world/shape-of-the-world.md', standing: 'adopted'}],
       signIn: [{key: 'codex|provider:openai', provider: 'openai', command: 'codex login'}], loginNow: 'AIKit finds what codex needs to sign in.'},
-    {client: 'gemini', harness: 'Gemini CLI', installed: true, detection: 'detected', capability: 'agent', effect: 'Next session only.', folder: '~/.gemini',
+    {agent: 'gemini', harness: 'Gemini CLI', starts: false, talks: false, why: 'gemini did not start: its node runtime could not load a library.', client: 'gemini', folderPresent: true, capability: 'agent', effect: 'Next session only.', folder: '~/.gemini',
       signInNote: 'Login with Google (OAuth) is Gemini CLI\'s default auth; the API key delivers only when credential:gemini is bound'},
-    {client: 'pi', harness: 'pi', installed: true, detection: 'detected', capability: 'agent', folder: '~/.pi'},
-    {client: 'hermes', harness: 'Hermes', installed: true, detection: 'stale', reason: 'The gateway answered once and then went quiet.', capability: 'gateway', gap: {contract: 'No session-settings contract for Hermes yet.', skill: 'aikit:harness-adapter-authoring'}},
-    {client: 'opencode', harness: 'OpenCode', installed: false, detection: 'absent', reason: 'Not on PATH.', capability: 'agent'},
+    {agent: 'pi', harness: 'Pi', starts: true, talks: true, version: '1.5.0', client: 'pi', folderPresent: true, capability: 'agent', folder: '~/.pi',
+      modelWhy: 'AIKit holds no model default for pi: a new chat opens with its own model', sets: ['foundation'], skills: [], lawFile: 'AGENTS.md', lawState: 'rendered',
+      law: [{topic: 'Authorship', file: 'authorship-and-return/propose-not-write.md', standing: 'adopted'}, {topic: 'Shape of the world', file: 'world/shape-of-the-world.md', standing: 'adopted'}]},
+    {agent: 'hermes', harness: 'Hermes', starts: false, talks: false, why: 'hermes did not answer its version.', client: 'hermes', folderPresent: true, capability: 'gateway', gap: {contract: 'No session-settings contract for Hermes yet.', skill: 'aikit:harness-adapter-authoring'}},
+    {agent: 'opencode', harness: 'OpenCode', starts: false, talks: false, why: 'Actuation detects opencode but found no executable to start', client: 'opencode', folderPresent: false, capability: 'agent'},
   ]),
   routes: dump([
     {model: 'claude-opus-5-5', name: 'Claude Opus 5.5', routes: [{provider: 'anthropic', key: true, standing: 'usable'}, {provider: 'claude-code', key: false, standing: 'usable'}]},
@@ -1422,7 +1510,7 @@ export const design: DesignedDevice = {
     'Changes to review': {
       'draft:software-factory:telemetry:watch-interval-seconds': 10, 'draft:ai-kit:resolution:resolution.profiles': 'documentation',
       'draft:ai-kit:models:models.default': dump([{harness: 'claude-code', model: 'claude-opus-5-5'}, {harness: 'pi', model: 'claude-sonnet-5'}, {harness: 'codex', model: 'gpt-5.5-codex'}]),
-      conflicts: dump(['ai-kit:resolution:resolution.profiles']), focus: 'ai-kit:models:models.default', 'draft:oi:harness:chat.default': 'pi',
+      conflicts: dump(['ai-kit:resolution:resolution.profiles']), focus: 'ai-kit:models:models.default',
       plans: dump([
         {ref: 'ai-kit:models:models.default', title: 'Default model per harness', scope: 'This machine', changes: ['codex → gpt-5.5-codex'], effect: 'session-restart-required'},
         {ref: 'ai-kit:resolution:resolution.profiles', title: 'Native profile selection', scope: 'This machine', changes: ['core-development → documentation'], effect: 'session-restart-required'},

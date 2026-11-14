@@ -257,12 +257,11 @@ async fn run_kernel_op<R: tauri::Runtime>(
     // dispatch the walk-bridge also calls (kernel dispatch.rs): owner work
     // runs outside the kernel lock wherever the op has a prepared form.
     tauri::async_runtime::spawn_blocking(move || {
-        let host = app.state::<KernelHost>();
         // One timing line per op, in the dev bridge's format, to the file
         // OI_KERNEL_TRACE_FILE names (a Finder launch has no stderr).
         let name = oi_cradle_kernel::dispatch::op_name(&op);
         let started = std::time::Instant::now();
-        let (result, timing) = oi_cradle_kernel::dispatch::dispatch_with(&host.0, &host.1, op);
+        let (result, timing) = dispatch_kernel_op(&app, op);
         oi_cradle_kernel::dispatch::trace_op(
             "native",
             &name,
@@ -270,19 +269,35 @@ async fn run_kernel_op<R: tauri::Runtime>(
             started.elapsed(),
             &timing,
         );
-        let outcome = result?;
+        result
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+/// The host's one dispatch (kernel dispatch.rs): an op a shell page sends (`run_kernel_op`) and a read the World Model makes
+/// (O-I #1001) both run here, and each receipt is told to the shell on the event topic, the window's appearance following a
+/// presentation change.
+fn dispatch_kernel_op<R: tauri::Runtime>(
+    app: &AppHandle<R>,
+    op: KernelOp,
+) -> (
+    Result<KernelOpOutcome, String>,
+    oi_cradle_kernel::dispatch::Timing,
+) {
+    let host = app.state::<KernelHost>();
+    let (result, timing) = oi_cradle_kernel::dispatch::dispatch_with(&host.0, &host.1, op);
+    if let Ok(outcome) = &result {
         for receipt in &outcome.receipts {
             if let oi_cradle_kernel::events::KernelEvent::PresentationChanged { theme, .. } =
                 &receipt.envelope.event
             {
-                apply_native_appearance(&app, &theme.appearance);
+                apply_native_appearance(app, &theme.appearance);
             }
             let _ = app.emit(KERNEL_EVENT_TOPIC, receipt);
         }
-        Ok(outcome)
-    })
-    .await
-    .map_err(|e| e.to_string())?
+    }
+    (result, timing)
 }
 
 /// Each window's page loads (G2): the holder of a field op, and when the driver a page held is freed.
@@ -534,6 +549,30 @@ fn main() {
             let field = kernel.native_field();
             live_engine_host::follow_torus(app.handle(), &field);
             app.manage(KernelHost(Mutex::new(kernel), field));
+            // The World Model (kernel world_model.rs; O-I #1001): every slice of the owners' present state read once now, on the
+            // model's own thread, and kept by the watch's notices and the kernel's own writes. Each move of a slice is recorded
+            // in the event log and told to the shell on the event topic (`model_changed`); a read the model makes through the
+            // kernel forwards that read's receipts like any other op.
+            {
+                let asking = app.handle().clone();
+                let telling = app.handle().clone();
+                let via: std::sync::Arc<dyn Fn(KernelOp) -> Result<KernelOpOutcome, String> + Send + Sync> =
+                    std::sync::Arc::new(move |op| dispatch_kernel_op(&asking, op).0);
+                let changed = std::sync::Arc::new(move |slice, version| {
+                    let host = telling.state::<KernelHost>();
+                    // The slice's `model_changed`, then each Set that reads it and moved, its `set_changed` (mode_set.rs).
+                    let receipts = match host.0.lock() {
+                        Ok(mut kernel) => kernel.record_model_moved(slice, version),
+                        Err(_) => return,
+                    };
+                    for receipt in &receipts {
+                        let _ = telling.emit(KERNEL_EVENT_TOPIC, receipt);
+                    }
+                });
+                if let Err(error) = oi_cradle_kernel::world_model::Model::global().start(via, changed) {
+                    eprintln!("{error}; each slice is read when it is first asked for");
+                }
+            }
             // The window's one SharedField client for its identity (O-I #858),
             // held for the window's life: every transaction it takes — the
             // rows it moved, by view and ref — is recorded in the event log

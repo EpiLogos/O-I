@@ -6,7 +6,7 @@
 import {useCallback, useEffect, useReducer, useState} from 'react'
 import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
-import {attemptReceivingWords, receiveAttempt} from '../../../../../desktop/cradle/src/contributions/factory/desk/factoryReads'
+import {attemptChoiceWords, chooseAttemptOf} from '../../../../../desktop/cradle/src/contributions/factory/desk/factoryReads'
 import {runKey, runsOf, servedBySession, takesBySession, type FactoryTake} from '../agent/factoryTakes'
 import {onOwnerChanged, tellOwnerChanged} from './notices'
 import {useSpineEpoch} from './spine'
@@ -43,13 +43,14 @@ export async function readAttemptTakes(call: TakesCall, projects: SessionProject
   return takesBySession(served, runs)
 }
 
-/** Choose one take: Factory's own op, answered in the owner's words (agent/factoryTakes.ts). A refusal and an unconfirmed answer
+/** Choose one take: Factory's own Action, factory.attempt.choose by `act` (desk/factoryReads.ts chooseAttemptOf), answered in the owner's
+ * words (agent/factoryTakes.ts). A refusal — a Run that belongs to no Flow has nowhere to receive its Return — and an unconfirmed answer
  * are `ok: false` with the owner's reason; the Run's readers are told when something may have moved. */
 export async function chooseAttempt(transport: KernelTransportStatus, take: FactoryTake): Promise<{ok: true; note: string} | {ok: false; error: string}> {
   try {
-    const receipt = await receiveAttempt(transport, {statePath: take.statePath, runRef: take.runRef, attemptRef: take.attemptRef})
-    if (receipt.changed) tellOwnerChanged({topic: 'temporal', cause: 'an attempt was chosen: its Return was proposed to Central\'s receiving field', agentSession: take.sessionRef})
-    const words = attemptReceivingWords(receipt)
+    const choice = await chooseAttemptOf(transport, {statePath: take.statePath, runRef: take.runRef, attemptRef: take.attemptRef})
+    if (choice.state !== 'already-received') tellOwnerChanged({topic: 'temporal', cause: 'an attempt was chosen: its Return was proposed to Central\'s receiving field', agentSession: take.sessionRef})
+    const words = attemptChoiceWords(choice)
     return words.ok ? {ok: true, note: words.line} : {ok: false, error: words.line}
   } catch (cause) {
     return {ok: false, error: cause instanceof Error ? cause.message : String(cause)}

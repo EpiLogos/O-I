@@ -45,6 +45,7 @@ export async function load(u, c, n) {
 const docs = await import('../src/central/documents/centralDocuments.ts')
 const readings = await import('../src/central/documents/documentReadings.ts')
 const pane = await import('../src/central/documents/CentralDocumentPane.tsx')
+const skillDocument = await import('../src/central/documents/SkillDocument.tsx')
 // The Day's and the Flow's forms load when first drawn (shell/loadWhenDrawn.ts; O-I #740); a server render cannot wait for a module, so they are fetched first.
 await (await import('../src/shell/loadWhenDrawn.ts')).loadEveryPart()
 const opening = await import('../src/central/documents/useOpenCentralDocument.ts')
@@ -177,7 +178,7 @@ test('today\'s Day is asked of the owner with no day ref, and the owner\'s answe
     const uninitialised = await readings.readDayStanding(bridge, null)
     assert.equal(uninitialised.state, 'uninitialised')
     assert.equal(uninitialised.message, 'Current Day has no native document yet.', 'the owner\'s own sentence, verbatim')
-    assert.equal(uninitialised.op, 'central · initialise-day', 'and the op that would admit the Day')
+    assert.equal(uninitialised.op, 'central · central.day.turn', 'and the Action that makes the page: Central\'s turn (O-I 1005)')
   } finally { absent.restore() }
   const refused = fakeOwner(() => ({ok: false, error: 'The Day source is outside the ground.'}))
   try {
@@ -239,10 +240,10 @@ test('the Day pane draws the Day die\'s own hosted form when the owner has stood
   assert.match(waiting, /data-central-absence="reading"/)
   const none = html(createElement(pane.DayView, {transport, standing: uninitialised}))
   assert.match(none, /data-central-absence="uninitialised"/)
-  assert.match(none, /Today&#x27;s page is not made yet\. Open today makes it\./, 'in plain words, with the way on')
-  assert.match(none, /data-central-day-open="today"/, 'Open today makes the page (centralDeviceWrites.ts openToday: initialise-day)')
+  assert.match(none, /Today&#x27;s page is not made yet\. Central makes it from the Day form at the Day&#x27;s turn\./, 'in plain words: it is made by itself')
+  assert.doesNotMatch(none, /Open today|data-central-day-open/, 'no press stands in for the Day making its page (O-I 1005)')
   assert.doesNotMatch(none.replace(/ data-[a-z-]+="[^"]*"/g, ''), /The owner says|op: |native document/, 'never Central\'s raw sentence or the op as text')
-  assert.match(none, /data-owner-op="central · initialise-day"/, 'the op stays on the element, for a reader')
+  assert.match(none, /data-owner-op="central · central.day.turn"/, 'the op stays on the element, for a reader')
   assert.doesNotMatch(none, /ql-daily-die/, 'no die is drawn for a Day that has no document')
   const no = html(createElement(pane.DayView, {transport, standing: refused}))
   assert.match(no, /data-central-absence="refused"/)
@@ -427,4 +428,167 @@ test('a document reached in a pane names its pane (lane F)', async () => {
   door.withdrawDocument('day:p')
   const pane = await readFile(new URL('../src/central/documents/CentralDocumentPane.tsx', import.meta.url), 'utf8')
   assert.match(pane, /<DocumentPaneContext\.Provider value=\{binding\.id\}>/)
+})
+
+// Docs' Open (manual §18.5 "Select a source to open it in the Document"; O-I ticket 1005) and a page's link: a source opens by its path,
+// by the owner's own listing of its folder. A page opens as its page by the page owner's reading of its form, and the page owner writes it
+// (a participating source through the source owner's CAS: kernel page.rs write_on_revision). Any other file opens by the file owner's
+// reading of it, as the cradle's own file route does (CradleFrame.tsx openFile): a source a tier binds, whose reading names its source, in
+// a source pane, saved on the source owner's CAS; a skill's SKILL.md as the skill (its revision is proposed, reviewed and released there,
+// SkillDocument); any other file in its file pane.
+test('Open puts a source in a pane by its owners\' readings: a Flow, a Being, a bound source as a source, a skill as the skill', async () => {
+  const door = await import('../src/central/documents/documentDoor.ts')
+  const VISION = 'Work/O-I/ProjectCentral/docs/1-vision', SKILL = 'Control/user/skills/central-session-strap'
+  const listed = {[VISION]: ['flow-2026-11-14-0800.html', 'nara.html', 'vision.html', 'plain.html', 'VISION.md', 'notes.md'], [SKILL]: ['SKILL.md']}
+  const forms = {'flow-2026-11-14-0800.html': 'flow', 'nara.html': 'being', 'vision.html': 'unknown'}
+  const BOUND = {ref: 'central:source:project:O-I:vision', path: `${VISION}/VISION.md`, treatment: 'project-human', agent_retrieval_allowed: true}
+  const owner = fakeOwner(op => {
+    if (op.op === 'files_list') return listed[op.path] ? {ok: true, outcome: {result: 'directory_read', directory: {schema: 'central.directory-reading/v1',
+      location: location(op.path), entries: [...listed[op.path].map(name => entry(`${op.path}/${name}`)), {...entry(`${op.path}/old`), kind: 'directory'}]}}}
+      : {ok: false, error: 'No such file or directory (os error 2)'}
+    const name = (op.location ?? op.request?.location)?.path.split('/').pop()
+    if (op.op === 'page') return forms[name] ? {ok: true, outcome: {result: 'page_reading', data: {schema: 'oi.page-reading/v1', location: op.request.location,
+      revision: 'rev:1', form: forms[name], title: null, island: {}}}} : {ok: false, error: 'This file is no page: it carries no ql-doc island'}
+    if (op.op === 'file_read') return {ok: true, outcome: {result: 'file_read', reading: {schema: 'central.file-reading/v1', location: op.location, revision: 'rev:2',
+      byte_len: 3, content_encoding: 'utf-8', content: '# x', project: name === 'SKILL.md' ? null : {name: 'O-I', path: 'Work/O-I', project_ref: null},
+      source: name === 'VISION.md' ? BOUND : name === 'SKILL.md' ? {...BOUND, ref: 'central:source:control:skill', path: `${SKILL}/SKILL.md`, treatment: 'control-skill'} : null,
+      automatic_agent_or_model_invocation: false}}}
+    return {ok: false, error: `nothing answers ${op.op} here`}
+  })
+  let layout = empty()
+  await assert.rejects(pane.openWorldSource(bridge, `${VISION}/VISION.md`), /No pane tree is mounted/, 'with no book mounted, Open refuses by name')
+  const release = door.registerDocumentLayoutWriter(update => { layout = update(layout) })
+  const opened = () => Object.values(layout.surfaces).at(-1)
+  try {
+    await pane.openWorldSource(bridge, `${VISION}/flow-2026-11-14-0800.html`)
+    assert.equal(opened().projection?.subject_ref, location(`${VISION}/flow-2026-11-14-0800.html`).ref, 'a Flow opens as its Flow')
+    await pane.openWorldSource(bridge, `${VISION}/nara.html`)
+    assert.equal(opened().projection?.subject_ref, `page:being:${location(`${VISION}/nara.html`).ref}`, 'a Being opens as its page')
+    await pane.openWorldSource(bridge, `${VISION}/vision.html`)
+    assert.deepEqual([opened().kind, opened().location?.path], ['file', `${VISION}/vision.html`], 'an island that is no reference page and no Flow opens as its file')
+    await pane.openWorldSource(bridge, `${VISION}/plain.html`)
+    assert.deepEqual([opened().kind, opened().location?.path], ['file', `${VISION}/plain.html`], 'an HTML file with no page island opens as its file')
+    await pane.openWorldSource(bridge, `${VISION}/VISION.md`)
+    assert.deepEqual({kind: opened().kind, ref: opened().ref, project: opened().project, title: opened().title},
+      {kind: 'source', ref: BOUND.ref, project: 'O-I', title: 'VISION.md'}, 'a source a tier binds opens as its source, by the ref its reading names')
+    await pane.openWorldSource(bridge, `${VISION}/VISION.md`)
+    assert.equal(Object.values(layout.surfaces).filter(binding => binding.ref === BOUND.ref).length, 1, 'opened again, the one source pane is reached, not a second')
+    await pane.openWorldSource(bridge, `${SKILL}/SKILL.md`)
+    assert.deepEqual({kind: opened().kind, subject: opened().projection?.subject_ref, title: opened().title},
+      {kind: KIND, subject: 'skill:control-user:central-session-strap', title: 'Skill · central-session-strap'},
+      'a skill\'s text opens as the skill Central keeps, in the Document, never as a file to write over')
+    await assert.rejects(pane.openWorldSource(bridge, `${VISION}/gone.md`), /The owner lists no gone\.md in Work\/O-I\/ProjectCentral\/docs\/1-vision\./)
+    await assert.rejects(pane.openWorldSource(bridge, `${VISION}/old`), /The owner lists no old/, 'a folder is no source to open')
+    assert.deepEqual(owner.asked.filter(op => op.op === 'page').map(op => op.request.location.path.split('/').pop()),
+      ['flow-2026-11-14-0800.html', 'nara.html', 'vision.html', 'plain.html'], 'the page owner is asked of HTML files only')
+  } finally { owner.restore(); release() }
+})
+
+// A skill in the Document (manual §19.8, Skill: "Write it in Document, or open the one you have. Propose a revision, review it and release
+// it to every harness that carries it"; O-I ticket 1005). The subject names the skill as Central keeps it; Central's revision acts
+// (ctrl control_skills.rs control.skills.revision.*) keep the revision beside the skill in use and write it on your Accept; AIKit's source
+// sync and promote release it. A FAKE OWNER stands in for Central and AIKit: a skill whose text and one waiting revision it keeps, with
+// Central's rules (one waits at a time; Accept at the digest read).
+test('a skill\'s subject names it as Central keeps it, by scope and name, with the member that carries it', () => {
+  assert.deepEqual(docs.skillOfPath('Control/user/skills/wayfinder/SKILL.md'), {scope: 'control-user', name: 'wayfinder'})
+  assert.deepEqual(docs.skillOfPath('Control/machines/mac/skills/build/SKILL.md'), {scope: 'control-machine', machine: 'mac', name: 'build'})
+  assert.deepEqual(docs.skillOfPath('Work/O-I/ProjectCentral/user/skills/walk/SKILL.md'), {scope: 'projectcentral-user', project: 'O-I', name: 'walk'})
+  for (const other of ['Control/user/skills/wayfinder/notes.md', 'Control/user/skills/SKILL.md', 'Work/O-I/skills/walk/SKILL.md']) assert.equal(docs.skillOfPath(other), null, other)
+  for (const skill of [{scope: 'control-user', name: 'wayfinder'}, {scope: 'control-user', name: 'wayfinder', member: 'skill/personal/wayfinder'},
+    {scope: 'control-machine', machine: 'mac', name: 'build'}, {scope: 'projectcentral-user', project: 'O-I', name: 'walk', member: 'skill/o-i/walk'}]) {
+    const {ref, title} = docs.subjectOf({form: 'skill', skill})
+    assert.deepEqual(docs.parseDocumentSubject(ref), {form: 'skill', skill}, ref)
+    assert.equal(title, `Skill · ${skill.name}`)
+  }
+  assert.equal(docs.subjectOf({form: 'skill', skill: {scope: 'control-user', name: 'wayfinder', member: 'skill/personal/wayfinder'}}).ref,
+    'skill:control-user:wayfinder#skill/personal/wayfinder')
+  for (const bad of ['skill:control-user:a/b', 'skill:control-machine:build', 'skill:nowhere:x', 'skill:projectcentral-user:/walk']) assert.equal(docs.parseDocumentSubject(bad), null, bad)
+  assert.deepEqual(docs.skillInput({scope: 'projectcentral-user', project: 'O-I', name: 'walk', member: 'skill/o-i/walk'}), {scope: 'projectcentral-user', name: 'walk', project: 'O-I'},
+    'Central\'s acts take the scope, the name and the project or machine; the member is AIKit\'s')
+})
+
+test('a skill is proposed, reviewed and accepted through Central\'s revision acts, and released through AIKit\'s source sync and promote', async () => {
+  const DIR = 'Control/user/skills/wayfinder'
+  const digest = text => `sha256:${text.length}:${text.slice(0, 12)}`
+  const central = {text: '# Wayfinder\n\nPlan a huge chunk of work.\n', proposal: null}
+  const sources = [{id: 'personal', kind: 'central'}, {id: 'git-skills', kind: 'git'}]
+  const dispatched = (action, data) => ({ok: true, outcome: {result: 'action_dispatched', dispatch: {state: 'invoked', owner_operation: action, data}}})
+  const refused = message => ({ok: true, outcome: {result: 'action_dispatched', dispatch: {state: 'owner_refused', message}}})
+  const reading = () => ({schema: 'central.skill-revision-reading/v1', name: 'wayfinder', scope: 'control-user', path: DIR, in_use: {digest: digest(central.text)},
+    proposal: central.proposal, stale: false, accept: {available: !!central.proposal, reason: central.proposal ? null : 'no proposed revision of wayfinder waits'}})
+  const owner = fakeOwner(op => {
+    if (op.op === 'invoke_action') {
+      const {action, input} = op.invocation
+      if (input.scope !== 'control-user' || input.name !== 'wayfinder') return refused(`no skill ${input.name} in ${input.scope}`)
+      if (action === 'control.skills.revision.read') return dispatched(action, reading())
+      if (action === 'control.skills.revision.propose') {
+        if (central.proposal) return refused(`a proposed revision of wayfinder waits already (${central.proposal.revision_ref}): accept or discard it first`)
+        if (input.body === central.text) return refused('the proposed revision of wayfinder changes nothing: it is the body in use')
+        central.proposal = {revision_ref: 'central:skill-revision:1', proposed_digest: digest(input.body), proposed_body: input.body, reason: input.reason,
+          proposed_by: input.proposed_by, proposed_at_unix_seconds: 1}
+        return dispatched(action, reading())
+      }
+      if (action === 'control.skills.revision.accept' || action === 'control.skills.revision.discard') {
+        if (!central.proposal) return refused('no proposed revision of wayfinder waits')
+        if (input.expected_proposed_digest !== central.proposal.proposed_digest) return refused('the proposed revision of wayfinder differs from the one reviewed; nothing was written')
+        if (action.endsWith('accept')) central.text = central.proposal.proposed_body
+        central.proposal = null
+        return dispatched(action, {name: 'wayfinder', skill_bytes_mutated: action.endsWith('accept')})
+      }
+    }
+    if (op.op === 'files_list' && op.path === DIR) return {ok: true, outcome: {result: 'directory_read', directory: {schema: 'central.directory-reading/v1',
+      location: location(DIR), entries: [entry(`${DIR}/SKILL.md`), entry(`${DIR}/skill.json`)]}}}
+    if (op.op === 'file_read' && op.location.path === `${DIR}/SKILL.md`) return {ok: true, outcome: {result: 'file_read', reading: {schema: 'central.file-reading/v1',
+      location: op.location, revision: digest(central.text), byte_len: central.text.length, content_encoding: 'utf-8', content: central.text, project: null, source: null,
+      automatic_agent_or_model_invocation: false}}}
+    if (op.op === 'aikit_read' && op.request.kind === 'source-list') return {ok: true, outcome: {result: 'owner_route_reading', route: 'aikit source list', data: {sources, unreadable: []}}}
+    if (op.op === 'aikit_write') return {ok: true, outcome: {result: 'owner_route_reading', route: `aikit ${op.request.kind}`, data: {id: op.request.id}}}
+    return {ok: false, error: `nothing answers ${op.op} here`}
+  })
+  const skill = {scope: 'control-user', name: 'wayfinder'}
+  const {centralWrite} = await import('../src/central/devices/centralDeviceWrites.ts')
+  const {centralRevisionWrite, DESKTOP_ACTOR} = await import('../src/agent/devices/ownerRoutes.ts')
+  try {
+    const first = await skillDocument.readSkill(bridge, skill)
+    assert.equal(first.text, central.text, 'the text in use, read by the file owner from the folder Central names')
+    assert.equal(first.location.path, `${DIR}/SKILL.md`)
+    assert.equal(first.reading.proposal, null)
+    const revised = central.text + '\nResolve one ticket at a time.\n'
+    await centralWrite(bridge, 'control.skills.revision.propose', {...docs.skillInput(skill), body: revised, reason: 'one at a time', proposed_by: DESKTOP_ACTOR})
+    const waiting = await skillDocument.readSkill(bridge, skill)
+    assert.equal(waiting.text, first.text, 'proposing writes nothing of the skill')
+    assert.deepEqual([waiting.reading.proposal.proposed_body, waiting.reading.proposal.reason, waiting.reading.proposal.proposed_by], [revised, 'one at a time', DESKTOP_ACTOR],
+      'the revision waits beside the skill in use, with why and by whom, to be reviewed')
+    await assert.rejects(centralWrite(bridge, 'control.skills.revision.propose', {...docs.skillInput(skill), body: 'other', reason: 'x', proposed_by: DESKTOP_ACTOR}),
+      /waits already/, 'one waits at a time, in Central\'s words')
+    const hand = centralRevisionWrite(bridge)
+    await assert.rejects(hand('accept', {...docs.skillInput(skill), proposedDigest: 'sha256:stale'}), /differs from the one reviewed/, 'Accept is at the digest read')
+    await hand('accept', {...docs.skillInput(skill), proposedDigest: waiting.reading.proposal.proposed_digest})
+    const accepted = await skillDocument.readSkill(bridge, skill)
+    assert.equal(accepted.text, revised, 'your Accept wrote the revision as the skill in use')
+    assert.equal(accepted.reading.proposal, null)
+    const asked = owner.asked.filter(op => op.op === 'invoke_action' && op.invocation.action === 'control.skills.revision.accept')
+    assert.deepEqual(asked.map(op => op.invocation.input), [{scope: 'control-user', name: 'wayfinder', expected_proposed_digest: 'sha256:stale'},
+      {scope: 'control-user', name: 'wayfinder', expected_proposed_digest: waiting.reading.proposal.proposed_digest}])
+    // Release: the member the open named, else the one source AIKit keeps from Central.
+    assert.equal(await skillDocument.releaseSourceOf(bridge, {...skill, member: 'skill/team/wayfinder'}), 'team')
+    assert.equal(await skillDocument.releaseSourceOf(bridge, skill), 'personal')
+    assert.equal(await skillDocument.releaseSkill(bridge, skill), 'personal')
+    assert.deepEqual(owner.asked.filter(op => op.op === 'aikit_write').map(op => op.request),
+      [{kind: 'source-sync', id: 'personal'}, {kind: 'source-promote', id: 'personal', trust_skills: ['skill/personal/wayfinder']}],
+      'AIKit syncs the source from Central, then promotes it with your review of the member recorded')
+    sources.push({id: 'team', kind: 'central'})
+    await assert.rejects(skillDocument.releaseSourceOf(bridge, skill), /AIKit keeps 2 sources from Central \(personal, team\); open wayfinder from its member/)
+    sources.splice(0)
+    await assert.rejects(skillDocument.releaseSourceOf(bridge, skill), /AIKit keeps no source from Central/)
+    await assert.rejects(skillDocument.readSkill(bridge, {scope: 'control-user', name: 'gone'}), /no skill gone in control-user/, 'a skill Central does not keep is said in its words')
+  } finally { owner.restore() }
+  // A machine's or a project's skill: Central's acts take its machine or project.
+  const machine = fakeOwner(op => ({ok: true, outcome: {result: 'action_dispatched', dispatch: {state: 'invoked', owner_operation: op.invocation?.action, data: {}}}}))
+  try {
+    await centralRevisionWrite(bridge)('discard', {...docs.skillInput({scope: 'control-machine', machine: 'mac', name: 'build'}), proposedDigest: 'sha256:x'})
+    assert.deepEqual(machine.asked[0].invocation.input, {scope: 'control-machine', name: 'build', expected_proposed_digest: 'sha256:x', machine: 'mac'})
+  } finally { machine.restore() }
+  // The pane reads before it draws anything: no text stands before Central answers.
+  assert.match(html(createElement(pane.CentralDocumentPane, {transport: bridge, subjectRef: 'skill:control-user:wayfinder'})), /data-central-absence="reading"[\s\S]*Reading wayfinder from Central/)
 })

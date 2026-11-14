@@ -176,7 +176,7 @@ test('the Gateway reads the harness\'s own answer and writes through the address
   // REPLACED (lane A wiring): Connect is AIKit's pause/resume of the binding's connector and goes through its row; Transport, Stall after,
   // Fan-out and Auto-continue have no operation in AIKit's gateway (`aikit gateway agent`), so they stand disabled and send nothing.
   await binding.write([{key: 'connect', value: false}])
-  assert.deepEqual(calls, [['connect', 'kernel:harness_agent_control', false]])
+  assert.deepEqual(calls, [['connect', 'act:aikit.gateway.agent', false]])
   for (const key of ['transport', 'stallAfter', 'fanOut', 'autoContinue']) {
     assert.match(binding.standing[key].disabled, /AIKit's gateway has no operation/, `${key} stands disabled`)
     await assert.rejects(() => binding.write([{key, value: 1}]), /`aikit gateway agent` takes status, stop, new/, key)
@@ -201,6 +201,80 @@ test('the catalogue\'s Gateway draws on the binding in all five views: the owner
   })
   assert.ok(drawn.some(markup => markup.includes('the gateway is not running')), 'the owner\'s refusal is drawn')
   host.resetHost()
+})
+
+// ---- the chain's reading, from the World Model (O-I ticket 1006) -------------------------------------------------------------
+
+// REAL CAPTURE: `seat status --json` on this machine, 21 Oct 2026 (fixtures/workcell-readings-2026-10-21.json): three workcells, each with a
+// seat of every product; o-i claimed in all three, actuation in env-1 alone, factory in none.
+const SEATS = JSON.parse(readFileSync(new URL('./fixtures/workcell-readings-2026-10-21.json', import.meta.url), 'utf8')).seatStatus
+const held = (slice, value) => ({state: 'held', answer: {schema: 'oi.world-model-slice/v1', slice, owner: 'kernel', scopes: ['machine'], version: 1, state: 'read', error: null, read_at_unix_ms: 1, value}})
+const workcellsSlice = (seats = SEATS) => held('workcells', {seats: {state: 'read', reading: seats}, workcells: {state: 'read', reading: {workcell_ref: 'workcell:mac'}}})
+
+test('Git / landing reads the workcell\'s seat of the session\'s project: the one seat, or the one held; several held or none name no checkout, and say why', () => {
+  const one = bind.projectSeatOf(SEATS, 'actuation')
+  assert.equal(one.seat?.workcell, 'env-1', 'of three seats of actuation, the one held')
+  assert.equal(one.seat.branch, 'fold/day-close-20261012')
+  const several = bind.projectSeatOf(SEATS, 'O-I')
+  assert.match(several.why, /^3 seats of O-I stand in the workcells \(env-1, env-2, env-3\), 3 of them held: Git \/ landing names no checkout it cannot tell is the session's/)
+  assert.match(bind.projectSeatOf(SEATS, 'factory').why, /3 seats of factory .*none held/)
+  assert.match(bind.projectSeatOf(SEATS, 'Nowhere').why, /^No workcell holds a seat of Nowhere/)
+  assert.match(bind.projectSeatOf({schema: 'other'}, 'O-I').why, /not a seat reading/)
+  // A fresh world: one workcell, one seat of the project, free — that seat is the session's checkout.
+  const fresh = {schema: 'central.workcell-status/v1', workcells: [{name: 'cell-1', path: '/w/cell-1', seats: [{product: 'first-project', state: 'free', live_branch: 'main', tracked_changes: 2, untracked: 1}]}]}
+  assert.equal(bind.projectSeatOf(fresh, 'first-project').seat?.workcell, 'cell-1')
+  // The chain's Git line and the Agent's Context row read the same seat.
+  const chain = bind.chainFromModel({slices: {workcells: workcellsSlice(fresh)}, sessionRef: 's', project: 'first-project', absent: null})
+  assert.equal(chain.reading.git.kind, 'reading')
+  assert.equal(chain.reading.git.line, 'workcell workcell:mac · seat cell-1/first-project on main')
+  assert.deepEqual(chain.reading.gitRepo, {branch: 'main', uncommitted: 3}, 'its files with no commit: changed and untracked')
+  assert.equal(chain.reading.gitAdmitted, true)
+  assert.deepEqual(chain.git, {sessionRef: 's', project: 'first-project', repo: {branch: 'main', uncommitted: 3}, error: null})
+  assert.deepEqual(bind.sessionGitOf(workcellsSlice(fresh), 's', 'first-project', null), chain.git, 'Central\'s Context reads the one function')
+  const ambiguous = bind.chainFromModel({slices: {workcells: workcellsSlice()}, sessionRef: 's', project: 'O-I', absent: null})
+  assert.equal(ambiguous.reading.git.kind, 'refused', 'the workcells answered, but no seat is the session\'s')
+  assert.equal(ambiguous.reading.gitAdmitted, true, 'Workcell answered: its lamp is not the seat\'s')
+  assert.equal(ambiguous.git.repo, null)
+  assert.match(ambiguous.git.error, /3 seats of O-I/)
+  // No session, or your world's root register, names no checkout, in the world scope's words.
+  const absent = bind.chainFromModel({slices: {workcells: workcellsSlice()}, sessionRef: null, project: '', absent: 'No session is selected.'})
+  assert.deepEqual([absent.git.repo, absent.git.error], [null, 'No session is selected.'])
+  assert.match(absent.reading.git.line, /No session is selected\.$/)
+  // The seat instrument refused, Workcell answered: the line says both.
+  const seatsRefused = held('workcells', {seats: {state: 'refused', why: 'seat status timed out'}, workcells: {state: 'read', reading: {workcell_ref: 'workcell:mac'}}})
+  const noSeats = bind.chainFromModel({slices: {workcells: seatsRefused}, sessionRef: 's', project: 'O-I', absent: null})
+  assert.equal(noSeats.reading.git.line, 'workcell workcell:mac · seat status timed out.', 'the owner\'s words, as one line')
+  // Not held yet: the lamp dark, nothing said.
+  const reading = bind.chainFromModel({slices: {}, sessionRef: 's', project: 'O-I', absent: null})
+  assert.deepEqual([reading.reading.gitAdmitted, reading.reading.waitingOn.git, reading.git.error], [null, null, null])
+})
+
+test('the Gateway, the Harness and the Model choosers read the World Model\'s slices: the binding the gateway names, its refusal in AIKit\'s words, the kernel not reached', () => {
+  const sessions = gateway => held('sessions', {project_ref: 'project:root', spaces: [], gateway})
+  const named = bind.chainFromModel({slices: {sessions: sessions({state: 'read', reading: {ecology: {type: 'ecology', ecology: {agencies: []}}, binding: 'gateway-binding/one',
+    agent: {state: 'read', reading: {state: 'ready', transport: 'ws'}}}}), models: held('models', {entries: [{model: 'model:aion-2.0'}, {model: 'model:glm-5.1'}, {name: 'no id'}]})},
+  sessionRef: 's', project: 'O-I', absent: null})
+  assert.deepEqual([named.binding, named.resolved], ['gateway-binding/one', true])
+  assert.equal(named.reading.gateway.kind, 'reading')
+  assert.match(named.reading.gateway.line, /^binding gateway-binding\/one · /)
+  assert.deepEqual(named.reading.gatewayDoc, {state: 'ready', transport: 'ws'})
+  assert.deepEqual(named.models, ['model:aion-2.0', 'model:glm-5.1'], 'the catalogue\'s models, by id')
+  assert.equal(named.harnesses, null, 'the census not read: nothing to choose yet')
+  assert.equal(named.ecology.status, 'answered')
+  const refused = bind.chainFromModel({slices: {sessions: sessions({state: 'refused', why: 'aikit: no gateway is configured'})}, sessionRef: 's', project: 'O-I', absent: null})
+  assert.deepEqual([refused.binding, refused.resolved], ['cursor', false], 'no binding named: the shell\'s default, which nothing writes to')
+  assert.equal(refused.reading.gateway.kind, 'refused')
+  assert.equal(refused.reading.gateway.line, 'waiting on AIKit — harness_agent_read refused: aikit: no gateway is configured.')
+  assert.equal(refused.reading.waitingOn.gateway, 'AIKit')
+  assert.deepEqual(refused.ecology, {status: 'refused', value: null, error: 'aikit: no gateway is configured.'})
+  const unbound = bind.chainFromModel({slices: {sessions: sessions({state: 'read', reading: {ecology: {}, binding: null, agent: {state: 'refused', why: 'AIKit\'s gateway names no conversation binding'}}})},
+    sessionRef: 's', project: 'O-I', absent: null})
+  assert.equal(unbound.resolved, false)
+  assert.match(unbound.reading.gateway.line, /names no conversation binding/)
+  const unreached = bind.chainFromModel({slices: {sessions: sessions({state: 'read', reading: {}})}, sessionRef: 's', project: 'O-I', absent: null, unreachable: 'Transport unavailable'})
+  assert.match(unreached.reading.gateway.line, /not reached: Transport unavailable$/)
+  assert.deepEqual(unreached.reading.waitingOn, {gateway: 'AIKit', skillset: unreached.reading.waitingOn.skillset, git: 'Workcell'})
+  assert.equal(unreached.git.error, 'Transport unavailable')
 })
 
 // ---- the Agent ---------------------------------------------------------------------------------------------------------------
@@ -270,7 +344,7 @@ test('the Agent writes through its rows\' own write paths; a reading is refused 
   // REPLACED (lane A wiring): Model is AIKit's `gateway agent model --model ID`, through the address table's model row.
   await binding.write([{key: 'model', value: 'gpt-5'}])
   await assert.rejects(() => binding.write([{key: 'heartbeat', value: false}]), /cron-stratum cadence/, 'the dispatcher\'s own refusal, verbatim')
-  assert.deepEqual(calls, [['model', 'kernel:harness_agent_control', 'gpt-5'], ['heartbeat', 'shell.setHeartbeat', false]])
+  assert.deepEqual(calls, [['model', 'act:aikit.gateway.agent', 'gpt-5'], ['heartbeat', 'shell.setHeartbeat', false]])
   calls.length = 0
   // Effort, Input and Interrupt timing have no operation in AIKit's gateway: disabled, and refused with nothing sent.
   for (const key of ['effort', 'input', 'quantize']) {
@@ -311,7 +385,7 @@ test('a change goes to the owner on release through the runtime\'s own path, and
     async (row, value) => { calls.push([row.writePath, value]); return {kind: 'refused', channel: 'kernel', writePath: row.writePath, reason: 'AIKit\'s gateway: this conversation has no agent backing'} }, () => true)
   host.setDraft('factory:agent', 'model', 'gpt-5')
   assert.equal(await host.flushDrafts(binding, 0), 'AIKit\'s gateway: this conversation has no agent backing')
-  assert.deepEqual(calls, [['kernel:harness_agent_control', 'gpt-5']])
+  assert.deepEqual(calls, [['act:aikit.gateway.agent', 'gpt-5']])
   assert.equal(host.hostState('factory:agent').refused.model.reason, 'AIKit\'s gateway: this conversation has no agent backing')
   host.setDraft('factory:agent', 'cap', 30)
   assert.match(await host.flushDrafts(binding, 0), /used and cap come from the session's task record/, 'Budget has no owner write: refused in words that say whose it is, nothing sent')
@@ -354,7 +428,7 @@ test('as the shell boots (families admitted, no kit rows adopted), the Agent\'s 
     registerAgentShellSetters({
       transport: () => ({kind: 'bridge', url: 'http://fixture.invalid'}), binding: () => 'harness:fixture',
       shell: {setEffort() {}, setSteer() {}, setHeartbeat() {}, setWriteArm() {}, setQuantize() {}, quantize: 'next tool'},
-      invoke: async (_t, op) => { captured.push(op); return {outcome: {result: 'harness_agent_outcome', document: {}}, error: undefined} },
+      invoke: async (_t, op) => { captured.push(op); return {outcome: {result: 'action_dispatched', dispatch: {state: 'invoked', owner_operation: 'aikit.gateway.agent', data: {ok: true, schema: 1, data: {}}}}, error: undefined} },
     })
     // REPLACED (lane A wiring): AIKit's gateway has no operation for Effort or Interrupt timing, so the setters refuse naming it and
     // nothing reaches the kernel; an accepted value is still what the Agent draws (the record the owner's acceptance writes).
@@ -644,7 +718,7 @@ test('Scope: no owner reports a reach, a write mode, places or receipts, so none
   for (const key of ['src.wiki', 'linkDepth', 'readBudget']) assert.equal(scope().writes(key), false, `${key}: no Knowledge page stands on Scope (§19.9 Sources holds it)`)
   await assert.rejects(() => scope().write([{key: 'w:lantern', value: false}]), /scope places write/)
   assert.equal(calls.length, 1)
-  // Tool calls: the harness's approvals, as the gateway reads it, through the Gateway slot's own row (kernel:harness_agent_control).
+  // Tool calls: the harness's approvals, as the gateway reads it, through the Gateway slot's own row (act:aikit.gateway.agent).
   const approvals = model.slotRows('gateway').find(row => row.key === 'approvals')
   const asked = bind.scopeBinding('factory:world', bind.chainHolds(), writeMode, write, {toolCalls: 'ask', toolCallsRow: approvals})
   assert.equal(asked.values.toolCalls, 'ask', 'the harness\'s own answer to a tool request')

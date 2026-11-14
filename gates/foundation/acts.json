@@ -1,0 +1,32 @@
+[
+  {
+    "act": "open-a-world-and-save-a-page",
+    "test": "act_1_open_a_world_and_save_a_page",
+    "standing": "green",
+    "reason": "13 Nov 2026: a fresh World opens as the window reads it, from the World Model's worlds slice (model_subscribe), and a page made and saved twice in its Flows home by the Action central.files.write (act; #1002) reads back the same from the disk and from Central's own central.files.read, is listed in the model's worlds slice as soon as the save answers (#1001), and is a clip on your world's track in Central's Set (set_subscribe; #1004)"
+  },
+  {
+    "act": "see-the-agents-that-start",
+    "test": "act_2_see_the_agents_that_start",
+    "standing": "green",
+    "reason": "14 Nov 2026 (export of ab96c6aca, this change before its board line; Central#362's ctrl, the #1006 owners with Factory 4fcad74 and Workcell ce169c2, AIKit with ai-kit#631 and #636, each owner named on the World's PATH): the census lists exactly the agents that start (#1001); a law statement adopted at the root (control.law.adopt) is rendered into the floors, and each agent that starts shows the law it carries, as Central's control.floor.read reads the file AIKit says it reads in a project (ai-kit#636), each reach the one AIKit's client status gives: claude-code (CLAUDE.md), pi, opencode and prime (AGENTS.md) in every project of the world, codex and kimi (AGENTS.md) only at the world's root, since they look no higher than their repository or their folder; openclaw, whose profile does not say what it reads in a project, is claimed neither way (#1005); Launch, Factory's seat act (factory.session.start), opens a session of claude-code, codex and pi in the project's seat, each advertising its models, and each starts with its project and today's Day, as Factory keeps what its harness takes in (claude-code's and codex's from AIKit's SessionStart hook; pi's from the same answer, asked as AIKit's carrier asks, which appends it to the session at its start, ai-kit#635); and a model default chosen from claude-code's is carried by the census and runs in the next session it opens (#1003)"
+  },
+  {
+    "act": "send-a-passage-and-get-the-answer",
+    "test": "act_3_send_a_passage_and_get_the_answer",
+    "standing": "green",
+    "reason": "14 Nov 2026 (export of f0fc413f6; Central main's ctrl b6c119a, AIKit 347de5ae, oi b2592c58): each agent of the census you can talk to (claude-code, codex and pi on this Mac) is opened by the one provision (encounter_provision); the passage the person selects in the page goes into its Packet (Capture, the page's To packet), brought there by AIKit's own edit on the Packet the World Model holds, read fresh as the window reads it (packetSlice.ts packetNow), and the Send carries it (prompt-context): each answers in its conversation with the code only the selected words hold, the answer lands in the page in Central, and both stand in the Sets (#1004); a conversation opened in a project's register (passage-project) holds its Packet, with a passage brought to it, and its own settings, as the World Model's packet and scope slices read them in that register (#1005). gemini, hermes and hermes-acp do not start, and kimi, opencode, openclaw and prime are ones you cannot talk to, each in its owner's words (#1003)"
+  },
+  {
+    "act": "run-a-factory-task",
+    "test": "act_4_run_a_factory_task",
+    "standing": "green",
+    "reason": "14 Nov 2026 (export of b4dde3416, codex; Factory 47068fa, Workcell 5286cd5, AIKit 347de5ae, oi with b86355b6a): in a fresh World with a project, Workcell declares its workcell (workcell.declare) and the project takes a seat; codex from the census is seated on a track by factory.session.start in the seat's checkout, AIKit's hook dispatch keeping its SessionStart; a task written (factory.task.write) and run (factory.task.run) streams its log through factory.task.log (1, 2, 4, 8, 12, 15 lines) and returns an attempt with its diff (NOTES.md) in the checkout, standing as the clip with its take on the session's track in Factory's Set (set_subscribe factory) with End session on the track; a second task is paused, then cancelled by factory.task.stop; factory.session.end ends the session, AIKit keeping its SessionEnd (#1006)"
+  },
+  {
+    "act": "the-day-holds-it-and-closes",
+    "test": "act_5_the_day_holds_it_and_closes",
+    "standing": "green",
+    "reason": "14 Nov 2026 (export of 209b30305, codex; Central#362's ctrl c714f4a, AIKit 347de5ae, Factory 6665ed6a, Workcell b558b43f, oi b2592c58): in a fresh World, today's Day opened by itself on the civil day, its page made from the Day form Setup keeps; Central's own reading of it (central.day.read) held the page saved, the passage sent to codex and answered, and the Factory task run (its attempt with its diff), each laid in the Day as its act's receipt; the Day closed by itself at its turn and today is the next civil day (#1005)"
+  }
+]

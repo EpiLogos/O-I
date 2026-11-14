@@ -35,14 +35,11 @@ export async function load(u, c, n) {
 }`)}`, import.meta.url)
 
 globalThis.document = {getElementById: () => null, createElement: () => ({}), head: {appendChild: () => {}}}
-const {factoryTrackAdapter, FACTORY_LAUNCH_OP, FACTORY_TASK_LAUNCH_OP, NOT_FACTORY_WORK} = await import('../src/timeline/factoryTrackAdapter.ts')
-const {taskLaunchPort} = await import('../src/agent/factoryTaskActs.ts')
 const {clipLaunchPress} = await import('../src/inhabitants/catalogue/panels/dlw__session-grid.tsx')
 const settings = await import('../src/agent/sessionSettings.ts')
 const factory = await import('../src/agent/clipBinding.ts')
 const {settingsReadingEntry} = await import('../src/owners/readers.ts')
 const {trackKey} = await import('../src/agent/agentRunModel.ts')
-const {repeatPress} = await import('../src/frame/tracks/useFactoryTracks.ts')
 
 const NOW = Date.UTC(2026, 9, 28, 12, 0, 0)
 const session = (state, n = 1) => ({sessionRef: 'ses-795', purpose: 'run the fixtures', agentRef: null, agentName: 'Fizz', agentAccepted: true,
@@ -50,251 +47,11 @@ const session = (state, n = 1) => ({sessionRef: 'ses-795', purpose: 'run the fix
   budget: {used: null, max: null}, disclosure: null, tasks: [
     {n, title: 'run the fixtures', state, startUnixMs: NOW - 60_000, lastActivityUnixMs: NOW - 1_000, softStop: false, disclosure: null, taskRef: 'task:fixtures'},
     {n: n + 1, title: null, state: 'unknown', startUnixMs: null, lastActivityUnixMs: null, softStop: true, disclosure: null}]})
-const port = launch => ({of: () => ({telemetry: true, solo: false, task: {task_ref: 'task:fixtures', launch, then: 'next', quantize: 'global'}}),
-  set: async () => ({ok: true, note: 'set'})})
-/** The set as the grid gets it, with the harness's control, the session's own stop and (where handed) the Repeat's takes. */
-function projected(state, launch, repeat) {
-  const calls = [], stops = []
-  const set = factoryTrackAdapter.project({tracks: [session(state)], nowUnixMs: NOW, settings: port(launch),
-    controls: {control: async word => { calls.push(word); return {ok: true, note: word} }},
-    sessionStop: async ref => { stops.push(ref); return {ok: true, note: 'stopped'} },
-    ...(repeat ? {repeat} : {})})
-  return {set, calls, stops, clip: set.clips[0]}
-}
-
-// ---------------------------------------------------------------------------------------------------------------- Gate, Toggle
-
-test('Gate runs the task only while the launch is held: the press launches it, the release stops that session', async () => {
-  const {set, calls, stops, clip} = projected('stalled', 'gate')
-  assert.equal(clip.launch.mode, 'gate')
-  assert.equal(typeof set.actions.launch.release, 'function', 'a launch the grid can release')
-  const pressed = await set.actions.launch.run(clip.id)
-  assert.equal(pressed.ok, true); assert.deepEqual(calls, ['restart'], 'the press launches as Trigger does')
-  const released = await set.actions.launch.release(clip.id)
-  assert.equal(released.ok, true); assert.match(released.note, /Gate/)
-  assert.deepEqual(stops, ['ses-795'], 'the release stops the session it launched')
-  // A press the owner refused launched nothing: its release stops nothing.
-  const done = projected('done', 'gate')
-  assert.equal((await done.set.actions.launch.run(done.clip.id)).ok, false)
-  await done.set.actions.launch.release(done.clip.id)
-  assert.deepEqual(done.stops, [], 'nothing was launched, so nothing is stopped')
-  // The grid draws a new set on every render, the press's own receipt among the causes: the release reaches the set drawn then.
-  const pressedOn = projected('stalled', 'gate'), releasedOn = projected('stalled', 'gate')
-  assert.equal((await pressedOn.set.actions.launch.run(pressedOn.clip.id)).ok, true)
-  assert.equal((await releasedOn.set.actions.launch.release(releasedOn.clip.id)).ok, true)
-  assert.deepEqual(releasedOn.stops, ['ses-795'], 'what the press launched is released from the next render\'s set')
-  // Another mode's release does nothing.
-  const trigger = projected('stalled', 'trigger')
-  await trigger.set.actions.launch.run(trigger.clip.id)
-  assert.equal(await trigger.set.actions.launch.release(trigger.clip.id), undefined)
-  assert.deepEqual(trigger.stops, [])
-})
-
-test('Toggle starts the task with one press and stops it with the next', async () => {
-  const running = projected('running', 'toggle')
-  const second = await running.set.actions.launch.run(running.clip.id)
-  assert.equal(second.ok, true); assert.match(second.note, /Toggle/)
-  assert.deepEqual(running.stops, ['ses-795'], 'a running task\'s press stops its session'); assert.deepEqual(running.calls, [])
-  const stalled = projected('stalled', 'toggle')
-  assert.equal((await stalled.set.actions.launch.run(stalled.clip.id)).ok, true)
-  assert.deepEqual(stalled.calls, ['restart'], 'a task that is not running starts'); assert.deepEqual(stalled.stops, [])
-  // Trigger is as it was: a running task's press is refused, before any owner call.
-  const trigger = projected('running', 'trigger')
-  assert.match((await trigger.set.actions.launch.run(trigger.clip.id)).error, /no op that launches a task in that state/)
-  assert.deepEqual([trigger.calls, trigger.stops], [[], []])
-})
-
-test('Repeat makes the task\'s takes through the port the shell hands, or says what it waits for', async () => {
-  const asked = []
-  const repeat = async (sessionRef, label) => { asked.push([sessionRef, label]); return {ok: true, note: 'takes made'} }
-  const handed = projected('done', 'repeat', repeat)
-  assert.deepEqual(await handed.set.actions.launch.run(handed.clip.id), {ok: true, note: 'takes made'})
-  assert.deepEqual(asked, [['ses-795', 'run the fixtures']]); assert.deepEqual(handed.calls, [], 'not the harness\'s launch')
-  const bare = projected('done', 'repeat')
-  const refused = await bare.set.actions.launch.run(bare.clip.id)
-  assert.equal(refused.ok, false); assert.match(refused.error, /comparison run/)
-})
-
 // ---------------------------------------------------------------------------------------------------------------- A Factory task's ▶
 
-// (BD r24, O-I 804) The grid's ▶ on a Factory task was the bound harness's restart or resume (FACTORY_LAUNCH_OP): the harness's
-// conversation, never the task. A task AIKit names a task_ref for is Factory's work, so its ▶ is the task's own Launch, the one the
-// Agent rack presses (agent/factoryTaskActs.ts launchSessionTask, taskBindings.ts launchTask), and the stop Gate's release and Toggle's
-// second press make is Factory's Stop after of its unit (stopAfterTask). A task AIKit names none for, or one that is not Factory's work
-// (no Factory state, no unit Factory names, no attempt of it current), launches and stops as it did: the harness, the session's own stop.
-const NO_UNIT = 'Launch: Factory names no unit for task:fixtures: no open custody of the work names its Run and unit, and it retains no attempt of it.'
-const NONE_CURRENT = 'Stop after: no attempt of task:fixtures is current on any unit (`factory attempt units`), so there is nothing to stop.'
-const notFactory = asked => ({
-  launch: async (sessionRef, taskRef) => { asked.push(['launch', sessionRef, taskRef]); return {ok: false, error: NO_UNIT, document: {status: NOT_FACTORY_WORK}} },
-  stop: async (sessionRef, taskRef) => { asked.push(['stop', sessionRef, taskRef]); return {ok: false, error: NONE_CURRENT, document: {status: NOT_FACTORY_WORK}} },
-})
-const taskLaunches = () => {
-  const asked = []
-  return {asked, port: {
-    launch: async (sessionRef, taskRef) => { asked.push(['launch', sessionRef, taskRef])
-      return {ok: true, note: 'Software Factory launched unit:build of run:r1 for task:fixtures as attempt:01.', document: {status: 'launched'}} },
-    stop: async (sessionRef, taskRef) => { asked.push(['stop', sessionRef, taskRef]); return {ok: true, note: 'Factory was asked to stop unit:build of run:r1.'} },
-  }}
-}
-function projectedOnFactory(state, launch, {taskLaunch, controls = true, taskRef = 'task:fixtures'} = {}) {
-  const calls = [], stops = []
-  const track = session(state)
-  if (!taskRef) delete track.tasks[0].taskRef
-  const set = factoryTrackAdapter.project({tracks: [track], nowUnixMs: NOW, settings: port(launch),
-    ...(controls ? {controls: {control: async word => { calls.push(word); return {ok: true, note: word} }}} : {}),
-    sessionStop: async ref => { stops.push(ref); return {ok: true, note: 'stopped'} }, ...(taskLaunch ? {taskLaunch} : {})})
-  return {set, calls, stops, clip: set.clips[0]}
-}
-
-test('(BD r24) the grid\'s ▶ on a Factory task is the task\'s own Launch through Factory, never the harness\'s restart', async () => {
-  const {asked, port: taskLaunch} = taskLaunches()
-  const trigger = projectedOnFactory('stalled', 'trigger', {taskLaunch})
-  assert.equal(trigger.set.actions.launch.op, FACTORY_TASK_LAUNCH_OP)
-  const launched = await trigger.set.actions.launch.run(trigger.clip.id)
-  assert.equal(launched.ok, true); assert.match(launched.note, /^Software Factory launched/)
-  assert.deepEqual(asked, [['launch', 'ses-795', 'task:fixtures']]); assert.deepEqual(trigger.calls, [], 'the harness is not asked')
-  // Factory, not the grid, says whether a task in its state starts: a finished task's press reaches it too.
-  asked.length = 0
-  const done = projectedOnFactory('done', 'trigger', {taskLaunch})
-  await done.set.actions.launch.run(done.clip.id)
-  assert.deepEqual(asked, [['launch', 'ses-795', 'task:fixtures']])
-  // A task AIKit names no task_ref for is no Factory work: it launches on the harness as it did.
-  asked.length = 0
-  const bare = projectedOnFactory('stalled', 'trigger', {taskLaunch, taskRef: null})
-  await bare.set.actions.launch.run(bare.clip.id)
-  assert.deepEqual([asked, bare.calls], [[], ['restart']])
-  // With no harness bound a Factory task still launches; a task with no task_ref then says nothing carries it.
-  const unbound = projectedOnFactory('stalled', 'trigger', {taskLaunch, controls: false})
-  assert.equal((await unbound.set.actions.launch.run(unbound.clip.id)).ok, true)
-  const neither = projectedOnFactory('stalled', 'trigger', {taskLaunch, controls: false, taskRef: null})
-  assert.match((await neither.set.actions.launch.run(neither.clip.id)).error, /AIKit names no task for it/)
-  // Without the port the ▶ is the harness's, as before.
-  assert.equal(projectedOnFactory('stalled', 'trigger').set.actions.launch.op, FACTORY_LAUNCH_OP)
-  // A task that is not Factory's work: Factory says so before anything of its moves, and the harness launches it as it did.
-  const askedOther = []
-  const other = projectedOnFactory('stalled', 'trigger', {taskLaunch: notFactory(askedOther)})
-  const fellBack = await other.set.actions.launch.run(other.clip.id)
-  assert.equal(fellBack.ok, true); assert.equal(fellBack.note.startsWith(`${NO_UNIT} So its launch is the bound harness's. Whole harness:`), true, fellBack.note)
-  assert.deepEqual([askedOther, other.calls], [[['launch', 'ses-795', 'task:fixtures']], ['restart']])
-  const alone = projectedOnFactory('stalled', 'trigger', {taskLaunch: notFactory([]), controls: false})
-  assert.deepEqual(await alone.set.actions.launch.run(alone.clip.id), {ok: false, error: NO_UNIT, document: {status: NOT_FACTORY_WORK}})
-})
-
-test('(BD r24) Gate and Toggle on a Factory task stop through Factory, its Stop after of the unit, never the session\'s turn', async () => {
-  const {asked, port: taskLaunch} = taskLaunches()
-  const gate = projectedOnFactory('stalled', 'gate', {taskLaunch})
-  assert.equal((await gate.set.actions.launch.run(gate.clip.id)).ok, true)
-  const released = await gate.set.actions.launch.release(gate.clip.id)
-  assert.equal(released.ok, true); assert.match(released.note, /^Gate's release on “run the fixtures” asked Factory to stop the task's unit/)
-  assert.deepEqual(asked, [['launch', 'ses-795', 'task:fixtures'], ['stop', 'ses-795', 'task:fixtures']]); assert.deepEqual(gate.stops, [])
-  // Factory had launched it already: the press took no launch, so its release stops nothing.
-  asked.length = 0
-  const already = {...taskLaunch, launch: async (sessionRef, taskRef) => { asked.push(['launch', sessionRef, taskRef])
-    return {ok: true, note: 'Software Factory had launched unit:build of run:r1 for task:fixtures already.', document: {status: 'already-launched'}} }}
-  const held = projectedOnFactory('stalled', 'gate', {taskLaunch: already})
-  await held.set.actions.launch.run(held.clip.id)
-  const let_go = await held.set.actions.launch.release(held.clip.id)
-  assert.equal(let_go.ok, false); assert.match(let_go.error, /launched already, so its release stops nothing/)
-  assert.deepEqual(asked, [['launch', 'ses-795', 'task:fixtures']], 'nothing is stopped')
-  asked.length = 0
-  const toggle = projectedOnFactory('running', 'toggle', {taskLaunch})
-  const second = await toggle.set.actions.launch.run(toggle.clip.id)
-  assert.equal(second.ok, true); assert.match(second.note, /^Toggle's second press on “run the fixtures” asked Factory/)
-  assert.deepEqual(asked, [['stop', 'ses-795', 'task:fixtures']]); assert.deepEqual([toggle.calls, toggle.stops], [[], []])
-  // Not Factory's work: a running task's Toggle stops its session's turn as it did, and a Gate the harness launched releases the same way.
-  const askedOther = []
-  const other = projectedOnFactory('running', 'toggle', {taskLaunch: notFactory(askedOther)})
-  assert.match((await other.set.actions.launch.run(other.clip.id)).note, /^Toggle's second press on “run the fixtures” stopped this session's running turn/)
-  assert.deepEqual([askedOther, other.stops], [[['stop', 'ses-795', 'task:fixtures']], ['ses-795']])
-  const harnessGate = projectedOnFactory('stalled', 'gate', {taskLaunch: notFactory([])})
-  assert.equal((await harnessGate.set.actions.launch.run(harnessGate.clip.id)).ok, true)
-  await harnessGate.set.actions.launch.release(harnessGate.clip.id)
-  assert.deepEqual([harnessGate.calls, harnessGate.stops], [['restart'], ['ses-795']], 'the harness launched it, so its release is the session\'s stop')
-})
-
-test('(BD r24) the ▶\'s carrier: Factory locates the session\'s register, and the rack\'s own Launch and Stop after run there in their owners\' words', async () => {
-  const sent = []
-  const answers = {
-    locate: {locations: [{state: 'located', project: 'O-I', location: {statePath: '/state/o-i', projectRef: 'project:o-i'}}]},
-    'custody-list': {schema: 'factory.work-custody-listing/v1', project_ref: 'project:o-i', count: 1, custody: [{schema: 'factory.work-custody/v1',
-      custody_ref: 'custody:c1', position_ref: 'central:position:o-i:builder', work_ref: 'task:fixtures', state: 'in-progress', run_ref: 'run:r1', workflow_unit_ref: 'unit:build'}]},
-    'attempt-launch': {contract: 'oi.factory-attempt-launch/v1', runRef: 'run:r1', workflowUnitRef: 'unit:build', status: 'launched', changed: true,
-      attemptRef: 'attempt:01', taskRef: 'task:fixtures', refusal: null},
-    'attempt-task-units': {contract: 'factory.attempt-task-units-reading/v1', taskRef: 'task:fixtures', units: [{runRef: 'run:r1', workflowUnitRef: 'unit:build',
-      currentAttemptRef: 'attempt:01', status: 'running', attempts: 1, runRevision: 2, required: true}]},
-    'attempt-request-cancellation': {status: 'cancel-requested', refusal: null},
-  }
-  globalThis.fetch = async (_url, init) => {
-    const op = JSON.parse(init.body)
-    sent.push(op)
-    const ok = (result, data, extra = {}) => ({json: async () => ({ok: true, outcome: {result, data, receipts: [], ...extra}})})
-    if (op.op === 'factory_owner') return ok('factory_development_reading', answers[op.request.kind])
-    if (op.op === 'encounter' && op.request.action === 'model-read') return ok('encounter_reading', {agent_session: 'ses-795', native_session_id: 'native-1',
-      standing: 'observed', model_observation: {current_model_id: 'claude-opus-5', available_models: [{modelId: 'claude-opus-5', name: 'Claude Opus 5'}], standing: 'observed'}})
-    if (op.op === 'model_catalogue') return ok('model_catalogue_reading', {entries: [{model: 'model:claude-opus-5',
-      declared_routes: [{kind: 'provider-native', provider: 'provider:anthropic', provider_native_ids: ['claude-opus-5']}]}]})
-    if (op.op === 'aikit_write') return ok('owner_route_reading', {realisation: {schema: 'aikit.model-realisation/v2', selected: true}}, {route: 'aikit compose --realise'})
-    return {json: async () => ({ok: false, error: `unexpected ${op.op}`})}
-  }
-  const asked = () => sent.splice(0).map(op => op.op === 'factory_owner' ? op.request.kind : op.op === 'encounter' ? op.request.action : op.op)
-  const carrier = taskLaunchPort(transport, () => project)
-  const launched = await carrier.launch('ses-795', 'task:fixtures')
-  assert.deepEqual(launched, {ok: true, note: 'Software Factory launched unit:build of run:r1 for task:fixtures as attempt:01, on model:claude-opus-5 as AIKit realised it on ses-795.',
-    document: {status: 'launched', attemptRef: 'attempt:01'}})
-  const launchedOps = [...sent]
-  assert.deepEqual(asked(), ['locate', 'custody-list', 'model-read', 'model_catalogue', 'aikit_write', 'attempt-launch'])
-  assert.deepEqual(launchedOps[0].request, {kind: 'locate', project: 'O-I'}, 'located in the register the session was read under')
-  assert.equal(launchedOps[5].request.state_path, '/state/o-i')
-  assert.deepEqual(await carrier.stop('ses-795', 'task:fixtures'), {ok: true, note: 'Software Factory was asked to stop unit:build of run:r1, the unit task:fixtures stands current on.'})
-  assert.deepEqual(asked(), ['locate', 'attempt-task-units', 'attempt-request-cancellation'])
-  // Factory's own refusal comes back in its words; a register Factory keeps no state for asks nothing more.
-  answers['attempt-launch'] = {...answers['attempt-launch'], status: 'refused', attemptRef: null, refusal: {source: 'owner', step: 'launch', message: 'Factory links run:r1 to no Journey'}}
-  assert.deepEqual(await carrier.launch('ses-795', 'task:fixtures'), {ok: false, error: 'Factory links run:r1 to no Journey'})
-  // Not Factory's work, said so before anything of Factory's moves: no unit named for the task, no attempt of it current, no Factory state.
-  sent.length = 0
-  answers['custody-list'] = {...answers['custody-list'], count: 0, custody: []}
-  answers['attempt-task-units'] = {...answers['attempt-task-units'], units: []}
-  const noUnit = await carrier.launch('ses-795', 'task:fixtures')
-  assert.equal(noUnit.document.status, NOT_FACTORY_WORK); assert.match(noUnit.error, /^Launch: Factory names no unit for task:fixtures/)
-  assert.deepEqual(asked(), ['locate', 'custody-list', 'attempt-task-units'], 'nothing realised, nothing launched')
-  const noneCurrent = await carrier.stop('ses-795', 'task:fixtures')
-  assert.equal(noneCurrent.document.status, NOT_FACTORY_WORK); assert.match(noneCurrent.error, /^Stop after: no attempt of task:fixtures is current/)
-  assert.deepEqual(asked(), ['locate', 'attempt-task-units'])
-  answers.locate = {locations: [{state: 'absent', project: 'O-I'}]}
-  const absent = await carrier.launch('ses-795', 'task:fixtures')
-  assert.equal(absent.ok, false); assert.equal(absent.document.status, NOT_FACTORY_WORK); assert.match(absent.error, /^Launch: Factory keeps no state for O-I/)
-  assert.deepEqual(asked(), ['locate'])
-})
-
-test('(BD r25) the ▶ says what it starts: a Factory task\'s own Launch names the task, a harness launch the whole harness', async () => {
-  const React = await import('react')
-  const {renderToStaticMarkup} = await import('react-dom/server')
-  const {SessionGrid} = await import('../src/inhabitants/catalogue/panels/dlw__session-grid.tsx')
-  const drawn = set => renderToStaticMarkup(React.createElement(SessionGrid, {set, selection: {select() {}}}))
-  const tri = (markup, label) => markup.match(new RegExp(`<button type="button" class="tri" aria-label="Launch ${label}[^"]*"[^>]*>`))?.[0] ?? ''
-  const {port: taskLaunch} = taskLaunches()
-  // A Factory task's ▶ starts that task's unit: its own grain (none: the one task pressed) and its own op, while Stop All and the row
-  // launchers still act on the whole harness and say so.
-  const onFactory = projectedOnFactory('stalled', 'trigger', {taskLaunch})
-  const label = onFactory.clip.label
-  assert.equal(onFactory.set.actions.grain, 'whole harness')
-  assert.equal(onFactory.set.actions.launch.grainOf(onFactory.clip.id), null)
-  assert.equal(onFactory.set.actions.launch.opOf(onFactory.clip.id).startsWith('the task · Software Factory attempt-launch'), true)
-  const own = tri(drawn(onFactory.set), label)
-  assert.match(own, new RegExp(`aria-label="Launch ${label}"`), own)
-  assert.match(own, /title="Launch \(the task · Software Factory attempt-launch/, own)
-  assert.doesNotMatch(own, /whole harness/, own)
-  // A task AIKit names no task_ref for is no Factory work: its ▶ is the harness's and says so, as before.
-  const bare = projectedOnFactory('stalled', 'trigger', {taskLaunch, taskRef: null})
-  assert.equal(bare.set.actions.launch.grainOf(bare.clip.id), undefined, 'the set\'s grain')
-  const harness = tri(drawn(bare.set), bare.clip.label)
-  assert.match(harness, new RegExp(`aria-label="Launch ${bare.clip.label} \\(whole harness\\)"`), harness)
-  assert.match(harness, /title="Launch \(whole harness · harness_agent_control:restart/, harness)
-  // Without the task's carrier the ▶ is the harness's for every clip.
-  const plain = projectedOnFactory('stalled', 'trigger')
-  assert.match(tri(drawn(plain.set), plain.clip.label), new RegExp(`aria-label="Launch ${plain.clip.label} \\(whole harness\\)"`))
-})
-
+// REPLACED (O-I #1006): the ▶'s carrier over the rack's Launch and Factory's Stop after (taskLaunchPort, deleted with the window's
+// Factory set). A task's ▶ on Factory's Set is the Set's own Action, factory.task.run, and its track's Stop factory.task.stop
+// (kernel mode_set.rs; tests/factory-tracks.test.mjs), each run to its end against the real Factory by the gate's act 4.
 test('the grid\'s launch button: a Gate clip launches on press and stops on release; every other clip launches on a click', () => {
   const pressed = []
   const onPress = (key, what, run) => pressed.push([key, what, run()])
@@ -464,10 +221,8 @@ test('Repeat\'s press runs the takes over the run AIKit hands with the session\'
   const start = reading({repeat_variable: 'effort', repeat_levels: ['low', 'high'], repeat_repeats: 1, repeat_stop: 'turns', take_run: handed})
   const kernel = scriptedKernel(start)
   await readSettings()
-  // The grid's press, as useFactoryTracks wires it: the settings the tracks read hand the run.
-  // Each session's own register (agent/worldScope.ts), as useFactoryTracks hands it.
-  const press = repeatPress(transport, ref => ref === 'ses-795' ? start : undefined, () => project)
-  const made = await press('ses-795')
+  // The run AIKit hands with the session's settings (takeRunOf), in the session's own register (agent/worldScope.ts).
+  const made = await settings.makeTakes(transport, project, 'ses-795', settings.takeRunOf(start.task))
   assert.equal(made.ok, true, made.error)
   const writes = kernel.sent.filter(op => op.request)
   assert.deepEqual(writes.map(op => op.op), ['encounter_session_settings', 'actuation_write', 'encounter_session_settings'])
@@ -477,14 +232,14 @@ test('Repeat\'s press runs the takes over the run AIKit hands with the session\'
   const passing = reading({repeat_variable: 'effort', repeat_levels: ['low'], repeat_stop: 'pass', take_run: handed})
   const untested = scriptedKernel(passing)
   await readSettings()
-  const pass = await repeatPress(transport, () => passing, () => project)('ses-795')
+  const pass = await settings.makeTakes(transport, project, 'ses-795', settings.takeRunOf(passing.task))
   assert.equal(pass.ok, false); assert.match(pass.error, /Test pass[\s\S]*test/)
   assert.deepEqual(untested.sent.filter(op => op.request), [])
   // Settings that hand AIKit's refusal: the press says it, before any write.
   const refusing = reading({take_run: {refused: 'The session\'s agent has never opened.'}})
   const quiet = scriptedKernel(refusing)
   await readSettings()
-  const said = await repeatPress(transport, () => refusing, () => project)('ses-795')
+  const said = await settings.makeTakes(transport, project, 'ses-795', settings.takeRunOf(refusing.task))
   assert.equal(said.ok, false); assert.match(said.error, /never opened/)
   assert.deepEqual(quiet.sent.filter(op => op.request), [])
 })

@@ -1,7 +1,7 @@
 // What the atlas binds for palaces while it stands (T-PALACES-ONTO-ATLAS; FOUNDATION §3 N4). Called once by the attach
 // (AtlasProjectionPanel.tsx), released with it, beside the Places binding (places/placesHost.ts) — the same seam, the same lifetime.
 //
-// - The palace's owners (palaceOwners.ts) over the attach's kernel transport and the atlas's workspace memory.
+// - The palace's owners (palaceOwners.ts) over the attach's kernel transport and the atlas's memory (the World's).
 // - The palace drawn inside (PalaceFloor.tsx): one layer in the pane, over the globe, made the first time a palace is entered and drawing
 //   only while one is — the atlas's palace scale. The globe stays mounted beneath it, its state and keys unchanged, and comes back as it was on leaving.
 // - Escape leaves the palace for the Earth (the atlas's own step back, one level out; the palace's return to ground), before the

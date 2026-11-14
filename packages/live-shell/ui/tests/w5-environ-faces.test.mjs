@@ -1,10 +1,10 @@
 // The environs of the process devices (manual §25.6 "Process types, read in time": a creature shows an agent's act, an environ a
-// process's course): the Gateway's river (§19.2), the NOWs' seasons (§23.6), the succession of the seats and the erosion of the checkouts on
+// process's course): the Gateway's river (§19.2), the succession of the seats and the erosion of the checkouts on
 // the Seats page of Workcell's instrument (§19.23), and the erosion of Docs (§18.5). Each is read from the value keys its device already carries
 // (faces/environReadings.ts) and drawn in the kit's well (faces/EnvironFaces.tsx), at its home in the device's views; while a reading is
 // missing the picture stands still and says which reading it waits on, and nothing in it moves.
 // Channels: REAL (tests/fixtures/environ-readings-2026-10-21.json: `central.now.list` and `seat status --json` read on workcell:mac,
-// 21 Oct, read-only, the clearings' purposes replaced); BINDING (the Gateway's, the NOWs' and the Seat's own value functions on those
+// 21 Oct, read-only, the clearings' purposes replaced); BINDING (the Gateway's and the Seat's own value functions on those
 // readings, or on the answer shapes their tests use); SCRIPTED (the designs rendered to static markup on their defaults and fixtures).
 // Ported by hand from the design lane's proposal (O-I 871182e98) onto today's homes. Loader as factory-design-binding.test.mjs.
 import test from 'node:test'
@@ -50,7 +50,6 @@ const rail = await import('../src/widgets/railBindings.ts')
 const cell = await import('../src/agent/devices/workcellBindings.ts')
 const {prefixed} = await import('../src/inhabitants/catalogue/panels/design.ts')
 const {design: gateway} = await import('../src/inhabitants/catalogue/panels/actuation__gateway.tsx')
-const {design: nows} = await import('../src/inhabitants/catalogue/panels/widgets__nows.tsx')
 const {design: git} = await import('../src/inhabitants/catalogue/panels/workcell__git-seat.tsx')
 const {design: workcell} = await import('../src/inhabitants/catalogue/panels/workcell__workcell.tsx')
 const {design: docs} = await import('../src/inhabitants/catalogue/panels/central__docs.tsx')
@@ -103,37 +102,6 @@ test('the river at its home: across the head of the Gateway\'s Full, live on all
   assert.equal(fixture.state, 'live', 'the catalogue carries today\'s binding as a fixture: the four link readings stand')
   assert.equal(only(draw(gateway.full(props({...gateway.defaults, ...gateway.fixtures.Stalled}))), 'river').state, 'still', 'a stall does not breathe')
   assert.equal(only(draw(gateway.full(props({...gateway.defaults, ...gateway.fixtures.Refused}))), 'river').state, 'dry')
-})
-
-// ---------------------------------------------------------------- the seasons
-
-test('the seasons: the real NOW field read as a year, its clearings in growth, dormant, harvested and in the record', () => {
-  const rows = REAL.nows.records
-  const tally = {active: 0, quiescent: 0, closed: 0, archived: 0}
-  for (const r of rows) tally[r.lifecycle] += 1
-  const reading = F.seasonsOf({nows: JSON.stringify(rows.filter(r => r.lifecycle !== 'archived')), seasons: JSON.stringify(tally)})
-  assert.deepEqual(reading.counts, {growth: tally.active, dormant: tally.quiescent, harvested: tally.closed, record: tally.archived})
-  assert.equal(reading.standing.length, tally.active + tally.quiescent, 'the standing field: active and quiescent')
-  const created = ref => rows.find(r => r.now_ref === ref).created_at_unix_seconds
-  assert.ok(reading.standing.every((c, i, all) => i === 0 || created(all[i - 1].ref) <= created(c.ref)), 'oldest first')
-  assert.equal(F.seasonsOf({nows: '[]'}).counts.record, null, 'without the year\'s count the record is unread, not zero')
-  assert.deepEqual(F.seasonsOf({reason: 'central.now.list: refused'}), {absent: true, waits: 'Waits on the NOW listing: central.now.list: refused.'})
-})
-
-test('the NOWs binding counts the field\'s year over the whole listing, archived clearings too, beside the rows that leave them out', () => {
-  const listing = {schema: 'central.now-listing/v1', automatic_agent_or_model_invocation: false, records: REAL.nows.records}
-  const values = rail.nowsValues({time: {state: 'failed', action: 'central.time.policy'}, day: {state: 'failed', action: 'central.day.read'}, now: {state: 'ready', action: 'central.now.list', data: listing}, sources: {state: 'unavailable', action: 'x'}})
-  const seasons = JSON.parse(values.seasons)
-  assert.equal(seasons.active + seasons.quiescent + seasons.closed + seasons.archived, REAL.nows.records.length)
-  assert.equal(seasons.archived, 58, 'the real field holds 58 archived')
-  assert.ok(JSON.parse(values.nows).every(r => r.lifecycle !== 'archived'), 'the rows still leave them out')
-  const full = only(draw(nows.full(props({...nows.defaults, ...values}))), 'seasons')
-  assert.equal(full.state, 'live')
-  assert.equal((full.body.match(/data-season="growth"/g) ?? []).length, seasons.active, 'a stalk in ear for each clearing in growth')
-  assert.equal((full.body.match(/data-season="harvested"/g) ?? []).length, Math.min(5, seasons.closed), 'a sheaf for each harvested clearing, five at most')
-  assert.match(full.body, new RegExp(`${seasons.active} in growth · ${seasons.quiescent} dormant · ${seasons.closed} harvested · 58 in the record`))
-  const unread = only(draw(nows.full(props({...nows.defaults, ...nows.fixtures['The ground reports nothing']}))), 'seasons')
-  assert.deepEqual([unread.state, unread.words], ['waiting', 'Waits on the NOW listing: The ground did not answer.'])
 })
 
 // ---------------------------------------------------------------- the succession
@@ -215,14 +183,14 @@ test('the erosion of Docs: each tier a stretch, worn by every move since its law
 
 // ---------------------------------------------------------------- the rules
 
-test('an environ is the state now: nothing in it moves, it paints only with the shell\'s tokens, and the kit exports the four with their readers', async () => {
+test('an environ is the state now: nothing in it moves, it paints only with the shell\'s tokens, and the kit exports the three with their readers', async () => {
   const {readFile} = await import('node:fs/promises')
   const source = await readFile(new URL('../src/inhabitants/catalogue/faces/EnvironFaces.tsx', import.meta.url), 'utf8')
   assert.doesNotMatch(source, /<animate|requestAnimationFrame|setInterval|setTimeout|@keyframes|animation/, 'no motion without an event')
   assert.doesNotMatch(source.replace(/\/\/[^\n]*/g, ''), /#[0-9a-fA-F]{3,8}\b|rgba?\(|hsla?\(/, 'no raw colour: every paint is a token')
   assert.doesNotMatch(source, /figures|INK\b/, 'the environs are drawn in the kit\'s inks, not the creatures\' roster inks')
   const kit = await import('../src/inhabitants/catalogue/faces/index.ts')
-  for (const name of ['RiverEnviron', 'SeasonsEnviron', 'SuccessionEnviron', 'ErosionEnviron', 'riverOf', 'seasonsOf', 'successionOf', 'checkoutErosionOf', 'docsErosionOf'])
+  for (const name of ['RiverEnviron', 'SuccessionEnviron', 'ErosionEnviron', 'riverOf', 'successionOf', 'checkoutErosionOf', 'docsErosionOf'])
     assert.equal(typeof kit[name], 'function', name)
   assert.equal(typeof faces.RiverEnviron, 'function')
 })

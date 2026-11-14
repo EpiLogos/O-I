@@ -205,11 +205,47 @@ test('a refused reading stands in Central\'s words; your root world has no accou
     assert.equal(refused.standing[key].disabled, words, `${key}: the refusal word for word`)
   }
   assert.ok(refused.values.root, 'the root is read all the same')
-  // Your world: Central reads one project's account; the root has none to inspect.
-  const root = pages.docsBinding(ID, {name: 'Your world', project: null}, {doctor: READINGS.doctor})
+  // Your world: Central reads one project's account, and the root has none to inspect; its tier 0 is its law (O-I ticket 1005), whose
+  // index refused stands in Central's words.
+  const root = pages.docsBinding(ID, {name: 'Your world', project: null}, {doctor: READINGS.doctor, law: {status: 'refused', error: 'governance folder unreadable'}})
   assert.equal(root.values.sources, undefined)
-  assert.equal(root.standing.sources.disabled, pages.DOCS_NO_PROJECT)
+  assert.equal(root.values.light, 'dark')
+  assert.equal(root.standing.sources.disabled, 'governance folder unreadable')
+  for (const key of ['account', 'ux', 'ex', 'scaffold']) assert.equal(root.standing[key].disabled, pages.DOCS_NO_PROJECT, `${key}: the root has no project account`)
   assert.ok(root.values.root)
+})
+
+// O-I ticket 1005 (manual §18.5): on your own ground, the root world, tier 0 holds your law — the statements Central indexes under
+// Control/agents/governance (control.index, its answer as Central gave it on an isolated ground, 14 Nov 2026) — and Recognise adopts one
+// through Central (control.law.adopt), which renders the floor every harness reads again; SCRIPTED: the adoption goes to a recording port.
+test('your world\'s tier 0 is its law: each statement Central indexes, recognised once adopted, and Recognise adopts it', async () => {
+  pages.resetHolds()
+  const INDEX = {drafts: 0, statements: [{file: 'craft/plain-words.md', standing: 'undeclared', topic: 'Plain words'}, {file: 'evidence/claims.md', standing: 'durable', topic: 'Claims'}]}
+  const adopted = []
+  let reread = 0
+  const binding = pages.docsBinding(ID, {name: 'Your world', project: null}, {doctor: READINGS.doctor, law: answered(INDEX)},
+    {central: async () => { throw new Error('no other act is pressed') }, reread: async () => { reread++ }, adopt: async statement => { adopted.push(statement); return {} }})
+  assert.equal(binding.values.light, 'lit')
+  assert.deepEqual(JSON.parse(binding.values.sources), [
+    {path: 'Control/agents/governance/craft/plain-words.md', tier: 0, kind: 'Law', hints: [], recognised: false},
+    {path: 'Control/agents/governance/evidence/claims.md', tier: 0, kind: 'Law', hints: [], recognised: {provenance: 'human-authored', standing: 'authored-human-position'}},
+  ], 'each statement on tier 0, waiting for you until adopted')
+  assert.equal(binding.standing.sources, undefined, 'the law stands read')
+  assert.equal(binding.standing.recognise, undefined, 'Recognise stands enabled: it adopts')
+  for (const key of ['relate', 'ensure', 'reproject']) assert.equal(binding.standing[key].disabled, pages.DOCS_NO_PROJECT, `${key} reads a project`)
+  await binding.write([{key: 'recognise', value: JSON.stringify({source: 'Control/agents/governance/craft/plain-words.md', provenance: 'human-authored', standing: 'design-commitment'})}])
+  assert.deepEqual(adopted, ['Control/agents/governance/craft/plain-words.md'])
+  assert.equal(reread, 1, 'the law is read again after the adoption')
+  await assert.rejects(binding.write([{key: 'recognise', value: JSON.stringify({source: 'Work/notes.md', provenance: 'human-authored', standing: 'design-commitment'})}]), /is not a statement under Control\/agents\/governance/)
+  // A statement opens in the Document by its own path: your world's sources stand under the ground itself.
+  const opened = []
+  await pages.docsBinding(ID, {name: 'Your world', project: null}, {law: answered(INDEX)}, {open: async path => { opened.push(path) }})
+    .write([{key: 'openSource', value: 'Control/agents/governance/craft/plain-words.md'}])
+  assert.deepEqual(opened, ['Control/agents/governance/craft/plain-words.md'])
+  // Without the adoption's carrier, Recognise stands disabled saying so.
+  const bare = pages.docsBinding(ID, {name: 'Your world', project: null}, {law: answered(INDEX)}, {central: async () => ({})})
+  assert.equal(bare.standing.recognise.disabled, pages.DOCS_NO_CARRIER)
+  assert.deepEqual(pages.lawOf(answered({statements: 'none'})), null)
 })
 
 test('Relate, Recognise, Ensure, Reproject and Initialise root write through Central as the person\'s presses, then Docs reads again', async () => {
@@ -237,11 +273,63 @@ test('Relate, Recognise, Ensure, Reproject and Initialise root write through Cen
   await assert.rejects(binding.write([{key: 'relate', value: JSON.stringify({as: '1', source: 'nowhere.md'})}]), /nowhere\.md is not among the unbound sources/)
   await assert.rejects(binding.write([{key: 'relate', value: JSON.stringify({as: 'ux', source: gallery})}]), {message: pages.DOCS_RELATE_UX_EX})
   assert.equal(owner.asked.length, 5)
-  // Open stands refused, naming what the Document opens.
-  await assert.rejects(binding.write([{key: 'openSource', value: gallery}]), {message: pages.DOCS_WIRING.refused.openSource})
+  // Open opens the source in the Document by its path under the ground (manual §18.5; CentralDocumentPane.tsx openWorldSource): a
+  // project's source under Work/<project>. Without the Document's carrier it stands disabled, saying so.
+  assert.equal(binding.standing.openSource.disabled, pages.DOCS_NO_CARRIER)
+  const opened = []
+  const opening = pages.docsBinding(ID, OI, READINGS, {central: owner.port, open: async path => { opened.push(path) }})
+  assert.equal(opening.standing?.openSource, undefined, 'Open stands enabled')
+  await opening.write([{key: 'openSource', value: gallery}])
+  assert.deepEqual(opened, [`Work/O-I/${gallery}`])
+  await assert.rejects(opening.write([{key: 'openSource', value: ''}]), /choose a source first/)
+  assert.equal(owner.asked.length, 5, 'Open asks Central for no act')
   // With no carrier, each press stands disabled saying so.
   const bare = pages.docsBinding(ID, OI, READINGS)
   for (const key of ['relate', 'recognise', 'ensure', 'reproject', 'initRoot']) assert.equal(bare.standing[key].disabled, pages.DOCS_NO_CARRIER)
+})
+
+// O-I ticket 1005: the adoption itself (centralDeviceWrites.ts adoptLaw) — the statement found and read through Central at its revision now,
+// then control.law.adopt as the person's press with the instruction files the agents read (the floor itself left out), each by the host's
+// press channel. Central's answers are its own on an isolated ground (14 Nov 2026), the root written <root>; SCRIPTED channel.
+test('a law statement is adopted on the revision Central reads now, with the files the agents read, by the person\'s press', async () => {
+  const writes = await import('../src/central/devices/centralDeviceWrites.ts')
+  const path = 'Control/agents/governance/craft/plain-words.md'
+  const location = {schema: 'central.path-ref/v1', root: '<root>', path, ref: `central:path:<root>:${path}`}
+  const revision = 'central.content-fnv1a64/v1:58:5d2bf5e4f2a8e0c1'
+  const answers = {
+    'central.files.list': {entries: [{kind: 'file', name: 'plain-words.md', retrieval_allowed: true, location}], schema: 'central.directory-reading/v1'},
+    'central.files.read': {revision, content: '# Plain words\n\nSay what the work is in the words of the work.\n', schema: 'central.file-reading/v1'},
+    'control.law.adopt': {adopted: true, schema: 'central.law-adoption/v1', floor: {floor: 'AGENTS.md', links: [{file: 'CLAUDE.md', state: 'made', to: 'AGENTS.md'}]}},
+  }
+  // The World Model's agents as the kernel answers the slice (census.rs: each agent's floor, carries.law.file).
+  const agentsHeld = {state: 'held', answer: {schema: 'oi.world-model-slice/v1', slice: 'agents', version: 3, owner: 'kernel', value: {agents: [
+    {slug: 'claude-code', carries: {law: {file: 'CLAUDE.md', state: 'absent'}}}, {slug: 'codex', carries: {law: {file: 'AGENTS.md'}}},
+    {slug: 'claude', carries: {law: {file: 'CLAUDE.md'}}}, {slug: 'gemini', carries: {law: {file: 'GEMINI.md'}}},
+    {slug: 'pi', carries: {law: {why: 'AIKit names no instruction file pi reads'}}}]}}}
+  const invoked = []
+  const priorWindow = globalThis.window
+  globalThis.window = {__TAURI_INTERNALS__: {invoke: async (command, args) => {
+    const {action, input} = args.op.invocation
+    invoked.push([command, action, input])
+    return {result: 'action_dispatched', dispatch: {state: 'invoked', owner_operation: action, data: answers[action]}}
+  }}}
+  try {
+    const receipt = await writes.adoptLaw({kind: 'tauri'}, 'craft/plain-words.md', async () => agentsHeld)
+    assert.equal(receipt.adopted, true)
+    assert.deepEqual(invoked.map(([command, action]) => [command, action]), [['kernel_press', 'central.files.list'], ['kernel_press', 'central.files.read'], ['kernel_press', 'control.law.adopt']])
+    assert.deepEqual(invoked[0][2], {path: 'Control/agents/governance/craft'})
+    assert.deepEqual(invoked[1][2], {location})
+    assert.deepEqual(invoked[2][2], {statement: path, expected_revision: revision, files: ['CLAUDE.md', 'GEMINI.md']}, 'the floor is not linked to itself, and each file once')
+    // A statement not written yet is refused before anything is adopted.
+    invoked.length = 0
+    await assert.rejects(writes.adoptLaw({kind: 'tauri'}, 'craft/unwritten.md', async () => agentsHeld), /is not written on tier 0/)
+    assert.deepEqual(invoked.map(([, action]) => action), ['central.files.list'])
+  } finally {
+    if (priorWindow === undefined) delete globalThis.window; else globalThis.window = priorWindow
+  }
+  // The files come from the World Model's agents: each agent's floor, once.
+  assert.deepEqual(writes.lawFilesOf(agentsHeld), ['CLAUDE.md', 'AGENTS.md', 'GEMINI.md'])
+  assert.deepEqual(writes.lawFilesOf({state: 'reading'}), [])
 })
 
 // The Docs device's family note says what Docs reads: held equal to the readings the binding asks (DOCS_ACTIONS, and AIKit's reflection laws

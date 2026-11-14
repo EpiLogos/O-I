@@ -24,7 +24,7 @@ put('Work/demo/plural.html',(()=>{const d=fixtureDoc('thread-branch-convergence'
 put('Work/demo/raced.html',(()=>{const d=fixtureDoc('clean-document-validates');d.meta.participants[0].binding={owner:'document',basis:'unknown'};return d;})());
 put('Work/demo/bound.html',fixtureDoc('clean-document-validates'));
 const calls=[];let raceOnce=false;
-const reading=(path)=>{const f=files.get(path);return {schema:'central.file-reading/v1',location:{root:'central',path,ref:`central:source:${path}`},content:f.content,revision:f.revision,byte_len:Buffer.byteLength(f.content),content_encoding:'utf-8'};};
+const reading=(path)=>{const f=files.get(path);return {schema:'central.file-reading/v1',location:{schema:'central.path-ref/v1',root:'central',path,ref:`central:source:${path}`},content:f.content,revision:f.revision,byte_len:Buffer.byteLength(f.content),content_encoding:'utf-8'};};
 const roster={schema:'central.agent-profile-roster/v1',scope_ref:'control:root',profiles:[
  {profile:{agent_ref:'agent/ada-lin',ref:'profile/ada-lin',name:'Ada Lin',purpose:'Recovers the argument from its sources',role:'researcher'},accepted:true},
  {profile:{agent_ref:'agent/ash-kay',ref:'profile/ash-kay',name:'Ash Kay',purpose:'Tests a claim on a worked example',role:'analyst'},accepted:true},
@@ -34,13 +34,15 @@ function execute(op){calls.push(op);
  if(op.op==='ground')return {result:'ground_reading',reading:{}};
  if(op.op==='agent_definition')return {result:'agent_definition_reading',data:roster};
  if(op.op==='file_read')return {result:'file_read',reading:reading(op.location.path)};
- if(op.op==='file_operation'&&op.request.action==='write'){
-  const path=op.location.path,f=files.get(path);
+ // A file's save is Central's central.files.write through `act` (O-I #1002), answered with its file mutation for the location asked.
+ if(op.op==='act'&&op.action==='central.files.write'){
+  const {location,expected_revision,content}=op.input,path=location.path,f=files.get(path);
+  const mutation=data=>({result:'action_dispatched',dispatch:{state:'invoked',owner_operation:op.action,data:{schema:'central.file-mutation/v1',location,...data}}});
   if(raceOnce&&path.endsWith('raced.html')){raceOnce=false;const d=readDoc(f.content);d.entries[0].html='<p>Edited elsewhere in the meantime.</p>';files.set(path,{content:htmlOf(d),revision:'r'+(++counter)});}
   const current=files.get(path);
-  if(op.request.expected_revision!==current.revision)return {result:'file_operation',data:{outcome:'conflict',current:reading(path)}};
-  files.set(path,{content:op.request.content,revision:'r'+(++counter)});
-  return {result:'file_operation',data:{outcome:'written',revision:files.get(path).revision}};
+  if(expected_revision!==current.revision)return mutation({outcome:'conflict',current:reading(path)});
+  files.set(path,{content,revision:'r'+(++counter)});
+  return mutation({outcome:'written',revision:files.get(path).revision});
  }
  if(op.op==='knowledge')return {result:'knowledge',data:{hits:[],rows:[],absences:[]}};
  if(op.op==='encounter_task_read')return {result:'encounter_task_reading',data:null};

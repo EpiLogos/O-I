@@ -2446,54 +2446,6 @@
       ]
     },
     {
-      "owner": "src/workspace/settings/settingsData.ts",
-      "references": [
-        "sessionStorage"
-      ],
-      "sites": [
-        {
-          "owner": "src/workspace/settings/settingsData.ts",
-          "receiver": "window.sessionStorage",
-          "method": "getItem",
-          "key": "STAGED_DEFAULT_KEY",
-          "basis": [
-            "STAGED_DEFAULT_KEY = \"oi-settings.staged-connection.v1\""
-          ]
-        },
-        {
-          "owner": "src/workspace/settings/settingsData.ts",
-          "receiver": "window.sessionStorage",
-          "method": "removeItem",
-          "key": "STAGED_DEFAULT_KEY",
-          "basis": [
-            "STAGED_DEFAULT_KEY = \"oi-settings.staged-connection.v1\""
-          ]
-        },
-        {
-          "owner": "src/workspace/settings/settingsData.ts",
-          "receiver": "window.sessionStorage",
-          "method": "setItem",
-          "key": "STAGED_DEFAULT_KEY",
-          "basis": [
-            "STAGED_DEFAULT_KEY = \"oi-settings.staged-connection.v1\""
-          ]
-        }
-      ],
-      "key_literals": [
-        "oi-settings.staged-connection.v1"
-      ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
-      "rationale": "Staged new-chat provider intent before native apply; not active/effective owner state.",
-      "keys": [
-        {
-          "family": "STAGED_DEFAULT_KEY",
-          "classification": "device-draft",
-          "rationale": "Staged new-chat provider intent before native apply; not active/effective owner state.",
-          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
-        }
-      ]
-    },
-    {
       "owner": "src/workspace/settings/settingsNav.ts",
       "references": [
         "sessionStorage"

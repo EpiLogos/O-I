@@ -3,6 +3,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {readFile} from 'node:fs/promises'
 import {register} from 'node:module'
+import {worldsSliceOf} from './support/worldModelFixture.mjs'
 
 // Reads that remember, second pass: engine views that polled an owner on a period re-read on the kernel's notice where the window
 // carries one, and keep the period where it does not (the legacy frame installs no notice source). The read-before-write sites of
@@ -127,44 +128,63 @@ test('the owner-polling timers of the engine views go through the seam; the kept
 
 // ---- the read-before-write sites ask afresh ----------------------------------------------------------------------------------
 
-const withHolder = async run => {
+
+/** What the writes ask the kernel on a carrier of their own, the kernel refusing each ask (`stubbed`). */
+const withKernelAsked = async (run, url) => {
+  const own = {kind: 'bridge', url}
   const asked = []
-  bridge.installKernelReadHolder(async (transport, op, fresh) => { asked.push({op: op.op, kind: op.request?.kind, fresh}); return {outcome: null, error: 'stubbed'} })
-  try { await run(asked) } finally { bridge.installKernelReadHolder(null) }
+  const original = globalThis.fetch
+  globalThis.fetch = async (target, init) => {
+    if (!String(target).startsWith(own.url)) return original(target, init)
+    asked.push(JSON.parse(init.body))
+    return {json: async () => ({ok: false, error: 'stubbed'})}
+  }
+  try { await run(own) } finally { globalThis.fetch = original }
   return asked
 }
-const transport = {kind: 'bridge', url: 'http://127.0.0.1:1'}
 
-test('openToday and closeDay read Central\'s ground afresh before they decide', async () => {
-  for (const act of [writes.openToday, writes.closeDay]) {
-    const asked = await withHolder(() => act(transport).then(() => assert.fail('the stubbed kernel refused'), () => {}))
+// O-I ticket 1005: the ground a Day write checks its basis against is the World Model's day slice, read fresh (centralDeviceWrites.ts
+// groundReadAgain): the kernel reads Central first, past every held reading.
+test('Close now\'s carry and Open tomorrow read Central\'s ground afresh before they decide', async () => {
+  for (const [act, port] of [[writes.closeCarry, 3], [writes.openTomorrow, 4]]) {
+    const asked = await withKernelAsked(own => act(own).then(() => assert.fail('the stubbed kernel refused'), why => assert.match(why.message, /stubbed/)), `http://127.0.0.1:${port}`)
     assert.ok(asked.length >= 1)
-    assert.equal(asked[0].op, 'central')
-    assert.equal(asked[0].fresh, true, 'the basis of a write is the owner\'s present revision')
+    assert.deepEqual(asked[0], {op: 'model_subscribe', slice: 'day', fresh: true}, 'the basis of a write is the owner\'s present revision')
   }
 })
 
 test('the press of Show on a Day entry reads Central\'s ground afresh before it reads the entry (SF06; DLW build ruling 2026-11-09)', async () => {
   const offered = {dayRef: 'central:day:control:root:2026-10-16', revision: 'rev-1'}
   const offer = {kind: 'page', label: 'one', select: {field_id: 'p3_pattern'}}
-  const asked = await withHolder(() => writes.bringDayEntry(transport, offered, offer).then(() => assert.fail('the stubbed kernel refused'), () => {}))
-  assert.ok(asked.length >= 1)
-  assert.deepEqual(asked[0], {op: 'central', kind: 'inspect', fresh: true}, 'the Day is checked as today\'s open one on the owner\'s present reading')
+  const asked = await withKernelAsked(own => writes.bringDayEntry(own, offered, offer).then(() => assert.fail('the stubbed kernel refused'), () => {}), 'http://127.0.0.1:5')
+  assert.deepEqual(asked, [{op: 'model_subscribe', slice: 'day', fresh: true}], 'the Day is checked as today\'s open one on the owner\'s present reading, before the entry is read')
 })
 
-test('readWorlds asks afresh on the first browse when told to, and not otherwise', async () => {
-  const plain = await withHolder(() => readWorlds(transport, {tries: 1, apartMs: 0}))
-  assert.deepEqual(plain.map(row => row.fresh), [false])
-  const fresh = await withHolder(() => readWorlds(transport, {tries: 1, apartMs: 0}, true))
-  assert.deepEqual(fresh.map(row => row.fresh), [true])
+test('readWorlds reads the World Model\'s worlds slice: held once read, and asked afresh when told to (the read before a write)', async () => {
+  const own = {kind: 'bridge', url: 'http://127.0.0.1:2'}
+  const asked = []
+  const original = globalThis.fetch
+  globalThis.fetch = async (target, init) => {
+    if (!String(target).startsWith(own.url)) return original(target, init)
+    asked.push(JSON.parse(init.body))
+    return {json: async () => worldsSliceOf({}, null, asked.length)}
+  }
+  try {
+    assert.equal((await readWorlds(own)).state, 'read')
+    assert.equal((await readWorlds(own)).state, 'read')
+    assert.deepEqual(asked, [{op: 'model_subscribe', slice: 'worlds'}], 'asked once, then held at its version')
+    assert.equal((await readWorlds(own, {fresh: true})).state, 'read')
+    assert.deepEqual(asked.at(-1), {op: 'model_subscribe', slice: 'worlds', fresh: true}, 'the kernel reads Central first, past every held reading')
+    assert.ok(!asked.some(op => op.op === 'world_browse'), 'no device browses Central itself')
+  } finally { globalThis.fetch = original }
 })
 
 test('every read in the Central device writes that precedes a write is fresh', async () => {
   const text = await src('../src/central/devices/centralDeviceWrites.ts')
-  assert.doesNotMatch(text, /readGround\(transport, null\)/, 'no ground read there is held')
+  assert.doesNotMatch(text, /readGround\(/, 'no ground read of its own: the World Model\'s day slice holds the ground (O-I ticket 1005)')
   // W2: Open tomorrow (central.day.rollover) and Close now's carry (central.day.close-carry) read the ground fresh before they write, too;
   // so does the press of Show on a Day entry, which checks the Day is still today's open one (SF06; DLW build ruling 2026-11-09).
-  assert.equal((text.match(/readGround\(transport, null, true\)/g) ?? []).length, 7)
-  assert.match(text, /readFile\(transport, formLocation, true\)/)
-  assert.match(text, /readWorlds\(transport, undefined, true\)/)
+  // Open today, its form's read and its carry went with O-I 1005: the Day opens itself at Central's turn.
+  assert.ok(text.includes('dayFromModel(await modelSlice(transport, \'day\', {fresh: true}))'), 'the one read again is the day slice, fresh')
+  assert.equal((text.match(/await groundReadAgain\(transport\)/g) ?? []).length, 3)
 })

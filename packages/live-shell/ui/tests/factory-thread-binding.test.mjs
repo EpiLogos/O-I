@@ -7,11 +7,12 @@
 // Channels:
 // - REAL CAPTURE: the encounter blocks, statuses and actions below are trimmed from the installed owner's answers on this machine,
 //   16 Oct 2026 (`aikit session-space -C Work/O-I encounter --request-json '{"action":"view","agent_session":…}'`, sessions
-//   fx-aletheia-20260926-201904, o-i-chat-1790087010-4a70, o-i-chat-1791392656-7658); the client status and model catalogue are
-//   `aikit --json client status` and `aikit model-catalogue show --json`. The lane's scratch `shapes/` holds them whole.
+//   fx-aletheia-20260926-201904, o-i-chat-1790087010-4a70, o-i-chat-1791392656-7658); the model catalogue is
+//   `aikit model-catalogue show --json`. The lane's scratch `shapes/` holds them whole.
 // - FIXTURE: a pending consent request (none waits on this machine), an ACP-shaped tool update (the cradle's operations.ts shape; the
-//   O-I sessions here run pi-rpc), and the owners behind the ports (a permission and a cancel that record their calls). No write
-//   ever reaches the owner's real state.
+//   O-I sessions here run pi-rpc), the census of the agents on this machine as the window holds the World Model's agents slice (O-I
+//   ticket 1003), and the owners behind the ports (a permission and a cancel that record their calls). No write ever reaches the
+//   owner's real state.
 // - SCRIPTED: the catalogue's Thread rendered through the runtime's host (deviceHost.HostedDevice) to static markup. Not a screen pass.
 import test from 'node:test'
 import assert from 'node:assert/strict'
@@ -55,8 +56,8 @@ const familyDoor = await import('../src/inhabitants/familyManifest.ts')
 familyDoor.resetFamilyManifestsForTest()
 ;(await import('../src/inhabitants/loadAgentShellFamilies.ts')).loadAgentShellFamilies()
 ;(await import('../src/inhabitants/worldShellFamilies.ts')).loadWorldShellFamilies()
-const {foundHarnesses} = await import('../src/agent/useHarnessBinding.ts')
-const {catalogueModels} = await import('../src/agent/devices/useModelCatalogue.ts')
+// REPLACED (O-I ticket 1006): the catalogue's models are the World Model's models slice, read by the chain's declarations (designBindings.ts).
+const {catalogueModels} = bind
 const {design: threadDesign} = await import('../src/inhabitants/catalogue/panels/thread.tsx')
 const {THREAD_PAGE} = await import('../src/agent/devices/oneAgentBinding.ts')
 const {design: agentDesign} = await import('../src/inhabitants/catalogue/panels/actuation__harness-model.tsx')
@@ -99,9 +100,12 @@ const RESIDENT = {connection_generation: '01M4BNAHQSPT3SZ6NDVH0RAFR8', error: nu
 /** A payload the view split (o-i-chat-1790095416-e090: a tool block's text cut mid-JSON, and its continuation). */
 const SPLIT = [{id: 50, kind: 'tool', text: '{"args":{"command":"cd /Users/admin/Central/worktrees/env-2/factory; f=/Users/admin/.local/bin/factory; echo \\"=== CHECK ===\\"'},
   {id: 51, kind: 'tool', text: ' one call, never inflated into separate tools\\",\\n        \\"raw-events-preserved'}]
-const CLIENT_STATUS = {clients: [
-  {client: 'claude', harness: 'claude-code', detection: 'detected', installed: true}, {client: 'pi', harness: 'pi', detection: 'detected', installed: false},
-  {client: 'grok', harness: 'grok', detection: 'not-installed', installed: null}, {client: 'broker'},
+/** The census as the window holds it (desktop/cradle/src/agency/census.ts CensusReading, the World Model's agents slice; O-I ticket
+ * 1003): claude-code and pi start, gemini does not. */
+const CENSUS = {state: 'read', agents: [
+  {slug: 'claude-code', harnessRef: 'harness/claude-code', executable: '/x/claude', starts: true, talks: true, version: '2.1.323', aikit: {client: 'claude', harness: 'claude-code'}},
+  {slug: 'pi', harnessRef: 'harness/pi', executable: '/x/pi', starts: true, talks: false, version: '1.5.0', why: 'AIKit opens no conversation with pi', aikit: {client: 'pi', harness: 'pi'}},
+  {slug: 'gemini', harnessRef: 'harness/gemini', executable: '/x/gemini', starts: false, talks: false, why: '/x/gemini --version exited exit status: 1', aikit: null},
 ]}
 const CATALOGUE = {catalogued: 2, shown: 2, standing: 'catalogue identity only — a catalogued Model is not thereby available', entries: [
   {model: 'model:aion-2.0', name: 'AionLabs: Aion-2.0', source: 'source/aikit-provider-catalog', declared_routes: [], book: null},
@@ -168,8 +172,11 @@ test('the light is the session\'s connection; the sessions are the agency\'s ses
     {id: 'agent-session/fx-aletheia-20260926-201904', name: 'Explain run', agent: 'aletheia', used: 3, cap: 12},
     {id: 'agent-session/o-i-chat-1790087010-4a70', agent: 'nara'},
   ], 'no model, no parent: the reading discloses neither')
-  assert.deepEqual(foundHarnesses(CLIENT_STATUS), ['claude-code', 'pi'], 'found here: the owner\'s detection, by its harness name')
-  assert.equal(foundHarnesses({}), null)
+  // The Harness chooser offers the census's agents that start, by slug (O-I ticket 1003): never AIKit's client rows.
+  assert.deepEqual(bind.harnessChoices(CENSUS), ['claude-code', 'pi'], 'not gemini, which does not start')
+  assert.deepEqual(bind.harnessChoices({state: 'read', agents: []}), [], 'a census of no agent that starts: nothing to choose')
+  assert.equal(bind.harnessChoices({state: 'reading'}), null)
+  assert.equal(bind.harnessChoices({state: 'unavailable', why: 'The World Model has not answered.'}), null)
   assert.deepEqual(catalogueModels(CATALOGUE), ['model:aion-2.0', 'model:glm-5.1'])
   assert.equal(catalogueModels(null), null)
 })
@@ -196,7 +203,7 @@ test('the Thread reads only what an owner reported, the Agent\'s shared keys, an
   // The Agent's thread is the same rows; its models and harnesses the owners' lists.
   const agent = bind.agentValues({sessionRef: 's', track: null, nowUnixMs: 0, reading: {attached: null, budget: null, gatewayAdmitted: null, gatewayDoc: null},
     accepted: {}, harness: {binding: 'cursor', resolved: false}, holds: bind.chainHolds(),
-    thread: thread.threadJson({reading: ALETHEIA, status: DISCONNECTED}, 'aletheia'), models: catalogueModels(CATALOGUE), harnesses: foundHarnesses(CLIENT_STATUS)})
+    thread: thread.threadJson({reading: ALETHEIA, status: DISCONNECTED}, 'aletheia'), models: catalogueModels(CATALOGUE), harnesses: bind.harnessChoices(CENSUS)})
   assert.equal(agent.thread, values.thread, 'the Agent and the Thread draw one stream')
   assert.deepEqual(JSON.parse(agent.models), ['model:aion-2.0', 'model:glm-5.1'])
   assert.deepEqual(JSON.parse(agent.harnesses), ['claude-code', 'pi'])
@@ -305,6 +312,25 @@ test('the Agent\'s light only reads: its standing names Power, so its activator 
   host.resetHost()
 })
 
+test('the Harness chooser offers the census\'s agents that start; where none starts it offers nothing and says why, never an empty list (O-I ticket 1003)', () => {
+  bind.resetHolds()
+  const input = {sessionRef: 's', track: null, nowUnixMs: 0, reading: {attached: true, budget: null, gatewayAdmitted: null, gatewayDoc: null},
+    accepted: {}, harness: {binding: 'cursor', resolved: false}, holds: bind.chainHolds()}
+  /** The Harness chooser as the Whole view draws it: its cell's words and its options. */
+  const chooser = binding => hosted(agentDesign, binding).join('\n').match(/<div class="dp-cell dp-cell--chooser"[^>]*data-i="Harness\|[^"]*"[\s\S]*?<\/select>/)?.[0] ?? null
+  const some = bind.agentBinding('factory:agent', {...input, harnesses: bind.harnessChoices(CENSUS)}, {}, async () => ({kind: 'fired'}), () => true)
+  assert.equal(some.standing.harness, undefined, 'agents that start: the chooser offers them')
+  assert.match(chooser(some), /<select class="dp-chooser" aria-label="Harness"><option value="" disabled="" selected="">—<\/option><option value="claude-code">claude-code<\/option><option value="pi">pi<\/option><\/select>$/,
+    'the census\'s agents that start: not gemini')
+  host.resetHost()
+  const none = bind.agentBinding('factory:agent', {...input, harnesses: bind.harnessChoices({state: 'read', agents: CENSUS.agents.filter(agent => !agent.starts)})}, {}, async () => ({kind: 'fired'}), () => true)
+  assert.equal(none.values.harnesses, '[]')
+  assert.equal(none.standing.harness.disabled, bind.AGENT_NO_HARNESS)
+  assert.ok(chooser(none).includes(`${escaped(bind.AGENT_NO_HARNESS)}" data-unread="true" data-disabled="true">`), 'the chooser says why it offers nothing')
+  assert.match(chooser(none), /<select class="dp-chooser" aria-label="Harness" disabled=""><option value="" disabled="" selected="">—<\/option><\/select>$/)
+  host.resetHost()
+})
+
 // ---- the chain ------------------------------------------------------------------------------------------------------------
 
 test('the Thread is the one Agent\'s Full on the session\'s conversation (REPLACED: the Thread beside the Agent and its own pane — R4)', () => {
@@ -330,7 +356,8 @@ test('the Thread is the one Agent\'s Full on the session\'s conversation (REPLAC
   assert.match(read('AgentThreadView.tsx'), /const project = track\.project \?\? ROOT_REGISTER[\s\S]*?project,\n\s+accompanying: \{ref: track\.sessionRef, project, space: track\.spaceRef\}/, 'the pane observes the same key')
   assert.match(view, /\[\{ref: held\.sessionRef, space: held\.spaceRef, project: held\.project \?\? ROOT_REGISTER\}\]/, 'the chain observes it in the same register')
   assert.match(read('AgentThreadView.tsx'), /import \{threadTrackOf\} from '\.\/threadTrack'/, 'and resolves the same session')
-  for (const file of ['devices/threadBinding.ts', 'devices/EncounterObservers.tsx', 'devices/EncounterObserver.tsx', 'devices/useModelCatalogue.ts', 'threadTrack.ts']) {
+  // REPLACED (O-I ticket 1006): devices/useModelCatalogue.ts is gone (the models are the World Model's models slice).
+  for (const file of ['devices/threadBinding.ts', 'devices/EncounterObservers.tsx', 'devices/EncounterObserver.tsx', 'threadTrack.ts']) {
     assert.deepEqual(read(file).match(/#[0-9a-fA-F]{3,8}\b/g) ?? [], [], `${file}: shell tokens only`)
     assert.doesNotMatch(read(file), /\.defaults\[|\.fixtures|catalogue\/panels\//, `${file}: no design default or fixture is read`)
   }

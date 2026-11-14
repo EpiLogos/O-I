@@ -1,15 +1,17 @@
 /**
  * "Search settings" (12-SETTINGS §1): one index over every section and
  * product page, each entry landing on its exact row. Built from the same
- * snapshot the sections render, so a result never names a row that isn't
- * there.
+ * snapshot the sections render, and from the census the Harnesses section
+ * draws its agents from (the World Model's agents, O-I #1003), so a result
+ * never names a row that isn't there.
  */
-import {credentialCards, harnessName, readyHarnesses, adapterNeeded, skillParts, titleCase, permissionModeEntries, trustEntries} from "./sectionModel";
+import {credentialCards, skillParts, titleCase, permissionModeEntries, trustEntries} from "./sectionModel";
 import type {SettingsSnapshot} from "./settingsData";
-import {DEFAULT_CONNECTION_ROW, settingRowId, skillRowId} from "./changeModel";
+import {settingRowId, skillRowId} from "./changeModel";
 import type {SettingsPlace} from "./settingsNav";
 import {settingsProducts} from "./settingsProducts";
 import {connectionNames, MODEL_DEFAULT_SETTING} from "./harnessCapabilities";
+import {agentName, censusConnections, type CensusReading} from "../../agency/census";
 
 export interface SearchEntry {
   label: string;
@@ -19,7 +21,8 @@ export interface SearchEntry {
   terms: string;
 }
 
-export function searchIndex(data: SettingsSnapshot): SearchEntry[] {
+/** `census`: the agents on this machine as the Harnesses section reads them (agency/census.ts `useCensus`). */
+export function searchIndex(data: SettingsSnapshot, census: CensusReading): SearchEntry[] {
   const out: SearchEntry[] = [];
   const products = settingsProducts(data);
   const add = (label: string, where: string, place: SettingsPlace, row: string | null, extra = "") =>
@@ -27,22 +30,28 @@ export function searchIndex(data: SettingsSnapshot): SearchEntry[] {
   const section = (id: Extract<SettingsPlace, {kind: "section"}>["id"]): SettingsPlace => ({kind: "section", id});
   const hasModelDefaults = data.registry.state === "ok" && !!data.registry.value.index[MODEL_DEFAULT_SETTING];
   for (const [label, row] of [["Suite version", "card:suite"], ["Secret stores", "card:secret-stores"], ["Capability changes", "card:changes"], ["Drift", null]] as const) add(label, "Status", section("status"), row);
-  add("Default harness for new chats", "Harnesses", section("harnesses"), DEFAULT_CONNECTION_ROW, "provider new chat connection default");
   if (hasModelDefaults) add("Default models for new chats", "Harnesses", section("harnesses"), settingRowId(MODEL_DEFAULT_SETTING), "model choice new chat");
   add("About model policies", "Harnesses", section("harnesses"), "model:ranking-policy", "ranking auto balanced cheapest");
   add("Catalogue", "Harnesses", section("harnesses"), "model:catalogue", "models browse refresh");
   add("Theme and opening", "Appearance", section("appearance"), null, "light dark system visuals");
   add("Default permission mode", "Permissions", section("permissions"), null, "ask accept plan bypass");
   if (data.suite.state === "ok") {
-    const providers = data.suite.value.harness.providers;
-    for (const [id, name] of connectionNames(providers.state === "ok" ? providers.rows : [])) {
-      add(name, "Harnesses", section("harnesses"), `harness:${id}`, "connection");
-      if (hasModelDefaults) add(`Default model for ${name}`, "Harnesses", section("harnesses"), `model:${id}`);
+    // The agents are the census's, where the Harnesses section draws them: one entry per agent, landing on its card (`agent:<slug>`),
+    // AIKit's client for it adding only the words its card's AIKit detail answers to (sign in, install), never an entry of its own;
+    // and, where AIKit keeps model defaults, one per agent a person can talk to, landing on its row under New chats (`model:<slug>`),
+    // named as that row names it.
+    if (census.state === "read") {
+      for (const agent of census.agents) {
+        const client = agent.aikit?.client;
+        add(agentName(agent), "Harnesses", section("harnesses"), `agent:${agent.slug}`, `${agent.slug} agent harness${agent.aikit ? ` ${typeof client === "string" ? client : ""} sign in login install` : ""}`);
+      }
+      if (hasModelDefaults) {
+        const providers = data.suite.value.harness.providers;
+        const rows = censusConnections(census, providers.state === "ok" ? providers.rows : []).map((row) => ({id: row.id, label: row.label, ...(row.protocol ? {protocol: row.protocol} : {})}));
+        const names = connectionNames(rows);
+        for (const row of rows) add(`Default model for ${names.get(row.id)}`, "Harnesses", section("harnesses"), `model:${row.id}`);
+      }
     }
-    for (const row of readyHarnesses(data.suite.value)) {
-      add(`${harnessName(row.harness)} setup`, "Harnesses", section("harnesses"), `harness-install:${row.client}`, `${row.client} sign in login install`);
-    }
-    for (const row of adapterNeeded(data.suite.value)) add(harnessName(row.harness), "Harnesses · adapter needed", section("harnesses"), null, row.client);
     if (data.suite.value.disclosure.state === "ok") {
       for (const skill of data.suite.value.disclosure.rows.skills) {
         const parts = skillParts(skill.id);

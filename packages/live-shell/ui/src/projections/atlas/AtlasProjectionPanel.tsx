@@ -3,8 +3,8 @@
 // The host leg of T-ATLAS-HOST (DEVICE-SEMANTICS-LOCK §8.1, §8.4). The atlas is the ported Archetypal-Earth code and is
 // mounted with mountAtlas; its own Earth ⇄ Graph switch is driven through its controller (toggleMode). Nothing of the
 // atlas is reimplemented here. What the host adds: the corpus provider is registered from the World (the suite provider,
-// provider/suiteProvider.ts: Central's owners, never an old corpus), the atlas's three memories are bound to the workspace's
-// storage namespace, the pane says how many of the owners' subjects the Earth cannot place and which owner input did not answer
+// provider/suiteProvider.ts: Central's owners, never an old corpus), the atlas's memories are the World's the window is open on (the
+// World the host names; below), the pane says how many of the owners' subjects the Earth cannot place and which owner input did not answer
 // (the suite standing), and the pane's
 // lifecycle is the shell's: the atlas mounts on first view, pauses while concealed (the hidden-inhabitant law: the
 // instance survives), and is destroyed with its pane — or moves to a held pane on screen while its own pane is concealed
@@ -14,10 +14,10 @@
 // here as a mirror of the atlas controller's own mode, which the atlas writes to body[data-mode] (graph/switch.ts). The
 // atlas owns the state; the Earth ⇄ Graph device and the plates' View read the mirror.
 
-import {useEffect, useRef, useState, useSyncExternalStore} from 'react'
+import {useSyncExternalStore} from 'react'
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
-import {useContinuity} from '../../continuity/workspace'
-import {useWorkspace} from '../../shell/workspace'
+import {readShellConfig, subscribeShellConfig, type ShellConfig} from '../../native/application'
+import {CANDIDATE_WORKSPACE_KEY} from '../../continuity/workspace'
 import type {AionEpochJump} from './aionTimeline'
 import type {History} from './src/types/history'
 import type {AtlasHandle} from './mount'
@@ -27,7 +27,7 @@ import type {DatedSubsolarState, ShownInstant} from '../../inhabitants/qlSkyEart
 import {disclosureSession} from '../../../../../../desktop/cradle/src/techne/session'
 import {sunStanding} from '../../inhabitants/qlSkyEarthAdapter'
 import {bindSharedTimeClock, windowYear} from './sharedClock'
-import {SUITE_PROVIDER_ID, describeProgress, describeStanding, subscribeSuiteStanding, suiteStanding, type SuiteStanding} from './provider/suiteStanding'
+import {SUITE_PROVIDER_ID, describeStanding, subscribeSuiteStanding, suiteStanding, type SuiteStanding} from './provider/suiteStanding'
 import {bindPlaces, selectLocation, type PlacesBinding} from './places/placesHost'
 import {notePlaceTool} from './places/placeTool'
 import type {DreamJournalBinding} from './practice/dreamsHost'
@@ -41,7 +41,6 @@ import {enterWorld} from './system/enteredWorld'
 import type {SystemOverlayBinding} from './system/systemOverlay'
 import {bindSystemClock} from './system/systemClock'
 import {watchPaneChrome} from './paneChrome'
-import {spineWorkspace, subscribeSpineWorkspace} from '../encounterBridge'
 import './atlasHost.css'
 
 /** The year the Earth shows, from the shared window: null while no window is in force (all time). */
@@ -142,29 +141,66 @@ export function presentAtlasView(view: AtlasView): void {
   reconcileFollowed?.()
 }
 
-// ── the workspace scope: the atlas's memories, per workspace id ───────────
+// ── the World: the atlas's memories are the World's the window is open on ──
 
-export interface AtlasHostScope {
-  /** the workspace book's storage namespace (continuity: storageNamespace.key) */
-  namespace: string
-  /** the active workspace id */
-  workspaceId: string
+/** The World the window is open on, as the host names it (native/application.ts readShellConfig, the reading the shell qualifies its
+ * World by, native/Foundation.tsx): its Central ground, under which the World's own Sets and Expression owners stand too (App.tsx
+ * setsGround, native/expressionOwners.ts), and its owner, whose walk the Earth reads and writes (walks/walksHost.ts). No pane, book or
+ * workspace binds it: the attach reads it before anything stands, and each later reading of the host moves it. */
+export interface AtlasWorld {
+  /** the World's Central ground (`world_scope.personal_ground`) */
+  readonly ground: string
+  /** the World's owner (`world_scope.owner`) */
+  readonly owner: string
 }
 
-let scope: AtlasHostScope | null = null
+let world: AtlasWorld | null = null
 
-export function bindAtlasScope(next: AtlasHostScope): void {
-  scope = next
+/** The World a host reading names: its scope's ground, else the ground the host discloses (App.tsx setsGround's rule). Null when it
+ * names none. Pure. */
+export function atlasWorldOf(config: Pick<ShellConfig, 'world_scope' | 'personal_ground'> | null | undefined): AtlasWorld | null {
+  const ground = config?.world_scope?.personal_ground ?? config?.personal_ground ?? null
+  return typeof ground === 'string' && ground ? {ground, owner: config?.world_scope?.owner ?? 'central'} : null
 }
 
-/** The scope the memories are kept under, read at each use: the one a pane bound (the centre pane, AtlasEarthPane), else the workspace
- * the spine stands in (projections/encounterBridge.ts spineWorkspace). A pane of the `projection.earth` kind mounts through the module
- * door (registerAtlasHost.ts), where no centre pane stands to bind it (O-I #742, walk 739 T1); the spine's workspace is the live book's,
- * held by the native Workbench before any pane's module mounts, so a workspace switch moves the memories with it. */
-function currentScope(): AtlasHostScope | null {
-  if (scope) return scope
-  const standing = spineWorkspace()
-  return standing ? {namespace: standing.namespace, workspaceId: standing.workspaceId} : null
+/** The World the Earth stands in: the one the host last named; null while it names none. */
+export function atlasWorld(): AtlasWorld | null {
+  return world
+}
+
+/** Bind the World the host names: a lived-in World's memory is carried in as the World is first named, and its walk is its owner's. */
+function bindWorld(next: AtlasWorld | null): void {
+  if (next?.ground === world?.ground) return
+  if (next) carryWorkspaceMemory(next)
+  world = next
+  setWalkWorld(next?.owner)
+}
+
+let followingHost = false
+
+/** Follow the host's readings from the first attach on: each one the window settles (its first, and each resync, native/Foundation.tsx)
+ * names the World the Earth stands in. A reading that fails names nothing new, and the World stays as it was named. */
+function followHostWorld(): void {
+  if (followingHost) return
+  followingHost = true
+  subscribeShellConfig(outcome => { if (outcome.config) bindWorld(atlasWorldOf(outcome.config)) })
+}
+
+/** How long an attach waits for the host to name its World. The window read it as it opened (native/Foundation.tsx), long before any pane
+ * mounts, so this is a moment's grace and never a hold: a host reading that has not answered by then does not hold the Earth, and the
+ * World is bound when it is named. */
+export const WORLD_GRACE_MS = 250
+
+/** Read the World the host names now, waiting no longer than the grace. A host that cannot be read names none, and the Earth mounts on
+ * what its owners answer all the same. */
+async function readAtlasWorld(): Promise<void> {
+  followHostWorld()
+  let timer: ReturnType<typeof setTimeout> | undefined
+  await Promise.race([
+    readShellConfig().then(config => bindWorld(atlasWorldOf(config)), () => {}),
+    new Promise<void>(resolve => { timer = setTimeout(resolve, WORLD_GRACE_MS) }),
+  ])
+  clearTimeout(timer)
 }
 
 function localArea(): Storage | null {
@@ -175,14 +211,16 @@ function localArea(): Storage | null {
   }
 }
 
-/** The one Storage the atlas's memories are bound to: keys under the book's namespace, one set per workspace id. The
- * atlas never names a key or an area itself. With no workspace bound, nothing is read and a write is refused, so the
- * atlas's own probe finds no storage and says so, rather than keeping something nowhere. */
-function workspaceStorage(): Storage {
-  const prefix = (): string | null => {
-    const bound = currentScope()
-    return bound ? `${bound.namespace}.atlas.${bound.workspaceId}::` : null
-  }
+/** Where a World's memories stand in the window's store: under its Central ground. The store is the World's own already — the host gives
+ * every World a webview store of its own and Yours keeps its own (desktop/cradle/src-tauri/src/main.rs, world_folder.rs
+ * `store_identifier`) — and the ground keeps apart Worlds one page's store serves (a development page over another World's bridge). */
+const worldPrefix = (of: AtlasWorld): string => `oi.atlas[${of.ground}]::`
+
+/** The one Storage the atlas's memories are bound to: the World's keys in the window's store. The atlas never names a key or an area
+ * itself. While the host names no World, nothing is read and a write is refused in words, so the atlas's own probe finds no storage and
+ * says so, rather than keeping something nowhere. */
+function worldStorage(): Storage {
+  const prefix = (): string | null => (world ? worldPrefix(world) : null)
   const owned = (): string[] => {
     const p = prefix()
     const area = localArea()
@@ -216,7 +254,7 @@ function workspaceStorage(): Storage {
     setItem(key, value) {
       const p = prefix()
       const area = localArea()
-      if (!p || !area) throw Error('No workspace is bound for the Earth projection memory')
+      if (!p || !area) throw Error('The Earth\'s memory has nowhere to be kept: the host names no World this window is open on.')
       area.setItem(p + key, value)
     },
     removeItem(key) {
@@ -232,7 +270,39 @@ function workspaceStorage(): Storage {
   return store
 }
 
-const sharedStorage = workspaceStorage()
+/** Where a lived-in World's Earth kept its memories before they were the World's: per workspace of the window's book
+ * (`<book namespace>.atlas.<workspace id>::`, O-I #742). */
+const WORKSPACE_MEMORY = `${CANDIDATE_WORKSPACE_KEY}.atlas.`
+
+/** What a lived-in World's Earth kept under the book's workspaces becomes the World's, once, while the World keeps nothing yet. Each key is
+ * copied — the root workspace's first, then the others' in the store's order, a key already carried never replaced — and what the
+ * workspaces kept is left where it was. */
+function carryWorkspaceMemory(into: AtlasWorld): void {
+  const area = localArea()
+  if (!area) return
+  const prefix = worldPrefix(into)
+  try {
+    const kept: {workspace: string; key: string; stored: string}[] = []
+    for (let i = 0; i < area.length; i++) {
+      const stored = area.key(i)
+      if (stored?.startsWith(prefix)) return
+      if (!stored?.startsWith(WORKSPACE_MEMORY)) continue
+      const rest = stored.slice(WORKSPACE_MEMORY.length)
+      const split = rest.indexOf('::')
+      if (split > 0) kept.push({workspace: rest.slice(0, split), key: rest.slice(split + 2), stored})
+    }
+    kept.sort((a, b) => Number(b.workspace === 'root') - Number(a.workspace === 'root'))
+    for (const {key, stored} of kept) {
+      if (area.getItem(prefix + key) !== null) continue
+      const value = area.getItem(stored)
+      if (value !== null) area.setItem(prefix + key, value)
+    }
+  } catch {
+    // A store that refuses (full, or closed to this page) keeps what it had: the World's memory starts from what was carried, nothing lost.
+  }
+}
+
+const sharedStorage = worldStorage()
 
 /** The dream journal the practice store's dreams are bound to (practice/dreamsHost.ts), one per attach. */
 let practiceDreams: DreamJournalBinding | null = null
@@ -376,7 +446,6 @@ function heldBy(options: AtlasAttachOptions, visible = false): AtlasAttachment {
  * for the claim. Throws with the atlas's own honest message when it cannot mount. */
 export async function attachAtlas(options: AtlasAttachOptions): Promise<AtlasAttachment> {
   if (claimed) return heldBy(options)
-  if (!currentScope()) throw Error('No workspace is bound for the Earth projection, so its settings have nowhere to live.')
   claimed = true
   const progress: {teardown: (() => void) | null} = {teardown: null}
   try {
@@ -394,6 +463,9 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
   const {element, transport, follow} = options
   const fixedView: AtlasView = options.view ?? 'earth'
   const target = (): AtlasView => (follow ? desiredView : fixedView)
+  // The Earth stands in the World the window is open on, read before anything is bound: its memories are that World's (a lived-in
+  // World's carried in once), and its walk is that World's owner's.
+  await readAtlasWorld()
   element.replaceChildren()
   const globe = document.createElement('div')
   globe.id = 'globe'
@@ -420,7 +492,7 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
   landing.setLandingStore(null)
   // Your dreams are kept in your dream journal (practice/dreamsHost.ts; T-WORLDS W4): the store's dream collection is that Flow's
   // entries, read through their owner once the Earth has mounted (the mount never waits on it: a dream asked for before the read lands
-  // is refused in words, never kept in the window); every other collection stays the workspace's store. The lens's Amplify lays Source
+  // is refused in words, never kept in the window); every other collection stays the World's memory. The lens's Amplify lays Source
   // entries from the mounted field's model.
   practiceDreams?.dispose()
   const {bindDreamJournal, kernelDreamOwners} = await import('./practice/dreamsHost')
@@ -475,7 +547,6 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
   let places: PlacesBinding | null = null
   let palaces: PalacesBinding | null = null
   let walks: WalksBinding | null = null
-  let unsubscribeWorld: () => void = () => {}
   let body: {dispose(): void} | null = null
   let bodyDraw: {dispose(): void} | null = null
   let system: SystemOverlayBinding | null = null
@@ -504,7 +575,6 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
     places?.dispose()
     palaces?.dispose()
     walks?.dispose()
-    unsubscribeWorld()
     body?.dispose()
     bodyDraw?.dispose()
     system?.dispose()
@@ -541,17 +611,13 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
   // reads the point under a click and offers it to the owner's editor (places/placesHost.ts).
   places = bindPlaces({handle: mounted, transport, session: disclosureSession})
   // Palaces live in the atlas (T-PALACES-ONTO-ATLAS; FOUNDATION §3 N4): a palace is a place on the world you enter, drawn inside this pane
-  // at the atlas's palace scale; its owners read and write through this transport, and its presence through the atlas's workspace memory
+  // at the atlas's palace scale; its owners read and write through this transport, and its presence through the World's memory
   // (palaces/palacesHost.ts).
   palaces = bindPalaces({element, transport, storage: atlasMemoryStorage})
   // The World's walk (O-I #760): Record keeps a take of the places you visit and Capture keeps the view as a Scene, both in the walk's
-  // Expression through its owner over this transport; the read of the walk lays its takes on Technē's ruler (walks/walksHost.ts).
+  // Expression through its owner over this transport; the read of the walk lays its takes on Technē's ruler (walks/walksHost.ts). The
+  // walk is the World's the window is open on (set above, as the attach read the World).
   walks = bindWalks({handle: mounted, transport})
-  // The walk is the book's world's: the world the spine stands in, as the centre pane sets it from its own book (a pane of the module door
-  // has no book of its own). Without a spine (a standalone harness) the world is left as it was set.
-  const followWorld = () => { const standing = spineWorkspace(); if (standing) setWalkWorld(standing.world) }
-  followWorld()
-  unsubscribeWorld = subscribeSpineWorkspace(followWorld)
   // Your world's body (T-WORLDS §5 W3): read from its owner (the root register's space, AIKit's `aikit.world-body/v1`), and the view's choice of
   // which body to look at (body/worldBody.ts); the Earth stays given. It reads and draws nothing: one drawer draws the globe's body, with the look
   // its world's readings give it and the weather of the shared occasion (system/bodyDraw.ts; T-PROCEDURAL-BODY §6 item 3).
@@ -738,89 +804,4 @@ export async function jumpAtlasToLayerStop(layerId: string, eventId: string): Pr
   const jump = aionEpochJump(reading, epoch, held.providerId)
   if (typeof location !== 'undefined' && location.hash !== jump.hash) location.hash = jump.hash
   return jump
-}
-
-// ── the centre pane ───────────────────────────────────────────────────────
-
-/** The Earth centre panel: mounts the atlas on first view, then keeps it through concealment. */
-export function AtlasEarthPane() {
-  const {transport} = useWorkspace()
-  const continuity = useContinuity()
-  const namespace = continuity.storageNamespace.key
-  const workspaceId = continuity.current.id
-  const wrapper = useRef<HTMLDivElement>(null)
-  const body = useRef<HTMLDivElement>(null)
-  const attachment = useRef<AtlasAttachment | null>(null)
-  const wantVisible = useRef(false)
-  const started = useRef(false)
-  const transportRef = useRef(transport)
-  transportRef.current = transport
-  const [phase, setPhase] = useState<{state: 'waiting' | 'reading' | 'ready' | 'failed' | 'held'; message?: string}>({state: 'waiting'})
-
-  useEffect(() => {
-    bindAtlasScope({namespace, workspaceId})
-  }, [namespace, workspaceId])
-  // The world the walk belongs to is the book's (walks/walksHost.ts).
-  const world = continuity.current.context?.world
-  useEffect(() => { setWalkWorld(world) }, [world])
-
-  useEffect(() => {
-    const element = wrapper.current
-    if (!element || typeof IntersectionObserver === 'undefined') return
-    let alive = true
-    // The pane's attachment, however it was given: a held pane's is replaced when the atlas is handed to it (onHandover).
-    const adopt = (next: AtlasAttachment) => {
-      if (!alive) {
-        next.unmount()
-        return
-      }
-      attachment.current?.unmount()
-      attachment.current = next
-      next.setVisible(wantVisible.current)
-      // a pane that does not hold the atlas says so in its body (heldBy); the pane's phase names it too
-      setPhase({state: next.held ? 'held' : 'ready'})
-    }
-    const fail = (error: unknown) => {
-      if (alive) setPhase({state: 'failed', message: error instanceof Error ? error.message : String(error)})
-    }
-    const attach = () => {
-      attachAtlas({
-        element: body.current!,
-        transport: transportRef.current,
-        follow: true,
-        onHandover: outcome => ('error' in outcome ? fail(outcome.error) : adopt(outcome.attachment)),
-      }).then(adopt, fail)
-    }
-    const start = () => {
-      if (started.current) return
-      started.current = true
-      setPhase({state: 'reading'})
-      attach()
-    }
-    const observer = new IntersectionObserver(entries => {
-      for (const entry of entries) {
-        wantVisible.current = entry.isIntersecting
-        if (entry.isIntersecting) start()
-        attachment.current?.setVisible(entry.isIntersecting)
-      }
-    })
-    observer.observe(element)
-    return () => {
-      alive = false
-      observer.disconnect()
-      attachment.current?.unmount()
-      attachment.current = null
-    }
-  }, [])
-
-  const standing = useSuiteStanding()
-  const text = phase.state === 'failed'
-    ? `The Earth could not mount: ${phase.message ?? 'unknown error'}`
-    : phase.state === 'reading' ? (standing.phase === 'reading' ? describeProgress(standing) : 'Reading your world…') : null
-  return (
-    <div ref={wrapper} className="atlas-host" data-atlas-phase={phase.state} data-projection-kind="projection.earth">
-      <div ref={body} className="atlas-host-body" />
-      {text && <p role={phase.state === 'failed' ? 'alert' : 'status'} className="atlas-host-status">{text}</p>}
-    </div>
-  )
 }

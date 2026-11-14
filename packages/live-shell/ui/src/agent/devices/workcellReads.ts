@@ -13,7 +13,7 @@ import {useMemo} from 'react'
 import {scopesOf, useHeldRead, useOwnerOp} from '../../owners/ownerCall'
 import {kernelRead} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import type {GatewayRemotesReading, KernelOp, KernelTransportStatus, SeatStatusReading, SourceReturnsReading} from '../../../../../../desktop/cradle/src/kernel/types'
-import {ownerReadings, scoped, useOwnerReading, type OwnerRead, type OwnerReadings, type OwnerReadingEntry} from '../../owners/ownerReading'
+import {ownerReadings, useOwnerReading, type OwnerRead, type OwnerReadings, type OwnerReadingEntry} from '../../owners/ownerReading'
 import {useSpineEpoch} from '../../owners/spine'
 import {gatewayEpochKey, useGatewayGeneration} from '../../owners/gatewayGeneration'
 import {ROUTE_WORDS, aikitReadOp, refusalWords, routeAnswerOf, workcellReadOp} from './ownerRoutes'
@@ -127,15 +127,6 @@ export function useConnectionShows(transport: KernelTransportStatus, labels: rea
     return Object.fromEntries(shown)
   })
   return useMemo(() => new Map(reading.status === 'answered' && reading.value ? Object.entries(reading.value) : []), [reading])
-}
-
-/** An owner route's held reading as the bindings take it (workcellBindings.ts WorkcellAnswer): AIKit's gateway ecology. */
-export function useGatewayEcology(transport: KernelTransportStatus, enabled: boolean): WorkcellAnswer {
-  const reading = useHeldRead<unknown>(enabled ? ['gateway-ecology', transport] : null, async () => {
-    const read = await routeRead(transport, aikitReadOp({kind: 'gateway-ecology'}), ROUTE_WORDS.ecology)
-    return scoped(read.data, read.read_scopes)
-  })
-  return useMemo((): WorkcellAnswer => ({status: reading.status, value: reading.value, error: reading.error}), [reading])
 }
 
 /** The frames of each Stream asked, from AIKit's gateway journal (`aikit gateway replay --stream S --after N --limit L`), by Stream ref: its

@@ -5,8 +5,11 @@
  * rewrites it silently.
  */
 import type {DisclosedSetting} from "../types";
-import {adapterNeeded, readyHarnesses, skillCounts, credentialCards, storedIn, providerName} from "../sectionModel";
+import {agentsLine, skillCounts, credentialCards, storedIn, providerName} from "../sectionModel";
 import {useEffect} from "react";
+import {useCensus} from "../../../agency/census";
+import {useKernel} from "../../../kernel/KernelProvider";
+import {Refusal} from "../../../shared/Refusal";
 import {refreshAll, watchPair, type SettingsSnapshot} from "../settingsData";
 import {goTo} from "../settingsNav";
 import {settingsProducts} from "../settingsProducts";
@@ -65,6 +68,8 @@ const AXIS_WORD: Record<string, string> = {declared: "Declared", effective: "In 
 
 export function StatusSection({data}: {data: SettingsSnapshot}) {
   useEffect(() => { void watchPair("oi:update:state", {scope_kind: "world", scope_ref: null}); }, []);
+  // The agents on this machine are the census's (the World Model's agents, O-I #1003): the cards the Harnesses section draws.
+  const agents = useCensus(useKernel().transport);
   if (data.suite.state === "reading" && data.census.state === "reading") return <Reading/>;
   const drift = driftRows(data);
   const owners = data.owners.state === "ok" ? data.owners.value : null;
@@ -82,8 +87,8 @@ export function StatusSection({data}: {data: SettingsSnapshot}) {
         <p data-status-suite>{oi?.owner.owner_version ? `O:I ${oi.owner.owner_version}` : data.census.state === "ok" ? "O:I" : "O:I · not read yet"}{typeof update === "string" && update ? ` · ${update}` : ""}</p>
       </Card>
       <Card title="Harnesses" id="harnesses">
-        {suite ? <p data-status-harnesses>{readyHarnesses(suite).length} ready · {adapterNeeded(suite).length} detected without an adapter</p>
-          : data.suite.state === "failed" ? <p>Couldn't be read.</p> : <p>Reading…</p>}
+        {agents.state === "read" ? <p data-status-harnesses>{agentsLine(agents)}</p>
+          : agents.state === "unavailable" ? <Refusal role="status" said="The agents on this machine couldn't be read." error={agents.why}/> : <p>Reading…</p>}
         <button type="button" className="settings-button" onClick={() => goTo({kind: "section", id: "harnesses"})}>Open</button>
       </Card>
       <Card title="Credentials" id="credentials">

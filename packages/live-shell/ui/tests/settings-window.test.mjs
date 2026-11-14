@@ -414,12 +414,22 @@ test('Products, Profiles, Appearance: an owner\'s about, every operation of the 
 // ── the readings each page's owner gives ─────────────────────────────────────────────────────────────────────────────────────────────
 
 test('CODE-DERIVED — each page\'s owner reading becomes the design\'s keys: harnesses and routes, credentials by reference, profiles, machines, routines and timers, the theme, products and the four axes', () => {
-  const reading = {kind: 'live', label: 'live', observed_at_unix_ms: 1, heldDefault: {value: 'pi', set_at_unix_ms: 1}, defaultState: {state: 'ok'},
-    providers: {state: 'ok', rows: [{id: 'pi', label: 'Pi'}, {id: 'claude', label: 'Claude'}]},
-    harnesses: {state: 'ok', rows: [{harness: 'Claude Code', client: 'claude-code', detection: 'binary', detected: true, detection_reason: null, installed: true, config_dir: '/Users/x/.claude (settings)', dispatch: 'acp', capability: 'descriptor', effect: 'restart Claude', items: 3, adapter_gap: null}]},
+  const reading = {kind: 'live', label: 'live', observed_at_unix_ms: 1, providers: {state: 'ok', rows: [{id: 'pi', label: 'Pi'}, {id: 'claude', label: 'Claude'}]},
+    harnesses: {state: 'ok', rows: [{harness: 'Claude Code', client: 'claude-code', detection: 'binary', detected: true, detection_reason: null, config_dir_present: true, config_dir: '/Users/x/.claude (settings)', dispatch: 'acp', capability: 'descriptor', effect: 'restart Claude', items: 3, adapter_gap: null}]},
     catalogue: {state: 'ok', rows: {count: 1, entries: [{model: 'm1', name: 'Model one', source: 'aikit', routes: [{kind: 'api', provider: 'anthropic', credential_required: true}]}]}}}
-  const h = win.harnessValues(reading)
-  assert.deepEqual([h.heldDefault, JSON.parse(h.effectiveDefault).rule, JSON.parse(h.harnesses)[0].folder, JSON.parse(h.routes)[0].routes[0]], ['pi', 'owner-choice', '/Users/x/.claude', {provider: 'anthropic', key: true}])
+  // The rows are the census's agents (O-I #1003); AIKit's client row is detail on the agent it names, and no row of its own.
+  const census = {state: 'read', agents: [{slug: 'claude-code', harnessRef: 'harness/claude-code', executable: '/x/claude', starts: true, talks: true, version: '2.1.323', aikit: null},
+    {slug: 'gemini', harnessRef: 'harness/gemini', executable: '/x/gemini', starts: false, talks: false, why: 'gemini did not start', aikit: null},
+    {slug: 'opencode', harnessRef: 'harness/opencode', executable: '/x/opencode', starts: true, talks: false, version: '1.18.29', why: 'AIKit opens no conversation with opencode', aikit: null}]}
+  const h = win.harnessValues(reading, null, census)
+  const rows = JSON.parse(h.harnesses)
+  // AIKit's client row says whether the harness's folder exists (`config_dir_present`), which is all its old `installed` checked.
+  assert.deepEqual([rows.length, rows[0].folder, rows[0].folderPresent, rows[0].version, rows[1].why, rows[1].folderPresent, JSON.parse(h.routes)[0].routes[0]],
+    [3, '/Users/x/.claude', true, '2.1.323', 'gemini did not start', undefined, {provider: 'anthropic', key: true}])
+  // An agent that starts but that AIKit opens no conversation with is listed, starting, as one you cannot talk to, in AIKit's words.
+  assert.deepEqual(rows.map(row => [row.agent, row.starts, row.talks]), [['claude-code', true, true], ['gemini', false, false], ['opencode', true, false]])
+  assert.equal(rows[2].why, 'AIKit opens no conversation with opencode')
+  assert.equal(h.providers, undefined, 'no provider rows and no chat default stand in the values')
   const c = win.credentialValues([{credential: 'ai-kit:credential:anthropic', provider: 'anthropic', reference: 'keychain://aikit/anthropic', revoked: false, verifiedAt: 1792500000}], {'ai-kit:credential:anthropic': 'working'}, 2)
   assert.deepEqual([JSON.parse(c.credentials)[0].verdict, c.found], ['working', 2])
   assert.doesNotMatch(c.credentials, /material|secret_value/, 'no material enters the values')
@@ -470,7 +480,7 @@ test('SCRIPTED — the Settings window (SettingsWorkspace) draws the design\'s F
   assert.match(markup, /class="ref-pane-body st-window"/, 'the catalogue design draws the window')
   assert.match(markup, /aria-label="Harnesses &amp; models"/, 'a window opened over a world with its ground opens on Harnesses & models')
   // O-I #758: the registry asked and not answered yet is drawn waiting, never as a reading that is absent, and never a sample.
-  assert.match(markup, /<h4>New conversations<small><span class="dp-no-reading" data-standing="awaiting"/, 'the registry being read: drawn waiting')
+  assert.match(markup, /<h4>Agent settings<small><span class="dp-no-reading" data-standing="awaiting"/, 'the registry being read: drawn waiting')
   assert.doesNotMatch(markup, /No reading of the owners&#x27; settings/, 'the registry being read is not said to be absent')
   assert.match(markup, />← Back to work</, 'the way back')
   assert.doesNotMatch(markup, SETTINGS_FIXTURE)
@@ -489,6 +499,8 @@ test('the pages the window drew before are retired with the port: the design dra
 /** Native oi's adoption and Central's Work as they answer (oi setup's oi.setup/v1 documents; ctrl's work.list, projectcentral.inspect,
  * central.files.list and projectcentral.init data, shapes read from the installed owners on scratch worlds, 28 Oct). A world's folder
  * is /w/Bare; its ground, once made, /w/Bare/Central. Every request is kept, in order. */
+/** A live standing grant Actuation keeps, as `authority list` lists it: held by the person, rooted at the World's root. */
+const standingGrant = (worlds = ['control:root']) => [{source: 'authority-source:world-grant@control:root:1726300000', at: 1726300000, holder: 'human:owner', worlds, revoked: null}]
 function scriptedSetup() {
   const calls = []
   const GROUND = '/w/Bare/Central'
@@ -507,6 +519,9 @@ function scriptedSetup() {
     placement: null, key: false, keeps: true,
     // `form`: whether the ground keeps the Day's form (Control/forms); `formByProject`: whether its O-I project carries it instead.
     form: false, formByProject: false,
+    // `day`: your Day's settings as Central keeps them (central.day.settings.read/write, O-I ticket 1005): their revision (`absent` before the
+    // first save), the Day form saved and Close's runs_at (null: Central's default, Off); `formRevision`: the revision the form stands at.
+    day: {revision: 'absent', day_form: null, close: null, saves: 0}, formRevision: 'central.content-fnv1a64/v1:form-1',
     // `extended`: the projects the person's grant and the ground's bounds reach (central.ground.project.adopt); `byHand`: a ground
     // whose key and bounds the person keeps by hand (their recognition is not Setup's), which Central never extends.
     extended: new Set(), byHand: false, adoptRefusal: null,
@@ -514,7 +529,10 @@ function scriptedSetup() {
     // Central that refuses the agreement once.
     lacks: [], agreeRefusal: null,
     // `placed`: the projects Factory keeps (their .factory placement); `factoryRefusal`: a Factory that refuses project setup.
-    placed: new Set(), factoryRefusal: null}
+    placed: new Set(), factoryRefusal: null,
+    // `grants`: Actuation's authority store as `authority list` lists the World's standing grants (a renewal revokes the holder's earlier
+    // grant for the same root); `grantRefusal`: an Actuation that refuses grant-world once.
+    grants: [], grantRefusal: null}
   const HOME = '/w/Bare'
   const digestOf = relative => `digest:${relative}:${world.elsewhere.get(relative).revision}`
   // A ground the person chose (discover's `ground`) is read where it is: new until it is the bound one.
@@ -613,6 +631,21 @@ function scriptedSetup() {
       return {adopted: true, added, actions: ['central.day.ensure', 'central.world.place'], authority_revision: 'a-2', source_ref: 'central:source:control:root:Control/user/native-action-authority.json'}
     }
     if (!world.bound) throw new Error(`Central root does not exist as a directory: ${GROUND}`)
+    // Your Day's settings (Central's continuous_work/day_moves.rs, O-I ticket 1005; shapes as the built ctrl answers): the Day form saved at
+    // the revision read, and Close; a save on a stale revision, or of a form that changed since it was read, is refused in Central's words.
+    const dayReading = () => ({schema: 'central.day-settings-reading/v1', scope_ref: 'control:root', path: 'Control/agents/now/day/settings.json', revision: world.day.revision,
+      saved: world.day.revision !== 'absent', settings: {day_form: world.day.day_form, moves: {close: {prompt: '', runs_at: world.day.close ?? {kind: 'off'}}}},
+      standing: {day_form: world.day.day_form ? 'saved' : 'default', moves: {close: {prompt: 'default', runs_at: world.day.close ? 'saved' : 'default'}}}, automatic_agent_or_model_invocation: false})
+    if (action === 'central.day.settings.read') return dayReading()
+    if (action === 'central.day.settings.write') {
+      if (input.expected_revision !== world.day.revision) throw new Error('the Day\'s settings changed; read them again')
+      if (input.day_form && input.day_form.revision !== world.formRevision)
+        throw new Error(`The Day form at ${input.day_form.path} changed since you read it (it stands at ${world.formRevision} now): read it again before you save it`)
+      if ('day_form' in input) world.day.day_form = input.day_form
+      if (input.moves?.close?.runs_at) world.day.close = input.moves.close.runs_at
+      world.day.saves += 1; world.day.revision = `day-settings-${world.day.saves}`
+      return {...dayReading(), written_by: 'human:Bare'}
+    }
     const project = name => { const row = world.work.get(name); if (!row) throw new Error(`Project root does not exist as a directory: ${GROUND}/Work/${name}`); return row }
     if (action === 'work.list') return {items: [...world.work.keys()].map(name => ({name, path: `${GROUND}/Work/${name}`})), root: GROUND}
     if (action === 'projectcentral.inspect') {
@@ -667,8 +700,8 @@ function scriptedSetup() {
   const aikit = async op => {
     calls.push(['aikit', op.op === 'aikit_read' || op.op === 'aikit_write' ? `${op.op} ${op.request.kind}` : op.op, structuredClone(op)])
     const tools = [...world.tools.values()]
-    if (op.op === 'harness_status') return {clients: [...tools.map(tool => ({client: tool.client, harness: tool.harness, detection: 'detected', installed: true, config_dir: tool.folder,
-      capability: 'descriptor', dispatch: 'client', credential: 'credential-gated'})), {client: 'codex', harness: 'codex', detection: 'not-installed', installed: false, config_dir: `${HOME}/.codex`}]}
+    if (op.op === 'harness_status') return {clients: [...tools.map(tool => ({client: tool.client, harness: tool.harness, detection: 'detected', config_dir_present: true, config_dir: tool.folder,
+      capability: 'descriptor', dispatch: 'client', credential: 'credential-gated'})), {client: 'codex', harness: 'codex', detection: 'not-installed', config_dir_present: false, config_dir: `${HOME}/.codex`}]}
     if (op.op === 'harness_auth_describe') {
       if (op.harness !== 'claude-code') throw new Error(`harness.unknown: no harness profile named ${op.harness}`)
       return REAL.harness_auth_claude.data
@@ -735,16 +768,33 @@ function scriptedSetup() {
   // The kernel's ground_form route (desktop/cradle/kernel/src/ground_form.rs): the application's own Day form, kept through Central.
   const groundForm = async request => {
     calls.push(['form', request.operation, structuredClone(request)])
-    if (world.formByProject) return {schema: 'oi.ground-form/v1', name: 'ql-daily-die.html', carried_by: 'Work/O-I/desktop/cradle/documents', kept: false, state: 'project'}
+    // The form as your Day's settings save it, where one stands (the kernel's ground_form `day_form`, O-I ticket 1005).
+    const dayForm = path => ({path, revision: world.formRevision})
+    if (world.formByProject) return {schema: 'oi.ground-form/v1', name: 'ql-daily-die.html', carried_by: 'Work/O-I/desktop/cradle/documents', kept: false, state: 'project',
+      day_form: dayForm('Work/O-I/desktop/cradle/documents/ql-daily-die.html')}
     const central = {schema: 'central.ground-form-preview/v1', state: !world.bound ? 'no-ground' : world.form ? 'present' : 'absent', source_path: 'Control/forms/ql-daily-die.html', digest: world.form ? null : 'form-digest'}
-    if (request.operation === 'preview') return {schema: 'oi.ground-form/v1', name: 'ql-daily-die.html', central}
+    const standing = () => (world.form ? dayForm('Control/forms/ql-daily-die.html') : null)
+    if (request.operation === 'preview') return {schema: 'oi.ground-form/v1', name: 'ql-daily-die.html', central, day_form: standing()}
     if (!world.bound) throw new Error('there is no ground here yet: make the ground first')
-    if (world.form) return {schema: 'oi.ground-form/v1', name: 'ql-daily-die.html', kept: false, state: 'present'}
+    if (world.form) return {schema: 'oi.ground-form/v1', name: 'ql-daily-die.html', kept: false, state: 'present', day_form: standing()}
     if (request.expected_digest !== 'form-digest') throw new Error('the form Central would keep changed since its preview (or no preview was named): preview it again. Nothing was written.')
     world.form = true; world.formAcceptance = request.acceptance_ref
-    return {schema: 'oi.ground-form/v1', name: 'ql-daily-die.html', kept: true, state: 'present', source_path: 'Control/forms/ql-daily-die.html'}
+    return {schema: 'oi.ground-form/v1', name: 'ql-daily-die.html', kept: true, state: 'present', source_path: 'Control/forms/ql-daily-die.html', day_form: standing()}
   }
   const harnessDisclosure = async () => { calls.push(['disclosure']); if (!world.disclosure) throw new Error('aikit harness disclose did not answer'); return world.disclosure }
+  // The census as the World Model answers it (`model_subscribe` agents; kernel census.rs census_of's row shape, O-I #1003): each tool
+  // Actuation detects, started, with AIKit's client row on it and what it carries; `censusRefusal`: a World Model that does not answer.
+  const agents = async fresh => {
+    calls.push(['agents', !!fresh])
+    if (world.censusRefusal) throw new Error(world.censusRefusal)
+    const rows = [...world.tools.values()].map(tool => ({slug: tool.harness, harness_ref: `harness/${tool.harness}`, native_kind: 'harness', state: 'detected',
+      executable: `/usr/local/bin/${tool.client}`, aikit: {client: tool.client, harness: tool.harness, detection: 'detected', config_dir_present: true, config_dir: tool.folder},
+      carries: {model: {model_id: 'claude-opus-5-5'}, skills: {sets: ['foundation'], skills: ['wayfinder']},
+        law: {file: 'CLAUDE.md', state: 'rendered', renderer: 'control.floor.render', statements: [{file: 'world/shape-of-the-world.md', topic: 'Shape of the world', standing: 'adopted'}]}},
+      starts: true, version: '2.1.323 (Claude Code)', start_seconds: 0.4, talks: true}))
+    return {schema: 'oi.world-model-slice/v1', slice: 'agents', owner: 'kernel', scopes: ['machine'], version: 1, state: 'read', error: null, read_at_unix_ms: 1,
+      value: {schema: 'oi.agents-census/v1', detection_ref: 'd1', observed_at: 'now', agents: rows, not_agents: [], aikit_detail: {state: 'read'}}}
+  }
   // The kernel's factory_owner for a project (desktop/cradle/kernel/src/factory.rs; shapes as the walk-bridge answered on a scratch world,
   // 29 Oct): locate (oi.factory-source-discovery/v1) and project-setup (Factory's factory.project-location/v1). A Work member that is no
   // project is outside Central's disclosed ground.
@@ -765,7 +815,21 @@ function scriptedSetup() {
     }
     throw new Error(`unexpected factory ${request.kind}`)
   }
-  return {source: {adoption, central, workcell, aikit, identity, harnessDisclosure, groundAuthority, groundForm, factory, groundChanged: () => calls.push(['groundChanged'])}, calls, world, GROUND, HOME}
+  // Actuation's Actions through the registry's door (actuation-cli authority.rs: grant-world and list, shapes as the built CLI answers).
+  const act = async (action, input) => {
+    calls.push(['act', action, structuredClone(input)])
+    if (action === 'actuation.authority.list') return {authorities: world.grants.map(grant => ({authority_source_ref: grant.source, issued_at_unix_seconds: grant.at,
+      record: {holder: grant.holder, allowed_world_refs: grant.worlds, governing_binding: {world_ref: grant.worlds[0]}}, revoked: grant.revoked ? {reason: grant.revoked} : null})), invalid: []}
+    if (action === 'actuation.authority.grant-world') {
+      if (world.grantRefusal) { const refusal = world.grantRefusal; world.grantRefusal = null; throw new Error(refusal) }
+      const at = 1726300000 + world.grants.length + 1, source = `authority-source:world-grant@${input.world[0]}:${at}`
+      for (const grant of world.grants) if (!grant.revoked && grant.holder === input.holder && grant.worlds[0] === input.world[0]) grant.revoked = `superseded by ${source}`
+      world.grants.push({source, at, holder: input.holder, worlds: [...input.world], revoked: null})
+      return {schema: 'actuation.local-authority/v1', issued: true, authority_source_ref: source, root_world_ref: input.world[0], allowed_world_refs: [...input.world]}
+    }
+    throw new Error(`Unknown action: ${action}`)
+  }
+  return {source: {adoption, central, act, workcell, aikit, identity, harnessDisclosure, agents, groundAuthority, groundForm, factory, groundChanged: () => calls.push(['groundChanged'])}, calls, world, GROUND, HOME}
 }
 /** AIKit's answers on a scratch Arriving world (REAL; the kernel's owner-route fixture, the world's folder written /w/Arriving). */
 const REAL = JSON.parse(readFileSync(new URL('../../../../desktop/cradle/kernel/tests/fixtures/owner-routes/aikit-setup-harnesses-credentials-2026-10-28.json', import.meta.url), 'utf8'))
@@ -1012,6 +1076,57 @@ test('SCRIPTED — a project the person makes or brings in is theirs to act in: 
   assert.ok(!world.placed.has('Vault'), 'and Factory keeps nothing of it')
 })
 
+test('SCRIPTED — the World\'s standing authority (O-I #1003): Ground grants it in Actuation, held by the person and rooted at the World\'s root; each project made theirs renews it, superseding the earlier grant; one theirs already but unnamed is left to Finish; a refusal or no Action door says why and leaves the step found', async () => {
+  const {source, calls, world, GROUND} = scriptedSetup()
+  const walk = new settingsPages.SetupWalk(source)
+  await walk.read()
+  const authority = values => stepOf(values, 'ground').items.find(item => item.name === 'Your agents\' authority')
+  assert.deepEqual(authority(win.setupValues(walk.snapshot(), held({}))),
+    {name: 'Your agents\' authority', where: 'Actuation', adopts: true, change: 'Actuation keeps your standing authority in this world · each agent\'s Agency is minted under it'})
+  assert.match(await walk.accept('ground', held({})), /Your agents act on your standing authority in this world: Actuation keeps it, and each agent's Agency is minted under it\./)
+  assert.deepEqual(calls.filter(([kind, action]) => kind === 'act' && action === 'actuation.authority.grant-world').map(([, , input]) => input), [{holder: 'human:owner', world: ['control:root']}])
+  let values = win.setupValues(walk.snapshot(), held({}))
+  assert.equal(authority(values).change, 'Your agents act on your standing authority in this world')
+  assert.equal(stepOf(values, 'ground').state, 'accepted')
+  await assert.rejects(walk.accept('ground', held({})), /Nothing is made twice/)
+  // A project made theirs renews it: one live grant names the root and the project, the earlier superseded, never rewritten.
+  world.work.set('field-notes', {material: ['notes.md'], wikis: [], made: false})
+  await walk.read()
+  const create = {folder: `${GROUND}/Work/field-notes`, make: 'create'}
+  await walk.preview(held(create))
+  assert.match(await walk.accept('projects', held(create)), /You act as you in field-notes, and its agents may write inside it\. Your agents act on your standing authority in field-notes: Actuation keeps it/)
+  assert.deepEqual(world.grants.map(grant => [grant.worlds, !!grant.revoked]), [[['control:root'], true], [['control:root', 'project:field-notes'], false]])
+  assert.equal(authority(win.setupValues(walk.snapshot(), held({}))).change, 'Your agents act on your standing authority in this world and in field-notes')
+  // A project theirs already (an older Setup extended it) that the grant does not name: Finish renews the grant, carrying every world forward.
+  world.work.set('ledger', {material: ['a.md'], wikis: [], made: true}); world.extended.add('ledger'); world.placed.add('ledger')
+  await walk.read()
+  const folder = JSON.parse(win.setupValues(walk.snapshot(), held({})).folders).find(f => f.title === 'ledger')
+  assert.deepEqual(folder.left, ['extension'], 'only the standing authority is left')
+  const finish = {folder: `${GROUND}/Work/ledger`, make: 'finish'}
+  await walk.preview(held(finish))
+  assert.deepEqual(JSON.parse(win.setupValues(walk.snapshot(), held(finish)).setupPlan), ['Your agents act on your standing authority in ledger: Actuation keeps it, and each agent\'s Agency is minted under it.'])
+  assert.equal(await walk.accept('projects', held(finish)), 'Your agents act on your standing authority in ledger: Actuation keeps it, and each agent\'s Agency is minted under it.')
+  assert.ok(!calls.some(([, action, input]) => action === 'central.ground.project.adopt' && input.project === 'ledger'), 'Central is not asked to extend what is theirs already')
+  assert.deepEqual(world.grants.filter(grant => !grant.revoked).map(grant => grant.worlds), [['control:root', 'project:field-notes', 'project:ledger']])
+  // An Actuation that refuses: said in its words, and the Ground step stands found with the row to grant until Accept grants it.
+  const refusing = scriptedSetup()
+  refusing.world.grantRefusal = 'the authority store is not writable'
+  const again = new settingsPages.SetupWalk(refusing.source)
+  await again.read()
+  assert.match(await again.accept('ground', held({})), /Your agents have no standing authority in this world yet: the authority store is not writable Accept again to grant it\./)
+  values = win.setupValues(again.snapshot(), held({}))
+  assert.equal(stepOf(values, 'ground').state, 'found')
+  assert.equal(authority(values).adopts, true)
+  assert.match(await again.accept('ground', held({})), /^Central keeps your ground at .* Your agents act on your standing authority in this world/)
+  assert.equal(stepOf(win.setupValues(again.snapshot(), held({})), 'ground').state, 'accepted')
+  // A host that hands Setup no Action door: the row says so, and the step is not accepted on it.
+  const bare = scriptedSetup()
+  const without = new settingsPages.SetupWalk({...bare.source, act: undefined})
+  await without.read()
+  assert.equal(authority(win.setupValues(without.snapshot(), held({}))).why,
+    'Actuation does not say whether your agents act on your standing authority: Setup reaches no Actuation here (SetupSource.act, the kernel\'s act).')
+})
+
 test('SCRIPTED — a project its making left unfinished (made before, or its grant or placement refused) shows Finish: Accept finishes only what is left, and then nothing is', async () => {
   const {source, calls, world, GROUND} = scriptedSetup()
   const walk = new settingsPages.SetupWalk(source)
@@ -1028,7 +1143,7 @@ test('SCRIPTED — a project its making left unfinished (made before, or its gra
   await walk.preview(held(finish))
   assert.deepEqual(JSON.parse(win.setupValues(walk.snapshot(), held(finish)).setupPlan), ['You act as you in old-notes, and its agents may write inside it.', 'Factory keeps old-notes\' runs and pads.'])
   const said = await walk.accept('projects', held(finish))
-  assert.equal(said, 'You act as you in old-notes, and its agents may write inside it. Factory keeps old-notes\' runs and pads.')
+  assert.equal(said, 'You act as you in old-notes, and its agents may write inside it. Your agents act on your standing authority in old-notes: Actuation keeps it, and each agent\'s Agency is minted under it. Factory keeps old-notes\' runs and pads.')
   assert.ok(!calls.some(([, action]) => action === 'projectcentral.init'), 'Finish makes no ProjectCentral')
   values = win.setupValues(walk.snapshot(), held({}))
   folder = JSON.parse(values.folders).find(f => f.title === 'old-notes')
@@ -1049,7 +1164,7 @@ test('SCRIPTED — a project its making left unfinished (made before, or its gra
   await walk.preview(held(finishTide))
   assert.deepEqual(JSON.parse(win.setupValues(walk.snapshot(), held(finishTide)).setupPlan), ['You act as you in tide, and its agents may write inside it.'])
   const setups = calls.filter(([, action]) => action === 'project-setup').length
-  assert.equal(await walk.accept('projects', held(finishTide)), 'You act as you in tide, and its agents may write inside it.')
+  assert.equal(await walk.accept('projects', held(finishTide)), 'You act as you in tide, and its agents may write inside it. Your agents act on your standing authority in tide: Actuation keeps it, and each agent\'s Agency is minted under it.')
   assert.equal(calls.filter(([, action]) => action === 'project-setup').length, setups, 'what was not left is not made again')
   // A Factory that refused the placement leaves just that.
   world.work.set('reef', {material: ['a.md'], wikis: [], made: false})
@@ -1118,19 +1233,27 @@ test('SCRIPTED — Machines: Accept binds Central\'s current machine to the Work
   await assert.rejects(walk.accept('machines', held({})), /already binds a different Workcell: workcell:mac/)
 })
 
-test('CODE-DERIVED — Setup\'s Harnesses and skills step is AIKit\'s reading of each agent tool and its skills: found until AIKit holds every skill root, its settings and instructions left as they are', () => {
-  const base = {adoption: {}, folders: {state: 'unread'}, plan: null}
-  // AIKit's own answers on a scratch Arriving world (REAL): Claude Code detected, its two skills foreign, then adopted.
-  const harnesses = win.setupHarnessClients(REAL.client_status.data)
-  assert.deepEqual(harnesses, [{client: 'claude', harness: 'claude-code', folder: '/w/Arriving/.claude'}], 'the detected tools only: Codex is not installed')
+test('CODE-DERIVED — Setup\'s Harnesses and skills step lists exactly the census, each agent with what it carries, and AIKit\'s reading of each agent\'s skills: found until AIKit holds every skill root, its settings and instructions left as they are', () => {
+  // The agents are the census (the World Model's agents slice, O-I #1003): Actuation detects Claude Code, which started; AIKit's client row
+  // on it is detail (REAL: AIKit's client status on a scratch Arriving world, where Codex is not installed and so no agent here).
+  const claude = REAL.client_status.data.clients.find(row => row.client === 'claude')
+  const census = {state: 'read', agents: [{slug: 'claude-code', harnessRef: 'harness/claude-code', executable: '/x/claude', starts: true, talks: true, version: '2.1.323', aikit: claude,
+    carries: {model: {id: 'claude-opus-5-5'}, skills: {sets: ['foundation'], skills: ['wayfinder']}, law: {file: 'CLAUDE.md', state: 'rendered', statements: [{file: 'world/shape-of-the-world.md', topic: 'Shape of the world', standing: 'adopted'}]}}},
+    {slug: 'gemini', harnessRef: 'harness/gemini', executable: '/x/gemini', starts: false, talks: false, why: 'gemini did not start', aikit: null}]}
+  const base = {adoption: {}, folders: {state: 'unread'}, plan: null, agents: census}
+  assert.deepEqual(win.setupAgentTools(census), [{client: 'claude', harness: 'claude-code', folder: '/w/Arriving/.claude'}], 'AIKit is asked about the census\'s agents it has a client for')
   assert.equal(win.setupSkillRoots.length, 2, 'init and collate: who owns each root is init\'s answer, no tree is read')
   const foreign = win.setupSkillRoots(REAL.init_foreign.data, REAL.collate_all.data)
   assert.deepEqual(foreign, [{label: '@claude', path: '/w/Arriving/.claude/skills', skills: 2, problems: 0, names: ['field-recording-log', 'weekly-review'], standing: 'foreign'}])
-  const found = stepOf(win.setupValues({...base, harnesses: {state: 'read', harnesses, roots: foreign}}, held({})), 'harnesses')
+  const found = stepOf(win.setupValues({...base, harnesses: {state: 'read', roots: foreign}}, held({})), 'harnesses')
   assert.equal(found.state, 'found')
-  assert.deepEqual([found.items[0].name, found.items[0].where], ['claude-code', '/w/Arriving/.claude/skills'])
+  assert.deepEqual(found.agents.map(row => [row.agent, row.starts]), [['claude-code', true], ['gemini', false]], 'exactly the census: every agent, whether it starts')
+  assert.deepEqual([found.agents[0].model, found.agents[0].sets, found.agents[0].skills, found.agents[0].lawFile, found.agents[0].law.map(row => row.topic)],
+    ['claude-opus-5-5', ['foundation'], ['wayfinder'], 'CLAUDE.md', ['Shape of the world']], 'what it carries: its model, its skill set and its floor\'s law')
+  assert.equal(found.agents[1].model, undefined, 'an agent that does not start carries nothing')
+  assert.deepEqual([found.items[0].name, found.items[0].where], ['Claude Code', '/w/Arriving/.claude/skills'])
   assert.match(found.items[0].change, /AIKit adopts its 2 skills \(field-recording-log, weekly-review\) as skill\/claude\//)
-  assert.match(found.items[0].change, /claude-code reads them where they were/)
+  assert.match(found.items[0].change, /Claude Code reads them where they were/)
   assert.match(found.items[0].change, /settings and instructions stay as they are/)
   const adopted = win.setupSkillRoots(REAL.init_adopted.data, REAL.collate_all.data)
   assert.equal(adopted[0].standing, 'adopted')
@@ -1140,17 +1263,20 @@ test('CODE-DERIVED — Setup\'s Harnesses and skills step is AIKit\'s reading of
   assert.deepEqual([generated[0].standing, generated[0].generation, generated[0].procedure], ['generated', 'gen_01', undefined])
   // A root init names no ownership for (an AIKit older than init's ownership) is not taken as foreign: nothing is adopted on a guess.
   assert.equal(win.setupSkillRoots({roots: [{...REAL.init_foreign.data.roots[0], ownership: undefined}]}, REAL.collate_all.data)[0].standing, 'unknown')
-  const accepted = stepOf(win.setupValues({...base, harnesses: {state: 'read', harnesses, roots: adopted}}, held({})), 'harnesses')
+  const accepted = stepOf(win.setupValues({...base, harnesses: {state: 'read', roots: adopted}}, held({})), 'harnesses')
   assert.equal(accepted.state, 'accepted', 'read back from AIKit: the root is adopted')
   assert.match(accepted.items[0].change, /AIKit holds its 2 skills .*adopted · procedure prc_/)
-  // A detected tool with no skills is named and left alone, and with nothing to adopt the step is done (#740 D); AIKit's refusal stands in
-  // its words; not read yet is absent.
-  const bare = stepOf(win.setupValues({...base, harnesses: {state: 'read', harnesses, roots: []}}, held({})), 'harnesses')
+  // With nothing to adopt the step is done (#740 D), every agent still listed; AIKit's refusal stands in its words beside the agents; a
+  // census not read says why; not read yet is absent.
+  const bare = stepOf(win.setupValues({...base, harnesses: {state: 'read', roots: []}}, held({})), 'harnesses')
   assert.equal(bare.state, 'accepted')
-  assert.match(bare.said, /^Nothing to bring in/)
-  assert.match(bare.items[0].why, /keeps no skills/)
-  const refused = stepOf(win.setupValues({...base, harnesses: {state: 'refused', error: 'AIKit\'s client status did not finish'}}, held({})), 'harnesses')
+  assert.match(bare.said, /^Nothing to bring in: no agent here keeps skills AIKit can adopt/)
+  assert.deepEqual([bare.items, bare.agents.map(row => row.agent)], [[], ['claude-code', 'gemini']])
+  const refused = stepOf(win.setupValues({...base, harnesses: {state: 'refused', error: 'AIKit\'s init did not finish'}}, held({})), 'harnesses')
   assert.match(refused.items[0].why, /did not finish/)
+  assert.equal(refused.agents.length, 2, 'the agents stand by the census, not by AIKit')
+  const unread = stepOf(win.setupValues({...base, agents: {state: 'unavailable', why: 'Actuation\'s detection did not answer'}, harnesses: {state: 'read', roots: foreign}}, held({})), 'harnesses')
+  assert.deepEqual([unread.agents, unread.agentsWhy, unread.items[0].name], [undefined, 'Actuation\'s detection did not answer', '@claude'], 'no census: no agent is listed from anywhere else')
   assert.equal(win.setupValues(base, held({})).setup, undefined, 'not read yet: absent, never a sample')
 })
 
@@ -1206,8 +1332,12 @@ test('SCRIPTED — Harnesses and skills: Accept adopts each agent tool\'s skill 
   world.tools.get('claude').names.pop()
   await walk.read()
   const said = await walk.accept('harnesses', held({}))
-  assert.match(said, /AIKit adopted 2 skills from claude-code/)
+  assert.match(said, /AIKit adopted 2 skills from Claude Code/)
   assert.match(said, /reads them where they were/)
+  assert.ok(calls.some(([kind]) => kind === 'agents'), 'the agents are read from the census')
+  await walk.read({fresh: true})
+  assert.deepEqual(calls.filter(([kind]) => kind === 'agents').at(-1), ['agents', true], 'Read again asks the census afresh')
+  assert.ok(!calls.some(([kind, op]) => kind === 'aikit' && op === 'harness_status'), 'AIKit\'s own client list names no agent of Setup\'s')
   const plan = calls.find(([, kind]) => kind === 'aikit_read adopt-plan')[2].request
   assert.deepEqual(plan, {kind: 'adopt-plan', root: `${HOME}/.claude/skills`, namespace: 'claude'})
   const adopt = calls.find(([, kind]) => kind === 'aikit_write adopt')[2].request
@@ -1261,7 +1391,8 @@ test('SCRIPTED — the design draws Harnesses and skills and Credentials from AI
   await walk.read()
   await walk.accept('ground', held({}))
   const harnesses = drawn({...win.setupValues(walk.snapshot(), held({})), setupStep: 'harnesses'}, 'setup')
-  assert.ok(harnesses.includes('claude-code'), 'the tool, by AIKit\'s name for it')
+  assert.ok(harnesses.includes('data-census-agent="claude-code"') && harnesses.includes('Claude Code'), 'the agent, as the census lists it')
+  for (const carried of ['claude-opus-5-5', 'foundation', 'Shape of the world', 'CLAUDE.md']) assert.ok(harnesses.includes(carried), `what it carries: ${carried}`)
   assert.ok(harnesses.includes(escaped('AIKit adopts its 2 skills (field-recording-log, weekly-review)')), 'the change Accept makes')
   const choice = {credential: 'credential:anthropic', reference: 'op://Scratch/anthropic/credential'}
   const credentials = drawn({...win.setupValues(walk.snapshot(), held(choice)), setupStep: 'credentials', ...choice}, 'setup')
@@ -1414,8 +1545,9 @@ test('SCRIPTED — once the ground is made, Setup asks for your name and date of
 })
 
 test('CODE-DERIVED — Harnesses and skills and Credentials with nothing to adopt or bind are done, and say so in words', () => {
-  const tools = [{client: 'claude', harness: 'claude-code', folder: '/w/Bare/.claude'}, {client: 'gemini', harness: 'gemini', folder: '/w/Bare/.gemini'}]
-  const none = win.setupHarnessStep({state: 'read', harnesses: tools, roots: []})
+  const tools = {state: 'read', agents: [{slug: 'claude-code', harnessRef: 'harness/claude-code', executable: '/x/claude', starts: true, talks: true, aikit: {client: 'claude', harness: 'claude-code', config_dir: '/w/Bare/.claude'}},
+    {slug: 'gemini', harnessRef: 'harness/gemini', executable: '/x/gemini', starts: true, talks: true, aikit: {client: 'gemini', harness: 'gemini', config_dir: '/w/Bare/.gemini'}}]}
+  const none = win.setupHarnessStep({state: 'read', roots: []}, tools)
   assert.equal(none.state, 'accepted')
   assert.match(none.said, /Nothing to bring in/)
   const empty = win.setupCredentialStep({state: 'read', findings: [], providers: [], bindings: []}, held({}))
@@ -1423,10 +1555,67 @@ test('CODE-DERIVED — Harnesses and skills and Credentials with nothing to adop
   assert.match(empty.said, /Nothing to bind/)
   const waiting = win.setupCredentialStep({state: 'read', findings: [{source: 'project-env', location: '/w/.env', name: 'ANTHROPIC_API_KEY', credential: 'credential:anthropic', bound: false}], providers: [], bindings: []}, held({}))
   assert.equal(waiting.state, 'found', 'a key that waits to be bound keeps the step found')
-  const foreign = win.setupHarnessStep({state: 'read', harnesses: tools, roots: [{label: '@claude', path: '/w/Bare/.claude/skills', skills: 2, problems: 0, names: ['a', 'b'], standing: 'foreign'}]})
+  const foreign = win.setupHarnessStep({state: 'read', roots: [{label: '@claude', path: '/w/Bare/.claude/skills', skills: 2, problems: 0, names: ['a', 'b'], standing: 'foreign'}]}, tools)
   assert.equal(foreign.state, 'found')
   const drawnNone = drawn({setup: json([{step: 'harnesses', state: 'accepted', said: none.said, items: none.items}]), setupStep: 'harnesses'}, 'setup')
   assert.ok(drawnNone.includes(escaped(none.said)), 'the step says it in words')
+})
+
+test('CODE-DERIVED — a census not read is said as not read, with its why, never as no agent on this computer: Harnesses and skills with nothing to bring in says so, and Credentials says why no agent\'s providers were asked', () => {
+  // A fresh home whose Actuation detection cannot be read: the World Model refuses the agents slice, in its words (census.rs).
+  const why = 'Actuation\'s harness detection: actuation detect did not answer within 10s'
+  const unread = win.setupHarnessStep({state: 'read', roots: []}, {state: 'unavailable', why})
+  assert.equal(unread.state, 'accepted', 'nothing to bring in is done by the skill roots, as before')
+  assert.equal(unread.said, `Nothing to bring in: no skill root here keeps skills AIKit can adopt. The agents on this computer are not read: ${why}.`)
+  assert.doesNotMatch(unread.said, /there is no agent/, 'a census never read is not an empty one')
+  assert.deepEqual([unread.agents, unread.agentsWhy], [undefined, why])
+  assert.equal(win.setupHarnessStep({state: 'read', roots: []}, {state: 'reading'}).said,
+    'Nothing to bring in: no skill root here keeps skills AIKit can adopt. The agents on this computer are not read: The agents on this machine are not read yet.', 'asked and not answered yet: said as that')
+  // Only a census read that lists no agent says there is none.
+  assert.equal(win.setupHarnessStep({state: 'read', roots: []}, {state: 'read', agents: []}).said, 'Nothing to bring in: there is no agent on this computer. Each agent stays as it is.')
+  // Credentials: no agent was asked which providers it reaches, and the step says why, in the census's words.
+  const credentials = win.setupCredentialStep({state: 'read', findings: [], providers: [], bindings: [], agentsWhy: why}, held({}))
+  assert.deepEqual(credentials.items, [{name: 'Your agents\' providers', why: `The agents on this computer are not read, so no agent's providers were asked: ${why}.`}])
+  assert.deepEqual(win.setupCredentialStep({state: 'read', findings: [], providers: [], bindings: []}, held({})).items, [], 'a census read: no such row')
+  // Drawn: the step's own words, and the why on the Credentials row.
+  const harnesses = drawn({setup: json([{step: 'harnesses', state: unread.state, said: unread.said, agentsWhy: unread.agentsWhy, items: unread.items}]), setupStep: 'harnesses'}, 'setup')
+  assert.ok(harnesses.includes(escaped(unread.said)), 'the census not read, in words')
+  assert.ok(!harnesses.includes('there is no agent'), 'never that there is no agent')
+  const keys = drawn({setup: json([{step: 'credentials', state: credentials.state, said: credentials.said, items: credentials.items}]), setupStep: 'credentials'}, 'setup')
+  assert.ok(keys.includes(escaped(`The agents on this computer are not read, so no agent's providers were asked: ${why}.`)), 'Credentials says why no agent was asked')
+})
+
+test('SCRIPTED — Setup where the World Model does not answer the census: Harnesses and skills says the agents are not read, with why; Credentials asks AIKit of no agent, and says why', async () => {
+  const {source, calls, world, HOME} = scriptedSetup()
+  world.tools.set('claude', {client: 'claude', harness: 'claude-code', folder: `${HOME}/.claude`, names: [], standing: 'foreign', revision: 1})
+  world.censusRefusal = 'Actuation\'s harness detection: actuation detect did not answer within 10s'
+  const walk = new settingsPages.SetupWalk(source)
+  await walk.read(); await walk.accept('ground', held({}))
+  const harnesses = stepOf(win.setupValues(walk.snapshot(), held({})), 'harnesses')
+  assert.deepEqual([harnesses.state, harnesses.agents, harnesses.agentsWhy], ['accepted', undefined, world.censusRefusal])
+  assert.equal(harnesses.said, `Nothing to bring in: no skill root here keeps skills AIKit can adopt. The agents on this computer are not read: ${world.censusRefusal}.`)
+  const credentials = stepOf(win.setupValues(walk.snapshot(), held({})), 'credentials')
+  assert.deepEqual(credentials.items, [{name: 'Your agents\' providers', why: `The agents on this computer are not read, so no agent's providers were asked: ${world.censusRefusal}.`}])
+  assert.ok(!calls.some(([kind, op]) => kind === 'aikit' && op === 'harness_auth_describe'), 'AIKit is asked of no agent')
+  // The census answers again: the agents stand, and the row is gone.
+  world.censusRefusal = null
+  await walk.read({fresh: true})
+  assert.deepEqual(stepOf(win.setupValues(walk.snapshot(), held({})), 'credentials').items.map(row => row.name), ['anthropic for claude-code'])
+})
+
+test('SCRIPTED — the window\'s Read again on Setup asks the census afresh, as Setup\'s own Read again does: an agent installed or a model default changed outside the window shows then', async () => {
+  const {source, calls, world, GROUND, HOME} = scriptedSetup()
+  world.bound = GROUND; world.outcome = 'recognized'
+  world.tools.set('claude', {client: 'claude', harness: 'claude-code', folder: `${HOME}/.claude`, names: [], standing: 'foreign', revision: 1})
+  let part
+  const Probe = () => { part = settingsPages.useSetupPage({setup: source}, true, held({}), () => {}, []); return null }
+  renderToStaticMarkup(createElement(Probe))
+  const census = () => calls.filter(([kind]) => kind === 'agents')
+  // The window's Read again presses each part's reread, with nothing (SettingsWorkspace).
+  await part.reread()
+  assert.deepEqual(census(), [['agents', true]], 'the window\'s Read again asks past what the kernel holds')
+  await part.acts.rereadSetup()
+  assert.deepEqual(census(), [['agents', true], ['agents', true]], 'Setup\'s own Read again, the same')
 })
 
 /** AIKit's own disclosure of a tool (REAL shape: `aikit harness disclose claude-code --json`, data, 29 Oct; trimmed to its layers). */
@@ -1628,10 +1817,11 @@ test('SCRIPTED — run over an older setup, Setup\'s held Ground Accept brings t
   await again.read()
   assert.match(await again.accept('ground', held({})), /Your grant is not in agreement yet: the founded source's relation moved Accept again to bring it\./)
   assert.equal(stepOf(win.setupValues(again.snapshot(), held({})), 'ground').state, 'found')
-  // A grant kept by hand (the owner's own): read hand-authored, never pressed, and the step stands accepted.
+  // A grant kept by hand (the owner's own): read hand-authored, never pressed, and the step stands accepted (their Day kept as they saved it).
   const owner = scriptedSetup()
   Object.assign(owner.world, {bound: '/w/Bare/Central', outcome: 'recognized', civil: {timezone: 'Europe/London', day_boundary_minutes: 0}, placement: {writable: []}, key: true, form: true,
-    byHand: true, lacks: ['central.world.place']})
+    byHand: true, lacks: ['central.world.place'], grants: standingGrant(),
+    day: {revision: 'r1', day_form: {path: 'Control/forms/ql-daily-die.html', revision: 'central.content-fnv1a64/v1:form-1'}, close: {kind: 'daily', time: '22:00'}, saves: 1}})
   const theirs = new settingsPages.SetupWalk(owner.source)
   await theirs.read()
   const ground = stepOf(win.setupValues(theirs.snapshot(), held({})), 'ground')
@@ -1663,6 +1853,96 @@ test('CODE-DERIVED — the Ground step keeps the Day\'s form in a ground no O-I 
   assert.match(row(project).change, /Work\/O-I\/desktop\/cradle\/documents/)
   assert.equal(stepOf(project, 'ground').state, 'accepted', 'the owner\'s ground changes nothing')
   assert.match(row(of({state: 'refused', error: 'no route'})).why, /no route/)
+})
+
+// ── your Day (O-I ticket 1005: the Day opens by itself on the form you saved, and closes itself at its turn) ──────────────────────────────
+
+test('CODE-DERIVED — the Ground step proposes your Day: made from the Day form as it stands, closing itself at Day start, Close yours to choose; accepted once Central keeps both', () => {
+  const bound = {bound_ground: '/w/Bare/Central', suggested_ground: '/w/Bare/Central', selected_ground: '/w/Bare/Central', ground: {outcome: 'recognized', canonical_path: '/w/Bare/Central', access: {readable: true, searchable: true}}}
+  const FORM = {path: 'Control/forms/ql-daily-die.html', revision: 'central.content-fnv1a64/v1:form-1'}
+  const form = {state: 'read', reading: {central: {state: 'present'}, day_form: FORM}}
+  const day = (saved = {}) => ({state: 'read', reading: {path: 'Control/agents/now/day/settings.json', revision: saved.revision ?? 'absent', form: saved.form ?? null,
+    close: saved.close ?? {kind: 'off'}, closeSaved: !!saved.close}})
+  const of = (d, values = {}) => win.setupValues({adoption: {discovery: bound}, civilTime: civilRead('recognised'), form, day: d, folders: {state: 'read', folders: []}, plan: null}, held(values))
+  const row = values => stepOf(values, 'ground').items.find(item => item.name === 'Your Day')
+  // Before Accept: the form as it stands and Close at Day start, as Setup proposes it; yours to change to Off.
+  const proposed = of(day())
+  assert.deepEqual(row(proposed), {name: 'Your Day', where: 'Control/agents/now/day/settings.json', adopts: true, close: 'day_start',
+    change: 'Today\'s Day is made from Control/forms/ql-daily-die.html as it stands now · it closes itself at its turn, and face 5\'s proposal for tomorrow waits in Approvals · Central keeps both in your Day\'s settings'})
+  assert.equal(proposed.dayClose, 'day_start', 'Setup proposes Close at Day start')
+  assert.equal(stepOf(proposed, 'ground').state, 'found')
+  const off = of(day(), {dayClose: 'off'})
+  assert.equal(row(off).close, 'off')
+  assert.match(row(off).change, /· Close is Off: each Day stays open until you close it, and says why ·/)
+  assert.equal(off.dayClose, undefined, 'your choice stands as you held it')
+  // Kept: the form saved as it stands, and Close saved, whichever you chose.
+  const kept = of(day({revision: 'r1', form: FORM, close: {kind: 'day_start'}}))
+  assert.deepEqual(row(kept), {name: 'Your Day', where: 'Control/agents/now/day/settings.json',
+    change: 'Today\'s Day is made from Control/forms/ql-daily-die.html · it closes itself at its turn, and face 5\'s proposal for tomorrow waits in Approvals'})
+  assert.equal(stepOf(kept, 'ground').state, 'accepted')
+  assert.equal(kept.dayClose, undefined, 'no Close to choose once it is saved')
+  const keptOff = of(day({revision: 'r1', form: FORM, close: {kind: 'off'}}))
+  assert.match(row(keptOff).change, /Close is Off: each Day stays open until you close it, and says why$/)
+  assert.equal(stepOf(keptOff, 'ground').state, 'accepted', 'Off is yours to choose')
+  // A form that changed since it was saved is saved again as it stands; a Close you saved is never changed here.
+  const stale = of(day({revision: 'r1', form: {...FORM, revision: 'central.content-fnv1a64/v1:form-0'}, close: {kind: 'daily', time: '22:00'}}))
+  assert.equal(row(stale).adopts, true)
+  assert.equal(row(stale).close, undefined)
+  assert.match(row(stale).change, /as it stands now · it closes at 22:00 each day ·/)
+  assert.equal(win.setupDayPatch(form, day({revision: 'r1', form: {...FORM, revision: 'x'}, close: {kind: 'daily', time: '22:00'}}), undefined).moves, undefined)
+  assert.match(row(of({state: 'refused', error: 'Unknown Action: central.day.settings.read'})).why, /^Central did not say how your Day is kept: Unknown Action/)
+  assert.equal(row(of(undefined)), undefined, 'no row before the ground stands')
+})
+
+test('SCRIPTED — a held Ground Accept saves your Day on your key: the Day form as it stands at the revision read, and Close at Day start or Off as you choose', async () => {
+  const saves = calls => calls.filter(call => call[0] === 'central' && call[1] === 'central.day.settings.write').map(call => call[2])
+  const FORM = {path: 'Control/forms/ql-daily-die.html', revision: 'central.content-fnv1a64/v1:form-1'}
+  {
+    const {source, calls, world} = scriptedSetup()
+    const walk = new settingsPages.SetupWalk(source)
+    await walk.read()
+    assert.equal(stepOf(win.setupValues(walk.snapshot(), held({})), 'ground').items.find(item => item.name === 'Your Day'), undefined, 'no Day before the ground stands')
+    const made = await walk.accept('ground', held({}))
+    assert.match(made, /Central keeps your Day: today's page is made from Control\/forms\/ql-daily-die\.html, and it closes itself at its turn\./)
+    assert.deepEqual(saves(calls), [{project: null, expected_revision: 'absent', day_form: FORM, moves: {close: {runs_at: {kind: 'day_start'}}}}])
+    // Saved on the person's key: after the key's adoption, never before it.
+    const order = calls.map(call => (call[0] === 'key' && call[1] === 'adopt' ? 'key' : call[1] === 'central.day.settings.write' ? 'day' : null)).filter(Boolean)
+    assert.deepEqual(order, ['key', 'day'])
+    assert.deepEqual(world.day.day_form, FORM)
+    assert.deepEqual(world.day.close, {kind: 'day_start'})
+    const row = stepOf(win.setupValues(walk.snapshot(), held({})), 'ground').items.find(item => item.name === 'Your Day')
+    assert.equal(row.adopts, undefined, 'read back kept')
+    // Nothing is saved twice.
+    await walk.accept('ground', held({})).catch(() => null)
+    assert.equal(saves(calls).length, 1)
+  }
+  {
+    // Off, as you chose it: each Day then stays open until you close it, and says why.
+    const {source, calls, world} = scriptedSetup()
+    const walk = new settingsPages.SetupWalk(source)
+    await walk.read()
+    const made = await walk.accept('ground', held({dayClose: 'off'}))
+    assert.match(made, /Central keeps your Day: today's page is made from Control\/forms\/ql-daily-die\.html, and Close is Off: each Day stays open until you close it\./)
+    assert.deepEqual(saves(calls)[0].moves, {close: {runs_at: {kind: 'off'}}})
+    assert.deepEqual(world.day.close, {kind: 'off'})
+  }
+  {
+    // A ground whose Close you saved keeps it: only the Day form is saved, and a form that changed since the step read it is refused in
+    // Central's words, the Accept saying so.
+    const {source, calls, world} = scriptedSetup()
+    Object.assign(world, {bound: '/w/Bare/Central', outcome: 'recognized', civil: {timezone: 'Europe/London', day_boundary_minutes: 0}, placement: {writable: []}, key: true, form: true,
+      day: {revision: 'day-settings-7', day_form: null, close: {kind: 'daily', time: '22:00'}, saves: 7}})
+    const walk = new settingsPages.SetupWalk(source)
+    await walk.read()
+    world.formRevision = 'central.content-fnv1a64/v1:form-2'
+    const refused = await walk.accept('ground', held({}))
+    assert.match(refused, /Your Day is not kept yet: The Day form at Control\/forms\/ql-daily-die\.html changed since you read it/)
+    assert.deepEqual(saves(calls), [{project: null, expected_revision: 'day-settings-7', day_form: FORM}])
+    await walk.read()
+    const kept = await walk.accept('ground', held({}))
+    assert.match(kept, /Central keeps your Day: today's page is made from Control\/forms\/ql-daily-die\.html, and it closes as you set it \(daily\)\./)
+    assert.deepEqual(world.day.close, {kind: 'daily', time: '22:00'}, 'your Close stands')
+  }
 })
 
 // ── the world's Music folder (DLW build ruling 2026-11-08 LV01: "Setup's part is only where"; 2026-11-09, round 47 item 1) ──────────────
@@ -1800,24 +2080,114 @@ const LOGIN_FACES = {
     note: 'Login with Google (OAuth) is Gemini CLI\'s default auth; the API key delivers only when credential:gemini is bound'}]},
   opencode: {slug: 'opencode', own_login: [{provider_ref: 'provider:openai', runnable: true, argv: ['opencode', 'auth', 'login']}]},
 }
-const loginAdapter = (status = LOGIN_STATUS, asked = []) => ({invoke: async op => {
+/** The census as the kernel answers it (`model_subscribe` agents: census.rs census_of in the World Model's slice, O-I ticket 1003): each
+ * harness Actuation detects with an executable to start is an agent, AIKit's client row on it as detail; the others are no agents
+ * (`not_agents`), each with why. `refused`: a census the World Model could not read, in its words. */
+const censusAnswer = (agents, notAgents = [], refused = null) => ({schema: 'oi.world-model-slice/v1', slice: 'agents', owner: 'kernel', scopes: ['machine'], version: 1,
+  state: refused ? 'refused' : 'read', error: refused, read_at_unix_ms: refused ? null : 1,
+  value: refused ? null : {schema: 'oi.agents-census/v1', detection_ref: 'd1', observed_at: 'now', agents, not_agents: notAgents, aikit_detail: {state: 'read'}}})
+const censusAgent = row => ({slug: row.harness, harness_ref: `harness/${row.harness}`, native_kind: 'harness', state: 'detected', executable: `/usr/local/bin/${row.client}`, aikit: row,
+  starts: true, version: '1.0.0', start_seconds: 0.2, talks: true})
+const notAnAgent = (row, why) => ({slug: row.harness, harness_ref: `harness/${row.harness}`, native_kind: 'harness', state: row.detection === 'detected' ? 'detected' : 'absent', executable: null,
+  aikit: row, starts: false, talks: false, why})
+/** LOGIN_STATUS's clients as the census lists them: the five on this computer are agents; opencode, not installed, is none. */
+const LOGIN_CENSUS = censusAnswer(LOGIN_STATUS.clients.filter(row => row.detection === 'detected').map(censusAgent),
+  LOGIN_STATUS.clients.filter(row => row.detection !== 'detected').map(row => notAnAgent(row, `Actuation does not detect ${row.harness} on this machine (absent)`)))
+/** A kernel channel answering Sign in's reads: the census, AIKit's client status (`{error}`: one that does not answer) and each declared login. */
+const loginAdapter = (status = LOGIN_STATUS, asked = [], census = LOGIN_CENSUS) => ({invoke: async op => {
   asked.push(op)
-  if (op.op === 'harness_status') return {outcome: {result: 'harness_status_reading', data: status}}
+  if (op.op === 'model_subscribe' && op.slice === 'agents') return {outcome: {result: 'model_slice', data: census}}
+  if (op.op === 'harness_status') return status.error ? {error: status.error} : {outcome: {result: 'harness_status_reading', data: status}}
   if (op.op === 'harness_auth_describe' && LOGIN_FACES[op.harness]) return {outcome: {result: 'harness_auth_reading', data: LOGIN_FACES[op.harness]}}
   if (op.op === 'harness_auth_describe' && op.harness === 'pi') return {error: '[harness_auth.unknown_harness] `pi` is not a harness AIKit carries a profile for'}
   return {error: `aikit harness auth ${op.harness} did not answer within 10s`}
 }})
-const HARNESS_READING = {kind: 'live', label: 'live', observed_at_unix_ms: 1, heldDefault: null, defaultState: {state: 'ok'}, providers: {state: 'ok', rows: []},
+const HARNESS_READING = {kind: 'live', label: 'live', observed_at_unix_ms: 1, providers: {state: 'ok', rows: []},
   harnesses: {state: 'ok', rows: ['codex', 'claude-code', 'gemini', 'hermes', 'opencode', 'pi'].map(client => ({harness: client, client, detection: client === 'opencode' ? 'unavailable' : 'detected',
     detected: client !== 'opencode', detection_reason: null, installed: client !== 'opencode', config_dir: null, dispatch: 'acp', capability: 'descriptor', effect: null, items: null, adapter_gap: null}))},
   catalogue: {state: 'ok', rows: {count: 0, entries: []}}}
+/** The census of those six (the World Model's agents, O-I #1003): the rows the page draws, AIKit's client facts joined on each. */
+const HARNESS_CENSUS = {state: 'read', agents: ['codex', 'claude-code', 'gemini', 'hermes', 'opencode', 'pi'].map(slug => ({slug, harnessRef: `harness/${slug}`,
+  executable: slug === 'opencode' ? null : `/x/${slug}`, starts: slug !== 'opencode' && slug !== 'hermes', aikit: null}))}
+
+test('CODE-DERIVED — Harnesses & models shows what each agent that starts carries, as the census reads it from its owners: its model and skill set from AIKit, the law statements of its floor from Central, or why not', async () => {
+  const {censusOf} = await import('../../../../desktop/cradle/src/agency/census.ts')
+  // The agents slice as the kernel answers it (census.rs carries_of): Claude Code carries a model default, the foundation set and a rendered
+  // floor's two statements; Codex has no model default and Central did not read its floor; gemini did not start and carries nothing.
+  const answer = {schema: 'oi.world-model-slice/v1', slice: 'agents', owner: 'kernel', scopes: ['machine'], version: 3, state: 'read', error: null, read_at_unix_ms: 1, value: {agents: [
+    {slug: 'claude-code', harness_ref: 'harness/claude-code', executable: '/x/claude', starts: true, talks: true, version: '2.1.323', aikit: {client: 'claude', harness: 'claude-code'},
+      carries: {model: {model_id: 'claude-opus-5-5', model_name: 'Claude Opus 5.5'}, skills: {sets: ['foundation'], skills: ['engineering-methodology', 'wayfinder']},
+        law: {file: 'CLAUDE.md', state: 'rendered', renderer: 'control.floor.render', statements: [{file: 'authorship-and-return/propose-not-write.md', topic: 'Authorship', standing: 'adopted'},
+          {file: 'world/shape-of-the-world.md', topic: 'Shape of the world', standing: 'adopted'}], reach: {scope: 'ancestors', why: 'claude-code reads CLAUDE.md where it works and in every folder above, so this floor reaches it in every project of the world'}}}},
+    {slug: 'codex', harness_ref: 'harness/codex', executable: '/x/codex', starts: true, talks: true, version: 'codex-cli 0.155.1', aikit: {client: 'codex', harness: 'codex'},
+      carries: {model: {own: true, why: 'AIKit holds no model default for codex: a new chat opens with its own model'}, skills: {sets: [], skills: []},
+        law: {file: 'AGENTS.md', why: 'Central did not read the floor: no control.floor.read here'}}},
+    {slug: 'gemini', harness_ref: 'harness/gemini', executable: '/x/gemini', starts: false, talks: false, why: 'gemini did not start', aikit: null},
+    // kimi reads AGENTS.md only in the folder it works in: the world's floor reaches it only at the world's root, and the page says so.
+    {slug: 'kimi', harness_ref: 'harness/kimi', executable: '/x/kimi', starts: true, talks: true, version: 'kimi, version 1.6', aikit: {client: 'kimi', harness: 'kimi'},
+      carries: {model: {own: true, why: 'AIKit holds no model default for kimi: a new chat opens with its own model'}, skills: {sets: [], skills: []},
+        law: {file: 'AGENTS.md', state: 'rendered', statements: [{file: 'craft/plain-words.md', topic: 'Plain words', standing: 'durable'}],
+          reach: {scope: 'workdir', why: 'kimi reads AGENTS.md only in the folder it works in, so this floor reaches it only when it works at the world\'s root'}}}},
+    // A reach the window does not know is said in the census's words, and claimed neither everywhere nor only at the root.
+    {slug: 'opencode', harness_ref: 'harness/opencode', executable: '/x/opencode', starts: true, talks: true, version: '2.0.32', aikit: {client: 'opencode', harness: 'opencode'},
+      carries: {model: {own: true, why: 'AIKit holds no model default for opencode: a new chat opens with its own model'}, skills: {sets: [], skills: []},
+        law: {file: 'AGENTS.md', state: 'rendered', statements: [{file: 'craft/plain-words.md', topic: 'Plain words', standing: 'durable'}],
+          reach: {scope: 'sideways', why: 'AIKit says opencode looks for AGENTS.md in a way Central does not know (sideways)'}}}}]}}
+  const census = censusOf({state: 'held', answer})
+  assert.deepEqual(census.agents[0].carries, {model: {id: 'claude-opus-5-5', name: 'Claude Opus 5.5'}, skills: {sets: ['foundation'], skills: ['engineering-methodology', 'wayfinder']},
+    law: {file: 'CLAUDE.md', state: 'rendered', renderer: 'control.floor.render', statements: [{file: 'authorship-and-return/propose-not-write.md', topic: 'Authorship', standing: 'adopted'},
+      {file: 'world/shape-of-the-world.md', topic: 'Shape of the world', standing: 'adopted'}], reach: {scope: 'ancestors', why: 'claude-code reads CLAUDE.md where it works and in every folder above, so this floor reaches it in every project of the world'}}})
+  assert.equal(census.agents[2].carries, undefined, 'an agent that did not start carries nothing')
+  const rows = Object.fromEntries(JSON.parse(win.harnessValues(null, null, census).harnesses).map(row => [row.agent, row]))
+  assert.deepEqual([rows['claude-code'].model, rows['claude-code'].sets, rows['claude-code'].law.map(row => row.topic), rows['claude-code'].lawFile],
+    ['Claude Opus 5.5', ['foundation'], ['Authorship', 'Shape of the world'], 'CLAUDE.md'])
+  assert.deepEqual([rows.codex.model, rows.codex.modelWhy, rows.codex.sets, rows.codex.law, rows.codex.lawWhy],
+    [undefined, 'AIKit holds no model default for codex: a new chat opens with its own model', [], undefined, 'Central did not read the floor: no control.floor.read here'])
+  assert.deepEqual([rows['claude-code'].lawEverywhere, rows['claude-code'].lawRootOnly, rows.kimi.lawEverywhere, rows.kimi.lawRootOnly, rows.kimi.law.map(row => row.topic)],
+    [true, false, false, true, ['Plain words']])
+  assert.ok(rows.kimi.lawReach.includes('only when it works at the world\'s root'), rows.kimi.lawReach)
+  assert.deepEqual([rows.opencode.lawEverywhere, rows.opencode.lawRootOnly], [false, false], 'a reach the window does not know is claimed neither way')
+  const page = drawn({harnesses: win.harnessValues(null, null, census).harnesses}, 'harnesses')
+  for (const shown of ['Claude Opus 5.5', 'foundation', 'Authorship · Shape of the world', 'CLAUDE.md', escaped('AIKit holds no model default for codex'),
+    escaped('so this floor reaches it in every project of the world'), escaped('AGENTS.md · only at your world\'s root'), 'data-law-reach="root"', 'data-law-reach="unknown"',
+    // The law's tooltip carries the reach too: the row's line may clip it.
+    escaped('Shape of the world (world/shape-of-the-world.md, adopted) — claude-code reads CLAUDE.md where it works and in every folder above')]) assert.ok(page.includes(shown), `drawn: ${shown}`)
+  assert.equal(page.split(escaped('only at your world\'s root')).length - 1, 1, 'only kimi, whose reach is the root, is marked as reached only there')
+  assert.ok(!page.includes('data-carries="gemini"'), 'nothing carried is drawn for an agent that does not start')
+})
+
+test('CODE-DERIVED — A floor Central keeps in a file an agent reads in every session reaches it everywhere; a block that does not stand says why, and the reach stays its project\'s', async () => {
+  const {censusOf} = await import('../../../../desktop/cradle/src/agency/census.ts')
+  const floor = {file: 'AGENTS.md', state: 'rendered', statements: [{file: 'craft/plain-words.md', topic: 'Plain words', standing: 'durable'}]}
+  const agent = (slug, law) => ({slug, harness_ref: `harness/${slug}`, executable: `/x/${slug}`, starts: true, talks: true, version: '1.0', aikit: {client: slug, harness: slug},
+    carries: {model: {own: true, why: `AIKit holds no model default for ${slug}`}, skills: {sets: [], skills: []}, law: {...floor, ...law}}})
+  const current = {file: '~/.codex/AGENTS.md', state: 'rendered', current: true, renderer: 'central control.floor.render'}
+  const answer = {schema: 'oi.world-model-slice/v1', slice: 'agents', owner: 'kernel', scopes: ['machine'], version: 1, state: 'read', error: null, read_at_unix_ms: 1, value: {agents: [
+    // Central's block in ~/.codex/AGENTS.md stands and is current (census.rs law_of): codex carries the floor wherever it works.
+    agent('codex', {home: current, reach: {scope: 'home', file: '~/.codex/AGENTS.md',
+      why: 'codex reads ~/.codex/AGENTS.md in every session wherever it works, and Central keeps the world\'s floor there, so this floor reaches it in every project of the world'}}),
+    // No block where it reads in every session: the reach is its project's (the root only), and Central's why is said beside it.
+    agent('kimi', {home: {file: '~/.kimi/AGENTS.md', state: 'absent', current: false, why: 'no Kimi folder (~/.kimi) at this home'},
+      reach: {scope: 'workdir', why: 'kimi reads AGENTS.md only in the folder it works in, so this floor reaches it only when it works at the world\'s root'}})]}}
+  const census = censusOf({state: 'held', answer})
+  assert.deepEqual(census.agents[0].carries.law.home, current)
+  assert.equal(census.agents[0].carries.law.reach.file, '~/.codex/AGENTS.md')
+  const rows = Object.fromEntries(JSON.parse(win.harnessValues(null, null, census).harnesses).map(row => [row.agent, row]))
+  assert.deepEqual([rows.codex.lawEverywhere, rows.codex.lawRootOnly, rows.codex.lawHomeWhy, rows.kimi.lawEverywhere, rows.kimi.lawRootOnly, rows.kimi.lawHomeWhy],
+    [true, false, undefined, false, true, 'no Kimi folder (~/.kimi) at this home'])
+  const page = drawn({harnesses: win.harnessValues(null, null, census).harnesses}, 'harnesses')
+  for (const shown of ['data-law-reach="everywhere"', 'data-law-reach="root"', 'data-law-home', escaped('no Kimi folder (~/.kimi) at this home'),
+    escaped('codex reads ~/.codex/AGENTS.md in every session wherever it works')]) assert.ok(page.includes(shown), `drawn: ${shown}`)
+  assert.equal(page.split('data-law-home').length - 1, 1, 'only the block that does not stand says why')
+})
 
 test('CODE-DERIVED — Sign in is each harness\'s own login as AIKit declares it: a runnable one runs its command (Claude Code\'s claude auth login as Codex\'s codex login), one that signs in inside itself says so in its own words and offers no button, a login that cannot be read affects that harness alone', async () => {
   const asked = []
   const logins = await settingsPages.harnessLogins(loginAdapter(LOGIN_STATUS, asked)).read()
-  assert.deepEqual(asked.map(op => op.op === 'harness_auth_describe' ? op.harness : op.op), ['harness_status', 'codex', 'claude-code', 'gemini', 'hermes', 'pi'],
-    'AIKit\'s client status, then the declared logins of each client it detects')
-  const rows = Object.fromEntries(JSON.parse(win.harnessValues(HARNESS_READING, logins).harnesses).map(row => [row.client, row]))
+  assert.deepEqual(asked.map(op => op.op === 'harness_auth_describe' ? op.harness : op.op), ['model_subscribe', 'harness_status', 'codex', 'claude-code', 'gemini', 'hermes', 'pi'],
+    'the census and AIKit\'s client status, then the declared logins of each agent of the census AIKit has a client for')
+  assert.ok(!asked.some(op => op.op === 'model_subscribe' && op.fresh), 'a plain read takes the census the kernel holds')
+  const rows = Object.fromEntries(JSON.parse(win.harnessValues(HARNESS_READING, logins, HARNESS_CENSUS).harnesses).map(row => [row.client, row]))
   assert.deepEqual(rows.codex.signIn, [{key: 'codex|provider:openai', provider: 'openai', command: 'codex login'}], 'a runnable login: its command, as AIKit declares it')
   assert.match(rows.codex.loginNow, /^AIKit does not find what codex needs to sign in yet: credential:openai is unbound/, 'what AIKit finds now, in its words')
   assert.deepEqual(rows['claude-code'].signIn, [{key: 'claude-code|provider:anthropic', provider: 'anthropic', command: 'claude auth login'}], 'Claude Code: its one-shot login, as Codex\'s')
@@ -1842,12 +2212,12 @@ test('CODE-DERIVED — Sign in is each harness\'s own login as AIKit declares it
   assert.deepEqual([claude.command, claude.title, claude.check], [['claude', 'auth', 'login'], 'Sign in · claude-code', ['claude', 'auth', 'status', '--json']], 'Claude Code\'s login runs, with its check')
   assert.throws(() => settingsPages.loginOf(logins, 'gemini|provider:gemini'), /^Error: Login with Google \(OAuth\) is Gemini CLI's default auth/)
   assert.throws(() => settingsPages.loginOf(logins, 'hermes|provider:x'), /AIKit did not say how hermes signs in/)
-  assert.throws(() => settingsPages.loginOf(null, 'codex|provider:openai'), /AIKit's client status is not read yet/)
-  assert.throws(() => settingsPages.loginOf(logins, 'nosuch|provider:x'), /nosuch is no harness client AIKit finds on this computer/)
+  assert.throws(() => settingsPages.loginOf(null, 'codex|provider:openai'), /the agents' logins are not read yet/)
+  assert.throws(() => settingsPages.loginOf(logins, 'nosuch|provider:x'), /nosuch is no agent on this computer that AIKit has a client for/)
   const after = await settingsPages.harnessLogins(loginAdapter({clients: LOGIN_STATUS.clients.map(row => row.client === 'codex' ? {...row, credential: 'ok', credential_reason: null} : row)})).read()
   assert.equal(win.loginReadBack(codex, after), 'codex login has ended, and AIKit now finds what codex needs to sign in.')
   assert.match(win.loginReadBack(codex, logins), /^codex login has ended, but AIKit does not find what codex needs yet: credential:openai is unbound/)
-  assert.match(win.loginReadBack(codex, null, 'the kernel did not answer'), /^codex login has ended, but AIKit's client status could not be read again: the kernel did not answer$/)
+  assert.match(win.loginReadBack(codex, null, 'the kernel did not answer'), /^codex login has ended, but the agents' logins could not be read again: the kernel did not answer$/)
   await assert.rejects(settingsPages.harnessLogins({}).read(), /not connected/, 'no kernel channel: said, never an empty list')
 })
 
@@ -1856,6 +2226,7 @@ test('CODE-DERIVED — Sign in reads the result back through the harness\'s own 
   const faces = {...LOGIN_FACES, codex: {...LOGIN_FACES.codex, own_login: [{...LOGIN_FACES.codex.own_login[0], status: CHECK}]}}
   const checkAdapter = (answer, asked = []) => ({invoke: async op => {
     asked.push(op)
+    if (op.op === 'model_subscribe' && op.slice === 'agents') return {outcome: {result: 'model_slice', data: LOGIN_CENSUS}}
     if (op.op === 'harness_status') return {outcome: {result: 'harness_status_reading', data: LOGIN_STATUS}}
     if (op.op === 'harness_auth_describe' && op.check) return answer(op)
     if (op.op === 'harness_auth_describe' && faces[op.harness]) return {outcome: {result: 'harness_auth_reading', data: faces[op.harness]}}
@@ -1889,14 +2260,139 @@ test('CODE-DERIVED — Sign in reads the result back through the harness\'s own 
   assert.equal((await settingsPages.loginResult(checkAdapter(claudeChecks, claudeRan), claude)).said, 'claude auth login has ended, and claude auth status --json says claude-code is signed in.')
   assert.deepEqual(claudeRan.filter(op => op.check).map(op => op.harness), ['claude-code'], 'its check is asked of AIKit, for that client')
   // A login with no declared check: the credential leg, and no check is asked.
-  const opencode = {client: 'opencode', harness: 'opencode', provider: 'provider:openai', command: ['opencode', 'auth', 'login'], title: 'Sign in · opencode'}
+  const plainCodex = {client: 'codex', harness: 'codex', provider: 'provider:openai', command: ['codex', 'login'], title: 'Sign in · codex'}
   const plain = []
-  const leg = await settingsPages.loginResult(checkAdapter(checks(signedIn), plain), opencode)
+  const leg = await settingsPages.loginResult(checkAdapter(checks(signedIn), plain), plainCodex)
   assert.ok(plain.every(op => !op.check), 'no declared check: none is asked')
-  assert.equal(leg.said, 'opencode auth login has ended, but AIKit does not find what opencode needs yet: not on PATH.')
+  assert.equal(leg.said, 'codex login has ended, but AIKit does not find what codex needs yet: credential:openai is unbound and the harness\'s own login store at ~/.codex is absent — the ChatGPT OAuth flow.')
+  assert.ok(!plain.some(op => op.op === 'model_subscribe' && op.fresh), 'the read back takes the census the kernel holds: a login moves no agent')
+  // A login of a harness the census does not list (opencode is not installed): never a credential leg of a client that is no agent here.
+  const opencode = {client: 'opencode', harness: 'opencode', provider: 'provider:openai', command: ['opencode', 'auth', 'login'], title: 'Sign in · opencode'}
+  assert.equal((await settingsPages.loginResult(checkAdapter(checks(signedIn)), opencode)).said, 'opencode auth login has ended, but opencode is no longer among the agents on this computer.')
   const pages = readFileSync(new URL('../src/settings/windowPages.ts', import.meta.url), 'utf8')
   assert.match(pages, /const result = await loginResult\(source, login\)/, 'Sign in reads back through loginResult')
   assert.match(win.SETTINGS_WINDOW_WIRING.reads.loginSaid ?? '', /--check/, 'the wiring names the check')
+})
+
+test('CODE-DERIVED — Sign in stands on the census (O-I ticket 1003: AIKit adds detail, never a row): a client AIKit\'s status calls detected that the census lists as no agent is never asked nor offered, on Credentials or Harnesses & models; a census not read is said with its why', async () => {
+  const {censusOf} = await import('../../../../desktop/cradle/src/agency/census.ts')
+  // ~/.codex and ~/.claude stand but neither codex nor claude is on PATH: Actuation detects both by their folders and AIKit's client status
+  // passes that on as detected; the census lists both among the harnesses that are no agents (census.rs: no executable to start).
+  const gone = ['codex', 'claude-code']
+  const census = censusAnswer(LOGIN_STATUS.clients.filter(row => row.detection === 'detected' && !gone.includes(row.client)).map(censusAgent),
+    LOGIN_STATUS.clients.filter(row => row.detection !== 'detected' || gone.includes(row.client)).map(row => notAnAgent(row, row.detection === 'detected'
+      ? `Actuation detects ${row.harness} but found no executable to start` : `Actuation does not detect ${row.harness} on this machine (absent)`)))
+  const asked = []
+  const logins = await settingsPages.harnessLogins(loginAdapter(LOGIN_STATUS, asked, census)).read()
+  assert.deepEqual(logins.clients.map(client => client.client), ['gemini', 'hermes', 'pi'], 'exactly the census\'s agents AIKit has a client for')
+  assert.deepEqual(asked.filter(op => op.op === 'harness_auth_describe').map(op => op.harness), ['gemini', 'hermes', 'pi'], 'AIKit is asked how each of them signs in, and of no other client')
+  const keys = [{credential: 'ai-kit:credential:openai', provider: 'provider:openai', reference: 'keychain://aikit/openai', revoked: false, verifiedAt: null},
+    {credential: 'ai-kit:credential:anthropic', provider: 'provider:anthropic', reference: 'keychain://aikit/anthropic', revoked: false, verifiedAt: null}]
+  assert.deepEqual(JSON.parse(win.credentialValues(keys, {}, null, logins).credentials).map(row => row.signIn), [undefined, undefined],
+    'no codex login beside OpenAI\'s key and no claude auth login beside Anthropic\'s: neither runs on this computer')
+  assert.throws(() => settingsPages.loginOf(logins, 'codex|provider:openai'), /^Error: codex is no agent on this computer that AIKit has a client for, so there is nothing to sign in to\.$/)
+  assert.deepEqual(JSON.parse(win.harnessValues(HARNESS_READING, logins, censusOf({state: 'held', answer: census})).harnesses).map(row => row.agent), ['gemini', 'hermes', 'pi'],
+    'Harnesses & models lists the same agents Sign in reads')
+  // A census the World Model could not read: no client is asked, and Sign in says why, never an empty list of agents.
+  const refused = []
+  await assert.rejects(settingsPages.harnessLogins(loginAdapter(LOGIN_STATUS, refused, censusAnswer([], [], 'Actuation\'s harness detection: actuation detect did not answer within 10s'))).read(),
+    /^Error: The agents on this computer are not read: Actuation's harness detection: actuation detect did not answer within 10s$/)
+  assert.ok(!refused.some(op => op.op === 'harness_auth_describe'), 'no client is asked how it signs in')
+  // AIKit's client status not answering: the census's agents stand with their logins, each saying its credential leg is not known.
+  const unknown = 'aikit client status did not answer within 10s'
+  const statusless = await settingsPages.harnessLogins(loginAdapter({error: unknown})).read()
+  assert.deepEqual(statusless.clients.map(client => [client.client, client.credentialUnread]), ['codex', 'claude-code', 'gemini', 'hermes', 'pi'].map(client => [client, unknown]))
+  const codex = JSON.parse(win.harnessValues(HARNESS_READING, statusless, HARNESS_CENSUS).harnesses).find(row => row.client === 'codex')
+  assert.deepEqual(codex.signIn, [{key: 'codex|provider:openai', provider: 'openai', command: 'codex login'}], 'its login is offered still')
+  assert.equal(codex.loginNow, `AIKit's client status could not be read, so whether AIKit finds what codex needs to sign in is not known: ${unknown}`)
+  assert.equal(win.loginReadBack(settingsPages.loginOf(statusless, 'codex|provider:openai'), statusless), `codex login has ended, but AIKit's client status could not be read again: ${unknown}`)
+  // Read again on Sign in asks the census afresh, as Harnesses & models does: both pages stand on one reading of the agents.
+  const pressed = []
+  let part
+  const Probe = () => { part = settingsPages.useSignIn(loginAdapter(LOGIN_STATUS, pressed), true); return null }
+  renderToStaticMarkup(createElement(Probe))
+  await part.reread()
+  assert.deepEqual(pressed.filter(op => op.op === 'model_subscribe').map(op => op.fresh), [true])
+  // The wiring names the census as Sign in's list.
+  assert.match(win.SETTINGS_WINDOW_WIRING.writes.signIn ?? '', /model_subscribe agents/)
+})
+
+test('CODE-DERIVED — a census read while AIKit\'s client status did not answer: Sign in says AIKit\'s why, never an empty list of logins, and Setup\'s Credentials says why no agent\'s providers were asked (O-I ticket 1003)', async () => {
+  const {censusOf} = await import('../../../../desktop/cradle/src/agency/census.ts')
+  // census.rs read(): Actuation's agents stand, each with no AIKit row, and `aikit_detail` says why AIKit was not read.
+  const why = 'AIKit client status is unavailable: aikit client status did not answer within 10s'
+  const bare = LOGIN_STATUS.clients.filter(row => row.detection === 'detected').map(row => ({...censusAgent(row), aikit: null, talks: false}))
+  const census = {...censusAnswer(bare), value: {...censusAnswer(bare).value, aikit_detail: {state: 'unavailable', why}}}
+  const read = censusOf({state: 'held', answer: census})
+  assert.equal(read.state, 'read')
+  assert.equal(read.aikitWhy, why, 'the census carries AIKit\'s why beside its agents')
+  const asked = []
+  await assert.rejects(settingsPages.harnessLogins(loginAdapter(LOGIN_STATUS, asked, census)).read(),
+    new RegExp(`^Error: AIKit's client status was not read with the agents on this computer, so no agent's login is known: ${why}$`))
+  assert.ok(!asked.some(op => op.op === 'harness_auth_describe'), 'no client is asked how it signs in')
+  const credentials = win.setupCredentialStep({state: 'read', findings: [], providers: [], bindings: [], aikitWhy: why}, () => undefined)
+  assert.deepEqual(credentials.items, [{name: 'Your agents\' providers', why: `AIKit's client status was not read with the agents on this computer, so no agent's providers were asked: ${why}.`}])
+  // A census read with AIKit's detail carries no such why.
+  assert.equal(censusOf({state: 'held', answer: LOGIN_CENSUS}).aikitWhy, undefined)
+})
+
+test('CODE-DERIVED — Launch beside each agent you can talk to: Factory\'s Set says where a session can start, the press runs factory.session.start through the registry\'s door with the agent, and Factory\'s answer is read back (O-I ticket 1003)', async () => {
+  const setOf = (acts, waiting = {}) => ({state: 'held', answer: {schema: 'oi.mode-set/v1', mode: 'factory', version: 3, set: {acts, waiting}}})
+  const seatIn = project => ({action: 'factory.session.start', input: {world: '/w/Central', project}, takes: 'agent',
+    words: `Factory's factory.session.start: the agent seated on a new track in ${project}`, done: `The agent is seated on a new track in ${project}: its session is open.`})
+  // kernel mode_set.rs: one project holding a workcell seat is the Set's `seat`; several are each `seat:<project>`, the empty track's drop waiting.
+  const one = setOf({seat: seatIn('atelier'), arm: {action: 'shell.setWriteArm', words: 'Arm', takes: 'on'}})
+  assert.deepEqual(win.launchValues(win.launchSeats(one)), {launchProjects: '["atelier"]'})
+  const several = setOf({'seat:kiln': seatIn('kiln'), 'seat:atelier': seatIn('atelier')},
+    {'track.seat': 'an agent seated on a new track: factory.session.start opens its session in one project, and several hold a workcell seat (atelier, kiln), which a drop does not choose between'})
+  assert.deepEqual(win.launchValues(win.launchSeats(several)), {launchProjects: '["atelier","kiln"]'}, 'a press names its project, so each project\'s seat stands')
+  const none = setOf({}, {'track.seat': 'an agent seated on a new track: factory.session.start opens its session in a project\'s workcell seat, and no project of this World holds one (Workcell\'s seat join)'})
+  assert.deepEqual(win.launchValues(win.launchSeats(none)), {launchWhy: 'Factory starts no session here yet: an agent seated on a new track: factory.session.start opens its session in a project\'s workcell seat, and no project of this World holds one (Workcell\'s seat join).'})
+  assert.deepEqual(win.launchValues(win.launchSeats({state: 'unavailable', reason: 'the kernel is not running'})),
+    {launchWhy: 'Factory\'s Set is not read, so no session can be started here: the kernel is not running.'})
+  // The press: the seat act for the project named, the agent in the place it takes, through the registry's door; Factory's answer read back.
+  const called = []
+  const opened = (project, kept = true) => ({contract: 'factory.session/v1', state: 'open', session: `agent-session/${project}-chat-1`, space: `session-space/${project}-chat-1`,
+    agent: 'codex', world: '/w/Central', project, checkout: `/w/Central/worktrees/env-1/${project}`,
+    record: kept ? {event: 'SessionStart', client: 'codex', kept: true, answer: '', words: '', by: 'aikit hook dispatch'}
+      : {event: 'SessionStart', client: 'codex', kept: false, words: 'AIKit\'s hook dispatch could not start: No such file', by: 'aikit hook dispatch'}})
+  const act = async (action, input) => { called.push([action, input]); return opened(input.project) }
+  assert.equal(await settingsPages.launchAgent(several, act, 'codex|kiln'),
+    'codex is seated on a new track in kiln, in the World /w/Central: its session is open in /w/Central/worktrees/env-1/kiln, and AIKit\'s SessionStart hook kept its record.')
+  assert.equal(await settingsPages.launchAgent(one, act, 'claude-code|'), 'claude-code is seated on a new track in atelier, in the World /w/Central: its session is open in /w/Central/worktrees/env-1/atelier, and AIKit\'s SessionStart hook kept its record.',
+    'where the Set offers one project, the press needs none named')
+  assert.deepEqual(called, [['factory.session.start', {world: '/w/Central', project: 'kiln', agent: 'codex'}], ['factory.session.start', {world: '/w/Central', project: 'atelier', agent: 'claude-code'}]])
+  // Several projects and none named, a project with no seat, a Set with none, and no door: each refuses in words, and no owner is asked.
+  await assert.rejects(settingsPages.launchAgent(several, act, 'codex|'), /^Error: Choose the project codex starts in: atelier, kiln\.$/)
+  await assert.rejects(settingsPages.launchAgent(several, act, 'codex|loose'), /^Error: Factory's Set offers no seat in loose: it offers one in atelier, kiln\.$/)
+  await assert.rejects(settingsPages.launchAgent(none, act, 'codex|atelier'), /^Error: Factory starts no session here yet: an agent seated on a new track/)
+  await assert.rejects(settingsPages.launchAgent(null, act, 'codex|atelier'), /^Error: Factory's Set is being read\.$/)
+  await assert.rejects(settingsPages.launchAgent(one, undefined, 'codex|atelier'), /^Error: Launch reaches no Action door here/)
+  assert.equal(called.length, 2, 'no refused press reached an owner')
+  // An answer that is no open session is said, never read as a start; a SessionStart hook that kept no record says so, in AIKit's words.
+  await assert.rejects(settingsPages.launchAgent(one, async () => ({contract: 'factory.session/v1', state: 'ended'}), 'codex|atelier'), /^Error: Factory answered factory\.session\.start for codex without an open session: /)
+  assert.match(win.launchSaid('codex', opened('atelier', false)), /, and AIKit's SessionStart hook did not keep its record \(AIKit's hook dispatch could not start: No such file\)\.$/)
+  // Drawn on Harnesses & models: Launch beside the agent that starts, none beside the one that does not; several projects are chosen
+  // between once, above the agents; a Set with no seat says why on the press.
+  const harnesses = json([{agent: 'codex', harness: 'Codex', starts: true, talks: true},
+    {agent: 'pi', harness: 'Pi', starts: true, talks: false, why: 'AIKit has no conversation adapter for pi'},
+    {agent: 'gemini', harness: 'Gemini', starts: false, talks: false, why: 'it exited 1'}])
+  const launches = markup => [...markup.matchAll(/data-i="(Launch\|[^"]*)"( data-disabled="true")?/g)].map(match => [match[1], !!match[2]])
+  const single = drawn({harnesses, launchProjects: '["atelier"]'}, 'harnesses')
+  assert.deepEqual(launches(single).map(([words, off]) => [words.split('|')[1], off]),
+    [['Starts a session of Codex in atelier: Factory seats it on a new track there, with this World, the project and today&#x27;s Day.', false]],
+    'one Launch, beside Codex, which you can talk to: none beside Pi, which starts but AIKit opens no conversation with, or Gemini, which does not start')
+  assert.doesNotMatch(single, /Sessions start in/, 'one project: nothing to choose')
+  const choose = drawn({harnesses, launchProjects: '["atelier","kiln"]'}, 'harnesses')
+  assert.match(choose, /aria-label="Sessions start in"/)
+  assert.deepEqual(launches(choose).map(([words, off]) => [words.includes('Choose the project it starts in first.'), off]), [[true, true]], 'several projects: Launch waits for the choice')
+  assert.deepEqual(launches(drawn({harnesses, launchProjects: '["atelier","kiln"]', launchIn: 'kiln'}, 'harnesses')).map(([words, off]) => [words.split('|')[1].split(':')[0], off]),
+    [['Starts a session of Codex in kiln', false]])
+  const waits = drawn({harnesses, launchWhy: 'Factory starts no session here yet: no project of this World holds one (Workcell&#x27;s seat join).'}, 'harnesses')
+  assert.deepEqual(launches(waits).map(([words, off]) => [words.includes('no project of this World holds one'), off]), [[true, true]], 'the Set\'s why, on the press')
+  // The wiring names the seat act and the registry's door.
+  assert.match(win.SETTINGS_WINDOW_WIRING.writes.launch, /factory\.session\.start through Factory's Set's seat act/)
+  assert.ok(win.SETTINGS_LOCAL_KEYS.includes('launchIn'))
 })
 
 test('SCRIPTED — Sign in runs the login in a terminal in the Workbench, where you answer it: the request names its id and command, a refusal comes back in words, and the end of that terminal is what the page reads back on', async () => {

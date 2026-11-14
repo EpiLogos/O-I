@@ -162,8 +162,28 @@
   background: transparent; border: 1px solid currentColor; border-radius: 2px; cursor: pointer }
 .central-document-pane .document-pane-acts button:disabled { opacity: .4; cursor: default }
 .central-document-absence { font-family: var(--serif) }
-/* A press on a page that has no document yet (Open today, Start a Flow): the paper's own act, as Save and Review are drawn above. */
+/* A press on a page that has no document yet (Start a Flow): the paper's own act, as Save and Review are drawn above. */
 .central-document-absence button { height: 22px; min-height: 0; margin: 4px 0 10px; padding: 0 10px; font: 11px/1 var(--oi-font-sans); letter-spacing: .02em;
   color: var(--pmid); background: transparent; border: 1px solid currentColor; border-radius: 2px; cursor: pointer }
 .central-document-absence button:hover:not(:disabled) { color: var(--oi-foreground) }
 .central-document-absence button:disabled { opacity: .4; cursor: default }
+
+/* A skill in the Document (CentralDocumentPane.tsx SkillDocument): its head and acts as any document's, the revision that waits beside
+   the skill in use above the text, the text filling the pane, and the line that says why under it. */
+.central-skill-document { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column }
+.central-skill-document > .editor-frame, .central-skill-document > .text-editor { flex: 1 1 auto; min-height: 0 }
+.central-skill-document > .inhabitant-device-fault { flex: none; margin: 0 22px 8px }
+.central-skill-revision { flex: none; max-height: 40%; overflow: auto; margin: 0 22px 10px; padding: 10px 12px; border: 1px solid var(--oi-hairline);
+  border-radius: 2px; background: var(--oi-wash); font: var(--oi-shell-type-ui)/1.5 var(--oi-font-sans) }
+.central-skill-revision[data-skill-revision="stale"] { border-color: var(--accent) }
+.central-skill-revision p { margin: 0 0 8px }
+.central-skill-revision pre { margin: 0 0 10px; white-space: pre-wrap; font: var(--oi-shell-type-meta)/1.5 var(--oi-font-mono) }
+.central-skill-revision button,
+.central-skill-reason input { height: 22px; min-height: 0; font: 11px/1 var(--oi-font-sans); color: var(--pmid); background: transparent;
+  border: 1px solid currentColor; border-radius: 2px }
+.central-skill-revision button { margin-right: 6px; padding: 0 10px; cursor: pointer }
+.central-skill-revision button:disabled { opacity: .4; cursor: default }
+.central-skill-reason { flex: none; display: flex; align-items: center; gap: 8px; padding: 8px 22px; font: var(--oi-shell-type-meta)/1.5 var(--oi-font-sans);
+  letter-spacing: .06em; text-transform: uppercase; color: var(--pmid) }
+.central-skill-reason input { flex: 1; min-width: 0; padding: 0 8px; text-transform: none; letter-spacing: 0; color: var(--oi-foreground) }
+.central-skill-document > p { flex: none; margin: 0 22px 8px; font: var(--oi-shell-type-ui)/1.5 var(--oi-font-sans) }

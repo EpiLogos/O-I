@@ -96,6 +96,17 @@ export const AT_SEARCH_MESSAGE = 'oi:at-search'
 export const AT_SEARCH_CLOSED_MESSAGE = 'oi:at-search-closed'
 /** The message the host sends the form when a choice in the line puts a reference where the @ was typed (§5): its address and its words. */
 export const AT_SEARCH_INSERT_MESSAGE = 'oi:at-search-insert'
+/** The message the Flow's form sends its host when the passage selected in an entry changes (ql-flow.html postSel: its words and its
+ * entry, empty words when none stands), and the one the host sends the form for the page's own To packet on that passage — Central's
+ * Capture (world-shell.md §9.3, selection → packet; O-I ticket 1005). */
+export const SELECTION_MESSAGE = 'oi:selection'
+export const TO_PACKET_MESSAGE = 'oi:to-packet'
+
+/** The passage a frame's message says stands selected in the page, or none: its words, trimmed, and its entry. Pure. */
+export function selectionOf(data: unknown): {readonly text: string; readonly entry: string | null} | null {
+  const {text, entry} = (data ?? {}) as {text?: unknown; entry?: unknown}
+  return typeof text === 'string' && text.trim() ? {text: text.trim(), entry: typeof entry === 'string' && entry ? entry : null} : null
+}
 
 export interface DocumentFlowFaceProps {
   readonly transport: KernelTransportStatus
@@ -423,6 +434,22 @@ export function FlowFace({transport, location, presentation = 'device', openLink
     window.addEventListener('message', listener)
     return () => window.removeEventListener('message', listener)
   }, [location.path])
+  // The passage selected in the page, as its form tells this host (SELECTION_MESSAGE, from this frame only): Capture carries it to the
+  // page's packet by the form's own To packet (TO_PACKET_MESSAGE), and the island is read at once, so the Packet and the Key count follow.
+  const [selection, setSelection] = useState<{readonly text: string; readonly entry: string | null} | null>(null)
+  useEffect(() => {
+    const listener = (event: MessageEvent) => {
+      if (event.source !== frame.current?.contentWindow || (event.data as {type?: unknown})?.type !== SELECTION_MESSAGE) return
+      const next = selectionOf(event.data)
+      setSelection(was => (was?.text === next?.text && was?.entry === next?.entry ? was : next))
+    }
+    window.addEventListener('message', listener)
+    return () => window.removeEventListener('message', listener)
+  }, [])
+  const toPacket = useCallback(() => {
+    frame.current?.contentWindow?.postMessage({type: TO_PACKET_MESSAGE}, '*')
+    void refreshDraftStanding()
+  }, [refreshDraftStanding])
   const key = useRef(`flow:${Math.random().toString(36).slice(2)}`).current
   const paneId = useContext(DocumentPaneContext) ?? undefined
   // The door carries the Flow's own location, draft fact and last save outcome, so the page family's devices read the reached
@@ -430,7 +457,7 @@ export function FlowFace({transport, location, presentation = 'device', openLink
   const standing: DocumentInPane = {key, paneId, form: 'Flow', title: documentLabel, revision: revision || undefined,
     state: face && !baselined && !save ? 'form not answered yet' : documentStateWords({pending, dirty, save}), save: face && !pending ? () => void saveToOwner() : undefined,
     reread: pending ? undefined : reread, rereadLabel: 'Re-read', location: instance?.location ?? location, dirty,
-    ...(save ? {outcome: save.outcome} : {}), ...(packet ? {packet} : {})}
+    ...(save ? {outcome: save.outcome} : {}), ...(packet ? {packet} : {}), ...(selection ? {selection, toPacket} : {})}
   // The aperture follows the document the hand reached (the first one standing until then); a change of standing reaches it.
   useEffect(() => { if (inPane) publishDocument(standing, !reachedDocument()) })
   // While a Flow stands in a pane, a Send brings AIKit's prepared context to the reached document's packet first (lane AA's proposal,

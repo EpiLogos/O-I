@@ -22,7 +22,7 @@ const pageErrors=[];page.on('pageerror',e=>pageErrors.push(String(e)));
 const loadedModules=[],moduleReads=[];
 page.on('response',response=>{
  const url=response.url();
- if(/expressions-engine|engineSurface|engineProjection/.test(url))moduleReads.push(response.body().then(bytes=>loadedModules.push({url,status:response.status(),sha256:createHash('sha256').update(bytes).digest('hex')})));
+ if(/expressions-app\/(?:src\/engine|field-studies-journeys\/src)\/|engineSurface|engineProjection/.test(url))moduleReads.push(response.body().then(bytes=>loadedModules.push({url,status:response.status(),sha256:createHash('sha256').update(bytes).digest('hex')})));
 });
 const evidence={schema:'oi.expression-ascii-renderer-regression/v1',source:{file,sha256:createHash('sha256').update(bytes).digest('hex'),native_revision:document.revision,body_ref:body.id},standing:'Production WebGL renderer, software GPU; retained native input; no tool effects; timed readings after 50 rendered startup frames',readings:[]};
 const read=async label=>{

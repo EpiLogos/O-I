@@ -211,15 +211,17 @@ export function taskSettingChange(setting: TaskSetting, value: Value, reading: E
  * Solo, a gate on its executor's launches, is never written from here. */
 export const trackSettingChange = (setting: 'telemetry', on: boolean): EncounterSessionSettingsRequest => ({track: {[setting]: on}})
 
-/** Write one change to a session's settings against the revision its standing reading holds, then read them again. The owner's
- * refusal (a stale revision, another task, a word outside the manual's) is thrown in its words. */
+/** Write one change to a session's settings against the revision its standing reading holds — or the reading the caller read them in
+ * (`basis`: the World Model's, O-I ticket 1005) — then read them again. The owner's refusal (a stale revision, another task, a word outside
+ * the manual's) is thrown in its words. */
 export async function writeSessionSettings(transport: KernelTransportStatus, project: string, agentSession: string,
-  change: EncounterSessionSettingsRequest): Promise<EncounterSessionSettingsReading> {
+  change: EncounterSessionSettingsRequest, basis?: EncounterSessionSettingsReading): Promise<EncounterSessionSettingsReading> {
   const entry = settingsReadingEntry(transport, project, agentSession)
   const standing = entry.snapshot()
   const epoch = standing.epoch ?? ''
-  if (standing.status !== 'answered' || !standing.value) throw new Error('The session\'s settings are not read yet; read them before changing them.')
-  const revision = (standing.value as EncounterSessionSettingsReading).revision
+  const read = basis ?? (standing.status === 'answered' ? standing.value as EncounterSessionSettingsReading | null : null)
+  if (!read) throw new Error('The session\'s settings are not read yet; read them before changing them.')
+  const revision = read.revision
   const result = await kernelOp(transport, {op: 'encounter_session_settings', project, agent_session: agentSession, request: change,
     ...(revision ? {expected_revision: revision} : {})})
   if (result.error || result.outcome?.result !== SETTINGS_RESULT) {

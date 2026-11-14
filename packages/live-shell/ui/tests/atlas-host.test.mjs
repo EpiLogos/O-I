@@ -3,8 +3,8 @@ import assert from 'node:assert/strict'
 import {readFile, readdir} from 'node:fs/promises'
 import {register} from 'node:module'
 
-// The Earth projection's shell host (T-ATLAS-HOST, host leg): the workspace-scoped memory of the atlas, the admission of the centre
-// panel and the two pane kinds, and the honest refusals. Production modules in memory (the mode-grammar loader pattern): .ts/.tsx
+// The Earth projection's shell host (T-ATLAS-HOST, host leg): the World-scoped memory of the atlas, the admission of the two pane
+// kinds, and the honest refusals. Production modules in memory (the mode-grammar loader pattern): .ts/.tsx
 // transpiled, CSS and JSON stubbed. The atlas itself is not mounted here: it needs WebGL and a kernel; its mount is UNVERIFIED headless
 // and is verified on screen.
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
@@ -34,28 +34,21 @@ export async function load(u, c, n) {
 
 const panelSource = new URL('../src/projections/atlas/AtlasProjectionPanel.tsx', import.meta.url)
 
-// Admission before any workspace is bound: the door refuses honestly, and claims nothing.
-test('the Earth pane kinds are admitted once; a door with no bound workspace refuses and claims nothing', async () => {
-  const {registerAtlasHost, ATLAS_PANEL_ID, ATLAS_MODULE_ID} = await import('../src/projections/atlas/registerAtlasHost.ts')
+// Admission: the atlas mounts through the module door alone; no centre panel stands for it (O-I #1009: it never mounted in the candidate,
+// whose centre is the pane tree in every mode). Mounting with no workspace bound is atlas-world-scope.test.mjs's.
+test('the Earth pane kinds are admitted once, and no centre panel is registered for the atlas', async () => {
+  const {registerAtlasHost, ATLAS_MODULE_ID} = await import('../src/projections/atlas/registerAtlasHost.ts')
   const {getPanels} = await import('../src/shell/panels.ts')
   const {projectionModule, registerProjectionModule} = await import('../../../../desktop/cradle/src/surface/projectionModules.ts')
   registerAtlasHost()
   registerAtlasHost()
-  const centre = getPanels('center').filter(panel => panel.id === ATLAS_PANEL_ID)
-  assert.equal(centre.length, 1, 'the centre panel is registered once')
-  assert.equal(centre[0].navigation, false, 'the lens bar is its entry; the transport list does not name it')
+  assert.equal(getPanels('center').filter(panel => panel.id === 'projection.earth').length, 0, 'the atlas is a pane kind, never a centre panel')
   for (const kind of ['projection.earth', 'projection.constellation']) {
     assert.equal(projectionModule(kind)?.id, ATLAS_MODULE_ID, `${kind} is admitted under the atlas module`)
   }
   assert.equal(projectionModule('projection.timeline'), undefined, 'no kind is claimed that the atlas does not mount')
   assert.throws(() => registerProjectionModule({id: 'other-owner', kind: 'projection.earth', create: () => ({unmount() {}})}),
     /already admitted by "atlas-earth"/, 'a second, different module for the kind is refused')
-  const element = {replaceChildren() {}, append() {}}
-  await assert.rejects(
-    () => projectionModule('projection.earth').create({kind: 'projection.earth', binding: {id: 'b1', title: 'Earth'}, element, encounter: {}}),
-    /No workspace is bound for the Earth projection/,
-    'the door names the missing workspace rather than mounting without a memory',
-  )
 })
 
 // The Technē lens bar retired (#762: ModeDetail's TechneLensBar was reached only by tests). Retired: 'the lens bar cuts Places and Project /
@@ -64,8 +57,15 @@ test('the Earth pane kinds are admitted once; a door with no bound workspace ref
 // open lens: the atlas view while the atlas is the centre …' → atlas-face-bodies.test.mjs 'the mode switch is the atlas view …: a choice
 // made on the face is the view the pane follows' and techne-devices.test.mjs (the Earth ⇄ Graph device reads the view mirror).
 
-test('the atlas memory is bound to the workspace namespace and to one workspace id at a time', async () => {
-  const {bindAtlasScope, atlasMemoryStorage} = await import('../src/projections/atlas/AtlasProjectionPanel.tsx')
+test('the atlas memory is the World\'s the host names: refused in words while it names none', async () => {
+  const {atlasWorldOf, atlasWorld, atlasMemoryStorage} = await import('../src/projections/atlas/AtlasProjectionPanel.tsx')
+  const scope = ground => ({owner: 'central', world: 'control:root', personal_ground: ground, workcell_ref: 'workcell:test'})
+  assert.deepEqual(atlasWorldOf({world_scope: scope('/a/Central')}), {ground: '/a/Central', owner: 'central'}, 'the World scope\'s Central ground')
+  assert.deepEqual(atlasWorldOf({world_scope: null, personal_ground: '/b/Central'}), {ground: '/b/Central', owner: 'central'},
+    'else the ground the host discloses (the Sets\' rule, App.tsx setsGround)')
+  assert.equal(atlasWorldOf({world_scope: null, personal_ground: null}), null, 'a host that names no ground names no World')
+  assert.equal(atlasWorldOf(null), null)
+
   const areaMap = new Map([['unrelated.key', 'kept']])
   Object.defineProperty(globalThis, 'localStorage', {configurable: true, writable: true, value: {
     get length() {return areaMap.size},
@@ -76,36 +76,18 @@ test('the atlas memory is bound to the workspace namespace and to one workspace 
     clear: () => areaMap.clear(),
   }})
   const memory = atlasMemoryStorage()
-
-  assert.equal(memory.getItem('forces'), null, 'unbound: nothing is read')
+  assert.equal(atlasWorld(), null, 'no attach has read a World here')
+  assert.equal(memory.getItem('forces'), null, 'no World: nothing is read')
   assert.equal(memory.length, 0)
-  assert.throws(() => memory.setItem('forces', '{}'), /No workspace is bound/, 'unbound: a write is refused, so the atlas finds no storage')
-  assert.equal(areaMap.size, 1, 'unbound: nothing was written to the area')
-
-  bindAtlasScope({namespace: 'oi.test.workspace', workspaceId: 'A'})
-  memory.setItem('forces', '{"v":1}')
-  assert.equal(memory.getItem('forces'), '{"v":1}', 'a value written in workspace A is read back in A')
-  assert.equal([...areaMap.keys()].includes('oi.test.workspace.atlas.A::forces'), true, 'the key sits under the namespace and the id')
-  assert.equal(memory.length, 1)
-  assert.equal(memory.key(0), 'forces', 'the namespace is not shown to the atlas')
-
-  bindAtlasScope({namespace: 'oi.test.workspace', workspaceId: 'B'})
-  assert.equal(memory.getItem('forces'), null, 'workspace B does not see workspace A')
-  assert.equal(memory.length, 0)
-
-  bindAtlasScope({namespace: 'oi.test.workspace', workspaceId: 'A'})
-  memory.removeItem('forces')
-  memory.setItem('practice', '[]')
-  memory.clear()
-  assert.equal(memory.length, 0, 'clear removes only the workspace\'s own keys')
-  assert.equal(areaMap.get('unrelated.key'), 'kept', 'keys outside the atlas namespace are untouched')
+  assert.throws(() => memory.setItem('forces', '{}'), /names no World/, 'no World: a write is refused, so the atlas finds no storage')
+  assert.equal(areaMap.size, 1, 'no World: nothing was written to the area')
 })
 
 test('the panel loads the atlas lazily, writes no storage of its own, and reimplements none of the atlas', async () => {
   const source = await readFile(panelSource, 'utf8')
   const code = source.split('\n').filter(line => !/^\s*\/\//.test(line)).join('\n')
   const storageUses = code.match(/localStorage|sessionStorage|indexedDB/g) ?? []
-  assert.equal(storageUses.length, 1, 'the only browser-storage reference is the workspace area lookup')
+  assert.equal(storageUses.length, 1, 'the only browser-storage reference is the window store\'s lookup')
   assert.match(code, /import\('\.\/provider\/suiteProvider'\)/, 'the provider loads with the atlas, not with the shell')
   assert.match(code, /import\('\.\/mount'\)/, 'the atlas loads on first view')
   assert.match(code, /mounted\.ctl\.toggleMode\(\)/, 'the Earth ⇄ Graph switch is the controller\'s own toggle')

@@ -61,7 +61,11 @@ export function readNativeMode(value:unknown,session:string,native:string):Nativ
 export class NativeModeController {
  private native?:string;private ready=false;private generation=0;private serial=0;
  private state:NativeModeState={phase:"unread"};
- constructor(private session:string,private call:(request:NativeModeRequest)=>Promise<unknown>,private changed:(state:NativeModeState)=>void){}
+ // Fields, not parameter properties: this module is loaded in Node's strip-only TypeScript (the engine suite), which erases types only.
+ private session:string;
+ private call:(request:NativeModeRequest)=>Promise<unknown>;
+ private changed:(state:NativeModeState)=>void;
+ constructor(session:string,call:(request:NativeModeRequest)=>Promise<unknown>,changed:(state:NativeModeState)=>void){this.session=session;this.call=call;this.changed=changed;}
  snapshot=()=>this.state;
  private set(state:NativeModeState){this.state=state;this.changed(state);}
  observe(status:ModelConnection|undefined){

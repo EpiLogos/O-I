@@ -85,7 +85,9 @@ import {createEncounterLink, type EncounterLink} from './projections/encounterLi
 import {setTimelinePanePresentation, useTimelinePanePresentation, usePublishTimelineReading} from './projections/timelinePaneHost'
 import {useAtlasHandle, useAtlasView} from './projections/atlas/AtlasProjectionPanel'
 import {deviceInstrumentFor, factoryFocusedPane, type HostedLens} from './shell/paneInstrument'
-import {focusedSurfaceKind, isFactoryMode} from './agent/factoryCentre'
+import {focusedSurfaceKind, isFactoryMode, sessionInWindowOf} from './agent/factoryCentre'
+import {onActAnswered} from '../../../../desktop/cradle/src/kernel/bridge'
+import type {EncounterRow} from '../../../../desktop/cradle/src/encounter/EncounterList'
 import {subjectWords} from './central/daySurface'
 import {worldSubjectOf} from './techne/subject/worldRows'
 import {clampBrowserWidth, clampDetailHeight, clampRailWidth, collapseDetail, drawnSizes, railDefaultWidth, draggedSize, enteredDetailHeight, expandDetail,
@@ -311,6 +313,20 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     window.dispatchEvent(new CustomEvent(LOGIN_TERMINAL_OPEN, {detail: loginIntent}))
     setLoginIntent(null)
   }, [loginIntent, settingsPresented, centerPanel])
+  // A session Factory starts opens where it runs (manual §19.1: "It runs in a terminal in the window"; O-I #1006): whichever press started
+  // it, its start's answer names the session (agent/factoryCentre.ts sessionInWindowOf). Settings steps back and Pane view presents the
+  // Workbench first, then the Workbench opens the session's pane, AIKit's own conversation of it (it acts only while presented).
+  const [sessionIntent, setSessionIntent] = useState<EncounterRow | null>(null)
+  useEffect(() => onActAnswered((action, answer) => {
+    const row = sessionInWindowOf(action, answer)
+    if (!row) return
+    presentSettings(false); openSettings(null); showMainView('pane'); setCenterPanel('native.workbench'); setSessionIntent(row)
+  }), [])
+  useEffect(() => {
+    if (!sessionIntent || settingsPresented || centerPanel !== 'native.workbench' || mainView !== 'pane') return
+    window.dispatchEvent(new CustomEvent('oi:open-encounter', {detail: sessionIntent}))
+    setSessionIntent(null)
+  }, [sessionIntent, settingsPresented, centerPanel, mainView])
   // Settings' way back names the work it returns to: the mode the frame stands in (manual §10.10; #739 gap 19).
   useEffect(() => { setSettingsReturnLabel(returnToMode(frameMode)) }, [frameMode])
   useEffect(() => {

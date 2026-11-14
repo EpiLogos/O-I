@@ -9,8 +9,10 @@
 import {useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore} from 'react'
 import type {Value} from '../frame/devices/designed'
 import type {ChangeRequest, ScopeAddress, SettingsAdapter, SetupSource} from './adapter'
-import type {KernelOp, PresentationDocument} from '../../../../../desktop/cradle/src/kernel/types'
+import type {KernelOp, ModelSliceAnswer, PresentationDocument} from '../../../../../desktop/cradle/src/kernel/types'
+import {modeSetOf, type ModeSetReading} from '../owners/modeSets'
 import type {HarnessReading} from '../../../../../desktop/cradle/src/configuration/harnessSource'
+import {agentName, censusOf, type CensusReading} from '../../../../../desktop/cradle/src/agency/census'
 import type {ProfileDocument} from '../../../../../desktop/cradle/src/configuration/contracts'
 import type {DisclosedAction, SystemCompositionReading} from '../../../../../desktop/cradle/src/workspace/settings/types'
 import {actionMessage, object, routineList, type Invocation, type MethodRow, type RoutineDetail, type RoutineList, type RoutineRequest} from '../../../../../desktop/cradle/src/contributions/automations/client'
@@ -20,10 +22,11 @@ import {refusalLine, scalarEntries} from '../agent/RefusalCard'
 import {connectionBasis, machineBasis, validateMachine, type MachineConnection, type RemoteMachineDeclaration, type RemoteMachinesSource} from './machines'
 import {authorityAllowsTrigger, eligibleProofs, routineBasis, scheduleFromInput, type RoutineAuthoringOptions, type RoutineAuthoringResult, type ScheduleShape} from './routines'
 import {appearanceValues, automationValues, credentialValues, NEW_SCHEDULE, ROUTINE_FORM, scanWords, workcellSecretValues, folderOf, harnessValues, machineValues, NO_AUTHORING, NO_HARNESS, NO_INVOKE, NO_MACHINES, NO_NAVIGATE, NO_PRODUCTS,
-  NO_PROFILES, NO_SETUP_AIKIT, NO_SETUP_SOURCE, NO_VISUALS, groundBound, productValues, profileValues, SECRET_REFERENCE, setupFolder, setupHarnessClients, setupHarnessProviders,
+  NO_PROFILES, NO_SETUP_AIKIT, NO_SETUP_SOURCE, NO_VISUALS, groundBound, productValues, profileValues, SECRET_REFERENCE, setupFolder, setupAgentTools, setupRootAgent, setupHarnessProviders,
   setupKeyFindings, setupNamespace, setupSkillRoots, setupValues, systemValues, type CredentialRow, type SetupCredentials, type SetupHarnesses, type SetupMachine, type SetupPreview,
-  harnessLoginClients, harnessLoginsOf, loginCheckOf, loginReadBack, commandWords, type HarnessLoginClient, type HarnessLoginReading,
-  setupExtensionLine, setupPlacementLine, possessive, type SetupExtension, type SetupLeft, type SetupPlacement, type SetupSnapshot, type SetupWorkFolder, type SetupFounding, type SetupKey, type SetupAgreement, type SetupForm, type SetupMusic, type CivilTimePreview, type SetupBirth, type SetupCivilTime, type SetupDisclosure, groundNameRefusal, groundParts, groundPath} from './windowValues'
+  harnessLoginClients, harnessLoginsOf, loginCheckOf, loginReadBack, commandWords, type HarnessLoginClient, type HarnessLoginReading, launchSaid, launchSeats, launchValues,
+  setupExtensionLine, setupPlacementLine, possessive, type SetupExtension, type SetupLeft, type SetupPlacement, type SetupSnapshot, type SetupWorkFolder, type SetupFounding, type SetupKey, type SetupAgreement, type SetupForm, type SetupMusic, type SetupAuthority, type CivilTimePreview, type SetupBirth, type SetupCivilTime, type SetupDisclosure, groundNameRefusal, groundParts, groundPath,
+  dayFormOf, setupDayPatch, type SetupDay} from './windowValues'
 import type {IdentityProfile} from '../../../../../desktop/cradle/src/nara/identity/types'
 import {chooseFolder, nativeFolderChooser, NO_NATIVE_FOLDER_CHOOSER} from './folderChooser'
 import {AdoptionController} from '../../../../../desktop/cradle/src/configuration/adoptionController'
@@ -112,6 +115,14 @@ async function operation(adapter: SettingsAdapter, op: KernelOp, expected: strin
   return response.outcome
 }
 
+/** The agents on this computer, the census (the World Model's agents slice, O-I ticket 1003), over the adapter's kernel channel: the one
+ * reading of them every page that names an agent takes (Harnesses & models, Sign in). `fresh`: read from its owners past what the kernel
+ * holds, as Read again asks it. */
+async function readCensus(adapter: SettingsAdapter, fresh = false): Promise<CensusReading> {
+  const outcome = await operation(adapter, {op: 'model_subscribe', slice: 'agents', ...(fresh ? {fresh: true} : {})}, 'model_slice') as {data: ModelSliceAnswer}
+  return censusOf({state: 'held', answer: outcome.data})
+}
+
 /** The system's own file picker, for an import (the old pages' hidden file inputs). Null when you cancel. */
 export function pickFile(accept: string): Promise<File | null> {
   return new Promise(resolve => {
@@ -126,17 +137,23 @@ export function pickFile(accept: string): Promise<File | null> {
 
 // ---------------------------------------------------------------------------------------------------------------- Harnesses & models
 
-/** Harnesses & models (HarnessPreferences.tsx): the providers and the chat default through the adapter's HarnessSource, each harness client's
- * install and folder through the kernel channel, and its Sign in from AIKit's reading of its own login (useSignIn's `logins`). The provider a
- * new chat starts with is a local change of O:I's chat-default setting (chatDefaultSetting.ts), which Review changes… plans and applies
- * through its owner, and Reset on its row withdraws (O-I #744): this page reads the owner for the engine (`reading`) and takes its new
- * reading after (`set`). */
-export function useHarnessPage(adapter: SettingsAdapter, enabled: boolean, logins: HarnessLoginReading | null = null): PagePart & {reading: HarnessReading | null; set(reading: HarnessReading): void} {
+/** Harnesses & models (HarnessPreferences.tsx): the agents on this machine, which are the census (the World Model's agents, O-I #1003),
+ * each with AIKit's client facts through the adapter's HarnessSource; a client's install and folder through the kernel channel, and its Sign
+ * in from AIKit's reading of its own login (useSignIn's `logins`). Which agent a new chat talks to is chosen in the chat itself. */
+export function useHarnessPage(adapter: SettingsAdapter, enabled: boolean, logins: HarnessLoginReading | null = null): PagePart {
   const read = useRead<HarnessReading>(enabled, adapter, !!adapter.harnesses, async source => {
     const answer = await source.harnesses!.read()
     if (answer.kind === 'fixture' && !import.meta.env?.DEV) throw new Error('Fixture harness readings cannot qualify production settings.')
     return answer
   })
+  // Read again asks the census afresh, past what the kernel holds: a model default or Skill Set changed in AIKit's own tools moves no
+  // slice (world_model.rs: the census is not re-read on AIKit's churn), and is read then.
+  const fresh = useRef(false)
+  const census = useRead<CensusReading>(enabled, adapter, !!adapter.invoke, source => {
+    const asked = fresh.current
+    fresh.current = false
+    return readCensus(source, asked)
+  }, 'census')
   const rows = read.value?.harnesses.state === 'ok' ? read.value.harnesses.rows : []
   const run = useCallback(async (client: Value, install: boolean): Promise<string> => {
     const row = rows.find(item => item.client === client)
@@ -151,36 +168,97 @@ export function useHarnessPage(adapter: SettingsAdapter, enabled: boolean, login
   return useMemo(() => {
     const why: Record<string, string> = {}
     if (!adapter.invoke) { why.install = NO_INVOKE('Install and Folder'); why.reveal = NO_INVOKE('Install and Folder') }
-    const refused: Record<string, string> = {}
-    if (!adapter.harnesses) refused.effectiveDefault = NO_HARNESS
-    if (read.error) refused.effectiveDefault = read.error
-    else if (read.value) for (const [section, state] of [['providers', read.value.providers], ['harnesses', read.value.harnesses], ['catalogue', read.value.catalogue], ['saved default', read.value.defaultState]] as const)
-      if (state.state === 'failed') refused.effectiveDefault = `${section}: ${state.error}`
-    return {values: harnessValues(read.value, logins), why, refused, reading: read.value, set: read.set, reread: read.refresh,
+    // The agents stand by the census, read over the kernel channel; AIKit's facts on them and the catalogue by the HarnessSource. A reading
+    // asked and not answered is drawn waiting (O-I #758); AIKit's failure stands on its own column (harnessValues' aikitWhy), not on the agents.
+    const standing = joined(readStanding(['harnesses'], census, adapter.invoke ? null : NO_INVOKE('The agents on this machine')),
+      readStanding(['routes'], read, adapter.harnesses ? null : NO_HARNESS))
+    const refused: Record<string, string> = {...standing.refused}
+    if (census.value?.state === 'unavailable') refused.harnesses = census.value.why
+    if (read.value?.catalogue.state === 'failed') refused.routes = `catalogue: ${read.value.catalogue.error}`
+    return {values: harnessValues(read.value, logins, census.value), why, refused, waiting: standing.waiting, reread: async () => { fresh.current = true; await Promise.all([read.refresh(), census.refresh()]) },
       acts: {
         install: async client => run(client, true),
         reveal: async client => run(client, false),
       }}
-  }, [adapter, read.value, read.error, read.refresh, read.set, run, logins])
+  }, [adapter, read, run, logins, census])
 }
 
 // ---------------------------------------------------------------------------------------------------------------- Sign in
+
+// ---------------------------------------------------------------------------------------------------------------- Launch
+
+/** Why Launch starts no session where the host hands the window no Action door. */
+const NO_LAUNCH_ACT = 'Launch reaches no Action door here (SetupSource.act, the kernel\'s act), so no session can be started from Settings.'
+
+/** Factory's Set over the adapter's kernel channel (`set_subscribe factory`, kernel mode_set.rs), as Launch reads its seat acts. */
+async function readFactorySet(adapter: SettingsAdapter): Promise<ModeSetReading> {
+  if (!adapter.invoke) return {state: 'unavailable', reason: NO_INVOKE('Factory\'s Set')}
+  const answer = await adapter.invoke({op: 'set_subscribe', mode: 'factory'})
+  return modeSetOf(answer.outcome, answer.error ?? undefined, 'factory')
+}
+
+/** One Launch press (useLaunch): the seat act Factory's Set offers for the project the press names (`<agent slug>|<project>`; with no
+ * project, the Set's only one), run with the agent through the registry's door (SetupSource.act), and Factory's answer read back
+ * (launchSaid). Each refusal in words: the Set's, the press's, or the owner's. */
+export async function launchAgent(set: ModeSetReading | null, act: SetupSource['act'] | undefined, value: Value): Promise<string> {
+  const [agent = '', project = ''] = String(value ?? '').split('|')
+  if (!agent) throw new Error('Launch names no agent.')
+  const seats = launchSeats(set)
+  if ('why' in seats) throw new Error(seats.why)
+  const seat = project ? seats.seats.find(one => one.project === project) : seats.seats.length === 1 ? seats.seats[0] : undefined
+  if (!seat) {
+    const offered = seats.seats.map(one => one.project).join(', ')
+    throw new Error(project ? `Factory's Set offers no seat in ${project}: it offers one in ${offered}.` : `Choose the project ${agent} starts in: ${offered}.`)
+  }
+  if (!act) throw new Error(NO_LAUNCH_ACT)
+  const bound = seat.act.input && typeof seat.act.input === 'object' && !Array.isArray(seat.act.input) ? seat.act.input as Record<string, unknown> : {}
+  return launchSaid(agent, await act(seat.act.action, {...bound, [seat.act.takes ?? 'agent']: agent}))
+}
+
+/** Launch (O-I #1003: "Launch starts a session that comes with its world, its project and today's Day"; R36), beside each agent you
+ * can talk to on Harnesses & models and on Setup's Harnesses and skills step: one press seats the agent on a new track of Factory's, through
+ * the seat act Factory's Set offers for the project chosen (kernel mode_set.rs: factory.session.start bound to this World and a project
+ * that holds a workcell seat, taking the agent) and the registry's door (SetupSource.act, the kernel's `act`). The window computes no
+ * World and no seat: where the Set offers none, its own words say why (launchSeats). What Factory answered is read back (launchSaid).
+ * The press's value is `<agent slug>|<project>`. One reading of the Set for both pages. */
+export function useLaunch(adapter: SettingsAdapter, enabled: boolean): PagePart {
+  const set = useRead<ModeSetReading>(enabled, adapter, !!adapter.invoke, readFactorySet, 'factory-set')
+  const launch = useCallback(async (value: Value): Promise<string> => {
+    const setup = adapter.setup
+    const said = await launchAgent(set.value, setup?.act ? (action, input) => setup.act!(action, input) : undefined, value)
+    // The new track stands in Factory's Set: read it again.
+    await set.refresh()
+    return said
+  }, [adapter, set])
+  return useMemo(() => {
+    const why: Record<string, string> = adapter.setup?.act ? {} : {launch: NO_LAUNCH_ACT}
+    const standing = readStanding(['launchProjects'], set, adapter.invoke ? null : NO_INVOKE('Launch'))
+    return {values: launchValues(launchSeats(set.value ?? (set.error ? {state: 'unavailable', reason: set.error} : null))), why, refused: standing.refused,
+      waiting: standing.waiting, reread: set.refresh, acts: {launch}}
+  }, [adapter, set, launch])
+}
 
 /** AIKit carries no profile for this harness: it has no login of its own to offer, which is no fault of the page's. */
 const NO_PROFILE = /harness_auth\.unknown_harness|not a harness AIKit carries a profile/
 /** How long the Workbench has to take a login terminal before Sign in says that nothing took it. */
 const LOGIN_DEADLINE_MS = 10_000
 
-/** What Sign in reads, over the adapter's kernel channel (manual §10.10 Rules): AIKit's client status (harness_status: each client, whether
- * it is on this computer, and its credential leg), then the logins each client on this computer declares (harness_auth_describe: `aikit
- * harness auth <client> --json`). A client whose logins cannot be read stands with why, and the others stand as read. */
+/** What Sign in reads, over the adapter's kernel channel (manual §10.10 Rules): the agents on this computer, which are the census (O-I
+ * ticket 1003; `fresh` as Read again asks it), and of those AIKit has a client for (setupAgentTools, as Setup asks), the logins each
+ * declares (harness_auth_describe: `aikit harness auth <client> --json`), with its credential leg from AIKit's client status
+ * (harness_status), detail on the agent and never a list of its own. A census not read refuses, with its why; a client status that
+ * cannot be read leaves each agent's logins and says why on each; a client whose logins cannot be read stands with why, and the others
+ * stand as read. */
 export function harnessLogins(adapter: SettingsAdapter) {
   return {
-    read: async (): Promise<HarnessLoginReading> => {
-      const status = await operation(adapter, {op: 'harness_status'}, 'harness_status_reading')
-      const clients = harnessLoginClients(status.result === 'harness_status_reading' ? status.data : null)
-      return {clients: await Promise.all(clients.map(async (client): Promise<HarnessLoginClient> => {
-        if (!client.detected) return client
+    read: async (options: {readonly fresh?: boolean} = {}): Promise<HarnessLoginReading> => {
+      const [census, status] = await Promise.all([readCensus(adapter, options.fresh),
+        operation(adapter, {op: 'harness_status'}, 'harness_status_reading').then(answer => ({data: answer.result === 'harness_status_reading' ? answer.data : null}),
+          (cause: unknown) => ({unread: words(cause)}))])
+      if (census.state !== 'read') throw new Error(`The agents on this computer are not read: ${census.state === 'unavailable' ? census.why : 'the World Model has not answered yet.'}`)
+      // The census read without AIKit's detail: no agent carries AIKit's client, so no login can be known, and Sign in says why.
+      if (census.aikitWhy) throw new Error(`AIKit's client status was not read with the agents on this computer, so no agent's login is known: ${census.aikitWhy}`)
+      return {clients: await Promise.all(harnessLoginClients(census, status).map(async (client): Promise<HarnessLoginClient> => {
         try {
           const face = await operation(adapter, {op: 'harness_auth_describe', harness: client.client}, 'harness_auth_reading')
           return {...client, logins: harnessLoginsOf(face.result === 'harness_auth_reading' ? face.data : null)}
@@ -195,10 +273,10 @@ export function harnessLogins(adapter: SettingsAdapter) {
 /** The login a Sign in press names (`<client>|<provider>`, harnessValues' and credentialValues' `signIn` key), as AIKit declares it; or why
  * there is none to run, in words: one that signs in only inside itself is refused with its own note. */
 export function loginOf(reading: HarnessLoginReading | null, key: string): {client: string; harness: string; provider: string; command: readonly string[]; title: string; check?: readonly string[]} {
-  if (!reading) throw new Error('Sign in: AIKit\'s client status is not read yet, so no login is known here. Read again.')
+  if (!reading) throw new Error('Sign in: the agents\' logins are not read yet, so no login is known here. Read again.')
   const cut = key.indexOf('|'), name = cut < 0 ? key : key.slice(0, cut), provider = cut < 0 ? '' : key.slice(cut + 1)
   const client = reading.clients.find(item => item.client === name)
-  if (!client?.detected) throw new Error(`${name} is no harness client AIKit finds on this computer, so there is nothing to sign in to.`)
+  if (!client) throw new Error(`${name} is no agent on this computer that AIKit has a client for, so there is nothing to sign in to.`)
   if (client.unread) throw new Error(client.unread)
   const logins = (client.logins ?? []).filter(login => !provider || login.provider === provider)
   const login = logins.find(item => item.command)
@@ -207,8 +285,9 @@ export function loginOf(reading: HarnessLoginReading | null, key: string): {clie
 }
 
 /** What Sign in reads back once a login's terminal ended (manual §10.10 Rules: "the page reads the result back"): the logins read again
- * (AIKit's client status and each client's declared logins), and, where AIKit declares the harness's own logged-in check, that check run
- * (harness_auth_describe with `check`: `aikit harness auth <client> --check --json`); the result in words (loginReadBack). */
+ * (the census's agents, AIKit's client status and each client's declared logins), and, where AIKit declares the harness's own logged-in
+ * check, that check run (harness_auth_describe with `check`: `aikit harness auth <client> --check --json`); the result in words
+ * (loginReadBack). */
 export async function loginResult(source: SettingsAdapter, login: ReturnType<typeof loginOf>): Promise<{after: HarnessLoginReading | null; said: string}> {
   let after: HarnessLoginReading | null = null, error: string | undefined, check: {signedIn: boolean} | {unread: string} | undefined
   try { after = await harnessLogins(source).read() } catch (cause) { error = words(cause) }
@@ -258,9 +337,14 @@ export function loginEnded(id: string, signal?: AbortSignal): Promise<void> {
 /** Sign in, for Harnesses & models and Credentials alike (manual §10.10 Rules: "Sign in runs it in a terminal, where you answer it, and the
  * page reads the result back"): one reading of the logins (`logins`, which both pages draw), the press that runs one in a terminal in the
  * Workbench, and the result read back when that terminal ends (`loginSaid`), or why the logins could not be read. Read when either page
- * opens. */
+ * opens; Read again asks the census afresh, as Harnesses & models does, so Sign in stands on the agents that page lists. */
 export function useSignIn(adapter: SettingsAdapter, enabled: boolean): PagePart & {logins: HarnessLoginReading | null} {
-  const read = useRead<HarnessLoginReading>(enabled, adapter, !!adapter.invoke, source => harnessLogins(source).read(), 'harness-logins')
+  const fresh = useRef(false)
+  const read = useRead<HarnessLoginReading>(enabled, adapter, !!adapter.invoke, source => {
+    const asked = fresh.current
+    fresh.current = false
+    return harnessLogins(source).read({fresh: asked})
+  }, 'harness-logins')
   const [said, setSaid] = useState<string | null>(null)
   const watching = useRef<AbortController | null>(null)
   useEffect(() => () => watching.current?.abort(), [])
@@ -282,9 +366,9 @@ export function useSignIn(adapter: SettingsAdapter, enabled: boolean): PagePart 
   return useMemo(() => {
     const why: Record<string, string> = {}
     if (!adapter.invoke) why.signIn = NO_INVOKE('Sign in')
-    const loginSaid = said ?? (read.error ? `Sign in: AIKit's client status could not be read, so no harness's own login is offered: ${read.error}` : null)
+    const loginSaid = said ?? (read.error ? `Sign in: no agent's own login is offered: ${read.error}` : null)
     const values: Record<string, Value> = loginSaid ? {loginSaid} : {}
-    return {values, why, refused: {}, logins: read.value, reread: read.refresh, acts: {signIn}}
+    return {values, why, refused: {}, logins: read.value, reread: async () => { fresh.current = true; await read.refresh() }, acts: {signIn}}
   }, [adapter, read.value, read.error, read.refresh, said, signIn])
 }
 
@@ -325,7 +409,8 @@ export function workcellSecrets(adapter: SettingsAdapter) {
 }
 
 /** Credentials (OwnerPreferences.tsx CredentialPreferences, CredentialConnection): AIKit's binding metadata, Discover, Verify, Rotate, Revoke
- * and a new binding, by reference only; beside a provider's key, the Sign in of each harness here that serves it (useSignIn's `logins`). */
+ * and a new binding, by reference only; beside a provider's key, the Sign in of each agent on this computer (the census's, as useSignIn's
+ * `logins` read them) that serves it. */
 export function useCredentialsPage(adapter: SettingsAdapter, enabled: boolean, held: Held, done: (keys: readonly string[]) => void, logins: HarnessLoginReading | null = null): PagePart {
   const read = useRead<CredentialRow[]>(enabled, adapter, !!adapter.invoke, async source => {
     const answer = await operation(source, {op: 'credential_list'}, 'credential_reading')
@@ -840,6 +925,7 @@ export class SetupWalk {
   private folders: SetupSnapshot['folders'] = {state: 'unread'}
   private plan: SetupPreview | null = null
   private machine: SetupMachine | undefined = undefined
+  private agents: CensusReading | undefined = undefined
   private harnesses: SetupHarnesses | undefined = undefined
   private credentials: SetupCredentials | undefined = undefined
   private civilTime: SetupCivilTime | undefined = undefined
@@ -849,7 +935,9 @@ export class SetupWalk {
   private placement: SetupFounding | undefined = undefined
   private key: SetupKey | undefined = undefined
   private agreement: SetupAgreement | undefined = undefined
+  private authority: SetupAuthority | undefined = undefined
   private form: SetupForm | undefined = undefined
+  private day: SetupDay | undefined = undefined
   private music: SetupMusic | undefined = undefined
   private brought: string | null = null
   /** Folders you chose to bring in (the browser's Work place: Add folder…), read beside the ones work.candidates finds. */
@@ -866,24 +954,26 @@ export class SetupWalk {
   snapshot = (): SetupSnapshot => this.current
   subscribe = (listener: () => void): (() => void) => { this.listeners.add(listener); return () => { this.listeners.delete(listener) } }
   private compose(): SetupSnapshot {
-    return {adoption: this.controller.getSnapshot(), folders: this.folders, plan: this.plan, machine: this.machine, brought: this.brought, harnesses: this.harnesses, credentials: this.credentials,
+    return {adoption: this.controller.getSnapshot(), folders: this.folders, plan: this.plan, machine: this.machine, brought: this.brought, ...(this.agents ? {agents: this.agents} : {}), harnesses: this.harnesses, credentials: this.credentials,
       ...(this.civilTime ? {civilTime: this.civilTime} : {}), ...(this.groundChoice ? {groundAt: this.groundChoice} : {}), ...(this.birth ? {birth: this.birth} : {}),
-      ...(this.disclosure ? {disclosure: this.disclosure} : {}), ...(this.placement ? {placement: this.placement} : {}), ...(this.key ? {key: this.key} : {}), ...(this.agreement ? {agreement: this.agreement} : {}), ...(this.form ? {form: this.form} : {}),
-      ...(this.music ? {music: this.music} : {})}
+      ...(this.disclosure ? {disclosure: this.disclosure} : {}), ...(this.placement ? {placement: this.placement} : {}), ...(this.key ? {key: this.key} : {}), ...(this.agreement ? {agreement: this.agreement} : {}), ...(this.authority ? {authority: this.authority} : {}), ...(this.form ? {form: this.form} : {}),
+      ...(this.day ? {day: this.day} : {}), ...(this.music ? {music: this.music} : {})}
   }
   private publish(): void { this.current = this.compose(); for (const listener of [...this.listeners]) listener() }
 
   /** Read every step again: native oi's ground, then, once there is a ground, AIKit's tools, skill roots and keys, this computer's
    * Workcell and Central's machine, Central's Work and the folders of work elsewhere. A refusal stands in the reading, in its owner's
    * words; nothing is retried. */
-  async read(): Promise<void> {
+  async read(options: {readonly fresh?: boolean} = {}): Promise<void> {
     await this.controller.refresh()
     await this.readCivilTime()
     await this.readPlacement()
     await this.readKey()
     await this.readAgreement()
+    await this.readAuthority()
     await this.readForm()
-    await this.readHarnesses()
+    await this.readDay()
+    await this.readHarnesses(options.fresh)
     await this.readCredentials()
     await this.readMachine()
     await this.readMusic()
@@ -962,6 +1052,21 @@ export class SetupWalk {
     } catch (cause) { this.form = {state: 'refused', error: words(cause)} }
     this.publish()
   }
+  /** Your Day's settings (Central's `central.day.settings.read`, O-I ticket 1005): where they are kept, their revision, the Day form saved and
+   * Close, read once there is a ground, which keeps them. A refusal stands in Central's words. */
+  private async readDay(): Promise<void> {
+    if (!groundBound(this.controller.getSnapshot().discovery)) { this.day = undefined; this.publish(); return }
+    try {
+      const data = await this.source.central(DAY_SETTINGS_READ, {project: null}) as {schema?: unknown; path?: unknown; revision?: unknown
+        settings?: {day_form?: unknown; moves?: {close?: {runs_at?: {kind?: unknown; time?: unknown}}}}; standing?: {moves?: {close?: {runs_at?: unknown}}}} | null
+      const runsAt = data?.settings?.moves?.close?.runs_at
+      if (data?.schema !== 'central.day-settings-reading/v1' || typeof data.revision !== 'string' || typeof data.path !== 'string' || typeof runsAt?.kind !== 'string')
+        throw new Error(`Central answered ${DAY_SETTINGS_READ} in a form Setup does not read (central.day-settings-reading/v1 expected).`)
+      this.day = {state: 'read', reading: {path: data.path, revision: data.revision, form: dayFormOf(data.settings?.day_form),
+        close: {kind: runsAt.kind, ...(typeof runsAt.time === 'string' ? {time: runsAt.time} : {})}, closeSaved: data.standing?.moves?.close?.runs_at === 'saved'}}
+    } catch (cause) { this.day = {state: 'refused', error: words(cause)} }
+    this.publish()
+  }
   /** The person's identity kept in the ground (SetupSource.identity: the kernel's nara_identity list, then open of the one it lists):
    * read once there is a ground, which keeps it. */
   private async readBirth(): Promise<void> {
@@ -994,36 +1099,46 @@ export class SetupWalk {
     await this.controller.refresh()
     this.publish()
   }
-  /** AIKit's tools and skill roots (SetupHarnesses): its client status, `aikit init` (each root and who owns it) and `aikit collate --all`.
-   * AIKit's routes run from the world's ground (the kernel's route_ground), so they are read once there is one. */
-  private async readHarnesses(): Promise<void> {
+  /** The agents and their skill roots: the census (the World Model's agents slice, SetupSource.agents; O-I #1003), the one list of agents,
+   * each with what it carries; and AIKit's skill roots (SetupHarnesses): `aikit init` (each root and who owns it) and `aikit collate
+   * --all`. AIKit's routes run from the world's ground (the kernel's route_ground), so they are read once there is one. */
+  private async readHarnesses(fresh = false): Promise<void> {
     const aikit = this.source.aikit
-    if (!groundBound(this.controller.getSnapshot().discovery)) { this.harnesses = undefined; this.publish(); return }
+    if (!groundBound(this.controller.getSnapshot().discovery)) { this.agents = undefined; this.harnesses = undefined; this.publish(); return }
+    this.agents = await this.readAgents(fresh)
     if (!aikit) { this.harnesses = {state: 'refused', error: NO_SETUP_AIKIT}; this.publish(); return }
     const disclose = this.source.harnessDisclosure
     try {
-      const [status, init, collate, disclosure] = await Promise.all([aikit({op: 'harness_status'}), aikit({op: 'aikit_read', request: {kind: 'init'}}),
-        aikit({op: 'aikit_read', request: {kind: 'collate', all: true}}),
-        // What AIKit reads of each tool besides its skills: a refusal of it leaves the tools and their skills read, and is said.
+      const [init, collate, disclosure] = await Promise.all([aikit({op: 'aikit_read', request: {kind: 'init'}}), aikit({op: 'aikit_read', request: {kind: 'collate', all: true}}),
+        // What AIKit reads of each agent besides its skills: a refusal of it leaves the agents and their skills read, and is said.
         disclose ? disclose().then((reading): SetupDisclosure => ({state: 'read', reading}), (cause: unknown): SetupDisclosure => ({state: 'refused', error: words(cause)}))
           : Promise.resolve<SetupDisclosure>({state: 'refused', error: NO_SETUP_DISCLOSURE})])
-      this.harnesses = {state: 'read', harnesses: setupHarnessClients(status), roots: setupSkillRoots(init, collate)}
+      this.harnesses = {state: 'read', roots: setupSkillRoots(init, collate)}
       this.disclosure = disclosure
     } catch (cause) { this.harnesses = {state: 'refused', error: words(cause)} }
     this.publish()
   }
+  /** The census as the World Model answers it (`fresh`: read from its owners past what the kernel holds, as Read again asks it), or why
+   * it is not read, in its words. */
+  private async readAgents(fresh = false): Promise<CensusReading> {
+    const agents = this.source.agents
+    if (!agents) return {state: 'unavailable', why: NO_SETUP_AGENTS}
+    return agents(fresh).then(answer => censusOf({state: 'held', answer}), (cause: unknown): CensusReading => ({state: 'unavailable', why: words(cause)}))
+  }
   /** AIKit's keys and bindings (SetupCredentials): `aikit credential discover` (presence only), the providers `aikit harness auth` names
-   * for each detected tool (a refusal named on its tool), and `aikit credential list` (metadata only). */
+   * for each agent of the census AIKit has a client for (a refusal named on its agent; a census not read, why no agent was asked), and
+   * `aikit credential list` (metadata only). */
   private async readCredentials(): Promise<void> {
     const aikit = this.source.aikit
     if (!groundBound(this.controller.getSnapshot().discovery)) { this.credentials = undefined; this.publish(); return }
     if (!aikit) { this.credentials = {state: 'refused', error: NO_SETUP_AIKIT}; this.publish(); return }
     try {
-      const tools = this.harnesses?.state === 'read' ? this.harnesses.harnesses : setupHarnessClients(await aikit({op: 'harness_status'}))
+      const census = this.agents ??= await this.readAgents(), tools = setupAgentTools(census)
       const [discover, list, providers] = await Promise.all([aikit({op: 'credential_discover'}), aikit({op: 'credential_list'}),
         Promise.all(tools.map(tool => aikit({op: 'harness_auth_describe', harness: tool.harness}).then(auth => setupHarnessProviders(tool, auth),
           (cause: unknown) => [{harness: tool.harness, ...(tool.folder ? {folder: tool.folder} : {}), provider: '', unread: `AIKit did not say which providers ${tool.harness} reaches: ${words(cause)}`}])))])
-      this.credentials = {state: 'read', findings: setupKeyFindings(discover), providers: providers.flat(), bindings: credentialMetadata(list)}
+      this.credentials = {state: 'read', findings: setupKeyFindings(discover), providers: providers.flat(), bindings: credentialMetadata(list),
+        ...(census.state === 'read' ? (census.aikitWhy ? {aikitWhy: census.aikitWhy} : {}) : {agentsWhy: census.state === 'unavailable' ? census.why : 'The agents on this machine are not read yet.'})}
     } catch (cause) { this.credentials = {state: 'refused', error: words(cause)} }
     this.publish()
   }
@@ -1048,6 +1163,7 @@ export class SetupWalk {
       const listing = await this.source.central('work.list', {})
       const items = (listing && typeof listing === 'object' && Array.isArray((listing as {items?: unknown}).items) ? (listing as {items: unknown[]}).items : [])
         .flatMap(item => { const row = item as {name?: unknown; path?: unknown}; return typeof row?.name === 'string' && typeof row.path === 'string' ? [{name: row.name, path: row.path}] : [] })
+      const authority = await this.readAuthority(), granted = authority.state === 'read' ? authority.worlds : undefined
       const folders = await Promise.all(items.map(async ({name, path}): Promise<SetupWorkFolder> => {
         const [inspection, listed] = await Promise.all([
           this.source.central(PC_INSPECT_ACTION, {project: name}).catch((cause: unknown) => ({refused: words(cause)})),
@@ -1058,7 +1174,7 @@ export class SetupWalk {
         const row: SetupWorkFolder = {name, path, place: 'work', inspection, material: names.filter(entry => entry !== 'ProjectCentral' && !entry.startsWith('.')), parts}
         // A made project in a world Setup founded may have something left to finish: the person's grant, Factory's placement.
         if (setupFolder(row).finds !== 'ground') return row
-        const left = (await this.readLeft(name, projectIdOf(inspection) ?? name)).left
+        const left = (await this.readLeft(name, projectIdOf(inspection) ?? name, granted)).left
         return left.length ? {...row, left} : row
       }))
       // The folders of work elsewhere under the world's folder; a refusal to read them leaves Work's own standing, and is said.
@@ -1116,7 +1232,7 @@ export class SetupWalk {
     const keeping = reading.roots.filter(root => root.skills > 0), pending = keeping.filter(root => root.standing === 'foreign')
     if (!keeping.length) throw new Error('Nothing found to bring in: AIKit finds no agent tool\'s skills on this computer.')
     if (!pending.length) throw new Error('Accepted: AIKit holds every skill root here already. Nothing is made twice.')
-    const toolOf = (path: string) => reading.harnesses.find(tool => tool.folder && path.startsWith(`${tool.folder}/`))?.harness
+    const toolOf = (path: string) => { const agent = setupRootAgent(this.agents, path); return agent ? agentName(agent) : undefined }
     const said: string[] = []
     for (const root of pending) {
       const namespace = setupNamespace(root)
@@ -1183,12 +1299,14 @@ export class SetupWalk {
     // The days, bounds and key the step showed are the ones Accept keeps: the previews the person saw, on their digests (Central refuses
     // one that moved).
     const shown = this.civilTime, shownPlacement = this.placement, shownKey = this.key, shownForm = this.form, shownAgreement = this.agreement, shownMusic = this.music
+    // How your Day closes, as the step shows it: at Day start as Setup proposes it, or Off as you chose (`dayClose`).
+    const close = text(held('dayClose')) || undefined
     if (groundBound(before.discovery)) {
       // A ground Central keeps already: only what an older ground lacks is made — its days, bounds, form or key, and its grant's agreement.
       const where = before.discovery.bound_ground ?? before.discovery.selected_ground ?? before.discovery.suggested_ground
       const acceptance = `dlw-setup-ground-accept:${Date.now()}`
       const days = await this.keepDays(shown, acceptance)
-      const kept = [days, ...(await this.keepFounding(shownPlacement, shownKey, acceptance, shownForm, shownAgreement, shownMusic))].filter((line): line is string => !!line)
+      const kept = [days, ...(await this.keepFounding(shownPlacement, shownKey, acceptance, shownForm, shownAgreement, shownMusic, close))].filter((line): line is string => !!line)
       if (!kept.length) throw new Error('Accepted: Central keeps your ground here already. Nothing is made twice.')
       return `Central keeps your ground at ${where}, where it was. Nothing in it moved. ${kept.join(' ')}`
     }
@@ -1224,7 +1342,7 @@ export class SetupWalk {
       if (now?.state === 'read' && now.preview.state === 'absent') days = 'Your days are not kept yet: Central reads them now that your ground stands. Accept again to keep them as the step shows.'
     }
     // Its bounds and the person's key, on the same acceptance: the ground stands whatever they answer, and each says what it kept.
-    const founded = await this.keepFounding(shownPlacement, shownKey, `oi-setup-adoption:${token}`, shownForm, shownAgreement)
+    const founded = await this.keepFounding(shownPlacement, shownKey, `oi-setup-adoption:${token}`, shownForm, shownAgreement, undefined, close)
     await this.readHarnesses()
     await this.readCredentials()
     await this.readMachine()
@@ -1243,7 +1361,7 @@ export class SetupWalk {
    * today (`central.ground.agreement.adopt` on the preview's digest, read back in agreement). One that cannot be kept says why; none
    * stops another. */
   private async keepFounding(placement: SetupFounding | undefined, key: SetupKey | undefined, acceptance: string, form?: SetupForm, agreement?: SetupAgreement,
-    music?: SetupMusic): Promise<string[]> {
+    music?: SetupMusic, close?: string): Promise<string[]> {
     const said: string[] = []
     if (placement?.state === 'read' && ['absent', 'no-ground'].includes(placement.preview.state) && placement.preview.digest) {
       try {
@@ -1292,6 +1410,9 @@ export class SetupWalk {
       // A grant founded just now, or a reading the step did not have: read what Central says of it now, so the row stands as it is.
       await this.readAgreement()
     }
+    // Your Day, on your key (O-I ticket 1005): the Day form as the step showed it standing, else as the keep above made it, and Close.
+    const day = await this.keepDay(dayFormOf(form?.state === 'read' ? form.reading.day_form : null) ? form : this.form, close)
+    if (day) said.push(day)
     // The world's Music folder (round 47 item 1), as the step showed it: Central's file map registers it on this Accept's acceptance of
     // the digest of what the step showed, which the kernel checks against what its preview gives now (47c item 10, round 54b item 9), read
     // back kept.
@@ -1308,7 +1429,60 @@ export class SetupWalk {
           : 'Central\'s file map keeps your Music folder, so Samples lists its audio; Central never writes inside it.')
       } catch (cause) { said.push(`Your Music folder is not kept yet: ${words(cause)} Accept again to keep it.`) }
     }
+    // The World's standing authority in Actuation, held by you: each agent's Agency is minted under it (O-I #1003).
+    const granted = await this.keepWorldGrant([])
+    if (granted) said.push(granted)
     return said
+  }
+  /** Saves your Day as the Ground step shows it (Central's `central.day.settings.write`, O-I ticket 1005; manual §18.2 "The Day opens by itself
+   * and the close runs by itself"): the Day form at the revision `form` read, while none is saved or the one saved is not it, and Close at
+   * Day start as Setup proposes it or Off as you chose, while you have not saved Close (`setupDayPatch`), on the revision of your Day's
+   * settings read now, and read back by `central.day.settings.read`. Central's civil clock then makes today's page from that form and closes
+   * the Day at its turn. Null where nothing waits to be saved; otherwise what was kept, or why not. */
+  private async keepDay(form: SetupForm | undefined, close: string | undefined): Promise<string | null> {
+    await this.readDay()
+    const day = this.day, patch = setupDayPatch(form, day, close)
+    if (!patch || day?.state !== 'read') return null
+    try {
+      await this.source.central(DAY_SETTINGS_WRITE, {project: null, expected_revision: day.reading.revision, ...patch})
+      await this.readDay()
+      const now = this.day
+      const saved = (patch.day_form as {path: string; revision: string} | undefined) ?? (now?.state === 'read' ? now.reading.form : null)
+      if (now?.state !== 'read' || setupDayPatch(form, now, close) || (patch.day_form && (now.reading.form?.path !== saved?.path || now.reading.form?.revision !== saved?.revision)))
+        throw new Error(`Central answered ${DAY_SETTINGS_WRITE}, but your Day does not read back as saved.`)
+      const shut = now.reading.close.kind === 'off' ? 'Close is Off: each Day stays open until you close it' : now.reading.close.kind === 'day_start' ? 'it closes itself at its turn' : `it closes as you set it (${now.reading.close.kind})`
+      return `Central keeps your Day: today's page is made from ${saved?.path ?? 'no Day form'}, and ${shut}.`
+    } catch (cause) { return `Your Day is not kept yet: ${words(cause)} Accept again to keep it.` }
+  }
+  /** Grants the World's standing authority as Setup stands (Actuation's `actuation.authority.grant-world`, O-I #1003): held by you, rooted
+   * at the World's root, naming every world your live grant names already and the projects `adds` makes yours, read back by
+   * `actuation.authority.list`. A renewal supersedes the earlier grant, so nothing it named is dropped. Null where the live grant names them
+   * all already; otherwise what was granted, or why not. */
+  private async keepWorldGrant(adds: readonly string[]): Promise<string | null> {
+    const where = adds.length ? `in ${adds.join(', ')}` : 'in this world'
+    const act = this.source.act, before = await this.readAuthority()
+    const worlds = before.state === 'read' ? [...new Set([WORLD_ROOT, ...before.worlds, ...adds.map(projectWorld)])] : []
+    if (before.state === 'read' && before.worlds.length && worlds.every(world => before.worlds.includes(world))) return null
+    try {
+      if (!act || before.state === 'refused') throw new Error(before.state === 'refused' ? before.error : NO_SETUP_ACT)
+      await act(WORLD_GRANT, {holder: WORLD_HOLDER, world: worlds})
+      const after = await this.readAuthority()
+      if (after.state !== 'read' || !worlds.every(world => after.worlds.includes(world)))
+        throw new Error(`Actuation answered ${WORLD_GRANT}, but your live grant does not read back naming ${worlds.join(', ')}.`)
+      return `Your agents act on your standing authority ${where}: Actuation keeps it, and each agent's Agency is minted under it.`
+    } catch (cause) { return `Your agents have no standing authority ${where} yet: ${words(cause)} Accept again to grant it.` }
+  }
+  /** The World's standing authority (Actuation's `actuation.authority.list`): the worlds your live grant names, or why Setup cannot read
+   * them (Actuation's words, or no Action door here). Kept on the Ground step's row. */
+  private async readAuthority(): Promise<SetupAuthority> {
+    let authority: SetupAuthority
+    if (!this.source.act) authority = {state: 'refused', error: NO_SETUP_ACT}
+    else {
+      try { authority = {state: 'read', worlds: grantedWorlds(await this.source.act(WORLD_GRANTS, {}))} } catch (cause) { authority = {state: 'refused', error: words(cause)} }
+    }
+    this.authority = authority
+    this.publish()
+    return authority
   }
   /** Keeps the ground's days as previewed (manual §10.11 Ground; §18.2): Central's `central.time.policy.adopt` on the preview's digest,
    * the person's acceptance named (`acceptance_ref`), read back by its preview as recognised. Null where the step offered no policy to
@@ -1397,9 +1571,12 @@ export class SetupWalk {
     if (make === 'finish') {
       // What its making left, read again now: only what is still left is listed, and Accept finishes only that.
       const id = projectIdOf(row.inspection) ?? row.name
-      const {extension, placement, left} = await this.readLeft(row.name, id)
+      const authority = await this.readAuthority()
+      const {extension, placement, left} = await this.readLeft(row.name, id, authority.state === 'read' ? authority.worlds : undefined)
       if (!left.length) throw new Error(`${row.name}: its ground is in place and nothing is left to finish. Nothing to make.`)
-      this.plan = {folder: row.path, make, where, lines: [...(left.includes('extension') ? [setupExtensionLine(row.name, extension)] : []),
+      const reach = extension.state === 'present' ? `Your agents act on your standing authority in ${row.name}: Actuation keeps it, and each agent's Agency is minted under it.`
+        : setupExtensionLine(row.name, extension)
+      this.plan = {folder: row.path, make, where, lines: [...(left.includes('extension') ? [reach] : []),
         ...(placement && left.includes('placement') ? [setupPlacementLine(row.name, placement)] : [])], extension, ...(placement ? {placement} : {})}
       this.publish()
       return
@@ -1443,11 +1620,13 @@ export class SetupWalk {
   }
   /** What a made project's Accept has still to finish, in a world Setup founded: the person's grant reaching it (Central's preview says
    * `absent`), and Factory's placement (Factory locates none). A ground the person keeps by hand has nothing left here. */
-  private async readLeft(project: string, projectId: string): Promise<{extension: SetupExtension; placement?: SetupPlacement; left: SetupLeft[]}> {
+  private async readLeft(project: string, projectId: string, granted?: readonly string[]): Promise<{extension: SetupExtension; placement?: SetupPlacement; left: SetupLeft[]}> {
     const extension = await this.readExtension(project, projectId)
     const founded = extension.state === 'absent' || extension.state === 'present'
     const placement = founded && this.source.factory ? await this.locateFactory(project) : undefined
-    const left: SetupLeft[] = [...(extension.state === 'absent' ? ['extension' as const] : []), ...(placement?.state === 'absent' ? ['placement' as const] : [])]
+    // Yours to act in, but your standing authority in Actuation does not name it: its agents' Agencies are refused there until it does.
+    const ungranted = extension.state === 'present' && !!granted && !granted.includes(projectWorld(extension.project_id))
+    const left: SetupLeft[] = [...(extension.state === 'absent' || ungranted ? ['extension' as const] : []), ...(placement?.state === 'absent' ? ['placement' as const] : [])]
     return {extension, ...(placement ? {placement} : {}), left}
   }
   /** Makes the project's Factory placement as previewed (`factory_owner` project-setup: Factory's own `project setup-central`), read back
@@ -1474,15 +1653,17 @@ export class SetupWalk {
     } catch (cause) { return {state: 'refused', project, project_id: projectId, error: words(cause)} }
   }
   /** Extends the person's grant and the ground's bounds to a project as previewed (Central's `central.ground.project.adopt` on the preview's
-   * digest), read back by its preview as theirs. What Accept says of it; null where the preview offered nothing to extend (it said why). */
+   * digest), read back by its preview as theirs, then the World's standing authority to it (keepWorldGrant), so its agents' Agencies
+   * mint there. What Accept says of it; null where nothing was left to extend. */
   private async extend(project: string, extension: SetupExtension | undefined, acceptance: string): Promise<string | null> {
+    if (extension?.state === 'present') return this.keepWorldGrant([extension.project_id])
     if (extension?.state !== 'absent' || !extension.digest) return null
     try {
       await this.source.central(PROJECT_ADOPT, {actor_kind: 'human', acceptance: 'human-accepted', acceptance_ref: acceptance, project, project_id: extension.project_id, expected_digest: extension.digest})
       const after = await this.readExtension(project, extension.project_id)
       if (after.state !== 'present') throw new Error(`Central answered ${PROJECT_ADOPT}, but ${project} does not read back as yours to act in.`)
-      return `You act as you in ${project}, and its agents may write inside it.`
     } catch (cause) { return `${project} is not yours to act in yet: ${words(cause)}` }
+    return [`You act as you in ${project}, and its agents may write inside it.`, await this.keepWorldGrant([extension.project_id])].filter(Boolean).join(' ')
   }
   private async acceptProject(held: Held): Promise<string> {
     const {row, make, where, wiki} = this.chosen(held)
@@ -1541,10 +1722,39 @@ const SETUP_GROUND_FIRST = 'Make your ground first: AIKit\'s routes run from you
 const CIVIL_PREVIEW = 'central.time.policy.preview', CIVIL_ADOPT = 'central.time.policy.adopt'
 /** Central's adoption of the ground's bounds (ctrl ground_founding.rs, O-I #740). */
 const PLACEMENT_PREVIEW = 'central.ground.placement.preview', PLACEMENT_ADOPT = 'central.ground.placement.adopt'
+/** Your Day's settings (Central's continuous_work/day_moves.rs, O-I ticket 1005): read, and saved on the person's key (a person act, the
+ * kernel's PERSON_ACTS): the Day form today's page is made from and Close. */
+const DAY_SETTINGS_READ = 'central.day.settings.read', DAY_SETTINGS_WRITE = 'central.day.settings.write'
 /** Central's agreement of the person's grant with what Setup grants today (ctrl ground_agreement.rs, O-I #740, lane AU). */
 const AGREEMENT_PREVIEW = 'central.ground.agreement.preview', AGREEMENT_ADOPT = 'central.ground.agreement.adopt'
 /** Central's extension of the person's grant and the ground's bounds to a project (ctrl ground_projects.rs, O-I #740, lane D). */
 const PROJECT_PREVIEW = 'central.ground.project.preview', PROJECT_ADOPT = 'central.ground.project.adopt'
+/** The World's standing authority in Actuation (actuation-cli authority.rs, O-I #1003): Setup grants it at the Ground step and renews it as
+ * each project becomes yours; an agent's Agency is minted under it (AIKit encounter_agency_mint.rs). You hold it, rooted at the World's
+ * root: the agencies minted under it take your words. */
+const WORLD_GRANT = 'actuation.authority.grant-world', WORLD_GRANTS = 'actuation.authority.list'
+const WORLD_HOLDER = 'human:owner', WORLD_ROOT = 'control:root'
+/** Why Setup grants no standing authority where the host hands it no Action door. */
+const NO_SETUP_ACT = 'Setup reaches no Actuation here (SetupSource.act, the kernel\'s act).'
+/** A project's world as an agent's mint names it (AIKit encounter_agency_mint.rs canonical_world_ref): its manifest's id, `project:` first. */
+const projectWorld = (id: string): string => /^(project|control):/.test(id) ? id : `project:${id}`
+/** The worlds your live standing authority names: Actuation's authority list, the newest grant you hold rooted at the World's root that is
+ * neither revoked nor expired. Empty where none stands. Pure. */
+function grantedWorlds(listing: unknown, nowUnixSeconds = Math.floor(Date.now() / 1000)): string[] {
+  const rows = (listing as {authorities?: unknown} | null | undefined)?.authorities
+  let newest: {at: number; worlds: string[]} | null = null
+  for (const row of Array.isArray(rows) ? rows : []) {
+    const {record, revoked, issued_at_unix_seconds: at} = (row ?? {}) as {record?: Record<string, unknown>; revoked?: unknown; issued_at_unix_seconds?: unknown}
+    const worlds = record?.allowed_world_refs, expires = record?.expires_at_unix_seconds
+    const root = (record?.governing_binding as {world_ref?: unknown} | undefined)?.world_ref
+    if (revoked && typeof revoked === 'object') continue
+    if (record?.holder !== WORLD_HOLDER || root !== WORLD_ROOT || !Array.isArray(worlds)) continue
+    if (typeof expires === 'number' && expires <= nowUnixSeconds) continue
+    const issued = typeof at === 'number' ? at : 0
+    if (!newest || issued >= newest.at) newest = {at: issued, worlds: worlds.filter((world): world is string => typeof world === 'string')}
+  }
+  return newest?.worlds ?? []
+}
 /** Why Setup makes no Factory placement where the host hands it no Factory route. */
 const NO_SETUP_FACTORY = 'Setup reaches no Factory here (SetupSource.factory, the kernel\'s factory_owner).'
 /** A made project's id, as its inspection's manifest names it. */
@@ -1558,6 +1768,8 @@ const NO_SETUP_FORM = 'Setup reaches no form route here (SetupSource.groundForm,
 const NO_SETUP_KEY = 'Setup reaches no key route here (SetupSource.groundAuthority, the kernel\'s ground_authority).'
 /** Why Setup keeps no date of birth where the host hands it no identity owner. */
 export const NO_SETUP_IDENTITY = 'Setup reaches no identity owner here (SetupSource.identity, the kernel\'s nara_identity): your date of birth is kept from the identity of the Studio\'s Nara chain (§24.7) until it does.'
+/** Why the Harnesses and skills step lists no agent where the host hands Setup no census. */
+const NO_SETUP_AGENTS = 'Setup reaches no census of the agents here (SetupSource.agents, the World Model\'s agents slice)'
 /** Why the Harnesses and skills step shows no tool's settings where the host hands Setup no disclosure. */
 const NO_SETUP_DISCLOSURE = 'Setup reaches no AIKit disclosure here (SetupSource.harnessDisclosure, `aikit harness disclose`)'
 /** A reference that names no store: refused before anything is sent, and the field is cleared (it may hold the key itself). */
@@ -1575,11 +1787,13 @@ export function useSetupPage(adapter: SettingsAdapter, enabled: boolean, held: H
   const snapshot = useSyncExternalStore(walk?.subscribe ?? noSubscription, walk?.snapshot ?? noSetupSnapshot, walk?.snapshot ?? noSetupSnapshot)
   // Setup reads its owners one after another (SetupWalk.read): while it reads, a step not read yet is drawn waiting, never as absent.
   const [reading, setReading] = useState(0)
-  const readAll = useCallback(async () => {
+  const readAll = useCallback(async (fresh = false) => {
     if (!walk) return
     setReading(n => n + 1)
-    try { await walk.read() } finally { setReading(n => n - 1) }
+    try { await walk.read({fresh}) } finally { setReading(n => n - 1) }
   }, [walk])
+  // Read again, Setup's own and the window's alike, reads the census afresh: an agent installed or changed outside the window shows then.
+  const readAgain = useCallback(() => readAll(true), [readAll])
   useEffect(() => { if (enabled && walk) void readAll() }, [enabled, walk, readAll])
   // A folder the Projects step was opened for (Add folder…) stands among its folders, whether or not Central found it.
   const asked = text(held('folder'))
@@ -1605,7 +1819,7 @@ export function useSetupPage(adapter: SettingsAdapter, enabled: boolean, held: H
     if (snapshot.adoption.busy) why.acceptStep = why.rereadSetup = why.chooseGroundFolder = 'Waiting for native oi…'
     const refusal = snapshot.folders.state === 'refused' ? snapshot.folders.error : null
     return {values: setupValues(snapshot, held), why, refused: refusedOn('rereadSetup', refusal), waiting: reading > 0 || snapshot.adoption.busy === 'reading' ? ['setup', 'setupReading'] : [],
-      reread: enabled ? readAll : async () => {},
+      reread: enabled ? readAgain : async () => {},
       acts: {
         acceptStep: async step => {
           try {
@@ -1618,7 +1832,7 @@ export function useSetupPage(adapter: SettingsAdapter, enabled: boolean, held: H
           }
         },
         previewStep: async () => { await walk.preview(held) },
-        rereadSetup: async () => { await readAll() },
+        rereadSetup: readAgain,
         // The system's folder chooser (folderChooser.ts), then native oi reads the ground there under the name shown.
         chooseGroundFolder: async () => {
           const folder = await chooseFolder('ground')
@@ -1632,5 +1846,5 @@ export function useSetupPage(adapter: SettingsAdapter, enabled: boolean, held: H
         keepBirth: async () => { const said = await walk.keepBirth(held); done(['birthName', 'birthDate']); return said },
       }}
     // eslint-disable-next-line react-hooks/exhaustive-deps -- the held choices name what the values read
-  }, [walk, snapshot, held, done, enabled, reading, readAll, ...choices])
+  }, [walk, snapshot, held, done, enabled, reading, readAgain, ...choices])
 }

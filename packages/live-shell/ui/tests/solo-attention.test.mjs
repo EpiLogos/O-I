@@ -3,9 +3,10 @@
 // §16.6 Rules: "Solo changes what you attend to, never what runs"; §19.1 the session's Solo row: "the views, the tiles and the instruments
 // show only them. The others keep running. Off by default"; §19.15 the rack's chain list). The shell holds it beside THE selection, on the
 // book's world context, and AIKit's own session Solo (a launch gate on its executor) is never written from here.
-// Channels: the book's context helpers (desktop/cradle/src/workspace/store.ts), pure; Factory's set (timeline/factoryTrackAdapter.ts) over
-// FIXTURE tracks shaped as agentRunModel.ts builds them, with a SPY on every owner port; the rack's binding (agent/devices/
-// sessionChainBindings.ts); the source of the parts that hand the attention on (the agent shell, the tracks hook, the tile, the instrument).
+// Channels: the book's context helpers (desktop/cradle/src/workspace/store.ts), pure; Factory's Set as the kernel answers it (kernel
+// mode_set.rs, its `solo` act the shell's attention), drawn through the one projection (frame/tracks/kernelSet.ts) over FIXTURE tracks
+// shaped as agentRunModel.ts builds them, with a SPY on the runner every owner act would go through; the rack's binding (agent/devices/
+// sessionChainBindings.ts); the source of the parts that hand the attention on (the agent shell, the projection, the tile, the instrument).
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {register} from 'node:module'
@@ -44,7 +45,8 @@ const stored = new Map()
 globalThis.localStorage ??= {getItem: key => stored.get(key) ?? null, setItem: (key, value) => stored.set(key, String(value)), removeItem: key => stored.delete(key), key: () => null, length: 0}
 
 const store = await import('../../../../desktop/cradle/src/workspace/store.ts')
-const adapter = await import('../src/timeline/factoryTrackAdapter.ts')
+const {kernelSetTracks} = await import('../src/frame/tracks/kernelSet.ts')
+const fixture = await import('./support/modeSetFixture.mjs')
 const model = await import('../src/agent/agentRunModel.ts')
 const bind = await import('../src/agent/devices/designBindings.ts')
 const own = await import('../src/agent/devices/sessionChainBindings.ts')
@@ -66,33 +68,33 @@ const group = (spaceRef, members) => ({...session(spaceRef, spaceRef), agentRef:
 const KITE = session('ses-kite', 'space:crew'), CAIRN = session('ses-cairn', 'space:crew'), WREN = session('ses-wren', 'space:solo')
 const CREW = group('space:crew', [KITE, CAIRN]), LONE = group('space:solo', [WREN])
 const TRACKS = [CREW, KITE, CAIRN, LONE, WREN]
-const event = sessionRef => ({kind: 'message', stream: 'messages', subject_ref: sessionRef, instant_unix_ms: NOW - 60_000, summary: `${sessionRef} spoke`})
-
-/** Every owner the set can reach, each a spy: the harness's controls, the sessions' own settings, a session's Stop and a Repeat. */
-function owners() {
-  const asked = []
-  return {
-    asked,
-    controls: {control: async control => { asked.push(['harness_agent_control', control]); return {ok: true, note: 'done'} }},
-    settings: {of: sessionRef => ({telemetry: sessionRef !== 'ses-cairn', solo: sessionRef === 'ses-wren'}),
-      set: async (sessionRef, setting, on) => { asked.push(['encounter_session_settings', sessionRef, setting, on]); return {ok: true, note: `${setting} ${on}`} }},
-    sessionStop: async sessionRef => { asked.push(['encounter cancel', sessionRef]); return {ok: true, note: 'stopped'} },
-    repeat: async sessionRef => { asked.push(['comparison-run', sessionRef]); return {ok: true, note: 'takes'} },
-    takes: {of: sessionRef => [{sessionRef, attemptRef: `attempt:${sessionRef}`, runRef: 'run:1', statePath: '/state', taskRef: 'task:1', unit: null, unitRef: null, state: 'running',
-        startUnixMs: NOW - 300_000, endUnixMs: null, summary: null, receivingRef: null}],
-      choose: async take => { asked.push(['attempt-receiving', take.attemptRef]); return {ok: true} }},
-  }
-}
+// The kernel's Factory Set over those tracks (mode_set.rs factory), in its shape: each session's task a clip, each its one attempt a take,
+// Solo the shell's attention (its `solo` act) and its words where none is handed, as mode_set.rs says them.
+const kernelSource = readFileSync(new URL('../../../../desktop/cradle/kernel/src/mode_set.rs', import.meta.url), 'utf8')
+const kernelWords = name => kernelSource.match(new RegExp(`const ${name}: &str = "([^"]+)";`))?.[1]
+const SOLO_WORDS = kernelWords('SOLO_WORDS'), SOLO_UNHANDED = kernelWords('SOLO_UNHANDED')
+const factorySet = () => fixture.modeSetOf({owner: 'Factory', ruler: {kind: 'clock', unit: 'seconds', origin_unix_ms: NOW - 600_000},
+  rows: [{id: 'batch:1', name: '1'}],
+  tracks: TRACKS.map(track => fixture.setTrack(trackKey(track), track.group ? track.spaceLabel : track.sessionRef,
+    track.group ? {kind: 'group'} : {kind: 'session', depth: 1, parent: `${track.spaceRef}:${track.spaceRef}`})),
+  clips: TRACKS.filter(track => !track.group).map(track => fixture.setClip(`${trackKey(track)}#task/1`, trackKey(track), 'batch:1', `task of ${track.sessionRef}`,
+    {status: 'running', at: {start_unix_ms: NOW - 600_000}})),
+  takes: TRACKS.filter(track => !track.group).map(track => ({id: `factory:attempt:attempt:${track.sessionRef}`, clip: `${trackKey(track)}#task/1`, track: trackKey(track),
+    name: 'take 1', state: 'running', at: {start_unix_ms: NOW - 300_000}, words: 'running', run: 'run:1'})),
+  mixer: {solo: {meaning: 'You attend to the soloed sessions alone: the views, the tiles and the instruments show only them. The others keep running. Off by default.', disabled: SOLO_UNHANDED}},
+  acts: {solo: {action: 'shell.setSolo', takes: 'on', words: SOLO_WORDS}},
+  waiting: {'track.solo': 'what you attend to: the agent shell hands it from the book\'s world context, and none is handed to this pane'},
+})
 /** The shell's attention as the agent shell hands it to the set: what is soloed, and the press, recorded. */
 function attention(soloed = []) {
   const pressed = []
   return {pressed, port: {soloed: new Set(soloed), solo: (ref, on) => { pressed.push([ref, on]) }}}
 }
-const project = (soloed, extra = {}) => {
-  const spies = owners(), held = attention(soloed)
-  const set = adapter.factoryTrackAdapter.project({tracks: TRACKS, nowUnixMs: NOW, controls: spies.controls, settings: spies.settings, sessionStop: spies.sessionStop,
-    repeat: spies.repeat, takes: spies.takes, events: TRACKS.filter(t => !t.group).map(t => event(t.sessionRef)), attention: held.port, ...extra})
-  return {set, spies, held}
+/** The Set drawn with that attention, every owner act it could run going through a SPY runner. */
+const project = soloed => {
+  const asked = [], held = attention(soloed)
+  const runner = {act: async (...call) => { asked.push(call) }, shell: async (...call) => { asked.push(call); return {ok: true, note: ''} }}
+  return {set: kernelSetTracks(factorySet(), {nowMs: NOW, attention: held.port, runner}), spies: {asked}, held}
 }
 const SOLO_ON = {ok: true, note: 'Soloed: the views, the tiles and the instruments show only what you solo. The others keep running.'}
 const SOLO_OFF = {ok: true, note: 'Solo lifted: you attend to everything again; nothing stopped or started.'}
@@ -131,7 +133,7 @@ test('the book holds what you attend to beside THE selection: soloed by mode and
 test('soloing a session asks no owner: the press changes what you attend to, and every session keeps running', async () => {
   const {set, spies, held} = project([])
   const solo = set.actions.mixer.solo
-  assert.equal(solo.op, adapter.FACTORY_SOLO_OP)
+  assert.equal(solo.op, SOLO_WORDS)
   assert.doesNotMatch(solo.op, /encounter_session_settings/, 'the op is the shell\'s, never AIKit\'s session Solo')
   assert.match(solo.op, /what you attend to/)
   assert.deepEqual(await solo.run(trackKey(KITE), true), SOLO_ON)
@@ -139,35 +141,35 @@ test('soloing a session asks no owner: the press changes what you attend to, and
     'a group is soloed as a track is')
   assert.deepEqual(await solo.run(trackKey(KITE), false), SOLO_OFF)
   assert.deepEqual(held.pressed, [[trackKey(KITE), true], [trackKey(CREW), true], [trackKey(KITE), false]], 'the shell\'s attention took each press')
-  assert.deepEqual(await solo.run('space:none:nobody', true), {ok: false, error: '"space:none:nobody" is not a session of this work.'})
+  assert.deepEqual(await solo.run('space:none:nobody', true), {ok: false, error: '"space:none:nobody" is no track of this Set.'})
   assert.deepEqual(spies.asked, [], 'no owner was asked: no setting written, no turn cancelled, nothing launched or paused')
-  // The set's acts on the other sessions stand as they did: they keep running, and their Stop and Telemetry are still theirs.
-  assert.equal(set.actions.stopTrack.op, adapter.FACTORY_SESSION_STOP_OP)
-  assert.equal(set.actions.mixer.activator.op, adapter.FACTORY_TELEMETRY_OP)
-  await set.actions.mixer.activator.run(trackKey(CAIRN), true)
-  assert.deepEqual(spies.asked, [['encounter_session_settings', 'ses-cairn', 'telemetry', true]], 'Telemetry is still the session\'s own setting on AIKit')
-  // The mixer's words are the manual's, and Solo's light is the attention, never AIKit's reading (WREN's own setting reads solo: true).
+  // REPLACED (O-I #1004): "the set's acts on the other sessions stand as they did: their Stop and Telemetry are still theirs" — each a
+  // session's own act on AIKit, which the kernel's Set carries none of yet (O-I #1006).
+  // The mixer's words are the manual's, and Solo's light is the attention, never AIKit's reading.
   assert.equal(set.mixer.solo.meaning, 'You attend to the soloed sessions alone: the views, the tiles and the instruments show only them. The others keep running. Off by default.')
   assert.equal(set.mixer.solo.disabled, undefined)
   assert.equal(headOf(set, WREN).mix.solo, false, 'AIKit\'s own session Solo is not read as the shell\'s')
-  assert.equal(headOf(set, CAIRN).mix.activator, false, 'each session\'s Telemetry still reads its own setting')
   // The shell builds no write of AIKit's session Solo at all: its request builder takes Telemetry alone; AIKit's gate stays AIKit's.
   assert.match(read('agent/sessionSettings.ts'), /export const trackSettingChange = \(setting: 'telemetry', on: boolean\)/)
 })
 
 test('with no attention handed the Solo cell says what it waits for; the waiting words name the shell, never AIKit', () => {
-  const set = adapter.factoryTrackAdapter.project({tracks: TRACKS, nowUnixMs: NOW})
+  const set = kernelSetTracks(factorySet(), {nowMs: NOW})
   assert.match(set.mixer.solo.disabled, /no owner operation carries it yet — missing op: /, 'the grid\'s unread shape (r3-tracks-lanes)')
   assert.match(set.mixer.solo.disabled, /what you attend to.*\(the live shell\)\.$/)
-  assert.doesNotMatch(set.mixer.solo.disabled, /Actuation|harness_agent_control|pauses/)
-  assert.match(adapter.FACTORY_WAITING['track.solo'], /what you attend to/)
-  assert.doesNotMatch(adapter.FACTORY_WAITING['track.solo'], /AIKit/)
+  assert.doesNotMatch(set.mixer.solo.disabled, /Actuation|aikit\.gateway\.agent|pauses/)
+  assert.match(set.actions.waiting['track.solo'], /what you attend to/)
+  assert.doesNotMatch(set.actions.waiting['track.solo'], /AIKit/)
   assert.equal(set.actions?.mixer?.solo, undefined)
+  // A Set that carries no Solo of the shell's (Central's: a world soloed in today's set) takes no attention, handed or not.
+  const central = kernelSetTracks(fixture.modeSetOf({tracks: [fixture.setTrack('central:world:x', 'X', {kind: 'world'})]}), {nowMs: NOW, attention: attention([]).port})
+  assert.equal(central.actions?.mixer?.solo, undefined)
+  assert.equal(central.tracks[0].mix, undefined)
 })
 
 // ---------------------------------------------------------------------------------------------------------------- the views follow it
 
-test('the views follow the attention: only what you attend to keeps its clips, needle and lanes; every track keeps its head and its mixer', () => {
+test('the views follow the attention: only what you attend to keeps its clips and lanes; every track keeps its head and its mixer', () => {
   const all = project([]).set
   for (const track of [KITE, CAIRN, WREN]) assert.equal(clipsOf(all, track), 1, `${track.sessionRef}: with nothing soloed you attend to everything`)
   for (const track of TRACKS) assert.equal(headOf(all, track).mix.solo, false, `${track.sessionRef}: Solo off by default`)
@@ -179,11 +181,9 @@ test('the views follow the attention: only what you attend to keeps its clips, n
   assert.equal(clipsOf(set, WREN), 0)
   assert.equal(headOf(set, KITE).mix.solo, true)
   assert.equal(headOf(set, CAIRN).mix.solo, false)
-  assert.equal(typeof headOf(set, KITE).needle, 'number')
-  assert.equal(headOf(set, CAIRN).needle, undefined, 'the needle of what you do not attend to leaves the ruler')
-  assert.equal(headOf(set, CAIRN).mix.activator, false, 'its mixer stays: Telemetry still reads its own setting')
-  assert.deepEqual([...new Set(set.lanes.events.map(lane => lane.trackId))], [trackKey(KITE)], 'only the attended session\'s events lie as lanes')
-  assert.deepEqual([...new Set(set.lanes.takes.map(lane => lane.trackId))], [trackKey(KITE)], 'and only its takes')
+  assert.deepEqual([...new Set(set.lanes.takes.map(lane => lane.trackId))], [trackKey(KITE)], 'only the attended session\'s takes lie as lanes')
+  // REPLACED (O-I #1004): a session's needle and its event lanes are no part of the kernel's Set yet (the temporal stream is no slice of
+  // the World Model: O-I #1006), so there is none to keep or hide.
   // A group soloed: you attend to what it holds; a session soloed: its group's head stands with it.
   const crew = project([trackKey(CREW)]).set
   assert.deepEqual([clipsOf(crew, KITE), clipsOf(crew, CAIRN), clipsOf(crew, WREN)], [1, 1, 0])
@@ -208,11 +208,12 @@ test('the tiles, the instrument and the rack read the one attention the agent sh
   const shell = read('agent/AgentShellContext.tsx')
   assert.match(shell, /soloedIn\(continuity\.current\.context, 'factory'\)/, 'read from the book\'s world context')
   assert.match(shell, /continuity\.setContext\(context => soloOnContext\(context, 'factory', ref, on\)\)/, 'written through the book\'s one context writer')
-  const hook = read('frame/tracks/useFactoryTracks.ts')
-  assert.match(hook, /attention/)
-  assert.doesNotMatch(hook, /'solo'/, 'the tracks write no Solo setting')
+  // REPLACED (O-I #1004): the attention was handed on by the window's Factory hook (useFactoryTracks.ts); the one projection hands it on now.
+  const projection = read('frame/tracks/kernelSet.ts')
+  assert.match(projection, /const soloed = shell\?\.soloed, setSolo = shell\?\.setSolo/)
+  assert.doesNotMatch(projection, /encounter_session_settings|encounter-session-settings/, 'the tracks write no Solo setting')
   // (agent/agentFidelity.ts keeps the reverse-engineered oracle's Solo line verbatim, as agent-shell-status-info requires; nothing draws it.)
-  assert.doesNotMatch(read('timeline/factoryTrackAdapter.ts'), /Only soloed sessions may run|harness_agent_control \{binding, control: "solo"/)
+  assert.doesNotMatch(read('timeline/factoryTrackAdapter.ts'), /Only soloed sessions may run|aikit\.gateway\.agent \{binding, operation: "solo"/)
   // DLW build ruling 2026-11-05: the Solo tip and the mockup line it is pinned to say §16.1's sense, word for word in both.
   const tip = read('agent/agentFidelity.ts').match(/solo: \['Solo', '([^']+)'\]/)?.[1]
   assert.equal(tip, 'You attend to the soloed sessions alone: the views, the tiles and the instruments show only them. The others keep running.')

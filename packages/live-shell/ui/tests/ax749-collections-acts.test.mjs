@@ -9,8 +9,9 @@ import {readFileSync} from 'node:fs'
 //     (ctrl collections.rs: central.collections.rename and .show, Central dlw/749-collections-acts), whose real answers are the fixture;
 //   - a collected thing opens from its row the way its place's row opens it: a world comes into today, a Day opens;
 //   - a place's row drags as the browser's other rows do, onto the targets the manual names (§16.7): a world onto the empty track (it
-//     joins today), an agent onto an empty track or the agent chain (it takes the seat), a Day into a pane (it opens there), a machine or a
-//     workcell onto the rail (its tile opens there). The identity you share and a harness name no target, so they do not drag.
+//     joins today), an agent onto an empty track or the agent chain (it takes the seat), a census agent you can talk to likewise, a Day
+//     into a pane (it opens there), a machine or a workcell onto the rail (its tile opens there). The identity you share and a census agent
+//     you cannot talk to name no target, so they do not drag.
 // Channels: REAL (Central's answers, captured by ctrl on a scratch ground), SCRIPTED (pure rows, payloads and handlers; the browser
 // rendered on the server). Not a screen pass (#821).
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
@@ -142,7 +143,7 @@ test('a collected thing opens as its place\'s row opens it: read again from its 
   assert.match(rows, /event\.key === 'Enter'[^\n]*open\(item\)/)
 })
 
-test('a place\'s row drags what the manual\'s target for it takes; the identity and a harness drag nothing', () => {
+test('a place\'s row drags what the manual\'s target for it takes; the identity, and a census agent you cannot talk to, drag nothing', () => {
   const root = {root: '/w/Central', control: {agent_wiki: {wiki: {space_ref: 'central:wiki:root'}}}, work: {projects: []}}
   const world = acts.placeRowDrag(places.yourWorldRow(root))
   assert.deepEqual(world, {type: CENTRAL_WORLD_DRAG, data: 'central:wiki:root', words: 'My World'}, 'a world onto the empty track')
@@ -156,7 +157,17 @@ test('a place\'s row drags what the manual\'s target for it takes; the identity 
   assert.deepEqual(JSON.parse(acts.placeRowDrag(machine).data), {kind: 'workcell', ref: 'workcell:mac', label: 'This machine'})
   assert.equal(acts.placeRowDrag(machine).type, acts.RUNNING_DRAG, 'a running thing onto the rail')
   assert.equal(acts.placeRowDrag(places.identityRows({profiles: [{name: 'Frank', source_ref: 'Control/user/identity/nara.json'}]})[0]), null)
-  assert.equal(acts.placeRowDrag(places.harnessRows({profiles: [{disclosure: {slug: 'codex'}}]})[0]), null)
+  // A harness row is a census agent (O-I ticket 1003). One you can talk to drags as an agent, by its census ref, and an empty Factory
+  // track seats it (the Set's seat act takes the slug from `harness:<slug>`, frame/tracks/kernelSet.ts; AIKit opens its session). One
+  // that does not start, or starts but AIKit opens no conversation with it, drags nowhere.
+  const [talking, quiet, idle] = places.harnessRows([{slug: 'codex', harnessRef: 'harness/codex', executable: '/x/codex', starts: true, talks: true, aikit: null},
+    {slug: 'pi', harnessRef: 'harness/pi', executable: '/x/pi', starts: true, talks: false, why: 'AIKit has no conversation adapter for pi', aikit: null},
+    {slug: 'gemini', harnessRef: 'harness/gemini', executable: '/x/gemini', starts: false, talks: false, why: 'it exited 1', aikit: null}])
+  const seat = acts.placeRowDrag(talking)
+  assert.equal(seat.type, AGENT_CHAIN_MIME, 'a census agent you can talk to drags as an agent')
+  assert.deepEqual(decodeChainDrag(seat.data), {kind: 'chain-item', drag: {family: 'agent', ref: 'harness:codex', label: 'Codex'}})
+  assert.equal(acts.placeRowDrag(quiet), null, 'an agent that starts but that AIKit opens no conversation with takes no seat')
+  assert.equal(acts.placeRowDrag(idle), null, 'an agent that does not start takes no seat')
   assert.equal(acts.placeRowDrag(places.workRows({work: {projects: [{name: 'Loose', path: '/w/Loose', projectcentral: {}}]}})[0]), null, 'a folder that is no world')
   const rows = source('../src/frame/browser/PlaceRows.tsx')
   assert.match(rows, /draggable=\{drag !== null\}/)

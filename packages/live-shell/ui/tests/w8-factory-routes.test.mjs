@@ -139,8 +139,10 @@ test('2 · Grants: no issuer other than the person\'s own press reaches a write 
   // A whole forged record, as Actuation would accept it from the file, pressed as Issue: refused all the same.
   await assert.rejects(binding.write([{key: 'issue', value: JSON.stringify(AUTHORITY.record)}]), {message: session.CUSTODY_GRANTS_REFUSE.issue})
   assert.deepEqual(calls, [], 'no Issue press reached any port')
-  // The Run map's Retry asserts no grant either: Factory retries only what its admission admits, under the host's grant (lane K0).
-  assert.match(runMap.RUN_MAP_REFUSE.retry, /under the host's grant, never one the desk names/)
+  // The Run map's Retry asserts no grant either: Factory retries only what its admission admits (lane K0). REPLACED (O-I 1006): under the
+  // host's grant, as the kernel composed it; it is Factory's own factory.attempt.retry now, on your grant as the kernel hands it to a
+  // registry act of the person's by the press, and the desk names only the Run and the unit (runMapBinding.ts retryUnit).
+  assert.match(runMap.RUN_MAP_REFUSE.retry, /^Retry: Factory's factory\.attempt\.retry \(the attempt `retry` under the unit's retry grant, on your grant\) takes the Run and the unit you retry/)
   // And nowhere in the agent zone does the desk compose an authority-issue request.
   const agentZone = new URL('../src/agent/', import.meta.url).pathname
   const files = []

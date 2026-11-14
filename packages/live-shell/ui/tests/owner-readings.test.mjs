@@ -578,7 +578,9 @@ test('one agency source: the provider drives it, every other reader subscribes; 
   for (const [name, source] of [['AgentSessionsProvider.tsx', provider], ['useAgencySessions.ts', legacy]]) {
     assert.doesNotMatch(source, /setInterval|POLL_MS|readAgency\(/, `${name} keeps no cadence and asks the owner nothing itself`)
   }
-  for (const file of ['../src/agent/devices/useAgentChainReading.ts', '../src/agent/AgentShellBrowser.tsx', '../src/agent/AgentDockTileBody.tsx', '../src/central/devices/useCentralReadings.ts']) {
+  // REPLACED (O-I ticket 1006): the chain's reading (devices/useAgentChainReading.ts, gone) is composed from the World Model's slices and the
+  // shared answers (designBindings.ts chainFromModel, read by FactoryDeviceChain.tsx).
+  for (const file of ['../src/agent/devices/designBindings.ts', '../src/agent/devices/FactoryDeviceChain.tsx', '../src/agent/AgentShellBrowser.tsx', '../src/agent/AgentDockTileBody.tsx', '../src/central/devices/useCentralReadings.ts']) {
     const source = await readFile(new URL(file, import.meta.url), 'utf8')
     assert.doesNotMatch(source, /op: 'encounter_task_read'|op: 'agent_definition'|op: 'workcell_status_read'/, `${file} reads the shared answers, never the op itself`)
   }

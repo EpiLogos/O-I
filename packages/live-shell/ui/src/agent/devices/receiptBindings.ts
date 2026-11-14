@@ -24,12 +24,12 @@
 //
 // Approvals neither reads nor sets the answer to a tool call (§19.14: which acts wait for you "are set on the Scope of the agent that asks
 // (§19.12): its Asks, Wait and On no answer. Approvals shows them and never sets them"; the design draws no `approvals`): it is Scope's
-// Tool calls, the Gateway slot's own `approvals` row read and set on Scope (agentChainDevices.ts gatewayDisclosed, kernel
-// harness_agent_control, which AIKit's gateway has no operation for; designBindings.ts ScopeAsks), and Approvals is handed no Gateway (ticket 788). Its queue
+// Tool calls, the Gateway slot's own `approvals` row read and set on Scope (agentChainDevices.ts gatewayDisclosed, AIKit's Action
+// aikit.gateway.agent, which has no approvals operation; designBindings.ts ScopeAsks), and Approvals is handed no Gateway (ticket 788). Its queue
 // is the shown session's pending consent requests (AIKit's encounter view `permissions`, the Thread's own reading, threadBinding.ts
 // pendingPermissions), each answered with the harness's own choice (allow once, allow always, reject) through the encounter's `permission`
 // verb. Wait and On no answer are the asking agent's Scope's (§19.12), and Approvals "shows them and never sets them" (§19.14): two
-// readings, which no owner reports yet (Hermes' approvals.timeout is not a harness_agent_control field, harnessAgentControl.ts:15-26), so
+// readings, which no owner reports yet (Hermes' approvals.timeout is no aikit.gateway.agent input, harnessAgentControl.ts:7-11), so
 // they stand absent with the reading they wait for and no write of them is taken (ticket 804); the proposals are
 // Central's source returns, which the kernel reads since lane K1 (`source_returns_read`, central.source-returns/v1: workcellReads.ts) —
 // the pending and applying ones stand in the queue. Approve accepts one through Central's projectcentral.source.return_accept, the person's
@@ -357,10 +357,10 @@ export const APPROVE_UNWIRED = 'Approve: this chain does not carry Central\'s pr
  * through invoke_action as every answer to a return is (centralWrite), but this chain does not pass it. */
 export const REJECT_UNWIRED = 'Deny: this chain does not carry Central\'s projectcentral.source.return_reject to the return (no rejecting port is passed here).'
 /** The answers to a review and a recognition (§19.14 "What waits"), each refused with what Approvals is not handed or the op it lacks: no
- * review row stands in the queue (the take you choose to stand is chosen in the take lanes, through Factory's factory_owner
- * attempt-receiving: owners/attemptTakes.ts, factoryTakes.ts), and no recognition row (the Run's return is the journey reading the Run map
+ * review row stands in the queue (the take you choose to stand is chosen in the take lanes, through Factory's factory.attempt.choose:
+ * owners/attemptTakes.ts, factoryTakes.ts), and no recognition row (the Run's return is the journey reading the Run map
  * reads, which carries Recognise and Close: runMapBinding.ts). */
-const NO_REVIEW = 'no review waits in this queue: Approvals is not handed the take you chose to stand (the take lanes choose it through Factory\'s factory_owner attempt-receiving, agent/factoryTakes.ts), so no review row stands to answer.'
+const NO_REVIEW = 'no review waits in this queue: Approvals is not handed the take you chose to stand (the take lanes choose it through Factory\'s factory.attempt.choose, agent/factoryTakes.ts), so no review row stands to answer.'
 const NO_RECOGNITION = 'no recognition waits in this queue: Approvals is not handed the journey reading\'s returns (the Run map reads the Run and carries Recognise and Close: agent/devices/runMapBinding.ts).'
 export const APPROVALS_ANSWERS_REFUSED: Readonly<Record<string, string>> = {
   confirm: `Confirm: ${NO_REVIEW}`,
@@ -512,8 +512,8 @@ export interface ApprovalsPorts {
   /** Decline one returned proposal through Central (projectcentral.source.return_reject {project, return_ref}), with the row as Central lists
    * it. Rejects with Central's words. Absent: Deny on a proposal stands disabled. */
   readonly reject?: (row: SourceReturnEntry) => Promise<unknown>
-  /** Answer one unit decision's question through Central's receiving Review (the kernel's `receiving` op, the person's press), in the
-   * register its return belongs to. Absent: no carrier stands. */
+  /** Answer one unit decision's question through Central's receiving Review (`central.receiving.review` by the kernel's `act`, the
+   * person's press), in the register its return belongs to. Absent: no carrier stands. */
   readonly answerUnit?: (project: string | null, review: {kind: 'review'; return_ref: string; expected_return_revision: string; disposition: 'answered'; answer: string}) => Promise<unknown>
   /** Answer a skill's proposed revision through AIKit (aikit_write refinement-accept · refinement-discard), the Refining page's own verbs.
    * Absent: no carrier stands. */

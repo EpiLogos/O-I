@@ -224,6 +224,8 @@ export interface WorldTrackActions {
   /** Take a track out of the set (Live: select the track, Delete): the inverse of `seat`. What the track holds stays where its owner
    * keeps it; only the set no longer holds the track. */
   removeTrack?: {op: string; run(trackId: string): unknown};
+  /** End the session a track is (manual §19.1: "End session, on the track's menu, ends it"): its owner ends it and closes its record. */
+  endSession?: {op: string; run(trackId: string): unknown};
   /** The grain the owner's ops take when it is coarser than the controls look (e.g. "whole harness": a Stop on one track
    * stops the harness). The Session says it on every control it applies to. */
   grain?: string;

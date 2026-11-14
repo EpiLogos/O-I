@@ -5,15 +5,11 @@ import {register} from 'node:module'
 
 // R3 (T-REALIGN §3; manual §16.6 "Tracks, Session view and Arrangement view", §16.8, §17.1–§21.1 "The mixer row"; lock §0.3 item 3–4):
 // every track's mixer row with its mode's meaning, the Main track last with its row launchers, Stop All and Back to Arrangement,
-// and the lanes under the tracks in Arrangement view — automation, take lanes with the comp, Factory's event lanes.
+// and the lanes under the tracks in Arrangement view — automation, take lanes with the comp, and why a lane is absent.
 //
 // Channels (each claim below is carried by exactly one):
-// - REAL CAPTURE: tests/fixtures/central-vertical/now-list.capture.json (read-only `ctrl central.now.list`, 14 Oct 2026), mapped
-//   to the Day's entries by the kernel's own rule, as tests/central-tracks.test.mjs maps it.
-// - FIXTURE: the workspace book (in desktop/cradle/src/workspace/store.ts's own shape), the agency tracks (through the run model's
-//   own builders, as tests/factory-tracks.test.mjs builds them), the temporal events in the kernel's wire shape
-//   (desktop/cradle/kernel/src/temporal_events.rs: EventKind kebab-case), a scene's property tracks and automation lanes in the
-//   Expressions model's shape, a Live set summary. Each is labelled where it is used.
+// - FIXTURE: Central's and Factory's Sets in the shape the kernel builds them (kernel mode_set.rs; O-I #1004), a scene's property
+//   tracks and automation lanes in the Expressions model's shape, a Live set summary. Each is labelled where it is used.
 // - SCRIPTED: the shared views rendered to static markup, or called as stateless functions and pressed.
 // No computer-use pass and no browser: the on-screen legs are not covered here.
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
@@ -42,12 +38,11 @@ globalThis.document = {getElementById: () => null, createElement: () => ({}), he
 const React = await import('react')
 const {renderToStaticMarkup} = await import('react-dom/server')
 const central = await import('../src/timeline/centralTrackAdapter.ts')
-const factory = await import('../src/timeline/factoryTrackAdapter.ts')
-const model = await import('../src/agent/agentRunModel.ts')
+const {kernelSetTracks} = await import('../src/frame/tracks/kernelSet.ts')
+const {modeSetOf, setClip, setTrack} = await import('./support/modeSetFixture.mjs')
 const {techneTakeLanes, TECHNE_MIXER} = await import('../src/timeline/techneTrackAdapter.ts')
 const {liveSetTrackAdapter, LIVE_MIXER} = await import('../src/timeline/liveSetTrackAdapter.ts')
 const {nativeTracks, sceneAutomationOf} = await import('../src/frame/tracks/modeTracks.ts')
-const {shellWriteArm} = await import('../src/frame/tracks/useFactoryTracks.ts')
 const {answerOf} = await import('../src/frame/tracks/SessionGrid.tsx')
 const {SessionGrid, SessionGridView} = await import('../src/inhabitants/catalogue/panels/dlw__session-grid.tsx')
 const {ArrangementRuler, ArrangementRulerView} = {...await import('../src/frame/tracks/ArrangementRuler.tsx'), ...await import('../src/inhabitants/catalogue/panels/dlw__arrangement-ruler.tsx')}
@@ -66,39 +61,46 @@ function find(tree, pred, out = []) {
 }
 const RULER_VIEW = {window: null, onWindow: noop, snap: 'free', onSnap: noop, marker: null, onMarker: noop, width: 0}
 
-// ── Central: workspaces are the tracks, the Day is the Main track ─────────────────────────────────────────────────────────────────
+// ── Central and Factory: their Sets from the kernel (O-I #1004) ────────────────────────────────────────────────────────────
 
-// REAL CAPTURE: the NOW clearings → the Day's entries (temporal_sources.rs now_record_to_event), as central-tracks.test.mjs maps them.
-const FIXTURES = new URL('./fixtures/central-vertical/', import.meta.url)
-const capture = async name => JSON.parse(await readFile(new URL(name, FIXTURES), 'utf8'))
-const policy = (await capture('time-policy.capture.json')).data.policy
-const londonDate = unixMs => new Intl.DateTimeFormat('en-CA', {timeZone: policy.timezone, year: 'numeric', month: '2-digit', day: '2-digit'}).format(new Date(unixMs))
-const nowEvents = (await capture('now-list.capture.json')).data.records.map(record => {
-  const instant = record.created_at_unix_seconds * 1000
-  return {stream: 'central-now', kind: 'now', subject_ref: record.now_ref, instant_unix_ms: instant, summary: record.purpose,
-    day_ref: `central:day:${policy.scope_ref}:${londonDate(instant)}`, evidence_refs: [record.source_ref].filter(Boolean)}
+// FIXTURE: Central's Set in the shape the kernel builds it from the worlds and day slices (kernel mode_set.rs `central`, whose own tests
+// lay out what each slice gives): your world and O-I as tracks, a page of your world in its slot's row, the Day the Main track, and the
+// mixer row as the kernel words it.
+const firstDay = '2026-10-14'
+const ARM = {action: 'shell.setWriteArm', takes: 'on', words: 'shell.setWriteArm — the shell\'s one write arm (agent/shellSetterBridge.ts): its receipt names the owner that enforces it'}
+const PAGE = 'Control/user/flows/flow-2026-10-07-1014.html'
+const centralSet = modeSetOf({
+  owner: 'Central · its worlds, their pages and today\'s Day, through the Action registry',
+  ruler: {kind: 'day', unit: `minutes (UTC) of ${firstDay}`, date: firstDay},
+  rows: [{id: 'central:slot:1', name: '1'}],
+  tracks: [setTrack('central:world:central:wiki:root', 'Your world', {kind: 'your world · its folder Control/user/flows · 1 page'}),
+    setTrack('central:world:central:wiki:project:O-I', 'O-I', {kind: 'a project world · its folder Work/O-I/ProjectCentral/user · no page'}),
+    setTrack('central:day', 'Day', {kind: `today, ${firstDay}`, main: true})],
+  clips: [setClip(PAGE, 'central:world:central:wiki:root', 'central:slot:1', 'Closing the day', {subject: `central:path:/ground:${PAGE}`, note: `A Flow · ${PAGE}`})],
+  main: {track: 'central:day', name: `Day · ${firstDay}`, chain: ['Day', 'Approvals']},
+  mixer: {
+    activator: {meaning: 'Send to Day: on, the work in this world reaches the Day\'s faces; off, it stays out of the Day. On by default',
+      disabled: 'Send to Day: no owner operation carries it yet — missing op: a set track field `sendToDay: boolean` in the Day\'s set (central/daySet.ts) read by the Day\'s faces and its close (shell · Central).'},
+    arm: {meaning: 'Lets the agent of this world write into its pages directly, each write with a receipt; off, every agent write arrives as a proposal', grain: 'the shell\'s one write arm: arming one world arms every one'},
+    solo: {meaning: 'Shows only this world in the Day\'s faces and in the world instrument', disabled: 'Solo: no owner operation carries it yet — missing op: the Day\'s faces and the world instrument reading a soloed world from the set (shell · Central).'},
+    input: {meaning: 'Its Folder: a file you add to the folder shows as a clip', route: 'the world\'s folder'},
+    output: {meaning: 'Every world sends its work to the Day, the Main track', route: 'Day'},
+  },
+  lanes_absent: {takes: 'A page\'s revisions are its takes (manual §18.1): Central\'s file history is no slice of the World Model yet (O-I #1005).'},
+  acts: {arm: ARM},
+  waiting: {'track.stop': 'the page owner\'s stop (each playing page\'s NOW clearing closed, central.now.lifecycle), and the clearings that play are no slice of the World Model yet (O-I #1005)'},
 })
-const firstDay = new Date(Math.min(...nowEvents.map(event => event.instant_unix_ms))).toISOString().slice(0, 10)
 
-// FIXTURE: the workspace book as desktop/cradle/src/workspace/store.ts holds it — two workspaces, the first opened a Flow on the day
-// the first NOW clearing was made (its recentPlaces, the book's own record of the files it opened).
-const visited = Date.parse(`${firstDay}T10:15:00Z`)
-// FIXTURE: Central's worlds (central/centralWorlds.ts) and their pages (the page owner's listing), T-WORLDS W2.
-const worlds = [{ref: 'central:wiki:root', name: 'Your world', kind: 'yours', folder: 'Control/user/flows', project: null},
-  {ref: 'central:wiki:project:O-I', name: 'O-I', kind: 'project', folder: 'Work/O-I/ProjectCentral/user', project: 'O-I'}]
-const at = path => ({schema: 'central.path-ref/v1', ref: `central:path:/ground:${path}`, root: '/ground', path})
-const pages = new Map([['central:wiki:root', {state: 'read', listing: {schema: 'oi.page-list/v1', path: 'Control/user/flows', more: false, not_pages: [],
-  pages: [{location: at('Control/user/flows/flow-2026-10-07-1014.html'), name: 'flow-2026-10-07-1014.html', form: 'flow', title: 'Closing the day', revision: 'r', world: null}]}}]])
-const daySetReading = {state: 'read', civilDate: firstDay, set: {schema: 'oi.day-set/v1', tracks: [{world: 'central:wiki:project:O-I'}], rows: []}}
-
-test('Central: today\'s worlds are the tracks, each with its pages; the Day is the Main track, last, with the day\'s entries', () => {
-  const set = central.projectCentralTracks({civil: {state: 'live', events: nowEvents, absences: []}, worlds: {state: 'read', worlds}, set: daySetReading, pages})
+test('Central: today\'s worlds are the tracks, each with its pages; the Day is the Main track, last, on today\'s ruler', () => {
+  const set = kernelSetTracks(centralSet, {nowMs: Date.parse(`${firstDay}T12:00:00Z`)})
   assert.deepEqual(set.tracks.map(track => [track.id, track.main ?? false]), [['central:world:central:wiki:root', false], ['central:world:central:wiki:project:O-I', false], ['central:day', true]])
   assert.deepEqual(set.main, {name: `Day · ${firstDay}`, chain: ['Day', 'Approvals']}, 'the Main track\'s own chain: the Day, then Approvals (§18.1)')
   const page = set.clips.find(clip => clip.trackId === 'central:world:central:wiki:root')
-  assert.equal(page.id, 'Control/user/flows/flow-2026-10-07-1014.html')
+  assert.equal(page.id, PAGE)
   assert.equal(set.columns.find(column => column.id === page.columnId).id, 'central:slot:1', 'a page no named row holds stands in its slot\'s row')
-  assert.deepEqual(central.centralSubjectOfClip(page.id), {kind: 'note', path: 'Control/user/flows/flow-2026-10-07-1014.html'}, 'it opens as the page the path names')
+  assert.deepEqual(central.centralSubjectOfClip(page.id), {kind: 'note', path: PAGE}, 'it opens as the page the path names')
+  assert.equal(set.ruler.unit, `minutes (UTC) of ${firstDay}`)
+  assert.equal(set.ruler.label(61), `${firstDay.slice(5)} 01:01`)
   // The Session: the worlds are columns, the Day stands in the Main column at the end; the Arrangement lays the Day last.
   const grid = session(set)
   assert.deepEqual([...grid.matchAll(/data-track="([^"]*)"/g)].map(m => m[1]), ['central:world:central:wiki:root', 'central:world:central:wiki:project:O-I'])
@@ -108,27 +110,24 @@ test('Central: today\'s worlds are the tracks, each with its pages; the Day is t
   assert.equal(order.at(-1), 'central:day', 'the Day lies last on the ruler')
 })
 
-test('Central\'s mixer row says what each control means here; Arm is the shell\'s write arm; a world\'s Stop closes the pages that play', async () => {
-  const armed = [], stopped = []
-  const writeArm = {on: false, set: async on => { armed.push(on); return {ok: false, error: 'refused: write-arm enforcement is Factory receiving (WO-SF2)'} }}
-  const set = central.projectCentralTracks({civil: {state: 'reading'}, worlds: {state: 'read', worlds}, set: daySetReading, pages,
-    playing: [{pageRef: at('Control/user/flows/flow-2026-10-07-1014.html').ref, nowRef: 'now:1', project: null, sinceMs: null}],
-    controls: {stop: async item => stopped.push(item.nowRef), writeArm}})
-  assert.deepEqual(Object.keys(set.mixer), ['activator', 'arm', 'solo', 'input', 'output'], 'Monitor is for a world you visit; yours have none (§18.1)')
+test('Central\'s mixer row says what each control means here; Arm is the shell\'s write arm through its Action; what no Action carries waits', async () => {
+  const armed = []
+  const runner = {act: async () => { throw new Error('no Action of the registry is pressed here') },
+    shell: async (action, value) => { armed.push([action, value]); return {ok: false, error: 'refused: write-arm enforcement is Factory receiving (WO-SF2)'} }}
+  const set = kernelSetTracks(centralSet, {nowMs: Date.parse(`${firstDay}T12:00:00Z`), armOn: false, runner})
+  assert.deepEqual(Object.keys(set.mixer).sort(), ['activator', 'arm', 'input', 'output', 'solo'], 'Monitor is for a world you visit; yours have none (§18.1)')
   assert.equal(set.mixer.output.route, 'Day', 'the output is the Day: a route, never a setting')
   assert.match(set.mixer.activator.meaning, /^Send to Day/)
   assert.match(set.mixer.activator.disabled, /missing op: .*sendToDay/, 'Send to Day has no owner field yet, and says which')
   assert.equal(set.mixer.input.route, 'the world\'s folder', 'the input of a world is its folder')
   assert.deepEqual(set.tracks.filter(track => !track.main).map(track => track.mix), [{arm: false}, {arm: false}], 'Arm reads the shell\'s flag on every world')
-  assert.deepEqual(await answerOf(() => set.actions.stopTrack.run('central:world:central:wiki:root')), {ok: true, text: '1 page of Your world stopped.'})
-  assert.deepEqual(stopped, ['now:1'])
-  assert.deepEqual(await answerOf(() => set.actions.stopTrack.run('central:day')), {ok: false, text: '"central:day" is no world of today\'s set.'}, 'the Day is not a world')
+  assert.equal(set.actions.stopTrack, undefined, 'a world\'s Stop is no Action yet')
+  assert.match(set.actions.waiting['track.stop'], /O-I #1005/, 'and the Set says what it waits for')
   const cells = lanes.mixerCells(set, set.tracks[0], 0)
   assert.deepEqual(cells.map(cell => [cell.id, cell.state, !!cell.press]), [['activator', 'unread', false], ['solo', 'unread', false], ['arm', 'off', true], ['input', 'route', false], ['output', 'route', false]])
   assert.deepEqual(await answerOf(cells[2].press.run), {ok: false, text: 'refused: write-arm enforcement is Factory receiving (WO-SF2)'}, 'the owner\'s refusal is the receipt')
-  assert.deepEqual(armed, [true])
-  // REPLACED (T-COVERAGE §1.3): a page's revisions are read from central.temporal.source-history; none handed in here, the takes say so.
-  assert.match(set.lanes.absent.takes, /no page of today's worlds has its history read yet \(Central's central\.temporal\.source-history\)/, 'revisions as takes: the reading they wait on')
+  assert.deepEqual(armed, [['shell.setWriteArm', true]], 'the press is the Set\'s own act: the shell\'s setter, given the value')
+  assert.match(set.lanes.absent.takes, /Central's file history is no slice of the World Model yet/, 'revisions as takes: the reading they wait on')
   // The view: the mixer row under each world's head, its controls disabled where no owner writes them.
   const grid = session(set)
   assert.equal((grid.match(/data-mixer="central:world:/g) ?? []).length, 2, 'a mixer row under every world')
@@ -136,81 +135,57 @@ test('Central\'s mixer row says what each control means here; Arm is the shell\'
   assert.match(grid, /data-mix="arm" data-state="off" aria-label="Arm" aria-pressed="false" title="Arm · Lets the agent/)
 })
 
-test('the shell\'s write arm, pressed from a track, is the transport\'s registered setter: its receipt, or the refusal that none is registered', async () => {
-  const none = shellWriteArm(null, () => undefined)
-  assert.deepEqual(await none.set(true), {ok: false, error: 'shell.setWriteArm is not registered in this session: the transport\'s write arm registers it, so the press reached no owner.'})
-  const sent = []
-  const refused = shellWriteArm(false, path => value => { sent.push([path, value]); return Promise.resolve({kind: 'refused', channel: 'none', writePath: path, reason: 'no shell write flow reads it yet', missingOp: 'WO-SF2'}) })
-  assert.deepEqual(await refused.set(true), {ok: false, error: 'no shell write flow reads it yet — missing op: WO-SF2'})
-  const fired = shellWriteArm(false, path => () => Promise.resolve({kind: 'fired', channel: 'shell', writePath: path, note: 'armed'}))
-  assert.deepEqual(await fired.set(true), {ok: true, note: 'armed'})
-  assert.deepEqual(sent, [['shell.setWriteArm', true]])
-})
-
-// ── Factory: sessions, attempts, events, needles ─────────────────────────────────────────────────────────────────────────────────
-
+// FIXTURE: Factory's Set in the shape the kernel builds it from the sessions, factory and workcells slices (kernel mode_set.rs `factory`).
 const NOW = Date.UTC(2026, 9, 14, 12, 0, 0)
-// FIXTURE: an agency reading through the run model's own builders (tests/factory-tracks.test.mjs), and temporal events in the
-// kernel's wire shape (EventKind kebab-case: run, return, gateway-delta).
-const rows = [{spaceRef: 'space:port', spaceLabel: 'Port', sessionRef: 'sess-lead', purpose: 'lead', agentRef: 'agent:fizz'}]
-const events = [
-  {stream: 'factory-runs', kind: 'run', subject_ref: 'agency/sess-lead/tool.done', instant_unix_ms: NOW - 600_000, summary: 'read vault/cw13/iv.md'},
-  {stream: 'factory-runs', kind: 'run', subject_ref: 'agency/sess-lead/tool.done', instant_unix_ms: NOW - 300_000, summary: 'explore.localWhole'},
-  {stream: 'gateway', kind: 'gateway-delta', subject_ref: 'agency/sess-lead/approval', instant_unix_ms: NOW - 120_000, summary: 'approval asked'},
-  {stream: 'factory-runs', kind: 'run', subject_ref: 'agency/sess-lead/tool.done', instant_unix_ms: null, summary: 'no instant'},
-  {stream: 'factory-runs', kind: 'run', subject_ref: 'agency/sess-other/tool.done', instant_unix_ms: NOW - 200_000, summary: 'another session'},
-]
-const axis = model.sharedAxis([], NOW)
-const reading = {request: {central: {purpose: 'map field', task_ref: 'task:map'}}, state: 'done'}
-const tracks = model.buildTracks(rows, new Map([['agent:fizz', {name: 'Fizz', accepted: true}]])).map(track => track.group ? track : {
-  ...track, tasks: model.buildTaskClips(reading, events, track.sessionRef, NOW), needle: model.needleFor(events, track.sessionRef, axis)})
-
-test('Factory: each session\'s events lie in lanes by the kind the temporal stream gives, at their instants; a needle at its last check-in', () => {
-  const set = factory.factoryTrackAdapter.project({tracks, nowUnixMs: NOW, events})
-  const session = set.tracks.find(track => track.kind === 'session')
-  assert.ok(session.needle !== undefined, 'the session\'s needle stands at its last check-in')
-  const eventLanes = set.lanes.events
-  assert.deepEqual(eventLanes.map(lane => [lane.trackId, lane.kind, lane.events.map(event => event.label)]),
-    [[session.id, 'run', ['read vault/cw13/iv.md', 'explore.localWhole']], [session.id, 'gateway-delta', ['approval asked']]],
-    'one lane per kind, its own session\'s events only, an event with no instant left off the ruler')
-  assert.equal(set.ruler.label(eventLanes[0].events[1].at), new Date(NOW - 300_000).toTimeString().slice(0, 8), 'each where it happened on the run\'s ruler')
-  assert.match(set.lanes.absent.events, /Messages, Files, Terminal and Pages read are not kinds it names — missing op/)
-  assert.match(set.lanes.absent.takes, /attempts are unread here.*encounter_task_attempts_list.*factory_attempt_read/, 'attempts as takes: unread here, and the ops that read them')
-  assert.equal(set.clips[0].status, 'done', 'a finished task is done (dim and settled), not stopped')
-  // The Lanes setting: Events are Off by default (§16.6), so the ruler draws none until they are turned on; clicked, one opens beside it.
-  assert.doesNotMatch(arrangement(set), /data-event-lane=/)
-  const opened = []
-  const tree = ArrangementRulerView({set, selection: SELECT, view: RULER_VIEW, receipt: null, onPress: noop, onDismiss: noop,
-    lanes: {shown: {takes: true, automation: true, events: true}, onShown: noop, take: null, onTake: noop, opened: null, onOpened: next => opened.push(next)}})
-  const ticks = find(tree, node => node.props?.className?.startsWith?.('tl-event') && node.props['data-event'] !== undefined && node.type === 'button')
-  assert.equal(ticks.length, 3)
-  ticks[0].props.onClick()
-  assert.deepEqual(opened, [{laneId: eventLanes[0].id, eventId: eventLanes[0].events[0].id}])
-  const open = renderToStaticMarkup(React.createElement(ArrangementRulerView, {set, selection: SELECT, view: RULER_VIEW, receipt: null, onPress: noop, onDismiss: noop,
-    lanes: {shown: {takes: true, automation: true, events: true}, onShown: noop, take: null, onTake: noop, opened: opened[0], onOpened: noop}}))
-  assert.match(open, /<aside class="tl-event-open" role="dialog" aria-label="run: read vault\/cw13\/iv\.md"/, 'the event opens beside the ruler')
+const factorySet = modeSetOf({
+  owner: 'Factory and AIKit · the Agent sessions, Factory\'s tasks and their attempts',
+  ruler: {kind: 'clock', unit: 'seconds', origin_unix_ms: NOW - 600_000},
+  rows: [1, 2, 3, 4].map(n => ({id: `batch:${n}`, name: String(n)})),
+  tracks: [setTrack('space:port:space:port', 'Port', {kind: 'a SessionSpace'}), setTrack('space:port:sess-lead', 'lead', {kind: 'an Agent session', depth: 1, parent: 'space:port:space:port'})],
+  clips: [setClip('space:port:sess-lead#task/1', 'space:port:sess-lead', 'batch:1', 'map field', {subject: 'task:map', status: 'done',
+    at: {start_unix_ms: NOW - 600_000, end_unix_ms: NOW - 120_000}})],
+  main: {name: 'Main', chain: ['Gateways', 'Experiment', 'Approvals', 'Ledger', 'Link']},
+  mixer: {
+    activator: {meaning: 'Telemetry: on, the session feeds the widgets, the Ledger and other agents; off, it is muted', disabled: 'Telemetry: no owner operation carries it yet — missing op: the session\'s own Telemetry on AIKit (encounter-session-settings), whose settings are no slice of the World Model yet (O-I #1006).'},
+    solo: {meaning: 'You attend to the soloed sessions alone', disabled: 'Solo: what you attend to is the shell\'s, and the kernel\'s Set carries none of it yet (O-I #1006).'},
+    arm: {meaning: 'Lets the session\'s agent write directly, with receipts, where Scope allows', grain: 'the shell\'s one write arm: arming one session arms every one'},
+    monitor: {meaning: 'Watch: In streams the session into the widgets always; Auto streams it when it is armed or selected; Off does not stream it', disabled: 'Watch: no owner operation carries it yet — missing op: shell.setSessionWatch(sessionRef, "in" | "auto" | "off"), a per-session watch the widgets read (shell).'},
+    input: {meaning: 'The way in', route: 'Gateway'},
+    output: {meaning: 'The way out', route: 'Landing'},
+  },
+  lanes_absent: {events: 'A session\'s events by their kind (run, return, generation …): the temporal stream is no slice of the World Model yet (O-I #1006).',
+    takes: 'No task Factory holds has an attempt yet: Factory records each attempt it dispatches on its task.'},
+  acts: {arm: ARM},
+  waiting: {'set.stop-all': 'a session\'s stop on its own encounter owner, or the bound harness\'s (O-I #1006)'},
 })
 
-test('Factory\'s mixer row: Watch, Telemetry and Solo say the op they lack; Arm is the shell\'s write arm; Stop All is the harness\'s stop', async () => {
-  const calls = []
-  const set = factory.factoryTrackAdapter.project({tracks, nowUnixMs: NOW, controls: {control: async word => { calls.push(word); return {ok: true, note: `${word} → done`} }},
-    writeArm: {on: true, set: async on => ({ok: true, note: `armed ${on}`})}})
-  assert.deepEqual(Object.keys(set.mixer), ['activator', 'solo', 'arm', 'monitor', 'input', 'output'])
+test('Factory: a task lies where it ran on the clock; event lanes and takes say why none is read, in the Set\'s words', () => {
+  const set = kernelSetTracks(factorySet, {nowMs: NOW})
+  assert.deepEqual(set.clips[0].at, {start: 0, end: 480})
+  assert.equal(set.clips[0].status, 'done', 'a finished task is done (dim and settled), not stopped')
+  assert.equal(set.lanes.events, undefined, 'no event lane is drawn from a stream the World Model does not hold')
+  assert.match(set.lanes.absent.events, /the temporal stream is no slice of the World Model yet \(O-I #1006\)/)
+  assert.match(set.lanes.absent.takes, /No task Factory holds has an attempt yet/)
+  assert.equal(set.ruler.label(0), new Date(NOW - 600_000).toTimeString().slice(0, 8), 'the run\'s ruler is the clock')
+  const ruler = arrangement(set)
+  assert.match(ruler, /data-lanes="events" aria-pressed="false"/, 'Events are Off by default')
+})
+
+test('Factory\'s mixer row: Watch, Telemetry and Solo say what they lack; Arm is the shell\'s write arm; Stop All waits in the Set\'s words', async () => {
+  const runner = {act: async () => { throw new Error('unexpected') }, shell: async (_action, on) => ({ok: true, note: `armed ${on}`})}
+  const set = kernelSetTracks(factorySet, {nowMs: NOW, armOn: true, runner})
+  assert.deepEqual(Object.keys(set.mixer).sort(), ['activator', 'arm', 'input', 'monitor', 'output', 'solo'])
   assert.match(set.mixer.monitor.meaning, /^Watch: In streams the session into the widgets always/)
   assert.match(set.mixer.activator.meaning, /^Telemetry/)
-  for (const id of ['activator', 'solo', 'monitor']) assert.match(set.mixer[id].disabled, /no owner operation carries it yet — missing op: /, `${id} names its missing op`)
+  for (const id of ['activator', 'solo', 'monitor']) assert.match(set.mixer[id].disabled, /O-I #1006|no owner operation carries it yet — missing op: /, `${id} names what it lacks`)
   assert.deepEqual([set.mixer.input.route, set.mixer.output.route], ['Gateway', 'Landing'])
   assert.deepEqual(set.main, {name: 'Main', chain: ['Gateways', 'Experiment', 'Approvals', 'Ledger', 'Link']})
-  const sessionTrack = set.tracks.find(track => track.kind === 'session')
+  const sessionTrack = set.tracks.find(track => track.id === 'space:port:sess-lead')
   assert.deepEqual(sessionTrack.mix, {arm: true})
   assert.deepEqual(await answerOf(() => set.actions.mixer.arm.run(sessionTrack.id, false)), {ok: true, text: 'armed false'})
-  const stopped = await answerOf(() => set.actions.stopAll.run())
-  assert.match(stopped.text, /^Whole harness: Stop All reached the bound harness/)
-  assert.deepEqual(calls, ['stop'])
-  // Armed, a session's empty slots are record buttons (Live cap 35) — disabled, since no owner records into a slot.
+  assert.equal(set.actions.stopAll, undefined, 'Stop All is no Action of the Set yet')
+  assert.match(set.actions.waiting['set.stop-all'], /O-I #1006/)
   const grid = session(set)
-  assert.match(grid, /class="sg-rec" aria-label="Record on lead \(whole harness\)" disabled=""/)
-  assert.match(grid, /aria-label="Stop All" data-receipt|aria-label="Stop All" title="Stop All: every clip stops/, 'Stop All stands in the Main column')
   assert.match(grid, /class="cs clip done"/)
 })
 

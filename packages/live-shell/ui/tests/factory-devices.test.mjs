@@ -122,7 +122,7 @@ test('compact is a picture and at most four controls: the others\' are their mos
   assert.deepEqual(compact('agent'), ['model', 'effort', 'budget-used', 'input'], 'the manual\'s four (§19.4 Compact: "Macros: Model, Effort, Budget, Input"): the Agent\'s Autonomy is retired')
   assert.deepEqual(compact('skillset'), [], 'the rack\'s four settings are readings no owner maps, so the compact rack draws its chains and no badge posing as a macro')
   assert.deepEqual(compact('world'), ['write-mode'])
-  assert.deepEqual(compact('git'), ['commit-policy', 'push-policy', 'land'])
+  assert.deepEqual(compact('git'), ['commit-policy', 'push-policy', 'landAs', 'land'], 'the manual\'s four (§19.16 Compact: Commit, Push, Land as, Land)')
   for (const {device} of set) assert.ok(compactRows(device.rows).length <= 4)
   const rack = slotOf(set, 'skillset').device.rows
   // REPLACED (lane BD round 12, §19.7 "Refining a skill"): the rack's rows were ai-kit's four settings alone. The Refining page's rows
@@ -226,7 +226,7 @@ test('owners write, faces read: a write row reaches its own write path, a readin
 
 test('a write the table declares but gives no domain for stays a reading in the device — no knob on an invented 0..1', () => {
   const stall = slotOf(chain(), 'gateway').device.rows.find(row => row.key === 'stall-after')
-  assert.equal(agentAddress('gateway', 'stall-after').writePath, 'kernel:harness_agent_control')
+  assert.equal(agentAddress('gateway', 'stall-after').writePath, 'act:aikit.gateway.agent')
   assert.equal(stall.writePath, undefined)
   assert.match(stall.disclosure, /no domain/)
 })
@@ -237,8 +237,9 @@ test('the harness\'s document supplies the gateway rows only under the carrier\'
   assert.deepEqual(model.gatewayDisclosed({refused: {message: 'no'}}), {})
   assert.deepEqual(model.gatewayDisclosed(null), {})
   assert.equal(model.gatewayLine({schema: 's', binding: 'b'}), 'schema s · binding b')
-  assert.deepEqual(model.gitRepoReading({repo_root: '/r', head_branch: 'main', worktrees: [{path: '/x', dirty_files: 9}, {path: '/r', dirty_files: 2}]}), {branch: 'main', uncommitted: 2})
-  assert.deepEqual(model.gitRepoReading({repo_root: '/r', worktrees: []}), {})
+  // REPLACED (O-I ticket 1006): gitRepoReading read the primary checkout's repository document for the chain's Git; Git / landing reads the
+  // workcell's seat of the session's project (factory-design-binding.test.mjs, designBindings.ts projectSeatOf).
+  assert.equal('gitRepoReading' in model, false)
   assert.deepEqual(model.taskReading({turns: {used: 2, cap: 8}, custody: 'review', autonomy: 'auto'}), {used: 2, cap: 8}, 'a task record\'s custody or autonomy word is no Agent setting: the Autonomy is retired')
   assert.equal(model.budgetLine({used: 2}), '2')
   assert.equal(model.budgetLine(null), undefined)

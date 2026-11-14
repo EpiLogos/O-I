@@ -15,6 +15,8 @@
 //   `central:path:<root>:<path>` one Flow document, by the owner's path ref
 //   `page:<being|thing>:<ref>`  one Being or Thing page, by its owner's path ref (T-WORLDS W2: they open as panes with a hosted
 //                               face, like a Flow, never as a bare file tab)
+//   `skill:<scope>:<name>`      one skill Central keeps (ctrl control_skills.rs), by its scope and name: `<machine>/<name>` for a
+//                               machine's, `<project>/<name>` for a project's; `#<member>` after it names the AIKit member that carries it
 // Nothing here reads the owner, so nothing here can fabricate a document: a subject that names none the owner holds is
 // said by the pane, in the owner's words.
 import {activateSurface, dropOnEdge, focusGroup, groupOf, moveTab, openBinding} from '../../../../../../desktop/cradle/src/surface/engine'
@@ -61,6 +63,7 @@ export type DocumentSubject =
   | {readonly form: 'day'; readonly dayRef: string | null}
   | {readonly form: 'flow'; readonly location: CentralLocation | null}
   | {readonly form: 'page'; readonly kind: PageKind; readonly location: CentralLocation}
+  | {readonly form: 'skill'; readonly skill: SkillSubject}
 
 /** A reference page's kind: a Being or a Thing (oi.page/v1, its family). */
 export type PageKind = 'being' | 'thing'
@@ -72,6 +75,8 @@ export function parseDocumentSubject(ref: string | undefined): DocumentSubject |
   if (ref === undefined || ref === LATEST_FLOW_REF) return {form: 'flow', location: null}
   if (ref === TODAY_REF) return {form: 'day', dayRef: null}
   if (ref.startsWith('central:day:')) return {form: 'day', dayRef: ref}
+  const skill = skillOfSubject(ref)
+  if (skill) return {form: 'skill', skill}
   const page = PAGE_SUBJECT.exec(ref)
   if (page) {
     const at = parseCentralPathRef(page[2]!)
@@ -89,6 +94,7 @@ export type CentralDocumentTarget =
   | {readonly form: 'day'; readonly date: string | null}
   | {readonly form: 'flow'; readonly location: CentralLocation | null}
   | {readonly form: 'page'; readonly kind: PageKind; readonly location: CentralLocation}
+  | {readonly form: 'skill'; readonly skill: SkillSubject}
 
 /** A listed row, as the browser holds it. */
 export type DocumentEntry = Pick<NativeFileEntry, 'name' | 'location' | 'kind' | 'retrieval_allowed'>
@@ -108,8 +114,54 @@ export function flowOfEntry(entry: DocumentEntry, path: string = entry.location?
 
 const baseName = (path: string): string => path.split('/').filter(Boolean).pop() ?? path
 
+// ── a skill ──────────────────────────────────────────────────────────────
+
+/** A skill as Central keeps it (ctrl control_skills.rs SkillScope): your own (`control-user`, Control/user/skills), a machine's
+ * (`control-machine`, Control/machines/<machine>/skills) or a project's (`projectcentral-user`, Work/<project>/ProjectCentral/user/skills);
+ * and the AIKit member that carries it (`skill/<source>/<name>`), where the open named one: Release syncs and promotes that source. */
+export interface SkillSubject {
+  readonly scope: 'control-user' | 'control-machine' | 'projectcentral-user'
+  readonly name: string
+  readonly machine?: string
+  readonly project?: string
+  readonly member?: string
+}
+
+const SKILL_PATHS: readonly [RegExp, (match: RegExpExecArray) => SkillSubject][] = [
+  [/^Control\/user\/skills\/([^/]+)\/SKILL\.md$/, match => ({scope: 'control-user', name: match[1]!})],
+  [/^Control\/machines\/([^/]+)\/skills\/([^/]+)\/SKILL\.md$/, match => ({scope: 'control-machine', machine: match[1]!, name: match[2]!})],
+  [/^Work\/([^/]+)\/ProjectCentral\/user\/skills\/([^/]+)\/SKILL\.md$/, match => ({scope: 'projectcentral-user', project: match[1]!, name: match[2]!})],
+]
+
+/** The skill whose text a path is (its SKILL.md where Central keeps skills), or null. Pure. */
+export function skillOfPath(path: string): SkillSubject | null {
+  for (const [pattern, skill] of SKILL_PATHS) {
+    const match = pattern.exec(path)
+    if (match) return skill(match)
+  }
+  return null
+}
+
+/** A skill as Central's revision acts name it (control.skills.revision.*: scope, name, and the machine or project its scope needs). */
+export const skillInput = (skill: SkillSubject): {scope: SkillSubject['scope']; name: string; machine?: string; project?: string} =>
+  ({scope: skill.scope, name: skill.name, ...(skill.machine ? {machine: skill.machine} : {}), ...(skill.project ? {project: skill.project} : {})})
+
+const SKILL_SUBJECT = /^skill:(control-user|control-machine|projectcentral-user):([^#]+)(?:#(.+))?$/
+function skillOfSubject(ref: string): SkillSubject | null {
+  const at = SKILL_SUBJECT.exec(ref)
+  if (!at) return null
+  const scope = at[1] as SkillSubject['scope'], parts = at[2]!.split('/'), member = at[3] ? {member: at[3]} : {}
+  if (scope === 'control-user') return parts.length === 1 && parts[0] ? {scope, name: parts[0], ...member} : null
+  if (parts.length !== 2 || !parts[0] || !parts[1]) return null
+  return scope === 'control-machine' ? {scope, machine: parts[0], name: parts[1], ...member} : {scope, project: parts[0], name: parts[1], ...member}
+}
+
 /** The ref and the tab's title a target is held under. */
 export function subjectOf(target: CentralDocumentTarget): {ref: string; title: string} {
+  if (target.form === 'skill') {
+    const {scope, name, member} = target.skill, owner = target.skill.machine ?? target.skill.project
+    return {ref: `skill:${scope}:${owner ? `${owner}/` : ''}${name}${member ? `#${member}` : ''}`, title: `Skill · ${name}`}
+  }
   if (target.form === 'day') return target.date ? {ref: dayRefOfDate(target.date), title: `Day · ${target.date}`} : {ref: TODAY_REF, title: 'Day'}
   if (target.form === 'page') return {ref: `page:${target.kind}:${target.location.ref}`, title: `${target.kind === 'being' ? 'Being' : 'Thing'} · ${baseName(target.location.path).replace(/\.html$/i, '')}`}
   return target.location ? {ref: target.location.ref, title: `Flow · ${baseName(target.location.path).replace(/\.html$/i, '')}`} : {ref: LATEST_FLOW_REF, title: 'Flow'}

@@ -129,12 +129,15 @@ export async function setup() {
   const aikit = need("OI_AIKIT_BIN");
   const ctrlBin = need("OI_CENTRAL_CTRL_BIN");
   const pi = process.env.PF_PI ?? join(homedir(), ".local/bin/pi");
-  const template = process.env.PF_TEMPLATE ?? join(homedir(), "Central/Work/O-I/.aikit/sf6-agency/agency-request.json");
+  // The Actuation the World's standing authority is granted in and each chat's Agency is minted under (O-I #1003): the suite's own
+  // unless a build is named.
+  const actuation = process.env.OI_ACTUATION_BIN ?? "actuation";
   const root = mkdtempSync("/private/tmp/oi-plural-flow-");
   const aikitHome = mkdtempSync("/private/tmp/oi-plural-flow-home-");
   const home = mkdtempSync("/private/tmp/oi-plural-flow-oihome-");
   const projectRoot = join(root, "Work", "Flowlab");
-  const ownerEnv = {...process.env, AIKIT_HOME: aikitHome, CENTRAL_ROOT: root, AIKIT_CENTRAL_ROOT: root, CENTRAL_CTRL_BIN: ctrlBin, OI_CENTRAL_CTRL_BIN: ctrlBin, AIKIT_AGENCY_MINT_TEMPLATE: template, OI_AIKIT_BIN: aikit};
+  const ownerEnv = {...process.env, AIKIT_HOME: aikitHome, CENTRAL_ROOT: root, AIKIT_CENTRAL_ROOT: root, CENTRAL_CTRL_BIN: ctrlBin, OI_CENTRAL_CTRL_BIN: ctrlBin, OI_AIKIT_BIN: aikit,
+    OI_ACTUATION_BIN: actuation, ACTUATION_AUTHORITY_STORE: join(root, ".actuation-authority")};
   delete ownerEnv.CENTRAL_NATIVE_TOKEN;
   const call = (action, input = {}, env = {}) => {
     const r = JSON.parse(execFileSync(ctrlBin, ["--root", root, "--json", "action", "run", action, JSON.stringify(input)], {encoding: "utf8", env: {...ownerEnv, ...env}}));
@@ -164,6 +167,8 @@ export async function setup() {
     const aikitBin = (...args) => execFileSync(aikit, args, {encoding: "utf8", env: ownerEnv});
     const bind = JSON.parse(aikitBin("--json", "-C", projectRoot, "project", "bind", "flowlab-walk", "--directory", projectRoot, "--no-default-skill-sets"));
     if (!bind.ok) throw new Error(JSON.stringify(bind));
+    // The World's standing authority, held by the person: the root and the bound project each chat's Agency is minted for.
+    execFileSync(actuation, ["authority", "grant-world", "--holder", "human:owner", "--world", "control:root", "--world", "project:flowlab-walk", "--json"], {encoding: "utf8", env: ownerEnv});
     aikitBin("session-space", "-C", projectRoot, "encounter-configure", "--provider-json", JSON.stringify({protocol: "pi-rpc", id: "pi", label: "Pi (plural flow walk)", argv: [pi, "--mode", "rpc"]}));
     owner.starting();
     owner.started(JSON.parse(execFileSync(aikit, ["session-space", "-C", projectRoot, "encounter-start"], {encoding: "utf8", env: ownerEnv, timeout: 20000})));
@@ -189,9 +194,12 @@ export default async function run({page, baseUrl, check, shot, channel, provisio
     if (!response.url().endsWith("/op")) return;
     try {
       const sent = response.request().postDataJSON();
-      if (sent.op !== "file_operation" && sent.op !== "file_read") return;
+      // A save and a restore are Central's own Actions through `act` (O-I 1002): what was asked is the input, the mutation the dispatch's data.
+      const save = sent.op === "act" && (sent.action === "central.files.write" || sent.action === "central.files.restore");
+      if (!save && sent.op !== "file_operation" && sent.op !== "file_read") return;
       const body = await response.json();
-      wire.push([sent.op, sent.request?.action, String(sent.request?.expected_revision ?? "").slice(-8), sent.location?.path?.split("/").pop(), body.outcome?.data?.outcome ?? body.outcome?.result, String(body.outcome?.data?.revision ?? body.outcome?.reading?.revision ?? body.outcome?.data?.current?.revision ?? "").slice(-8), body.error ?? ""]);
+      const asked = save ? sent.input : sent.request, data = save ? body.outcome?.dispatch?.data : body.outcome?.data;
+      wire.push([sent.op, save ? sent.action : sent.request?.action, String(asked?.expected_revision ?? "").slice(-8), (save ? sent.input?.location : sent.location)?.path?.split("/").pop(), data?.outcome ?? body.outcome?.dispatch?.state ?? body.outcome?.result, String(data?.revision ?? body.outcome?.reading?.revision ?? data?.current?.revision ?? "").slice(-8), body.error ?? body.outcome?.dispatch?.message ?? ""]);
     } catch { /* teardown */ }
   });
   await page.goto(baseUrl); await channel("info");
@@ -238,39 +246,33 @@ export default async function run({page, baseUrl, check, shot, channel, provisio
   await box.click();
   await page.keyboard.type("Please read docs/passage.md in your working directory. Ada: recover the argument and state its premises and conclusion exactly as the passage gives them. Ash: test the claim on one concrete example with numbers and say whether it supports step 3. Under 120 words each.");
   await page.getByRole("button", {name: "Ask for a response"}).click();
-  await page.locator('[data-recipient][data-recipient-state]').first().waitFor({timeout: 240000});
+  // 4 — Each agent is asked in its own conversation (the one send, O-I #1003); each answer is added as that agent's entry, answering
+  // the asked one, when its turn ends.
+  const deadline = Date.now() + 600000;
+  let replies = [], question;
+  while (Date.now() < deadline) {
+    const doc = p.readFlow(flowName);
+    question = doc.entries.find(e => e.html.includes("recover the argument"));
+    const keys = new Set(["Ada", "Ash"].map(n => doc.meta.participants.find(x => x.name === n)?.key));
+    replies = question ? doc.entries.filter(e => keys.has(e.authorKey) && (e.relations ?? []).some(r => r.type === "reply" && r.entryId === question.id)) : [];
+    if (replies.length >= 2) break;
+    await sleep(2000);
+  }
   const asked = p.readFlow(flowName);
   check("each addressed agent now answers from a session of its own", (() => { const m = asked.meta.participants; return ["Ada", "Ash"].every(n => /^agent-session\//.test(m.find(x => x.name === n)?.ref ?? "")); })());
   check("the asked entry is in the flow once, authored by the person, addressed to both", (() => { const e = asked.entries.filter(x => x.html.includes("recover the argument")); return e.length === 1 && e[0].addressees.length === 2 && e[0].intent === "response"; })());
+  check("each answer is authored by its own agent and answers the asked entry", replies.length === 2 && new Set(replies.map(r => r.authorKey)).size === 2);
   await shot("plural-flow-asked");
 
-  // 4 — CLOSE the view before the answers arrive. The owner carries them in.
-  await page.goto("about:blank");
-  const deadline = Date.now() + 300000;
-  let included = 0;
-  while (Date.now() < deadline) {
-    const doc = p.readFlow(flowName);
-    included = doc.entries.filter(e => e.request?.ref?.startsWith("conv-reply:")).length;
-    if (included >= 2) break;
-    await sleep(2000);
-  }
-  check("both answers reached the flow while no view was open", included === 2);
-  const closedDoc = p.readFlow(flowName);
-  const replies = closedDoc.entries.filter(e => e.request?.ref?.startsWith("conv-reply:"));
-  const question = closedDoc.entries.find(e => e.html.includes("recover the argument"));
-  check("each reply is authored by its own agent, answers the asked entry, and is attributed to a session", replies.length === 2 && new Set(replies.map(r => r.authorKey)).size === 2 && replies.every(r => r.replyTo.entryId === question.id && r.attribution?.session?.startsWith("agent-session/")));
-
-  // 5 — Reopen: each answer is there once, the recipients read as answered, nobody is asked again.
+  // 5 — Reopen: each answer is there once, and nobody is asked again.
   await page.goto(baseUrl); await channel("info");
   await page.locator('[data-project-path="Work/Flowlab"]').click().catch(() => {});
   const flowsSection = page.getByRole("complementary", {name: "World navigator"}).locator('[data-section="flows"]');
   await flowsSection.locator("button, a, [role='treeitem'], li").first().click({timeout: 30000}).catch(() => {});
-  await page.locator("[data-flow-conversations]").waitFor({timeout: 60000});
-  await page.locator('[data-recipient-state="included"]').first().waitFor({timeout: 60000});
-  check("reopening shows each recipient as answered, with the reply in the flow", await page.locator('[data-recipient-state="included"]').count() === 2);
+  await page.locator(".flow-thread-who", {hasText: "Ash"}).first().waitFor({timeout: 60000});
   check("each reply appears once in the reopened thread", await page.locator(".flow-thread-entry", {hasText: /premise|Premise|conclusion/i}).count() >= 1 && (await page.locator(".flow-thread-who", {hasText: "Ada"}).count()) >= 1 && (await page.locator(".flow-thread-who", {hasText: "Ash"}).count()) >= 1);
   const after = p.readFlow(flowName);
-  check("reopening asked no one again: the flow is unchanged by the view", after.entries.length === closedDoc.entries.length && after.meta.revision === closedDoc.meta.revision);
+  check("reopening asked no one again: the flow is unchanged by the view", after.entries.length === asked.entries.length && after.meta.revision === asked.meta.revision);
   await shot("plural-flow-reopened");
   // Cleanup failures must fail the scenario before a passing receipt is made.
   // The registered disposer retries only the same retained cleanup result.

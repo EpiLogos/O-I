@@ -100,14 +100,16 @@ try{
  let receivingSubmission;
  if(config.receiving_destination){
   const subject=`Commission: ${proposal.proposal_ref}`.slice(0,280);
-  const submitted=await native({op:'receiving',project:config.project||null,request:{Submit:{
+  // A submission is Central's own `central.receiving.submit` through the kernel's `act` (O-I 1002); the receiving client builds its input.
+  const {receiving}=await server.ssrLoadModule('/src/receiving/client.ts');
+  const submitted=await receiving(transport,config.project||null,{kind:'ask',
    producer_key:`epii-development-commission:${proposal.proposal_ref}`,
    occurred_at_unix_seconds:Math.floor(Date.now()/1000),task_ref:expression_ref,
    request:{kind:'proposal',subject,body:proposal.discrepancy,proposed_owner_ref:'factory',proposal_ref:proposal.proposal_ref},
    summary:proposal.discrepancy.slice(0,8192),
    evidence_refs:proposal.diagnosis_refs,
    declared_producer:{ref:dialogue.provisioning.agent_session,actor_kind:'agent',attribution:'claimed'},
-  }}});
+  });
   receivingSubmission={return_ref:submitted.return_ref??null,schema:submitted.schema??null,kind:submitted.record?.kind??null};
   assert.ok(receivingSubmission.return_ref,'The receiving owner must acknowledge the proposal request with a return reference');
   assert.equal(receivingSubmission.kind,'request','The proposal reaches the person as a request, not a document edit');

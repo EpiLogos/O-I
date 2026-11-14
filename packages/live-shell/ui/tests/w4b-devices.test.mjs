@@ -185,7 +185,11 @@ test('in a Circle Speak as stands with the holder; Entry is the view\'s and writ
   globalThis.fetch = async (_url, init) => {
     const op = JSON.parse(init.body)
     if (op.op === 'file_read') return {json: async () => ({ok: true, outcome: {result: 'file_read', reading: {location, revision: 'r1', content: html, source: null, project: null}}})}
-    if (op.op === 'file_operation') { written = op.request.content; return {json: async () => ({ok: true, outcome: {result: 'file_operation', data: {outcome: 'written', revision: 'r2'}}})} }
+    if (op.op === 'act' && op.action === 'central.files.write') {
+      written = op.input.content
+      return {json: async () => ({ok: true, outcome: {result: 'action_dispatched', dispatch: {state: 'invoked', owner_operation: op.action,
+        data: {schema: 'central.file-mutation/v1', location: op.input.location, outcome: 'written', revision: 'r2'}}}})}
+    }
     throw new Error(op.op)
   }
   const plain = {...location, path: 'Control/user/flows/flow-circle.html'}

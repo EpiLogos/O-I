@@ -8,7 +8,8 @@
 // stations, A = A in twin appearances, the Ø traversal run along a drawn path,
 // and the envelope closing in 3d. Five held grounds; seven turns.
 import { readFileSync, writeFileSync } from "node:fs";
-import { DEFAULT_PARAMS } from "../../packages/oi-design-system/expressions-engine/shell/model.mjs";
+// The engine's compiled copy is retired (O-I ticket 1008): the defaults come from the frame's own model, which Node loads by type stripping.
+import { DEFAULT_PARAMS } from "../../desktop/cradle/expressions-app/field-studies-journeys/src/model.ts";
 
 const JP = "desktop/cradle/expressions-app/collections/return-of-zero/symbolon/roz-symbolon-spine.journey.json";
 const BP = "desktop/cradle/expressions-app/collections/return-of-zero/symbolon/bindings/roz-symbolon-spine.binding.json";

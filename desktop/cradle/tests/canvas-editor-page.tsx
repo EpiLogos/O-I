@@ -15,8 +15,8 @@ import '../src/rest.css';
 import '../src/cradle.css';
 import '../src/workspace/shell.css';
 import '../src/agent/agent.css';
-const sample={id:'sample',kind:'file' as const,ref:'central:source:sample.md',title:'sample.md',project:'demo',location:{root:'central',path:'Work/demo/sample.md',ref:'central:source:sample.md'}};
-const flowBinding={id:'flow',kind:'flow' as const,ref:'central:source:flow.html',title:'Flow.html',project:'demo',location:{root:'central',path:'Work/demo/flow.html',ref:'central:source:flow.html'}};
+const sample={id:'sample',kind:'file' as const,ref:'central:source:sample.md',title:'sample.md',project:'demo',location:{schema:'central.path-ref/v1',root:'central',path:'Work/demo/sample.md',ref:'central:source:sample.md'}};
+const flowBinding={id:'flow',kind:'flow' as const,ref:'central:source:flow.html',title:'Flow.html',project:'demo',location:{schema:'central.path-ref/v1',root:'central',path:'Work/demo/flow.html',ref:'central:source:flow.html'}};
 const binding=location.search.includes('flow')?flowBinding:sample;
 // Only fixture controls live here. FileSurface, editor, Context, owner client and
 // the session CAS/send machine are the actual production implementations.

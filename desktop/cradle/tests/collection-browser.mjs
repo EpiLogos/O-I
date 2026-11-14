@@ -30,7 +30,7 @@ try{
     if(op.op==='state')result={result:'state',snapshot:{focus:{},surfaces:{},buffers:{}}};
     else if(op.op==='expression')result={result:'expression',data:{schema:'oi.expression-index/v1',expressions:[]}};
     else if(op.op==='knowledge')result={result:'knowledge',data:{hits:[],absences:[]}};
-    else if(op.op==='files_list'||op.op==='file_read'||op.op==='file_operation')result=await t.handle(op);
+    else if(op.op==='files_list'||op.op==='file_read'||op.op==='act')result=await t.handle(op);
     else {response={ok:false,error:'Controlled test: optional owner not supplied'};}
     response??={ok:true,outcome:result};
    }
@@ -50,11 +50,12 @@ try{
  check('source selection returns native revision separately from export time',opened.item.revision.startsWith('sha256:'));
  await page.getByText('Collection membership',{exact:true}).click();
  await page.getByLabel('Member label',{exact:true}).fill('Seven centres — reading view');
- const writesBefore=t.ops.filter(o=>o.op==='file_operation').length;
+ const saves=()=>t.ops.filter(o=>o.op==='act'&&o.action==='central.files.write').length;
+ const writesBefore=saves();
  await page.getByRole('button',{name:'Save label',exact:true}).focus();await page.keyboard.press('Enter');
  await page.getByRole('status').filter({hasText:'Membership saved'}).waitFor();
  await page.getByRole('option',{name:/Seven centres — reading view/}).waitFor();
- check('keyboard activation performs exactly one native membership write',t.ops.filter(o=>o.op==='file_operation').length===writesBefore+1);
+ check('keyboard activation performs exactly one native membership write',saves()===writesBefore+1);
  check('membership edit never rewrites subject body',files.get(base+'/'+chosen.file)===original.get(oldBase+'/'+chosen.file));
  await page.screenshot({path:new URL('library-membership.png',out).pathname,fullPage:true});
  // Source disappears after discovery; click must fail, not return the first sibling.

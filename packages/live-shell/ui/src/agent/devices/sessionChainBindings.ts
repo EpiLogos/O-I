@@ -61,7 +61,7 @@ const reading = (key: string) => `${key} is a reading: its owner reports it; not
 
 // Telemetry is the session's own setting on AIKit (lane K0 corrected): `encounter-session-settings` `track.telemetry`, written through
 // the kernel's encounter_session_settings against the revision that stands (agent/sessionSettings.ts trackSettingChange) — the Session
-// view's mixer reads and writes it (timeline/factoryTrackAdapter.ts FACTORY_TELEMETRY_OP). Solo is what you attend to, never what runs
+// view's mixer is where it is pressed, once Factory's Set (the kernel's, mode_set.rs) carries it as an act. Solo is what you attend to, never what runs
 // (§16.1, §16.6): the shell holds it on the book (agent/AgentShellContext.tsx setSolo), and AIKit's own session Solo, a gate on its
 // executor's launches, is never written. The Run device is handed neither, so it names each route and stands disabled here.
 // AIKit's gateway agent controls (`aikit gateway agent --binding B pause|resume`) address a gateway binding's connector, never a session.
@@ -616,21 +616,17 @@ export const AGENTSET_REFUSE = {
   delete: 'Delete: no carrier to AIKit\'s detach of a chain\'s session from its space (the kernel\'s encounter_session_detach, as the session track\'s own Delete) stands on this chain.',
   // The Devices view (§19.15 "Change a setting there and you change the agent"): each device of a chain answers to its own owner, and the
   // rack holds each chain's session, never the binding of a device of another session's chain.
-  // A device of another session's chain is that session's (DLW build ruling 2026-11-05): the change goes to it as a message through
-  // Messages' delegate (AIKit's gateway send to its agent's Position, then delegate onto the session's task: the route a message dropped on a
-  // track takes, O-I ticket 757), never a write of another chain's binding.
-  dev: 'Devices: no carrier to Messages\' delegate stands on this rack. A change of a device of another session\'s chain goes as a message to that session through Messages\' delegate (AIKit\'s gateway send, then delegate onto its task).',
-  // Factory retries a unit of a Run under the unit's retry grant (factory_owner attempt-retry, lane K0; the Run map's Retry), and names the
-  // units a task stands on (factory_owner attempt-task-units, O-I ticket 772): the chosen chain's task's units read, then its unit retried
-  // (taskBindings.ts retryTask).
-  retry: 'Retry: no carrier to Factory\'s attempt-task-units and attempt-retry stands on this rack, so the chosen chain\'s task cannot be read or retried (Software Factory).',
-  // Stop after (§19.4; round 870) stands beside Retry: Factory's request-cancellation of the unit the chosen chain's task's current attempt
-  // stands on (factory_owner attempt-request-cancellation, O-I ticket 842; taskBindings.ts stopAfterTask).
-  stopAfter: 'Stop after: no carrier to Factory\'s attempt-task-units and attempt-request-cancellation stands on this rack, so the chosen chain\'s task cannot be read or stopped (Software Factory).',
-  // Launch (BD r23, DLW build ruling 2026-11-05) stands before Retry and Stop after on the chain's task row, as a clip's launch stands in
-  // Live's slot: AIKit realises the chosen chain's session on its own model, and Factory starts the unit it names for the chain's task
-  // (taskBindings.ts launchTask: aikit_write realise, then factory_owner attempt-launch).
-  launch: 'Launch: no carrier to AIKit\'s realisation and Factory\'s attempt-launch stands on this rack, so the chosen chain\'s task cannot be started (AIKit, Software Factory).',
+  // A device of another session's chain is that session's (DLW build ruling 2026-11-05): the change goes to it as its conversation's next
+  // turn, through the one send (desktop/cradle encounter/session.ts, O-I ticket 1003), never a write of another chain's binding. REPLACED
+  // (O-I ticket 1006): it went through Messages' delegate (AIKit's gateway send to its agent's Position, then delegate onto its task).
+  dev: 'Devices: no carrier to the session\'s conversation stands on this rack. A change of a device of another session\'s chain goes to that session as its next turn, through the one send (its conversation\'s draft and prompt in AIKit).',
+  // Launch, Stop after and Retry on the chain's task row (BD r23, round 870, DLW build ruling 2026-11-05; O-I ticket 1006) are the chosen
+  // chain's session's own acts in Factory's Set, as the Session grid presses them on its track (factoryTaskActs.ts sessionSetAct): Launch
+  // runs the first task written on the session that has not run (factory.task.run), as a clip's launch stands in Live's slot; Stop after
+  // is its track's Stop (factory.task.stop: paused, pressed again its attempt cancelled); Retry is its track's retry (factory.attempt.retry).
+  retry: 'Retry: no carrier to Factory\'s Set stands on this rack, so the chosen chain\'s stalled task cannot be run again (Software Factory\'s factory.attempt.retry).',
+  stopAfter: 'Stop after: no carrier to Factory\'s Set stands on this rack, so the chosen chain\'s running task cannot be stopped (Software Factory\'s factory.task.stop).',
+  launch: 'Launch: no carrier to Factory\'s Set stands on this rack, so the chosen chain\'s written task cannot be run (Software Factory\'s factory.task.run).',
 } as const
 /** What the chain list refuses with its carriers standing: a press on what is no chain of the rack, the Decision helper where it has nothing
  * to do (it answers every agent of a group's rack and is given no work), a drop that names no standing session (AIKit attaches a session
@@ -744,13 +740,14 @@ export interface AgentRackPorts {
   readonly propose?: (input: {scope: 'root'; ref: string; revision: 'r1'; members: {kind: 'agent'; agent_ref: string}[]; reason: string; type?: string}) => Promise<unknown>
   /** Discard: Central's central.agent-set.remove of the proposal, at the revision Central wrote. */
   readonly removeSet?: (input: {scope: 'root'; ref: string; expected_revision: string}) => Promise<unknown>
-  /** Retry: the chosen chain's session's task through Factory (its units read, its unit retried: taskBindings.ts retryTask). */
+  /** Retry: the chosen chain's session's track's retry in Factory's Set (factory.attempt.retry; factoryTaskActs.ts sessionSetAct). */
   readonly retry?: (input: {project: string; agent_session: string}) => Promise<unknown>
-  /** Stop after: the chosen chain's session's task through Factory (its units read, its current unit asked to stop: taskBindings.ts stopAfterTask). */
+  /** Stop after: the chosen chain's session's track's Stop in Factory's Set (factory.task.stop; factoryTaskActs.ts sessionSetAct). */
   readonly stopAfter?: (input: {project: string; agent_session: string}) => Promise<unknown>
-  /** Launch: the chosen chain's session's task started (taskBindings.ts launchTask): Factory's answer, its status and its words. */
+  /** Launch: the chosen chain's session's first written task run (its clip's launch in Factory's Set, factory.task.run): its status and
+   * Factory's answer in words. */
   readonly launch?: (input: {project: string; agent_session: string}) => Promise<{readonly status: string; readonly said: string}>
-  /** A device of another session's chain changed: the words go to that session as a message through Messages' delegate. */
+  /** A device of another session's chain changed: the words go to that session as its conversation's next turn (the one send). */
   readonly ask?: (input: {project: string; agent_session: string; agent_ref: string; device: string; change: Readonly<Record<string, unknown>>; words: string}) => Promise<unknown>
   readonly agent?: DesignBinding | null
   readonly suffix?: () => string
@@ -1485,7 +1482,7 @@ export function agentsetBinding(input: AgentRackInput, ports?: AgentRackPorts): 
     await ports.removeSet({scope: 'root', ref: proposal.ref, expected_revision: proposal.revision})
     clearCard()
   }
-  /** Retry: the chosen chain's task, through Factory (its units read, its unit retried). */
+  /** Retry: the chosen chain's stalled task run again, its session's track's retry in Factory's Set (factory.attempt.retry). */
   const retry = async () => {
     if (!ports?.retry) throw Error(AGENTSET_REFUSE.retry)
     const id = pressed().member
@@ -1495,7 +1492,7 @@ export function agentsetBinding(input: AgentRackInput, ports?: AgentRackPorts): 
     if (!chain) throw Error(CHAIN_LIST_REFUSE.notChain('Retry', id))
     await ports.retry({project: chain.project ?? ROOT_REGISTER, agent_session: chain.sessionRef})
   }
-  /** Stop after: the chosen chain's task, through Factory (its units read, the unit its current attempt stands on asked to stop). */
+  /** Stop after: the chosen chain's running task stopped, its session's track's Stop in Factory's Set (factory.task.stop). */
   const stopAfter = async () => {
     if (!ports?.stopAfter) throw Error(AGENTSET_REFUSE.stopAfter)
     const id = pressed().member
@@ -1505,7 +1502,8 @@ export function agentsetBinding(input: AgentRackInput, ports?: AgentRackPorts): 
     if (!chain) throw Error(CHAIN_LIST_REFUSE.notChain('Stop after', id))
     await ports.stopAfter({project: chain.project ?? ROOT_REGISTER, agent_session: chain.sessionRef})
   }
-  /** Launch: the chosen chain's task, started through AIKit and Factory; Factory's answer stands in the row in its words until the next press. */
+  /** Launch: the chosen chain's written task run, its clip's launch in Factory's Set (factory.task.run); Factory's answer stands in the row in
+   * its words until the next press. */
   const launch = async () => {
     if (!ports?.launch) throw Error(AGENTSET_REFUSE.launch)
     const id = pressed().member
@@ -1517,7 +1515,7 @@ export function agentsetBinding(input: AgentRackInput, ports?: AgentRackPorts): 
     const answer = await ports.launch({project: chain.project ?? ROOT_REGISTER, agent_session: chain.sessionRef})
     holdView(AGENTSET_ID, LAUNCHED, JSON.stringify({chain: chain.sessionRef, status: answer.status, said: answer.said}))
   }
-  /** A device of another session's chain (`dev:<chain>@<device>`): the change goes to that session as a message (Messages' delegate), in
+  /** A device of another session's chain (`dev:<chain>@<device>`): the change goes to that session as its conversation's next turn, in
    * words its agent reads; nothing of that chain's binding is written from here. */
   const askChain = async (key: string, value: Value | undefined) => {
     if (!ports?.ask) throw Error(AGENTSET_REFUSE.dev)

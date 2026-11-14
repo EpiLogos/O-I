@@ -112,18 +112,18 @@ test('Factory\'s readouts are the old bar\'s, and read dashes until the owner ac
   assert.match(markup, />— ▾</); assert.match(markup, />Σ — · —</)
 })
 
-test('Factory\'s Run and Stop send harness_agent_control on the bound harness, and nothing else', async () => {
+test('Factory\'s Run and Stop send the Action aikit.gateway.agent on the bound harness, and nothing else', async () => {
   const sent = []
   const real = globalThis.fetch, warn = console.warn
   console.warn = () => {}   // the old bar warned on a refused control; the refusal is asserted by the absence of a request
-  globalThis.fetch = async (url, init) => { sent.push({url, body: JSON.parse(init.body)}); return {json: async () => ({ok: true, outcome: {result: 'harness_agent_outcome', document: {state: 'running'}}})} }
+  globalThis.fetch = async (url, init) => { sent.push({url, body: JSON.parse(init.body)}); return {json: async () => ({ok: true, outcome: {result: 'action_dispatched', dispatch: {state: 'invoked', owner_operation: 'aikit.gateway.agent', data: {ok: true, schema: 1, data: {state: 'running'}}}}})} }
   try {
     const {bindings} = factory()
     bindings.play.press(); await settle()
     bindings.stop.press(); await settle()
     assert.deepEqual(sent, [
-      {url: 'http://owner.test/op', body: {op: 'harness_agent_control', binding: 'cursor', control: 'resume'}},
-      {url: 'http://owner.test/op', body: {op: 'harness_agent_control', binding: 'cursor', control: 'stop'}},
+      {url: 'http://owner.test/op', body: {op: 'act', action: 'aikit.gateway.agent', input: {binding: 'cursor', operation: 'resume'}}},
+      {url: 'http://owner.test/op', body: {op: 'act', action: 'aikit.gateway.agent', input: {binding: 'cursor', operation: 'stop'}}},
     ])
     // With no carrier there is no owner to reach: the press asks nobody.
     sent.length = 0

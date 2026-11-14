@@ -1,23 +1,17 @@
-// Central's tracks, re-cut by T-WORLDS W2 (manual §18.1 "Central: the Day, its worlds and their pages"): today is the set, its
-// tracks are the worlds brought into today (your world first, then the Day's set), their clips are the worlds' pages, the rows are
-// the set's named rows then one row per slot, a page plays in its NOW clearing, and the Day is the Main track holding the day's
-// entries on today's ruler. Over recorded readings and fixtures, headless.
+// Central's names the window keeps beside the kernel's Set (O-I #1004). Central's Set itself — today's worlds as tracks (your world first,
+// then the Day's set), their pages as clips, the set's rows, the Day as the Main track — is the kernel's, built from the World Model's
+// worlds, day and workcells slices (kernel mode_set.rs, whose own tests lay it out) and drawn through frame/tracks/kernelSet.ts
+// (tests/kernel-mode-sets.test.mjs). What is proved here is what the window's other readers still share with it: the worlds Central
+// discloses, a clip's ground subject, the pages that play, today's set as the Day keeps it, and the day surface's names.
 //
 // Channels (each claim below is carried by exactly one):
-// - REAL CAPTURE (text redacted): tests/fixtures/central-vertical/*.capture.json — the shape of read-only `ctrl` answers on
-//   14 Oct 2026 (central.now.list, central.files.list of the wiki returns, central.time.policy). The temporal events are
-//   built from them by the kernel's own mapping rules, exactly as tests/central-vertical.test.mjs does. The kernel's temporal
-//   read itself is not invoked here.
-// - RECORDED LISTING: the names in Control/agents/now/day on this machine, 14 Oct 2026 (`ls`), as the owner's directory
-//   reading would list them.
-// - FIXTURE: the machine-NOW and kernel-log events (no capture of those streams), the explicit instants of the placement
-//   test, and the stubbed bridge answers of the read leg. Each is labelled where it is used.
-// - SCRIPTED: the shared views (SessionGrid, ArrangementRuler) rendered to static markup; the hook rendered once on the server.
+// - FIXTURE: Central's disclosure of its registers (central.world's shape, 18 Oct), the NOW listing rows of the playing test, and the
+//   ground readings of the set's reading. Each is labelled where it is used.
 // No computer-use pass, no browser: the on-screen legs are not covered here.
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {readFile} from 'node:fs/promises'
 import {register} from 'node:module'
+import {worldsOfRoot} from './support/worldModelFixture.mjs'
 
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
 register(`data:text/javascript,${encodeURIComponent(`
@@ -42,33 +36,10 @@ export async function load(url,context,next){
 }`)}`, {parentURL: import.meta.url})
 
 globalThis.document = {getElementById: () => null, createElement: () => ({}), head: {appendChild: () => {}}}
-const React = await import('react')
-const {renderToStaticMarkup} = await import('react-dom/server')
 const adapter = await import('../src/timeline/centralTrackAdapter.ts')
-const dayTrack = await import('../src/timeline/dayTrackAdapter.ts')
-const {walkReaches} = await import('../src/timeline/worldTrackAdapter.ts')
-const {SessionGrid} = await import('../src/inhabitants/catalogue/panels/dlw__session-grid.tsx')
-const {ArrangementRuler, placeClips} = {...await import('../src/frame/tracks/ArrangementRuler.tsx'), ...await import('../src/inhabitants/catalogue/panels/dlw__arrangement-ruler.tsx')}
-const {useCentralTracks, readDayRecords, setReadingOf, playingOf} = await import('../src/frame/tracks/useCentralTracks.ts')
 const daySet = await import('../src/central/daySet.ts')
-const worldsMod = await import('../src/central/centralWorlds.ts')
-const {civilReadingOf} = await import('../src/timeline/centralTrackAdapter.ts')
-const {browserCategoriesOf} = await import('../src/shell/modeGrammar.ts')
-
-const FIXTURES = new URL('./fixtures/central-vertical/', import.meta.url)
-const capture = async name => JSON.parse(await readFile(new URL(name, FIXTURES), 'utf8'))
-
-// REAL CAPTURE: the civil-time policy, and the central.now.list rows → temporal_sources.rs now_record_to_event.
-const policy = (await capture('time-policy.capture.json')).data.policy
-const londonDate = unixMs => new Intl.DateTimeFormat('en-CA', {timeZone: policy.timezone, year: 'numeric', month: '2-digit', day: '2-digit'}).format(new Date(unixMs))
-const nowRows = (await capture('now-list.capture.json')).data.records
-const nowEvents = nowRows.map(record => {
-  const instant = record.created_at_unix_seconds * 1000
-  return {stream: 'central-now', kind: 'now', subject_ref: record.now_ref, instant_unix_ms: instant, summary: record.purpose,
-    day_ref: `central:day:${policy.scope_ref}:${londonDate(instant)}`, evidence_refs: [record.source_ref].filter(Boolean)}
-})
-// The newest day the capture names stands for today.
-const today = nowEvents.map(event => new Date(event.instant_unix_ms).toISOString().slice(0, 10)).sort().pop()
+const {setReadingOf} = daySet
+const {playingOf} = adapter
 
 // FIXTURE: Central's disclosure of its registers (central.world's shape, 18 Oct: the root's wiki and each project's ProjectCentral).
 const ground = (path, ref, user = true) => ({path, user: {path: `${path}/user`, exists: user, sources: 1}, agent_governance: {path, exists: true, sources: 1},
@@ -78,187 +49,55 @@ const root = {schema: 'central.world/v1', root: '/ground', ground_state: 'ready'
     {name: 'O-I', path: 'Work/O-I', source_files: 1, projectcentral: {...ground('Work/O-I/ProjectCentral', 'central:wiki:project:O-I'), state: 'ready'}},
     {name: 'face-rig', path: 'Work/face-rig', source_files: 1, projectcentral: {...ground('Work/face-rig/ProjectCentral', 'central:wiki:project:face-rig', false), state: 'ready'}},
   ]}}
-const worlds = worldsMod.worldsOf(root)
+const worlds = worldsOfRoot(root)
 const loc = path => ({schema: 'central.path-ref/v1', ref: `central:path:/ground:${path}`, root: '/ground', path})
-const listingOf = (folder, pages) => ({state: 'read', listing: {schema: 'oi.page-list/v1', path: folder, more: false, not_pages: [{name: 'notes.html', why: 'it carries no ql-doc island'}],
-  pages: pages.map(([name, form, title]) => ({location: loc(`${folder}/${name}`), name, form, title, revision: 'r1', world: null}))}})
-const pages = new Map([
-  ['central:wiki:root', listingOf('Control/user/flows', [['flow-2026-10-07-1343.html', 'flow', 'Closing the day'], ['beings-2026-10-08-0900.html', 'being', 'Hildegard'], ['oi203.html', 'flow', 'Multi-agent']])],
-  ['central:wiki:project:O-I', listingOf('Work/O-I/ProjectCentral/user', [['things-2026-10-09-1000.html', 'thing', 'The lyre']])],
-])
-const set = {state: 'read', civilDate: today, set: {schema: 'oi.day-set/v1', tracks: [{world: 'central:wiki:project:O-I'}, {world: 'central:wiki:project:gone', name: 'A world gone'}],
-  rows: [{id: 'morning', name: 'Morning', pages: [loc('Control/user/flows/oi203.html').ref, loc('Work/O-I/ProjectCentral/user/things-2026-10-09-1000.html').ref]}]}}
-const reading = {civil: {state: 'live', events: nowEvents, absences: []}, worlds: {state: 'read', worlds}, set, pages, playing: []}
-const tracks = adapter.projectCentralTracks(reading)
-const DAY = adapter.CENTRAL_DAY_TRACK_ID
-
-// RECORDED LISTING: Control/agents/now/day on this machine, 14 Oct 2026 (`.sources` are snapshots, not day records).
-const listing = {entries: ['2026-09-06.md', '2026-09-06.sources', '2026-09-07.md', '2026-09-07.sources', '2026-09-12.md', '2026-09-12.sources'].map(name => ({
-  name, kind: name.endsWith('.md') ? 'file' : 'directory', byte_len: 4096, retrieval_allowed: true,
-  location: {schema: 'central.path-ref/v1', ref: `central:path:/sample/ground:Control/agents/now/day/${name}`, root: '/sample/ground', path: `Control/agents/now/day/${name}`}}))}
-const records = adapter.dayRecordsOf(listing)
+const today = '2026-10-14'
 
 test('the worlds are disclosed by Central: yours first, then each project with a human ground and a wiki, by its wiki space ref', () => {
   assert.deepEqual(worlds.map(world => [world.ref, world.name, world.folder]), [['central:wiki:root', 'Your world', 'Control/user/flows'],
     ['central:wiki:project:O-I', 'O-I', 'Work/O-I/ProjectCentral/user']], 'a project with no human ground is no world yet')
 })
 
-test('the tracks are today\'s worlds — yours first, then the set\'s in order — and the Day is the Main track, last; a world gone is named, not dropped', () => {
-  assert.deepEqual(tracks.tracks.map(track => [track.id, track.name, track.main ?? false]), [
-    ['central:world:central:wiki:root', 'Your world', false], ['central:world:central:wiki:project:O-I', 'O-I', false],
-    ['central:world:central:wiki:project:gone', 'A world gone', false], [DAY, 'Day', true]])
-  assert.match(tracks.tracks[2].kind, /no longer discloses/)
-  assert.match(tracks.tracks[0].kind, /your world · its folder Control\/user\/flows · 3 pages · 1 file in it no page/)
-  assert.match(tracks.tracks[3].kind, new RegExp(`today, ${today}: 3 worlds, 1 named row`))
-  const bare = adapter.projectCentralTracks({civil: {state: 'reading'}})
-  assert.deepEqual(bare.tracks.map(track => track.name), ['Your world', 'Day'], 'with nothing read, your world and the Day still stand')
-})
-
-test('a world\'s clips are its pages, each by its title; the rows are the set\'s named rows, then one row per slot; the Day holds no clip in Session view', () => {
-  assert.deepEqual(tracks.columns.map(column => [column.id, column.name]), [['central:row:morning', 'Morning'], ['central:slot:1', '2'], ['central:slot:2', '3']])
-  const placed = tracks.clips.filter(clip => clip.trackId !== DAY).map(clip => [clip.columnId, clip.label, clip.id])
-  assert.deepEqual(placed, [
-    ['central:row:morning', 'Multi-agent', 'Control/user/flows/oi203.html'], ['central:row:morning', 'The lyre', 'Work/O-I/ProjectCentral/user/things-2026-10-09-1000.html'],
-    ['central:slot:1', 'Closing the day', 'Control/user/flows/flow-2026-10-07-1343.html'], ['central:slot:2', 'Hildegard', 'Control/user/flows/beings-2026-10-08-0900.html']],
-    'a named row holds its pages; the rest stand one per slot, in the order made')
-  assert.ok(tracks.clips.filter(clip => clip.trackId === DAY).every(clip => clip.columnId === ''), 'the Day\'s entries stand on no row')
+test('a page\'s clip id is its Central-relative path, and selects as the browser\'s rows do; a track id is no ground subject', () => {
   assert.deepEqual(adapter.centralSubjectOfClip('Work/O-I/ProjectCentral/user/things-2026-10-09-1000.html'), {kind: 'note', path: 'Work/O-I/ProjectCentral/user/things-2026-10-09-1000.html'})
   assert.deepEqual(adapter.centralSubjectOfClip('Control/user/flows/oi203.html'), {kind: 'note', path: 'Control/user/flows/oi203.html'}, 'a clip selects as the browser\'s rows do')
   assert.equal(adapter.centralSubjectOfClip('central:world:central:wiki:root'), null)
+  assert.equal(adapter.centralWorldTrackId('central:wiki:root'), 'central:world:central:wiki:root', 'a world\'s track, as the kernel\'s Set names it')
+  assert.equal(adapter.CENTRAL_DAY_TRACK_ID, 'central:day')
 })
 
-test('the Day track lays today\'s entries at their instant on today\'s ruler, and no other day\'s', () => {
-  const entries = tracks.clips.filter(clip => clip.trackId === DAY)
-  const todays = nowEvents.filter(event => new Date(event.instant_unix_ms).toISOString().slice(0, 10) === today)
-  assert.equal(entries.length, todays.length)
-  assert.ok(entries.every(clip => clip.at.start >= 0 && clip.at.start < 1440))
-  assert.equal(tracks.ruler.unit, `minutes (UTC) of ${today}`)
-  assert.equal(tracks.ruler.label(61), `${today.slice(5)} 01:01`)
-  assert.equal(tracks.main.name, `Day · ${today}`)
-})
-
-test('each world wears its body\'s colour; the practice world stands as Practice, fogged, its Activator off (T-WORLDS W3, W4)', () => {
-  const coloured = adapter.projectCentralTracks({...reading, colours: new Map([['central:wiki:project:O-I', '#abcdef']]), practice: 'central:wiki:project:O-I'})
-  const oi = coloured.tracks.find(track => track.id === 'central:world:central:wiki:project:O-I')
-  assert.equal(oi.color, '#abcdef')
-  assert.match(oi.kind, /^Practice · fogged: .* its chain Packet · Nara · Scope · /)
-  assert.equal(oi.mix.activator, false)
-  const yours = coloured.tracks.find(track => track.id === 'central:world:central:wiki:root')
-  assert.equal(yours.color, undefined, 'a world given no colour draws the default')
-  assert.doesNotMatch(yours.kind, /Practice/)
-})
-
-test('a page plays in its NOW clearing: its clip runs and lies on the ruler from when it opened; Stop closes only that world\'s playing pages', async () => {
+test('a page plays in its NOW clearing: an active clearing whose task is a page\'s, and nothing else', () => {
   const since = Date.parse(`${today}T09:30:00Z`)
+  // FIXTURE: a NOW listing (central.now-listing/v1) with a page's active clearing, a page's closed one and another task's.
   const playing = playingOf([{project: null, listing: {schema: 'central.now-listing/v1', automatic_agent_or_model_invocation: false, records: [
     {now_ref: 'now:1', task_ref: `oi:page:${loc('Control/user/flows/oi203.html').ref}`, lifecycle: 'active', created_at_unix_seconds: since / 1000},
     {now_ref: 'now:2', task_ref: `oi:page:${loc('Control/user/flows/flow-2026-10-07-1343.html').ref}`, lifecycle: 'closed', created_at_unix_seconds: since / 1000},
     {now_ref: 'now:3', task_ref: 'central:task:control:root:other', lifecycle: 'active', created_at_unix_seconds: since / 1000}]}}])
-  assert.deepEqual(playing.map(item => item.nowRef), ['now:1'], 'an active clearing whose task is a page\'s, and nothing else')
-  const calls = []
-  const controls = {launch: async page => calls.push(['launch', page.path]), stop: async item => calls.push(['stop', item.nowRef]), addWorld: async world => calls.push(['add', world.ref])}
-  const live = adapter.projectCentralTracks({...reading, playing, controls})
-  const clip = live.clips.find(item => item.id === 'Control/user/flows/oi203.html')
-  assert.equal(clip.status, 'running'); assert.equal(clip.at.start, 570, 'it lies on the ruler from 09:30')
-  // A page carried from an earlier Day plays through today from its start, and says since when and when to look at it again (the
-  // day-close law's review, three days on).
-  const carried = adapter.projectCentralTracks({...reading, playing: [{...playing[0], sinceMs: Date.parse(`${today}T00:00:00Z`) - 86_400_000 + 3_600_000}], controls})
-    .clips.find(item => item.id === 'Control/user/flows/oi203.html')
-  assert.equal(carried.at.start, 0, 'a carried page lies from the start of today')
-  const yesterday = new Date(Date.parse(`${today}T00:00:00Z`) - 86_400_000).toISOString().slice(0, 10)
-  const review = new Date(Date.parse(`${today}T00:00:00Z`) + 2 * 86_400_000).toISOString().slice(0, 10)
-  assert.match(carried.note, new RegExp(`carried, open since ${yesterday}; look at it again ${review}`))
-  assert.doesNotMatch(clip.note, /carried/, 'a page opened today is not carried')
-  assert.match(live.tracks[0].kind, /1 page plays now/)
-  assert.deepEqual(await live.actions.stopTrack.run('central:world:central:wiki:project:O-I'), {ok: true, note: 'No page of O-I plays.'})
-  await live.actions.stopTrack.run('central:world:central:wiki:root')
-  await live.actions.launch.run('Control/user/flows/flow-2026-10-07-1343.html')
-  assert.deepEqual(await live.actions.launch.run('Control/elsewhere.html'), {ok: false, error: '"Control/elsewhere.html" is no page of today\'s worlds.'})
-  await live.actions.launchStop.run('central:row:morning')
-  assert.deepEqual(calls, [['stop', 'now:1'], ['launch', 'Control/user/flows/flow-2026-10-07-1343.html'], ['launch', 'Control/user/flows/oi203.html'],
-    ['launch', 'Work/O-I/ProjectCentral/user/things-2026-10-09-1000.html']], 'a row launcher launches every page in its row')
-  assert.equal(live.actions.seat.accepts, adapter.CENTRAL_WORLD_DRAG)
-  assert.match((await live.actions.seat.run('central:wiki:project:O-I')).note, /already in today's set/)
-  assert.deepEqual(await live.actions.seat.run('central:wiki:project:nowhere'), {ok: false, error: '"central:wiki:project:nowhere" is no world Central discloses.'})
-  const fewer = adapter.projectCentralTracks({...reading, set: {...set, set: {...set.set, tracks: []}}, controls})
-  await fewer.actions.seat.run('central:wiki:project:O-I')
-  assert.deepEqual(calls.at(-1), ['add', 'central:wiki:project:O-I'], 'a world dropped on the empty track is written into today\'s set')
+  assert.deepEqual(playing, [{pageRef: loc('Control/user/flows/oi203.html').ref, nowRef: 'now:1', project: null, sinceMs: since}])
 })
 
-test('the Day keeps its set in its meta: read by its schema, a world added once, a row named; a Day with none keeps an empty set', () => {
+test('the Day keeps its set in its meta, read by its schema; a Day with none keeps an empty set', () => {
   assert.deepEqual(daySet.daySetOf({meta: {}}), daySet.EMPTY_SET)
   assert.deepEqual(daySet.daySetOf({meta: {set: {schema: 'other'}}}), daySet.EMPTY_SET)
   const held = daySet.daySetOf({meta: {set: {schema: 'oi.day-set/v1', tracks: [{world: 'w1'}, {name: 'no world'}], rows: [{id: 'r', name: 'R', pages: ['p', 3]}, {id: 'x'}]}}})
   assert.deepEqual(held, {schema: 'oi.day-set/v1', tracks: [{world: 'w1'}], rows: [{id: 'r', name: 'R', pages: ['p']}]})
-  assert.equal(daySet.withWorld(held, 'w1'), held, 'a world already there stays where it is')
-  assert.deepEqual(daySet.withWorld(held, 'w2', 'Two').tracks, [{world: 'w1'}, {world: 'w2', name: 'Two'}])
-  assert.deepEqual(daySet.withoutWorld(held, 'w1').tracks, [])
-  assert.deepEqual(daySet.withRow(held, {id: 'r', name: 'Renamed', pages: []}).rows, [{id: 'r', name: 'Renamed', pages: []}])
 })
 
-test('today\'s set reads from the ground\'s Day: a Day with no document says to open today; a refusal is said in the owner\'s words', () => {
+test('today\'s set reads from the ground\'s Day: a Day with no page says Central makes it at the turn; a refusal is said in the owner\'s words', () => {
   assert.deepEqual(setReadingOf(null, null), {state: 'reading'})
   assert.deepEqual(setReadingOf(null, 'carrier down'), {state: 'none', reason: 'carrier down'})
   const time = {state: 'ready', data: {civil_date: '2026-10-18'}}
   const uninitialised = setReadingOf({time, day: {state: 'ready', data: {day_ref: 'central:day:control:root:2026-10-18', temporal: {civil_date: '2026-10-18'}, document_state: 'absent'}}}, null)
-  assert.equal(uninitialised.state, 'none'); assert.match(uninitialised.reason, /open today/)
+  assert.equal(uninitialised.state, 'none'); assert.match(uninitialised.reason, /Central makes it at the Day's turn/)
   const stale = setReadingOf({time, day: {state: 'stale', error: {message: 'the Day is stale'}}}, null)
-  // Past the boundary (walk 13 Nov): today not opened yet, with the way on, never Central's stale-pointer words.
-  assert.deepEqual(stale, {state: 'none', reason: 'Today has not opened yet. Open today opens it.'})
+  // Past the boundary (walk 13 Nov): today not opened yet, opening by itself (O-I 1005), never Central's stale-pointer words.
+  assert.deepEqual(stale, {state: 'none', reason: 'Today has not opened yet. Central opens it by itself at the Day\'s turn.'})
 })
 
-test('the hook returns your world and the Day whatever has been read, and names what has not', () => {
-  const live = {status: 'live', error: null, events: nowEvents, absences: [], readAtUnixMs: 1}
-  const Probe = ({transport, world}) => {
-    const tracks = useCentralTracks({transport, set: null, document: null, world})
-    return React.createElement('pre', null, JSON.stringify({tracks: tracks.tracks.map(track => track.name), kind: tracks.tracks.find(track => track.main).kind}))
-  }
-  const rendered = JSON.parse(/<pre>(.*)<\/pre>/.exec(renderToStaticMarkup(React.createElement(Probe, {transport: {kind: 'unavailable', reason: 'carrier down'}, world: {source: live}})))[1].replaceAll('&quot;', '"'))
-  assert.deepEqual(rendered.tracks, ['Your world', 'Day'])
-  assert.match(rendered.kind, /today keeps no set yet \(the kernel carrier is unavailable: carrier down\)/)
-})
-
-test('the civil reading is the published one: live, being read, or unread with the owner\'s words', () => {
-  assert.deepEqual(civilReadingOf({status: 'live', events: [1], absences: [2]}), {state: 'live', events: [1], absences: [2]})
-  assert.deepEqual(civilReadingOf({status: 'reading', error: null}), {state: 'reading'})
-  assert.deepEqual(civilReadingOf({status: 'unavailable', error: 'Temporal events reading unavailable'}), {state: 'unavailable', reason: 'Temporal events reading unavailable'})
-  assert.equal(civilReadingOf({status: 'unavailable', error: null}).reason, 'the kernel temporal read is unavailable')
-  assert.equal(civilReadingOf(undefined).state, 'unavailable')
-})
-
-test('the day records are read through the owner\'s listing route, and a refusal is the reading', async () => {
-  assert.deepEqual(await readDayRecords(undefined), {state: 'unavailable', reason: 'the shell published no kernel carrier to this pane'})
-  assert.deepEqual(await readDayRecords({kind: 'unavailable', reason: 'no kernel transport'}), {state: 'unavailable', reason: 'no kernel transport'})
-  const realFetch = globalThis.fetch
-  const sent = []
-  try {
-    // FIXTURE: the bridge's answers. The recorded listing above stands in for the owner's directory reading.
-    globalThis.fetch = async (url, init) => { sent.push([url, JSON.parse(init.body)]); return {json: async () => ({ok: true, outcome: {result: 'directory_read', directory: {...listing, schema: 'central.directory-reading/v1'}}})} }
-    const read = await readDayRecords({kind: 'bridge', url: 'http://bridge.fixture'})
-    assert.deepEqual(sent, [['http://bridge.fixture/op', {op: 'files_list', path: 'Control/user/day'}]], 'one files_list at the owner\'s day surface — the browser\'s own route')
-    assert.equal(read.state, 'read')
-    assert.deepEqual(read.records.map(record => record.name), records.map(record => record.name))
-    const {ownerReadings} = await import('../src/owners/ownerReading.ts')
-    assert.equal(sent.length, 1)
-    await readDayRecords({kind: 'bridge', url: 'http://bridge.fixture'})
-    assert.equal(sent.length, 1, 'the listing is held: a second reader asks the owner nothing')
-    await ownerReadings.moved()
-    globalThis.fetch = async () => ({json: async () => ({ok: false, error: 'the owner refused the listing'})})
-    assert.deepEqual(await readDayRecords({kind: 'bridge', url: 'http://bridge.fixture'}), {state: 'unavailable', reason: 'the owner refused the listing'})
-    globalThis.fetch = async () => ({json: async () => ({ok: true, outcome: {result: 'something_else'}})})
-    await ownerReadings.moved()
-    assert.equal((await readDayRecords({kind: 'bridge', url: 'http://bridge.fixture'})).state, 'unavailable', 'an answer that is not a directory reading is not a list of days')
-  } finally {
-    globalThis.fetch = realFetch
-  }
-})
-
-test('the owner\'s day surface (one folder per date holding day.md) reads as day records beside the legacy files', async () => {
+test('the owner\'s day surface (one folder per date holding day.md) names each day by its date, and a day\'s path opens as a day', async () => {
   const surface = await import('../src/central/daySurface.ts')
   const location = path => ({schema: 'central.path-ref/v1', ref: `central:path:/ground:${path}`, root: '/ground', path})
   const folder = date => ({name: date, kind: 'directory', byte_len: 96, retrieval_allowed: true, location: location(`Control/user/day/${date}`)})
-  const made = adapter.dayRecordsOf({entries: [folder('2026-10-12'), folder('2026-10-13'), {name: 'notes.md', kind: 'file', byte_len: 3, location: location('Control/user/day/notes.md')}, {name: 'scratch', kind: 'directory', byte_len: 1, location: location('Control/user/day/scratch')}]})
-  assert.deepEqual(made.map(record => [record.name, record.path]), [['2026-10-13.md', 'Control/user/day/2026-10-13/day.md'], ['2026-10-12.md', 'Control/user/day/2026-10-12/day.md']], 'date folders only, newest first, each its day.md')
   const [entry] = surface.dayEntriesOf([folder('2026-10-13')])
   assert.deepEqual([entry.kind, entry.location.ref], ['file', 'central:path:/ground:Control/user/day/2026-10-13/day.md'], 'the day document\'s own location, in the owner\'s ref grammar')
   assert.equal(surface.dateOfDayPath('Control/user/day/2026-10-13/day.md'), '2026-10-13')
@@ -274,27 +113,7 @@ test('a day subject is named by its date — every day on the surface is a day.m
   assert.equal(surface.subjectWords('Control/user/flows/flow-1.html'), 'flow-1.html', 'anything else by its file name')
 })
 
-
-test('a world leaves today\'s set as it came in: its track taken out writes the set without it; your world never leaves', async () => {
-  const calls = []
-  const controls = {addWorld: async world => calls.push(['add', world.ref]), removeWorld: async world => calls.push(['remove', world.ref])}
-  const live = adapter.projectCentralTracks({...reading, controls})
-  const oi = live.tracks.find(track => track.id === 'central:world:central:wiki:project:O-I')
-  assert.ok(oi, 'O-I is a track of today\'s set')
-  assert.deepEqual(await live.actions.removeTrack.run(oi.id), {ok: true, note: 'O-I is out of today\'s set; its pages stay in its folder.'})
-  assert.deepEqual(calls, [['remove', 'central:wiki:project:O-I']])
-  assert.deepEqual(await live.actions.removeTrack.run('central:world:central:wiki:root'), {ok: false, error: 'Your world is in every day\'s set; it does not leave it.'})
-  assert.equal((await live.actions.removeTrack.run('central:world:nowhere')).ok, false)
-  assert.equal(calls.length, 1)
-  assert.equal(adapter.projectCentralTracks({...reading, controls: {addWorld: controls.addWorld}}).actions.removeTrack, undefined, 'no removal without the Day\'s write')
-  const daySet = await import('../src/central/daySet.ts')
-  const set = {schema: 'oi.day-set/v1', tracks: [{world: 'a'}, {world: 'b'}], rows: []}
-  assert.deepEqual(daySet.withoutWorld(daySet.withWorld(set, 'c'), 'c'), set, 'in then out leaves the set as it was')
-})
-
-test('the bodies the tracks read are one value until the system changes: a snapshot read twice is the same (r16: the grid drew nothing)', async () => {
+test('the bodies the system reads are one value until the system changes: a snapshot read twice is the same (r16: the grid drew nothing)', async () => {
   const store = await import('../src/projections/atlas/system/systemStore.ts')
   assert.equal(store.systemBodies(), store.systemBodies(), 'unread, the bodies are one empty list, not a new one per read')
-  const source = await (await import('node:fs/promises')).readFile(new URL('../src/frame/tracks/useCentralTracks.ts', import.meta.url), 'utf8')
-  assert.doesNotMatch(source, /useSyncExternalStore\(subscribeSystem, systemBodies/, 'the hook subscribes to the stable reading, not a derived list')
 })

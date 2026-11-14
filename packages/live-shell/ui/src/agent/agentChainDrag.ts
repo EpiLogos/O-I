@@ -5,8 +5,8 @@
  * The aperture law, made data: every drop resolves to ONE declared owner
  * operation, or to a named missing op the drop refuses with. Nothing here
  * invents an operation: every drop a browser row starts rides an operation
- * that exists (the shell's own session selection; `harness_agent_control` on
- * the gateway binding; AIKit's Sources placement; Central's
+ * that exists (the shell's own session selection; AIKit's `aikit.gateway.agent`
+ * on the gateway binding; AIKit's Sources placement; Central's
  * `agent-profile.chain-admit` for a SkillSet; the seat instrument's
  * `seat join` for a seat: O-I #743, DLW build ruling 2026-11-12), and a slot
  * no row is dragged to yet (the world, the gateway) is declared missing by name. A successful-looking flag is never evidence of a native
@@ -114,9 +114,9 @@ export function activeChainDrag(): ActiveChainDrag | null {return active}
 
 /** The two drops that land through declared operations. `select-session` is
  * the shell's own selection action (the chain's who slot reads the selected
- * session's task record); `harness-control` is the declared
- * `harness_agent_control` op on the gateway binding, receipted by the
- * owner's `harness_agent_outcome` document. */
+ * session's task record); `harness-control` is AIKit's declared Action
+ * `aikit.gateway.agent` on the gateway binding (the kernel's `act`), receipted
+ * by the owner's own answer. */
 export type ChainDropOperation =
   | {kind: 'select-session'}
   | {kind: 'harness-control'; control: 'new'}
@@ -127,8 +127,8 @@ export type ChainDropOperation =
    * the chain is (§19.4), at its revision as read. Dropped on the Skillset rack that carries one already, it is the rack's Hot-swap
    * (agent-profile.chain-replace) instead: the view chooses by where it lands (sessionChainBindings.ts skillSetDropRequest). */
   | {kind: 'admit-skillset'}
-  /** A seat joined for the chain's work (§19.16 The seat; O-I #743): the Seat's own Join, the seat instrument's `seat join` through the
-   * kernel's seat_write, on the seat and the project Git / landing names, attributed to the desk's actor. */
+  /** A seat joined for the chain's work (§19.16 The seat; O-I #743): the Seat's own Join, the seat instrument's `seat join` (the Action
+   * workcell.seat.join, through the kernel's act), on the seat and the project Git / landing names, attributed to the desk's actor. */
   | {kind: 'join-seat'}
 
 /** The named missing operations. Each string is the exact op a refusal card
@@ -148,8 +148,8 @@ export const CHAIN_ORDER_OP = 'agent-profile.chain-order'
 export const CHAIN_ADMIT_WORDS = 'Central\'s agent-profile.chain-admit'
 /** What the chain's note says where the roster discloses no carried practice: where a SkillSet comes from and how the agent takes one. */
 export const SKILLSETS_ARRIVE = 'the sets AIKit holds are listed in the browser\'s Skillsets: drag one onto the agent\'s chain, and Central\'s agent-profile.chain-admit adds it to what the agent carries'
-/** A seat dropped on the chain is joined by the Seat's own Join (the seat instrument's `seat join`, kernel seat_write). */
-export const SEAT_JOIN_WORDS = 'the seat instrument\'s `seat join` through the kernel\'s seat_write'
+/** A seat dropped on the chain is joined by the Seat's own Join (the seat instrument's `seat join`, the Action workcell.seat.join). */
+export const SEAT_JOIN_WORDS = 'the seat instrument\'s `seat join` (the Action workcell.seat.join)'
 export const SLIDE_PLACE = `the Skillset rack stands between the Agent rack and the Agent, which keep their places; the order of the SkillSets inside it is Central's (${CHAIN_ORDER_OP})`
 
 // ---- Owners: who each binding waits on, and who owes each missing op -------
@@ -255,7 +255,7 @@ export function chainDropDecision(drag: AgentChainDrag): ChainDropDecision {
         kind: 'operation',
         operation: {kind: 'harness-control', control: 'new'},
         slot,
-        via: 'harness_agent_control (new) on the gateway binding',
+        via: 'aikit.gateway.agent (new) on the gateway binding',
       }
     case 'skillset':
       return {

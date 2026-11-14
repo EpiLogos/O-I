@@ -1,4 +1,4 @@
-/** Default application: the native journey editor. The original workbench remains at legacy.html. */
+/** The application: the native journey editor, the frame's one host of the field engine (O-I ticket 1008 retired the legacy workbench). */
 import '../field-studies-journeys/src/styles.css';
 import '../field-studies-journeys/src/workspace.css';
 import {carryStorageFromHost} from '../../../../packages/expressions-boundary/src/storageCarry';

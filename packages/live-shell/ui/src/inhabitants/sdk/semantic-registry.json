@@ -9,10 +9,10 @@
     ],
     "formats": {},
     "invariant": {
-      "routesTo": "kernel:harness_agent_control"
+      "routesTo": "act:aikit.gateway.agent"
     },
     "writePaths": [
-      "kernel:harness_agent_control"
+      "act:aikit.gateway.agent"
     ],
     "heldBy": [],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/session-model.md#3"
@@ -27,10 +27,10 @@
     ],
     "formats": {},
     "invariant": {
-      "generates": "kernel:harness_agent_control"
+      "generates": "act:aikit.gateway.agent"
     },
     "writePaths": [
-      "kernel:harness_agent_control"
+      "act:aikit.gateway.agent"
     ],
     "heldBy": [],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
@@ -93,7 +93,7 @@
     ],
     "formats": {},
     "invariant": {
-      "generatesAbsent": "Born on the rail: it reads AIKit's population and the open agent's conversation (kernel inhabitation_read); Send goes to the open agent's Position through `aikit gateway send` (kernel gateway_write), and Voice fills the composer through the kernel's dictation."
+      "generatesAbsent": "Born on the rail: it reads AIKit's population and the open agent's conversation (kernel inhabitation_read); Send goes to the open agent's Position through `aikit gateway send` (the Action aikit.gateway.send, through the kernel's act), and Voice fills the composer through the kernel's dictation."
     },
     "writePaths": [],
     "heldBy": [],
@@ -243,10 +243,10 @@
     ],
     "formats": {},
     "invariant": {
-      "generates": "kernel:receiving"
+      "generates": "act:central.document.mutate"
     },
     "writePaths": [
-      "kernel:receiving"
+      "act:central.document.mutate"
     ],
     "heldBy": [],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
@@ -291,10 +291,10 @@
     ],
     "formats": {},
     "invariant": {
-      "generates": "kernel:file_operation"
+      "generates": "act:central.files.write"
     },
     "writePaths": [
-      "kernel:file_operation"
+      "act:central.files.write"
     ],
     "heldBy": [],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
@@ -584,10 +584,10 @@
     ],
     "formats": {},
     "invariant": {
-      "routesTo": "kernel:harness_agent_control"
+      "routesTo": "act:aikit.gateway.agent"
     },
     "writePaths": [
-      "kernel:harness_agent_control"
+      "act:aikit.gateway.agent"
     ],
     "heldBy": [],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/session-model.md#3"
@@ -652,7 +652,7 @@
     ],
     "formats": {},
     "invariant": {
-      "generatesAbsent": "The Run map writes through Factory: Retry through factory_owner attempt-retry (the attempt `retry` under the unit's retry grant); Recognise and Close stand in Approvals; the development mutate for ContinueCommission has no kernel route yet (T-COVERAGE §1.2)."
+      "generatesAbsent": "The Run map writes through Factory: Retry through Factory's factory.attempt.retry (the attempt `retry` under the unit's retry grant); Recognise and Close stand in Approvals; the development mutate for ContinueCommission has no kernel route yet (T-COVERAGE §1.2)."
     },
     "writePaths": [],
     "heldBy": [],
@@ -668,10 +668,10 @@
     ],
     "formats": {},
     "invariant": {
-      "routesTo": "workcell-cli:git commit"
+      "routesTo": "act:workcell.lane.land"
     },
     "writePaths": [
-      "workcell-cli:git commit"
+      "act:workcell.lane.land"
     ],
     "heldBy": [],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/session-model.md#3"

@@ -21,7 +21,7 @@ import {queueSourcePassageReveal} from '../../../../../desktop/cradle/src/expres
 import {receiveSourceOpen, receiveSources} from './hostedSummons'
 import {placeOpenedPortal, type PortalPlace} from './portalPlace'
 import {framePlacement} from '../projections/expressionsPaneHost'
-import {encounter, encounterProvision} from '../../../../../desktop/cradle/src/encounter/client'
+import {encounter, encounterProvision, type ProvisionChoice} from '../../../../../desktop/cradle/src/encounter/client'
 import type {EncounterRow} from '../../../../../desktop/cradle/src/encounter/EncounterList'
 import {checkpointDocuments} from '../../../../../desktop/cradle/src/document/frame'
 import {readDraft} from '../../../../../desktop/cradle/src/workspace/drafts'
@@ -931,15 +931,17 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
       ...(tauri ? [{id: 'terminal', title: 'Terminal', hint: 'a shell in a pane', open: kind('terminal')}, {id: 'browser', title: 'Web browser', hint: 'a web page in a pane', open: kind('browser')}] : []),
       // The browser's New… grid (lane L): each of the four document forms opens a new tab and makes the form in it through the
       // same fresh choice a blank tab's form picker uses — the owner writes the new document.
-      // The Day is not copied: New Day is Central's own (T-WORLDS W2 "New Day calls central initialise-day"), Open today's press —
-      // today's Day ensured and made from the Day form when it has none — and today's Day opens in its pane.
+      // The Day is not copied: today's Day is Central's own, opened by itself at its turn with its page made from the Day form
+      // (central.day.turn, O-I 1005), so its tile opens today's Day in its pane.
       // Each opener answers what it made (O-I #750): the New… tile holds off a second press while one is being made, and says the answer.
       ...DOCUMENT_FORMS.filter(form => NEW_DOCUMENT_FORMS.includes(form.kind)).map(form => ({id: `form.${form.kind}`, title: form.label, hint: form.hint,
         open: (): Promise<string> => {
           const said = (cause: unknown): never => { openerActions.current.report(cause); throw cause }
           if (form.kind === 'document-42') {
-            return import('../central/devices/centralDeviceWrites').then(({openToday}) => openToday(latest.current.kernel.transport))
-              .then(() => { latest.current.book.setLayout(layout => openCentralDocumentAt(layout, {form: 'day', date: null})); return 'Today\'s Day opens in the focused pane.' }).catch(said)
+            try {
+              latest.current.book.setLayout(layout => openCentralDocumentAt(layout, {form: 'day', date: null}))
+              return Promise.resolve('Today\'s Day opens in the focused pane.')
+            } catch (cause) { openerActions.current.report(cause); return Promise.reject(cause) }
           }
           try {
             const id = crypto.randomUUID()
@@ -1008,11 +1010,11 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
             const existing=Object.values(latest.current.book.current.layout.surfaces).find(binding=>binding.kind==='encounter'&&binding.ref===value.ref&&binding.project===value.project&&binding.encounter?.space===value.space&&hostedWorld(binding)===world)
             const binding:SurfaceBinding=existing??{id:crypto.randomUUID(),kind:'encounter',title:'Conversation',project:value.project,ref:value.ref,encounter:{space:value.space},...(world?{view:{sourceWorldRef:world} as NonNullable<SurfaceBinding['view']>&{sourceWorldRef:string}}:{})}
             latest.current.book.setLayout(layout=>openBinding({...layout,accompanying:value},binding))
-          }} provision={async (project,preferredBodyRef) => {
+          }} provision={async (project,choice) => {
           if (!allowed()) throw Error('The originating Factory tree is concealed.')
           if (sourceWorldRef) throw Error('This hosted World does not disclose a qualified new-conversation provision operation.')
           const {origin, current} = capture(undefined, true)
-          const reading = await ownerIO(current, () => encounterProvision(origin.kernel.transport, project,preferredBodyRef))
+          const reading = await ownerIO(current, () => encounterProvision(origin.kernel.transport, project, choice))
           current()
           return {ref:reading.agent_session,project:reading.project,space:reading.space}
         }} report={report}/>,
@@ -1048,7 +1050,7 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
 function FactoryChat({layout, project, sourceWorldRef, workspaceId,accessEpoch,current,openSubject,choose,accompany, provision, report}: {
   layout: LayoutState; project?: string; sourceWorldRef?: string;
   workspaceId:string;accessEpoch:number;current:(scope:NativePreparedContextScope)=>boolean;openSubject:(subject:AgentSubject)=>void;
-  accompany:(value:AgentAccompanying|undefined,world?:string)=>void;provision:(project:string,preferredBodyRef?:string)=>Promise<AgentAccompanying>;report:(cause:unknown)=>void;
+  accompany:(value:AgentAccompanying|undefined,world?:string)=>void;provision:(project:string,choice:ProvisionChoice)=>Promise<AgentAccompanying>;report:(cause:unknown)=>void;
   choose:(row:EncounterRow,current?:()=>boolean,world?:string)=>Promise<void>;
 }) {
   let scope:NativePreparedContextScope|undefined,scopeError:string|undefined
@@ -1060,7 +1062,7 @@ function FactoryChat({layout, project, sourceWorldRef, workspaceId,accessEpoch,c
       subject={{ref:subject?.ref,kind:subject?.kind,title:subject?.title??'Workspace',project:subject?.project,location:subject?.location}}
       onAccompanying={value=>{if(current(scope!))accompany(value,scope!.sourceWorldRef)}}
       onChoose={(row,original)=>choose(row,()=>current(scope!)&&(!original||original()),scope!.sourceWorldRef)}
-      onProvision={async(project,preferredBodyRef)=>{if(!current(scope!))throw Error('The original conversation owner has retired.');if(scope!.sourceWorldRef)throw Error('This hosted World does not disclose a qualified new-conversation provision operation.');return await provision(project,preferredBodyRef)}}
+      onProvision={async(project,choice)=>{if(!current(scope!))throw Error('The original conversation owner has retired.');if(scope!.sourceWorldRef)throw Error('This hosted World does not disclose a qualified new-conversation provision operation.');return await provision(project,choice)}}
       onOpenSubject={openSubject} onError={report} resolveSurface={id=>layout.surfaces[id]}/>}
   </>
 }

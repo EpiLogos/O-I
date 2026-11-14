@@ -484,8 +484,8 @@ test('a mode whose owner cannot make its clip of a constellation yet takes the d
     assert.match(answer.error, /missing op/, `${mode}: the refusal names the missing operation`)
   }
   // REPLACED (O-I #768, part two): Factory and Expressions refused the drop naming AIKit's task_create and the knowledge_whole resolver; their
-  // sets bring their own makers now (agent/clipBinding.ts taskMaker on useFactoryTracks.ts; components/expressions/clip/clipBinding.ts
-  // sceneMaker on modeTracks.ts expressionsTracks), as Central's does.
+  // sets brought their own makers (agent/clipBinding.ts taskMaker, deleted under O-I #1006 with the window's Factory set;
+  // components/expressions/clip/clipBinding.ts sceneMaker on modeTracks.ts expressionsTracks), as Central's does.
   // REPLACED (O-I #768, part three): Technē refused naming event_create on the temporal events projection; its set brings its own maker now
   // (techne/clipBinding.ts techneEventMaker on useTechneTracks.ts), which keeps the event in the World's walk Expression.
   // REPLACED (O-I #768, part three): Live refused naming live_clip_create on live-set; its set brings its own maker now
@@ -537,18 +537,17 @@ test('Factory: a constellation dropped on a session\'s track makes the session\'
   assert.equal(untasked.ok, false)
   assert.match(untasked.error, /the fixture kernel answers no encounter_task_configure/)
   assert.equal(idle.sent.some(body => body.op === 'encounter_session_settings' && body.request), false, 'a session with no task has no settings written')
-  // The maker the Factory set carries: a session's track takes the drop; anything else, or a ref the wiki does not hold, is refused in words.
-  const maker = factory.taskMaker(BRIDGE, [track], ref => owners.constellationNamed(ROWS, ref))
-  assert.equal(maker.accepts, owners.CONSTELLATION_DRAG)
-  assert.match((await maker.run('elsewhere', LIVED)).error, /session's track/)
-  assert.match((await maker.run(trackKey(track), 'wiki:anchor:gone')).error, /no constellation the wiki/)
-  const dropped = await withKernel(settingsKernel(settingsOf(null)), () => maker.run(trackKey(track), LIVED))
-  assert.equal(dropped.ok, true, dropped.error)
-  // The Factory set the pane draws carries it (useFactoryTracks.ts factoryTrackSet): its tracks take the drop.
-  const {factoryTrackSet} = await import('../src/frame/tracks/useFactoryTracks.ts')
-  const drawn = factoryTrackSet({columns: [], tracks: [{id: trackKey(track), name: 'Fizz'}], clips: []}, null, null, BRIDGE, [track])
+  // REPLACED (O-I #1006): the maker the window's Factory set carried (taskMaker), deleted with that set: Factory's Set is the kernel's,
+  // which takes the drop and refuses it in its own words (below).
+  // The Factory Set the pane draws is the kernel's (O-I #1004), whose acts are Actions of the registry: making the session's task of a
+  // constellation is none yet (O-I #1006), so its tracks take the drop and refuse it in the Set's own words, never in silence.
+  const {kernelSetTracks} = await import('../src/frame/tracks/kernelSet.ts')
+  const {modeSetOf, setTrack} = await import('./support/modeSetFixture.mjs')
+  const waits = 'the session\'s task of a constellation dropped on it: AIKit\'s task made on the session (encounter-task-configure), which no Action of the registry carries yet (O-I #1006)'
+  const drawn = kernelSetTracks(modeSetOf({owner: 'Factory and AIKit', tracks: [setTrack(trackKey(track), 'Fizz')], waiting: {'clip.make': waits}}), {nowMs: 0})
   assert.equal(drawn.actions.makeClip.accepts, owners.CONSTELLATION_DRAG)
-  assert.match(drawn.actions.makeClip.op, /AIKit encounter-session-settings/)
+  assert.deepEqual(await drawn.actions.makeClip.run(trackKey(track), LIVED),
+    {ok: false, error: `No owner operation carries it yet — missing op: clip.make (Factory and AIKit). It waits for ${waits}.`})
 })
 
 // REPLACED (O-I #768 follow-up): PREPARED, a session's prepared task whose request a new task copied (its Central, protocol child, working
@@ -582,10 +581,8 @@ function factoryKernel({refuse = null} = {}) {
 test('Factory: a constellation dropped on a session that holds no task makes a new task of it through AIKit\'s task creation, which takes the rest from the session, its source read back from AIKit', async () => {
   // The session's own register rides its track (agent/worldScope.ts): the task is made where its agency read listed it.
   const idle = {...track, sessionRef: 'ses-215', agentRef: null, agentName: 'Buzz', tasks: [], project: 'O-I'}
-  const maker = factory.taskMaker(BRIDGE, [track, idle], ref => owners.constellationNamed(ROWS, ref))
-  assert.match(maker.op, /encounter-task-configure/, 'the maker names AIKit\'s task creation beside the settings write')
   const aikit = factoryKernel()
-  const made = await withKernel(aikit, () => maker.run(trackKey(idle), LIVED))
+  const made = await withKernel(aikit, () => factory.makeTaskOf(BRIDGE, {sessionRef: idle.sessionRef, label: idle.agentName}, owners.constellationNamed(ROWS, LIVED), idle.project))
   assert.equal(made.ok, true, made.error)
   assert.match(made.note, /The lived-in world/)
   const configured = aikit.sent.filter(body => body.op === 'encounter_task_configure')
@@ -634,7 +631,7 @@ test('Factory: a constellation dropped on a session that holds no task makes a n
   assert.match(real.underivable, /its participant \(central\.participant_refs\): the session has no Agency binding/)
   assert.match(real.underivable, /its provider \(provider\): the session has never opened/)
   for (const words of [real.refusal, real.underivable]) {
-    const refused = await withKernel(factoryKernel({refuse: words}), () => maker.run(trackKey(idle), LIVED))
+    const refused = await withKernel(factoryKernel({refuse: words}), () => factory.makeTaskOf(BRIDGE, {sessionRef: idle.sessionRef, label: idle.agentName}, owners.constellationNamed(ROWS, LIVED), idle.project))
     assert.equal(refused.ok, false)
     assert.ok(refused.error.endsWith(words), refused.error)
   }

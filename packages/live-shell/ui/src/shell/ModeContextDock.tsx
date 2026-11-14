@@ -1,14 +1,13 @@
 /**
  * The per-mode context dock — Revision 4's right side: the context tiles
  * above (the agent per mode — Fizz / Anima / Epii — Packet, Trail, Field,
- * Agents, Terminal, Results, Sky, NOWs), the launcher below that opens
+ * Agents, Terminal, Results, Sky), the launcher below that opens
  * tiles and never feeds the centre, and the resize wedge on the left edge
  * that exists only while the dock is open (the toggle collapses cleanly —
  * the wedge stays dead).
  *
  * Every tile body composes what IS landed and readable — the agency
- * reading (real sessions), the civil day/NOW (the one temporal reading),
- * the selected subject — and renders a DESIGNED frame naming its owner
+ * reading (real sessions), the selected subject — and renders a DESIGNED frame naming its owner
  * read where no owner lands. No fabricated activity anywhere (the honesty
  * boundaries). Tile headers carry the pin and close marks (the guide's §3.8
  * dock law); the launcher's cells open and close tiles; search filters.
@@ -24,7 +23,6 @@ import {MODE_GRAMMAR, type SurfMode} from './modeGrammar'
 import {useAgencySessions} from '../agent/useAgencySessions'
 import {Icon} from '../inhabitants/sdk/Icon'
 import type {CentralSubjectSelection} from '../inhabitants/CentralSubjectDetail'
-import type {WorldTimelineView} from '../projections/useWorldTemporalReading'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import {carrierOf} from './runContext'
 import './modeSurface.css'
@@ -34,17 +32,15 @@ export {COMPANIONS, TILES} from './modeDockTiles'
 
 /** Per-mode tile sets and defaults (Rev 4's tile set, per arrangement). */
 const DOCKS: Record<SurfMode, {tiles: string[]; open: string[]}> = {
-  live: {tiles: ['agent', 'trail', 'nows'], open: ['agent']},
-  base: {tiles: ['agent', 'packet', 'trail', 'field', 'agents', 'nows'], open: ['agent', 'packet', 'trail']},
+  live: {tiles: ['agent', 'trail'], open: ['agent']},
+  base: {tiles: ['agent', 'packet', 'trail', 'field', 'agents'], open: ['agent', 'packet', 'trail']},
   factory: {tiles: ['agents', 'terminal', 'results'], open: []},
   expressions: {tiles: ['agent', 'packet', 'trail', 'agents'], open: ['agent']},
-  techne: {tiles: ['agent', 'field', 'trail', 'agents', 'nows'], open: ['agent', 'field', 'trail']},
+  techne: {tiles: ['agent', 'field', 'trail', 'agents'], open: ['agent', 'field', 'trail']},
 }
 
-export function ModeContextDock({mode, world, transport, subject, initialOpen}: {
+export function ModeContextDock({mode, transport, subject, initialOpen}: {
   mode: SurfMode
-  /** The World cut's one temporal reading (the NOWs tile reads it). */
-  world: WorldTimelineView | null
   /** The kernel carrier — the agents tile reads the agency surface through it. */
   transport: KernelTransportStatus
   /** The selected Central subject, when one is selected. */
@@ -106,7 +102,7 @@ export function ModeContextDock({mode, world, transport, subject, initialOpen}: 
           </span>
         </header>
         <div className="mode-dock-tile-body">
-          <TileBody id={tile.id} mode={mode} world={world} transport={transport} subject={subject} />
+          <TileBody id={tile.id} mode={mode} transport={transport} subject={subject} />
         </div>
       </section>)}
     </div>
@@ -139,10 +135,9 @@ export function ModeContextDock({mode, world, transport, subject, initialOpen}: 
 
 /** One tile's body — the landed readings it composes, or the designed
  * frame naming its owner read. */
-export function TileBody({id, mode, world, transport, subject}: {
+export function TileBody({id, mode, transport, subject}: {
   id: string
   mode: SurfMode
-  world: WorldTimelineView | null
   transport: KernelTransportStatus
   subject: CentralSubjectSelection | null
 }) {
@@ -155,15 +150,6 @@ export function TileBody({id, mode, world, transport, subject}: {
     </div>
   }
   if (id === 'agents') return <AgentsTile transport={transport} />
-  if (id === 'nows') {
-    const source = world?.source
-    const now = source?.status === 'live' ? source.now : null
-    return <div className="mode-dock-rows">
-      {now?.dayRef && <div className="mode-dock-row"><span>day</span><b>{now.dayRef}</b></div>}
-      {now?.instantUnixMs != null && <div className="mode-dock-row"><span>now</span><b>{new Date(now.instantUnixMs).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</b></div>}
-      {!now && <p className="mode-dock-note">The civil field is unread — the day and its Now land here when the kernel's temporal read answers.</p>}
-    </div>
-  }
   if (id === 'packet') {
     return <div className="mode-dock-rows">
       <div className="mode-dock-row"><span>subject</span><b>{subject ? subject.path.split('/').pop() : 'not selected'}</b></div>

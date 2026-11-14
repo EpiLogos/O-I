@@ -1,7 +1,7 @@
 import {wikiRelationMetadata,type WikiRelationMetadata} from './wikiRelationMetadata';
 import {readWikiSpatial,type WikiSpatialReading} from "./spatialFacets";
 import {readWikiTemporal,type WikiTemporalReading} from "./temporalFacets";
-import {wikiDisplayName} from "../../../../packages/oi-design-system/expressions-engine/oi/wikiPresentation.mjs";
+import {wikiDisplayName} from "../../expressions-app/field-studies-journeys/src/wikiPresentation.mjs";
 /**
  * The Wiki→Expression projection (O-I #366 EX3A, Technè M0′ — owner
  * direction 2026-09-19): a register's bounded local whole — the wiki.json

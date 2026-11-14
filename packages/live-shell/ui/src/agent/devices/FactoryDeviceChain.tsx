@@ -59,8 +59,10 @@ import {openSettings} from '../../settings/host'
 import {chainLaw, slotStanding} from '../../inhabitants/sdk/chains'
 import {openInstrument} from '../../frame/instrumentDoor'
 import {agentAddress} from '../../inhabitants/agentParamAddresses'
-import {useRosterAnswer, useSettingsAnswer} from '../../owners/readers'
-import {registerOf, ROOT_REGISTER} from '../worldScope'
+import {useRosterAnswer, useSettingsAnswer, useTaskAnswer} from '../../owners/readers'
+import {useModelSlice} from '../../owners/model'
+import {useWorkspace} from '../../shell/workspaceContext'
+import {gitRepositoryAbsence, projectOfSession, registerOf, ROOT_REGISTER} from '../worldScope'
 import {useAgentSessionsOptional} from '../AgentSessionsProvider'
 import {useAgentShell, type AgentDeviceId} from '../AgentShellContext'
 import {threadTrackOf} from '../threadTrack'
@@ -72,7 +74,7 @@ import {
 import {agentDataI} from '../agentFidelity'
 import {fireWritePath} from '../agentNativeDispatch'
 import {harnessAgentControl, harnessIngressRule} from '../harnessAgentControl'
-import {chainListAct, chainTaskBudget, chainTaskRead, launchSessionTask, sessionModelRead, sessionModelSelect, useChainModelReadings, useRackMacrosReadings} from '../factoryTaskActs'
+import {chainListAct, chainTaskBudget, chainTaskRead, sessionModelRead, sessionModelSelect, sessionSetAct, useChainModelReadings, useRackMacrosReadings} from '../factoryTaskActs'
 import {RefusalCard, safeJson} from '../RefusalCard'
 import {CHAIN_DEVICE_IDS, SOURCES_DESIGN, SOURCES_DEVICE_IDS, agentChainDevices, chainDeviceId, gatewayDisclosed, rackMemberDevice, type ChainWrite} from './agentChainDevices'
 import {chainPicture, type PictureContext} from './AgentDevicePictures'
@@ -80,25 +82,22 @@ import {
   AGENT_DESIGN, AGENT_P0_ROWS, GATEWAY_DESIGN, LANDING_DESIGN, MEMBER_DESIGN, MEMBER_DEVICE_ID, RACK_DESIGN, SCOPE_DESIGN, SLOT_DESIGN_FACE, agentBinding, designWaits,
   gatewayBinding, memberBinding,
   memberChains, rackBinding, refiningBinding, scopeBinding, seatedProfile, useChainHolds, viewHolds, type AgentRows, type MemberPorts, type RackUpkeep,
-  type RefiningPorts, callsOf, callsOnEvery, lastUsageModels, type CallsDecision,
+  type RefiningPorts, callsOf, callsOnEvery, chainFromModel, lastUsageModels, type CallsDecision,
 } from './designBindings'
 import {useOwnerAccepted} from './ownerAccepted'
 import {useSelectedSkillChain} from './skillRackSelection'
-import {useAgentChainReading} from './useAgentChainReading'
 import {composePorts, useRackReading} from './useRackReading'
 import {observedState, useEncounterSessions} from './EncounterObservers'
 import {FRAMES_ID, mainDevices} from './mainTrackBindings'
 import {askRowsOf, shownSession, threadBinding, threadJson} from './threadBinding'
 import {CAPTURE_PAGE, REFINE_PAGE, SEAT_PAGE, carryPages, composeAgentBinding, withAgentGit} from './oneAgentBinding'
 import {testRefinement, useScopeWaits, writeSessionSettings} from '../sessionSettings'
-import {useIdentityDevice} from '../../central/devices/agentChainDevices'
+import {identityFromModel, useIdentityHolds} from '../../central/devices/agentChainDevices'
 import {useAgentSetReadings, useCentralAction} from '../../central/devices/useCentralReadings'
 import {actionAnswerOf, centralActionOp} from '../../central/devices/centralActions'
 import {useAtSearch} from '../../central/searchPane'
-import {useModelCatalogue} from './useModelCatalogue'
 import {useAttemptTakes} from '../../owners/attemptTakes'
-import {readTaskOf, useWorkcellAnswer} from '../../owners/readers'
-import {usePopulationAnswer} from './usePopulationAnswer'
+import {useWorkcellAnswer} from '../../owners/readers'
 import {factoryLocateOp, useSessionCustody} from './sessionCustody'
 import {
   AGENTSET_DESIGN, AGENTSET_ID, PROFILE_REFUSE, agentChainSessions, agentsetBinding, chainProfileOf, custodyBinding, orderRequest, pinSourceRequest,
@@ -108,11 +107,9 @@ import {
 import {familyFaceDevice} from './mainTrackBindings'
 import {publishChainHead} from '../../shell/modeDetails'
 import {openInReader} from '../../frame/browser/constellationActs'
-import {retryTask, stopAfterTask} from './taskBindings'
-import {communiqueRefOf} from './messagesBinding'
 import {APPROVALS_DESIGN, APPROVALS_ID, approvalsAwayBinding, receiptDevices} from './receiptBindings'
-import {CARRIER_DESIGN, CARRIER_ID, carrierBinding, connectionLabels, gitBinding, planRunOf, runDemandOf, seatBinding, seatDropRefusal, workcellDevices, type SeatPorts} from './workcellBindings'
-import {ROUTE_WORDS, aikitWriteOp, centralRevisionWrite, deskActorOf, factoryOwnerWrite, gatewayWriteOp, ownerRouteWrite, refinementWrite, refusalWords, seatWriteOp} from './ownerRoutes'
+import {CARRIER_DESIGN, CARRIER_ID, LANE_WORDS, carrierBinding, connectionLabels, gitBinding, planRunOf, runDemandOf, seatBinding, seatDropRefusal, workcellDevices, type GitPorts, type SeatPorts} from './workcellBindings'
+import {ROUTE_WORDS, actOp, aikitWriteOp, centralRevisionWrite, deskActorOf, factoryOwnerWrite, ownerRouteWrite, refinementWrite, refusalWords, seatWriteOp} from './ownerRoutes'
 import {worldsOf} from './workcellMaterial'
 import {currentIdentity} from '../../../../../../desktop/cradle/src/nara/identity/current'
 import {WORKCELL_RACK_ID, chosenWorld, workcellGitReading} from './workcellRackBinding'
@@ -120,7 +117,7 @@ import {AGENT_SLOTS, ON_ITS_TRACK, RACK_CHAIN, SOURCES_OFF_DRAG, chainSlots, fac
   type RackChainName, type Reach} from './factoryPlaces'
 import {useOwnerOp} from '../../owners/ownerCall'
 import type {AikitWriteRequest, KernelOp} from '../../../../../../desktop/cradle/src/kernel/types'
-import {kernelOp} from '../../../../../../desktop/cradle/src/kernel/bridge'
+import {kernelAct, kernelOp} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import {DECISION_HELPER_ID, decisionHelperBinding, decisionHelperDevice} from './decisionHelperBinding'
 import {captureSkillBinding, type CaptureSkillPorts} from './captureSkillBinding'
 import {useSongClipFocus} from '../songClips'
@@ -129,7 +126,7 @@ import {useRunJourney} from './runJourney'
 import {PROMPT_PADS_DESIGN, PROMPT_PADS_ID, padsHeadActs, padsLocation, promptPadsBinding, promptPadsDevice, type PadsPresetPorts, type PromptPadsPorts} from './promptPadsBinding'
 import {useDecisionHelperReadings} from './decisionHelperReads'
 import {useTeamSpace, withTeamCell} from './teamCell'
-import {useActuationRead, useAikitRead, useConnectionShows, useGatewayEcology, useSeatStatusAnswer, useWorkcellRead} from './workcellReads'
+import {useActuationRead, useAikitRead, useConnectionShows, useSeatStatusAnswer, useWorkcellRead} from './workcellReads'
 import {workcellTrackId} from '../../frame/tracks/returnTracks'
 import '../agentShell.css'
 import './factoryDevices.css'
@@ -162,22 +159,6 @@ async function setAct(transport: Parameters<typeof kernelOp>[0], action: string,
   return answer.value
 }
 
-/** A session's bound task (AIKit's task record: request.central.task_ref), the task Factory's attempts are dispatched on; refused in words. */
-async function boundTaskOf(transport: Parameters<typeof kernelOp>[0], project: string, session: string, what: string): Promise<string> {
-  const read = await readTaskOf(transport, project, session)()
-  if ('error' in read) throw Error(`${what}: AIKit did not read the session's task: ${read.error}`)
-  const ref = (read.value as {request?: {central?: {task_ref?: unknown}}} | null)?.request?.central?.task_ref
-  if (typeof ref !== 'string' || !ref.trim()) throw Error(`${what}: AIKit's record of the session binds no task, so there is no work to name.`)
-  return ref
-}
-/** The Position an agent occupies in AIKit's population as the window holds it, or null. */
-function positionOf(population: {status: string; value?: unknown}, agentRef: string): string | null {
-  const positions = population.status === 'answered' && population.value && typeof population.value === 'object'
-    && Array.isArray((population.value as {positions?: unknown}).positions) ? (population.value as {positions: {position_ref?: unknown; occupancy?: {agent_ref?: unknown}}[]}).positions : []
-  const row = positions.find(item => item.occupancy?.agent_ref === agentRef && typeof item.position_ref === 'string')
-  return row ? String(row.position_ref) : null
-}
-
 /** The outcome of one drop attempt or one write: the owner's receipt, or the refusal that names the missing operation. */
 interface ChainNote {
   kind: 'receipt' | 'refused'
@@ -207,11 +188,26 @@ const SLOT_DESIGNS: Readonly<Record<string, string>> = {gateway: GATEWAY_DESIGN,
  * session's or the Main track's. */
 export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: string | null; workcell?: string | null}) {
   const shell = useAgentShell()
-  const {reading, transport, binding, resolved, harnesses, git: sessionGit} = useAgentChainReading(sessionRef)
+  const {transport} = useWorkspace()
+  const sessions = useAgentSessionsOptional()
+  // The chain's devices are declarations (inhabitants/agentParamAddresses.ts CHAIN_DECLARATIONS): each reads the World Model's slice it
+  // names — the Gateway and the Agent the sessions slice (AIKit's gateway, its binding and that binding's harness reading), Git / landing
+  // the workcells slice (Workcell's status and the seat of the session's project), the Harness and Model choosers the agents and models
+  // slices — kept current by the World Model's `model_changed`. The roster and the session's task record are the window's shared answers.
+  const sessionsSlice = useModelSlice(transport, 'sessions'), workcellsSlice = useModelSlice(transport, 'workcells')
+  const agentsSlice = useModelSlice(transport, 'agents'), modelsSlice = useModelSlice(transport, 'models')
+  const chainProject = projectOfSession(sessions?.rows ?? [], sessionRef)
+  const rosterAnswer = useRosterAnswer(transport, null)
+  const roster = rosterAnswer.reading
+  const taskAnswer = useTaskAnswer(transport, transport.kind === 'unavailable' ? null : sessionRef, chainProject).reading
+  const {reading, binding, resolved, harnesses, models, ecology, git: sessionGit} = useMemo(() => chainFromModel({
+    slices: {sessions: sessionsSlice, workcells: workcellsSlice, agents: agentsSlice, models: modelsSlice},
+    sessionRef, project: chainProject, absent: gitRepositoryAbsence(sessionRef, chainProject), roster, task: taskAnswer,
+    unreachable: transport.kind === 'unavailable' ? transport.reason ?? 'Transport unavailable' : null,
+  }), [sessionsSlice, workcellsSlice, agentsSlice, modelsSlice, sessionRef, chainProject, roster, taskAnswer, transport])
   // The settings an owner accepted on this harness: the only readings effort and input have. The shell's own effort, steer,
   // heartbeat and write-arm flags are presentation, so they are not read here.
   const accepted = useOwnerAccepted(binding)
-  const sessions = useAgentSessionsOptional()
   const track = sessionRef != null ? sessions?.tracks.find(item => item.sessionRef === sessionRef) ?? null : null
   // The register this chain reads in: the session's own (the one its world-wide agency read listed it in, agent/worldScope.ts); a chain
   // with no session (a workcell's, the Main track's) reads your world's root register. `register` is null for the root, as the ops that
@@ -281,7 +277,6 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
     return held ? [{ref: held.sessionRef, space: held.spaceRef, project: held.project ?? ROOT_REGISTER}] : []
   }), [shown, sessionRef, tracks])
   const {handles, observers} = useEncounterSessions(observed)
-  const models = useModelCatalogue(transport, !waits.agent)
   // The asks each conversation's session put to the decision helper, as AIKit keeps them against it (§19.4 Ask rows; O-I ticket 684).
   const shownAsks = useAikitRead(transport, !waits.agent && shown ? {kind: 'decision-asks', agent_session: shown} : null)
   const chainAsks = useAikitRead(transport, !waits.agent && sessionRef ? {kind: 'decision-asks', agent_session: sessionRef} : null)
@@ -367,8 +362,6 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
 
   // The rack: the seated agent's carried practice (its accepted profile in the roster, the sets AIKit replies for), and the
   // composition through the configuration plane. Read only while its design can draw it.
-  const rosterAnswer = useRosterAnswer(transport, null)
-  const roster = rosterAnswer.reading
   const profile = useMemo(() => seatedProfile(roster.status === 'answered' ? roster.value : null, track?.agentRef ?? null), [roster, track?.agentRef])
   // The chain is the profile Central keeps for the agent (§19.4; Central PR 318): the Agent's Rename and the Skillset rack's Hot-swap write it
   // at its revision as read, and the roster is read again behind each act.
@@ -520,11 +513,10 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const writeModeRow = chain.find(entry => entry.slot.id === 'world')?.device.rows.find(row => row.key === 'write-mode')
   const toolCallsRow = chain.find(entry => entry.slot.id === 'gateway')?.device.rows.find(row => row.key === 'approvals')
   const toolCalls = gatewayDisclosed(reading.gatewayDoc).approvals
-  // Calls to other agents: AIKit's rule for the sender kind agent on the session's gateway bindings, as its ecology reads it, set on every
-  // binding of the session through the kernel's harness_ingress_rule.
-  const ecology = useGatewayEcology(transport, !waits.world && sessionRef != null)
-  const calls = useMemo(() => (ecology.status === 'answered' ? callsOf(ecology.value, sessionRef)
-    : ecology.status === 'refused' ? {refused: ecology.error ?? 'AIKit refused the gateway\'s ecology.'} : null), [ecology, sessionRef])
+  // Calls to other agents: AIKit's rule for the sender kind agent on the session's gateway bindings, as its ecology reads it (the sessions
+  // slice's gateway, Scope's declared `calls`), set on every binding of the session through the kernel's harness_ingress_rule.
+  const calls = useMemo(() => (sessionRef == null || waits.world ? null : ecology.status === 'answered' ? callsOf(ecology.value, sessionRef)
+    : ecology.status === 'refused' ? {refused: ecology.error ?? 'AIKit refused the gateway\'s ecology.'} : null), [ecology, sessionRef, waits.world])
   // One binding at a time: where one refuses, the words say which bindings now answer the new way and what to press next.
   const callsWrite = useMemo(() => (transport.kind === 'unavailable' ? undefined : async (bindings: readonly string[], decision: CallsDecision) => {
     await callsOnEvery(bindings, decision, (ruled, said) => harnessIngressRule(transport, ruled, 'agent', said))
@@ -577,10 +569,13 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   // The seat instrument (lane K1's seat_status_read: slow, read once while a session's or a workcell's chain stands, and on demand): the
   // workcell's seats, the Seat, Git / landing on a workcell's chain, and the Workcells tile.
   const seats = useSeatStatusAnswer(transport, sessionRef != null || cellName != null).reading
-  // Git / landing: on a workcell's chain, that workcell's seat of the project (its branch, the files with no commit); elsewhere — on the
-  // door, on no chain — the chain's git reading. Every act stands disabled.
+  // Git / landing: on a workcell's chain, that workcell's seat of the project (its branch, the files with no commit, its commits against
+  // main); elsewhere — on the door, on no chain — the chain's git reading. Land is Workcell's own Actions on the held seat
+  // (workcell.lane.commit, .push and .land) through the kernel's `act`, each answering or refusing in Workcell's words (O-I 1006).
   const gitReading = useMemo(() => (cellName ? workcellGitReading(seats, cellName, rackProject) : reading), [cellName, seats, reading, rackProject])
-  const gitDesignBinding = useMemo(() => (waits.git ? null : gitBinding(gitReading, holds)), [waits.git, gitReading, holds])
+  const gitPorts = useMemo((): GitPorts => (transport.kind !== 'unavailable'
+    ? {lane: (action, input) => ownerRouteWrite(transport, actOp(action, input), LANE_WORDS[action])} : {}), [transport])
+  const gitDesignBinding = useMemo(() => (waits.git ? null : gitBinding(gitReading, holds, gitPorts)), [waits.git, gitReading, holds, gitPorts])
   // The one Agent (R4): its Custody page on the session's custody (its write mode Scope's), its Identity page on the roster card of the
   // session's own agent (the hold keyed apart from Central's Agent), its Thread page the Thread's binding — each composed under its prefix.
   // Custody's Grants page (lane W8): Actuation's authority list, and Revoke as the current person's own press — Actuation authenticates no
@@ -594,9 +589,6 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
       personNow: () => currentIdentity()?.reading.person_ref ?? null}
     : {}), [transport])
   const currentPerson = currentIdentity()?.reading.person_ref ?? null
-  // Factory's custody of the session's work (W11): the project's Factory state (located for the pads), its custody list, the Position the
-  // session's agent holds (AIKit's population: Custody sits on the Agent, §19.4), and the session's bound task as its work.
-  const custodyState = padsWhere && 'projectRef' in padsWhere ? padsWhere.statePath : null
   // The session's custody (sessionCustody.ts): the same readings the Clip view's edits take their hold through and the transport's
   // Re-enable gives back through. Hand back (§19.4; BD r20) is Factory's custody hold, the person's, and the custody list is read again
   // after it (its hand_back is the light).
@@ -604,11 +596,16 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const sessionCustody = useSessionCustody(transport, custodyAt)
   const custodyHoldPorts = useMemo((): CustodyPorts => (sessionCustody.hold ? {...custodyPorts, hold: sessionCustody.hold} : custodyPorts),
     [custodyPorts, sessionCustody.hold])
-  const custodyPopulation = usePopulationAnswer(transport, register)
   const custodyRead = sessionCustody.read ?? undefined
   const custodyDesignBinding = useMemo(() => custodyBinding({sessionRef, agent: agentDesignBinding?.values ?? {}, holds, grants, person: currentPerson,
     custody: custodyRead}, scopeDesignBinding, custodyHoldPorts), [sessionRef, agentDesignBinding, scopeDesignBinding, holds, grants, currentPerson, custodyRead, custodyHoldPorts])
-  const identityDesignBinding = useIdentityDevice(transport, track?.agentRef ?? null, FACTORY_IDENTITY_ID)
+  // The Identity page reads your roster as the World Model's roster slice holds it (agentChainDevices.ts identityFromModel; O-I ticket 1005).
+  const rosterSlice = useModelSlice(transport, 'roster')
+  const identityHolds = useIdentityHolds()
+  const identityAgent = track?.agentRef ?? null
+  const identityDesignBinding = useMemo(() => identityFromModel(FACTORY_IDENTITY_ID, rosterSlice, identityAgent),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the holds' version re-binds the Identity page's choices
+    [rosterSlice, identityAgent, identityHolds])
   // The Context page's Git row: the session's own repository, and Diff to Files' Diff page (§19.4 Context; §23.2).
   const oneAgent = useMemo(() => (agentDesignBinding ? withAgentGit(composeAgentBinding(agentDesignBinding, {custody: custodyDesignBinding, identity: identityDesignBinding, thread: threadDesignBinding}),
     {...sessionGit, openDiff: openSeatDiff}) : null),
@@ -617,7 +614,7 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   useAtSearch(typeof oneAgent?.values.draft === 'string' ? oneAgent.values.draft : undefined)
   // Git / landing's Seat group: the seat instrument, starting at the selected workcell's seat of the project.
   const seatsUnread = seats.status === 'refused' && seats.error ? seats.error : undefined
-  // Join and Release (lane W3): the seat instrument through the kernel's seat_write, attributed to the desk's actor — the person's ref when
+  // Join and Release (lane W3): the seat instrument's Actions through the kernel's act, attributed to the desk's actor — the person's ref when
   // an identity is current, else the desktop's own (ownerRoutes.ts deskActorOf). The claim it writes is read back on the next seat reading.
   const deskActor = deskActorOf(currentIdentity()?.reading.person_ref ?? null)
   const machineRef = workcellAnswer.status === 'answered' && workcellAnswer.value && typeof (workcellAnswer.value as {workcell_ref?: unknown}).workcell_ref === 'string'
@@ -691,41 +688,24 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
       // Unmap, Store, the variations and where each macro stands: Factory's rack macros, the person's, on the rack's revision.
       ...(macrosWhere ? {rackMacros: input => factoryOwnerWrite(transport, {kind: 'rack-macros-write', state_path: macrosWhere.statePath, project_ref: macrosWhere.projectRef, ...input},
         '`factory development rack-macros-write`').finally(refreshMacros)} : {}),
-      // Retry: the chosen chain's bound task (AIKit's task record), its units read in Factory and its unit retried (taskBindings.ts retryTask).
-      retry: async ({project, agent_session}) => {
-        if (!custodyState) throw Error('Retry: Factory keeps no state for this project here (`factory development locate`), so no unit of the task is read.')
-        await retryTask(request => factoryOwnerWrite(transport, request, `factory_owner ${request.kind}`), custodyState, await boundTaskOf(transport, project, agent_session, 'Retry'))
-      },
-      // Stop after, beside Retry (§19.4; round 870): the chosen chain's bound task, the unit its current attempt stands on asked to stop
-      // (taskBindings.ts stopAfterTask, factory_owner attempt-request-cancellation).
-      stopAfter: async ({project, agent_session}) => {
-        if (!custodyState) throw Error('Stop after: Factory keeps no state for this project here (`factory development locate`), so no unit of the task is read.')
-        await stopAfterTask(request => factoryOwnerWrite(transport, request, `factory_owner ${request.kind}`), custodyState, await boundTaskOf(transport, project, agent_session, 'Stop after'))
-      },
-      // Launch, before Retry (O-I 842 round 23): the chosen chain's bound task, the unit Factory names for it started on the model AIKit
-      // realises on the chain's session (factoryTaskActs.ts launchSessionTask, the Session grid's ▶ on a Factory task's own: taskBindings.ts
-      // launchTask, aikit_write realise, then factory_owner attempt-launch, under the project's factory.attempt.launch grant, which the kernel
-      // resolves and the owner gives). Factory's answer comes back in its words.
-      launch: async ({project, agent_session}) => {
-        if (!custodyState) throw Error('Launch: Factory keeps no state for this project here (`factory development locate`), so no unit of the task is read.')
-        return launchSessionTask(transport, {statePath: custodyState, taskRef: await boundTaskOf(transport, project, agent_session, 'Launch'), session: agent_session, project})
-      },
-      // A device of another session's chain (DLW build ruling 2026-11-05): a message to that session's agent's Position (AIKit's gateway send),
-      // turned into work on its task by Messages' own route, the one a message dropped on a track takes (`aikit gateway delegate`, O-I ticket
-      // 757). The chain writes both through the kernel itself: Messages is the rail's, never the chain's to reach.
-      ask: async ({project, agent_session, agent_ref, device, words}) => {
-        const position = positionOf(custodyPopulation, agent_ref)
-        if (!position) throw Error(`Devices: AIKit's population places ${agent_ref} at no Position, so no message reaches its session.`)
-        const work = await boundTaskOf(transport, project, agent_session, 'Devices')
-        const scope = project ? {project} : {}
-        const sent = await ownerRouteWrite(transport, gatewayWriteOp({kind: 'send', ...scope, to: position, body: words}), ROUTE_WORDS.send)
-        const communique = communiqueRefOf(sent)
-        if (!communique) throw Error('Devices: AIKit took the message but named no Communique, so it could not be turned into work.')
-        await ownerRouteWrite(transport, gatewayWriteOp({kind: 'delegate', ...scope, communique, work,
-          reason: `Asked from the Agent rack: a change of ${device} on this session's chain.`}), ROUTE_WORDS.delegate)
+      // Launch, Stop after and Retry on the chain's task row (§19.15; O-I 842 round 23, round 870): the chosen chain's session's own acts in
+      // Factory's Set, run as the Session grid runs them (factoryTaskActs.ts sessionSetAct, by `act`): the first task written on the session
+      // that has not run (its clip's launch, factory.task.run), its track's Stop (factory.task.stop: paused, pressed again its attempt
+      // cancelled) and its track's retry (factory.attempt.retry, lit where its task stalled). Factory's answer comes back in its words.
+      launch: async ({agent_session}) => ({status: 'launched', said: await sessionSetAct(transport, agent_session, 'launch')}),
+      stopAfter: ({agent_session}) => sessionSetAct(transport, agent_session, 'stopTrack'),
+      retry: ({agent_session}) => sessionSetAct(transport, agent_session, 'retry'),
+      // A device of another session's chain (DLW build ruling 2026-11-05): the words are that session's next turn, through the one send
+      // (desktop/cradle encounter/session.ts encounterSessionOf … submit, O-I ticket 1003), the session every presenter of it shares. The
+      // session module instruments the walk harness where it loads, so it loads when a device asks, as the encounter observer's does.
+      // REPLACED (O-I ticket 1006): a message to its agent's Position (AIKit's gateway send), then delegated onto its task (`aikit gateway
+      // delegate`), a second send beside the conversation's. Messages is the rail's, never the chain's to reach.
+      ask: async ({project, agent_session, words}) => {
+        const {encounterSessionOf} = await import('../../../../../../desktop/cradle/src/encounter/session')
+        return encounterSessionOf(transport, {project, ref: agent_session}).submit(words)
       },
     } : {}),
-  }), [transport, oneAgent, shell.setSolo, macrosWhere, refreshMacros, custodyState, custodyPopulation])
+  }), [transport, oneAgent, shell.setSolo, macrosWhere, refreshMacros])
   // The Decision helper (§19.20, T-AGENCY K5): a device of its own, a chain of the group's Agent rack in place of an Agent, on AIKit's
   // decision provider and QL's team space — read only where the group's space names its helper (AIKit's `decision_helper`, round 860). The
   // rack lists it among its chains.
@@ -778,7 +758,7 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
       return typeof row.id === 'string' && typeof row.semanticRef === 'string' ? [[row.id, row.semanticRef]] : []
     }))
     return runMapBinding(holds, {statePath: mapTake.statePath, runRef: mapTake.runRef, units},
-      transport.kind !== 'unavailable' ? {owner: request => factoryOwnerWrite(transport, request, '`factory attempt retry`')} : {},
+      transport.kind !== 'unavailable' ? {retry: input => kernelAct(transport, 'factory.attempt.retry', input)} : {},
       {status: mapChain.status, value, error: mapChain.error})
   }, [holds, mapTake, mapChain, transport])
   // A workcell's devices (§19.23): Git / landing's Seat group (the seat instrument), starting at the selected workcell's seat of the project;
@@ -866,8 +846,8 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const openAgentThread = () => openDevice(chainDeviceId('agent'), 'Agent')
 
   // One drop, one owner operation (or one named refusal). The session drop rides the run model's own selection — the who slot
-  // then reads the new session's task record. The agent drop dispatches `harness_agent_control` (new) on the gateway binding and
-  // folds the owner's outcome document as the receipt. That op takes a binding and a control word and no agent ref
+  // then reads the new session's task record. The agent drop dispatches AIKit's `aikit.gateway.agent` (new) on the gateway binding and
+  // folds the owner's outcome document as the receipt. That Action takes a binding and an operation and no agent ref
   // (harnessAgentControl.ts), so what the drop does is start a NEW agent on the bound harness: the dragged agent is named in the
   // note and the harness is not told which one it was. Everything else refuses by name — the dragged item simply returns.
   // (Ported from AgentDeviceChain.tsx:199-243.)
@@ -913,7 +893,7 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
       return
     }
     // A seat dropped on the chain (§19.16 The seat; ticket 743): the Seat's own Join, on the seat and the project Git / landing names, as
-    // its button asks it — the seat instrument's `seat join` through the kernel's seat_write, attributed to the desk's actor. The Seat
+    // its button asks it — the seat instrument's `seat join` (the Action workcell.seat.join), attributed to the desk's actor. The Seat
     // says in its own words why it joins nothing (no carrier, the seats unread, no seat chosen).
     if (decision.operation.kind === 'join-seat') {
       const refuse = (line: string) => setNote({kind: 'refused', title: 'Join refused', line, receipt: encodeChainDrag(active.drag)})
@@ -961,13 +941,13 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
       ? {
           kind: 'receipt',
           title: 'New agent started',
-          line: `${dragged} onto ${target.label} — started a new agent on the harness bound as “${binding}”; the harness was not told which agent was dragged, because harness_agent_control carries no agent ref. ${outcome.note}`,
+          line: `${dragged} onto ${target.label} — started a new agent on the harness bound as “${binding}”; the harness was not told which agent was dragged, because aikit.gateway.agent carries no agent ref. ${outcome.note}`,
           receipt: outcome.document !== undefined ? safeJson(outcome.document) : null,
         }
       : {
           kind: 'refused',
           title: 'New agent refused',
-          line: `${dragged} onto ${target.label} — harness_agent_control (${decision.operation.control}: a new agent on the bound harness, not the dragged one) answered: ${outcome.error}`,
+          line: `${dragged} onto ${target.label} — aikit.gateway.agent (${decision.operation.control}: a new agent on the bound harness, not the dragged one) answered: ${outcome.error}`,
           receipt: outcome.error,
         })
   }, [shell, transport, binding, chainProfile, profileAct, place, sessionRef, track?.project, machineRef, seatDesignBinding, deskActor])

@@ -11,11 +11,11 @@
 //     messages that wait for it. The Agency gateway's inbox is their sum;
 //   the run state of the session an occupant works (runFaces.ts runStateOfSession over the agency reading's tracks: its task, its needle, its
 //     thread): working, waiting on you, stalled — its face's posture (lane W5);
-//   harness_agent_read through AIKit's gateway (useAgentChainReading.ts; mainTrackBindings.ts gatewayAnswer): whether the Agency gateway
-//     answered — its state in the mark;
-//   `aikit gateway conversation --position P --with W --json`, which the kernel runs as inhabitation_read {kind: conversation}
-//     (useConversationAnswer.ts): the Communiques to and from the open agent's Position — the open agent's conversation, as the Thread's rows
-//     (its own `thread`, which the design lays under `conv.`), and its last line;
+//   AIKit's gateway as the World Model's sessions slice carries it (designBindings.ts chainFromModel; mainTrackBindings.ts gatewayAnswer):
+//     whether the Agency gateway answered — its state in the mark;
+//   the open agent's conversation (O-I ticket 1003): the session its Position's occupant works (the agency reading's track whose agent is the
+//     occupant), observed through the one encounter session (EncounterObservers.tsx; encounter/session.ts), as the Thread's rows
+//     (threadBinding.ts threadRowsOf: its own `thread`, which the design lays under `conv.`) and its last line;
 //   Central's agent-profile.review of the proposal Make wrote: its profile (role, purpose, world, sources, revision) and its content digest.
 // What nothing reads yet, each absent with the operation it waits for: an agent's model and type, the session's light and its last check-in
 // in the conversation, the types and skillsets the card offers.
@@ -24,22 +24,11 @@
 //     each by its ref, what it is for (the reason Central keeps with it), and its members as the Positions their agents occupy or are
 //     placed at in the population; a member no Position names stands as its own agent ref. A group's join, its last line and its unread
 //     have no owner reading. `aikit gateway team` acts on one admitted member's delivery for an occupying parent and lists no groups.
-// The gateway's writes go through the kernel's routes to AIKit's own commands (lane W3, desktop/cradle/kernel/src/owner_routes.rs
-// GatewayWrite; ownerRoutes.ts), each answered in AIKit's words and earning an `owner_changed` receipt, after which the conversation is read
-// again:
-//   Send     the composer's words to the open agent's Position → gateway_write {kind send, project, to: the Position, body: your words
-//            [, handling steer]} (`aikit gateway send --to P --body-file - [--handling steer]`, the words on stdin). Input says where they
-//            land while the agent works, as Buzz's harness lets its sender say (buzz-acp config.rs:63-88 MultipleEventHandling; O-I
-//            campaign-evidence/2026-10-07-buzz-grok-agent-messaging-re/CONTRACT.md Behaviours 2-3): Queue waits for its next turn — AIKit's
-//            way before steer, and where Input starts — and Steer reaches the turn that runs at its next tool call, framed as a message that
-//            arrived while it worked. A gateway that does not keep a steer refuses it in AIKit's words rather than quietly queue it, so
-//            Input starts where the running gateway can land the words: Steer when its protocol advertises `communique-handling`
-//            (ai-kit PR 566; `aikit gateway protocol`, aikit_read {gateway-protocol}), Queue otherwise and while it is unread. The line you
-//            sent stands in the conversation under Input's word until you send another: no Position stands for you, so the journal's
-//            rows never hold it. Whether the agent has heard it is AIKit's desk read of that one Communique by the ref its send
-//            answered (`aikit gateway heard C`, inhabitation_read {communique}): its delivery standing, never its words — Heard once
-//            delivered to the occupant, not heard yet while it waits;
-//   a drop   a message dragged onto a track → gateway_write {kind delegate, project, communique, work, reason[, run, journey,
+// Send is the one send (O-I ticket 1003): the composer's words as the next turn in the open agent's conversation (session.ts `submit`: the
+// draft, then the owner's prompt), refused in the owner's words; the line stands in the conversation as queued until the session's own
+// rows hold it. Input stands at Queue: the conversation takes a turn when its owner takes a prompt, and no steer into a running turn is
+// carried there. The gateway's own writes are AIKit's Actions through the kernel's `act` (O-I 1002; ownerRoutes.ts gatewayWriteOp):
+//   a drop   a message dragged onto a track → aikit.gateway.delegate {project, communique, work, reason[, run, journey,
 //            workflow_unit]} (`aikit gateway delegate`): the drop names the Communique, the work it becomes and why — AIKit takes all three.
 // No control of Messages' design writes a team operation: `aikit gateway team` prepares, delegates to, reads, cancels or releases one
 // admitted member for the parent that occupies a Position, and the desk occupies none. The conversation's Voice and its session acts stand
@@ -57,7 +46,7 @@
 //            expected_revision} at the revision Central wrote, the person's own act (PERSON_ACTS since C26 6311e404c).
 // Every refusal is its owner's own words. The list's settings, the agent you open, the composer's draft, the conversation's filters, the
 // card's fields and the proposal the card is on are the shell's own holds. Pure, apart from the view holds (designBindings.ts holdView); the
-// acts go through the ports the publisher gives (AgentRailDevices.tsx: the kernel's invoke_action for Central's, gateway_write for AIKit's).
+// acts go through the ports the publisher gives (AgentRailDevices.tsx: the kernel's invoke_action for Central's, act for AIKit's).
 import {gatewayMoved} from '../../owners/gatewayGeneration'
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
@@ -68,7 +57,9 @@ import {familyFaceDevice, gatewayAnswer} from './mainTrackBindings'
 import type {WorkcellAnswer} from './workcellBindings'
 import type {RunState} from '../../inhabitants/catalogue/faces/agency'
 import {messagesStateOf} from './runFaces'
-import {COMMUNIQUE_DRAG_SCHEMA, MESSAGES_ID, type CommuniqueDrag} from './railTileIds'
+import {MESSAGES_ID} from './railTileIds'
+import {threadLight, threadRowsOf} from './threadBinding'
+import type {EncounterReading, EncounterStatus} from '../../../../../../desktop/cradle/src/encounter/client'
 
 type Obj = Record<string, unknown>
 const isObj = (value: unknown): value is Obj => !!value && typeof value === 'object' && !Array.isArray(value)
@@ -85,12 +76,19 @@ export function messagesDevice(): DeviceInstance | null {
   return familyFaceDevice(MESSAGES_ID, 'ai-kit', 'messages', 'Messages', 'contact')
 }
 
-const missing = (what: string, op: string, owner: string) => `${what}: no owner operation carries it yet — missing op: ${op} (${owner}).`
 const unread = (what: string, op: string, owner: string) => `${what}: no reading reaches it yet — missing op: ${op} (${owner}).`
 
 export const MESSAGES_REFUSE = {
-  /** Send with no agent of the population open: a message is addressed to a Position. */
-  send: 'Send: open an agent in the list first — a message goes to its Position (`aikit gateway send --to P`).',
+  /** Send with no agent open: your words go to the conversation its occupant works, or to your own with an unseated agent. */
+  send: 'Send: open an agent in the list first — your words are the next turn in the conversation it works.',
+  /** The open Position has no occupant: no session works there, so there is no conversation to send in. */
+  unseated: 'No agent occupies this Position, so no conversation works here to send in: seat an agent at it first.',
+  /** The occupant's session is not among the agency's sessions read. */
+  noSession: 'The session this agent works is not among the agency\'s sessions read here (`agency_read`), so its conversation cannot be opened.',
+  /** The agency's sessions not read yet. */
+  sessionsUnread: 'The agency\'s sessions have not been read yet (`agency_read`), so the conversation this agent works cannot be found.',
+  /** Input: the one send lands as the next turn. */
+  input: 'Input: your words are the next turn in the agent\'s conversation, taken when its owner takes a prompt (the one send, O-I ticket 1003); no steer into a running turn is carried there.',
   /** A drop that does not name everything `aikit gateway delegate` takes. */
   delegate: 'A message dragged onto a track: `aikit gateway delegate` takes the Communique, the work it becomes and why (--communique C --work W --reason R), and the drop did not name all three.',
   /** The groups while Central has not answered its agent-set listing. */
@@ -99,8 +97,15 @@ export const MESSAGES_REFUSE = {
    * dictation_transcribe; agent/useAgentVoice.ts), which needs the native kernel carrier. */
   voice: 'Voice: the kernel carrier is unavailable here, so its local dictation (dictation_probe, then dictation_transcribe) cannot be asked.',
   /** The conversation's session acts: a Position's journal names no session, so nothing here answers its proposals or stalls. */
-  conversation: missing('The conversation\'s session acts (Approve, Diff, Retry, Hard stop, Tell parent, a spawn\'s thread)', 'a session for the Position\'s conversation (`aikit gateway conversation` carries Communiques, not a session\'s turns)', 'AIKit'),
-  session: unread('The session\'s light and its last check-in', 'a session for the Position\'s conversation (`aikit gateway conversation` carries Communiques, not a session)', 'AIKit'),
+  conversation: 'The conversation\'s session acts (Approve, Diff, Retry, Hard stop, Tell parent, a spawn\'s thread) are the Agent\'s: open its Thread for them. Messages carries the conversation\'s words.',
+  /** The open conversation's light and last check-in with no agent open: both are the session its occupant works. */
+  session: 'The conversation\'s light and its last check-in are the session its occupant works: open an agent in the list first.',
+  /** The occupant's session observed, its connection state not reported yet. */
+  opening: 'The conversation this agent works is being opened.',
+  /** The session's needle: the agency's temporal reading names no check-in for it yet. */
+  checkIn: 'Its last check-in: the agency\'s temporal reading has not reached the session this agent works yet.',
+  /** Whether a change waits for your answer: the Arm's write mode, which no owner enforces on a session's writes yet. */
+  writes: unread('Whether its changes wait for you', 'write-arm enforcement on the session\'s writes (WO-SF2): proposals · direct', 'Software Factory'),
   types: unread('The agent types to choose from', 'a type on Central\'s agent profile (agent-profile.express takes none; the six families are the face rig\'s ontology, held by no owner)', 'Central'),
   skillsets: unread('The skillsets it may carry', 'AIKit\'s sets for the card through the kernel', 'AIKit'),
   worlds: unread('The worlds it may work in', 'the World refs AIKit\'s population names (`aikit gateway who`: local_world_ref, project_world_ref) — not read yet', 'AIKit'),
@@ -118,60 +123,34 @@ export const PERSON_ACTS = {express: 'agent-profile.express', review: 'agent-pro
 /** What each key no owner reports waits for. */
 export const MESSAGES_ABSENT: Readonly<Record<string, string>> = {
   types: MESSAGES_REFUSE.types, skillsets: MESSAGES_REFUSE.skillsets,
-  'conv.light': MESSAGES_REFUSE.session, 'conv.age': MESSAGES_REFUSE.session, 'conv.writes': MESSAGES_REFUSE.session,
+  'conv.writes': MESSAGES_REFUSE.writes,
 }
 
-/** The writes no owner carries, by key: the conversation's own controls (the Thread's Full under `conv.`, thread.tsx:8-17:
- * the proposal's and the stall's buttons, a spawn row's open). Send (`conv.sent`) and a drop onto a track (`delegate`) write
- * through AIKit's gateway (MessagesPorts.gateway); Voice (`conv.voice`) through the kernel's dictation (MessagesPorts.voice). */
+/** The writes no owner carries here, by key: the conversation's own controls (the Thread's Full under `conv.`, thread.tsx:8-17:
+ * the proposal's and the stall's buttons, a spawn row's open), and Input. Send (`conv.sent`) writes through the open agent's
+ * conversation (MessagesPorts.send), a drop onto a track (`delegate`) through AIKit's gateway (MessagesPorts.gateway), Voice
+ * (`conv.voice`) through the kernel's dictation (MessagesPorts.voice). */
 export const MESSAGES_REFUSED: Readonly<Record<string, string>> = {
   'conv.approve': MESSAGES_REFUSE.conversation, 'conv.diff': MESSAGES_REFUSE.conversation, 'conv.retry': MESSAGES_REFUSE.conversation,
   'conv.hardStop': MESSAGES_REFUSE.conversation, 'conv.tellParent': MESSAGES_REFUSE.conversation, 'conv.session': MESSAGES_REFUSE.conversation,
+  'conv.input': MESSAGES_REFUSE.input,
 }
 
 /** The shell's own keys, and the starting value of the ones the manual gives one (§19.24: Show All, Order Needs you; the conversation's
- * filters as the Thread starts them, §17.10; Input on Queue, where AIKit lands a Communique that names no handling — Input starts on Steer
- * instead where the gateway advertises it keeps one, inputDefaultOf). The rest start empty: the agent you open, the search, the draft, the
- * card's fields. */
+ * filters as the Thread starts them, §17.10; Input on Queue, where the one send lands). The rest start empty: the agent you open, the
+ * search, the draft, the card's fields. */
 export const MESSAGES_VIEW: Readonly<Record<string, Value>> = {show: 'both', order: 'need', 'conv.toolRows': 'lines', 'conv.subagents': 'linked', 'conv.messages': 'all',
   'conv.input': 'queue'}
-export const MESSAGES_LOCAL: readonly string[] = ['open', 'show', 'order', 'search', 'conv.draft', 'conv.toolRows', 'conv.subagents', 'conv.messages', 'conv.input',
+export const MESSAGES_LOCAL: readonly string[] = ['open', 'show', 'order', 'search', 'conv.draft', 'conv.toolRows', 'conv.subagents', 'conv.messages',
   'new.for', 'new.type', 'new.world', 'new.scope', 'new.carries', 'new.members']
 
-/** Where your words land while the agent works (the Thread's Input, AIKit's `--handling`): Steer only when it is chosen. */
-export const handlingOf = (input: Value | undefined): 'steer' | undefined => (input === 'steer' ? 'steer' : undefined)
-
-/** The gateway feature that keeps a steer as a steer (ai-kit PR 566 GATEWAY_FEATURE_COMMUNIQUE_HANDLING). */
-export const HANDLING_FEATURE = 'communique-handling'
-
-/** Whether the running gateway advertises that it keeps a steer, from its protocol answer (`aikit gateway protocol`: `{type: protocol,
- * features}`; a gateway that predates advertisement names none, and keeps none). Undefined while the answer is not read. Pure. */
-export function handlingAdvertisedOf(protocol: unknown): boolean | undefined {
-  if (!isObj(protocol) || protocol.type !== 'protocol') return undefined
-  return Array.isArray(protocol.features) && protocol.features.includes(HANDLING_FEATURE)
-}
-
-/** Where Input starts while the hand has not moved it (as Buzz starts on steer): Steer where the gateway advertises it keeps one, Queue
- * otherwise — a gateway that does not keep a steer refuses every one. Pure. */
-export const inputDefaultOf = (advertised: boolean | undefined): 'steer' | 'queue' => (advertised === true ? 'steer' : 'queue')
-
-/** The line you last sent and where it went (held by the hand once AIKit took it): the Position, your words, and the Communique AIKit's
- * send answered with, whose delivery says whether the agent heard it. */
-export const sentOf = (held: unknown): {to: string; words: string; ref?: string} | null => {
+/** The line you last sent and where it went (held by the hand once the conversation's owner took it): the Position and your words. */
+export const sentOf = (held: unknown): {to: string; words: string} | null => {
   if (typeof held !== 'string') return null
   try {
-    const sent = JSON.parse(held) as {to?: unknown; words?: unknown; ref?: unknown}
-    return typeof sent.to === 'string' && typeof sent.words === 'string'
-      ? {to: sent.to, words: sent.words, ...(typeof sent.ref === 'string' && sent.ref ? {ref: sent.ref} : {})} : null
+    const sent = JSON.parse(held) as {to?: unknown; words?: unknown}
+    return typeof sent.to === 'string' && typeof sent.words === 'string' ? {to: sent.to, words: sent.words} : null
   } catch { return null }
-}
-
-/** The Communique AIKit's send answered with (`aikit gateway send --json`: the route's reading carries `communique`, the record it
- * accepted), by its ref. Undefined when the answer names none. Pure. */
-export function communiqueRefOf(answer: unknown): string | undefined {
-  const data = isObj(answer) && 'data' in answer ? answer.data : answer
-  const record = isObj(data) && isObj(data.communique) ? data.communique : null
-  return record ? str(record.communique_ref) : undefined
 }
 
 /** The first line of an owner's words, clipped for a list row. */
@@ -246,61 +225,16 @@ export function positionRefs(population: unknown): string[] {
   return population.positions.flatMap(row => (isObj(row) && str(row.position_ref) ? [String(row.position_ref)] : []))
 }
 
-/** The open agent's conversation (useConversationAnswer.ts: the Communiques to and from its Position) as the Thread's rows
- * (thread.tsx:12-17): what its Position sent is the agent's, by its name; what another Position sent stands under that
- * Position's name. No Position stands for you, so no row is yours. The journal's order is kept. Each record AIKit has not yet carried
- * into work (its state is not `escalated`) carries its drag onto a track (O-I ticket 757, communiqueDrag), read against the population. */
-export function conversationRows(conversation: unknown, names: ReadonlyMap<string, string>, population?: unknown): Record<string, string>[] | null {
-  if (!isObj(conversation) || !str(conversation.position_ref) || !Array.isArray(conversation.communiques)) return null
-  const self = String(conversation.position_ref)
-  return conversation.communiques.flatMap((record): Record<string, string>[] => {
-    const body = isObj(record) ? record.body : undefined
-    if (!isObj(record) || typeof body !== 'string') return []
-    const from = str(record.from_position_ref)
-    const who = from ? names.get(from) ?? from : undefined
-    const drag = communiqueDrag(record, names, population)
-    return [{...(who ? {who} : {}), kind: from === self ? 'agent' : 'text', text: body, ...(drag ? {drag: JSON.stringify(drag)} : {})}]
-  })
-}
-
-/** An agent of your roster that stands at no Position: spoken to directly (useAgentConversation.ts), not through a Position's journal. */
+/** An agent of your roster that stands at no Position (§19.24): its conversation is its own (the kernel's agent_conversation, made by
+ * the one provision), observed and sent in through the one encounter session like an occupant's (O-I ticket 1003). */
 export const isRosterAgent = (id: unknown): id is string => typeof id === 'string' && id.startsWith('agent:')
 
-/** AIKit's transcript view of a direct conversation (`aikit.encounter-view/v1` blocks) as the Thread's rows: your turns as yours, the
- * agent's answers under its name, its tools as tool rows. Blocks of other kinds (the turn's close) carry no words of the conversation. */
-export function chatRows(view: unknown, name: string): Record<string, string>[] | null {
-  if (!isObj(view) || !Array.isArray(view.blocks)) return null
-  return view.blocks.flatMap((block): Record<string, string>[] => {
-    if (!isObj(block) || typeof block.text !== 'string' || !block.text.trim()) return []
-    const kind = str(block.kind)
-    if (kind === 'user') return [{who: 'you', kind: 'you', text: block.text}]
-    if (kind === 'assistant') return [{who: name, kind: 'agent', text: block.text}]
-    if (kind?.startsWith('tool')) return [{who: 'tool', kind: 'tool', text: block.text}]
-    return []
-  })
-}
-
-/** The agent standing at a Position: its occupant, else the agent the population places there (as messagesAgents reads it). */
-function agentAt(positionRef: string, population: unknown): string | undefined {
+/** The agent that occupies a Position, by its agent ref (the population's occupancy): the agent whose session is the Position's
+ * conversation. Undefined where the Position is vacant or not in the reading. Pure. */
+export function occupantOf(population: unknown, positionRef: string): string | undefined {
   if (!isObj(population) || !Array.isArray(population.positions)) return undefined
   const row = population.positions.find(item => isObj(item) && item.position_ref === positionRef)
-  const occupant = isObj(row) && isObj(row.occupancy) ? str(row.occupancy.agent_ref) : undefined
-  if (occupant) return occupant
-  const agents = Array.isArray(population.agents) ? population.agents.filter(isObj) : []
-  return str(agents.find(item => Array.isArray(item.positions) && item.positions.includes(positionRef))?.agent_ref)
-}
-
-/** The drag a message carries onto a track (§19.24 Rules: "To turn one into work, drag it onto the agent's track, and the agent takes it
- * as a task with a receipt"; O-I ticket 757, DLW build ruling 2026-11-05): the agent's track makes a new task of it and Messages records the
- * turning (`aikit gateway delegate`, which gives the Position the message went to custody of that task), so the drag names that Position,
- * the agent standing there (the track that may take it) and the message's words, the new task's purpose. A record with no ref, no
- * recipient or no words, or already carried into work (escalated: AIKit refuses a second custody), carries none. Pure. */
-export function communiqueDrag(record: Obj, names: ReadonlyMap<string, string>, population: unknown): CommuniqueDrag | null {
-  const communique = str(record.communique_ref), to = str(record.to_position_ref)
-  const concern = typeof record.body === 'string' ? firstLine(record.body) : ''
-  if (!communique || !to || !concern || record.state === 'escalated') return null
-  const name = names.get(to) ?? to, agent = agentAt(to, population)
-  return {schema: COMMUNIQUE_DRAG_SCHEMA, communique, to, name, ...(agent ? {agent} : {}), concern}
+  return isObj(row) && isObj(row.occupancy) && row.occupancy.state === 'occupied' ? str(row.occupancy.agent_ref) : undefined
 }
 
 /** The messages that wait across the Positions: the Agency gateway's inbox (§19.10 Inbox, "Read from the gateway"). */
@@ -411,10 +345,12 @@ export interface MessagesInput {
   readonly population: WorkcellAnswer
   /** The Agency gateway's answer to harness_agent_read (the chain's gateway reading). */
   readonly gateway: Pick<AgentChainReading, 'gatewayAdmitted' | 'gatewayDoc'>
-  /** The open agent's conversation (useConversationAnswer.ts), read while an agent is open; absent, none is read. */
-  readonly conversation?: WorkcellAnswer
-  /** The direct conversation with the open agent of your roster (useAgentConversation.ts), while one is open. */
-  readonly chat?: {readonly agent: string; readonly status: 'reading' | 'answered' | 'refused'; readonly view?: unknown; readonly error?: string} | null
+  /** The open agent's conversation (O-I ticket 1003): the session its occupant works, as the one encounter session observes it, with the
+   * agent's name; `why` where there is none to observe (a vacant Position, a session not read, a refused observer). Absent: no agent
+   * is open. */
+  readonly conversation?: {readonly agent: string | null; readonly reading?: EncounterReading; readonly status?: EncounterStatus; readonly why?: string
+    /** Seconds since the session's last check-in (its track's needle on the agency's temporal reading); -1 read and none. */
+    readonly age?: number}
   /** Central's review of the agent profile Make wrote (agent-profile.review through invoke_action), read while one is held. */
   readonly review?: {readonly status: 'reading' | 'answered' | 'refused'; readonly value?: unknown; readonly error?: string}
   /** The run state of the session each agent works, by its agent ref (runFaces.ts runStateOfSession over the agency reading's tracks). */
@@ -423,11 +359,6 @@ export interface MessagesInput {
   readonly project?: string
   /** The profiles Central has accepted, by profile ref (agent-profile.roster `accepted`): an agent you made stands proposed until then. */
   readonly accepted?: ReadonlySet<string>
-  /** Whether the running gateway advertises that it keeps a steer (handlingAdvertisedOf over `aikit gateway protocol`); undefined
-   * while unread. Input starts by it. */
-  readonly handlingAdvertised?: boolean
-  /** AIKit's desk read of the Communique you last sent (`aikit gateway heard C`), by its ref; absent while none is sent or read. */
-  readonly heard?: {readonly ref: string; readonly status: 'reading' | 'answered' | 'refused'; readonly value?: unknown; readonly error?: string}
   /** Central's agent-set listings (`central.agent-set.list {scope}`), root and the project's, as the window holds them. Absent: not read. */
   readonly agentSets?: readonly {readonly scope: 'root' | 'project'; readonly answer: {readonly status: 'reading'} | {readonly status: 'answered'; readonly value: unknown} | {readonly status: 'refused'; readonly error: string}}[]
   readonly holds: ChainHolds
@@ -441,8 +372,11 @@ export interface MessagesPorts {
   readonly page?: () => string | null
   /** A fresh suffix for a group's ref (Central's propose takes the ref from its caller). */
   readonly suffix?: () => string
-  /** AIKit's gateway writes through the kernel's route (ownerRoutes.ts gateway_write): resolves with AIKit's reading or rejects with its
-   * words. Absent: no carrier stands. */
+  /** The one send (O-I ticket 1003): your words as the next turn in the conversation the Position's occupant works (session.ts `submit`);
+   * rejects in the owner's words, or when the Position is not the one whose conversation is observed. Absent: none is observed. */
+  readonly send?: (position: string, words: string) => Promise<void>
+  /** AIKit's gateway writes, its Actions through the kernel's act (ownerRoutes.ts gatewayWriteOp): resolves with AIKit's reading or rejects
+   * with its words. Absent: no carrier stands. */
   readonly gateway?: (request: GatewayWriteRequest) => Promise<unknown>
   /** Your words to the open roster agent's direct conversation (AIKit's encounter draft, then its prompt). Absent: no carrier stands. */
   readonly chat?: (words: string) => Promise<void>
@@ -471,8 +405,8 @@ export function messagesValues(input: MessagesInput): Values {
   for (const key of MESSAGES_LOCAL) { const held = view[key] ?? MESSAGES_VIEW[key]; if (held !== undefined) values[key] = held }
   // Voice: listening while the hand holds it on (the composer draws the wave), off otherwise.
   values['conv.voice'] = view['conv.voice'] === true
-  // Input starts where the running gateway can land the words, until the hand moves it.
-  if (view['conv.input'] === undefined) values['conv.input'] = inputDefaultOf(input.handlingAdvertised)
+  // Input stands at Queue: the one send is the conversation's next turn.
+  values['conv.input'] = 'queue'
   const known = input.population.status === 'answered' ? input.population.value : null
   const listed = known ? messagesAgents(known, input.accepted) : null
   // An occupied agent stands in the state of the session its occupant works (runFaces.ts): working, waiting on you, stalled; none read, absent.
@@ -487,18 +421,16 @@ export function messagesValues(input: MessagesInput): Values {
   }) ?? null
   // The open agent carries its conversation, as the design reads it (`thread` on the agent, laid under `conv.`), and its last line.
   const open = typeof values.open === 'string' ? values.open : undefined
-  // The line you sent to the open agent, which its journal rows never hold (no Position stands for you).
+  // The line you sent to the open agent: the Thread draws it queued until the conversation's own rows hold it.
   const sent = sentOf(view.sent)
-  if (open && sent?.to === open) {
-    values['conv.sent'] = sent.words
-    // Heard: AIKit's delivery standing of that one Communique, read by the ref its send answered.
-    const heard = input.heard
-    if (sent.ref && heard?.ref === sent.ref && heard.status === 'answered' && isObj(heard.value) && typeof heard.value.heard === 'boolean') values['conv.heard'] = heard.value.heard
-  }
-  const openName = String((agents ?? []).find(agent => agent.id === open)?.name ?? open ?? '')
-  const said = open && input.conversation?.status === 'answered' && isObj(input.conversation.value) && input.conversation.value.position_ref === open
-    ? conversationRows(input.conversation.value, new Map((agents ?? []).map(agent => [String(agent.id), String(agent.name)])), known)
-    : isRosterAgent(open) && input.chat?.agent === open && input.chat.view !== undefined ? chatRows(input.chat.view, openName) : null
+  if (open && sent?.to === open) values['conv.sent'] = sent.words
+  // The open agent's conversation: the session its occupant works, as the Thread's rows.
+  // Who answers: the occupant's name, else the open agent's own (an agent of your roster at no Position).
+  const who = input.conversation?.agent ?? (open ? (agents ?? []).find(agent => agent.id === open)?.name : undefined)
+  const said = open && input.conversation?.reading ? threadRowsOf(input.conversation.reading, input.conversation.status, typeof who === 'string' ? who : null) : null
+  // Its light (the owner's connection state, as the Thread reads it) and its last check-in (its track's needle), while one is observed.
+  if (open && input.conversation?.status) values['conv.light'] = threadLight(input.conversation.status)
+  if (open && typeof input.conversation?.age === 'number') values['conv.age'] = input.conversation.age
   if (agents) values.agents = JSON.stringify(said ? agents.map(agent => agent.id !== open ? agent
     : {...agent, thread: said, ...(said.length ? {last: firstLine(said[said.length - 1]!.text!)} : {})}) : agents)
   // The Agency gateway's mark: Ready when it answered the read (it carried it, whatever the harness said), Refused when it did not.
@@ -540,9 +472,8 @@ export function messagesBinding(input: MessagesInput, ports: MessagesPorts = {})
     const refused = (input.agentSets ?? []).flatMap(set => (set.answer.status === 'refused' ? [set.answer.error] : []))
     standing.groups = {disabled: refused.length ? [...new Set(refused)].join(' ') : MESSAGES_REFUSE.team}
   }
-  // The open agent's conversation, when it is not read: why, in the owner's words.
-  if (input.conversation?.status === 'refused' && input.conversation.error) standing.thread = {disabled: input.conversation.error}
-  if (input.chat && input.chat.agent === values.open && input.chat.status === 'refused' && input.chat.error) standing.thread = {disabled: input.chat.error}
+  // The open agent's conversation, when there is none to observe: why.
+  if (input.conversation?.why) standing.thread = {disabled: input.conversation.why}
   // The card's acts: Make while a carrier stands; Accept and Discard on the proposal Make wrote, once Central has reviewed it.
   const review = made?.kind === 'agent' ? input.review : undefined
   const reviewWhy = made?.kind === 'agent' && review?.status !== 'answered' ? review?.status === 'refused' && review.error ? review.error : 'Central has not answered the review of the proposal yet (agent-profile.review).' : null
@@ -552,19 +483,17 @@ export function messagesBinding(input: MessagesInput, ports: MessagesPorts = {})
     else if (reviewWhy) standing.accept = {disabled: reviewWhy}
   }
   if (!('proposal' in values) && made && !view.editing) standing.proposal = {disabled: reviewWhy ?? MESSAGES_REFUSE.noProposal}
-  // Send: to the open agent's Position, while a carrier stands; a drop onto a track names its own Communique, so only the carrier gates it.
+  // Send: into the open agent's conversation, while one is observed; a drop onto a track names its own Communique, so only the carrier
+  // gates it.
   const positions = positionRefs(known)
   if (!ports.voice) standing['conv.voice'] = {disabled: MESSAGES_REFUSE.voice}
+  const unopened = typeof values.open !== 'string' || !(positions.includes(values.open) || isRosterAgent(values.open))
+  if (unopened) standing['conv.sent'] = {disabled: MESSAGES_REFUSE.send}
+  else if (!ports.send) standing['conv.sent'] = {disabled: input.conversation?.why ?? (ports.gateway ? MESSAGES_REFUSE.opening : MESSAGES_REFUSE.noCarrier)}
+  // The conversation's light and last check-in: the session its occupant works, or why it is not read.
+  for (const [key, waits] of [['conv.light', MESSAGES_REFUSE.opening], ['conv.age', MESSAGES_REFUSE.checkIn]] as const)
+    if (!(key in values)) standing[key] = {disabled: unopened ? MESSAGES_REFUSE.session : input.conversation?.why ?? waits}
   if (!ports.gateway) for (const key of ['delegate', 'service']) standing[key] = {disabled: MESSAGES_REFUSE.noCarrier}
-  if (!ports.gateway && !(isRosterAgent(values.open) && ports.chat)) standing['conv.sent'] = {disabled: MESSAGES_REFUSE.noCarrier}
-  else if (typeof values.open !== 'string' || !(positions.includes(values.open) || (isRosterAgent(values.open) && ports.chat))) standing['conv.sent'] = {disabled: MESSAGES_REFUSE.send}
-  // Heard, where it has no reading: AIKit's send named no Communique, or its desk read refused (in its words), or it is being read.
-  const line = sentOf(view.sent)
-  if (line && line.to === values.open && !('conv.heard' in values)) {
-    standing['conv.heard'] = {disabled: !line.ref ? 'Whether the agent heard it: AIKit\'s send answered no Communique ref, so there is none to read (`aikit gateway heard`).'
-      : input.heard?.ref === line.ref && input.heard.status === 'refused' ? input.heard.error ?? 'AIKit refused the heard read.'
-      : 'Whether the agent heard it: AIKit has not answered its read of the Communique yet (`aikit gateway heard`).'}
-  }
 
   const hold = (made: Made | null) => { holdView(MESSAGES_ID, 'made', made ? JSON.stringify(made) : undefined); holdView(MESSAGES_ID, 'editing', undefined) }
   const act = async (action: string, body: Readonly<Record<string, unknown>>) => { if (!ports.act) throw Error(MESSAGES_REFUSE.noCarrier); return ports.act(action, body) }
@@ -641,19 +570,15 @@ export function messagesBinding(input: MessagesInput, ports: MessagesPorts = {})
     await act(PERSON_ACTS.remove, {...scopeInput(made), profile_ref: made.ref, expected_revision: String(reviewed?.revision ?? made.revision)})
     hold(null)
   }
-  /** Send: your words to the Position of the agent open when you press (`aikit gateway send`), landing as Input says; AIKit's refusal is
-   * its own words. Once AIKit took them, the line stands in the conversation. */
+  /** Send: your words as the next turn in the conversation of the agent open when you press (the one send, O-I ticket 1003); the owner's
+   * refusal is its own words. Once the owner took them, the line stands in the conversation until its rows hold it. */
   const send = async (words: Value | undefined) => {
     if (typeof words !== 'string' || !words.trim()) throw Error('Send: write the message first.')
-    const held = pressed(), open = held.open
-    // An agent of your roster at no Position: your words go straight into its conversation (AIKit's encounter), and its answer lands there.
-    if (isRosterAgent(open) && !positions.includes(open) && ports.chat) { await ports.chat(words.trim()); return }
-    if (!ports.gateway) throw Error(MESSAGES_REFUSE.noCarrier)
-    if (typeof open !== 'string' || !positions.includes(open)) throw Error(MESSAGES_REFUSE.send)
-    const handling = handlingOf(held['conv.input'] ?? inputDefaultOf(input.handlingAdvertised))
-    const answer = await ports.gateway({kind: 'send', ...(project ? {project} : {}), to: open, body: words, ...(handling ? {handling} : {})})
-    const ref = communiqueRefOf(answer)
-    holdView(MESSAGES_ID, 'sent', JSON.stringify({to: open, words: words.trim(), ...(ref ? {ref} : {})}))
+    const open = pressed().open
+    if (typeof open !== 'string' || !(positions.includes(open) || isRosterAgent(open))) throw Error(MESSAGES_REFUSE.send)
+    if (!ports.send) throw Error(input.conversation?.why ?? MESSAGES_REFUSE.noCarrier)
+    await ports.send(open, words)
+    holdView(MESSAGES_ID, 'sent', JSON.stringify({to: open, words: words.trim()}))
   }
   /** Voice: on arms the kernel's dictation; off ends it and lands the transcript after the draft, editable and unsent. A refused
    * dictation rejects in its own words and nothing lands. */
@@ -700,7 +625,7 @@ export function messagesBinding(input: MessagesInput, ports: MessagesPorts = {})
       // Change: back to the card's fields, the proposal still held; Make then saves the change.
       proposal: value => { if (value === undefined && made) holdView(MESSAGES_ID, 'editing', true) },
     },
-    writes: key => key in MESSAGES_REFUSED || key.startsWith('conv.') || key === 'delegate' || key === 'service' || key === 'make' || key === 'accept' || key === 'discard',
+    writes: key => key !== 'conv.light' && key !== 'conv.age' && (key in MESSAGES_REFUSED || key.startsWith('conv.')) || key === 'delegate' || key === 'service' || key === 'make' || key === 'accept' || key === 'discard',
     write: async (changes: readonly ValueChange[]) => {
       for (const {key, value} of changes) {
         if (key === 'conv.sent') { await send(value); continue }

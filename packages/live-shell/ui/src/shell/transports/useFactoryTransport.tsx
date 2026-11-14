@@ -5,13 +5,13 @@
 // session), every light comes from the reading the old bar lit it from, and a control with no owner call stays unbound.
 //
 // Lights and presses (the old bar's line is named on each binding below):
-//  - Run and Stop send `harness_agent_control` (resume, stop) on the bound harness — agent/harnessAgentControl.ts.
+//  - Run and Stop send AIKit's `aikit.gateway.agent` (resume, stop) on the bound harness — agent/harnessAgentControl.ts.
 //  - Effort, Heartbeat, Interrupt timing, Steer and Write arm go through the registered shell setters
 //    (inhabitants/sdk/shellSetters.ts, registered by agent/shellSetterBridge.ts) and carry the setter's receipt.
 //  - Voice is the dictation session (agent/useAgentVoice.ts); Tap, Capture, Follow, Hand back and Routine are the agent
 //    shell's own state (agent/AgentShellContext.tsx).
 // The note line the old bar drew under the bar (receipt, voice, capture, tap) becomes each slot's title.
-import {useContext, useRef, useState} from 'react'
+import {useContext, useMemo, useRef, useState} from 'react'
 import type {DictationSession} from '../../../../../../desktop/cradle/src/dictation/client'
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {AGENT_TRANSPORT_TIPS} from '../../agent/agentFidelity'
@@ -21,7 +21,8 @@ import {trackKey} from '../../agent/agentRunModel'
 import {harnessAgentControl} from '../../agent/harnessAgentControl'
 import {useAgentMetrics} from '../../agent/useAgentMetrics'
 import {startAgentVoice, stopAgentVoice} from '../../agent/useAgentVoice'
-import {useHarnessBinding} from '../../agent/useHarnessBinding'
+import {gatewayBindingIn} from '../../inhabitants/agentParamAddresses'
+import {sliceValue, useModelSlice} from '../../owners/model'
 import {useShellSetterBridge} from '../../agent/shellSetterBridge'
 import {useOwnerAccepted} from '../../agent/devices/ownerAccepted'
 import {handBackSlot, useHandBack} from '../../agent/devices/sessionCustody'
@@ -65,7 +66,10 @@ export const useFactoryTransport: UseModeTransport = ({readouts}) => {
   // Re-enable is Hand back, as Live's Re-enable Automation is (DLW build ruling 2026-11-05): the selected session's custody listing lights
   // it and its press gives back through Factory's custody hold (agent/devices/sessionCustody.ts), never the shell's own flag.
   const handBack = useHandBack(transport, track)
-  const {binding} = useHarnessBinding(transport)
+  // The binding AIKit's gateway names, as the World Model's sessions slice holds it (the Gateway's declared binding); until it names one,
+  // 'cursor' is only the shell's default.
+  const sessionsSlice = useModelSlice(transport, 'sessions')
+  const binding = useMemo(() => { const held = sliceValue(sessionsSlice); return (held.ok ? gatewayBindingIn(held.value) : null) ?? 'cursor' }, [sessionsSlice])
   // A light or a value is the owner's reading (R2 objection 7): what the harness accepted, never the shell's own flag.
   const accepted = useOwnerAccepted(binding)
   // The bar mounts the setters' registration (AgentShellTransport.tsx:74): without it the effort, steer, quantize, heartbeat and

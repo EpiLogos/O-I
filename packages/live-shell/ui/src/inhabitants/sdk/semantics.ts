@@ -36,8 +36,22 @@ export function isLiveSemantic(candidate: unknown): candidate is LiveSemantic {
  * (the shell's own armed setters), or `<tool>:<command>` (a native owner's
  * CLI — `workcell-cli:git commit`). Anything else is not a path an owner
  * stands behind. */
+/** `act:<id>`: the Action a control invokes, by its registry id (docs/architecture/world-shell.md §9.2 layer 5: the SDK's writePath
+ * is an Action id; O-I #1002). The kernel's `act` runs it, the same id an agent runs through `oi act invoke`. */
+export const ACTION_WRITE_PATH = /^act:[a-z][a-z0-9-]*(?:\.[a-z0-9][a-z0-9_-]*)+$/
+
+/** The registry's owner prefixes an Action id stands under (the kernel's action.rs CENTRAL_NAMESPACES and REGISTRY_OWNERS). */
+export const ACTION_OWNER_PREFIXES = ['central.', 'projectcentral.', 'agent-profile.', 'control.', 'machine.', 'work.', 'personal.',
+  'aikit.', 'factory.', 'workcell.', 'actuation.', 'ql.'] as const
+
+/** Whether an `act:` path names an id under one of the registry's owners. */
+export function isActionId(id: string): boolean {
+  return ACTION_OWNER_PREFIXES.some(prefix => id.startsWith(prefix) && id.length > prefix.length)
+}
+
 export function isWritePath(candidate: string): boolean {
   if (/^kernel:[a-z][a-z0-9_]*$/.test(candidate)) return true
+  if (ACTION_WRITE_PATH.test(candidate)) return true
   if (/^shell\.[a-z][a-zA-Z0-9]*$/.test(candidate)) return true
   return /^[a-z][a-z0-9-]*:[a-z][a-z0-9-]*(?:[ ][\w./-]+)*$/.test(candidate)
 }

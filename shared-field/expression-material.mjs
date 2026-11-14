@@ -3,7 +3,7 @@
  * Native original/config, live-world receipts, tools and unknown extensions
  * never travel. The author explicitly selects scene material before admission.
  */
-import {validateJourney} from '../packages/oi-design-system/expressions-engine/shell/model.mjs';
+import {validateJourney} from '../desktop/cradle/expressions-app/field-studies-journeys/src/model.ts';
 
 const scalar = null;
 const vec = {x: scalar, y: scalar, z: scalar};

@@ -14,7 +14,7 @@
  */
 import {kernelOp} from "../../../kernel/bridge";
 import type {KernelTransportStatus} from "../../../kernel/types";
-import {composeAddressed} from "../../../encounter/AddressedComposer";
+import {encounterSessionOf} from "../../../encounter/session";
 import type {Change, ExpressionDocument} from "../../../expression/types";
 import {decodeBasis, type Binding, type OpBasis} from "./eventMap";
 import type {ActBinding, WorldAct} from "../../../expression/world";
@@ -140,12 +140,11 @@ export function communicationOf(performed: PerformedPassage[], agentRef: string,
 // ---------------------------------------------------------------------------
 
 /** Address an agent (a message, or a request to invoke one of its selected
- * capabilities) through the conversation's addressed-request composer — the
- * owner's AddressedTurn `send` path, where sender, audience and the
- * participation basis stay explicit, owner-validated inputs. The session's
- * shared draft is never touched. The caller then opens the conversation. */
-export function addressAgent(session: string, sourceRef: string, text: string): void {
-  composeAddressed({agentSession: session, sourceRef, text});
+ * capabilities): the words are put in its conversation's draft through the one
+ * session (session.ts `compose`; O-I #1003), for the person to send there. The
+ * caller then opens the conversation. */
+export async function addressAgent(transport: KernelTransportStatus, binding: {project: string; ref: string; space?: string}, text: string): Promise<void> {
+  await encounterSessionOf(transport, binding).compose(text);
 }
 
 /** The owner's action request as the Run page states it (RunPage `invoke`):

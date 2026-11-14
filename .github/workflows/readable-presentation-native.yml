@@ -92,12 +92,6 @@ jobs:
           set -euo pipefail
           npm ci --prefix desktop/cradle --no-audit --no-fund \
             2>&1 | tee "$RUNNER_TEMP/readable-native-evidence/frontend-dependencies.log"
-          # The design-system declares Three as a peer and has no separate lock.
-          # Supply that peer at its source resolution path from the cradle lock.
-          native_three_version=$(node -p "require('./desktop/cradle/package-lock.json').packages['node_modules/three'].version")
-          test "$native_three_version" = "$(node -p "require('./desktop/cradle/package.json').dependencies.three")"
-          npm install --prefix packages/oi-design-system --no-save --package-lock=false --no-audit --no-fund "three@$native_three_version" \
-            2>&1 | tee "$RUNNER_TEMP/readable-native-evidence/design-system-dependencies.log"
           npm --prefix desktop/cradle run build \
             2>&1 | tee "$RUNNER_TEMP/readable-native-evidence/frontend-build.log"
       - name: Prove native source, library, context and account readability

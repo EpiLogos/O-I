@@ -25,9 +25,8 @@
 //! with no advance, `changed: false`, `already-applied`) records no receipt.
 //! The ordered arms in lib.rs `apply` run these same steps under the lock.
 use crate::{
-    action, agency, agent_prepared::PreparedWorld, central, configuration, credentials,
-    events::KernelEvent, factory, files, flow::ReceivingRequest, owner_read, CentralClient,
-    HarnessAgentControl, Kernel, KernelOp, KernelOpOutcome, KernelOpResult,
+    action, agency, agent_prepared::PreparedWorld, configuration, credentials, events::KernelEvent,
+    factory, files, owner_read, CentralClient, Kernel, KernelOp, KernelOpOutcome, KernelOpResult,
 };
 use serde_json::Value;
 use std::path::PathBuf;
@@ -36,6 +35,8 @@ use std::path::PathBuf;
 pub struct PreparedWrite {
     client: CentralClient,
     agency: agency::Client,
+    /// The agent reads' retained scopes: a conversation's place resolves as its reads resolve it (agent_prepared.rs `place_of`).
+    reads: std::sync::Arc<std::sync::Mutex<crate::read_cache::OwnerReadCache>>,
     world: PreparedWorld,
     op: KernelOp,
 }
@@ -91,11 +92,21 @@ fn reads_only(client: &CentralClient, op: &KernelOp) -> bool {
 }
 
 impl PreparedWrite {
+    /// Where a conversation this write provisions is held: the root World's root, or a named Project's place
+    /// (agent_prepared.rs `place_of`, as the conversation's reads resolve it).
+    fn place(&self, project: &str) -> Result<crate::agent_prepared::Place, String> {
+        crate::agent_prepared::place_of(
+            &self.client,
+            &self.agency,
+            &self.reads,
+            &self.world.read()?,
+            project,
+        )
+    }
+
     /// Whether `op` is an owner write with a prepared form.
     pub(crate) fn claims(op: &KernelOp) -> bool {
         match op {
-            KernelOp::Receiving { request, .. } => receiving_write(request),
-            KernelOp::Central { request, .. } => central_write(request),
             KernelOp::FactoryOwner { request, .. } => !request.is_read(),
             KernelOp::Page { request, .. } => request.is_write(),
             KernelOp::NaraJourney { request } => request.is_write(),
@@ -123,18 +134,14 @@ impl PreparedWrite {
             | KernelOp::ProfileEdit { .. }
             | KernelOp::InstanceCommission { .. }
             | KernelOp::EncounterProvision { .. }
-            | KernelOp::FlowParticipantProvision { .. }
             | KernelOp::AgentConversation { .. }
-            | KernelOp::HarnessAgentControl { .. }
             | KernelOp::HarnessIngressRule { .. }
-            | KernelOp::FileOperation { .. }
             | KernelOp::Routine { .. } => true,
             // Lane W3 (T-COVERAGE §1.2): the owner routes that write
             // (owner_routes.rs). A team `read` is a prepared read.
             KernelOp::GatewayTeam { request } => !request.is_read(),
-            KernelOp::GatewayWrite { .. }
+            KernelOp::GatewayService { .. }
             | KernelOp::WorkcellWrite { .. }
-            | KernelOp::SeatWrite { .. }
             | KernelOp::ActuationWrite { .. }
             | KernelOp::AikitWrite { .. } => true,
             // Lane AK: a new world's Day form and the person's key, kept by
@@ -152,24 +159,20 @@ impl PreparedWrite {
     /// one reading); the others need none and read none.
     fn needs_world(op: &KernelOp) -> bool {
         match op {
-            KernelOp::Receiving { project, .. } => project.is_some(),
             // Factory's unit decisions name Central's root (lane W3).
             KernelOp::FactoryOwner { request, .. } => request.needs_world(),
             // Lane W3: an AIKit route runs from Central's disclosed ground;
             // Workcell and the seat instrument need none.
-            KernelOp::GatewayWrite { request } => request.project().is_some(),
             KernelOp::GatewayTeam { request } => request.project.is_some(),
             KernelOp::AikitWrite { request } => request.project().is_some(),
             KernelOp::WorkcellWrite { .. }
-            | KernelOp::SeatWrite { .. }
+            | KernelOp::GatewayService { .. }
             | KernelOp::ActuationWrite { .. }
             | KernelOp::GroundForm { .. }
             | KernelOp::GroundMusic { .. }
             | KernelOp::GroundAuthority { .. } => false,
             KernelOp::Central { .. }
-            | KernelOp::HarnessAgentControl { .. }
             | KernelOp::HarnessIngressRule { .. }
-            | KernelOp::FileOperation { .. }
             | KernelOp::Page { .. }
             | KernelOp::NaraJourney { .. } => false,
             _ => true,
@@ -207,76 +210,6 @@ impl PreparedWrite {
 
     fn write(&self, records: &mut Vec<Record>) -> Result<KernelOpResult, String> {
         Ok(match &self.op {
-            KernelOp::Receiving {
-                project,
-                request,
-                channel,
-            } => {
-                // The person's own acts on a document (an authored field, a
-                // review, an inclusion, a recovery, an agent's answer the
-                // person carries in, naming its producer) carry the person's
-                // native authority, by the shell window's channel alone; by a
-                // wire they are refused in words before Central is asked
-                // (O-I #747 round 896, 0R-authority.1). A producer's own
-                // submission never carries it.
-                let client = if receiving_person_act(request) {
-                    self.client.for_person_act(request.action(), *channel)?
-                } else {
-                    self.client.without_person()
-                };
-                if let Some(project) = project {
-                    owner_read::disclosed(&self.world.read()?, project)?;
-                }
-                let data = client
-                    .receiving(project.as_deref(), request)
-                    .map_err(|e| e.to_string())?;
-                if moved(&data) {
-                    records.push(Record::Event(Box::new(KernelEvent::ReceivingChanged {
-                        owner: CENTRAL.into(),
-                        action: request.action().into(),
-                        project: project.clone(),
-                        reference: receiving_ref(request, &data, project.as_deref()),
-                        revision: owner_revision(&data),
-                    })));
-                    records.push(Record::RetireTemporal);
-                }
-                KernelOpResult::ReceivingReading { data }
-            }
-            KernelOp::Central {
-                project,
-                request,
-                channel,
-            } => {
-                let (action, requested) = match request {
-                    central::Request::EnsureDay { .. } => ("central.day.ensure", None),
-                    central::Request::InitialiseDay { day_ref, .. } => {
-                        ("central.document.create", Some(day_ref.as_str()))
-                    }
-                    central::Request::CloseDay { day_ref, .. } => {
-                        ("central.day.lifecycle", Some(day_ref.as_str()))
-                    }
-                    _ => unreachable!("only Central's Day writes are prepared writes"),
-                };
-                // Ensuring, making and closing a Day are the person's presses
-                // (Open today, Close now): they carry the person's native
-                // authority by the shell window's channel alone, and by a wire
-                // are refused in words (O-I #747 round 896, 0R-authority.1).
-                let person = self.client.for_person_act(action, *channel)?;
-                let data = central::operate(&person, project.as_deref(), request)?;
-                if moved(&data) {
-                    records.push(Record::Event(Box::new(KernelEvent::DayChanged {
-                        owner: CENTRAL.into(),
-                        action: action.into(),
-                        project: project.clone(),
-                        reference: answer_ref(&data, &["day_ref"])
-                            .or(requested.map(str::to_owned))
-                            .unwrap_or_else(|| register(project.as_deref())),
-                        revision: owner_revision(&data),
-                    })));
-                    records.push(Record::RetireTemporal);
-                }
-                KernelOpResult::CentralReading { data }
-            }
             KernelOp::FactoryOwner { request, channel } => {
                 // Factory's acts that present the person's authority (a Run's close, a Return received, a unit retried, stopped or
                 // launched, a pad, a preset, a rack's macros, a hold, a plan, a task offered at a star: `OwnerRequest::person_act`)
@@ -344,13 +277,65 @@ impl PreparedWrite {
                 // moves, accepting a returned source, making and keeping an agent — action.rs PERSON_ACTS, its test holding the list),
                 // and only by the shell's human-press channel (O-I #747 round 895, DLW build ruling 2026-11-09, an addition to 0b.2): a
                 // person act that came by a wire is refused in words before anything is read or asked, and every other Action goes on
-                // no one's token. The rule is flow.rs's `CentralClient::for_act`, which expression.rs keeps too.
-                let client = self.client.for_act(&invocation.action, *channel)?;
+                // no one's token. The rule is flow.rs's `CentralClient::for_act` (by what the invocation carries, `for_invocation`),
+                // which expression.rs keeps too.
+                let client = self.client.for_invocation(invocation, *channel)?;
+                // A page saved or restored through Central is the desktop person's act, so the save names them when it names no
+                // other actor, as every desktop save did (files.rs `operate`): attribution, not authority.
+                let attributed = files::attributed(invocation);
+                let invocation = attributed.as_ref().unwrap_or(invocation);
                 // Central discloses the scope, exactly as the Knowledge/Graph
                 // reads: renderer-supplied paths never become invocation context.
-                let world = self.world.read()?;
-                let cwd = crate::agent_prepared::location(&world, project.as_deref())?;
-                let dispatch = action::invoke(&client, &cwd, project.as_deref(), invocation);
+                let mut placed = None;
+                let cwd = if action::registry_action(&invocation.action) && project.is_none() {
+                    // Another owner's Action in the root register runs where the World is, else here: it needs nothing of Central's
+                    // but the place, so a Central that cannot disclose its World does not stop a seat or a session.
+                    self.root_or_cwd()?
+                } else if let Some(name) = project
+                    .as_deref()
+                    .filter(|_| action::registry_action(&invocation.action))
+                    .filter(|_| action::registry_takes(&invocation.action, "project_world"))
+                    .filter(|_| {
+                        invocation
+                            .input
+                            .as_ref()
+                            .is_none_or(|input| input["project_world"].is_null())
+                    })
+                {
+                    // An Action that takes a Project World (AIKit's send, `--project-world`) names the project's canonical one,
+                    // as Central binds it, when the input names none: `project:<ProjectRef>` (owner_read.rs `project_ground`).
+                    let (cwd, project_ref) =
+                        owner_read::project_ground(&self.client, &self.world.read()?, name)?;
+                    let mut input = invocation
+                        .input
+                        .clone()
+                        .unwrap_or_else(|| Value::Object(Default::default()));
+                    input["project_world"] = Value::String(format!("project:{project_ref}"));
+                    placed = Some(action::ActionInvocation {
+                        input: Some(input),
+                        ..invocation.clone()
+                    });
+                    cwd
+                } else {
+                    let world = self.world.read()?;
+                    crate::agent_prepared::location(&world, project.as_deref())?
+                };
+                let invocation = placed.as_ref().unwrap_or(invocation);
+                let mut dispatch = action::invoke(&client, &cwd, project.as_deref(), invocation);
+                // A save or restore Central answered for another file, or with an outcome it does not name, is refused here, once,
+                // as the kernel's own `operate` refuses it: the window reads what it is given (files.rs `unsound_mutation`).
+                if let action::ActionDispatch::Invoked {
+                    owner_operation,
+                    data,
+                } = &dispatch
+                {
+                    if let Some(words) = files::unsound_mutation(invocation, data) {
+                        dispatch = action::ActionDispatch::OwnerRefused {
+                            owner_operation: owner_operation.clone(),
+                            message: words.into(),
+                        };
+                    }
+                }
                 // Whatever the owner answered, the derived readings retire —
                 // unless the action only read. The outcome says which, so the
                 // window's held answers follow this word (kernel/bridge.ts).
@@ -384,8 +369,35 @@ impl PreparedWrite {
                             path,
                         })));
                     }
+                    // A page written or restored: its directory's listing is the one cached reading it moves by name, with the
+                    // temporal field's answers, and the change is disclosed once — an unchanged write mutated nothing and emits nothing.
+                    if let Some((path, summary)) = files::mutation(invocation, data) {
+                        records.push(Record::RetireListing(files::parent_path(&path)));
+                        records.push(Record::RetireTemporal);
+                        records.push(Record::Event(Box::new(KernelEvent::FileChanged {
+                            path,
+                            summary: summary.into(),
+                        })));
+                    }
                     if let Some(event) = central_family_receipt(project, invocation, data) {
                         records.push(Record::Event(Box::new(event)));
+                        records.push(Record::RetireTemporal);
+                    }
+                    // Another owner's Action through the registry (action.rs `invoke_registry`) that it took as a write and that moved
+                    // something: its receipt names the owner, the Action and what it moved, so every reader asks that owner again.
+                    let answer = registry_answer(data);
+                    if !reads_only
+                        && action::registry_action(&invocation.action)
+                        && moved(answer)
+                        && answer["replayed"] != true
+                    {
+                        let owner = invocation.action.split('.').next().unwrap_or_default();
+                        records.push(Record::Event(Box::new(KernelEvent::OwnerChanged {
+                            owner: owner.to_owned(),
+                            action: invocation.action.clone(),
+                            reference: registry_subject(invocation, answer),
+                            revision: owner_revision(answer),
+                        })));
                         records.push(Record::RetireTemporal);
                     }
                 }
@@ -416,62 +428,63 @@ impl PreparedWrite {
             }
             KernelOp::EncounterProvision {
                 project,
-                preferred_body_ref,
-            } => {
-                // The same disclosure gate as every project-scoped op: the
-                // project must be inside Central's disclosed ground, and the
-                // canonical ProjectRef is Central's own, never the caller's.
-                let (cwd, project_ref) =
-                    owner_read::project_ground(&self.client, &self.world.read()?, project)?;
-                KernelOpResult::EncounterProvisioned {
-                    data: self.agency.provision(
-                        &cwd,
-                        &project_ref,
-                        preferred_body_ref.as_deref(),
-                    )?,
-                }
-            }
-            KernelOp::FlowParticipantProvision {
-                project,
+                agent,
                 agent_ref,
-                flow_ref,
-                sender,
                 preferred_body_ref,
             } => {
-                let (cwd, project_ref) =
-                    owner_read::project_ground(&self.client, &self.world.read()?, project)?;
-                KernelOpResult::EncounterProvisioned {
-                    data: self.agency.provision_flow_participant(
-                        &cwd,
-                        &project_ref,
-                        agent_ref,
-                        preferred_body_ref.as_deref(),
-                        sender,
-                        flow_ref,
-                    )?,
-                }
-            }
-            KernelOp::AgentConversation { project, agent_ref } => {
-                // The root World, or a named Project inside Central's ground.
-                let (cwd, project_ref) = if project.is_empty() {
-                    let cwd = crate::agent_prepared::location(&self.world.read()?, None)?;
-                    let scope = self
-                        .agency
-                        .direct_agent(&cwd, "agent-session-scope", None)?;
-                    let project_ref = scope["project_ref"]
-                        .as_str()
-                        .filter(|s| !s.is_empty())
-                        .ok_or("No native root Project binding")?
-                        .to_owned();
-                    (cwd, project_ref)
-                } else {
-                    owner_read::project_ground(&self.client, &self.world.read()?, project)?
+                // The same disclosure gate as every project-scoped op: a named
+                // project must be inside Central's disclosed ground, and the
+                // canonical ProjectRef is the owners', never the caller's. The
+                // root World (no project named) converses at its root (O-I #1003).
+                let place = self.place(project)?;
+                // The agent is the census's (census.rs `agent_for`, from the World Model's agents): the one named when a person
+                // can talk to it, else the first such. A mode that needs one acting body names its body instead.
+                let body = preferred_body_ref
+                    .as_deref()
+                    .map(str::trim)
+                    .filter(|body| !body.is_empty());
+                let agent = match body {
+                    Some(_) => None,
+                    None => Some(crate::census::agent_for(
+                        crate::world_model::Model::global()
+                            .value_now(crate::world_model::Slice::Agents)
+                            .as_ref(),
+                        agent.as_deref(),
+                    )?),
                 };
                 KernelOpResult::EncounterProvisioned {
+                    data: self.agency.provision(
+                        &place.cwd,
+                        &place.project_ref,
+                        agent.as_deref(),
+                        agent_ref
+                            .as_deref()
+                            .map(str::trim)
+                            .filter(|r| !r.is_empty()),
+                        body,
+                    )?,
+                }
+            }
+            KernelOp::AgentConversation {
+                project,
+                agent_ref,
+                agent,
+            } => {
+                // The root World, or a named Project inside Central's ground: the same place every provision converses in.
+                let place = self.place(project)?;
+                // The harness is the census's (census.rs `agent_for`): the one named when you can talk to it, else the first such.
+                let agent = crate::census::agent_for(
+                    crate::world_model::Model::global()
+                        .value_now(crate::world_model::Slice::Agents)
+                        .as_ref(),
+                    agent.as_deref(),
+                )?;
+                KernelOpResult::EncounterProvisioned {
                     data: self.agency.provision_agent_conversation(
-                        &cwd,
-                        &project_ref,
+                        &place.cwd,
+                        &place.project_ref,
                         agent_ref,
+                        &agent,
                     )?,
                 }
             }
@@ -499,29 +512,6 @@ impl PreparedWrite {
             KernelOp::GroundAuthority { request } => KernelOpResult::GroundAuthorityReading {
                 data: crate::ground_authority::operate(&self.client, request)?,
             },
-            KernelOp::HarnessAgentControl {
-                binding,
-                control,
-                model,
-            } => {
-                // AIKit carries a value on `model` alone (`--model <ID>`).
-                let mut op = vec![control.as_cli_verb()];
-                match (control, model.as_deref()) {
-                    (HarnessAgentControl::Model, Some(id)) => op.extend(["--model", id]),
-                    (_, Some(_)) => {
-                        return Err(format!(
-                        "AIKit's gateway takes a model only on its `model` operation, not on `{}`",
-                        control.as_cli_verb()
-                    ))
-                    }
-                    (_, None) => {}
-                }
-                KernelOpResult::HarnessAgentOutcome {
-                    document: self.agency.gateway_agent_with(None, binding, &op)?,
-                    binding: binding.clone(),
-                    control: control.clone(),
-                }
-            }
             KernelOp::HarnessIngressRule {
                 binding,
                 kind,
@@ -532,35 +522,6 @@ impl PreparedWrite {
                     .gateway_ingress(binding, kind, decision.as_deref())?,
                 binding: binding.clone(),
             },
-            KernelOp::FileOperation { location, request } => {
-                let data = files::operate(&self.client, location, request)?;
-                // A write changed what a directory contains: the parent
-                // listing is the one cached reading it invalidates by name,
-                // with the derived readings and the temporal field's answers.
-                if matches!(
-                    request,
-                    files::Request::Write { .. } | files::Request::Restore { .. }
-                ) {
-                    records.push(Record::RetireListing(files::parent_path(&location.path)));
-                    records.push(Record::RetireDerived);
-                    records.push(Record::RetireTemporal);
-                    // One state change, one event: a write or restore the
-                    // owner actually recorded discloses FileChanged; an
-                    // unchanged write mutated nothing and emits nothing.
-                    let summary = match data["outcome"].as_str() {
-                        Some("created") => Some("A file was created through the owner's write."),
-                        Some("written") => Some("A file changed through the owner's write."),
-                        _ => None,
-                    };
-                    if let Some(summary) = summary {
-                        records.push(Record::Event(Box::new(KernelEvent::FileChanged {
-                            path: location.path.clone(),
-                            summary: summary.into(),
-                        })));
-                    }
-                }
-                KernelOpResult::FileOperation { data }
-            }
             // One field of a page written on the revision read (page.rs):
             // the file owner's write, retiring and disclosing as a file
             // write does; an unchanged write emits nothing.
@@ -747,19 +708,8 @@ impl PreparedWrite {
             // Lane W3: the owner routes that write (owner_routes.rs). Each
             // moves the read model (`execute`); its receipt is recorded only
             // where the owner's answer says something moved.
-            KernelOp::GatewayWrite { request } => {
-                let (cwd, project_world) =
-                    owner_read::route_ground(&self.client, &self.world, request.project())?;
-                route_written(
-                    records,
-                    crate::owner_routes::gateway_write(
-                        request,
-                        crate::owner_routes::Ground {
-                            cwd: cwd.as_deref(),
-                            project_world: project_world.as_deref(),
-                        },
-                    )?,
-                )
+            KernelOp::GatewayService { on } => {
+                route_written(records, crate::owner_routes::gateway_service_write(*on)?)
             }
             KernelOp::GatewayTeam { request } => {
                 let (cwd, _) = owner_read::route_ground(
@@ -774,9 +724,6 @@ impl PreparedWrite {
             }
             KernelOp::WorkcellWrite { request } => {
                 route_written(records, crate::owner_routes::workcell_write(request)?)
-            }
-            KernelOp::SeatWrite { request } => {
-                route_written(records, crate::owner_routes::seat_write(request)?)
             }
             KernelOp::ActuationWrite { request } => {
                 route_written(records, crate::owner_routes::actuation_write(request)?)
@@ -908,74 +855,9 @@ fn configuration_write(
     })
 }
 
-/// The receiving field's writes; its reads (list, read, document) are
-/// prepared reads (owner_read.rs).
-fn receiving_write(request: &ReceivingRequest) -> bool {
-    !matches!(
-        request,
-        ReceivingRequest::List { .. }
-            | ReceivingRequest::Read { .. }
-            | ReceivingRequest::Document { .. }
-    )
-}
-
 /// A page's person act by name, for the words its refusal says (`page::person_act`); every page op that reaches one is one.
 fn page_act(request: &crate::page::Request) -> &'static str {
     crate::page::person_act(request).unwrap_or("A page's act")
-}
-
-/// The receiving acts that are the person's own (Central refuses them from any
-/// other author): an authored field or metadata edit, a review, an inclusion,
-/// a recovery; a contribution the person carries in for an agent, naming it
-/// as its producer; and the person's own proposal, which names no producer
-/// (a Palace's Return, O-I #761). A producer's own submission never carries
-/// the person's authority.
-fn receiving_person_act(request: &ReceivingRequest) -> bool {
-    match request {
-        ReceivingRequest::MutateField { .. }
-        | ReceivingRequest::MutateMeta { .. }
-        | ReceivingRequest::Review { .. }
-        | ReceivingRequest::Include { .. }
-        | ReceivingRequest::Recover { .. } => true,
-        // The person carrying an agent's work into a document of theirs (Nara's answer quoted into the Day: nativeReturn.ts
-        // proposeAnswerForDay): Central authenticates every Return's carrier, keeps it as the author, and keeps the producer the
-        // carrier declares (Central docs/CAW-NATIVE-CONSUMER-INTERFACES.md "Receiving": "The credential stays the authenticated
-        // `author`; an Agent credential may not declare a different producer"). The kernel holds no credential but the person's, so
-        // a contribution that names the agent (or native service) whose work it carries is the person's press. An Agent's ask, and a
-        // submission naming no producer, go without it, and Central refuses them in its own words.
-        ReceivingRequest::Submit {
-            proposal: Some(_),
-            request: None,
-            declared_producer: Some(producer),
-            ..
-        } => matches!(
-            producer["actor_kind"].as_str(),
-            Some("agent" | "native-service")
-        ),
-        // The person's own proposal (O-I #761, a Palace's Return: manual §17.7 "The owner of the sources receives a proposal that
-        // carries your name"): a request Return of kind proposal, targeting no document and declaring no producer, so Central keeps the
-        // authenticated person as its author. A question is asked of the person, never by them; an agent's proposal names its producer.
-        ReceivingRequest::Submit {
-            request: Some(request),
-            proposal: None,
-            declared_producer: None,
-            source_ref: None,
-            document_id: None,
-            expected_source_revision: None,
-            ..
-        } => request["kind"].as_str() == Some("proposal"),
-        _ => false,
-    }
-}
-
-/// Central's Day writes; its other requests are prepared reads.
-pub(crate) fn central_write(request: &central::Request) -> bool {
-    matches!(
-        request,
-        central::Request::EnsureDay { .. }
-            | central::Request::InitialiseDay { .. }
-            | central::Request::CloseDay { .. }
-    )
 }
 
 /// Central's own NOW, Day and receiving writes — the actions its registry
@@ -1111,6 +993,52 @@ fn owner_revision(data: &Value) -> Option<String> {
         .map(str::to_owned)
 }
 
+/// A registry owner's own answer: AIKit's inside its envelope (`{ok: true, data}`), every other owner's as it came.
+fn registry_answer(data: &Value) -> &Value {
+    if data["ok"] == true && data["data"].is_object() {
+        &data["data"]
+    } else {
+        data
+    }
+}
+
+/// The refs a registry Action's subject is named by, in the owners' own spelling: Factory's run, attempt and request, AIKit's
+/// Communique, custody, delivery and session, Workcell's place.
+const SUBJECT_KEYS: [&str; 10] = [
+    "attempt_ref",
+    "run_ref",
+    "request_ref",
+    "communique_ref",
+    "custody_ref",
+    "delivery_ref",
+    "session_ref",
+    "binding_ref",
+    "place_ref",
+    "return_ref",
+];
+
+/// What a registry Action moved: the ref its owner's answer names (at its top, in the Communique it kept, or the Run a commission's
+/// receipt names, `commission.runRef`), else the one its input named, else the seat it joined or released
+/// (`workcell:<workcell>/<product>`), else the Action itself.
+fn registry_subject(invocation: &action::ActionInvocation, answer: &Value) -> String {
+    let input = invocation.input.as_ref().unwrap_or(&Value::Null);
+    answer_ref(answer, &SUBJECT_KEYS)
+        .or_else(|| answer_ref(&answer["communique"], &["communique_ref"]))
+        .or_else(|| answer_ref(&answer["commission"], &["runRef", "journeyRef"]))
+        .or_else(|| answer_ref(input, &SUBJECT_KEYS))
+        .or_else(|| {
+            let seat = |value: &Value| {
+                Some(format!(
+                    "workcell:{}/{}",
+                    value["workcell"].as_str()?,
+                    value["product"].as_str()?
+                ))
+            };
+            seat(answer).or_else(|| seat(input))
+        })
+        .unwrap_or_else(|| invocation.target_ref.clone())
+}
+
 /// The first ref the owner's answer names under one of `keys`.
 fn answer_ref(data: &Value, keys: &[&str]) -> Option<String> {
     keys.iter()
@@ -1119,44 +1047,12 @@ fn answer_ref(data: &Value, keys: &[&str]) -> Option<String> {
         .map(str::to_owned)
 }
 
-/// The register a write moved, when nothing narrower is named: the root
-/// (`control:root`) or the Project by its name.
-fn register(project: Option<&str>) -> String {
-    match project {
-        Some(project) => format!("project:{project}"),
-        None => "control:root".into(),
-    }
-}
-
-/// The ref a receiving act moved: the Return the owner (else the request)
-/// names, the document a field edit changed, else the receiving register.
-fn receiving_ref(request: &ReceivingRequest, data: &Value, project: Option<&str>) -> String {
-    let requested = match request {
-        ReceivingRequest::Review { return_ref, .. }
-        | ReceivingRequest::Include { return_ref, .. }
-        | ReceivingRequest::Recover { return_ref, .. } => Some(return_ref.clone()),
-        ReceivingRequest::MutateField { source_ref, .. }
-        | ReceivingRequest::MutateMeta { source_ref, .. } => Some(source_ref.clone()),
-        _ => None,
-    };
-    answer_ref(data, &["return_ref"])
-        .or(requested)
-        .unwrap_or_else(|| register(project))
-}
-
 /// Factory's own verb for a write, as the owner names it.
 fn factory_action(request: &factory::OwnerRequest) -> &'static str {
     match request {
         factory::OwnerRequest::ActionInvoke { .. } => "action invoke",
         factory::OwnerRequest::Recognise { .. } => "development mutate",
-        factory::OwnerRequest::DevelopmentCommission { .. } => "development commission",
         factory::OwnerRequest::RunClose { .. } => "run close",
-        factory::OwnerRequest::AttemptReceiving { .. } => "attempt receiving",
-        factory::OwnerRequest::AttemptRetry { .. } => "attempt action retry",
-        factory::OwnerRequest::AttemptRequestCancellation { .. } => {
-            "attempt action request-cancellation"
-        }
-        factory::OwnerRequest::AttemptLaunch { .. } => "attempt launch",
         factory::OwnerRequest::AttemptDecisionSubmit { .. } => "attempt decision submit",
         factory::OwnerRequest::CustodyAssign { .. } => "development custody assign",
         factory::OwnerRequest::CustodyUpdate { .. } => "development custody update",
@@ -1184,22 +1080,15 @@ fn factory_action(request: &factory::OwnerRequest) -> &'static str {
 fn factory_ref(request: &factory::OwnerRequest, data: &Value) -> String {
     use factory::OwnerRequest;
     match request {
-        OwnerRequest::ActionInvoke { run_ref, .. }
-        | OwnerRequest::RunClose { run_ref, .. }
-        | OwnerRequest::AttemptReceiving { run_ref, .. }
-        | OwnerRequest::AttemptRetry { run_ref, .. }
-        | OwnerRequest::AttemptRequestCancellation { run_ref, .. }
-        | OwnerRequest::AttemptLaunch { run_ref, .. } => run_ref.clone(),
+        OwnerRequest::ActionInvoke { run_ref, .. } | OwnerRequest::RunClose { run_ref, .. } => {
+            run_ref.clone()
+        }
         OwnerRequest::Recognise {
             journey_ref,
             state_path,
             ..
         } => answer_ref(data, &["run_ref", "runRef"])
             .unwrap_or_else(|| non_empty_or(journey_ref, state_path)),
-        OwnerRequest::DevelopmentCommission { state_path, .. } => {
-            answer_ref(data, &["run_ref", "runRef", "journey_ref", "journeyRef"])
-                .unwrap_or_else(|| state_path.display().to_string())
-        }
         // A pad's bank or record moved: the run its answer names, else the
         // project's bank.
         OwnerRequest::PadsWrite { project_ref, .. }
@@ -1269,6 +1158,7 @@ impl Kernel {
         Some(PreparedWrite {
             client: self.client.clone(),
             agency: self.agency.clone(),
+            reads: std::sync::Arc::clone(&self.agent_reads),
             world,
             op: op.clone(),
         })
@@ -1670,97 +1560,6 @@ mod tests {
         );
     }
 
-    /// The person's own receiving acts carry the person's authority; a
-    /// producer's submission and every read never do.
-    #[test]
-    fn only_the_person_s_own_receiving_acts_carry_the_person_s_authority() {
-        let request = |value: serde_json::Value| -> ReceivingRequest {
-            serde_json::from_value(value).unwrap()
-        };
-        assert!(receiving_person_act(&request(
-            serde_json::json!({"MutateField": {"source_ref": "s", "document_id": "d",
-            "expected_revision": "r", "request_id": "q", "field_id": "original:meta", "value": {}}})
-        )));
-        assert!(receiving_person_act(&request(
-            serde_json::json!({"Review": {"return_ref": "return:one",
-            "expected_return_revision": "v", "disposition": "accepted"}})
-        )));
-        assert!(!receiving_person_act(&request(
-            serde_json::json!({"Submit": {"producer_key": "p", "occurred_at_unix_seconds": 1}})
-        )));
-        assert!(!receiving_person_act(&request(
-            serde_json::json!({"Document": {"source_ref": "s", "document_id": "d"}})
-        )));
-    }
-
-    /// O-I #765: the person's quotation of an agent's answer into their Day (Nara's instrument, nativeReturn.ts proposeAnswerForDay)
-    /// is the person's press, carried as theirs: Central authenticates every Return's carrier and keeps the producer it declares
-    /// (Central docs/CAW-NATIVE-CONSUMER-INTERFACES.md "Receiving"). A contribution that names the agent whose work the person carries
-    /// goes with the person's authority; an Agent's ask, and a submission that declares no producer, still go without it.
-    #[test]
-    fn the_person_s_quotation_of_an_agent_s_answer_carries_the_person_s_authority() {
-        let request = |value: serde_json::Value| -> ReceivingRequest {
-            serde_json::from_value(value).unwrap()
-        };
-        let nara = serde_json::json!({"ref": "agent-session/nara-1", "actor_kind": "agent", "attribution": "claimed"});
-        let proposal = serde_json::json!({"operation": "field.append", "field_id": "p0", "contribution_id": "c", "html": "<p>a</p>"});
-        assert!(receiving_person_act(&request(
-            serde_json::json!({"Submit": {
-            "producer_key": "p", "source_ref": "s", "document_id": "d", "expected_source_revision": "r",
-            "occurred_at_unix_seconds": 1, "proposal": proposal, "declared_producer": nara}})
-        )));
-        assert!(
-            !receiving_person_act(&request(serde_json::json!({"Submit": {
-            "producer_key": "p", "source_ref": "s", "document_id": "d", "expected_source_revision": "r",
-            "occurred_at_unix_seconds": 1, "proposal": proposal}}))),
-            "a contribution that names no producer is not the person's"
-        );
-        assert!(
-            !receiving_person_act(&request(serde_json::json!({"Submit": {
-            "producer_key": "p", "occurred_at_unix_seconds": 1, "request": {"kind": "question", "subject": "q"},
-            "declared_producer": nara}}))),
-            "an Agent's ask is never the person's"
-        );
-        assert!(
-            !receiving_person_act(&request(serde_json::json!({"Submit": {
-            "producer_key": "p", "source_ref": "s", "document_id": "d", "expected_source_revision": "r",
-            "occurred_at_unix_seconds": 1, "proposal": proposal,
-            "declared_producer": {"ref": "human:other", "actor_kind": "human", "attribution": "claimed"}}}))),
-            "only an agent's or a native service's work is carried"
-        );
-    }
-
-    /// O-I #761: the person's own Return from a Palace (manual §17.7 "The owner of the sources receives a proposal that carries your
-    /// name") is a request Return of kind proposal that the person raises under their own name: no document target and no declared
-    /// producer, so Central keeps the authenticated person as its author. It carries the person's authority; a question, an agent's
-    /// proposal, and a proposal that also names a document still go without it.
-    #[test]
-    fn the_person_s_own_proposal_carries_the_person_s_authority() {
-        let request = |value: serde_json::Value| -> ReceivingRequest {
-            serde_json::from_value(value).unwrap()
-        };
-        let proposal = serde_json::json!({"kind": "proposal", "subject": "Return from Central", "proposed_owner_ref": "central:source:w"});
-        assert!(receiving_person_act(&request(
-            serde_json::json!({"Submit": {"producer_key": "palace-return:1", "occurred_at_unix_seconds": 1, "request": proposal}})
-        )));
-        assert!(
-            !receiving_person_act(&request(serde_json::json!({"Submit": {
-            "producer_key": "p", "occurred_at_unix_seconds": 1, "request": {"kind": "question", "subject": "q"}}}))),
-            "a question asks the person; the person never asks it of themselves"
-        );
-        assert!(
-            !receiving_person_act(&request(serde_json::json!({"Submit": {
-            "producer_key": "p", "occurred_at_unix_seconds": 1, "request": proposal,
-            "declared_producer": {"ref": "agent-session/a", "actor_kind": "agent", "attribution": "claimed"}}}))),
-            "an agent's proposal is never the person's"
-        );
-        assert!(
-            !receiving_person_act(&request(serde_json::json!({"Submit": {
-            "producer_key": "p", "source_ref": "s", "document_id": "d", "occurred_at_unix_seconds": 1, "request": proposal}}))),
-            "a request targets no document"
-        );
-    }
-
     /// A Central stand-in for owner writes: logs each action as it starts,
     /// holds every write while its gate file exists, then answers the shape
     /// the action's owner gives (or its refusal).
@@ -1824,6 +1623,11 @@ elif action == "central.file-map.inspect":
         ok({"result": {"revision": "r1", "scopes": []}})
 elif action == "central.day.lifecycle":
     given = json.loads(args[i + 3])
+    if given["lifecycle"] == "closed" and given["day_ref"].endswith("-closed"):
+        # Central refuses a Day closed already (temporal.rs change_lifecycle, EpiLogos/Central#360).
+        print(json.dumps({"ok": False, "status": "conflict", "action": action,
+                          "error": {"message": "The Day is closed already; a closed Day is not closed again"}}))
+        sys.exit(1)
     ok({"day_ref": given["day_ref"], "temporal": {"lifecycle": given["lifecycle"]},
         "revision": {"revision": "rev-day-" + given["lifecycle"] + "-" + given["expected_revision"] + "-" + given["expected_relations_revision"]}})
 else:
@@ -1905,6 +1709,53 @@ else:
         serde_json::from_value(value).unwrap()
     }
 
+    /// A registry Action's receipt names what it moved (O-I #1007 reads the subject into the Day): the Run a commission's receipt
+    /// names, the Communique a send kept, an attempt the answer names, the seat a join took.
+    #[test]
+    fn a_registry_act_names_what_it_moved() {
+        let invocation = |action: &str, input: serde_json::Value| action::ActionInvocation {
+            action: action.into(),
+            target_ref: action.into(),
+            input: Some(input),
+        };
+        use serde_json::json;
+        assert_eq!(
+            registry_subject(
+                &invocation(
+                    "factory.development.commission",
+                    json!({"state": "/s.json", "request": {}})
+                ),
+                &json!({"contract": "factory.commission-receipt/v1", "status": "applied",
+                    "commission": {"projectRef": "project:demo", "journeyRef": "journey:3", "runRef": "run:7"}})
+            ),
+            "run:7"
+        );
+        assert_eq!(
+            registry_subject(
+                &invocation("aikit.gateway.send", json!({"to": "@anima", "body": "b"})),
+                &json!({"communique": {"communique_ref": "communique:1"}})
+            ),
+            "communique:1"
+        );
+        assert_eq!(
+            registry_subject(
+                &invocation("factory.attempt.action", json!({})),
+                &json!({"attempt_ref": "attempt:2"})
+            ),
+            "attempt:2"
+        );
+        assert_eq!(
+            registry_subject(
+                &invocation(
+                    "workcell.seat.join",
+                    json!({"workcell": "env-1", "product": "o-i"})
+                ),
+                &json!({})
+            ),
+            "workcell:env-1/o-i"
+        );
+    }
+
     /// The B0 finding: a receiving act held the kernel lock for its whole
     /// owner call (a 60 s stub held it 60.4 s). Now, while the owner holds
     /// the write, an ordered op is answered at once; the write's finish
@@ -1919,8 +1770,10 @@ else:
             std::thread::spawn(move || {
                 dispatch(
                     &kernel,
-                    op(serde_json::json!({"op": "receiving", "project": null,
-                        "request": {"Submit": {"producer_key": "p", "occurred_at_unix_seconds": 1}}})),
+                    op(
+                        serde_json::json!({"op": "act", "action": "central.receiving.submit",
+                        "input": {"producer_key": "p", "occurred_at_unix_seconds": 1}}),
+                    ),
                 )
             })
         };
@@ -2008,16 +1861,18 @@ else:
         );
     }
 
-    /// A Day ensured through Central's route records the Day it moved, with
-    /// the owner's revision.
+    /// A Day ensured through Central's own Action (`act central.day.ensure`, O-I #1002) records the Day it moved, with the owner's
+    /// revision.
     #[test]
     fn an_ensured_day_records_the_day_it_moved() {
         let central = FakeCentral::new("day-ensure");
         let kernel = Mutex::new(central.kernel());
         let (written, timing) = dispatch(
             &kernel,
-            crate::person_press(op(serde_json::json!({"op": "central", "project": null,
-                "request": {"kind": "ensure-day", "expected_time_policy_revision": "tp-1"}})))
+            crate::person_press(op(
+                serde_json::json!({"op": "act", "action": "central.day.ensure",
+                "input": {"expected_time_policy_revision": "tp-1"}}),
+            ))
             .unwrap(),
         );
         let written = written.unwrap();
@@ -2029,17 +1884,18 @@ else:
         assert_eq!(receipt[0]["revision"], "rev-day-1");
     }
 
-    /// Close now closes the Day on both of its revisions and records the Day
-    /// it moved; a Day already closed is refused before Central is asked to
-    /// close it again.
+    /// Close now closes the Day through Central's own Action (`act central.day.lifecycle`, O-I #1002) on both of its revisions and
+    /// records the Day it moved; a Day already closed is Central's to refuse (EpiLogos/Central#360), and its refusal records nothing.
     #[test]
     fn a_closed_day_records_the_day_and_a_second_close_is_refused() {
         let central = FakeCentral::new("day-close");
         let kernel = Mutex::new(central.kernel());
         let close = |day: &str| {
-            crate::person_press(op(serde_json::json!({"op": "central", "project": null,
-                "request": {"kind": "close-day", "day_ref": day, "expected_revision": "rev-day-1",
-                    "expected_relations_revision": "rel-1"}})))
+            crate::person_press(op(
+                serde_json::json!({"op": "act", "action": "central.day.lifecycle",
+                "input": {"day_ref": day, "expected_revision": "rev-day-1",
+                    "expected_relations_revision": "rel-1", "lifecycle": "closed"}}),
+            ))
             .unwrap()
         };
         let (written, timing) = dispatch(&kernel, close("central:day:2026-10-18"));
@@ -2051,9 +1907,18 @@ else:
         assert_eq!(receipt[0]["ref"], "central:day:2026-10-18");
         assert_eq!(receipt[0]["revision"], "rev-day-closed-rev-day-1-rel-1");
         let (refused, _) = dispatch(&kernel, close("central:day:2026-10-17-closed"));
-        assert!(format!("{:?}", refused.unwrap_err()).contains("closed already"));
-        let log = std::fs::read_to_string(&central.log).unwrap();
-        assert_eq!(log.matches("central.day.lifecycle").count(), 1, "{log}");
+        let refused = refused.unwrap();
+        assert!(
+            refused.receipts.is_empty(),
+            "a refused close records nothing"
+        );
+        assert!(
+            matches!(&refused.result, KernelOpResult::ActionDispatched {
+                dispatch: action::ActionDispatch::OwnerRefused { message, .. }, ..
+            } if message.contains("closed already")),
+            "Central refuses a Day closed already, in its words: {:?}",
+            refused.result
+        );
     }
 
     /// A receipt reports what the owner did: an idempotent answer that says
@@ -2070,13 +1935,20 @@ else:
         assert!(allocated.unwrap().receipts.is_empty());
         let (reviewed, timing) = dispatch(
             &kernel,
-            crate::person_press(op(serde_json::json!({"op": "receiving", "project": null,
-                "request": {"Review": {"return_ref": "return:one", "expected_return_revision": "v",
-                                       "disposition": "accepted"}}})))
+            crate::person_press(op(serde_json::json!({"op": "act", "action": "central.receiving.review",
+                "input": {"return_ref": "return:one", "expected_return_revision": "v", "disposition": "accepted"}})))
             .unwrap(),
         );
         assert_eq!(timing.form, "owner-write");
-        assert!(reviewed.unwrap_err().contains("The Return revision moved"));
+        let reviewed = reviewed.unwrap();
+        assert!(reviewed.receipts.is_empty());
+        assert!(
+            matches!(&reviewed.result, KernelOpResult::ActionDispatched {
+                dispatch: action::ActionDispatch::OwnerRefused { message, .. }, ..
+            } if message.contains("The Return revision moved")),
+            "{:?}",
+            reviewed.result
+        );
         assert!(kernel.lock().unwrap().event_log().since(1).is_empty());
     }
 
@@ -2086,8 +1958,10 @@ else:
         let central = FakeCentral::new("ordered-arm");
         let mut kernel = central.kernel();
         let written = kernel
-            .apply(op(serde_json::json!({"op": "receiving", "project": null,
-                "request": {"Submit": {"producer_key": "p", "occurred_at_unix_seconds": 1}}})))
+            .apply(op(
+                serde_json::json!({"op": "act", "action": "central.receiving.submit",
+                "input": {"producer_key": "p", "occurred_at_unix_seconds": 1}}),
+            ))
             .unwrap();
         assert_eq!(written.receipts.len(), 1);
         assert_eq!(
@@ -2412,16 +2286,17 @@ else:
         ));
         let tokens =
             || std::fs::read_to_string(central.log.with_extension("token")).unwrap_or_default();
-        let field = serde_json::json!({"op": "receiving", "project": null, "channel": "person_press",
-            "request": {"MutateField": {"source_ref": "s", "document_id": "d", "expected_revision": "r",
-                "request_id": "q", "field_id": "original:meta", "value": {}}}});
-        let review = serde_json::json!({"op": "receiving", "project": null,
-            "request": {"Review": {"return_ref": "return:one", "expected_return_revision": "v", "disposition": "accepted"}}});
-        let ensure = serde_json::json!({"op": "central", "project": null, "channel": "person_press",
-            "request": {"kind": "ensure-day", "expected_time_policy_revision": "tp-1"}});
-        let close = serde_json::json!({"op": "central", "project": null,
-            "request": {"kind": "close-day", "day_ref": "central:day:2026-10-18", "expected_revision": "rev-day-1",
-                "expected_relations_revision": "rel-1"}});
+        // Each is Central's own Action by the one act path (O-I #1002); a channel the wire claims is never read.
+        let field = serde_json::json!({"op": "act", "action": "central.document.mutate", "channel": "person_press",
+            "input": {"source_ref": "s", "document_id": "d", "expected_revision": "r",
+                "request_id": "q", "field_id": "original:meta", "value": {}}});
+        let review = serde_json::json!({"op": "act", "action": "central.receiving.review",
+            "input": {"return_ref": "return:one", "expected_return_revision": "v", "disposition": "accepted"}});
+        let ensure = serde_json::json!({"op": "act", "action": "central.day.ensure", "channel": "person_press",
+            "input": {"expected_time_policy_revision": "tp-1"}});
+        let close = serde_json::json!({"op": "act", "action": "central.day.lifecycle",
+            "input": {"day_ref": "central:day:2026-10-18", "expected_revision": "rev-day-1",
+                "expected_relations_revision": "rel-1", "lifecycle": "closed"}});
         for (act, wire) in [
             ("central.document.mutate", field.clone()),
             ("central.receiving.review", review.clone()),
@@ -2458,8 +2333,8 @@ else:
             tokens()
         );
         // A producer's own submission takes no token, by either channel; a read is no press at all.
-        let submit = serde_json::json!({"op": "receiving", "project": null,
-            "request": {"Submit": {"producer_key": "p", "occurred_at_unix_seconds": 1}}});
+        let submit = serde_json::json!({"op": "act", "action": "central.receiving.submit",
+            "input": {"producer_key": "p", "occurred_at_unix_seconds": 1}});
         dispatch(&kernel, op(submit.clone())).0.unwrap();
         dispatch(&kernel, crate::person_press(op(submit)).unwrap())
             .0

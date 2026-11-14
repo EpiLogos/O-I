@@ -292,6 +292,11 @@ function trackMenu(target: Extract<ObjectTarget, {kind: 'track'}>, set: WorldTra
     if (a.openFolder) items.push(act('open', 'Open', undefined, a.openFolder, 'work.open', a, () => press(`open:${target.id}`, `Open ${named}'s folder`, () => a.openFolder!.run(target.id))))
     if (a.revealFolder) items.push(act('reveal', 'Reveal', undefined, a.revealFolder, 'work.reveal', a, () => press(`reveal:${target.id}`, `Reveal ${named}'s folder`, () => a.revealFolder!.run(target.id))))
   }
+  // End session (manual §19.1: "End session, on the track's menu, ends it"): listed where the set seats a session on the track.
+  if (a?.endSession) {
+    items.push(sep('s-end'))
+    items.push(act('end-session', 'End session', undefined, a.endSession, 'track.end', a, () => press(`end:${target.id}`, `End ${named}'s session`, () => a.endSession!.run(target.id))))
+  }
   items.push(sep('s4'))
   items.push({id: 'colour', type: 'swatches', label: 'Colour', colours: LIVE_CLIP_PALETTE, current: track?.color ?? null,
     ...(own(a?.colourTrack) ? {} : {disabled: true, why: missingAct('track.colour', a)}),

@@ -1,6 +1,7 @@
 // Central's actions as the kernel carries them (invoke_action: action.rs invoke → Central's runner), and their dispatch read as an answer.
 // Pure, and free of the window's held readings (owners/ownerCall.ts installs the readings holder when it loads): the writers
 // (centralDeviceWrites.ts) and the readers (useCentralReadings.ts) share these without the one pulling the other in.
+import {dispatchData} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import type {ActionDispatch, KernelOp, KernelOutcome} from '../../../../../../desktop/cradle/src/kernel/types'
 
 /** One Central action's answer as a device reads it: the action's data, its refusal in the owner's words, or nothing yet. */
@@ -17,13 +18,9 @@ export function actionAnswerOf(reading: {readonly status: string; readonly value
   action: string): ActionAnswer {
   if (reading.status === 'refused') return {status: 'refused', error: reading.error ?? `${action} did not answer.`}
   if (reading.status !== 'answered' || !reading.value) return {status: 'reading'}
-  const dispatch = reading.value.dispatch
-  switch (dispatch.state) {
-    case 'invoked': return {status: 'answered', value: dispatch.data}
-    case 'owner_refused': return {status: 'refused', error: dispatch.message}
-    case 'owner_unavailable': return {status: 'refused', error: dispatch.detail}
-    case 'unsupported_action': return {status: 'refused', error: dispatch.detail}
-    case 'malformed_ref': return {status: 'refused', error: dispatch.detail}
-    case 'unknown_owner': return {status: 'refused', error: `The kernel routes ${dispatch.action} to no owner (desktop/cradle/kernel/src/action.rs invoke).`}
+  try {
+    return {status: 'answered', value: dispatchData(reading.value.dispatch)}
+  } catch (error) {
+    return {status: 'refused', error: (error as Error).message}
   }
 }

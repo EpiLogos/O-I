@@ -1,14 +1,16 @@
 // Lane BC: Central's Day draws the catalogue's Day design (inhabitants/catalogue/panels/day.tsx, `central:day-die`) on Central's own
 // readings and writes (central/devices/dayBinding.ts, CentralDevices.tsx). Owners write, faces read: a design key the
-// owner reports is a reading, a key no owner reports is absent (never the design's default), a key is written only through an owner
-// op — the die's turn (receiving mutate-field) and the person's "Open today" (the `central` op ensure-day), never on a timer.
+// owner reports is a reading, a key no owner reports is absent (never the design's default), a key is written only through an owner's
+// Action — the die's turn (central.document.mutate) and Close now's close routine (central.day.close-carry); the Day opens itself at
+// Central's turn (central.day.turn, O-I 1005).
 //
 // Channels, each claim carried by one:
 // - REAL CAPTURE: the civil-time policy and today's Day reading as `ctrl --json action run central.time.policy '{}'` and
 //   `central.day.read '{}'` answered on this machine, 16 Oct 2026 01:18 BST (the Day pointer at 2026-10-13 against a civil 16 Oct);
 //   the `stale` state and its words are the kernel's own for that pair (desktop/cradle/kernel/src/central.rs, Request::Inspect).
 // - FIXTURE: the ground's other legs (NOW, sources, placement: not read here), a ready Day document, and the owner behind a
-//   stubbed kernel bridge that answers inspect, ensure-day and receiving the way the wire does. Never the owner's real ground.
+//   stubbed kernel bridge that answers inspect, receiving's Document and the Day's Actions through `act` (central.day.ensure,
+//   central.day.lifecycle, central.document.mutate) the way the wire does. Never the owner's real ground.
 // - SCRIPTED: the production views rendered to static markup (SSR); the runtime's own release path (deviceHost.flushDrafts).
 // Not a screen pass: the on-screen legs are the lead's.
 import test from 'node:test'
@@ -18,6 +20,7 @@ import {existsSync} from 'node:fs'
 import {register} from 'node:module'
 import {createElement} from 'react'
 import {renderToStaticMarkup} from 'react-dom/server'
+import {withWorldModel} from './support/worldModelFixture.mjs'
 
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
 register(`data:text/javascript,${encodeURIComponent(`
@@ -49,7 +52,7 @@ const bind = await import('../src/central/devices/dayBinding.ts')
 const {interpretDayOpen} = await import('../src/central/centralVertical.ts')
 const writes = await import('../src/central/devices/centralDeviceWrites.ts')
 const daySet = await import('../src/central/daySet.ts')
-const readings = await import('../src/central/devices/useCentralReadings.ts')
+const model = await import('../src/owners/model.ts')
 const chain = await import('../src/central/devices/CentralDevices.tsx')
 const dayPanel = await import('../src/inhabitants/catalogue/panels/day.tsx')
 const {day: catalogueDay} = dayPanel
@@ -68,8 +71,6 @@ function WholeBand() {
 const {DeviceFullPane} = await import('../src/frame/devices/devicePane.tsx')
 const {inhabitantManifest} = await import('../src/inhabitants/manifest.ts')
 const {loadWorldShellFamilies} = await import('../src/inhabitants/worldShellFamilies.ts')
-const {ownerReadings} = await import('../src/owners/ownerReading.ts')
-const {spineEpochKey} = await import('../src/owners/spine.ts')
 loadWorldShellFamilies()
 
 const html = element => renderToStaticMarkup(element)
@@ -119,30 +120,42 @@ const DAY_16 = {...DAY_13, day_ref: 'central:day:control:root:2026-10-16', docum
 const READY = groundOf({state: 'ready', action: 'central.day.read', data: DAY_16})
 /** Today's open Day as READY, moved on to another revision (be2g: the press sends the revision it was offered from, never the fresh one). */
 const MOVED_ON = groundOf({state: 'ready', action: 'central.day.read', data: {...DAY_16, document: documentReading(PAYLOAD, 'rev-9'), revision: {revision: 'rev-9'}}})
-// Today ensured, its document not made yet (T-WORLDS W2: Open today makes it from the Day form).
+// Today's Day open, its page not made yet (Central makes it from the Day form at the Day's turn, O-I 1005).
 const POLICY = {state: 'ready', action: 'central.work.policy', data: {revision: 'policy-rev'}}
 const UNMADE = {...groundOf({state: 'ready', action: 'central.day.read', data: {...DAY_16, document_state: 'uninitialised', document: null}}), placement: POLICY}
 
 /** The owner behind a stubbed kernel bridge (FIXTURE): it answers `central` inspect from a sequence of grounds, records each
- * ensure-day it is asked, and holds one Day document behind `receiving` (Document, MutateField, CAS-checked). */
+ * central.day.ensure and central.day.lifecycle it is asked, and holds one Day document, read by `receiving` Document and written by
+ * central.document.mutate (CAS-checked). An Action answers as the kernel's `act` does: invoked with Central's data, or Central's refusal. */
 function fakeOwner({grounds = [STALE, READY], refuseEnsure = null, now = {}, groundForms = false} = {}) {
   const sent = [], ensures = [], initialised = [], closes = []
   let inspected = 0
   const state = {revision: 1, payload: structuredClone(PAYLOAD)}
   const ok = (result, data) => ({json: async () => ({ok: true, outcome: {result, data}})})
   const refused = error => ({json: async () => ({ok: false, error})})
+  const dispatch = (action, answer) => ({json: async () => ({ok: true, outcome: {result: 'action_dispatched', dispatch: {owner_operation: action, ...answer}}})})
+  const invoked = (action, data) => dispatch(action, {state: 'invoked', data})
+  const ownerRefused = (action, message) => dispatch(action, {state: 'owner_refused', message})
   const fetch = async (_url, init) => {
     const body = JSON.parse(init.body)
     sent.push(body)
     if (body.op === 'central') {
       if (body.request.kind === 'inspect') return ok('central_reading', grounds[Math.min(inspected++, grounds.length - 1)])
-      if (body.request.kind === 'ensure-day') {
-        if (refuseEnsure) return refused(refuseEnsure)
-        ensures.push(body.request)
-        return ok('central_reading', {schema: 'central.day-ensure/v1', day_ref: 'central:day:control:root:2026-10-16'})
-      }
       if (body.request.kind === 'initialise-day') { initialised.push(body.request); return ok('central_reading', {schema: 'central.document-create/v1'}) }
-      if (body.request.kind === 'close-day') { closes.push(body.request); return ok('central_reading', {schema: 'central.day-reading/v1', day_ref: body.request.day_ref}) }
+    }
+    // Today's Day as the kernel's `day_read` gives it (central.rs `day`): the ground's Day reading when it is today's, else refused.
+    if (body.op === 'day_read') {
+      const ground = grounds[Math.min(inspected, grounds.length - 1)]
+      return ground.day.state === 'ready' ? ok('day_reading', ground.day.data) : refused(`The native today pointer is stale: Central did not turn the Day (${ground.day.error?.message ?? 'no turn'})`)
+    }
+    if (body.op === 'act' && body.action === 'central.day.ensure') {
+      if (refuseEnsure) return ownerRefused(body.action, refuseEnsure)
+      ensures.push(body.input)
+      return invoked(body.action, {schema: 'central.day-ensure/v1', day_ref: 'central:day:control:root:2026-10-16'})
+    }
+    if (body.op === 'act' && body.action === 'central.day.lifecycle') {
+      closes.push(body.input)
+      return invoked(body.action, {schema: 'central.day-reading/v1', day_ref: body.input.day_ref})
     }
     // Each register's NOW listing, as the test gives it (your register under `root`).
     if (body.op === 'now') return ok('now_reading', now[body.project ?? 'root'] ?? {schema: 'central.now-listing/v1', automatic_agent_or_model_invocation: false, records: []})
@@ -160,26 +173,25 @@ function fakeOwner({grounds = [STALE, READY], refuseEnsure = null, now = {}, gro
     if (body.op === 'files_list') return {json: async () => ({ok: true, outcome: {result: 'directory_read', directory: {schema: 'central.directory-reading/v1', location: {...formAt, path: body.path},
       entries: [{name: 'ql-daily-die.html', kind: 'file', byte_len: 1, retrieval_allowed: true, location: formAt}]}}})}
     if (body.op === 'file_read') return {json: async () => ({ok: true, outcome: {result: 'file_read', reading: {schema: 'central.file-reading/v1', location: formAt, revision: 'form-rev', content: '<html></html>', byte_len: 13, content_encoding: 'utf-8'}}})}
-    if (body.op === 'receiving') {
-      const {Document, MutateField} = body.request
-      if (Document) return ok('receiving_reading', documentReading(state.payload, `rev-${state.revision}`))
-      if (MutateField) {
-        if (MutateField.expected_revision !== `rev-${state.revision}`) return refused(`the owner holds rev-${state.revision}; revision ${MutateField.expected_revision} is stale`)
-        const field = FIELDS.find(candidate => candidate.id === MutateField.field_id)
-        if (!field) return refused(`no field ${MutateField.field_id}`)
-        state.payload = {...state.payload, [field.template_pointer.slice(1)]: MutateField.value}
-        const previous = `rev-${state.revision}`
-        state.revision++
-        return ok('receiving_reading', {...documentReading(state.payload, `rev-${state.revision}`), operation_receipt: {status: 'committed', previous_revision: previous, revision: `rev-${state.revision}`}})
-      }
+    if (body.op === 'receiving' && body.request.Document) return ok('receiving_reading', documentReading(state.payload, `rev-${state.revision}`))
+    if (body.op === 'act' && body.action === 'central.document.mutate') {
+      const write = body.input
+      if (write.expected_revision !== `rev-${state.revision}`) return ownerRefused(body.action, `the owner holds rev-${state.revision}; revision ${write.expected_revision} is stale`)
+      const field = FIELDS.find(candidate => candidate.id === write.field_id)
+      if (write.operation !== 'field.set' || !field) return ownerRefused(body.action, `no field ${write.field_id}`)
+      state.payload = {...state.payload, [field.template_pointer.slice(1)]: write.value}
+      const previous = `rev-${state.revision}`
+      state.revision++
+      return invoked(body.action, {...documentReading(state.payload, `rev-${state.revision}`), operation_receipt: {status: 'committed', previous_revision: previous, revision: `rev-${state.revision}`}})
     }
-    return refused(`unexpected op ${body.op} ${body.request?.kind ?? ''}`)
+    return refused(`unexpected op ${body.op} ${body.action ?? body.request?.kind ?? ''}`)
   }
-  return {fetch, sent, ensures, initialised, closes, state, mutations: () => sent.filter(body => body.request?.MutateField).map(body => body.request.MutateField)}
+  return {fetch, sent, ensures, initialised, closes, state,
+    mutations: () => sent.filter(body => body.op === 'act' && body.action === 'central.document.mutate').map(body => body.input)}
 }
 async function withOwner(owner, run) {
   const real = globalThis.fetch
-  globalThis.fetch = owner.fetch
+  globalThis.fetch = withWorldModel(owner.fetch)
   try { return await run() } finally { globalThis.fetch = real }
 }
 
@@ -193,16 +205,16 @@ designs.registerDesignedDevice(catalogueDay)
 
 // ── the readings ────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
-test('REAL CAPTURE — the stale Day pointer: the date is Central\'s civil today, the well is given the owner\'s words, Open today stands, and nothing reads a default', () => {
+test('REAL CAPTURE — the stale Day pointer: the date is Central\'s civil today, the well says today opens by itself, and nothing reads a default', () => {
   const facts = factsOf(STALE)
   const values = bind.dayValuesOf(facts, null)
   assert.equal(values.date, 'Fri 16 Oct', 'the civil date the time policy reads, by its own calendar')
   assert.equal(values.tomorrow, undefined, 'no reading reports tomorrow\'s Day: absent, never a calendar guess')
   assert.equal(values.light, 'dark', 'the owner reports no Day for today: dark, not hollow and not lit')
   // Walk 13 Nov: past the boundary, Central's stale pointer is no refusal — today has not opened yet (never Central's raw words).
-  assert.equal(values.notice, 'Today has not opened yet (the last Day was Tue 13 Oct). Open today opens it.', 'today not opened yet, and the last Day Central kept')
+  assert.equal(values.notice, 'Today has not opened yet (the last Day was Tue 13 Oct). Central opens it by itself at the Day\'s turn.', 'today not opened yet, and the last Day Central kept')
   assert.equal(values.refusal, undefined, 'a notice in the well, never a refusal')
-  assert.equal(values.canOpenToday, true, 'the ground panel\'s own rule: the policy answered and the Day is stale')
+  assert.equal('canOpenToday' in values, false, 'no press stands in for the Day opening itself (O-I 1005)')
   assert.equal(values.dayStart, 0, 'the policy\'s day boundary: 00:00')
   assert.equal(values.rollover, 0, 'automatic rollover opens the next Day at the boundary')
   assert.equal(facts.aperture, null, 'no Day document stands, so the die has nothing to turn')
@@ -241,9 +253,9 @@ test('a ready Day: its face and its records\' counts are the owner\'s; what the 
   const facts = factsOf(READY)
   assert.deepEqual(facts.aperture, {project: null, sourceRef: SOURCE_16, documentId: DOC_16}, 'the aperture the die turns')
   const values = bind.dayValuesOf(facts, {face: 2, payload: PAYLOAD})
-  assert.deepEqual({face: values.face, c0: values.c0, c1: values.c1, c2done: values.c2done, light: values.light, refusal: values.refusal, canOpenToday: values.canOpenToday},
-    {face: 2, c0: 2, c1: 3, c2done: 1, light: 'lit', refusal: undefined, canOpenToday: false},
-    'face 0 the capture rows, face 1 the three tiers, face 2 the sessions ledger; no refusal; nothing to open')
+  assert.deepEqual({face: values.face, c0: values.c0, c1: values.c1, c2done: values.c2done, light: values.light, refusal: values.refusal},
+    {face: 2, c0: 2, c1: 3, c2done: 1, light: 'lit', refusal: undefined},
+    'face 0 the capture rows, face 1 the three tiers, face 2 the sessions ledger; no refusal')
   for (const key of ['c1p', 'c2run', 'c2queue', 'c3', 'c3p', 'c4', 'c5']) assert.equal(key in values, false, `${key}: ${bind.DAY_ABSENT[key]}`)
   assert.deepEqual(bind.dayCountsOf({capture: 'not a list', fields: {p1_must: []}}), {}, 'a record that is not a list gives no count, and one missing tier gives no task count')
   assert.equal(bind.civilDayName('2026-02-29'), null, 'a date the calendar does not hold is no date')
@@ -251,13 +263,12 @@ test('a ready Day: its face and its records\' counts are the owner\'s; what the 
   assert.equal(bind.nextCivilDate('2026-12-31'), '2027-01-01')
 })
 
-test('a Day the person selected: its own date and the owner\'s words for it; Open today still answers to today\'s ground', () => {
-  const standing = {state: 'uninitialised', dayRef: 'central:day:control:root:2026-10-06', civilDate: '2026-10-06', owner: 'Central (root register)', op: 'central · initialise-day',
+test('a Day the person selected: its own date and the owner\'s words for it', () => {
+  const standing = {state: 'uninitialised', dayRef: 'central:day:control:root:2026-10-06', civilDate: '2026-10-06', owner: 'Central (root register)', op: 'central · central.day.turn',
     remedy: 'r', message: 'Current Day has no native document yet.'}
   const values = bind.dayValuesOf(factsOf(STALE, {standing, aperture: null}), null)
   assert.equal(values.date, 'Tue 6 Oct')
   assert.equal(values.refusal, 'Current Day has no native document yet.')
-  assert.equal(values.canOpenToday, true)
   assert.equal('face' in values, false)
   const unread = bind.dayFactsOf({ground: null, groundError: 'the kernel carrier is unavailable: down', selected: null})
   assert.equal(unread.civilDate, null, 'no ground: no date, so no binding stands (the design would draw its date as missing words)')
@@ -270,46 +281,8 @@ const bindingOf = (ground, owner, extra = {}) => {
   const facts = factsOf(ground)
   return bind.dayDesignBinding(ID, facts, bind.dayValuesOf(facts, extra.document ?? null), {
     turn: (aperture, face) => writes.turnDieFace(bridge, aperture, face).then(() => {}),
-    openToday: () => writes.openToday(bridge).then(() => {}),
   })
 }
-
-test('Open today is the person\'s press: on release one ensure-day goes to Central with the policy\'s revision; a Day already current is not ensured twice', async () => {
-  const owner = fakeOwner({grounds: [STALE, READY]})
-  const binding = bindingOf(STALE, owner)
-  assert.equal(binding.writes('openToday'), true)
-  host.resetHost(ID)
-  await withOwner(owner, async () => {
-    host.setDraft(ID, 'openToday', true)
-    assert.equal(owner.sent.length, 0, 'nothing is sent while the hand holds it')
-    assert.equal(await host.flushDrafts(binding, 0), null, 'the owner took it')
-  })
-  assert.deepEqual(owner.ensures, [{kind: 'ensure-day', expected_time_policy_revision: TIME.revision}], 'one ensure, under the time policy the owner read')
-  assert.deepEqual(owner.sent.map(body => body.request.kind), ['inspect', 'ensure-day', 'inspect'],
-    'the ground read again first, then the ensure, then read again: today\'s Day has its document, so nothing more')
-  // The owner now holds today's Day: a second press reads the ground and ensures nothing.
-  await withOwner(owner, () => writes.openToday(bridge).then(result => assert.deepEqual(result, {ensured: false, initialised: false, carried: null})))
-  assert.equal(owner.ensures.length, 1)
-  host.resetHost(ID)
-})
-
-test('Open today refused: the owner\'s words come back through the runtime to the Info line, and nothing is ensured without a policy', async () => {
-  const owner = fakeOwner({grounds: [STALE], refuseEnsure: 'Central refused ensure: the native authority is missing'})
-  const binding = bindingOf(STALE, owner)
-  host.resetHost(ID)
-  await withOwner(owner, async () => {
-    host.setDraft(ID, 'openToday', true)
-    assert.match(await host.flushDrafts(binding, 0), /native authority is missing/, 'the owner\'s refusal, verbatim')
-  })
-  assert.equal(host.hostState(ID).refused.openToday.reason.includes('native authority'), true, 'the control returns to the owner\'s value and says why')
-  const noTime = fakeOwner({grounds: [groundOf(STALE.day, {state: 'failed', action: 'central.time.policy', error: {message: 'policy unreadable'}})]})
-  await withOwner(noTime, async () => {
-    await assert.rejects(() => writes.openToday(bridge), /civil time is failed: policy unreadable; the current Day cannot be ensured/)
-  })
-  assert.deepEqual(noTime.sent.map(body => body.request.kind), ['inspect'], 'no ensure without the policy\'s revision')
-  await assert.rejects(() => binding.write([{key: 'openToday', value: false}]), /a press/, 'nothing here un-ensures or closes a Day')
-  host.resetHost(ID)
-})
 
 test('the die turns through the owner\'s mutate-field on the ready Day; with no Day document the turn is refused in the owner\'s words, and nothing is sent', async () => {
   const owner = fakeOwner()
@@ -363,7 +336,7 @@ const dayEntryOf = (facts, extra = {}) => chain.centralDeviceEntries(input({read
  * own Full. */
 function hosting(facts, values, run, extra = {}) {
   const entry = dayEntryOf(facts, extra)
-  const binding = bind.dayDesignBinding(ID, facts, values, {turn: async () => {}, openToday: async () => {}})
+  const binding = bind.dayDesignBinding(ID, facts, values, {turn: async () => {}})
   door.publishDevice(ID, chain.centralPublication(entry, binding))
   try { return run(entry, binding) } finally { door.publishDevice(ID, null); door.selectDevice(null); host.resetHost(ID) }
 }
@@ -376,13 +349,13 @@ test('the Day\'s bounds: a bound no owner reports draws why, in the owner\'s wor
   const values = bind.dayValuesOf(facts, null)
   assert.equal(values.dayStart, undefined, 'no boundary while the policy is refused')
   assert.match(bind.DAY_ABSENT.dayStart, /civil-time policy.*central\.time\.policy/, 'Closes is named absent with its reason')
-  const binding = bind.dayDesignBinding(ID, facts, values, {turn: async () => {}, openToday: async () => {}})
+  const binding = bind.dayDesignBinding(ID, facts, values, {turn: async () => {}})
   assert.match(binding.standing.dayStart?.disabled ?? '', /Central refused its civil-time policy: the civil-time policy is not valid JSON/, 'in the owner\'s words')
   assert.equal(binding.writes('dayStart'), false, 'still a reading: nothing here writes the boundary')
   const unanswered = bind.dayFactsOf({ground: null, groundError: null, selected: null})
-  assert.equal(bind.dayDesignBinding(ID, unanswered, {}, {turn: async () => {}, openToday: async () => {}}).standing.dayStart?.disabled, bind.DAY_ABSENT.dayStart, 'nothing answered yet')
+  assert.equal(bind.dayDesignBinding(ID, unanswered, {}, {turn: async () => {}}).standing.dayStart?.disabled, bind.DAY_ABSENT.dayStart, 'nothing answered yet')
   const read = factsOf(READY)
-  assert.equal(bind.dayDesignBinding(ID, read, bind.dayValuesOf(read, null), {turn: async () => {}, openToday: async () => {}}).standing.dayStart, undefined, 'a boundary that is read has no reason')
+  assert.equal(bind.dayDesignBinding(ID, read, bind.dayValuesOf(read, null), {turn: async () => {}}).standing.dayStart, undefined, 'a boundary that is read has no reason')
   hosting(facts, values, () => {
     door.selectDevice(ID)
     const whole = html(createElement(WholeBand))
@@ -429,7 +402,7 @@ test('Full is the Day\'s page as the owner stands it — the owner\'s words whil
     assert.match(pane, /data-device-design="central:day-die"/)
     assert.match(pane, /data-central-absence="unopened"/, 'the Day pane\'s own absence: today, not opened yet')
     assert.match(pane, /Today has not opened yet \(the last Day was Tue 13 Oct\)/, 'today not opened yet, never Central\'s raw words')
-    assert.match(pane, /data-central-day-open="today"/, 'with Open today on the page')
+    assert.doesNotMatch(pane, /Open today|data-central-day-open/, 'no press stands in for the Day opening itself (O-I 1005)')
     assert.doesNotMatch(pane, /<iframe|data-param=|role="slider"/, 'no blank template, no controls in the pane')
   })
   const ready = factsOf(READY)
@@ -462,29 +435,36 @@ test('the five views move together: the hand\'s face shows in every view at once
 
 // ── the chain reads today on its own, from the window's one ground answer ─────────────────────────────────────────────────────
 
-test('with no Day selected the Day device stands on today as Central\'s ground reads it — one shared answer, no Day lifecycle read or written', async () => {
-  const epoch = spineEpochKey(0, null)
+test('with no Day selected the Day device stands on today as Central\'s ground reads it — the World Model\'s day slice, no read of its own, no Day lifecycle read or written', async () => {
+  // A carrier of its own, so the window's store holds this test's slice alone.
+  const here = {kind: 'bridge', url: 'http://owner.fixture/today'}
   const owner = fakeOwner({grounds: [STALE]})
-  await withOwner(owner, () => ownerReadings.entry(readings.groundKey(bridge), readings.readGroundOf(bridge)).ensure(epoch))
-  assert.deepEqual(owner.sent.map(body => [body.op, body.request.kind]), [['central', 'inspect']], 'one read: the ground')
-  function Probe() {
-    const device = chain.useDayDevice(bridge, null)
-    return createElement('pre', null, JSON.stringify({values: device.binding?.values ?? null, writes: device.binding ? ['face', 'openToday', 'rollover'].map(key => device.binding.writes(key)) : null}))
-  }
-  const read = JSON.parse(html(createElement(Probe)).replace(/^<pre>|<\/pre>$/g, '').replace(/&quot;/g, '"'))
-  assert.equal(read.values.date, 'Fri 16 Oct')
-  assert.equal(read.values.canOpenToday, true)
-  assert.match(read.values.notice, /Today has not opened yet/)
-  assert.deepEqual(read.writes, [true, true, true], 'Rollover goes to the binding, which refuses it naming the person\'s route')
-  // The chain's own plate: the binding stands as soon as the ground answers (no shell design to wait for), so the Day's design draws
-  // on today's date, the light off.
-  const markup = html(createElement(chain.CentralDevicesChain, {transport: bridge, dayStanding: null}))
+  const held = await withOwner(owner, () => model.modelSlice(here, 'day'))
+  assert.equal(held.state, 'held', 'the World Model answers the day slice')
+  // What the kernel asks for the slice (world_model.rs `day`), as the fixture composes it: today's Day — refused, its pointer is
+  // stale —, the ground beside it, and the Day's settings; no moves or field, as no Day of today stands. Nothing opens or closes a Day.
+  assert.deepEqual(owner.sent.map(body => [body.op, body.request?.kind ?? body.action ?? null]),
+    [['day_read', null], ['central', 'inspect'], ['act', 'central.day.settings.read']], 'the slice\'s own reads, and nothing else')
+  const dayModel = bind.dayFromModel(held)
+  assert.match(dayModel.todayRefused, /today pointer is stale/, 'today\'s Day refused, in the kernel\'s words')
+  assert.equal(dayModel.groundError, null, 'the ground beside it is read')
+  // The Day device as the chain composes it (CentralDevices.tsx, CENTRAL_CHAIN_DECLARATIONS `day`): the slice's fields, no fetch of its own.
+  const facts = bind.dayFactsOf({ground: dayModel.ground, groundError: dayModel.groundError, selected: null})
+  const own = bind.dayOwnOf(dayModel, null, null)
+  const values = bind.dayValuesOf(facts, null, own)
+  const binding = bind.dayDesignBinding(ID, facts, values, {turn: async () => {}, closeNow: async () => {}, openTomorrow: async () => {}}, own)
+  assert.equal(values.date, 'Fri 16 Oct')
+  assert.match(values.notice, /Today has not opened yet/)
+  assert.deepEqual(['face', 'closeNow', 'rollover'].map(key => binding.writes(key)), [true, true, true], 'Rollover goes to the binding, which refuses it naming the person\'s route')
+  // The chain's own plate: the binding stands as soon as the slice is held, so the Day's design draws on today's date, the light off.
+  const sent = owner.sent.length
+  const markup = html(createElement(chain.CentralDevicesChain, {transport: here, dayStanding: null}))
   // The Day closes the Main track's chain; the workspace's chain follows it (R4: the Answer no longer stands after it).
   const day = markup.slice(markup.indexOf(`data-device="${ID}"`), markup.indexOf('data-track="workspace"'))
   assert.match(day, /data-device-light="off"/, 'the owner says no Day stands for today: off')
   assert.match(day, /data-device-design="central:day-die"/, 'the design draws on the chain')
   assert.match(day, /<span class="dp-display-corner">Fri 16<\/span>/, 'on civil today')
-  assert.equal(owner.sent.length, 1, 'rendering asked the owner nothing more: no ensure, no close, no lifecycle')
+  assert.equal(owner.sent.length, sent, 'rendering asked the owner nothing more: no ensure, no close, no lifecycle')
 })
 
 test('the Day design is the catalogue\'s own in all five views; its Full is the Day\'s page, published with the device (MOVED: dayDesign.tsx → PublishedDevice.full)', async () => {
@@ -498,7 +478,7 @@ test('the Day design is the catalogue\'s own in all five views; its Full is the 
   // REPLACED (D-28): the Full was the hosted Day face alone. It is the design's own Full — its Today / Tomorrow tabs on the Day's binding —
   // with the Day's page where the design draws the template page.
   const values = bind.dayValuesOf(facts, null)
-  const binding = bind.dayDesignBinding(ID, facts, values, {turn: async () => {}, openToday: async () => {}})
+  const binding = bind.dayDesignBinding(ID, facts, values, {turn: async () => {}})
   const full = html(chain.centralPublication(entry, binding).full.draw())
   const designFull = html(createElement(() => catalogueDay.full({v: values, owner: values, set: () => {}, nav: {}, page: 'today', setPage: () => {}, standing: binding.standing, frame: 'pane'})))
   assert.ok(full.includes(designFull), 'the design\'s own Full, as it draws on the binding')
@@ -507,7 +487,7 @@ test('the Day design is the catalogue\'s own in all five views; its Full is the 
   // Tomorrow, once Central has opened it: its own tab, and its page behind it.
   const opened = {...facts, tomorrow: '2026-10-17'}
   const withTomorrow = bind.dayValuesOf(opened, null)
-  const tomorrowBinding = bind.dayDesignBinding(ID, opened, withTomorrow, {turn: async () => {}, openToday: async () => {}})
+  const tomorrowBinding = bind.dayDesignBinding(ID, opened, withTomorrow, {turn: async () => {}})
   const both = html(chain.centralPublication(entry, tomorrowBinding, undefined, () => createElement('p', {'data-tomorrow-page': ''})).full.draw())
   assert.match(both, />Tomorrow · (?:<!-- -->)?Sat 17 Oct</, 'the design\'s Tomorrow tab')
   assert.match(both, /data-day-full="today"/, 'today stands first')
@@ -531,34 +511,6 @@ test('the Day\'s designed head carries the door\'s ↗ — its own window (R1) �
   }, {deviceWindows: windows(true), manifest: central})
 })
 
-test('Open today makes today\'s document from the Day form when it has none: initialise-day, with the form\'s revision and the placement policy\'s (T-WORLDS W2)', async () => {
-  const owner = fakeOwner({grounds: [UNMADE]})
-  await withOwner(owner, () => writes.openToday(bridge).then(result => assert.deepEqual(result, {ensured: false, initialised: true, carried: null})))
-  assert.equal(owner.ensures.length, 0, 'today is current: nothing is ensured')
-  assert.equal(owner.initialised.length, 1)
-  const [made] = owner.initialised
-  assert.equal(made.day_ref, 'central:day:control:root:2026-10-16')
-  assert.equal(made.expected_revision, 'rev-1'); assert.equal(made.expected_policy_revision, 'policy-rev'); assert.equal(made.expected_form_revision, 'form-rev')
-  assert.equal(made.form.path, 'Work/O-I/desktop/cradle/documents/ql-daily-die.html', 'the roster\'s own Day form, read through Central\'s file route')
-  assert.match(made.document_id, /^document:/)
-})
-
-test('today\'s set is kept in the Day: a world brought in is written through the Day\'s own meta field on the revision read; the same set writes nothing', async () => {
-  const owner = fakeOwner({grounds: [READY]})
-  const day = {project: null, sourceRef: SOURCE_16, documentId: DOC_16}
-  await withOwner(owner, async () => {
-    const first = await daySet.writeDaySet(bridge, day, set => daySet.withWorld(set, 'central:wiki:project:O-I', 'O-I'))
-    assert.deepEqual(first, {revision: 'rev-2', wrote: true})
-    const again = await daySet.writeDaySet(bridge, day, set => daySet.withWorld(set, 'central:wiki:project:O-I', 'O-I'))
-    assert.equal(again.wrote, false, 'a world already in the set is not written twice')
-  })
-  const [write] = owner.mutations()
-  assert.equal(write.field_id, 'original:meta'); assert.equal(write.expected_revision, 'rev-1')
-  assert.deepEqual(write.value.set, {schema: 'oi.day-set/v1', tracks: [{world: 'central:wiki:project:O-I', name: 'O-I'}], rows: []})
-  assert.equal(write.value.face, 2, 'the rest of the Day\'s meta stands as it was')
-  assert.deepEqual(daySet.daySetOf(owner.state.payload).tracks, [{world: 'central:wiki:project:O-I', name: 'O-I'}])
-})
-
 // ── The close, and what it carries (manual §18.1 "What carries to tomorrow"; §18.2 "Close now"; T-WORLDS W2 "The close carries") ────
 const PAGE = path => `central:path:/ground:${path}`
 const PLAYS_OI = PAGE('Work/O-I/ProjectCentral/user/beings-1.html')
@@ -578,43 +530,13 @@ const listing = records => ({schema: 'central.now-listing/v1', automatic_agent_o
 const NOW_PLAYING = {root: listing([clearing('now:mine', PLAYS_MINE, 'active')]),
   'O-I': listing([clearing('now:oi', PLAYS_OI, 'active'), clearing('now:stopped', STOPPED, 'closed')])}
 
-test('what still plays carries into tomorrow\'s set: the worlds holding a playing page, each row with only its playing pages, the closed Day in the lineage', () => {
-  const worldOf = ref => ref.includes('Work/O-I/') ? {ref: 'central:wiki:project:O-I', name: 'O-I'} : ref.includes('Control/user/flows/') ? {ref: 'central:wiki:root', name: 'Your world', yours: true} : null
-  const next = daySet.carriedSet(SET_15, 'central:day:control:root:2026-10-15', [PLAYS_OI, PLAYS_MINE], worldOf)
-  assert.deepEqual(next, {schema: 'oi.day-set/v1', tracks: [{world: 'central:wiki:project:O-I', name: 'O-I'}],
-    rows: [{id: 'r1', name: 'Morning', pages: [PLAYS_OI]}], lineage: ['central:day:control:root:2026-10-14', 'central:day:control:root:2026-10-15']},
-    'Old holds nothing that plays and leaves; the stopped page leaves its row, and a row left empty goes; your world is every set\'s first track, never named')
-  assert.deepEqual(daySet.carriedSet({...SET_15, tracks: []}, 'd', [PLAYS_OI], worldOf).tracks, [{world: 'central:wiki:project:O-I', name: 'O-I'}],
-    'a world the closed set did not hold comes in when a page of it still plays')
-  assert.deepEqual(daySet.daySetOf({meta: {set: next}}).lineage, next.lineage, 'the lineage reads back as written')
-})
-
-test('Close now closes the Day Central names on both of its revisions; a closed Day, or one you selected, offers no close, and nothing is sent', async () => {
-  const owner = fakeOwner({grounds: [READY]})
-  await withOwner(owner, () => writes.closeDay(bridge).then(result => assert.deepEqual(result, {closed: 'central:day:control:root:2026-10-16', civilDate: '2026-10-16'})))
-  assert.deepEqual(owner.closes, [{kind: 'close-day', day_ref: 'central:day:control:root:2026-10-16', expected_revision: 'rev-1', expected_relations_revision: DAY_13.relations_revision}])
-  const closedOwner = fakeOwner({grounds: [CLOSED_15]})
-  await withOwner(closedOwner, () => assert.rejects(writes.closeDay(bridge), /closed already/))
-  assert.equal(closedOwner.closes.length, 0)
+// The Day closes itself at its turn (O-I 1005); Close now is the close routine (central.day.close-carry), on the Day Central names.
+test('Close now stands for the Day Central names, open; a closed Day, or one you selected, offers none', async () => {
   assert.equal(factsOf(READY).canClose, true)
   assert.equal(factsOf(STALE).canClose, true, 'an earlier Day still open is closed after its boundary')
   assert.equal(factsOf(CLOSED_15).canClose, false)
   assert.equal(factsOf(READY, {standing: null, aperture: null}).canClose, false, 'a Day you selected is never the one closed')
   assert.equal(bind.dayValuesOf(factsOf(READY), null).canClose, true, 'the design reads it as canClose')
-})
-
-test('Open today after a closed Day: today\'s Day is made, and what still plays is carried into its set through the Day\'s own meta', async () => {
-  const owner = fakeOwner({grounds: [CLOSED_15, UNMADE, READY], now: NOW_PLAYING})
-  const result = await withOwner(owner, () => writes.openToday(bridge))
-  assert.deepEqual(result, {ensured: true, initialised: true, carried: {from: 'central:day:control:root:2026-10-15', worlds: 1, rows: 1, pages: 2}})
-  const [write] = owner.mutations()
-  assert.equal(write.field_id, 'original:meta')
-  assert.deepEqual(daySet.daySetOf(owner.state.payload), {schema: 'oi.day-set/v1', tracks: [{world: 'central:wiki:project:O-I', name: 'O-I'}],
-    rows: [{id: 'r1', name: 'Morning', pages: [PLAYS_OI]}], lineage: ['central:day:control:root:2026-10-14', 'central:day:control:root:2026-10-15']})
-  assert.deepEqual(owner.sent.filter(body => body.op === 'now').map(body => body.project), [null, 'O-I'], 'NOW is read at your register and at each project world the closed set held')
-  const open = fakeOwner({grounds: [STALE, UNMADE, READY], now: NOW_PLAYING})
-  const plain = await withOwner(open, () => writes.openToday(bridge))
-  assert.equal(plain.carried, null, 'an earlier Day never closed carries nothing'); assert.equal(open.mutations().length, 0)
 })
 
 test('the Day publishes its page as its own Full, and names it as data for its Pop-out: its aperture, never a drawing (r23)', () => {
@@ -654,7 +576,7 @@ test('the moves: with Central\'s readings not handed in, every Runs at, Prompt a
   const facts = factsOf(READY)
   const begun = []
   const binding = bind.dayDesignBinding(ID, facts, bind.dayValuesOf(facts, {face: 2, payload: PAYLOAD}),
-    {turn: async () => { wrote++ }, openToday: async () => { wrote++ }, closeNow: async () => { wrote++ }, begin: async (move, ref) => { begun.push([move, ref]) }})
+    {turn: async () => { wrote++ }, closeNow: async () => { wrote++ }, begin: async (move, ref) => { begun.push([move, ref]) }})
   // REPLACED (W2): a pad records its move's begin through central.day.move.record on the Day shown (central-person-writes.test.mjs).
   for (const move of ['tasks', 'patterns', 'context', 'synthesis']) assert.equal(binding.standing[`run_${move}`], undefined, `the ${move} pad presses`)
   await binding.write([{key: 'run_tasks', value: true}])
@@ -692,7 +614,7 @@ test('the Patterns pad: the one skill or method its items point at is Central\'s
   let wrote = 0
   const refined = []
   const facts = factsOf(READY)
-  const writers = {turn: async () => { wrote++ }, openToday: async () => { wrote++ }, closeNow: async () => { wrote++ }, begin: async () => { wrote++ },
+  const writers = {turn: async () => { wrote++ }, closeNow: async () => { wrote++ }, begin: async () => { wrote++ },
     refine: async member => { refined.push(member) }}
   const own = patternsEnded({summary: 'Three closes pull against one skill.', proposals: ['p1'], points_at: 'skill/practice/alpha'})
   const values = bind.dayValuesOf(facts, {face: 3, payload: PAYLOAD}, own)
@@ -732,19 +654,11 @@ const NO_POLICY_TIME = {state: 'denied', action: 'central.time.policy', error: {
   message: 'requires one explicitly recognised civil-time-policy source; the person adopts one with central.time.policy.adopt (preview: central.time.policy.preview)'}}
 const NO_POLICY = groundOf({state: 'unavailable', action: 'central.day.read', error: {code: 'source_or_scope_unavailable', message: 'no DayRef or current today pointer'}}, NO_POLICY_TIME)
 
-test('a ground with no civil-time policy: the Day die, the bring-in and Open today name the way on, Settings › Setup › Ground, never the raw denial', async () => {
+test('a ground with no civil-time policy: the Day die names the way on, Settings › Setup › Ground, never the raw denial', async () => {
   const die = bind.currentDayOf(NO_POLICY).standing
   assert.equal(die.state, 'refused')
   assert.match(die.message, /Settings › Setup › Ground/, 'the die names the way on')
   assert.doesNotMatch(die.message, /DayRef|central\.time\.policy/, 'not the raw denial')
-  const brought = daySet.bringInRefusal('field-notes', NO_POLICY, null)
-  assert.match(brought, /^field-notes cannot come into today: .*Settings › Setup › Ground.*then bring field-notes in again\.$/)
-  assert.doesNotMatch(brought, /DayRef|today pointer/)
-  const owner = fakeOwner({grounds: [NO_POLICY]})
-  await withOwner(owner, async () => {
-    await assert.rejects(() => writes.openToday(bridge), error => /Settings › Setup › Ground/.test(error.message) && !/civil-time-policy source/.test(error.message))
-  })
-  assert.deepEqual(owner.sent.map(body => body.request.kind), ['inspect'], 'nothing is ensured')
   // Another refusal of civil time stays in the owner's words.
   assert.match(bind.currentDayOf(groundOf(NO_POLICY.day, {state: 'failed', action: 'central.time.policy', error: {message: 'policy unreadable'}})).standing.message, /no DayRef/)
 })
@@ -758,51 +672,25 @@ test('the transport\'s die names the same way on, Settings › Setup › Ground,
   assert.match(dayDieOf(groundOf(NO_POLICY.day, {state: 'failed', action: 'central.time.policy', error: {message: 'policy unreadable'}}), null).reason, /no DayRef/, 'another refusal stays in Central\'s words')
 })
 
-test('in a new world, Open today makes today\'s document from the Day form its ground keeps (Control/forms), where no O-I project carries one (O-I #740)', async () => {
-  const owner = fakeOwner({grounds: [UNMADE], groundForms: true})
-  await withOwner(owner, () => writes.openToday(bridge).then(result => assert.deepEqual(result, {ensured: false, initialised: true, carried: null})))
-  assert.equal(owner.initialised.length, 1)
-  assert.equal(owner.initialised[0].form.path, 'Control/forms/ql-daily-die.html', 'the form the ground keeps, read through Central\'s file route')
-  // Neither the project's nor the ground's: named, with the way on.
-  const none = fakeOwner({grounds: [UNMADE], groundForms: true})
-  const real = none.fetch
-  none.fetch = async (url, init) => (JSON.parse(init.body).op === 'files_list' ? {json: async () => ({ok: false, error: 'No such file or directory'})} : real(url, init))
-  await withOwner(none, async () => {
-    await assert.rejects(() => writes.openToday(bridge), error => /Settings › Setup › Ground/.test(error.message) && /Work\/O-I\/desktop\/cradle\/documents/.test(error.message))
-  })
-  assert.equal(none.initialised.length, 0, 'nothing is made without a form')
-})
-
-// be2j ruling 6 (DLW build ruling 2026-11-09; the review's T28): a world whose Central names no Day yet (central.day.read refuses with
-// source_or_scope_unavailable, as day-read-unrecorded.capture.json does) while its civil time answers may ensure today's Day.
-test('where Central names no Day yet and its civil time answers, Open today stands and ensures today\'s Day; another refusal, or no civil time, admits none (be2j T28)', async () => {
-  const UNRECORDED = groundOf({state: 'unavailable', action: 'central.day.read', error: {code: 'source_or_scope_unavailable', message: 'no DayRef or current today pointer'}})
-  assert.equal(bind.canEnsureDay(UNRECORDED), true)
-  assert.equal(bind.canEnsureDay(groundOf({state: 'unavailable', action: 'central.day.read', error: {code: 'policy_or_source_denied', message: 'denied'}})), false,
-    'another refusal admits no ensure')
-  assert.equal(bind.canEnsureDay(groundOf(UNRECORDED.day, NO_POLICY_TIME)), false, 'nor a Day reading without civil time')
-  const owner = fakeOwner({grounds: [UNRECORDED, UNMADE], groundForms: true})
-  await withOwner(owner, () => writes.openToday(bridge).then(result => assert.deepEqual([result.ensured, result.initialised], [true, true])))
-  assert.equal(owner.ensures.length, 1, 'today\'s Day is ensured once')
-})
-
 // Empty start (map #706, 12 Nov walk on a fresh Bare): before the first Day, Central names no current Day. That is no refusal: the Day
-// reads "No Day is open yet" with Open today, never Central's raw "no DayRef or current today pointer" in a red fault.
-test('a fresh ground with civil time and no Day yet reads as unopened, offers Open today, and never shows Central\'s raw words (map #706)', () => {
+// reads "No Day is open yet", opening by itself (O-I 1005), never Central's raw "no DayRef or current today pointer" in a red fault.
+test('a fresh ground with civil time and no Day yet reads as unopened, opening by itself, and never shows Central\'s raw words (map #706)', () => {
   const FRESH = groundOf({state: 'unavailable', action: 'central.day.read', error: {code: 'source_or_scope_unavailable', message: 'no DayRef or current today pointer'}})
   const {standing} = bind.currentDayOf(FRESH)
   assert.equal(standing.state, 'unopened')
-  assert.equal(standing.message, 'No Day is open yet. Open today starts it.')
+  assert.equal(standing.message, 'No Day is open yet. Central opens today\'s Day by itself on its civil date.')
   const facts = factsOf(FRESH)
-  assert.equal(facts.refusal, 'No Day is open yet. Open today starts it.')
-  assert.equal(facts.canOpenToday, true)
+  assert.equal(facts.refusal, 'No Day is open yet. Central opens today\'s Day by itself on its civil date.')
+  // A policy that keeps the Day from turning by itself: nothing opens, and the way on is Setup's Ground step.
+  const held = groundOf(FRESH.day, {...FRESH.time, data: {...FRESH.time.data, policy: {...FRESH.time.data.policy, automatic_day_rollover: false}}})
+  assert.match(bind.currentDayOf(held).standing.message, /keeps the Day from turning by itself[\s\S]*Settings › Setup › Ground/)
   const opened = interpretDayOpen('today', {error: 'Central owner Action refused: no DayRef or current today pointer'})
   assert.equal(opened.state, 'unopened', 'the open-day answer reads the same')
   assert.doesNotMatch(opened.message, /DayRef|today pointer/)
   // Past midnight (walk 13 Nov): the page's open-day answer meets the stale pointer — today not opened yet, never the raw refusal.
   const turned = interpretDayOpen('today', {error: 'Central owner Action refused: The native today pointer is stale; explicitly ensure the current Day under the native time policy'})
   assert.equal(turned.state, 'unopened')
-  assert.equal(turned.message, 'Today has not opened yet. Open today opens it.')
+  assert.equal(turned.message, 'Today has not opened yet. Central opens it by itself at the Day\'s turn.')
 })
 
 // ── SF06, SF08: the held field beside your own Day (DLW build ruling 2026-11-06), and what reached you recorded into it under the Day's
@@ -864,7 +752,7 @@ test('SF06, SF08: the field\'s values are readings; the face says what the Day r
   const values = bind.dayValuesOf(factsOf(READY), null, null, fieldModel.dayFieldReading(HELD, true, []))
   // nothing writes the field: the face's star is its own choice, and the field's values are readings
   const turned = []
-  const binding = bind.dayDesignBinding(ID, factsOf(READY), values, {turn: async (...x) => { turned.push(x) }, openToday: async () => { turned.push('open') }, closeNow: async () => { turned.push('close') }})
+  const binding = bind.dayDesignBinding(ID, factsOf(READY), values, {turn: async (...x) => { turned.push(x) }, closeNow: async () => { turned.push('close') }})
   for (const key of ['fieldDay', 'fieldWhy', 'fieldKept', 'fieldRefusal', 'fieldSkipped']) await assert.rejects(binding.write([{key, value: '{}'}]), /a reading/, `${key} is a reading, never written`)
   assert.deepEqual(turned, [], 'no owner is asked to record anything by a reading')
   // the field not read: unbound (no World stands), being read, refused in the field's words
@@ -1263,9 +1151,10 @@ test('SF06 (DLW build ruling 2026-11-09): the Day device offers today’s entrie
     // the revision it was offered from.
     const sent = [], real = globalThis.fetch
     const ok = outcome => ({json: async () => ({ok: true, outcome})})
-    globalThis.fetch = async (_url, init) => {
+    // The kernel's own asks for the World Model's day slice (`quiet`, world_model.rs `day`) are not the press's.
+    const composed = withWorldModel(async (_url, init, {quiet = false} = {}) => {
       const body = JSON.parse(init.body)
-      sent.push(body)
+      if (!quiet) sent.push(body)
       // Central's ground read again stands at another revision than the one offered: the press still sends the offered one (be2g)
       if (body.op === 'central' && body.request.kind === 'inspect') return ok({result: 'central_reading', data: MOVED_ON})
       if (body.op === 'invoke_action' && body.invocation.action === 'central.day.entry.part') {
@@ -1273,6 +1162,11 @@ test('SF06 (DLW build ruling 2026-11-09): the Day device offers today’s entrie
           data: {schema: 'central.day-entry-part/v1', part: {id: 'day-entry:0123456789abcdef', kind: 'page', label: 'one'}}}})
       }
       return {json: async () => ({ok: false, error: `unexpected op ${body.op}`})}
+    })
+    globalThis.fetch = async (url, init) => {
+      const body = JSON.parse(init.body)
+      if (body.op === 'model_subscribe') sent.push(body)
+      return composed(url, init)
     }
     try {
       const held = systemStore.dayEntries()
@@ -1280,10 +1174,10 @@ test('SF06 (DLW build ruling 2026-11-09): the Day device offers today’s entrie
     } finally {
       globalThis.fetch = real
     }
-    assert.deepEqual(sent.map(body => (body.op === 'invoke_action' ? [body.invocation.action, body.invocation.input] : [body.op, body.request?.kind])), [
-      ['central', 'inspect'],
+    assert.deepEqual(sent.map(body => (body.op === 'invoke_action' ? [body.invocation.action, body.invocation.input] : [body.op, body.slice, body.fresh])), [
+      ['model_subscribe', 'day', true],
       ['central.day.entry.part', {day_ref: 'central:day:control:root:2026-10-16', expected_revision: 'rev-1', field_id: 'p3_pattern'}],
-    ], 'the press sends the revision the hook offered from')
+    ], 'Central\'s ground read again (the World Model\'s day slice, fresh), then the entry on the revision the hook offered from')
     today.unmount()
     devices.pop()
     assert.equal(systemStore.dayEntries(), null, 'unmounted, it lets go of its own')

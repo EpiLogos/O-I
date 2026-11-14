@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {register} from 'node:module'
+import {withWorldModel} from './support/worldModelFixture.mjs'
 
 // T-WORLDS W4 (manual §24), the face side: the practice world derived from Central's own disclosure; practice pages made in its folder
 // through Central's own creation door and written on the source owner's CAS; the dream journal as the atlas's dreams; Amplify's Source
@@ -81,12 +82,19 @@ function fakeCentral({projects = ['personal']} = {}) {
         return {result: 'directory_read', directory: {location: loc(op.path), entries}}
       }
       case 'file_read': return {result: 'file_read', reading: reading(op.location.path)}
-      case 'file_operation': {
-        const path = op.location.path, held = files.get(path)
-        if (source(path) || path.startsWith('Control/') && !path.startsWith('Control/user/flows/')) throw new Error('Protected ground or owner state must use its native authored operation; ordinary file writes are unavailable')
-        if (!held && op.request.expected_revision === '') return {result: 'file_operation', data: {outcome: 'created', revision: put(path, op.request.content)}}
-        if (!held || held.revision !== op.request.expected_revision) return {result: 'file_operation', data: {outcome: 'conflict', current: held ? reading(path) : undefined}}
-        return {result: 'file_operation', data: {outcome: 'written', revision: put(path, op.request.content)}}
+      // A file's save: Central's central.files.write through `act` (O-I #1002), answered with its file mutation for the location asked,
+      // or refused in Central's words.
+      case 'act': {
+        if (op.action !== 'central.files.write') throw new Error(`unexpected Action ${op.action}`)
+        const {location, expected_revision, content} = op.input, path = location.path, held = files.get(path)
+        const answered = dispatch => ({result: 'action_dispatched', dispatch: {owner_operation: op.action, ...dispatch}})
+        const mutation = (outcome, extra) => answered({state: 'invoked', data: {schema: 'central.file-mutation/v1', location, outcome, ...extra}})
+        if (source(path) || path.startsWith('Control/') && !path.startsWith('Control/user/flows/')) {
+          return answered({state: 'owner_refused', message: 'Protected ground or owner state must use its native authored operation; ordinary file writes are unavailable'})
+        }
+        if (!held && expected_revision === '') return mutation('created', {revision: put(path, content)})
+        if (!held || held.revision !== expected_revision) return mutation('conflict', {current: held ? reading(path) : undefined})
+        return mutation('written', {revision: put(path, content)})
       }
       case 'invoke_action': {
         const {action, input} = op.invocation
@@ -122,10 +130,10 @@ function fakeCentral({projects = ['personal']} = {}) {
       default: throw new Error(`the fake Central has no ${op.op}`)
     }
   }
-  globalThis.fetch = async (_url, init) => {
+  globalThis.fetch = withWorldModel(async (_url, init) => {
     const op = JSON.parse(init.body)
     try { return {json: async () => ({ok: true, outcome: outcome(op)})} } catch (error) { return {json: async () => ({ok: false, error: error.message})} }
-  }
+  })
   return {transport: {kind: 'bridge', url: 'http://kernel'}, files, ops, loc, put, islandOf}
 }
 
@@ -175,7 +183,7 @@ test('a practice page is made in the practice world through the source door, mar
   const written = await instances.writeFlowInstance(central.transport, made.location, held.revision, html)
   assert.equal(written.outcome, 'written')
   assert.ok(central.ops.some(op => op.op === 'invoke_action' && op.invocation.action === 'projectcentral.source.write'))
-  assert.ok(!central.ops.some(op => op.op === 'file_operation'), 'no ordinary file write on a project\'s ground')
+  assert.ok(!central.ops.some(op => op.op === 'act' && op.action === 'central.files.write'), 'no ordinary file write on a project\'s ground')
   // A write on a revision the file has moved past is a conflict, and nothing is written.
   const stale = await instances.writeFlowInstance(central.transport, made.location, held.revision, html)
   assert.equal(stale.outcome, 'conflict')
@@ -339,7 +347,7 @@ test('Answer this finds the bound conversation, asks from the page, waits for Na
     read: async (_t, dialogue, block) => ({dialogue, blockId: block}),
     flow: async () => ({location}),
     retain: async (_t, _flow, nara) => { kept.push(nara); return {revision: 'r2', entryId: 'nara-answer-1', already: false} },
-    sleep: async () => {}, everyMs: 1, waitMs: 100,
+    answer: async (_t, _dialogue, after) => { for (;;) { const block = answer.answeredBlock((views.shift() ?? views.at(-1)).blocks, after); if (block !== null) return block } },
   })
   assert.equal(asked[0].practice.kind, 'journal', 'the page\'s practice places the turn')
   assert.equal(asked[0].answering.passage, 'Why does the morning feel so wide?')
@@ -347,6 +355,15 @@ test('Answer this finds the bound conversation, asks from the page, waits for Na
   assert.deepEqual(done, {kind: 'written', receipt: {page: 'ref:journal', entryId: 'nara-answer-1', revision: 'r2', already: false, agent: 'Nara', agentSession: 'agent-session/1', answering: 'e1', passages: 2}})
   assert.throws(() => answer.answeredBlock([{id: 9, kind: 'user', text: 'q'}, {id: 10, kind: 'error', text: ''}], 8), /in an error/)
   assert.equal(answer.answeredBlock([{id: 9, kind: 'user', text: 'q'}, {id: 10, kind: 'assistant', text: 'part'}], 8), null, 'still answering')
+  // The one turn reader every sender waits on (session.ts turnAnswer, O-I #1003): a question in two blocks is one question; the answer is
+  // the turn's last run of text, its streamed blocks joined and named by the first, after whatever came between (a tool's call).
+  const {turnAnswer} = await import(`${cradle}encounter/session.ts`)
+  const turn = [{id: 9, kind: 'user', text: '{"q":'}, {id: 10, kind: 'user', text: '1}'}, {id: 11, kind: 'assistant', text: 'Looking.'},
+    {id: 12, kind: 'tool_call', text: ''}, {id: 13, kind: 'assistant', text: 'It is '}, {id: 14, kind: 'assistant', text: 'wide.'}, {id: 15, kind: 'completed', text: ''}]
+  assert.deepEqual(turnAnswer(turn, 8, 'Ada'), {id: 13, text: 'It is wide.'})
+  assert.equal(turnAnswer(turn.slice(0, 6), 8, 'Ada'), null, 'the turn has not ended')
+  assert.throws(() => turnAnswer([...turn.slice(0, 3), {id: 12, kind: 'cancelled', text: ''}], 8, 'Ada'), /^Error: Ada's turn ended cancelled/)
+  assert.throws(() => turnAnswer([turn[0], {id: 11, kind: 'assistant', text: '  '}, {id: 12, kind: 'completed', text: ''}], 8, 'Ada'), /^Error: Ada's turn completed with no answer/)
 })
 
 // ── identity and your sky ─────────────────────────────────────────────────────────────────────────────────────────────────────────────

@@ -1,4 +1,4 @@
-import {ConnectionRuntime} from "../../../../../packages/oi-design-system/expressions-engine/oi/connectionRuntime.mjs";
+import {ConnectionRuntime} from "./connectionRuntime.mjs";
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0

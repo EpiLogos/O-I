@@ -291,9 +291,6 @@ export interface SystemDisclosureSource {
   readonly kind: "live" | "unbound";
   readonly label: string;
   read(): Promise<SystemDisclosureReading>;
-  /** The harness-face writes (the held default provider) keep their seam. */
-  holdDefault(provider: string): Promise<void>;
-  discardDefault(): Promise<void>;
 }
 
 function unwrapMounted(call: OpCall) {
@@ -335,12 +332,6 @@ export function createLiveSystemDisclosure(call: OpCall): SystemDisclosureSource
         disclosure,
       };
     },
-    async holdDefault(provider) {
-      await harness.holdDefault(provider);
-    },
-    async discardDefault() {
-      await harness.discardDefault();
-    },
   };
 }
 
@@ -356,8 +347,6 @@ export function createUnboundSystemDisclosure(reason: string): SystemDisclosureS
       harness: await harness.read(),
       disclosure: {state: "absent" as const, reason},
     }),
-    holdDefault: async () => harness.holdDefault(""),
-    discardDefault: async () => harness.discardDefault(),
   };
 }
 

@@ -93,13 +93,19 @@ test('every change kind a shell face dispatches is applied by some owning bounda
   assert.deepEqual(unapplied, [], `faces dispatch change kinds no boundary reducer applies: ${unapplied.join(', ')} (verify each against its owning reducer before dismissing)`)
 })
 
-test('the agent gateway control rides the kernel-typed harness_agent_control op', () => {
+test('the agent gateway control rides the kernel-typed act op, as the registry\'s Action aikit.gateway.agent (O-I #1002)', () => {
   const kernelTypes = read(join(CRADLE, 'kernel/types.ts'))
-  assert.match(kernelTypes, /op:"harness_agent_control";binding:string;control:"new"\|"stop"\|"restart"\|"pause"\|"resume"/,
-    'the kernel op union no longer types harness_agent_control — re-audit src/agent/harnessAgentControl.ts')
+  assert.match(kernelTypes, /\{ op: "act"; action: string; input\?: Record<string, unknown>; project\?: string \}/,
+    'the kernel op union no longer types act — re-audit src/agent/harnessAgentControl.ts')
+  assert.match(kernelTypes, /\{result:"action_dispatched";dispatch:ActionDispatch/, 'the kernel result union no longer types action_dispatched')
   const sender = read(join(UI, 'src/agent/harnessAgentControl.ts'))
-  assert.match(sender, /op: 'harness_agent_control'/, 'the shell sender drifted from the kernel op name')
-  assert.match(sender, /harness_agent_outcome/, 'the sender no longer verifies the outcome kind — receipts lost')
+  assert.match(sender, /op: 'act', action: 'aikit\.gateway\.agent', input: \{binding, operation: control/, 'the shell sender drifted from the kernel op name or the Action id')
+  // The sender reads the answer through the bridge's one reading of a dispatch, which checks the outcome kind and tells the owner's
+  // refusal from its answer.
+  assert.match(sender, /actionData\(/, 'the sender no longer reads the answer through the bridge\'s actionData — receipts lost')
+  const bridge = read(join(CRADLE, 'kernel/bridge.ts'))
+  assert.match(bridge, /result !== "action_dispatched"/, 'actionData no longer verifies the outcome kind — receipts lost')
+  assert.match(bridge, /case "invoked": return dispatch\.data/, 'dispatchData no longer tells the owner\'s refusal from its answer')
 })
 
 test('the scene request union admits exactly the actions the transport model produces', () => {

@@ -154,7 +154,14 @@ jobs:
         run: |
           git fetch --no-tags --depth=1 origin "$BASE"
           mkdir -p "$RUNNER_TEMP/base"
-          git archive "$BASE" shared-field packages/oi-design-system/expressions-engine | tar -x -C "$RUNNER_TEMP/base"
+          # The base module imports the Expressions engine's journey model: from the application's own source
+          # (desktop/cradle/expressions-app), or, before #1008, from the design system's compiled copy of it.
+          paths=shared-field
+          for path in desktop/cradle/expressions-app/field-studies-journeys/src desktop/cradle/expressions-app/src/engine \
+            desktop/cradle/kernel/src/expression_blueprint_sixfold.json packages/oi-design-system/expressions-engine; do
+            if git cat-file -e "$BASE:$path" 2>/dev/null; then paths="$paths $path"; fi
+          done
+          git archive "$BASE" $paths | tar -x -C "$RUNNER_TEMP/base"
           npm install --prefix "$RUNNER_TEMP/base/shared-field/spacetimedb"
           node shared-field/scripts/upgrade-in-place-acceptance.mjs \
             --base "$RUNNER_TEMP/base/shared-field" --next shared-field \

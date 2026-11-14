@@ -10,7 +10,7 @@ import assert from "node:assert/strict";
 import {fieldApply, freshEncounter} from "../src/field/model.ts";
 import {registerFieldHost, currentFieldContext, fieldOperate} from "../src/field/fieldHost.ts";
 import {prepareFieldContext, isFieldItem, fieldItemGeneration, fieldItemStatus} from "../src/context/fieldContext.ts";
-import {nativeContext} from "../src/context/nativeContext.ts";
+import {packetNow} from "../src/context/packetSlice.ts";
 
 globalThis.window ??= {dispatchEvent() {}, localStorage: {getItem: () => null, setItem() {}}};
 globalThis.CustomEvent ??= class { constructor(t, i) { this.type = t; this.detail = i?.detail; } };
@@ -62,7 +62,8 @@ try {
   assert.equal(second.items.filter(isFieldItem).length, 1);
   assert.equal(fieldItemGeneration(second.items.find(isFieldItem)), g2);
   assert.notEqual(second.digest, first.digest); assert.ok(second.revision > first.revision);
-  const read = await nativeContext(transport, "Field", session);
+  // The packet as the kernel's World Model holds it, read fresh (O-I ticket 1005): the owner's own state after the edits.
+  const read = await packetNow(transport, "Field", session);
   assert.equal(read.digest, second.digest);
   console.log(`PASS — a later selection replaced it at generation ${g2}; digest and revision advanced (${first.revision} → ${second.revision}); the stale item was detectable`);
   console.log("2/2 passed");

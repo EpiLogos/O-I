@@ -86,7 +86,7 @@ const fixtureSession=(reading:EncounterReading,status:EncounterStatus,draft:stri
     model:{phase:"unavailable",error:"This dev preview has no native model owner."},
     mode:{phase:"unavailable",error:"This dev preview has no native mode owner."},
     draft,pending:false,busy:false,draftFailed:false,
-    dispatch:{kind:"idle"},deliveries:[],a2a:{busy:false},
+    a2a:{busy:false},
   };
   const actions={
     allowed:(name:string)=>reading.actions?.some(action=>action.ref===`aikit.encounter.${name}`&&action.enabled)===true,
@@ -95,7 +95,7 @@ const fixtureSession=(reading:EncounterReading,status:EncounterStatus,draft:stri
     send:async()=>{},retrySend:async()=>{},recover:async()=>{},connect:async()=>{},reconnect:async()=>{},cancel:()=>{},
     permission:async()=>{},earlier:()=>{},latest:()=>{},
     readJournal:async(after:number)=>({agent_session:"agent-session/fixture",events:[],next_cursor:after,more:false}),
-    reconcileAddressed:async()=>{},sendAddressed:async()=>{},sendGroup:async()=>{},seedA2a:()=>{},sendA2a:async()=>{},
+    submit:async()=>{},until:async()=>{throw new Error("No native session answers in this dev preview");},ask:async()=>{throw new Error("No native session answers in this dev preview");},compose:async()=>{},seedA2a:()=>{},sendA2a:async()=>{},
   };
   return {state,actions};
 };

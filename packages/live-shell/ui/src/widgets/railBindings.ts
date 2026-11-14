@@ -3,9 +3,6 @@
 // key the owner did not report left out, never filled in.
 import type {DesignBinding, Value, ValueChange} from '../frame/devices/designed'
 import type {TrailStop} from '../../../../../desktop/cradle/src/workspace/store'
-import type {CentralGroundReading} from '../../../../../desktop/cradle/src/central/client'
-import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
-import type {closeNowClearing} from '../central/devices/nowsClose'
 import type {TapeRow} from '../../../../../desktop/cradle/src/agent/tape/model'
 import type {WikiNode} from '../../../../../desktop/cradle/src/techne/wikiReading'
 import {blockText, oneLineText, plainText} from '../central/plainParts'
@@ -268,88 +265,6 @@ export function wikiReadLastOf(rows: readonly TapeRow[], nodes: readonly WikiNod
     if (hit) return hit.ref
   }
   return undefined
-}
-
-/** A project register's NOW listing, as `now` kind:list answers it in that register (desktop/cradle/src/receiving/now.ts nowReading). */
-export interface ProjectNows {readonly project: string; readonly records: readonly NowRecord[]}
-type NowRecord = NonNullable<CentralGroundReading['now']['data']>['records'][number]
-
-/** The register a clearing stands in, as the design names it (widgets__nows.tsx `register`): 'root' for your ground (`control:root`),
- * else the project's name (`project:<name>`); undefined for a scope Central names otherwise. Pure. */
-export function nowRegisterOf(scopeRef: unknown): string | undefined {
-  if (scopeRef === 'control:root') return 'root'
-  const project = typeof scopeRef === 'string' ? /^project:(.+)$/.exec(scopeRef)?.[1] : undefined
-  return project || undefined
-}
-/** The workcell seat a clearing was opened in (widgets__nows.tsx `seat`, env-1 and so on): the seat its work names — the checkout of its
- * first work ref, `…/worktrees/<seat>/…` — where it belongs to one. Pure. */
-export function nowSeatOf(workRefs: unknown): string | undefined {
-  if (!Array.isArray(workRefs)) return undefined
-  for (const ref of workRefs as {worktree_path?: unknown}[]) {
-    const seat = typeof ref?.worktree_path === 'string' ? /\/worktrees\/([^/]+)(?:\/|$)/.exec(ref.worktree_path)?.[1] : undefined
-    if (seat) return seat
-  }
-  return undefined
-}
-
-/** NOWs' Close (§23.6; W2): the clearing open in Full — the design sets `close` to its now_ref — closed through Central's
- * `central.now.lifecycle`, the person's press the kernel carries (central/devices/nowsClose.ts closeNowClearing), on the revision the
- * ground's listing gives the clearing and on the placement policy's revision (the ground's `placement` leg is central.work.policy).
- * Only `close` writes; `machine` and `open` are the hand's. With no kernel carrier, Close stands disabled in its words; every other
- * refusal is Central's, or nowsClose's own words for what has not answered. Pure: the close is handed in (railDevices.tsx hands
- * closeNowClearing), so this module stays type-only in its imports. */
-export function nowsCloseWrites(transport: KernelTransportStatus | undefined, ground: CentralGroundReading | null, close: typeof closeNowClearing,
-  projects: readonly ProjectNows[] = []): Pick<DesignBinding, 'write' | 'writes' | 'standing'> {
-  const carrier = !transport || transport.kind === 'unavailable' ? `Close: no kernel carrier stands, so Central's central.now.lifecycle cannot be asked${transport?.kind === 'unavailable' && transport.reason ? ` — ${transport.reason}` : ''}.` : null
-  return {
-    writes: key => key === 'close',
-    ...(carrier ? {standing: {close: {disabled: carrier}}} : {}),
-    write: async (changes: readonly ValueChange[]) => {
-      for (const {key, value} of changes) {
-        if (key !== 'close') throw Error(`${key} is a reading: its owner reports it; nothing here changes it.`)
-        if (carrier || !transport) throw Error(carrier ?? 'Close: no kernel carrier stands.')
-        const policy = ground?.placement.state === 'ready' ? ground.placement.data : null
-        // A project's clearing closes in its own register, on its own listing's revision.
-        const own = ground?.now.data?.records.some(row => row.now_ref === value) ? null : projects.find(listing => listing.records.some(row => row.now_ref === value))
-        if (own) await close(transport, value, own.records, policy, own.project)
-        else await close(transport, value, ground?.now.data?.records ?? null, policy)
-      }
-    },
-  }
-}
-
-/** The NOWs binding (widgets__nows.tsx) from the ground's one reading (desktop/cradle/src/central/client.ts readGround, Central's
- * `inspect`): the civil date and time and the policy's timezone; the Day's own lifecycle; the clearings as the listing states them —
- * an archived one is closed and does not show — and the year counted over all of them (`seasons`). A part the ground refused is absent, its words the reason when nothing stands. */
-export function nowsValues(ground: CentralGroundReading, projects: readonly ProjectNows[] = []): Record<string, Value> {
-  const values: Record<string, Value> = {}
-  const time = ground.time.state === 'ready' ? ground.time.data : undefined
-  if (time) {
-    put(values, 'day', time.civil_date)
-    put(values, 'time', `${time.civil_date}T${time.local_time}`)
-    put(values, 'timezone', time.policy.timezone)
-  }
-  const day = ground.day.state === 'ready' ? ground.day.data : undefined
-  put(values, 'dayState', typeof day?.temporal.lifecycle === 'string' ? day.temporal.lifecycle : undefined)
-  const root = ground.now.state === 'ready' ? ground.now.data : undefined
-  // Every register's clearings: your ground's listing, then each project's, each clearing once; where each stands is its own scope.
-  const seen = new Set<string>()
-  const records = root ? [...root.records, ...projects.flatMap(listing => listing.records)].filter(row => !seen.has(row.now_ref) && !!seen.add(row.now_ref)) : undefined
-  const listing = records ? {records} : undefined
-  if (listing) put(values, 'nows', JSON.stringify(listing.records.filter(row => row.lifecycle !== 'archived').map(row => {
-    const register = nowRegisterOf(row.scope_ref), seat = nowSeatOf(row.work_refs)
-    return {now_ref: row.now_ref, purpose: row.purpose, lifecycle: row.lifecycle, participant_refs: row.participant_refs, created_at_unix_seconds: row.created_at_unix_seconds,
-      ...(register ? {register} : {}), ...(seat ? {seat} : {})}
-  })))
-  // The field's year (manual §25.6, the NOWs' environ: a clearing active, quiescent, closed, archived): how many clearings stand in each
-  // season over the whole listing, the archived ones too, which the rows above leave out (faces/environReadings.ts seasonsOf).
-  if (listing) {
-    const seasons: Record<string, number> = {active: 0, quiescent: 0, closed: 0, archived: 0}
-    for (const row of listing.records) if (row.lifecycle in seasons) seasons[row.lifecycle]! += 1
-    put(values, 'seasons', JSON.stringify(seasons))
-  }
-  if (!time && !listing) put(values, 'reason', ground.time.error?.message ?? ground.now.error?.message ?? 'The ground did not answer')
-  return values
 }
 
 /** No calendar provider is installed (widgets__calendar.tsx: "no calendar provider, feed or panel exists in the shell"): every reading

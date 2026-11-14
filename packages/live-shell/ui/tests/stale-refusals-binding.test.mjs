@@ -1,10 +1,10 @@
 // T-COVERAGE §1.3, the refusals that were stale: each binding below refused a reading or an act its owner already answers. Each now
 // reads (or writes) through the owner's own route — Central's readings through the kernel's invoke_action (owner_write.rs carries a
-// Central reading as a reading: it retires nothing), the page op, Factory's AttemptReceiving — and draws its catalogue design on it.
+// Central reading as a reading: it retires nothing), the page op, Factory's factory.attempt.choose — and draws its catalogue design on it.
 //   the Day (central:day-die, DLW §18.2)            central.day.settings.read, central.day.moves.read
 //   Ground hygiene (central:ground-hygiene, §18.5)  central.git.census
 //   Beings and Things (central:beings|things)       the page op's mutate_field
-//   Runs (software-factory:attempt-review, §19.1)   the take lanes' reading; Stands through factory_owner AttemptReceiving
+//   Runs (software-factory:attempt-review, §19.1)   the take lanes' reading; Stands through Factory's factory.attempt.choose
 //   Scope (software-factory:context-write-mode)     central.world.effective-sources; a place request waits on the person's route
 //   Wiki (widgets:wiki, §23.7)                      central.wiki.read for the page's links
 //   Search (central:search, §18.4)                  control.search for Your world
@@ -139,7 +139,7 @@ test('a Central reading travels as invoke_action and comes back as its data, or 
 
 const OWN = {settings: REAL.daySettings.data, settingsRefusal: null, moves: REAL.dayMoves.data, movesRefusal: null, timezone: 'Europe/London'}
 const READY_FACTS = {civilDate: '2026-10-19', standing: {state: 'ready', dayRef: 'central:day:control:root:2026-10-19', civilDate: '2026-10-19', sourceRef: 's', documentId: 'd', revision: 'r'},
-  refusal: null, canOpenToday: false, canClose: true, aperture: null, boundary: 0, automaticRollover: false}
+  refusal: null, canClose: true, aperture: null, boundary: 0, automaticRollover: false}
 
 test('REAL — the Day\'s own settings and moves: Rollover Off, Agent writes, every Source, Close routine, each move\'s prompt and Runs at, and no run yet', () => {
   const values = day.dayOwnValuesOf(OWN)
@@ -193,14 +193,14 @@ test('the Day\'s readings refused or unread: each own key absent in the owner\'s
 test('(b) every key the Day design reads is a reading, absent with its reason, or a local hold; (c) every control writes or stands disabled with its route', async () => {
   const values = day.dayValuesOf(READY_FACTS, null, OWN)
   const why = {...day.DAY_ABSENT, ...day.dayOwnAbsent(OWN, values)}
-  const own = new Set(['face', 'c0', 'c1', 'c2done', 'date', 'refusal', 'canOpenToday', 'canClose', 'dayStart', 'light'])
+  const own = new Set(['face', 'c0', 'c1', 'c2done', 'date', 'refusal', 'notice', 'canClose', 'dayStart', 'light'])
   for (const key of designKeys(dayDesign)) {
     assert.ok(key in values || why[key] || own.has(key), `${key}: a reading, or absent with a reason`)
     if (key in values) assert.notEqual(values[key], undefined, key)
   }
   // REPLACED (W2): the settings and the pads write through Central (central-person-writes.test.mjs); with no writers handed in here, a
   // write is refused naming what is missing. Verify still waits on its kernel route.
-  const binding = day.dayDesignBinding('central:day-die', READY_FACTS, values, {turn: async () => {}, openToday: async () => {}, closeNow: async () => {}}, OWN)
+  const binding = day.dayDesignBinding('central:day-die', READY_FACTS, values, {turn: async () => {}, closeNow: async () => {}}, OWN)
   for (const key of ['run_tasks', 'rollover', 'agentWrites', 'closeRoutine', 'src_live', 'at_close', 'prompt_tasks']) assert.equal(binding.standing[key], undefined, `${key} acts`)
   await assert.rejects(binding.write([{key: 'verifyCloseout', value: true}]), /T-COVERAGE §1\.2/)
   assert.equal(binding.standing.closeNow, undefined, 'Close now writes through Central\'s close-carry')
@@ -208,7 +208,7 @@ test('(b) every key the Day design reads is a reading, absent with its reason, o
 
 test('(e) the Day draws its design on Central\'s readings in every view: the owner\'s prompt, the pads\' reasons, never the design\'s sample', () => {
   const values = day.dayValuesOf(READY_FACTS, null, OWN)
-  const binding = day.dayDesignBinding('central:day-die', READY_FACTS, values, {turn: async () => {}, openToday: async () => {}, closeNow: async () => {}}, OWN)
+  const binding = day.dayDesignBinding('central:day-die', READY_FACTS, values, {turn: async () => {}, closeNow: async () => {}}, OWN)
   const all = drawsOn(dayDesign, binding, /Wed 15 Oct|Read face 0 and propose tasks in three tiers|63 handoff returns/, [day.DAY_STANDING.verifyCloseout.disabled])
   assert.ok(all.includes(escaped(REAL.daySettings.data.effective_prompts.tasks)), 'Tasks\' Prompt is Central\'s own')
   assert.match(all, /not yet/, 'a pad\'s record says no run has ended today')
@@ -407,13 +407,13 @@ test('a Being with no page read with its revision: every tie stands disabled say
   for (const key of ['world', 'subject', 'kind', 'o1', 'layout', 'ground', 'dropSource']) assert.match(binding.standing[key].disabled, /page op mutate_field.*no page is read here/, key)
 })
 
-// ── Runs: the take lanes' attempts; Stands through AttemptReceiving ──────────────────────────────────────────────────────────────
+// ── Runs: the take lanes' attempts; Stands through factory.attempt.choose ──────────────────────────────────────────────────────────────
 
 const take = (attemptRef, n, extra = {}) => ({sessionRef: 'agent-session/s1', attemptRef, runRef: 'run:R1', statePath: '/factory/state', taskRef: 'task:1', unit: 'inspect-source',
   state: 'returned', startUnixMs: Date.UTC(2026, 9, 21, 8, n * 10), endUnixMs: Date.UTC(2026, 9, 21, 8, n * 10 + 7), summary: `attempt ${n}`, receivingRef: null, ...extra})
 const TAKES = [take('att:2', 2, {receivingRef: 'central:receiving:x'}), take('att:1', 1, {state: 'failed', summary: null}), take('att:3', 3, {state: 'running', endUnixMs: null})]
 
-test('FIXTURE — Runs reads the session\'s takes: its Run, the attempts oldest first, the one Central received standing; Stands writes through AttemptReceiving', async () => {
+test('FIXTURE — Runs reads the session\'s takes: its Run, the attempts oldest first, the one Central received standing; Stands writes through factory.attempt.choose', async () => {
   chainBind.resetHolds()
   const chosen = []
   const runs = {takes: TAKES, choose: async t => { chosen.push(t.attemptRef); return t.attemptRef === 'att:3' ? {ok: false, error: 'the attempt has not returned'} : {ok: true, note: 'proposed'} }, timezone: 'Europe/London'}
@@ -507,37 +507,20 @@ test('(e) Search draws Central\'s refusal and its matches in every view, never t
 
 // ── a page's takes: its revisions ────────────────────────────────────────────────────────────────────────────────────────────────
 
-test('REAL — a page\'s revisions over its day lie as take lanes under its world\'s track, the one that stands marked', () => {
-  const todayStart = Date.UTC(2026, 9, 19)
-  const minuteOf = ms => (ms < todayStart || ms >= todayStart + 86_400_000 ? null : Math.round((ms - todayStart) / 60000))
-  const page = {path: 'Control/user/day/2026-10-19/day.md', title: 'Day', world: 'central:wiki:root'}
-  const nowMs = Date.UTC(2026, 9, 19, 23, 0)
-  const takes = adapter.pageTakesOf(page, REAL.sourceHistory.data, minuteOf, todayStart, nowMs)
-  const entries = [...REAL.sourceHistory.data.entries].sort((a, b) => a.recorded_at_unix_seconds - b.recorded_at_unix_seconds)
-  assert.equal(takes.length, entries.length, 'each save of the day a take')
-  assert.deepEqual(takes.map(t => t.id), entries.map(entry => `${page.path}@${entry.revision}`))
-  assert.ok(takes.every(t => t.trackId === adapter.centralWorldTrackId('central:wiki:root')))
-  assert.deepEqual(takes.filter(t => t.standing).map(t => t.id), [`${page.path}@${REAL.sourceHistory.data.revision.revision}`], 'the revision that stands now')
-  for (let i = 0; i + 1 < takes.length; i++) assert.equal(takes[i].spans[0].end, takes[i + 1].spans[0].start, 'each stands until the next save')
-  assert.equal(takes.at(-1).spans[0].end, 23 * 60, 'the one that stands, until now')
-  assert.match(takes[0].spans[0].label, /^revision [0-9a-f]{8} · saved by a human$/)
-  assert.deepEqual(adapter.pageTakesOf(page, REAL.sourceHistory.data, minuteOf, Date.UTC(2026, 9, 25), nowMs), [], 'none of them stood on another day')
-  assert.deepEqual(adapter.pageSourceRef({project: null}, 'Control/user/flows/f.html'), {sourceRef: 'central:source:control:root:Control/user/flows/f.html'})
-  assert.deepEqual(adapter.pageSourceRef({project: 'Archetypal-Earth'}, 'Work/Archetypal-Earth/ProjectCentral/user/p.html'),
-    {sourceRef: 'central:source:project:Archetypal-Earth:ProjectCentral/user/p.html', project: 'Archetypal-Earth'})
-  assert.equal(adapter.pageSourceRef({project: 'O-I'}, 'Control/user/x.html'), null)
-})
-
-test('the takes reach the arrangement\'s lanes; a refusal is said where none stands', () => {
-  const page = {name: 'day.md', title: 'Day', form: 'page', revision: 'r', world: 'central:wiki:root',
-    location: {schema: 'central.path-ref/v1', ref: 'native:path', root: '/c', path: 'Control/user/day/2026-10-19/day.md'}}
-  const base = {civil: {state: 'unavailable', reason: 'x'}, worlds: {state: 'read', worlds: [{ref: 'central:wiki:root', name: 'Your world', kind: 'yours', folder: 'Control/user/day/2026-10-19', project: null}]},
-    set: {state: 'read', civilDate: '2026-10-19', set: {tracks: [], rows: []}}, pages: new Map([['central:wiki:root', {state: 'read', listing: {schema: 'oi.page-list/v1', path: 'x', more: false, pages: [page], not_pages: []}}]])}
-  const set = adapter.projectCentralTracks({...base, histories: new Map([[page.location.path, {state: 'read', history: REAL.sourceHistory.data}]]), nowMs: Date.UTC(2026, 9, 19, 23)})
-  assert.equal(set.lanes.takes.length, REAL.sourceHistory.data.entries.length)
-  assert.equal(set.lanes.absent.takes, undefined)
-  const refused = adapter.projectCentralTracks({...base, histories: new Map([[page.location.path, {state: 'refused', reason: 'SourceRef is not in this World'}]])})
-  assert.equal(refused.lanes.absent.takes, 'Revisions as take lanes: Central did not read a page\'s history — SourceRef is not in this World')
+// REPLACED (O-I #1004): "a page's revisions over its day lie as take lanes under its world's track, the one that stands marked" and "the
+// takes reach the arrangement's lanes; a refusal is said where none stands", both through the window's Central adapter over the page
+// histories its hook read (central.source.history). Central's Set is the kernel's now (kernel mode_set.rs central), and a page's file
+// history is no slice of the World Model yet (O-I #1005): the Set holds no take, and says why on the lanes.
+test('Central\'s Set says why its take lanes are absent, in the kernel\'s words, and draws none', async () => {
+  const {kernelSetTracks} = await import('../src/frame/tracks/kernelSet.ts')
+  const {modeSetOf, setTrack} = await import('./support/modeSetFixture.mjs')
+  const kernel = readFileSync(new URL('../../../../desktop/cradle/kernel/src/mode_set.rs', import.meta.url), 'utf8')
+  const words = kernel.match(/\("takes", "(A page's revisions are its takes[^"]+)"\)/)?.[1]
+  assert.match(words, /Central's file history is no slice of the World Model yet \(O-I #1005\)/)
+  const set = kernelSetTracks(modeSetOf({owner: 'Central', tracks: [setTrack(adapter.centralWorldTrackId('central:wiki:root'), 'Your world', {kind: 'world'})],
+    lanes_absent: {takes: words}}), {nowMs: Date.UTC(2026, 9, 19, 23)})
+  assert.equal(set.lanes.takes, undefined)
+  assert.equal(set.lanes.absent.takes, words)
 })
 
 // ── Diff: the selected seat ──────────────────────────────────────────────────────────────────────────────────────────────────────

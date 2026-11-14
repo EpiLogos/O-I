@@ -906,7 +906,8 @@ pub fn with_fresh<T>(f: impl FnOnce() -> T) -> T {
     value
 }
 
-fn fresh_asked() -> bool {
+/// Whether the reading being served was asked for afresh (`with_fresh`, carried onto its threads).
+pub(crate) fn fresh_asked() -> bool {
     FRESH.with(std::cell::Cell::get)
 }
 
@@ -1338,9 +1339,22 @@ impl Drop for Leader<'_> {
 pub fn written() {
     let at = std::panic::Location::caller();
     crate::dispatch::trace_read(&format!("* {}:{}", at.file(), at.line()), "written");
+    #[cfg(test)]
+    WRITTEN_HERE.with(|count| count.set(count.get() + 1));
     let watch = Watch::global();
     watch.changed_here();
     ReadModel::global().clear();
+}
+
+#[cfg(test)]
+thread_local! {
+    static WRITTEN_HERE: std::cell::Cell<usize> = const { std::cell::Cell::new(0) };
+}
+
+/// How many times `written` ran on this thread: a test's own count, which no other test's writes move.
+#[cfg(test)]
+pub(crate) fn written_here() -> usize {
+    WRITTEN_HERE.with(std::cell::Cell::get)
 }
 
 /// What a reading AIKit makes over `cwd` depends on: its own home, the root

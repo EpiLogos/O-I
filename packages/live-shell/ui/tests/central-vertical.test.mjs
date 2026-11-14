@@ -172,13 +172,13 @@ test('step 1 — a dated day-track clip selects the spine occasion and opens the
   const day = await capture('day-read-2026-10-06.capture.json')
   assert.equal(day.data.document_state, 'uninitialised')
   assert.equal(day.data.day_ref, selection.dayRef, 'the captured day is the same day ref the clip stands in')
-  // SOURCE: the kernel answers open-day for an uninitialised Day with its own sentence (central.rs:96).
-  const kernelSentence = 'Current Day has no native document yet. Use the explicit native initialisation path; its temporal artifact is not a Daily Die'
+  // SOURCE: the kernel answers open-day for a Day without its page with its own sentence (central.rs day_document; O-I 1005).
+  const kernelSentence = 'Current Day has no native document yet: Central makes it at the Day\'s turn from the Day form; its temporal artifact is not a Daily Die'
   const standing = vertical.interpretDayOpen(selection.dayRef, {error: kernelSentence})
   assert.equal(standing.state, 'uninitialised')
   assert.equal(standing.civilDate, '2026-10-06')
   assert.equal(standing.owner, vertical.DAY_OWNER)
-  assert.equal(standing.op, vertical.DAY_INITIALISE_OP, 'the face names the owner op that would admit the Day document')
+  assert.equal(standing.op, vertical.DAY_TURN_OP, 'the face names the owner op that makes the Day\'s page: Central\'s turn')
   assert.equal(standing.message, kernelSentence, 'the owner\'s own words stay on the face')
 })
 

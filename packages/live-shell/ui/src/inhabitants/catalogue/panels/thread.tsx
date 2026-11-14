@@ -775,7 +775,7 @@ const sampleThread = ({stalled, answered}: {stalled?: boolean; answered?: boolea
   {who: 'you', kind: 'you', text: 'Type-check the three TypeScript roots and fix what the last change broke.'},
   {who: 'Flint', kind: 'agent', text: "I will read the shell's agent context first, then run the type-check on each root."},
   {who: 'tool', kind: 'tool', tool: 'Read', text: 'src/agent/AgentShellContext.tsx', out: 'AgentShellState · AgentShellProvider · useAgentShell'},
-  {who: 'tool', kind: 'tool', tool: 'Grep', text: 'harness_agent_control', out: '6 matches'},
+  {who: 'tool', kind: 'tool', tool: 'Grep', text: 'aikit.gateway.agent', out: '6 matches'},
   {who: 'Kite', kind: 'spawn', text: 'expressions-app root', state: 'runs', link: 'tsc-kite'},
   {who: 'tool', kind: 'tool', tool: 'Bash', text: 'tsc --noEmit -p packages/live-shell/ui', out: stalled ? 'waits for an answer' : undefined, state: answered ? undefined : stalled ? 'waits' : 'runs'},
   {who: 'you', kind: 'steer', text: 'Skip the cradle root. Nothing changed there.'},
