@@ -12,8 +12,8 @@
 //     and cap, Launch mode, Then, Quantize, what a Repeat varies, envelopes and its source (the constellation it was made of, taskSourceOf)
 //     — from the session's settings on their owner (AIKit `encounter-session-settings`, agent/sessionSettings.ts), every default stated by
 //     the owner, in the manual's words, which are the owner's: read and written as they are, with no table between them.
-// A constellation dropped on a session's track would make the session's task of it (makeTaskOf); Factory's Set (the kernel's) carries no
-// clip maker yet and says what it waits for (its `clip.make`), so no drop reaches it.
+// A constellation dropped on a session's track would make the session's task of it (makeTaskOf); Factory's Set (the kernel's) makes a
+// task of a message dropped there (factory.task.write) and of no constellation yet, saying what that waits for (its `clip.make`).
 // A song's clip dropped there (Material › Songs, O-I #844) is one unit of the song the session's Run performs, with the thread form canon
 // (songClips.ts dropSong); File › Export Song… makes the selected task's song one clip (songClips.ts exportSong, answered here while
 // Factory's Clip view stands), and with a session's track selected, that track's row of it, with a stretch selected on the

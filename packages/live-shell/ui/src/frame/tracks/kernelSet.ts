@@ -24,6 +24,8 @@ import type {WorldActionReceipt, WorldMixer, WorldTakeLane, WorldTrack, WorldTra
 import type {UseModeTracks} from './modeTracks'
 import {refusingMaker} from './clipMakers'
 import {AGENT_CHAIN_MIME, parseAgentChainDrag} from '../../agent/agentChainDrag'
+import {COMMUNIQUE_DRAG, communiqueDragOf} from '../../agent/devices/railTileIds'
+import {CONSTELLATION_DRAG} from '../browser/constellationFocus'
 
 const MINUTES_PER_DAY = 1440
 
@@ -260,9 +262,19 @@ function actionsOf(set: ModeSet, runner: SetActRunner | undefined, attention: Se
     attention.solo(trackId, on)
     return {ok: true, note: on ? SOLO_ON : SOLO_OFF}
   }}}
-  // A drop is never lost in silence: the Set's words for the clip it cannot make of a constellation yet.
+  // A message dropped on a session's track (manual §19.24 "To turn one into work, drag it onto the agent's track"): the track's writeTask,
+  // the message's words its instruction. A drop is never lost in silence: the Set's words for the clip it cannot make of a constellation yet.
+  const writes = set.tracks.find(track => track.acts?.writeTask)?.acts?.writeTask
   const making = set.waiting['clip.make']
-  if (making) actions.makeClip = refusingMaker(`No owner operation carries it yet — missing op: clip.make (${set.owner}). It waits for ${making}.`)
+  const unmade = making ? `No owner operation carries it yet — missing op: clip.make (${set.owner}). It waits for ${making}.` : null
+  if (writes) actions.makeClip = {op: writes.words, accepts: CONSTELLATION_DRAG, alsoAccepts: [COMMUNIQUE_DRAG], run: (trackId: string, payload: string) => {
+    const message = communiqueDragOf(payload)
+    if (!message) return refused(unmade ?? `${set.owner} makes a task of a message dropped on a session's track, and of nothing else dropped here.`)
+    const act = tracksBy.get(trackId)?.acts?.writeTask
+    return act ? runAct(runner, act, message.concern)
+      : refused(`"${trackId}" takes no message as a task: ${tracksBy.has(trackId) ? 'it is no session seated in a project of this World' : 'it is no track of this Set'}.`)
+  }}
+  else if (unmade) actions.makeClip = refusingMaker(unmade)
   return actions
 }
 

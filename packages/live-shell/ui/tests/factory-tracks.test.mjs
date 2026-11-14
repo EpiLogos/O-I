@@ -123,7 +123,10 @@ test('a session Factory ran a task on carries Run, Stop and End session, and the
         'codex · atelier\'s task is stopped: paused, or cancelled when it was paused already.'),
       endSession: act('factory.session.end', {world: '/w/Central', project: 'atelier', session: 'agent-session/atelier-chat-1'},
         'Factory\'s factory.session.end: the session ended — a running turn stopped, its record closed, its body released',
-        'codex · atelier\'s session has ended: its record is closed.')}})],
+        'codex · atelier\'s session has ended: its record is closed.'),
+      writeTask: act('factory.task.write', {world: '/w/Central', project: 'atelier', session: 'agent-session/atelier-chat-1'},
+        'Factory\'s factory.task.write: the words dropped on the session\'s track written as its next task, a Run Factory commissions for it',
+        'A task is written on codex · atelier\'s session: run it from its clip.', 'instruction')}})],
     clips: [setClip(`${track}#task/1`, track, 'batch:1', 'Keep notes', {subject: 'task:a', acts: {
       launch: act('factory.task.run', {state, run_ref: 'run:a', session: 'agent-session/atelier-chat-1'},
         'Factory\'s factory.task.run: the task run on its session under your grant, its log streaming, its end an attempt with its diff',
@@ -155,6 +158,14 @@ test('a session Factory ran a task on carries Run, Stop and End session, and the
     ['factory.session.start', {world: '/w/Central', project: 'atelier', agent: 'codex'}, undefined],
     ['factory.session.start', {world: '/w/Central', project: 'atelier', agent: 'agent:roster-nara'}, undefined],
   ], 'each the Set\'s Action with its input; the seat\'s with the agent the drop named')
+  // A message dropped on the session's track (§19.24) is written as its next task, its words the instruction; anything else is refused.
+  const message = JSON.stringify({schema: 'oi.communique-drag/v1', communique: 'aikit:communique:1', to: 'position:scribe', name: 'Scribe', concern: 'Keep the notes short.'})
+  assert.deepEqual(a.makeClip.alsoAccepts, ['application/x-oi-communique'])
+  assert.deepEqual(await a.makeClip.run(track, message), {ok: true, note: 'A task is written on codex · atelier\'s session: run it from its clip.'})
+  assert.deepEqual(asked.at(-1), ['factory.task.write', {world: '/w/Central', project: 'atelier', session: 'agent-session/atelier-chat-1', instruction: 'Keep the notes short.'}, undefined])
+  assert.match((await a.makeClip.run(track, 'central:constellation:lived')).error, /a message dropped on a session's track, and of nothing else/)
+  assert.match((await a.makeClip.run('workcell:env-1', message)).error, /it is no track of this Set/)
+  asked.pop()
   // A seat that takes something other than an agent is no agent drop; a Set with no seat act seats nothing.
   const worldSeat = modeSetOf({acts: {seat: act('central.today.seat', {}, 'a world into today', 'In today.', 'world')}})
   assert.equal(kernelSetTracks(worldSeat, {nowMs: NOW, runner}).actions.seat, undefined)
