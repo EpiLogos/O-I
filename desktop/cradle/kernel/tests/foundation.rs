@@ -134,6 +134,9 @@ impl World {
             String::from_utf8_lossy(&init.stderr)
         );
         println!("world {}", home.join("Central").display());
+        // The host enters the World's folder before any owner starts (native_shell.rs, O-I #740), so nothing an owner resolves
+        // from its working directory (AIKit's project, a CLI's project root) reaches the checkout the gate runs from.
+        std::env::set_current_dir(&home).expect("enter the World's folder");
         let kernel = Arc::new(Mutex::new(Kernel::discover()));
         // The host's launch (src-tauri main.rs): the change watch over the World, and the World Model read once on its own
         // thread and kept by the watch and the kernel's writes, each move recorded in the event log.
@@ -740,9 +743,18 @@ fn carries_hold(world: &World, starting: &[(String, String)]) -> Act {
     ])?;
 
     let answer = world.send(json!({"op": "model_subscribe", "slice": "agents", "fresh": true}))?;
-    let census = result_of(&answer, "model_slice")
-        .map_err(|e| format!("model_subscribe agents {e}"))?["data"]["value"]
+    let data = result_of(&answer, "model_slice")
+        .map_err(|e| format!("model_subscribe agents {e}"))?["data"]
         .clone();
+    // A refused fresh read keeps the census from before the act's writes ("stale"): say the refusal, not a carries mismatch.
+    if data["state"] != "read" {
+        return Err(format!(
+            "the census asked afresh is {}: {}",
+            data["state"],
+            data["error"].as_str().unwrap_or("no state")
+        ));
+    }
+    let census = data["value"].clone();
     let rows = census["agents"].as_array().cloned().unwrap_or_default();
     let status = aikit(&["--json", "client", "status"])?;
     // AIKit answers in its JSON envelope (`{ok, data, warnings}`): its client rows are the data's.
@@ -781,6 +793,16 @@ fn carries_hold(world: &World, starting: &[(String, String)]) -> Act {
                 return Err(format!(
                     "AIKit gives {slug} the model {id}; the census carries {}",
                     clip(&carries["model"])
+                ))
+            }
+            // A null default is AIKit holding none only where AIKit read its defaults; otherwise no chat opens at all.
+            None if client["carries_reason"]
+                .as_str()
+                .is_some_and(|why| why.contains("model defaults")) =>
+            {
+                return Err(format!(
+                    "AIKit could not read its model defaults for {slug}: {}",
+                    client["carries_reason"]
                 ))
             }
             None if carries["model"]["own"] == true => {}
@@ -1358,8 +1380,16 @@ fn the_day_closes_at_its_turn(world: &World, day_ref: &str) -> Act {
     let read = read_day(world, day_ref)?;
     let turns_at = read["bounds"]["turns_at_unix_seconds"]
         .as_u64()
-        .ok_or_else(|| format!("Central keeps no turn for the Day {day_ref}: {}", clip(&read["bounds"])))?;
-    let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+        .ok_or_else(|| {
+            format!(
+                "Central keeps no turn for the Day {day_ref}: {}",
+                clip(&read["bounds"])
+            )
+        })?;
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
     let wait = turns_at.saturating_sub(now) + 120;
     if wait > 3 * 3600 {
         return Err(format!(

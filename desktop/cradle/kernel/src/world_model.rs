@@ -476,7 +476,8 @@ fn answer(slice: Slice, held: &Held) -> Value {
 
 /// The slices whose owners an op writes to when it succeeds; empty for an op that only reads. The census is moved only by what
 /// changes an agent's standing or what it carries: an Actuation write, a client install, a credential, AIKit's configuration
-/// (its model defaults), an adoption of skills and a render of the floor or a law adopted (action.rs `owner_slices`).
+/// applied or reset (its model defaults and Skill Sets), an adoption of skills and a render of the floor or a law adopted
+/// (action.rs `owner_slices`).
 pub fn written_by(op: &KernelOp) -> Vec<Slice> {
     let name = crate::dispatch::op_name(op);
     let central = vec![Slice::Worlds, Slice::Day];
@@ -546,6 +547,7 @@ pub fn written_by(op: &KernelOp) -> Vec<Slice> {
         | "actuation_write"
         | "config_apply"
         | "config_apply_reviewed"
+        | "config_reset"
         | "profile_use_apply" => {
             vec![Slice::Agents, Slice::Models, Slice::Sessions]
         }
@@ -1139,6 +1141,15 @@ mod tests {
         assert!(written_by(&adopt).contains(&Slice::Agents));
         assert!(!written_by(&capture).contains(&Slice::Agents));
         assert!(written_by(&capture).contains(&Slice::Sessions));
+    }
+
+    #[test]
+    fn a_reset_of_aikit_configuration_moves_the_census_as_its_apply_does() {
+        // Settings' Reset clears what the census carries (a model default, the default Skill Sets), as Apply sets it.
+        let reset: KernelOp = serde_json::from_value(json!({"op": "config_reset",
+            "setting_ref": "ai-kit:models:models.default", "scope": {"scope_kind": "machine"}}))
+        .expect("a config_reset op");
+        assert!(written_by(&reset).contains(&Slice::Agents));
     }
 
     #[test]

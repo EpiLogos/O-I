@@ -103,6 +103,24 @@ fn floor_files(client: &Value) -> Vec<String> {
         .unwrap_or_default()
 }
 
+/// AIKit's reason for one part of a client row it could not read, in AIKit's words: its `carries_reason` joins one sentence per
+/// part ("AIKit could not read its model defaults: …; AIKit could not read the Skill Sets …"), found here by what the part names.
+fn aikit_reason(client: &Value, part: &str) -> Option<String> {
+    const OPENS: &str = "AIKit could not read";
+    let reason = client["carries_reason"].as_str()?;
+    reason
+        .split(&format!("; {OPENS}"))
+        .enumerate()
+        .map(|(at, piece)| {
+            if at == 0 {
+                piece.to_owned()
+            } else {
+                format!("{OPENS}{piece}")
+            }
+        })
+        .find(|piece| piece.contains(part))
+}
+
 /// What an agent carries (O-I #1003): its model and the skill set it gets, from AIKit's client row, and the law its floor carries,
 /// from Central's floor reading. Each part says why where its owner does not answer.
 fn carries_of(
@@ -129,29 +147,40 @@ fn carries_of(
             }
             Value::Object(model)
         }
-        (None, Some(Value::Null)) => json!({"own": true, "why": format!(
-            "AIKit holds no model default for {slug}: a new chat opens with its own model"
-        )}),
-        (None, _) => json!({"why": aikit["carries_reason"].as_str().map_or_else(
-            || format!("AIKit's client status names no model default for {slug}"),
-            str::to_owned,
-        )}),
+        // A null default is AIKit holding none, unless AIKit could not read its defaults: then a new chat does not open either.
+        (None, Some(Value::Null)) => match aikit_reason(aikit, "model defaults") {
+            Some(why) => json!({"why": why}),
+            None => json!({"own": true, "why": format!(
+                "AIKit holds no model default for {slug}: a new chat opens with its own model"
+            )}),
+        },
+        (None, _) => json!({"why": aikit_reason(aikit, "model defaults")
+            .unwrap_or_else(|| format!("AIKit's client status names no model default for {slug}"))}),
     };
     let skills = match (&silent, aikit.get("skill_sets")) {
         (Some(why), _) => json!({"why": why}),
         (None, Some(Value::Array(sets))) => {
             json!({"sets": sets, "skills": aikit.get("skills").cloned().unwrap_or_else(|| json!([]))})
         }
-        (None, _) => json!({"why": aikit["carries_reason"].as_str().map_or_else(
-            || format!("AIKit's client status names no Skill Sets for {slug}"),
-            str::to_owned,
-        )}),
+        (None, _) => json!({"why": aikit_reason(aikit, "Skill Sets")
+            .unwrap_or_else(|| format!("AIKit's client status names no Skill Sets for {slug}"))}),
     };
     let law = match (&silent, floor_files(aikit).into_iter().next()) {
         (Some(why), _) => json!({"why": why}),
-        (None, None) => json!({"why": format!(
-            "AIKit names no instruction file {slug} reads, so no floor reaches it"
-        )}),
+        (None, None) => {
+            let named: Vec<&str> = aikit["guidance"]
+                .as_array()
+                .map(|names| names.iter().filter_map(Value::as_str).collect())
+                .unwrap_or_default();
+            json!({"why": if named.is_empty() {
+                format!("AIKit names no instruction file {slug} reads, so no floor reaches it")
+            } else {
+                format!(
+                    "AIKit names {} as what {slug} reads, and Central renders a floor only as Markdown files, so no floor reaches it",
+                    named.join(", ")
+                )
+            }})
+        }
         (None, Some(file)) => match floor {
             Err(why) => {
                 json!({"file": file, "why": format!("Central did not read the floor: {why}")})
@@ -625,6 +654,46 @@ mod tests {
         );
         // A detected harness that is not an agent carries nothing.
         assert!(census["not_agents"][0].get("carries").is_none());
+    }
+
+    #[test]
+    fn a_part_aikit_could_not_read_says_aikits_why_and_a_floor_that_is_not_markdown_is_named() {
+        // AIKit lays `model_default: null` both when it holds no default and when it could not read its defaults; only the
+        // second carries a reason, and then no chat opens with "its own model" (AIKit's open reads the same file).
+        let clients = [
+            json!({"client": "claude", "harness": "claude-code", "conversation": {"opens": true, "protocol": "acp"},
+                   "model_default": null, "skill_sets": null, "skills": [], "guidance": ["~/.claude/CLAUDE.md"],
+                   "carries_reason": "AIKit could not read its model defaults: Unrecognised model defaults schema; \
+                                      AIKit could not read the Skill Sets this context selects: no such set"}),
+            json!({"client": "codex", "harness": "codex", "conversation": {"opens": true, "protocol": "acp"},
+                   "model_default": null, "skill_sets": [], "skills": [], "guidance": [".goosehints"]}),
+        ];
+        let answers = |program: &Path| Started::Answered {
+            words: format!("{} 1.0", program.display()),
+            seconds: 0.1,
+        };
+        let census = census_of(&detection(), &clients, None, &no_floor(), answers);
+        let claude = &census["agents"][0]["carries"];
+        assert!(
+            claude["model"].get("own").is_none(),
+            "an unread default is no own model"
+        );
+        assert_eq!(
+            claude["model"]["why"],
+            "AIKit could not read its model defaults: Unrecognised model defaults schema"
+        );
+        assert_eq!(
+            claude["skills"]["why"],
+            "AIKit could not read the Skill Sets this context selects: no such set"
+        );
+        let codex = &census["agents"][1]["carries"];
+        assert_eq!(codex["model"]["own"], true, "no reason: AIKit holds none");
+        // A guidance file that is not Markdown (goose's `.goosehints`) is named in the why, not called absent.
+        let law = codex["law"]["why"].as_str().unwrap();
+        assert!(
+            law.contains(".goosehints") && law.contains("Markdown"),
+            "{law}"
+        );
     }
 
     #[test]
