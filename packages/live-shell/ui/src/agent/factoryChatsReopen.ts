@@ -12,16 +12,15 @@
 // The kernel gates every `encounter` verb on the project: the chat's space must be one of that project's discovered spaces and the
 // session attached to it (kernel/src/agency.rs encounter_once), so the op is sent with the project the chat was dragged from.
 //
-// Ports: agent/agentChainDrag.ts (the one drag type the empty track accepts), timeline/factoryTrackAdapter.ts (the seat action this
-// wraps — an agent still starts a new agent there), the thread's reconnect (desktop/cradle/src/encounter/session.ts:397).
+// A chat dropped on the rail reopens here (dropChatOnRail). On an empty track, Factory's Set seats an agent (the Set's seat act,
+// factory.session.start, frame/tracks/kernelSet.ts) and takes no chat yet: the reopen is AIKit's encounter reconnect, which is no Action
+// of the registry, so dropChatOnTrack waits for the Set to carry it. Ports: the thread's reconnect (desktop/cradle/src/encounter/session.ts).
 //
 // Pure TypeScript apart from the owner calls; no React.
 import {encounter, type EncounterReading, type JournalPage} from '../../../../../desktop/cradle/src/encounter/client'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import {tellOwnerChanged} from '../owners/notices'
-import type {WorldTrackSet} from '../timeline/worldTrackAdapter'
 import {CONVERSATION_PLACE} from '../widgets/agentConversation'
-import {AGENT_CHAIN_MIME} from './agentChainDrag'
 import {chatTrackKey, decodeChatDrag, glanceOfView, type ChatGlance, type FactoryChat} from './factoryChatsModel'
 
 /** The op a chat's reopen runs, as the refusals name it. */
@@ -135,29 +134,4 @@ export async function dropChatOnRail(payload: string, ports: ChatRailPorts): Pro
   if (!ports.rail.isOpen(RAIL_AGENT_WIDGET)) ports.rail.toggle(RAIL_AGENT_WIDGET)
   ports.rail.pin(RAIL_AGENT_WIDGET, chatTrackKey(chat))
   return {ok: true, note: `${receipt.note} The agent's tile holds it, ready to talk.${ports.trackIds?.includes(chatTrackKey(chat)) ? '' : ` The tile follows the sessions of ${CONVERSATION_PLACE}, and this chat is in none of their spaces, so it may show nothing of it.`}`}
-}
-
-/** The Session pane's seat action with a chat's drop added (frame/tracks/SessionGrid.tsx draws the empty track from `actions.seat`,
- * which accepts the one chain drag type): a chat's payload reopens the chat; anything else goes to the seat it replaces — an agent
- * still starts a new agent on the bound harness — and a set with no seat refuses an agent in words. */
-export function withChatSeat(set: WorldTrackSet, ports: {readonly transport: KernelTransportStatus; readonly call?: EncounterCall}): WorldTrackSet {
-  const original = set.actions?.seat
-  const trackIds = set.tracks.map(track => track.id)
-  return {
-    ...set,
-    actions: {
-      ...set.actions,
-      seat: {
-        op: original
-          ? `${REOPEN_OP} (a chat, where it stopped; its recorded provider) · ${original.op} (an agent)`
-          : `${REOPEN_OP} (a chat, where it stopped; its recorded provider) — no harness binding is resolved, so an agent cannot be started here`,
-        accepts: AGENT_CHAIN_MIME,
-        run: (payload: string) => {
-          if (decodeChatDrag(payload)) return dropChatOnTrack(payload, {transport: ports.transport, trackIds, call: ports.call})
-          if (original) return original.run(payload)
-          return Promise.resolve({ok: false as const, error: 'Only a chat reopens here: no harness binding is resolved, so an agent cannot be started on a track.'})
-        },
-      },
-    },
-  }
 }

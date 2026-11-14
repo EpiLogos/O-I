@@ -1,6 +1,6 @@
 import { useEffect, useRef, type ButtonHTMLAttributes, type ReactNode } from 'react';
-// @ts-ignore — the instrument's actual icon vocabulary is shared, not redrawn.
-import { icon } from '@epilogos/oi-design-system/expressions-engine/shell/icons.mjs';
+// The instrument's actual icon vocabulary is shared, not redrawn.
+import { icon } from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/icons';
 import { safeUrl, type LibraryEntry } from './model.mjs';
 export function Icon({name}:{name:string}) {return <span className="library-icon" aria-hidden="true" dangerouslySetInnerHTML={{__html:icon(name)}}/>;}
 export function Tool({name,label,...props}:{name:string;label:string}&ButtonHTMLAttributes<HTMLButtonElement>){return <button type="button" className="reader-tool" title={label} aria-label={label} {...props}><Icon name={name}/></button>;}

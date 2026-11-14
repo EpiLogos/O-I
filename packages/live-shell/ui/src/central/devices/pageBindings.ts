@@ -10,8 +10,8 @@
 //   - the document the hand reached (central/documents/documentDoor.ts): its form, title, revision, draft fact and the save router's
 //     outcome, and its acts Save and Re-read — the hosted face's own (DocumentFlowFace.tsx saveToOwner / load; DocumentDayDieFace);
 //   - a Flow's own file (flow/instances.ts readFlowInstance — central.files.read) for what the page holds; an entry is appended
-//     through the Flow's own revision-checked write (flow/instance.ts appendEntry + writeFlowInstance — central.files.write, kernel
-//     op file_operation; ported from desktop/cradle/src/flow/FlowSurface.tsx:153-165 `save`);
+//     through the Flow's own revision-checked write (flow/instance.ts appendEntry + writeFlowInstance — Central's Action
+//     central.files.write through the kernel's `act`; ported from desktop/cradle/src/flow/FlowSurface.tsx:153-165 `save`);
 //   - the Day document (`receiving` kind:document), where the reached Day is the one the Day device reads;
 //   - Central's roster of accepted agents (owners/readers.ts useRosterAgents) for the agents a Flow can bring in;
 //   - the workspace book (desktop/cradle/src/workspace/store.ts, through continuity/workspace.tsx) for the Workspace.
@@ -53,7 +53,7 @@ export const NOTES_DESIGN = 'central:notes'
 export const BEINGS_DESIGN = 'central:beings'
 export const THINGS_DESIGN = 'central:things'
 export const WORKSPACE_DESIGN = 'central:workspace'
-/** The Workspace on the door: the track's Workspace device a world's head opens (§18.1; frame/tracks/useCentralTracks.ts). */
+/** The Workspace on the door (§18.1). A world's head opens its Docs (central/worldDocsHeads.ts), not this. */
 export const WORKSPACE_DEVICE_ID = WORKSPACE_DESIGN
 
 const ON_THE_PAGE = 'the hosted form is the page\'s one writer while it holds the page (DocumentFlowFace.tsx: the bridge reads its island and never pushes into it)'
@@ -153,7 +153,7 @@ export const FLOW_WIRING: DesignWiring = {
     preflightRead: 'Contemplate\'s preflight asked (invoke_action `action:contemplate-flow`, bare: it records nothing)',
     contemplate: 'Contemplate run once on the preflight record (invoke_action `action:contemplate-flow` with the record)',
     sinceRead: 'what changed since the thought asked (op flow_changed_since)',
-    extra: 'the next entry, appended as the person\'s through the Flow\'s own write (flow/instance.ts appendEntry + central.files.write, op file_operation; FlowSurface.tsx save)',
+    extra: 'the next entry, appended as the person\'s through the Flow\'s own write (flow/instance.ts appendEntry + Central\'s Action central.files.write by act; FlowSurface.tsx save)',
     save: 'the hosted face\'s Save (DocumentInPane.save)',
     reread: 'the hosted face\'s Re-read (DocumentInPane.reread)',
   },
@@ -362,11 +362,18 @@ export const WORKSPACE_WIRING: DesignWiring = {
  *     (`projectcentral.docs.tier.relate`), Recognise (`projectcentral.ground.apply`, the document left where it is), Ensure
  *     (`projectcentral.docs.ensure`), Reproject (`central.world.reproject.apply`) and Initialise root (`central.init`).
  * Meaning and Moved since (O-I #786) are each source's readings against the work, by the laws the world wrote (readDocsMeaning,
- * docsMeaningOf, docsMovedOf). */
+ * docsMeaningOf, docsMovedOf).
+ * On your own ground, the root world, tier 0 holds your law (manual §18.5): the statements under Control/agents/governance as Central
+ * indexes them (`control.index`), each recognised once you adopt it — Recognise is then Central's `control.law.adopt` on the person's
+ * press, which renders the root's floor again for every harness (O-I ticket 1005). */
 export const DOCS_DESIGN = 'central:docs'
 /** The readings Docs asks, by the key of DocsReadings. */
 export const DOCS_ACTIONS = {inspect: 'projectcentral.docs.inspect', ground: 'projectcentral.ground.inspect', doctor: 'central.doctor', plan: 'central.world.reproject.plan',
-  horizon: 'projectcentral.change.horizon'} as const
+  horizon: 'projectcentral.change.horizon', law: 'control.index'} as const
+/** Where the root world's tier 0 stands: its law statements (Central's control.index names each by its path under it). */
+export const DOCS_LAW_DIR = 'Control/agents/governance'
+/** A law statement adopted stands as the person's own position (Central declares it durable and human-authored). */
+const LAW_ADOPTED = {provenance: 'human-authored', standing: 'authored-human-position'} as const
 
 /** Meaning (§18.5 "Whether the code still holds what the source says, by the law the project wrote for them"): the reflection laws the world
  * declares, as AIKit lists them (`aikit knowledge reflection laws`, aikit.reflection-laws/v1: one ReflectionLaw per file in the world's own
@@ -491,7 +498,7 @@ export const DOCS_WIRING: DesignWiring = {
     subject: 'the track\'s world: its project as Central discloses it (world browse: central/centralWorlds.ts readWorlds), or Central for your world',
     subjects: 'the track\'s world (its folders and notes are not listed yet)',
     sources: 'each tier\'s sources and the unbound ones at their revision (projectcentral.docs.inspect), each recognised as Central records it (projectcentral.ground.inspect '
-      + 'recognised_sources); its Meaning, each law the world declares on it verified by AIKit (aikit knowledge reflection laws, then reflection verify, in the world\'s ground), '
+      + 'recognised_sources); on the root world, tier 0\'s law statements (control.index), each recognised once adopted (its standing durable); its Meaning, each law the world declares on it verified by AIKit (aikit knowledge reflection laws, then reflection verify, in the world\'s ground), '
       + 'none where no law reads it; its Moved since, the changes Central\'s horizon kept to it since the revision its law read (projectcentral.change.horizon)',
     'refusal:meaning': 'why a source\'s Meaning is not read, in AIKit\'s words: its listing refused, a law\'s verdict refused, or a file in .aikit/reflection-laws that is not a law',
     'refusal:moved': 'why Moved since is not read, in Central\'s words (projectcentral.change.horizon refused)',
@@ -501,9 +508,14 @@ export const DOCS_WIRING: DesignWiring = {
   },
   writes: {
     relate: 'the person\'s Relate of a tier: projectcentral.docs.tier.relate {project, source_ref, tier, acceptance human-accepted} (invoke_action, action.rs PERSON_ACTS)',
-    recognise: 'the person\'s Recognise: projectcentral.ground.apply {project, source, provenance, standing, treatment retain-native-in-place, acceptance human-accepted} (PERSON_ACTS)',
+    recognise: 'the person\'s Recognise: projectcentral.ground.apply {project, source, provenance, standing, treatment retain-native-in-place, acceptance human-accepted} (PERSON_ACTS); '
+      + 'on the root world, a law statement\'s adoption: control.law.adopt {statement, expected_revision, files} (PERSON_ACTS), the root\'s floor rendered again',
     ensure: 'the person\'s Ensure: projectcentral.docs.ensure {project} (PERSON_ACTS)', reproject: 'the person\'s Reproject: central.world.reproject.apply {project} (PERSON_ACTS)',
     initRoot: 'the person\'s Initialise root: central.init (PERSON_ACTS)', readNow: 'Central\'s readings and AIKit\'s laws and verdicts asked again',
+    openSource: 'Open in the Document (manual §18.5 "Select a source to open it in the Document"): the source at its path under the ground, by the '
+      + 'owner\'s listing of its folder — a page as its page (a Flow as its Flow, a Being or a Thing as its page), any other file in its file pane '
+      + '(central/documents/CentralDocumentPane.tsx openWorldSource). Each saves through its owner\'s route, a source a tier binds through the '
+      + 'source owner\'s own CAS (projectcentral.source.write: flow/instances.ts writeFlowInstance, document/hostSave.ts)',
   },
   local: {
     tier: 'the tier in front (the first that needs you, by default)', show: 'Everything, or Needs you (the default)',
@@ -511,9 +523,7 @@ export const DOCS_WIRING: DesignWiring = {
     standing: 'what a source you would recognise stands as (Design commitment by default): held for Recognise',
     refresh: 'when Docs reads again (On open by default)', source: 'the source chosen', bindAs: 'the tier, experience or return a source is bound as: held for Relate',
   },
-  refused: {
-    openSource: 'Open in the Document: the Document opens a Day, a Flow or a page (central/documents/centralDocuments.ts CentralDocumentTarget), and a world\'s source is none of them — missing op: the Document opening a world source by its ref (Central).',
-  },
+  refused: {},
   absent: {},
 }
 
@@ -527,12 +537,18 @@ export interface DocsReadings {
   readonly meaning?: ActionAnswer
   /** Central's change horizon of the world (central.source-change-horizon/v1). */
   readonly horizon?: ActionAnswer
+  /** The root world's law: Central's governance index (control.index {statements: [{file, topic, standing}]}). */
+  readonly law?: ActionAnswer
 }
 /** Docs' writers: one of the person's own Central acts through invoke_action (centralDeviceWrites.ts centralWrite), and the readings asked
  * again. */
 export interface DocsPorts {
   readonly central?: (action: string, input: Readonly<Record<string, unknown>>) => Promise<unknown>
   readonly reread?: () => Promise<void> | void
+  /** The person's adoption of one law statement on the root world's tier 0 (centralDeviceWrites.ts adoptLaw: control.law.adopt). */
+  readonly adopt?: (statement: string) => Promise<unknown>
+  /** Open one source in the Document, by its path under the ground (CentralDocumentPane.tsx openWorldSource). */
+  readonly open?: (path: string) => Promise<void>
 }
 
 const docRec = (x: unknown): Record<string, unknown> | null => (x && typeof x === 'object' && !Array.isArray(x) ? x as Record<string, unknown> : null)
@@ -571,6 +587,17 @@ function docsSources(field: Record<string, unknown>, ground: unknown, meaning: D
   return [...tiers, ...docList(docRec(field.self_aperture)?.unbound_sources).flatMap(source => row(source, null))]
 }
 
+/** The root world's tier 0 in the design's shape: each law statement Central indexes, at its path under the ground, recognised once adopted
+ * (its standing durable) and waiting for you otherwise; null when Central's answer is not the index. */
+export function lawOf(answer: ActionAnswer | undefined): Record<string, unknown>[] | null {
+  const index = docRec(answerOf(answer))
+  if (!index || !Array.isArray(index.statements)) return null
+  return index.statements.flatMap(row => {
+    const r = docRec(row), file = docText(r?.file)
+    return r && file ? [{path: `${DOCS_LAW_DIR}/${file}`, tier: 0, kind: 'Law', hints: [], recognised: r.standing === 'durable' ? {...LAW_ADOPTED} : false}] : []
+  })
+}
+
 /** Docs' readings (DOCS_WIRING): the track's world as its subject; the account, its experiences and returns, the root's parts and the
  * world's scaffold where Central answered; the view's own keys at their defaults (§18.5 Parameters). Pure. */
 export function docsValues(id: string, world: TrackWorld | null, readings: DocsReadings = {}): Values {
@@ -596,6 +623,11 @@ export function docsValues(id: string, world: TrackWorld | null, readings: DocsR
       return r && ref ? [{ref, source: pathOfSource(r.source) ?? '', ux: docList(r.ux_refs).filter((x): x is string => typeof x === 'string')}] : []
     }))
   } else if (refusedOf(readings.inspect)) values.light = 'dark'
+  const law = world && !world.project ? lawOf(readings.law) : null
+  if (law) {
+    values.light = 'lit'
+    values.sources = JSON.stringify(law)
+  } else if (world && !world.project && refusedOf(readings.law)) values.light = 'dark'
   const root = rootOfDoctor(answerOf(readings.doctor))
   if (root) values.root = JSON.stringify({root: root.root, valid: root.valid, checks: root.checks})
   const scaffold = scaffoldOfPlan(answerOf(readings.plan))
@@ -619,6 +651,13 @@ function docsStanding(world: TrackWorld | null, readings: DocsReadings): Record<
   const account = !world?.project ? DOCS_NO_PROJECT : refusedOf(readings.inspect) ?? (fieldOf(readings.inspect) ? undefined
     : readings.inspect?.status === 'answered' ? 'Central answered the account in a form Docs does not read (central.development-field-reading/v1 expected).' : undefined)
   if (account) for (const key of ['sources', 'account', 'ux', 'ex']) standing[key] = {disabled: account}
+  // The root world's tier 0 is its law: its sources stand on Central's index, refused in Central's words.
+  if (!world?.project) {
+    const law = refusedOf(readings.law) ?? (readings.law?.status === 'answered' && !lawOf(readings.law)
+      ? 'Central answered its governance index in a form Docs does not read (statements expected).' : undefined)
+    if (law) standing.sources = {disabled: law}
+    else delete standing.sources
+  }
   const root = refusedOf(readings.doctor)
   if (root) standing.root = {disabled: root}
   const scaffold = !world?.project ? DOCS_NO_PROJECT : refusedOf(readings.plan)
@@ -652,9 +691,18 @@ function docsActs(world: TrackWorld | null, readings: DocsReadings, ports: DocsP
       await central('projectcentral.docs.tier.relate', relateInputOf(at, tier, ref))
     },
     recognise: async value => {
-      const press = asked(value), at = named('Recognise')
+      const press = asked(value)
       const source = docText(press.source)
       if (!source) throw new Error('Recognise: choose a source first.')
+      if (!project) {
+        // The root world's tier 0: adopting the statement is recognising it (manual §18.5).
+        if (!source.startsWith(`${DOCS_LAW_DIR}/`)) throw new Error(`Recognise: on your own ground tier 0 holds your law, and ${source} is not a statement under ${DOCS_LAW_DIR}.`)
+        if (!ports.adopt) throw new Error(DOCS_NO_CARRIER)
+        await ports.adopt(source)
+        await again()
+        return
+      }
+      const at = named('Recognise')
       if (typeof press.provenance !== 'string' || typeof press.standing !== 'string') throw new Error('Recognise: choose its provenance and standing first.')
       await central('projectcentral.ground.apply', {project: at, source, provenance: press.provenance, standing: press.standing, treatment: 'retain-native-in-place', acceptance: 'human-accepted'})
     },
@@ -665,17 +713,27 @@ function docsActs(world: TrackWorld | null, readings: DocsReadings, ports: DocsP
       if (!ports.reread) throw new Error(DOCS_NO_CARRIER)
       await ports.reread()
     },
+    // A source's path is its world's (Central's ResolvedDevelopmentSource): under Work/<project> for a project, the ground's own for yours.
+    openSource: async value => {
+      const path = docText(String(value ?? ''))
+      if (!path) throw new Error('Open: choose a source first.')
+      if (!ports.open) throw new Error(DOCS_NO_CARRIER)
+      await ports.open(project ? `Work/${project}/${path}` : path)
+    },
   }
 }
 /** The held Relate is the person's acceptance of the relation (pageGround.ts relateInput's shape). */
 const relateInputOf = (project: string, tier: number, sourceRef: string): Record<string, unknown> => ({project, source_ref: sourceRef, tier, acceptance: 'human-accepted'})
 
-/** Docs' binding: the account on Central's readings, each refusal in its words; the person's acts through Central, each standing disabled
- * where no carrier reaches it; Open refused naming what the Document opens. */
+/** Docs' binding: the account on Central's readings, each refusal in its words; the person's acts through Central, and Open in the
+ * Document, each standing disabled where no carrier reaches it. */
 export function docsBinding(id: string, world: TrackWorld | null, readings: DocsReadings = {}, ports: DocsPorts = {}): DesignBinding {
   const why: Record<string, string> = {}
+  if (!ports.open) why.openSource = DOCS_NO_CARRIER
   if (!ports.central) for (const key of ['relate', 'recognise', 'ensure', 'reproject', 'initRoot']) why[key] = DOCS_NO_CARRIER
-  else if (!world?.project) for (const key of ['relate', 'recognise', 'ensure', 'reproject']) why[key] = DOCS_NO_PROJECT
+  else if (!world?.project) for (const key of ['relate', 'ensure', 'reproject']) why[key] = DOCS_NO_PROJECT
+  // On the root world Recognise adopts a law statement: it stands where the adoption reaches Central.
+  if (!world?.project && ports.central && !ports.adopt) why.recognise = DOCS_NO_CARRIER
   if (!ports.reread) why.readNow = DOCS_NO_CARRIER
   return pageBinding(id, DOCS_WIRING, docsValues(id, world, readings), docsActs(world, readings, ports), why, docsStanding(world, readings))
 }

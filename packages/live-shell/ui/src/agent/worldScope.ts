@@ -11,13 +11,12 @@
 //   - World-wide readings (Factory's sessions, the agent of the world) read the root register and every disclosed project, each session
 //     kept with the register it was read under (`project` on its row and track).
 //   - Per-session readings read the session's own register; with no session selected they say so in words (NO_SESSION).
-//   - The world's projects are the kernel's own world browse (`world_browse`: navigator.root.work.projects, the list the gate checks),
-//     asked again a few times while its first browse settles, as central/centralWorlds.ts `readWorlds` does (ROOT_SETTLE).
+//   - The world's projects are the World Model's worlds slice (kernel world_model.rs: Central's root disclosure, root.work.projects,
+//     the list the gate checks), read as central/centralWorlds.ts `readRoot` reads it.
 import {useEffect, useMemo, useReducer} from 'react'
-import {kernelRead} from '../../../../../desktop/cradle/src/kernel/bridge'
 import type {KernelTransportStatus, RootWorld, SourceReturnEntry, SourceReturnsReading} from '../../../../../desktop/cradle/src/kernel/types'
 import type {AgencyReading, AgencySessionRow, AgencySpaceRow} from '../../../../../desktop/cradle/src/agency/agencyTypes'
-import {ROOT_SETTLE} from '../central/centralWorlds'
+import {readRoot} from '../central/centralWorlds'
 import {agencyEntry} from '../owners/agency'
 import {ensureInOrder, ownerReadings, sameWorld, useOwnerReading, type OwnerRead, type OwnerReading, type OwnerReadingEntry, type OwnerReadings} from '../owners/ownerReading'
 import {readSourceReturnsOf, sourceReturnsKey} from './devices/workcellReads'
@@ -61,18 +60,12 @@ export function projectsOf(root: Pick<RootWorld, 'work'> | null | undefined): st
   return names
 }
 
-/** The world's projects through the kernel's world browse; a refusal throws, in the kernel's words. A browse that has not yet disclosed
- * a root is asked again `settle.tries` times, `settle.apartMs` apart (ported from central/centralWorlds.ts `readWorlds`). */
-export async function readWorldProjects(transport: KernelTransportStatus, settle: {readonly tries: number; readonly apartMs: number} = ROOT_SETTLE): Promise<string[]> {
+/** The world's projects, from the World Model's worlds slice (central/centralWorlds.ts readRoot); a refusal throws, in its words. */
+export async function readWorldProjects(transport: KernelTransportStatus): Promise<string[]> {
   if (transport.kind === 'unavailable') throw new Error(transport.reason ?? 'Native transport unavailable')
-  for (let attempt = 1; ; attempt++) {
-    const answer = await kernelRead(transport, {op: 'world_browse'}, {fresh: attempt > 1})
-    if (answer.error || answer.outcome?.result !== 'world_read') throw new Error(answer.error ?? 'Central did not disclose its world')
-    const navigator = answer.outcome.snapshot.navigator
-    if (navigator?.root) return projectsOf(navigator.root)
-    if (navigator?.error || attempt >= settle.tries) throw new Error(navigator?.error ?? 'Central returned no root disclosure')
-    await new Promise(resolve => setTimeout(resolve, settle.apartMs))
-  }
+  const root = await readRoot(transport)
+  if (root.state !== 'read') throw new Error(root.reason)
+  return projectsOf(root.root)
 }
 
 export const worldProjectsKey = (transport: KernelTransportStatus): string => JSON.stringify(['world-projects', transport])

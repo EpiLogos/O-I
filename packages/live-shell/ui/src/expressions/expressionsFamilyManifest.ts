@@ -27,16 +27,18 @@ export interface ExpressionsFace {
 }
 
 /** The Expressions faces' Live semantics (DEVICE-SEMANTICS-LOCK §2.4, §4.8, §9; lead's ruling 13 Oct 2026, T-SEMANTICS-GATE).
- * The physics simulation is the sounding instrument (M1 generates); glyph is its visual side and sound its entity
- * voices — both generate through the native expression owner. The field and entity devices transform the material in
- * focus and keep the stream (effects on the instrument). Resonance (M2, the ☿ key) and Body 3:3 modulate the
+ * The physics simulation is the sounding instrument (M1 generates), through the Studio's act as every field device writes (O-I ticket
+ * 1008: `act:expressions.studio.set`, the kernel's one write door); glyph is its visual side and sound its entity voices — both
+ * generate through the native expression owner, whose entity edits no Studio act carries. The field and entity devices transform
+ * the material in focus and keep the stream (effects on the instrument). Resonance (M2, the ☿ key) and Body 3:3 modulate the
  * instrument — they never generate (QL-MEF D13: M2 is never a second generator). Automation is the scene's
  * parameter courses. A scene is a clip: an Expression's scene at its document revision (lock §9.1). */
-const GENERATES = 'kernel:native_expression'
+const GENERATES = 'act:expressions.studio.set'
+const ENTITY_GENERATES = 'kernel:native_expression'
 export const EXPRESSIONS_FACE_SEMANTICS: Readonly<Record<string, {readonly liveSemantic: LiveSemantic; readonly invariant?: SemanticInvariant}>> = {
-  glyph: {liveSemantic: 'device-instrument', invariant: {generates: GENERATES}},
+  glyph: {liveSemantic: 'device-instrument', invariant: {generates: ENTITY_GENERATES}},
   physics: {liveSemantic: 'device-instrument', invariant: {generates: GENERATES}},
-  sound: {liveSemantic: 'device-instrument', invariant: {generates: GENERATES}},
+  sound: {liveSemantic: 'device-instrument', invariant: {generates: ENTITY_GENERATES}},
   pointer: {liveSemantic: 'device-audio-fx', invariant: {transforms: 'the field under the pointer (attract, repel, trace) — the field plays on'}},
   relational: {liveSemantic: 'device-audio-fx', invariant: {transforms: 'the field\'s relational forces between entities'}},
   medium: {liveSemantic: 'device-audio-fx', invariant: {transforms: 'the medium the field moves in (drag, density)'}},

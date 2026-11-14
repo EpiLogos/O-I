@@ -1,5 +1,7 @@
 # Integration map — where Obsidian's A1/A2/A3 would land in the O-I cradle
 
+> Retired copy (O-I ticket 1008, 14 Nov 2026): the compiled engine copy at `packages/oi-design-system/expressions-engine` is deleted. The one engine is `desktop/cradle/expressions-app/src/engine`, built in `field-studies-journeys/src/production.ts`; its model and defaults are `field-studies-journeys/src/model.ts`. Paths into the copy below are a record of their date.
+
 Lane B, 2026-10-07. Read-only survey of `Work/O-I/desktop/cradle/` and its
 package/doc surroundings. Every path below was opened and read during this
 session; nothing was modified except this file. Vocabulary follows the

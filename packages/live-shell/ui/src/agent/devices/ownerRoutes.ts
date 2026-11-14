@@ -2,14 +2,14 @@
 // write and read through them. Each route runs the owner's own command and answers `owner_route_reading` {route, data, warnings}: the owner
 // command in plain words, its reading verbatim. A refusal is the owner's words in the kernel's Error envelope, unwrapped to its message
 // (desktop/cradle/src/contributions/factory/development.ts ownerRefusalText) where a person reads it.
-//   - A write goes through kernelOp, never a held read (central/devices/centralDeviceWrites.ts centralWrite is the idiom): gateway_write,
-//     workcell_write, seat_write and aikit_write are writing ops (desktop/cradle/src/kernel/bridge.ts WRITING_OPS), so a completed one
+//   - A write goes through kernelOp, never a held read (central/devices/centralDeviceWrites.ts centralWrite is the idiom): an Action (`act`:
+//     a seat's Join and Release, a Communique delegated), workcell_write and aikit_write are writes (desktop/cradle/src/kernel/bridge.ts), so a completed one
 //     retires every held answer of the window, and the kernel's `owner_changed` receipt (owners/notices.ts OWNER_WRITE_RECEIPTS) moves the
 //     temporal field: every reader asks its owner again.
 //   - A read is a held answer for the window (owners/ownerCall.ts useOwnerOp, the knowledge route's idiom), read again on the spine's epoch
 //     and after any write.
 // Pure of React, apart from what the hooks module (useOwnerOp) gives.
-import {kernelOp} from '../../../../../../desktop/cradle/src/kernel/bridge'
+import {actionData, kernelOp, ownerDocumentOf, type KernelOpCall} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import {ownerRefusalText} from '../../../../../../desktop/cradle/src/contributions/factory/development'
 import {actionAnswerOf, centralActionOp} from '../../central/devices/centralActions'
 import type {
@@ -25,10 +25,12 @@ export interface OwnerRouteAnswer {
 /** The owner's words from a kernel refusal: the Error envelope's message, else the words as they came. */
 export const refusalWords = (error: string): string => ownerRefusalText(error)
 
-/** One owner route's answer from a kernel call: the reading, or the owner's refusal thrown in its words. */
+/** One owner route's answer from a kernel call: the reading, or the owner's refusal thrown in its words. An Action (the kernel's `act`)
+ * answers `action_dispatched`: the owner's document when it took it (AIKit's inside its `{ok, data}` envelope), else its words. */
 export function routeAnswerOf(call: {readonly outcome: unknown; readonly error?: string}, asked: string): OwnerRouteAnswer {
   if (call.error) throw new Error(refusalWords(call.error))
   const outcome = call.outcome as {result?: unknown; route?: unknown; data?: unknown} | null
+  if (outcome?.result === 'action_dispatched') return {route: asked, data: ownerDocumentOf(actionData(call as KernelOpCall, asked))}
   if (outcome?.result !== 'owner_route_reading') throw new Error(`${asked} did not answer with its owner's reading.`)
   return {route: typeof outcome.route === 'string' ? outcome.route : asked, data: outcome.data}
 }
@@ -49,9 +51,37 @@ export async function factoryOwnerWrite(transport: KernelTransportStatus, reques
   return call.outcome.data
 }
 
-/** The writes the kernel routes, each in its owner's own request (desktop/cradle/src/kernel/types.ts). */
-export const gatewayWriteOp = (request: GatewayWriteRequest): KernelOp => ({op: 'gateway_write', request})
-export const seatWriteOp = (request: SeatWriteRequest): KernelOp => ({op: 'seat_write', request})
+/** One Action through the registry's door (the kernel's `act`, O-I 1002), by its id and its owner's own input names: the id an agent
+ * runs through `oi act invoke`. Absent fields are left out, so the owner's field takes its own defaults. */
+export function actOp(action: string, input: Readonly<Record<string, unknown>>, project?: string | null): KernelOp {
+  const given = Object.fromEntries(Object.entries(input).filter(([, value]) => value !== undefined && value !== null))
+  return {op: 'act', action, input: given, ...(project ? {project} : {})}
+}
+
+/** The gateway's writes: a Communique delegated is AIKit's Action (`aikit.gateway.delegate`); the gateway's Service is the window's own
+ * held process, started and stopped by the kernel (`gateway_service`). REPLACED (O-I 1006): the window's Communique sent to a Position
+ * (`aikit.gateway.send`), with what AIKit's answer named (communiqueRefOf). The window's words reach an agent only as its conversation's
+ * next turn, through the one send (desktop/cradle encounter/session.ts, O-I 1003); an agent's body sends its own Communiques. */
+export function gatewayWriteOp(request: GatewayWriteRequest): KernelOp {
+  switch (request.kind) {
+    case 'delegate': {
+      const {kind: _kind, project, ...input} = request
+      return actOp('aikit.gateway.delegate', input, project)
+    }
+    case 'service':
+      return {op: 'gateway_service', on: request.on}
+  }
+}
+
+/** A seat's Join and Release: the seat instrument's own Actions (`workcell.seat.join`, `workcell.seat.release`). */
+export function seatWriteOp(request: SeatWriteRequest): KernelOp {
+  if (request.kind === 'join') {
+    const {kind: _kind, regions, ...input} = request
+    return actOp('workcell.seat.join', {...input, ...(regions?.length ? {region: regions} : {})})
+  }
+  const {kind: _kind, ...input} = request
+  return actOp('workcell.seat.release', input)
+}
 export const workcellWriteOp = (request: WorkcellWriteRequest): KernelOp => ({op: 'workcell_write', request})
 export const aikitWriteOp = (request: AikitWriteRequest): KernelOp => ({op: 'aikit_write', request})
 /** The reads. */
@@ -82,23 +112,23 @@ async function centralAct(transport: KernelTransportStatus, action: string, inpu
 }
 
 export const centralRevisionWrite = (transport: KernelTransportStatus):
-  ((verb: 'accept' | 'discard', handed: {readonly scope: string; readonly name: string; readonly proposedDigest: string}) => Promise<unknown>) | undefined =>
+  ((verb: 'accept' | 'discard', handed: {readonly scope: string; readonly name: string; readonly proposedDigest: string; readonly machine?: string
+    readonly project?: string}) => Promise<unknown>) | undefined =>
   transport.kind !== 'unavailable'
-    ? (verb, handed) => centralAct(transport, CENTRAL_REVISION_ACTS[verb], {scope: handed.scope, name: handed.name, expected_proposed_digest: handed.proposedDigest})
+    // A machine's or a project's skill is named with its machine or project (ctrl control_skills.rs resolve_skill_location).
+    ? (verb, handed) => centralAct(transport, CENTRAL_REVISION_ACTS[verb], {scope: handed.scope, name: handed.name, expected_proposed_digest: handed.proposedDigest,
+      ...(handed.machine ? {machine: handed.machine} : {}), ...(handed.project ? {project: handed.project} : {})})
     : undefined
 
 /** The plain words of each write, for a refusal that names the command it could not ask. */
 export const ROUTE_WORDS = {
-  send: '`aikit gateway send`',
   delegate: '`aikit gateway delegate`',
   service: '`aikit gateway serve`',
   join: '`seat join`',
   release: '`seat release`',
   trust: '`aikit trust record`',
   connectionsShow: '`workcell connections show`',
-  ecology: '`aikit gateway ecology`',
   replay: '`aikit gateway replay`',
-  realise: '`aikit compose --realise`',
 } as const
 
 /** The desktop's own actor, as the kernel attributes the person's file writes (desktop/cradle/kernel/src/files.rs `oi-desktop-user`), and

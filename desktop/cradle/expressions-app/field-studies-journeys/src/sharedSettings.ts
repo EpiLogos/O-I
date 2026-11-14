@@ -1,7 +1,7 @@
-import {Journey,Scene,clone} from './model';
-import {BeltEntry,defaultWorkspace} from './workspacePreferences';
-import {NATIVE_BINDINGS,bindValue} from './nativeParameters';
-import {readPath} from '../../src/engine/automation';
+import {type Journey,type Scene,clone} from './model.ts';
+import {type BeltEntry,defaultWorkspace} from './workspacePreferences.ts';
+import {NATIVE_BINDINGS,bindValue} from './nativeParameters.ts';
+import {readPath} from '../../src/engine/automation.ts';
 export const POINTER_PATHS=['engine.pointerMode','engine.pointerClick','engine.pointerClickStrength','engine.pointerClickRadius',...NATIVE_BINDINGS.filter(b=>b.group==='pointer').map(b=>b.bind)];
 /** Device widgets: an ordered sibling list of identities; absent means none. */
 export type DeviceWidget={id:string;family:string};

@@ -128,10 +128,6 @@ const FUNCTIONS = [
   {was: 'controls.tsx:41 a table\'s rows, × to remove one, + to add one', place: ['permissions', /aria-label="Take out entry 1"[\s\S]*\+ Add entry/, {...ROWS, focus: TABLE.ref}]},
   {was: 'controls.tsx:45 a path, Browse…', place: ['machines', press('Choose…'), ROWS]},
   // ── HarnessPreferences.tsx ──
-  {was: 'HarnessPreferences.tsx:17 Default provider for new chats', place: ['harnesses', /Default provider[\s\S]*?<select class="dp-chooser"/]},
-  {was: 'HarnessPreferences.tsx:17 Apply provider default', place: ['harnesses', /<tr data-draft="true"><td><button[^>]*><b>Default provider/, {'draft:oi:harness:chat.default': 'pi'}], note: 'a local change, reviewed and applied by Review changes… (#744)'},
-  {was: 'HarnessPreferences.tsx:17 Undo draft', place: ['harnesses', press('Undo'), {'draft:oi:harness:chat.default': 'pi'}]},
-  {was: 'HarnessPreferences.tsx:17 Restore configured provider order', place: ['harnesses', held('Reset')]},
   {was: 'HarnessPreferences.tsx:17 Read again', place: ['harnesses', press('Read again')]},
   {was: 'HarnessPreferences.tsx:24 Install', place: ['harnesses', press('Install')]},
   {was: 'HarnessPreferences.tsx:24 install note (read detection again)', place: ['harnesses', escaped('Read detection again before you start work.')]},

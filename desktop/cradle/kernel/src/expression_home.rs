@@ -101,8 +101,9 @@ pub fn list(client: &CentralClient, open: &BTreeSet<&str>) -> Listing {
 }
 
 /// The works home's location from Central, made by Central when the ground has none yet (`central.flows.ensure`, Central's own
-/// operation: a ground `ctrl init` makes carries the home; one made before gets it here). Used by `save_as` when no parent is named;
-/// reading never makes it. The refusal is Central's, in its words.
+/// operation: a ground `ctrl init` makes has no home — init imposes nothing below the Control roots — so its first save makes it
+/// here). Used by `save_as` when no parent is named, which is how New saves while the list shows no home; reading never makes it.
+/// The refusal is Central's, in its words.
 pub fn ensure(client: &CentralClient) -> Result<files::Location, Value> {
     let data = client
         .run("central.flows.ensure", json!({}))

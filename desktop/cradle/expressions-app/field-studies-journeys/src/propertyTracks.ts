@@ -1,5 +1,5 @@
-import {baseValue,entityTargets,nativeBinding} from './nativeParameters';
-import {clone,Scene,Journey} from './model';
+import {baseValue,entityTargets,nativeBinding} from './nativeParameters.ts';
+import {clone,type Scene,type Journey} from './model.ts';
 /** Segment law from a point to the next one. Absent = linear (legacy behaviour, byte-identical). */
 export type Interpolation='linear'|'hold'|'smooth'|'bezier';
 /** Bezier handle, relative to its own point: `out` on point i (dt in [0,span]), `in` on point i+1 (dt in [-span,0]). */

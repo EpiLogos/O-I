@@ -36,6 +36,9 @@ fn command_desktop(args: &[OsString]) -> Result<i32, String> {
   oi desktop files read LOCATION_JSON\n\
   oi desktop knowledge CWD REQUEST_JSON\n\
   oi desktop session-spaces CWD PROJECT_REF\n\
+  oi desktop provision CWD PROJECT_REF AGENT\n\
+                                  the one provision (the kernel's encounter_provision):\n\
+                                  AGENT's session opened in PROJECT_REF, working in CWD\n\
 All operation results are JSON. Knowledge accepts the kernel Request contract.\n\
 The desktop is a full install (backing full-suite), disclosed in the plan and\n\
 recorded in the receipt; an install recorded on a retired partial backing\n\
@@ -105,6 +108,10 @@ native menu."
         ["session-spaces", cwd, project] => {
             oi_cradle_kernel::agency::Client::discover().read_project(Path::new(cwd), project)?
         }
+        // The one provision (O-I #1003), for an owner that starts a session outside the window: Factory's session start (O-I
+        // #1006) opens its agent's session through the kernel's own provision, never a second composition of AIKit's verbs.
+        ["provision", cwd, project, agent] => oi_cradle_kernel::agency::Client::discover()
+            .provision(Path::new(cwd), project, Some(agent), None, None)?,
         _ => return Err("usage: oi desktop --help".into()),
     };
     println!(

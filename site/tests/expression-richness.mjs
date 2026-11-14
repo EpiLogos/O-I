@@ -46,7 +46,7 @@
 import { readdirSync, statSync, existsSync, readFileSync } from "node:fs";
 import { join, dirname, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { validateJourney } from "../../packages/oi-design-system/expressions-engine/shell/model.mjs";
+import { validateJourney } from "../../desktop/cradle/expressions-app/field-studies-journeys/src/model.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = resolve(HERE, "../..");

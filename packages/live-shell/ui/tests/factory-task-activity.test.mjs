@@ -37,7 +37,6 @@ export async function load(u, c, n) {
 const activity = await import('../src/agent/taskActivity.ts')
 const model = await import('../src/agent/agentRunModel.ts')
 const clip = await import('../src/agent/clipBinding.ts')
-const tracks = await import('../src/timeline/factoryTrackAdapter.ts')
 
 const NOW = 1_800_000_000_000
 const S = 'agency/session-a'
@@ -88,7 +87,7 @@ test('Factory\'s word draws the task, its stall lights the track\'s retry, and a
   const [t] = activity.withTaskActivity(track(), {bySession: stalled, unread: new Map()})
   const task = activity.realTask(t)
   assert.equal(task.state, 'stalled')
-  assert.equal(t.needle.state, 'stalled', 'the track lights a retry from the stalled needle (timeline/factoryTrackAdapter.ts)')
+  assert.equal(t.needle.state, 'stalled', 'the needle stalls, which lights a retry')
   assert.deepEqual(task.standing, {word: 'stalled', why: 'No check-in within the 90 s bound: the last was 400 s ago, with its task open.', retry: true,
     decidedBy: 'window-sampling', closure: null})
   const [queued] = activity.withTaskActivity(track(), {bySession: activity.readingsBySession(reading('queued')), unread: new Map()})
@@ -98,11 +97,9 @@ test('Factory\'s word draws the task, its stall lights the track\'s retry, and a
   assert.equal(activity.realTask(stopped).standing.word, 'stopped')
   assert.equal(activity.realTask(stopped).state, 'stopped', 'Stopped draws as itself on the track (round two)')
   assert.equal(stopped.needle.state, 'idle')
-  // On the track: Stopped is the grid's own status, "ready, in full colour", standing where it ran.
-  const set = tracks.factoryTrackAdapter.project({tracks: [stopped], nowUnixMs: NOW})
-  const drawn = set.clips.find(c => c.trackId === model.trackKey(stopped))
-  assert.equal(drawn.status, 'stopped')
-  assert.ok(drawn.at && typeof drawn.at.start === 'number', 'a stopped task keeps its place on the ruler')
+  // REPLACED (O-I #1004): "On the track: Stopped is the grid's own status, standing where it ran", drawn by the window's Factory adapter.
+  // The track's clips are the kernel's Factory Set now (Factory's tasks and their attempts, kernel mode_set.rs); a session's task activity
+  // is no slice of the World Model yet (O-I #1006), so it stands in the Clip panel (below), not on the track.
   // Factory's check-in bound rides each task's standing (bound_ms), for the faces (runFaces.ts boundOf).
   const [bounded] = activity.withTaskActivity(track(), {bySession: activity.readingsBySession(reading('running')), unread: new Map(), boundMs: new Map([[S, 90_000]])})
   assert.equal(activity.realTask(bounded).standing.boundMs, 90_000)

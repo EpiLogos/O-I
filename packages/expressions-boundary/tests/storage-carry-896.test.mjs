@@ -133,12 +133,12 @@ test('1R-surface.2: the host carries the frame\'s own keys alone, and the frame 
   assert.equal(store.get('oi.workspace.v1'), 'toolbelt');
 });
 
-// The frame's pages (index, legacy, library, render) and every module their scripts load, type-only imports aside.
+// The frame's pages (index, library) and every module their scripts load, type-only imports aside.
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const APP = resolve(ROOT, 'desktop/cradle/expressions-app');
 const strip = source => source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"`\\])\/\/[^\n]*/g, '$1');
 function framePagesModules() {
-  const pages = ['index.html', 'legacy.html', 'library.html', 'render.html'];
+  const pages = ['index.html', 'library.html'];
   const entries = pages.flatMap(page => [...readFileSync(resolve(APP, page), 'utf8').matchAll(/<script[^>]*\bsrc="\/([^"]+)"/g)].map(m => resolve(APP, m[1])));
   assert.equal(entries.length, pages.length, 'each page loads its script');
   const file = base => {
@@ -173,9 +173,10 @@ test('1R-surface.2: every storage key the frame\'s pages name is one the carry t
     ];
     for (const key of keys) named.set(key, at.slice(ROOT.length));
   }
-  // The scan reads the keys it must: each family the frame keeps.
+  // The scan reads the keys it must: each family the frame keeps. (The legacy workbench's saved themes, `pointcloud_saved_themes_v2`,
+  // went with that page, O-I ticket 1008; the carry still takes their family, so what a person kept there is not left behind.)
   for (const key of ['oi.workspace.v1', 'oi.expression-session.v1', 'oi.field-studies.journey-library.v2.', 'oi.expression-recovery.drafts.',
-    'oi.panel-sizes.v1', 'oi.recent-work.v1', 'oi.field-studies.last', 'typographic_pointcloud_saved_states', 'pointcloud_saved_themes_v2',
+    'oi.panel-sizes.v1', 'oi.recent-work.v1', 'oi.field-studies.last', 'typographic_pointcloud_saved_states',
     'oi-cradle.techne-journey.presence.v1']) assert.ok(named.has(key), `the frame's pages name ${key}`);
   const unclaimed = [...named].filter(([key]) => !(key in NOT_A_FRAME_KEY) && !carried(key) && !carried(`${key}x`));
   assert.deepEqual(unclaimed, [], 'a key the frame keeps that the carry would leave at the shell\'s origin');

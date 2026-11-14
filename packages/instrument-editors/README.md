@@ -9,14 +9,14 @@ engine, field renderer, workspace store or window runtime.
 `src/index.ts` exports components, instrument constraints and receiving adapters.
 Per-instrument source exports and `@epilogos/instrument-editors/vite` let the
 shell import the production components through its normal package mechanism.
-The build adapter adopts the existing research aliases and complete native
-MapLibre worker. `npm --prefix packages/instrument-editors run build` compiles
+The build adapter adopts the existing research aliases (the frame's Canvas and
+Timeline closure; its MapLibre worker route went with the hosted map, O-I #1009:
+Places is the shell's Earth atlas). `npm --prefix packages/instrument-editors run build` compiles
 the public component entry without the development entrance or fixtures.
 `npm --prefix packages/instrument-editors run test:bundler` checks the actual
-receiving Vite6 resolver and offline MapLibre worker through browser rendering,
-data updates and resizing. `run check:receiving` verifies strict Vite6 config
-types. The worker conformance data is mathematical GeoJSON, separately labelled
-from native source and provider acceptance.
+receiving Vite6 resolver: one React in both receivers, and every research alias
+resolving to a source on disk. `run check:receiving` verifies strict Vite6 config
+types.
 The development entrance at `http://127.0.0.1:4298/` retains every opened editor;
 switching editors does not replace its binding or discard pending input.
 

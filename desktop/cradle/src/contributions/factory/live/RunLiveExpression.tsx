@@ -224,18 +224,17 @@ function ObjectPanel({object, entry, runKey, host, performed, currentAct, onClos
     const skills = (arrival?.op.basis.detail?.skills as string[] | undefined) ?? [];
     const capabilities = (arrival?.op.basis.detail?.capabilities as string[] | undefined) ?? [];
     const messages = communicationOf(performed, member.agent_ref);
-    // Addressed turns (AIKit `send`): composed into the conversation's
-    // addressed-request composer, where the sender and participation basis
-    // are the person's explicit inputs; the shared draft is never touched.
-    const address = (sourceRef: string, text: string) => {
+    // Addressing the agent puts the words in its conversation's draft through the one session (O-I #1003), to send there.
+    const address = (_sourceRef: string, text: string) => {
       if (!session) { setNote("This agent has no conversation in this Run to address."); return; }
-      addressAgent(session, sourceRef, text);
-      // The addressed composer lives on the conversation's encounter surface.
       const space = current?.body?.sessionSpaceRef ?? attempts.find(attempt => attempt.body?.agentSessionRef === session)?.body?.sessionSpaceRef;
-      if (space) openEncounterSurface({ref: session, project: entry.card.source.project ?? "", space, title: member.label});
-      else host.onOpenConversation?.(session);
-      setDraft("");
-      setNote("Composed as an addressed request in the conversation — send it there.");
+      const project = entry.card.source.project ?? "";
+      void addressAgent(kernel.transport, {project, ref: session, ...(space ? {space} : {})}, text).then(() => {
+        if (space) openEncounterSurface({ref: session, project, space, title: member.label});
+        else host.onOpenConversation?.(session);
+        setDraft("");
+        setNote("Put in the conversation's draft — send it there.");
+      }, error => setNote(refusalWords("The words were not put in the conversation's draft.", error)));
     };
     body = <>
       <p className="flx-panel-line">{current ? <>Working on <strong>{current.taskRef?.replace(/^.*[/:]/, "") ?? current.workflowUnitRef}</strong>{current.status ? ` · ${current.status.replace(/_/g, " ")}` : ""}</> : "No current attempt in this Run."}</p>

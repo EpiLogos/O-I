@@ -3,7 +3,6 @@
 // draws Central's refusal in its words:
 //   the Day (central:day-die, DLW §18.2)   central.day.settings.write, move.record, rollover, close-carry
 //   Scope (§19.12)                         central.world-relations.save (a read place's include or exclude)
-//   NOWs' Close (§23.6)                    central.now.lifecycle (central/devices/nowsClose.ts; the rail's hookup is the lead's)
 //   Approvals' Approve (§19.13)            projectcentral.source.return_accept (central/devices/sourceReturnAccept.ts; the hookup is the lead's)
 //   the Flow's Thought, the Workspace's Ground and Self (pageGround.ts)   action:contemplate-flow, flow_changed_since; projectcentral.inspect,
 //                                          self.inspect, adopt|migrate.preview — readings and presses; their writes wait on PERSON_ACTS.
@@ -20,6 +19,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {readFileSync} from 'node:fs'
 import {register} from 'node:module'
+import {withWorldModel} from './support/worldModelFixture.mjs'
 
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
 register(`data:text/javascript,${encodeURIComponent(`
@@ -54,7 +54,6 @@ const host = await import('../src/frame/devices/deviceHost.tsx')
 const day = await import('../src/central/devices/dayBinding.ts')
 const writes = await import('../src/central/devices/centralDeviceWrites.ts')
 const world = await import('../src/central/devices/contextWorldBinding.ts')
-const nows = await import('../src/central/devices/nowsClose.ts')
 const accept = await import('../src/central/devices/sourceReturnAccept.ts')
 const pages = await import('../src/central/devices/pageBindings.ts')
 const ground = await import('../src/central/devices/pageGround.ts')
@@ -85,9 +84,10 @@ function drawsOn(design, binding, fixture, reasons = []) {
 function kernel({actions = {}, ground: groundAnswer = null, changed = null} = {}) {
   const sent = []
   const ok = outcome => ({json: async () => ({ok: true, outcome})})
-  const fetch = async (_url, init) => {
+  // The kernel's own asks for a World Model slice it composes (`quiet`, support/worldModelFixture.mjs) are not the shell's: unrecorded.
+  const fetch = async (_url, init, {quiet = false} = {}) => {
     const body = JSON.parse(init.body)
-    sent.push(body)
+    if (!quiet) sent.push(body)
     if (body.op === 'central' && body.request?.kind === 'inspect' && groundAnswer) return ok({result: 'central_reading', data: groundAnswer})
     if (body.op === 'flow_changed_since' && changed) return ok({result: 'flow_changed_since', reading: changed})
     if (body.op === 'invoke_action') {
@@ -103,7 +103,14 @@ function kernel({actions = {}, ground: groundAnswer = null, changed = null} = {}
 }
 async function withKernel(owner, run) {
   const real = globalThis.fetch
-  globalThis.fetch = owner.fetch
+  // The World Model's slices composed over this kernel's answers, as the kernel composes them (O-I ticket 1005: a Day write reads its
+  // ground again through the day slice).
+  const composed = withWorldModel(owner.fetch)
+  globalThis.fetch = async (url, init) => {
+    const body = JSON.parse(init.body)
+    if (body.op === 'model_subscribe') owner.sent.push(body)
+    return composed(url, init)
+  }
   try { return await run() } finally { globalThis.fetch = real }
 }
 const bridge = url => ({kind: 'bridge', url})
@@ -114,7 +121,7 @@ const invoked = owner => owner.sent.filter(body => body.op === 'invoke_action').
 const OWN = {settings: REAL.daySettings.data, settingsRefusal: null, moves: REAL.dayMoves.data, movesRefusal: null, timezone: 'Europe/London'}
 const DAY_REF = 'central:day:control:root:2026-10-21'
 const FACTS = {civilDate: '2026-10-21', standing: {state: 'ready', dayRef: DAY_REF, civilDate: '2026-10-21', sourceRef: 's', documentId: 'd', revision: 'r'},
-  refusal: null, canOpenToday: false, canClose: true, aperture: null, boundary: 0, automaticRollover: false}
+  refusal: null, canClose: true, aperture: null, boundary: 0, automaticRollover: false}
 
 test('each Day setting becomes the one setting central.day.settings.write saves, in Central\'s words', () => {
   assert.deepEqual(day.daySettingsPatch('rollover', 1320), {rollover: '22:00'})
@@ -134,7 +141,7 @@ test('each Day setting becomes the one setting central.day.settings.write saves,
 
 test('the Day writes its settings on the revision read, presses its pads on the Day shown, opens tomorrow and closes with the carry', async () => {
   const calls = []
-  const writers = {turn: async () => {}, openToday: async () => {}, closeNow: async () => { calls.push(['close']) },
+  const writers = {turn: async () => {}, closeNow: async () => { calls.push(['close']) },
     settings: async (patch, revision) => { calls.push(['settings', patch, revision]) }, begin: async (move, ref) => { calls.push(['begin', move, ref]) },
     openTomorrow: async () => { calls.push(['tomorrow']) }}
   const binding = day.dayDesignBinding('central:day-die', FACTS, day.dayValuesOf(FACTS, null, OWN), writers, OWN)
@@ -203,7 +210,8 @@ test('SF06 (DLW build ruling 2026-11-09): Show checks Central’s today again at
   const t = bridge('http://bring-entry.fixture')
   const today = kernel({ground: CLOSE_GROUND, actions: answering('Call the harbour')})
   await withKernel(today, async () => assert.deepEqual(await writes.bringDayEntry(t, offered, offer), {id: 'day-entry:0123456789abcdef', kind: 'page', label: 'Call the harbour'}))
-  assert.deepEqual(today.sent.map(body => body.op === 'central' ? `central ${body.request.kind}` : body.invocation.action), ['central inspect', 'central.day.entry.part'], 'Central’s ground is read again first, fresh')
+  assert.deepEqual(today.sent.map(body => body.op === 'model_subscribe' ? `model ${body.slice}${body.fresh ? ' fresh' : ''}` : body.invocation.action), ['model day fresh', 'central.day.entry.part'],
+    'Central’s ground is read again first, fresh: the World Model\'s day slice (O-I ticket 1005)')
   const moved = kernel({ground: CLOSE_GROUND, actions: answering('Call the harbour master')})
   await withKernel(moved, () => assert.rejects(writes.bringDayEntry(t, offered, offer),
     {message: 'Central reads this entry as “Call the harbour master” now, not “Call the harbour” as it was offered: look again; nothing reached the field.'}))
@@ -419,7 +427,7 @@ test('SF08 (DLW build ruling 2026-11-09): a call released at its bound that sett
 
 test('(e) the Day draws its design with every setting live on Central\'s readings, never the design\'s sample', () => {
   const values = day.dayValuesOf(FACTS, null, OWN)
-  const binding = day.dayDesignBinding('central:day-die', FACTS, values, {turn: async () => {}, openToday: async () => {}, closeNow: async () => {}, settings: async () => {}, begin: async () => {}}, OWN)
+  const binding = day.dayDesignBinding('central:day-die', FACTS, values, {turn: async () => {}, closeNow: async () => {}, settings: async () => {}, begin: async () => {}}, OWN)
   const all = drawsOn(dayDesign, binding, /Wed 15 Oct|Read face 0 and propose tasks in three tiers|63 handoff returns/)
   assert.doesNotMatch(all, /central\.day\.settings\.write, which waits on/, 'no setting stands closed on the person\'s route any more')
 })
@@ -456,24 +464,6 @@ test('REAL — a read place\'s exclude and include are saved on the world\'s rel
   drawsOn(scopeDesign, binding, /Lantern \(object\)|Tidal \(Expression\)|r15 → r17/)
 })
 
-// ── NOWs' Close ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-
-test('REAL — NOWs\' Close asks central.now.lifecycle on the clearing\'s revision and the work policy\'s; each gap refused in words', async () => {
-  const rows = W2.nowList.data.records
-  const row = rows[0]
-  const policy = {revision: W2.workPolicy.revision}
-  assert.deepEqual(nows.nowCloseInput(row.now_ref, rows, policy).input,
-    {now_ref: row.now_ref, expected_revision: row.revision.revision, expected_policy_revision: W2.workPolicy.revision, lifecycle: 'closed'})
-  assert.match(nows.nowCloseInput(undefined, rows, policy).refused, /open a moment first/)
-  assert.match(nows.nowCloseInput(row.now_ref, null, policy).refused, /listing has not answered/)
-  assert.match(nows.nowCloseInput(row.now_ref, rows, null).refused, /central\.work\.policy/)
-  assert.match(nows.nowCloseInput('central:now:x', rows, policy).refused, /not among the clearings/)
-  const owner = kernel({actions: {'central.now.lifecycle': input => (input.expected_policy_revision === W2.workPolicy.revision ? {lifecycle: 'closed'} : {refuse: 'policy moved'})}})
-  await withKernel(owner, () => nows.closeNowClearing(bridge('http://nows.fixture'), row.now_ref, rows, policy))
-  assert.deepEqual(invoked(owner), [['central.now.lifecycle', {now_ref: row.now_ref, expected_revision: row.revision.revision, expected_policy_revision: W2.workPolicy.revision, lifecycle: 'closed'}]])
-  await assert.rejects(withKernel(owner, () => nows.closeNowClearing(bridge('http://nows.fixture'), row.now_ref, rows, {revision: 'old'})), /policy moved/)
-})
-
 // ── Approvals' Approve ───────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 test('Approve accepts a pending return through projectcentral.source.return_accept on its basis, by the person the anchor names', async () => {
@@ -491,6 +481,32 @@ test('Approve accepts a pending return through projectcentral.source.return_acce
   await withKernel(owner, () => accept.acceptSourceReturn(bridge('http://approve.fixture'), 'O-I', row, person))
   assert.deepEqual(invoked(owner)[0], ['projectcentral.source.return_accept', {project: 'O-I', return_ref: row.return_ref, expected_revision: 'b1', acceptance: 'human-accepted', accepted_by_ref: person}])
   assert.equal(owner.sent[0].project, 'O-I')
+})
+
+// O-I ticket 1005: a commissioned-maintenance Return (Play with Arm off on a page of a project's human ground: centralDeviceWrites.ts
+// proposeAgentAnswer) is accepted in that mode — Central's maintenance reading names the authority's revision and the principals its grant
+// lets accept here, and the acceptance names that principal (Central source_return.rs refuses any other). FIXTURE owner (the fake above).
+test('Approve accepts a maintenance Return in its own mode: the authority revision and the principal Central names', async () => {
+  const row = {return_ref: 'central:return:project:atlas:1', schema: 'central.source-return/v2', source_ref: 'central:source:project:atlas:ProjectCentral/user/plan.html',
+    basis_revision: 'b1', status: 'pending', current_revision: 'b1'}
+  const reading = {commissioned_maintenance: {authority_revision: 'auth-7', principal_refs: ['human:frank']}}
+  const anchored = 'central:source:control:root:Control/user/identity'
+  assert.deepEqual(accept.maintenanceAcceptInput('atlas', row, reading, anchored).input,
+    {project: 'atlas', return_ref: row.return_ref, expected_revision: 'b1', acceptance: 'commissioned-maintenance', accepted_by_ref: 'human:frank', expected_authority_revision: 'auth-7'},
+    'the one principal Central names, whatever the anchor calls the person')
+  const two = {commissioned_maintenance: {authority_revision: 'auth-7', principal_refs: ['human:a', 'human:b']}}
+  assert.match(accept.maintenanceAcceptInput('atlas', row, two, null).refused, /which of them you are/)
+  assert.equal(accept.maintenanceAcceptInput('atlas', row, two, 'human:b').input.accepted_by_ref, 'human:b')
+  assert.match(accept.maintenanceAcceptInput('atlas', row, {commissioned_maintenance: {authority_revision: 'auth-7', principal_refs: []}}, null).refused,
+    /no grant of yours covers accepting in this project/)
+  assert.match(accept.maintenanceAcceptInput('atlas', row, {}, null).refused, /names no authority revision/)
+  assert.match(accept.maintenanceAcceptInput('atlas', {...row, current_revision: 'b2'}, reading, null).refused, /the source moved since the agent proposed this/)
+  const owner = kernel({actions: {'projectcentral.source.return_read': reading, 'projectcentral.source.return_accept': {status: 'accepted'}}})
+  await withKernel(owner, () => accept.acceptSourceReturn(bridge('http://approve.fixture'), 'atlas', row, anchored))
+  assert.deepEqual(invoked(owner), [
+    ['projectcentral.source.return_read', {project: 'atlas', return_ref: row.return_ref, acceptance: 'commissioned-maintenance'}],
+    ['projectcentral.source.return_accept', {project: 'atlas', return_ref: row.return_ref, expected_revision: 'b1', acceptance: 'commissioned-maintenance', accepted_by_ref: 'human:frank',
+      expected_authority_revision: 'auth-7'}]])
 })
 
 // ── the Flow's Thought ───────────────────────────────────────────────────────────────────────────────────────────────────────────

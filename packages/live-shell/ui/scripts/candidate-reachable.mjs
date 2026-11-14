@@ -55,15 +55,13 @@ export const ENTRIES = [
   'desktop/cradle/expressions-app/library.html',
 ]
 /** Pages the frame's build also emits (expressions-app/vite.config.ts rollupOptions.input) and the payload copies with
- * the rest of dist/, which nothing in the candidate opens: the retired legacy workbench and the Physis renderer. */
-export const UNOPENED = [
-  'desktop/cradle/expressions-app/legacy.html',
-  'desktop/cradle/expressions-app/render.html',
-]
+ * the rest of dist/, which nothing in the candidate opens. None: O-I ticket 1008 deleted the legacy workbench and the Physis
+ * renderer, the last two, so the frame builds only the pages the candidate opens. */
+export const UNOPENED = []
 
 /** The frame's module aliases (expressions-app/vite.config.ts resolve.alias, tsconfig.json paths). */
 const FRAME_ALIASES = {
-  ...Object.fromEntries(['schema', 'domain', 'desktop-api', 'geography', 'viewers', 'node-document']
+  ...Object.fromEntries(['schema', 'domain', 'desktop-api', 'viewers', 'node-document']
     .map(name => [`@research-canvas/${name}`, join(FRAME, `vendor/research-canvas/packages/${name}/src/index.ts`)])),
   '@research-canvas/exporter': join(FRAME, 'vendor/research-canvas/browserExporter.ts'),
 }

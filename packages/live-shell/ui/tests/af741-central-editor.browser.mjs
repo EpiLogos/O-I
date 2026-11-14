@@ -108,9 +108,11 @@ const root = listing?.outcome?.directory?.location?.root
 assert.ok(root, `Central lists the scratch flows folder: ${JSON.stringify(listing).slice(0, 300)}`)
 const flowPath = `Control/user/flows/flow-af741-${Date.now()}.html`
 const flowHtml = mintInstance('The stone was carved at Bollingen.\n\nThe second stone stands by the water, and the stone remembers.')
-const created = await postOp(bridgeUrl, {op: 'file_operation', location: {schema: 'central.path-ref/v1', ref: `central:path:${root}:${flowPath}`, root, path: flowPath},
-  request: {action: 'write', expected_revision: '', content: flowHtml}}, 60000)
-assert.equal(created?.outcome?.data?.outcome, 'created', `Central creates the Flow on the scratch ground: ${JSON.stringify(created).slice(0, 300)}`)
+/** A save of the Flow: Central's own `central.files.write` through the kernel's `act` (O-I 1002). Its mutation is the dispatch's data. */
+const writeFlow = (location, expected_revision, content, timeoutMs) => postOp(bridgeUrl, {op: 'act', action: 'central.files.write', input: {location, expected_revision, content}}, timeoutMs)
+const mutation = answer => answer?.outcome?.dispatch?.state === 'invoked' ? answer.outcome.dispatch.data : undefined
+const created = await writeFlow({schema: 'central.path-ref/v1', ref: `central:path:${root}:${flowPath}`, root, path: flowPath}, '', flowHtml, 60000)
+assert.equal(mutation(created)?.outcome, 'created', `Central creates the Flow on the scratch ground: ${JSON.stringify(created).slice(0, 300)}`)
 
 /** The Flow as Central holds it now, and its revision. */
 const flowLocation = {schema: 'central.path-ref/v1', ref: `central:path:${root}:${flowPath}`, root, path: flowPath}
@@ -170,7 +172,7 @@ async function walk(name) {
   page.on('request', request => {
     if (!request.url().endsWith('/op') || request.method() !== 'POST') return
     const body = request.postData() ?? ''
-    if (body.includes('"file_operation"') && body.includes(flowPath.split('/').pop()) && body.includes('"write"')) writes.push(Date.now())
+    if (body.includes('"central.files.write"') && body.includes(flowPath.split('/').pop())) writes.push(Date.now())
   })
   try {
     await page.goto(site.url, {waitUntil: 'domcontentloaded', timeout: 90000})
@@ -422,8 +424,8 @@ async function walk(name) {
       const held = await readFlow()
       const moved = held.content.split('-bykey').join('-bykey stone')
       assert.notEqual(moved, held.content, 'the walk found the title to move')
-      const wrote = await postOp(bridgeUrl, {op: 'file_operation', location: flowLocation, request: {action: 'write', expected_revision: held.revision, content: moved}}, 30000)
-      assert.ok(['written', 'saved', 'updated'].includes(wrote?.outcome?.data?.outcome) || wrote?.outcome?.data?.revision, `Central writes the moved page: ${JSON.stringify(wrote).slice(0, 300)}`)
+      const wrote = await writeFlow(flowLocation, held.revision, moved, 30000)
+      assert.ok(['written', 'saved', 'updated'].includes(mutation(wrote)?.outcome) || mutation(wrote)?.revision, `Central writes the moved page: ${JSON.stringify(wrote).slice(0, 300)}`)
       await (await flowFrameObject())?.evaluate(() => { window.__agOldPage = true })
       await flowPane.locator('button[data-action="reread"]').click()
       // The new page stands in the frame: the old document's mark is gone and its words are drawn.
@@ -502,8 +504,8 @@ async function walk(name) {
       const held = await readFlow()
       const moved = held.content.split('-bykey').join(`-bykey-elsewhere${name}`)
       assert.notEqual(moved, held.content, 'the walk found the title to move')
-      const wrote = await postOp(bridgeUrl, {op: 'file_operation', location: flowLocation, request: {action: 'write', expected_revision: held.revision, content: moved}}, 30000)
-      assert.ok(wrote?.outcome?.data?.revision, `Central writes the moved page: ${JSON.stringify(wrote).slice(0, 300)}`)
+      const wrote = await writeFlow(flowLocation, held.revision, moved, 30000)
+      assert.ok(mutation(wrote)?.revision, `Central writes the moved page: ${JSON.stringify(wrote).slice(0, 300)}`)
       const theirs = await readFlow()
       await flowFrame.locator('[aria-label="Title"]').first().click()
       await page.keyboard.press('End')

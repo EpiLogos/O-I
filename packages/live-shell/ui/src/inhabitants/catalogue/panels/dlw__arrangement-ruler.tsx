@@ -101,7 +101,7 @@ const clockAt = (at: number, short?: boolean) => {
   return short ? `${pad(Math.floor(s / 3600))}:${pad(Math.floor(s / 60) % 60)}` : `${pad(Math.floor(s / 3600))}:${pad(Math.floor(s / 60) % 60)}:${pad(s % 60)}`
 }
 const mmss = (span: number) => `${Math.floor(span / 60)}m ${pad(Math.floor(span % 60))}s`
-/** The adapter's palette, by position: the group "Port bridge-2" takes the first, so the lead takes the second (factoryTrackAdapter.ts FACTORY_TRACK_PALETTE). */
+/** Factory's palette, by position: the group "Port bridge-2" takes the first, so the lead takes the second (the kernel's Set, mode_set.rs FACTORY_PALETTE). */
 const PAL = ['#79b6ce', '#779dcc', '#9885bc', '#8baf9c', '#b096b2', '#6caaa9'] as const
 
 const FACTORY: Data = {

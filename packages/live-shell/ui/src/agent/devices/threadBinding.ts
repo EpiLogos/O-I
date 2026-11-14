@@ -265,7 +265,7 @@ const missing = (what: string, op: string, owner: string) => `${what}: no owner 
 
 export const THREAD_REFUSE = {
   light: 'The light is a reading: AIKit\'s encounter reports whether the session\'s provider is resident; nothing here turns it.',
-  retry: missing('Retry', 'a retry of one session\'s task from its last good step (AIKit\'s encounter has no retry verb; harness_agent_control restart addresses the whole bound harness)', 'AIKit'),
+  retry: missing('Retry', 'a retry of one session\'s task from its last good step (AIKit\'s encounter has no retry verb; aikit.gateway.agent restart addresses the whole bound harness)', 'AIKit'),
   diff: missing('Diff', 'a proposal\'s diff read through the kernel', 'AIKit'),
   tellParent: missing('Tell parent', 'a stall handed to the parent session (the agency reading discloses no session parent)', 'AIKit'),
   voice: 'Voice: dictation lands in the thread pane\'s composer (the transport\'s Record); the Thread holds no capture of its own.',

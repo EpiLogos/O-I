@@ -327,9 +327,11 @@ function flowOwner() {
   const fetch = async (_url, init) => {
     const body = JSON.parse(init.body)
     if (body.op === 'file_read') return respond({result: 'file_read', reading: {location: ENTRY_AT, content: state.html, revision: `rev-${state.revision}`}})
-    if (body.op === 'file_operation' && body.request.action === 'write' && body.request.expected_revision === `rev-${state.revision}`) {
-      state.html = body.request.content; state.revision++
-      return respond({result: 'file_operation', data: {outcome: 'written', revision: `rev-${state.revision}`}})
+    // A save is Central's central.files.write through `act` (O-I #1002), answered with its file mutation for the location asked.
+    if (body.op === 'act' && body.action === 'central.files.write' && body.input.expected_revision === `rev-${state.revision}`) {
+      state.html = body.input.content; state.revision++
+      return respond({result: 'action_dispatched', dispatch: {state: 'invoked', owner_operation: body.action,
+        data: {schema: 'central.file-mutation/v1', location: body.input.location, outcome: 'written', revision: `rev-${state.revision}`}}})
     }
     return {json: async () => ({ok: false, error: `unexpected op ${body.op}`})}
   }

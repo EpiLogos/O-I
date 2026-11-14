@@ -6,8 +6,14 @@
  * directly in the engine's own scene schema (two formations on the shared
  * medium); the flight steps are overlay patches on its retained config.
  */
-import { blankScene, entity } from "@epilogos/oi-design-system/expressions-engine/shell/model.mjs";
-import { nativeExport, type NativeConfig } from "@epilogos/oi-design-system/expressions-engine/shell/nativeBridge.mjs";
+import { blankScene, entity } from "../../expressions-app/field-studies-journeys/src/model";
+import { nativeExport } from "../../expressions-app/field-studies-journeys/src/nativeBridge";
+
+/** A native configuration as the stage holds it: a JSON document, whole (the
+ * engine's own export) or an overlay patch over one. The stage merges these
+ * and hands them to the engine's own migration (nativeSnapshotToJourney); it
+ * never types the physics itself. */
+export type NativeConfig = Record<string, unknown>;
 
 export const MARK_RECIPE = "oi.mark";
 export const FOCUSED_INSTRUMENT_RECIPE = "instrument.focused";
@@ -30,7 +36,7 @@ const MARK_CONFIG: NativeConfig = (() => {
   scene.field.background = "#f4f2eb";
   scene.field.params.count = 120000;
   scene.field.params.size = 1.6;
-  return nativeExport(scene).config;
+  return { ...nativeExport(scene).config };
 })();
 
 /** K9's foreground medium. This is presentation material only: one stable
@@ -47,7 +53,7 @@ const FOCUSED_INSTRUMENT_CONFIG: NativeConfig = (() => {
   scene.field.background = "#f4f2eb";
   scene.field.params.count = 65536;
   scene.field.params.size = 1.2;
-  return nativeExport(scene).config;
+  return { ...nativeExport(scene).config };
 })();
 
 /** Stage material for a mark flight. The desktop opening splash does not

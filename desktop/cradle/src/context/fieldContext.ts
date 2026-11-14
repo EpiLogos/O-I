@@ -1,8 +1,8 @@
 /**
  * The field's encounter as a contribution to the companion's PREPARED turn.
  *
- * The seam is the one every prepared selection already uses (AIKit's `aikit.prepared-context/v1`, reached through
- * `nativeContext`): the field's present encounter becomes ONE prepared item — an observation of the field — whose
+ * The seam is the one every prepared selection already uses (AIKit's `aikit.prepared-context/v1`, read from the World Model's packet
+ * slice and edited through `nativeContext`; O-I ticket 1005): the field's present encounter becomes ONE prepared item — an observation of the field — whose
  * text names the roles and refs (primary with revision and span, tangent, selected, constellation, scene) and whose
  * anchor carries the exact `generation` it was read at. Because it is an ordinary prepared item:
  *
@@ -14,12 +14,14 @@
  *     same validation every observation passes before a send (`observationIsCurrent` → the registered validator).
  *
  * This module owns no state about the encounter and no session: the field host holds the encounter, AIKit holds the
- * prepared context; this only reads one and writes the other through their own operations.
+ * prepared context; this only reads one and writes the other through their own operations — the context as the World Model holds it,
+ * read fresh before each edit (packetSlice.ts packetNow).
  */
 import type {KernelTransportStatus} from "../kernel/types";
 import {fieldContextLines, currentFieldContext, type FieldContextReading} from "../field/fieldHost";
 import {observationDocumentId, registerPageObservation, releaseObservation} from "./ComponentSelection";
 import {nativeContext, type ContextProvider, type PreparedContext, type PreparedItem, type SelectionSnapshot} from "./nativeContext";
+import {packetNow} from "./packetSlice";
 
 export const FIELD_CONTEXT_OWNER = "Field";
 export const FIELD_ROLE = "field-encounter";
@@ -59,7 +61,7 @@ export function fieldSelection(r: FieldContextReading, key: string, project: str
  * added. Returns the context as the owner now holds it. Throws the owner's own refusal. */
 export async function prepareFieldContext(transport: KernelTransportStatus, project: string, session: string | undefined, live: FieldContextReading | undefined = currentFieldContext(), sourceWorldRef?: string, pinned = false): Promise<PreparedContext> {
   if (!live) throw new Error("No field is open, so there is no encounter to prepare.");
-  let context = await nativeContext(transport, project, session, { operation: "read" }, sourceWorldRef);
+  let context = await packetNow(transport, project, session, sourceWorldRef);
   // an unchanged generation is already what the turn would carry: nothing to write
   const same = context.items.find(i => isFieldItem(i) && fieldItemGeneration(i) === live.generation && parseFieldSelector((i.selection.anchor as {selector: string}).selector)?.binding === live.binding_id);
   if (same && context.items.filter(isFieldItem).length === 1) return context;
@@ -76,7 +78,7 @@ export async function prepareFieldContext(transport: KernelTransportStatus, proj
 
 /** Remove the field's items from the prepared context (turning the contribution off). */
 export async function withdrawFieldContext(transport: KernelTransportStatus, project: string, session: string | undefined, sourceWorldRef?: string): Promise<PreparedContext> {
-  let context = await nativeContext(transport, project, session, { operation: "read" }, sourceWorldRef);
+  let context = await packetNow(transport, project, session, sourceWorldRef);
   for (const old of context.items.filter(isFieldItem)) {
     context = await nativeContext(transport, project, session, { operation: "edit", basis: context.revision, mutation: { operation: "remove", id: old.id } }, sourceWorldRef);
   }

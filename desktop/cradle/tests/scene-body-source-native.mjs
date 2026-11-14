@@ -16,7 +16,7 @@ await mkdir(output);const sourcePath='Work/controlled/source-body-'+id+'.md';
 await writeFile(path.join(world.root,sourcePath),'# Native source body\n\nEarth 🜁 water — a controlled authored passage.\n');
 const transport={kind:'bridge',url:world.bridge};let server,browser,created=false;
 const receipts=[],browserErrors=[];
-async function op(request){const r=await fetch(world.bridge+'/op',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(request),signal:AbortSignal.timeout(90000)}).then(r=>r.json());if(r.error)throw Error(r.error);receipts.push({op:request.op,operation:request.request?.operation??request.request?.action,result:r.outcome.result});return r.outcome.data??r.outcome;}
+async function op(request){const r=await fetch(world.bridge+'/op',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(request),signal:AbortSignal.timeout(90000)}).then(r=>r.json());if(r.error)throw Error(r.error);receipts.push({op:request.op,operation:request.request?.operation??request.request?.action??request.action,result:r.outcome.result});return r.outcome.data??r.outcome;}
 try{
  server=await createServer({configFile:false,appType:'custom',root:process.cwd(),cacheDir:output+'/vite-cache',server:{host:'127.0.0.1',port:0,hmr:false}});
  server.middlewares.use((req,res,next)=>{
@@ -38,7 +38,8 @@ try{
  const {resolveHostedSource}=await server.ssrLoadModule('/src/expressions/sourceHandoff.ts');
  const request={ref:body.subject_ref,subject:{ref,revision:adopted.document.revision,sceneRef:scene}};
  const target=await resolveHostedSource(transport,request);assert.equal(target.location.ref,body.subject_ref);assert.equal(target.returnTo.passageId,scene);
- const changed=await op({op:'file_operation',location:target.location,request:{action:'write',expected_revision:body.reading.revision,content:'# Native source body\n\nThe real owner changed this source.\n'}});assert.ok(['written','unchanged'].includes(changed.outcome));
+ // A save is Central's own `central.files.write` through the kernel's `act` (O-I 1002): its mutation is the dispatch's data.
+ const changed=await op({op:'act',action:'central.files.write',input:{location:target.location,expected_revision:body.reading.revision,content:'# Native source body\n\nThe real owner changed this source.\n'}});assert.equal(changed.dispatch?.state,'invoked',changed.dispatch?.message??changed.dispatch?.detail);assert.ok(['written','unchanged'].includes(changed.dispatch.data.outcome));
  await frame.getByRole('button',{name:'Check source',exact:true}).click();await frame.getByText(/scene body source has changed/i).waitFor();
  await assert.rejects(resolveHostedSource(transport,request),/scene body source changed/);
  const refreshed=await frame.evaluate(p=>window.proof.prepare('text_source',p),body.subject_ref);assert.notEqual(refreshed.reading.revision,body.reading.revision);

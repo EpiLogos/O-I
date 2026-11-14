@@ -55,7 +55,7 @@ export interface WalkHere {
 
 /** The World as the walk reads and moves it (the host binds the mounted atlas, walksHost.ts). */
 export interface WalkWorld {
-  /** the world the walk belongs to (the book's world) and its title */
+  /** the world the walk belongs to (the World the window is open on, by its owner) and its title */
   readonly key: string
   readonly title: string
   /** where the World stands; null where it frames no body (the sky, the graph) */

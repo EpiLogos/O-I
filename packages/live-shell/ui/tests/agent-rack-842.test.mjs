@@ -404,7 +404,7 @@ test('each chain-list control with no carrier refuses in the words of the operat
   // §16.6 Rules). REPLACED (round 858): the rack solos through the shell's attention, the one the Session view's mixer solos
   // (tests/solo-attention.test.mjs); it refuses only where no attention is handed, and AIKit's session Solo is never named as its route.
   assert.match(R.solo, /^Solo: no owner operation carries it yet — missing op: what you attend to, handed to this rack: .*\(the live shell\)\.$/)
-  assert.doesNotMatch(R.solo, /encounter_session_settings/)
+  assert.doesNotMatch(R.solo, /encounter_session_settings|aikit\.session\.settings/)
   // REPLACED (round 859): Activator, Drag out and Add a chain were missing ops (no session-space mutation held a bench, a move into a space
   // of its own, or an attach to a space that stands). AIKit carries each now (bench-agent-session; `aikit session-space drag-out`; attach-
   // agent-session on a standing space) through the kernel's encounter_session_bench, _drag_out and _attach; with no carrier handed to the

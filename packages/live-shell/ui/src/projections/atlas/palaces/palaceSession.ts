@@ -10,7 +10,7 @@
 //   - the owners are the candidate's own, bound by the host (palaceOwners.ts): the kernel's `expression` op for inspect, list and the
 //     one CAS-gated edit; the owner's integral reading (wikiReadingProvider.ts readWikiSceneTechne, scope "expression"); the Return on the
 //     route the reading names for new knowledge, Central's receiving (palaceReturn.ts; O-I 761), where it replaced the frame's routed
-//     invoke_action; the presence store over the atlas's workspace memory; the shell's own doors to open an object;
+//     invoke_action; the presence store over the atlas's memory (the World's); the shell's own doors to open an object;
 //   - "Return to ground" re-opens the ground, which in the shell is the Earth itself (lock §0.1.3: "Technē's 0 instrument is the Earth and solar
 //     system together with its graph view"): leaving the palace is the return.
 //

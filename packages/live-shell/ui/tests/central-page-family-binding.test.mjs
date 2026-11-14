@@ -279,8 +279,10 @@ test('the Flow draws its entries and people from the page, its roster from Centr
   assert.deepEqual([refused.light, refused.entries, refused.people, refused.title], ['dark', undefined, undefined, undefined])
 })
 
-/** A fake owner behind a stubbed kernel bridge: it holds one Flow file and checks the CAS the way central.files.write does
- * (file_operation write with the expected revision; a moved revision is a conflict). FIXTURE, not a capture. */
+/** A fake owner behind a stubbed kernel bridge: it holds one Flow file and checks the CAS the way central.files.write does (the
+ * Action through `act`, with the expected revision; a moved revision is a conflict), answering Central's file mutation for the very
+ * location asked. FIXTURE, not a capture. */
+const isFileWrite = body => body.op === 'act' && body.action === 'central.files.write'
 function fakeFlowOwner({conflict = false} = {}) {
   const state = {html: island(DOC), revision: 1}
   const sent = []
@@ -289,11 +291,14 @@ function fakeFlowOwner({conflict = false} = {}) {
     const body = JSON.parse(init.body)
     sent.push(body)
     if (body.op === 'file_read') return respond({result: 'file_read', reading: {location: LOCATION, content: state.html, revision: `rev-${state.revision}`}})
-    if (body.op === 'file_operation' && body.request.action === 'write') {
-      if (conflict || body.request.expected_revision !== `rev-${state.revision}`) return respond({result: 'file_operation', data: {outcome: 'conflict', current: {revision: `rev-${state.revision + 1}`}}})
-      state.html = body.request.content
+    if (isFileWrite(body)) {
+      const {location, expected_revision, content} = body.input
+      const mutation = (outcome, extra) => respond({result: 'action_dispatched', dispatch: {state: 'invoked', owner_operation: body.action,
+        data: {schema: 'central.file-mutation/v1', location, outcome, ...extra}}})
+      if (conflict || expected_revision !== `rev-${state.revision}`) return mutation('conflict', {current: {revision: `rev-${state.revision + 1}`}})
+      state.html = content
       state.revision++
-      return respond({result: 'file_operation', data: {outcome: 'written', revision: `rev-${state.revision}`}})
+      return mutation('written', {revision: `rev-${state.revision}`})
     }
     return {json: async () => ({ok: false, error: `unexpected op ${body.op}`})}
   }
@@ -313,9 +318,9 @@ test('the Flow\'s next entry is the person\'s, appended through the Flow\'s own 
   const binding = bindings.flowBinding('central:flow-document', reachedFlow(), flowMaterial, [], writers)
   // The widget's compose: the line, by the person, replying to entry 3 (central__flow-document.tsx append).
   await withOwner(owner, () => binding.write([{key: 'extra', value: JSON.stringify([{by: 'F', at: '10:00', head: 'Start with the first unit.', rel: {type: 'reply', to: [3]}}])}]))
-  const writesSent = owner.sent.filter(body => body.op === 'file_operation')
+  const writesSent = owner.sent.filter(isFileWrite)
   assert.equal(writesSent.length, 1, 'one write')
-  assert.equal(writesSent[0].request.expected_revision, 'rev-1', 'checked against the revision it read')
+  assert.equal(writesSent[0].input.expected_revision, 'rev-1', 'checked against the revision it read')
   const after = parseInstance(owner.state.html)
   const added = after.entries.at(-1)
   assert.equal(after.entries.length, 6)
@@ -337,10 +342,94 @@ test('the Flow refuses in words: an agent\'s entry, a page holding a draft, a mo
     await assert.rejects(() => bindings.flowBinding('t', reachedFlow(), flowMaterial, [], writers).write([{key: 'view', value: 'journal'}]), /The Flow's file is not reached here/)
     await assert.rejects(() => bindings.flowBinding('t', reachedFlow(), flowMaterial, [], writers).write([{key: 'in:agent/central-guardian', value: true}]), /joins on the page itself/)
   })
-  assert.equal(owner.sent.filter(body => body.op === 'file_operation').length, 0, 'nothing was written')
+  assert.equal(owner.sent.filter(isFileWrite).length, 0, 'nothing was written')
   const moved = fakeFlowOwner({conflict: true})
   await withOwner(moved, () => assert.rejects(() => bindings.flowBinding('t', reachedFlow(), flowMaterial, [], writers).write([{key: 'extra', value: line('F')}]), /moved while the entry was written/))
   assert.equal(parseInstance(moved.state.html).entries.length, 5, 'a conflict overwrites nothing')
+})
+
+// O-I ticket 1005 (world-shell.md §9.3): Play with Arm on keeps the agent's answer in the page as the agent's own entry, its sources named under
+// it, through the Flow's revision-checked write; Overdub's replace writes it as the correction of the agent's last entry; a new agent joins
+// the page by its session. FIXTURE owner (the fake above).
+test('Play keeps the answer in the page as the agent\'s entry with its sources: a new entry, or the replacement of its last one', async () => {
+  const owner = fakeFlowOwner()
+  await withOwner(owner, () => writes.keepAgentAnswer(bridge, LOCATION, {text: 'Omarchy first.\n\nThen the image.', agent: 'Factory coordinator', session: 'codex:01a0',
+    sources: ['Factory Run · entry 4 (F)'], take: 'new'}))
+  let after = parseInstance(owner.state.html)
+  let added = after.entries.at(-1)
+  assert.equal(after.entries.length, 6)
+  assert.equal(added.authorKey, 'p-c', 'the agent the page already names, by its session')
+  assert.match(added.html, /<p>Omarchy first\.<\/p><p>Then the image\.<\/p>/)
+  assert.match(added.html, /Sources:<\/em> Factory Run · entry 4 \(F\)/)
+  assert.deepEqual(added.relations ?? [], [], 'a new entry corrects nothing')
+  await withOwner(owner, () => writes.keepAgentAnswer(bridge, LOCATION, {text: 'Omarchy, then the image.', agent: 'Factory coordinator', session: 'codex:01a0', sources: [], take: 'replace'}))
+  after = parseInstance(owner.state.html)
+  added = after.entries.at(-1)
+  assert.deepEqual(added.relations.map(relation => [relation.type, relation.entryId]), [['correct', after.entries.at(-2).id]], 'the replacement corrects the agent\'s last entry')
+  // An agent the page does not name yet joins it by its session; it has nothing to replace.
+  await withOwner(owner, () => writes.keepAgentAnswer(bridge, LOCATION, {text: 'A third view.', agent: 'claude-code', session: 'agent-session:fresh', sources: [], take: 'new'}))
+  after = parseInstance(owner.state.html)
+  const joined = after.meta.participants.find(person => person.ref === 'agent-session:fresh')
+  assert.equal(joined?.kind, 'agent'); assert.equal(joined?.name, 'claude-code')
+  assert.equal(after.entries.at(-1).authorKey, joined.key)
+  await withOwner(owner, () => assert.rejects(writes.keepAgentAnswer(bridge, LOCATION, {text: 'x', agent: 'gemini', session: 'agent-session:none', sources: [], take: 'replace'}), /has no entry on this page to replace/))
+  const moved = fakeFlowOwner({conflict: true})
+  await withOwner(moved, () => assert.rejects(writes.keepAgentAnswer(bridge, LOCATION, {text: 'Kept words.', agent: 'Factory coordinator', session: 'codex:01a0', sources: [], take: 'new'}),
+    /page moved twice[\s\S]*Kept words\./))
+  assert.equal(parseInstance(moved.state.html).entries.length, 5, 'a conflict overwrites nothing')
+})
+
+// O-I ticket 1005 (world-shell.md §9.3 "Arm (direct or proposal)"): Play with Arm off proposes the answer for a project's page as Central's source
+// Return (projectcentral.source.return): the page with the agent's entry, on the revision Central's horizon holds, the agent's session its
+// provenance and the packet's items its evidence; Approvals lists Central's source returns and accepts or refuses them. Nothing is written in
+// the page. A page of your own world is refused in words, the answer kept in them, as is a page that moved. FIXTURE owner (the fake above).
+test('Play with Arm off files the answer as Central\'s source Return on the page\'s revision and writes nothing; your own world\'s page is refused in words', async () => {
+  const PAGE = {schema: 'central.path-ref/v1', ref: 'central:path:/ground:Work/atlas/ProjectCentral/user/flows/plan.html', root: '/ground', path: 'Work/atlas/ProjectCentral/user/flows/plan.html'}
+  const owner = fakeFlowOwner()
+  const filed = []
+  let horizonRevision = null
+  const base = owner.fetch
+  owner.fetch = async (url, init) => {
+    const body = JSON.parse(init.body)
+    if (body.op === 'invoke_action') {
+      const {action, input} = body.invocation
+      const answered = data => ({json: async () => ({ok: true, outcome: {result: 'action_dispatched', dispatch: {state: 'invoked', owner_operation: action, data}}})})
+      if (action === 'projectcentral.change.horizon') return answered({schema: 'central.source-change-horizon/v1', sources: [
+        {binding: {ref: 'central:source:project:atlas:ProjectCentral/user/intent.md', path: 'ProjectCentral/user/intent.md'}, revision: {revision: 'sha:intent'}},
+        {binding: {ref: 'central:source:project:atlas:ProjectCentral/user/flows/plan.html', path: 'ProjectCentral/user/flows/plan.html', roles: ['project-human-source-aperture']},
+          revision: {revision: horizonRevision ?? `rev-${owner.state.revision}`}}]})
+      if (action === 'projectcentral.source.return') {
+        filed.push(input)
+        return answered({schema: 'central.source-return-reading/v1', proposal: {return_ref: 'return:atlas:1', status: 'pending'}, authored_source_mutated: false})
+      }
+    }
+    return base(url, init)
+  }
+  const worlds = async () => ({state: 'read', worlds: [
+    {ref: 'central:wiki:root', name: 'Your world', kind: 'yours', folder: 'Control/user/flows', project: null},
+    {ref: 'central:wiki:atlas', name: 'Atlas', kind: 'project', folder: '/ground/Work/atlas/ProjectCentral/user', project: 'atlas'}]})
+  const answer = {text: 'Omarchy first.', agent: 'Factory coordinator', session: 'codex:01a0', sources: ['Factory Run · entry 4 (F)'], take: 'new'}
+  const proposed = await withOwner(owner, () => writes.proposeAgentAnswer(bridge, PAGE, answer, worlds))
+  assert.deepEqual(proposed, {returnRef: 'return:atlas:1', project: 'atlas'})
+  assert.equal(filed.length, 1, 'one Return')
+  assert.deepEqual([filed[0].project, filed[0].source_ref, filed[0].expected_revision, filed[0].agent_session_ref],
+    ['atlas', 'central:source:project:atlas:ProjectCentral/user/flows/plan.html', 'rev-1', 'codex:01a0'], 'on the page as the project\'s source, at the revision read')
+  assert.deepEqual(filed[0].evidence_refs, ['Factory Run · entry 4 (F)'])
+  assert.equal(filed[0].acceptance, 'commissioned-maintenance', 'a page of the project\'s human ground changes only on the person\'s authenticated acceptance')
+  const page = parseInstance(filed[0].proposed_content)
+  assert.equal(page.entries.length, 6)
+  assert.equal(page.entries.at(-1).authorKey, 'p-c', 'the agent\'s own entry')
+  assert.match(page.entries.at(-1).html, /Sources:<\/em> Factory Run · entry 4 \(F\)/)
+  assert.equal(owner.sent.filter(isFileWrite).length, 0, 'nothing is written in the page')
+  assert.equal(parseInstance(owner.state.html).entries.length, 5)
+  // A page of your own world: Central keeps Returns for a project's sources only.
+  await withOwner(owner, () => assert.rejects(writes.proposeAgentAnswer(bridge, LOCATION, answer, worlds), /page of your own world[\s\S]*Omarchy first\./))
+  // The page moved after Central's horizon was read: nothing is proposed on bytes the horizon does not hold.
+  horizonRevision = 'rev-0'
+  await withOwner(owner, () => assert.rejects(writes.proposeAgentAnswer(bridge, PAGE, answer, worlds), /page moved while the proposal was made[\s\S]*Omarchy first\./))
+  // Worlds not read: the page's project is not known.
+  await withOwner(owner, () => assert.rejects(writes.proposeAgentAnswer(bridge, PAGE, answer, async () => ({state: 'unavailable', reason: 'no carrier'})), /worlds were not read \(no carrier\)/))
+  assert.equal(filed.length, 1, 'no other Return was filed')
 })
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────────── the effects
@@ -509,8 +598,8 @@ test('a Flow\'s title and view are its file\'s meta: written on the revision rea
   assert.equal(document.standing.title, undefined); assert.equal(flow.standing.view, undefined)
   await withOwner(owner, () => document.write([{key: 'title', value: '  Planning the units  '}]))
   await withOwner(owner, () => flow.write([{key: 'view', value: 'journal'}]))
-  const sent = owner.sent.filter(body => body.op === 'file_operation')
-  assert.deepEqual(sent.map(body => body.request.expected_revision), ['rev-1', 'rev-2'], 'each write checked against the revision it read')
+  const sent = owner.sent.filter(isFileWrite)
+  assert.deepEqual(sent.map(body => body.input.expected_revision), ['rev-1', 'rev-2'], 'each write checked against the revision it read')
   const after = parseInstance(owner.state.html)
   assert.equal(after.meta.title, 'Planning the units'); assert.equal(after.meta.view, 'journal')
   assert.equal(after.meta.revision, 10, 'the page\'s own counter moves by one per write')

@@ -7,6 +7,7 @@ import type {KernelOp, KernelOutcome, KernelTransportStatus, PresentationDocumen
 import type {SettingsAdapter, SettingsBasis, SetupAikitOp, SetupSource} from '../settings/adapter'
 import {createAdoptionNative} from '../../../../../desktop/cradle/src/configuration/adoptionNative'
 import {actionAnswerOf, centralActionOp} from '../central/devices/centralActions'
+import {actOp} from '../agent/devices/ownerRoutes'
 import {readWorldProjects} from '../agent/worldScope'
 import type {MachineConnection, MachineOperationResult, RemoteMachineDeclaration, RemoteMachinesSource} from '../settings/machines'
 import type {RoutineAuthoringOptions, RoutineAuthoringResult, RoutineAuthoringSource, RoutineAuthority, RoutineProof, RoutineTriggerDocument} from '../settings/routines'
@@ -199,10 +200,19 @@ const SETUP_AIKIT_ANSWER: Readonly<Record<SetupAikitOp['op'], string>> = {
 }
 /** Setup's owners over the host's kernel channel (settings/adapter.ts SetupSource): the kernel's `setup` op through the cradle's adoption
  * transport (configuration/adoptionNative.ts), AIKit's ops (SetupAikitOp: its data from the answer each op returns), Central's actions
- * through invoke_action (central/devices/centralActions.ts) and Workcell's status (workcell_status_read), each answering in its owner's
+ * through invoke_action (central/devices/centralActions.ts), any owner's Action through the registry's door (`act`, ownerRoutes.ts actOp) and Workcell's status (workcell_status_read), each answering in its owner's
  * words. It needs no qualified world: Setup is what makes one. `groundChanged` is the host's read of its world. */
 export function nativeSetup(transport: KernelTransportStatus, groundChanged?: () => void): SetupSource {
   const call = (op: KernelOp) => kernelOp(transport, op)
+  /** An Action's dispatch as Setup reads it (`act` runs as the `invoke_action` it names, lib.rs KernelOp::canonical): the owner's data,
+   * or its words. */
+  const dispatched = async (op: KernelOp, action: string): Promise<unknown> => {
+    const answer = await call(op)
+    if (answer.error) throw new Error(answer.error)
+    const read = actionAnswerOf({status: 'answered', value: answer.outcome?.result === 'action_dispatched' ? answer.outcome : null, error: null}, action)
+    if (read.status === 'answered') return read.value
+    throw new Error(read.status === 'refused' ? read.error : `${action} did not answer.`)
+  }
   return {
     adoption: createAdoptionNative(call),
     async aikit(op) {
@@ -212,13 +222,8 @@ export function nativeSetup(transport: KernelTransportStatus, groundChanged?: ()
       if (outcome?.result !== SETUP_AIKIT_ANSWER[op.op]) throw new Error(`AIKit did not answer ${op.op}.`)
       return outcome.data
     },
-    async central(action, input) {
-      const answer = await call(centralActionOp(action, input))
-      if (answer.error) throw new Error(answer.error)
-      const read = actionAnswerOf({status: 'answered', value: answer.outcome?.result === 'action_dispatched' ? answer.outcome : null, error: null}, action)
-      if (read.status === 'answered') return read.value
-      throw new Error(read.status === 'refused' ? read.error : `${action} did not answer.`)
-    },
+    act: (action, input) => dispatched(actOp(action, input), action),
+    central: (action, input) => dispatched(centralActionOp(action, input), action),
     async workcell() {
       const answer = await call({op: 'workcell_status_read'})
       if (answer.error) throw new Error(answer.error)
@@ -237,6 +242,13 @@ export function nativeSetup(transport: KernelTransportStatus, groundChanged?: ()
       const answer = await call({op: 'aikit_read', request: {kind: 'harness-disclose'}})
       if (answer.error) throw new Error(answer.error)
       if (answer.outcome?.result !== 'owner_route_reading') throw new Error('AIKit did not answer aikit harness disclose.')
+      return answer.outcome.data
+    },
+    // The agents on this machine: the census (kernel census.rs), the World Model's agents slice, through its door (O-I #1003).
+    async agents(fresh) {
+      const answer = await call({op: 'model_subscribe', slice: 'agents', ...(fresh ? {fresh: true} : {})})
+      if (answer.error) throw new Error(answer.error)
+      if (answer.outcome?.result !== 'model_slice') throw new Error('The World Model did not answer the agents on this machine.')
       return answer.outcome.data
     },
     // The Day's form in a new world (kernel ground_form.rs): the application's own form kept in the ground through Central.

@@ -401,6 +401,28 @@ impl Binding {
     }
 }
 
+/// Nara's dialogue is a named conversation, made by the one provision (agency.rs `NamedConversation`, O-I #1003).
+impl agency::NamedConversation for Binding {
+    fn space(&self) -> &str {
+        &self.space
+    }
+    fn agent_session(&self) -> &str {
+        &self.agent_session
+    }
+    fn expected_agent_ref(&self) -> &str {
+        &self.expected_agent_ref
+    }
+    fn label(&self) -> String {
+        Binding::label(self)
+    }
+    fn attachment(&self) -> Value {
+        Binding::attachment(self)
+    }
+    fn validate_state(&self, state: &Value, project: &str) -> Result<(), String> {
+        Binding::validate_state(self, state, project)
+    }
+}
+
 pub fn resolve(
     client: &CentralClient,
     agency: &agency::Client,
@@ -464,7 +486,7 @@ pub fn resolve(
         cwd,
         project,
         Some(agency::EPI_PRIME_QL_BODY_REF),
-        Some(&binding),
+        Some(&binding as &dyn agency::NamedConversation),
     )?;
     // The native owner, not successful CLI exit, proves the retained attachment.
     let states = agency.read_project(cwd, project)?;

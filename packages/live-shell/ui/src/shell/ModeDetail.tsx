@@ -86,7 +86,7 @@ export function BaseDevicesDetail({transport, world = null, subject = null, stan
   const apertures = centralRackApertures(selection, dayStanding)
   return (
     <div className="mode-detail" data-mode-detail="base-devices">
-      {apertures.dayNotice && <CentralDayNotice notice={apertures.dayNotice} transport={transport} />}
+      {apertures.dayNotice && <CentralDayNotice notice={apertures.dayNotice} />}
       <CentralDevicesChain transport={transport} dayStanding={apertures.day || apertures.dayNotice ? dayStanding : null} deviceWindows={deviceWindows}
         day={apertures.day ?? null} conversation={apertures.conversation ?? null} />
     </div>

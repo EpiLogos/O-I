@@ -1,4 +1,4 @@
-import {generatedWikiAppearance, wikiDisplayName} from '../../../../../packages/oi-design-system/expressions-engine/oi/wikiPresentation.mjs';
+import {generatedWikiAppearance, wikiDisplayName} from './wikiPresentation.mjs';
 /** Native Expression -> bounded working view of the SAME document.
  *
  * Native identities and the complete document stay above the engine's ten

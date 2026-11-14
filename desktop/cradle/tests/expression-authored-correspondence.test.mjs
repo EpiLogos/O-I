@@ -7,7 +7,7 @@ test('retained native shared material keeps its actual correspondence in the ren
   const server=await createServer({server:{middlewareMode:true},appType:'custom'});
   try {
     const {expressionRenderConfig}=await server.ssrLoadModule('/src/expression/engineProjection.ts');
-    const {nativeExport}=await server.ssrLoadModule('../../packages/oi-design-system/expressions-engine/shell/nativeBridge.mjs');
+    const {nativeExport}=await server.ssrLoadModule('/expressions-app/field-studies-journeys/src/nativeBridge.ts');
     for(const name of ['shared-continuation','shared-factory-source']) {
       const receipt=JSON.parse(readFileSync(new URL('./fixtures/shared-native-expressions/'+name+'.json',import.meta.url),'utf8'));
       const doc=receipt.composition,scene=doc.scenes.find(s=>s.scene_ref===doc.selection.scene_ref);

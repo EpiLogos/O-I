@@ -21,7 +21,6 @@ import {ENABLED_KEY, SETTING_PREFIX, expressionsFieldEntry, expressionsSettingCh
 import {handsFor, heldFor, hold as holdDesign} from '../../techne/devices/designDevices'
 import type {FrameInstrumentCondition} from '@epilogos/expressions-boundary'
 import {NO_CONDITION, tattvaBody, tattvaKeys, type BodyRow, type BodySource, type BodyTable, type CoordinateName} from '../../inhabitants/ql/devices/qlCoordinateName'
-import {stageAutomationResumeOne, stageLiveHold} from '../../native/stageCommands'
 import type {LiveRun} from '../nativeBarSession'
 
 /** The field families whose catalogue design this binding hosts (Physics has its own, physicsBinding.ts). */
@@ -295,6 +294,11 @@ export function fieldDesignBinding(family: FieldDesignFamily, device: DeviceInst
         if (!reply.ok) throw new Error(reply.error)
       }
     }} : {}),
+    // The hand's moves before it lets go reach the device as its rows (a preview, a take's sample); a key that is no row is not previewed.
+    ...(submit && device.drag ? {drag: (changes: readonly ValueChange[] | null) => {
+      if (changes === null) { device.drag!(null); return }
+      try { const {rows} = fieldDesignChanges(family, device, changes); if (rows.length) device.drag!(rows) } catch { /* said on release */ }
+    }} : {}),
     ...(toggle && device.rows.some(row => row.key === ENABLED_KEY) ? {enabledKey: toggle} : {}),
     ...(Object.keys(modulatedBy).length ? {modulatedBy} : {}),
     ...(Object.keys(standing).length ? {standing} : {}),
@@ -340,6 +344,9 @@ export interface FieldHold {
 export interface FieldLanes {
   readonly run: LiveRun | null
   readonly holds: readonly FieldHold[]
+  /** The kernel's Re-enable of one held value (the Set's `reenable` act with its target, O-I ticket 1008); absent: no value is given back
+   * from here. The frame lets go of its hold when the Set no longer holds the value (native/frameLink.ts). */
+  readonly reenable?: ((target: string) => Promise<unknown>) | null
 }
 
 /** The live target (`field.<key>`) and the units factor of a device row that is a native parameter; null for a switch or a setting. */
@@ -350,19 +357,19 @@ function laneTargetOf(key: string): {target: string; factor: number} | null {
 
 /** A field device's binding with its lanes: a value an enabled lane plays stands automated; one the hand holds off its lane stands
  * overridden and shows the held value (× the row's factor, the design's units), with its hand-back light (the kit's Re-enable) giving that
- * one value back; and moving a value a lane plays takes hold of it in the frame (no document write). A key that stands disabled keeps its
- * reason. Without a reading nothing is claimed. `keys` names the design's key for each engine path where the design keys its values by
- * names of its own (Physics, physicsBinding.ts PHYSICS_KEYS: design key → path); otherwise a row's design key is its path. */
+ * one value back through the kernel; and moving a value a lane plays writes it through the Studio's act, which holds it off its lane (the
+ * kernel's playback; the frame holds it as the Set says, O-I ticket 1008). A key that stands disabled keeps its reason. Without a reading
+ * nothing is claimed. `keys` names the design's key for each engine path where the design keys its values by names of its own (Physics,
+ * physicsBinding.ts PHYSICS_KEYS: design key → path); otherwise a row's design key is its path. */
 export function withAutomationLanes(binding: DesignBinding, device: DeviceInstance, reading: Pick<NativeEditorReading, 'scene'> | null, lanes: FieldLanes,
   keys: Readonly<Record<string, string>> | null = null): DesignBinding {
   // A reading may carry no lanes at all (a scene that never had one): then nothing moves its values.
   const automation = reading && Array.isArray(reading.scene?.automation) ? reading.scene.automation : []
   if (!reading || (!automation.length && !lanes.holds.length)) return binding
   const driven = new Set(automation.filter(lane => lane.enabled).map(lane => lane.target))
-  const held = new Map(lanes.holds.map(hold => [hold.target, hold.value] as const)), run = lanes.run
+  const held = new Map(lanes.holds.map(hold => [hold.target, hold.value] as const)), reenable = lanes.reenable
   const designKey = keys ? new Map(Object.entries(keys).map(([key, path]) => [path, key] as const)) : null
   const standing: Record<string, Standing> = {...binding.standing}, values: Record<string, Value> = {...binding.values}
-  const takes = new Map<string, {target: string; factor: number}>()
   for (const row of device.rows) {
     const at = laneTargetOf(row.key), key = designKey ? designKey.get(row.key) : row.key
     if (!at || !key) continue
@@ -371,21 +378,9 @@ export function withAutomationLanes(binding: DesignBinding, device: DeviceInstan
     if (value !== undefined) values[key] = value * at.factor
     if (standing[key]?.disabled) continue
     const lit = value !== undefined
-    if (driven.has(at.target)) takes.set(key, at)
     if (!lit && !driven.has(at.target)) continue
     standing[key] = {...standing[key], automated: lit ? 'overridden' : true,
-      ...(lit && run ? {onReenable: () => { void run(stageAutomationResumeOne(at.target)).catch(() => {}) }} : {})}
+      ...(lit && reenable ? {onReenable: () => { void reenable(at.target).catch(() => {}) }} : {})}
   }
-  const write = binding.write
-  if (!write || !run || !takes.size) return {...binding, values, ...(Object.keys(standing).length ? {standing} : {})}
-  return {...binding, values, standing, write: async (changes: readonly ValueChange[]) => {
-    const taken = changes.filter(change => takes.has(change.key) && finite(change.value))
-    for (const change of taken) {
-      const at = takes.get(change.key)!
-      const reply = await run(stageLiveHold(at.target, (change.value as number) / at.factor))
-      if (!reply.ok) throw new Error(reply.error)
-    }
-    const rest = changes.filter(change => !taken.includes(change))
-    if (rest.length) await write(rest)
-  }}
+  return {...binding, values, ...(Object.keys(standing).length ? {standing} : {})}
 }

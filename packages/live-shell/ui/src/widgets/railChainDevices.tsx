@@ -4,9 +4,8 @@
 // rail's tile of the same id draws the device (widgets/railDeviceIds.ts claims it), so in every other mode the rail publishes its own,
 // on the same binding functions and the same owners, while its tile is open and no chain holds the device, and withdraws only its own
 // (as the rail's Sky does: widgets/railSky.tsx). Mounted by the rail's publisher (widgets/railDevices.tsx) only while the tile is open.
-import {useEffect, useMemo, useRef, useState, useSyncExternalStore} from 'react'
+import {useEffect, useMemo, useRef, useSyncExternalStore} from 'react'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
-import {nativeContext, PREPARED_CONTEXT_CHANGED, type PreparedContext} from '../../../../../desktop/cradle/src/context/nativeContext'
 import {knowledgeGraphSurface, subscribeKnowledgeGraph} from '../../../../../desktop/cradle/src/knowledge/knowledgeGraphHandle'
 import {publishDevice, publishedDevice, subscribeDeviceDoor, type PublishedDevice} from '../frame/devices/deviceDoor'
 import type {DesignBinding} from '../frame/devices/designed'
@@ -17,7 +16,8 @@ import {useEncounterSessions} from '../agent/devices/EncounterObservers'
 import {ROOT_REGISTER} from '../agent/worldScope'
 import {COMPANIONS} from '../shell/modeDockTiles'
 import {useOptionalContinuity} from '../continuity/workspace'
-import {usePacketDevice, PACKET_DEVICE_ID} from '../central/devices/agentChainDevices'
+import {PACKET_DEVICE_ID, packetDeviceBinding, packetFromModel, useIdentityHolds} from '../central/devices/agentChainDevices'
+import {useModelSlice} from '../owners/model'
 import {CENTRAL_FAMILY, centralDeclaration} from '../central/devices/centralDeviceModel'
 import {documentPacketOf} from '../central/devices/packetBinding'
 import {useReachedDocument} from '../central/documents/documentDoor'
@@ -31,7 +31,6 @@ import {conversationOf} from './agentConversation'
 import {useWidgetReading} from './widgetReading'
 
 const NO_CARRIER: KernelTransportStatus = {kind: 'unavailable', reason: 'No kernel carrier stands.'}
-const message = (cause: unknown): string => (cause instanceof Error ? cause.message : String(cause))
 
 /** Publish the rail's device unless a chain holds it now. `mine` is the device the rail published last; the answer is the one it holds
  * now, or null while a chain's stands. */
@@ -61,41 +60,10 @@ function usePublishedUnlessHeld(id: string, device: DeviceInstance | null, bindi
 
 // ---------------------------------------------------------------------------------------------------------------- the Packet
 // What the agent of the mode in front of you will read (manual §5, §23.1): AIKit's prepared context for the conversation the rail's Agent
-// holds — THE selection's session, else the mode's companion's (agentConversation.ts conversationOf) — read through the kernel's encounter
-// op (context/nativeContext.ts) in that session's register, again on the owner's announcement of a changed packet and on the window's
-// return; Answer this is that conversation's own Send, through its one shared observer (agent/devices/EncounterObservers.tsx). The
-// binding is Central's (agentChainDevices.ts usePacketDevice → packetBinding.ts), so the tile draws what the chain's Packet draws.
-
-type Held = {key: string; context?: PreparedContext; error?: string}
-
-function usePacketReadingFor(transport: KernelTransportStatus, project: string, session: string | null): {context?: PreparedContext; error?: string} | null {
-  const key = JSON.stringify([transport.kind, project, session])
-  const [held, setHeld] = useState<Held | null>(null)
-  const [reread, setReread] = useState(0)
-  useEffect(() => {
-    if (transport.kind === 'unavailable') return
-    let alive = true
-    nativeContext(transport, project, session ?? undefined, {operation: 'read'})
-      .then(context => { if (alive) setHeld({key, context}) }, cause => { if (alive) setHeld({key, error: message(cause)}) })
-    return () => { alive = false }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- the key names the scope
-  }, [key, reread])
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    // The owner's own announcement of a changed packet (context/nativeContext.ts announceContext), and the window's return.
-    const changed = (event: Event) => {
-      const detail = (event as CustomEvent<{project?: string; value?: PreparedContext; sourceWorldRef?: string}>).detail
-      if (!detail?.value || detail.sourceWorldRef || detail.project !== project || detail.value.scope.agent_session !== session) return
-      setHeld({key, context: detail.value})
-    }
-    const again = () => setReread(count => count + 1)
-    window.addEventListener(PREPARED_CONTEXT_CHANGED, changed)
-    window.addEventListener('focus', again)
-    return () => { window.removeEventListener(PREPARED_CONTEXT_CHANGED, changed); window.removeEventListener('focus', again) }
-  }, [key, project, session])
-  if (transport.kind === 'unavailable') return {error: transport.reason ?? 'No kernel carrier stands.'}
-  return held?.key === key ? held : null
-}
+// holds — THE selection's session, else the mode's companion's (agentConversation.ts conversationOf) — as the World Model's packet slice
+// holds it (central/devices/agentChainDevices.ts packetFromModel; O-I ticket 1005), the read the chain's Packet makes; Answer this is that
+// conversation's own Send, through its one shared observer (agent/devices/EncounterObservers.tsx). The binding is Central's
+// (agentChainDevices.ts packetDeviceBinding → packetBinding.ts), so the tile draws what the chain's Packet draws.
 
 /** Central's Packet face as the family declares it, as a device of the runtime: its design draws on the binding's keys alone. */
 function packetDevice(): DeviceInstance | null {
@@ -113,14 +81,19 @@ export function RailPacket() {
   const session = track?.sessionRef ?? null, space = track?.spaceRef ?? null
   // The packet's register (agent/worldScope.ts): the conversation's session's own, else your world's root register.
   const project = track?.project ?? ROOT_REGISTER
-  const packetReading = usePacketReadingFor(transport, project, session)
+  const packetSlice = useModelSlice(transport, 'packet')
+  const packetReading = useMemo(() => packetFromModel(packetSlice, {session, project}), [packetSlice, session, project])
   const observed = useMemo(() => (session && space ? [{ref: session, space, project}] : []), [session, space, project])
   const {handles, observers} = useEncounterSessions(observed)
   const reached = useReachedDocument()
   const reachedPacket = reached?.packet, reachedForm = reached?.form, reachedTitle = reached?.title
   const document = useMemo(() => documentPacketOf(reachedPacket && reachedForm ? {form: reachedForm, title: reachedTitle ?? '', packet: reachedPacket} : null),
     [reachedPacket, reachedForm, reachedTitle])
-  const binding = usePacketDevice(transport, packetReading, {companion, bound: !!track, handle: session ? handles[session] : undefined}, document)
+  const holdsAt = useIdentityHolds()
+  const handle = session ? handles[session] : undefined
+  const binding = useMemo(() => packetDeviceBinding(transport, packetReading, {companion, bound: !!track, handle}, document),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the holds' version re-binds the view's own keys
+    [transport, packetReading, companion, track, handle, document, holdsAt])
   const device = useMemo(packetDevice, [])
   usePublishedUnlessHeld(PACKET_DEVICE_ID, device, binding)
   return <>{observers}</>

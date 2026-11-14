@@ -52,10 +52,12 @@ test('actual native Scene relations reach dated-source focus and filter rendered
   assert.ok(attributed>0,'actual owner relations cross the register decoder and ql compatibility path');
 
   const data=await api.readingInstruments(actual.reading,api.nativeInstrumentTitles(view,sceneId),new Map(),tags,relations);
-  const located=await data.places.getLocatedNodes(data.reading.subject.subject_ref);assert.equal(located.length,32);
+  // The reading's located nodes, and a place's neighbours by its node's expansion: the hosted Places map that read them as a Places
+  // repository retired (O-I #1009: Places is the shell's Earth atlas).
+  const located=data.bundle.nodes.filter(node=>node.place!==null);assert.equal(located.length,32);
   const place=located.find(node=>node.sourceCoordinates.length===1&&relations.some(row=>row.from_subject_ref===node.sourceCoordinates[0]||row.to_subject_ref===node.sourceCoordinates[0]));assert.ok(place,'actual native Place has source-bound relations');
   const placeSource=place.sourceCoordinates[0],placeEdges=relations.filter(row=>row.from_subject_ref===placeSource||row.to_subject_ref===placeSource),expectedNeighbours=[...new Set(placeEdges.flatMap(row=>[row.from_subject_ref,row.to_subject_ref]))].filter(ref=>ref!==placeSource).sort();assert.ok(expectedNeighbours.length);
-  const placeRelated=await data.places.getRelatedNodesForPlace(data.reading.subject.subject_ref,place.graphNodeId);assert.deepEqual(placeRelated.map(node=>node.graphNodeId).sort(),expectedNeighbours);
+  const placeRelated=(await data.dataSource.expandNode(place.graphNodeId)).neighbours;assert.deepEqual(placeRelated.map(node=>node.graphNodeId).sort(),expectedNeighbours);
   const sourceDetail={ref:place.graphNodeId,subject:{ref:document.expression_ref,revision:document.revision,sceneRef:scene.scene_ref},context:{node:place}};
   const placeTarget=await resolveHostedSource(transport,sourceDetail);assert.equal(placeTarget.address.value,placeSource);assert.equal(placeTarget.returnTo.place.ref,document.expression_ref);assert.equal(placeTarget.returnTo.passageId,scene.scene_ref);
   await assert.rejects(resolveHostedSource(transport,{...sourceDetail,subject:{...sourceDetail.subject,revision:document.revision+1}}),/revision changed/);

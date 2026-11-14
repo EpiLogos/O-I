@@ -8,7 +8,7 @@
  * navigation furniture: the stage never reads them.
  */
 
-import {snapTime} from './snapModel';
+import {snapTime} from './snapModel.ts';
 
 export const MARKER_COLOURS = ['amber', 'rose', 'sage', 'sky', 'violet'] as const;
 export type MarkerColour = typeof MARKER_COLOURS[number];

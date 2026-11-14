@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {register} from 'node:module'
+import {worldsSliceOf} from './support/worldModelFixture.mjs'
 
 // W2 (T-WORLDS §4: "Clips are pages: Beings, Things, Flows … in the world's folder, not Control/user/flows/"; "create in the world's
 // folder (projectcentral.source.create for a project's world)"): a page made in a project's scope lands in that project's human
@@ -74,9 +75,10 @@ function bridge() {
       created.push({door: 'projectcentral.source.create', path: `Work/${input.project}/${input.path}`, content: input.content, actor_kind: input.actor_kind})
       return answer({result: 'action_dispatched', dispatch: {state: 'invoked'}})
     }
-    if (body.op === 'file_operation' && body.request.action === 'write') {
-      created.push({door: 'central.files.write', path: body.location.path, content: body.request.content})
-      return answer({result: 'file_operation', data: {outcome: 'created', revision: 'r1'}})
+    if (body.op === 'act' && body.action === 'central.files.write') {
+      created.push({door: 'central.files.write', path: body.input.location.path, content: body.input.content})
+      return answer({result: 'action_dispatched', dispatch: {state: 'invoked', owner_operation: body.action,
+        data: {schema: 'central.file-mutation/v1', location: body.input.location, outcome: 'created', revision: 'r1'}}})
     }
     return {json: async () => ({ok: false, error: `unexpected op ${body.op}`})}
   }
@@ -132,25 +134,24 @@ test('a link a page follows opens in the shell: a page of a world as its page, a
   assert.equal(linkTarget('').kind, 'none')
 })
 
-test('the worlds wait for Central\'s first browse: a snapshot with no root yet is asked again, a refusal is said at once (r13)', async () => {
+test('the worlds are the World Model\'s: its worlds once Central disclosed its root, its refusal in the kernel\'s words, and no browse of Central from the window (r13)', async () => {
   const {readWorlds} = await import('../src/central/centralWorlds.ts')
   const root = {control: {agent_wiki: {wiki: {space_ref: 'central:wiki:root'}}}, work: {projects: [{name: 'O-I', path: 'Work/O-I',
     projectcentral: {user: {exists: true, path: 'Work/O-I/ProjectCentral/user'}, agent_wiki: {wiki: {space_ref: 'central:wiki:project:O-I'}}}}]}}
-  const browse = answers => {
-    let asked = 0
-    return {fetch: async () => ({json: async () => ({ok: true, outcome: {result: 'world_read', snapshot: {navigator: answers[Math.min(asked++, answers.length - 1)]}}})}), asked: () => asked}
+  const kernel = answer => {
+    const asked = []
+    return {fetch: async (_, init) => { asked.push(JSON.parse(init.body).op); return {json: async () => answer} }, asked}
   }
-  const settle = {tries: 4, apartMs: 1}
-  const late = browse([null, {}, {root}])
-  const read = await withBridge(late, transport => readWorlds(transport, settle))
+  // The kernel waits for Central's first browse before it holds the slice (world_model.rs `worlds`, tested there).
+  const held = kernel(worldsSliceOf(root))
+  const read = await withBridge(held, transport => readWorlds(transport))
   assert.equal(read.state, 'read'); assert.deepEqual(read.worlds.map(world => world.ref), ['central:wiki:root', 'central:wiki:project:O-I'])
-  assert.equal(late.asked(), 3, 'asked until the root was disclosed')
-  const refused = browse([{error: 'the map is unreadable'}])
-  assert.deepEqual(await withBridge(refused, transport => readWorlds(transport, settle)), {state: 'unavailable', reason: 'the map is unreadable'})
-  assert.equal(refused.asked(), 1, 'a refusal is not asked again')
-  const never = browse([null])
-  assert.deepEqual(await withBridge(never, transport => readWorlds(transport, settle)), {state: 'unavailable', reason: 'Central returned no root disclosure'})
-  assert.equal(never.asked(), 4)
+  assert.deepEqual(held.asked, ['model_subscribe'], 'the window asks the model, never Central')
+  const refusal = {ok: true, outcome: {result: 'model_slice', data: {schema: 'oi.world-model-slice/v1', slice: 'worlds', owner: 'Central', scopes: ['root', 'work'],
+    version: 1, state: 'refused', value: null, error: 'the map is unreadable', read_at_unix_ms: 1}}}
+  assert.deepEqual(await withBridge(kernel(refusal), transport => readWorlds(transport)), {state: 'unavailable', reason: 'the map is unreadable'})
+  assert.deepEqual(await withBridge(kernel({ok: false, error: 'Central returned no root disclosure'}), transport => readWorlds(transport)),
+    {state: 'unavailable', reason: 'Central returned no root disclosure'})
 })
 
 test('a Being\'s pane draws the page by the current template from its island, whatever script the file was copied with (r14)', async () => {

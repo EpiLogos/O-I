@@ -18,13 +18,20 @@ import type {DesignBinding, DesignedDevice, Standing, Value, ValueChange, Values
 import type {SdkParamRow} from '../../inhabitants/sdk/define'
 import type {DispatchReceipt} from '../../inhabitants/sdk/shellSetters'
 import type {Form, Member, Rung} from '../../inhabitants/catalogue/panels/practice'
-import type {ConfigRequestWire} from '../../../../../../desktop/cradle/src/kernel/types'
-import {CHAIN_ADMIT_WORDS} from '../agentChainDrag'
+import type {ConfigRequestWire, ModelSliceName} from '../../../../../../desktop/cradle/src/kernel/types'
+import {censusOf, type CensusReading} from '../../../../../../desktop/cradle/src/agency/census'
+import {sliceValue, type ModelSliceReading} from '../../owners/model'
+import {chainDeclaration, declaredValue, gatewayBindingIn, type ModelField} from '../../inhabitants/agentParamAddresses'
+import {parseSeatStatusJson, type SeatReading} from '../../inhabitants/centralHygieneModel'
+import {refusalLine, safeJson} from '../RefusalCard'
+import type {AgentGit} from './oneAgentBinding'
+import {CHAIN_ADMIT_WORDS, OWNER_BINDINGS, SKILLSETS_ARRIVE, ownerRefusalLine} from '../agentChainDrag'
 import {harnessKeyUncarried} from '../aikitGatewayOps'
-import {chainDeviceId, type AgentChainReading} from './agentChainDevices'
+import {INITIAL_READING, chainDeviceId, gatewayLine, rosterAdmits, rosterChains, rosterIdentity, taskReading, type AgentChainReading, type LandingSeat} from './agentChainDevices'
 import {flipDevice, publishedDevice, selectDevice, subscribeDeviceDoor} from '../../frame/devices/deviceDoor'
 import {setHostPage} from '../../frame/devices/deviceHost'
 import type {OwnerAcceptedValues} from './ownerAccepted'
+import type {TaskLevel} from '../sessionSettings'
 import type {TaskClip, TemporalEventLike} from '../agentRunModel'
 import {runStateOfSession, stageRecordingOf, threadRowsFrom} from './runFaces'
 import {armedOf, bypassesOf, contextPressureOf, contextTurnOf, historyOf, procedureDiffOf, proceduresOf, rootsOf, sourcesOf, unusedOf, whyOf, type AikitAnswer} from './aikitPages'
@@ -92,10 +99,10 @@ export const SHELL_MARK_SET = 'blade'
 const missing = (what: string, op: string, owner: string) => `${what}: no owner operation carries it yet — missing op: ${op} (${owner}).`
 
 /** Scope's Calls to other agents (§19.12 Asks): AIKit's ingress rule for the sender kind agent on each gateway binding of the session
- * (GatewayIngressPolicy kind_rules, decided after a sender's own id and before the binding's one default), set through the kernel's
- * harness_ingress_rule. Why it is not pressable, or a value it does not take. */
+ * (GatewayIngressPolicy kind_rules, decided after a sender's own id and before the binding's one default), set by AIKit's Action
+ * aikit.gateway.ingress (O-I 1006). Why it is not pressable, or a value it does not take. */
 export const CALLS_REFUSE = {
-  uncarried: 'Calls to other agents: no carrier to AIKit\'s ingress rule for the sender kind agent (the kernel\'s harness_ingress_rule) stands on this chain.',
+  uncarried: 'Calls to other agents: no carrier to AIKit\'s ingress rule for the sender kind agent (its Action aikit.gateway.ingress) stands on this chain.',
   unread: 'Calls to other agents: AIKit\'s gateway has not answered yet, so no rule for calls from other agents is read.',
   unbound: 'Calls to other agents: this session holds no conversation on AIKit\'s gateway, so no binding of it takes a rule for calls from other agents.',
   refused: (why: string) => `Calls to other agents: AIKit's gateway did not answer, so no rule for calls from other agents is read. ${why}`,
@@ -107,8 +114,8 @@ const CALLS_SAID: Readonly<Record<string, {readonly one: string; readonly many: 
   allow: {one: 'lets it through', many: 'let it through', word: 'Allow'}, pair: {one: 'asks you', many: 'ask you', word: 'Ask'},
   deny: {one: 'denies it', many: 'deny it', word: 'Deny'}}
 const listed = (items: readonly string[]) => (items.length <= 1 ? items.join('') : `${items.slice(0, -1).join(', ')} and ${items.at(-1)}`)
-/** Set one rule for calls from other agents on every binding of a session, one binding at a time (AIKit keeps a rule per binding: the
- * kernel's harness_ingress_rule). The bindings are not set as one: where one refuses, the words say which now answer the new way, which
+/** Set one rule for calls from other agents on every binding of a session, one binding at a time (AIKit keeps a rule per binding: its
+ * Action aikit.gateway.ingress). The bindings are not set as one: where one refuses, the words say which now answer the new way, which
  * keep the rule they had, and what to press next. */
 export async function callsOnEvery(bindings: readonly string[], decision: CallsDecision,
   set: (binding: string, decision: CallsDecision) => Promise<unknown>): Promise<void> {
@@ -125,14 +132,14 @@ export async function callsOnEvery(bindings: readonly string[], decision: CallsD
 }
 
 /** Scope's Wait and On no answer (§19.12 Asks: Wait 15 min–24 h, default 4 h; On no answer Hold or Deny, default Hold): the session's own
- * settings in AIKit (`track.wait` in seconds, `track.no_answer`; ai-kit encounter_task_settings.rs), written through the kernel's
- * encounter_session_settings. AIKit's executor plays them: a request nobody answered by its Wait is denied with the harness's own deny, or
+ * settings in AIKit (`track.wait` in seconds, `track.no_answer`; ai-kit encounter_task_settings.rs), written by AIKit's Action
+ * aikit.session.settings (O-I 1006). AIKit's executor plays them: a request nobody answered by its Wait is denied with the harness's own deny, or
  * held in Approvals past its Wait, as the person chose (ai-kit encounter_task_executor.rs settle_asks). */
 export const WAIT_SECONDS = {min: 900, max: 86_400} as const
 export const NO_ANSWERS: readonly string[] = ['hold', 'deny']
 export const WAIT_REFUSE = {
-  wait: 'Wait: no carrier to AIKit\'s Wait on the session\'s own settings (the kernel\'s encounter_session_settings, track wait) stands on this chain.',
-  noAnswer: 'On no answer: no carrier to AIKit\'s On no answer on the session\'s own settings (the kernel\'s encounter_session_settings, track no_answer) stands on this chain.',
+  wait: 'Wait: no carrier to AIKit\'s Wait on the session\'s own settings (its Action aikit.session.settings, track wait) stands on this chain.',
+  noAnswer: 'On no answer: no carrier to AIKit\'s On no answer on the session\'s own settings (its Action aikit.session.settings, track no_answer) stands on this chain.',
   unread: (what: string) => `${what}: AIKit has not read the session's settings yet.`,
   older: (what: string) => `${what}: this AIKit's session settings carry no ${what}, so it is neither read nor set (an AIKit before O-I round 860).`,
   range: 'Wait is 15 min to 24 h: a whole number of seconds from 900 to 86400.',
@@ -225,12 +232,12 @@ export const AGENT_CONTEXT_ABSENT: Readonly<Record<string, string>> = {
   'ctx.pressure': 'The context pressure: AIKit\'s continuity is not read here (`aikit work continuity pressure` through the kernel\'s aikit_read).',
   'ctx.armed': 'The star commands armed: AIKit\'s continuity is not read here (`aikit work continuity commands` through the kernel\'s aikit_read).',
   'ctx.turn': 'The last turn\'s bounded blocks: AIKit\'s continuity is not read here (`aikit work continuity turn` through the kernel\'s aikit_read).',
-  // The Git row (O-I ticket 748): the chain lays the session's repository in over this (oneAgentBinding.ts withAgentGit). No design draws
-  // it: the manual names no Git row (§19.4, §19.26).
-  'ctx.git': 'The session\'s repository: the chain that holds the Agent reads it (git_repository_read) and lays it in; it is not read here.',
+  // The Git row (O-I ticket 748): the chain lays the session's checkout in over this (oneAgentBinding.ts withAgentGit) — the workcell's seat
+  // of its project, from the World Model's workcells slice (sessionGitOf). No design draws it: the manual names no Git row (§19.4, §19.26).
+  'ctx.git': 'The session\'s checkout: the chain that holds the Agent reads the workcell\'s seat of its project and lays it in; it is not read here.',
 }
-/** The Git row's Diff, a press with no value of its own: it waits on the repository the chain lays in. */
-const AGENT_DIFF_ABSENT = 'Diff opens Files\' Diff page on the session\'s repository, which the chain that holds the Agent reads; it is not read here.'
+/** The Git row's Diff, a press with no value of its own: it waits on the checkout the chain lays in. */
+const AGENT_DIFF_ABSENT = 'Diff opens Files\' Diff page on the session\'s checkout, which the chain that holds the Agent reads; it is not read here.'
 
 /** Each chain design's refused writes, by key (the refusals its binding's write gives, below). The Agent's light is among them since
  * the kit's activator says why it only reads (inhabitants/sdk/panel.tsx Panel `lightWhy`, c5afc4aa0): the design stands its activator
@@ -278,19 +285,18 @@ export function gatewayLinkStanding(reading: GatewayInput['reading'], values: Va
   return Object.fromEntries(Object.keys(LINK_WORDS).filter(key => !(key in values)).map(key => [key, {disabled: why(key)}]))
 }
 
-/** The Gateway's rows with a write: the address table's (agentParamAddresses.ts:70-73), each to kernel:harness_agent_control. Its approvals
- * row is Scope's Tool calls (§19.12; ScopeAsks). */
+/** The Gateway's row with a write: the address table's Connect, to act:aikit.gateway.agent (agentParamAddresses.ts). Transport and Stall
+ * after are readings there, with AIKit's words for what owns each (O-I 1006); the harness's approvals are its own reading, and the session's
+ * answer to its requests to use a tool is Scope's Tool calls (§19.12; ScopeAsks). */
 export interface GatewayRows {
-  readonly transport?: SdkParamRow
   readonly connect?: SdkParamRow
-  readonly stallAfter?: SdkParamRow
 }
 
-const GATEWAY_KEYS: Readonly<Record<string, keyof GatewayRows>> = {transport: 'transport', connect: 'connect', stallAfter: 'stallAfter'}
+const GATEWAY_KEYS: Readonly<Record<string, keyof GatewayRows>> = {connect: 'connect'}
 
-/** The Gateway's settings AIKit's gateway has no operation for, by the design's key and the row key its refusal names
- * (aikitGatewayOps.ts): they stand disabled with AIKit's missing operation named, and a press is refused with the same words. Connect is
- * AIKit's pause/resume of the binding's connector and stands. */
+/** The Gateway's settings a binding's conversation does not carry, by the design's key and the row key its refusal names
+ * (aikitGatewayOps.ts): they stand disabled with AIKit's words for what owns each, or that nothing does, and a press is refused with the
+ * same words. Connect is AIKit's pause/resume of the binding's connector and stands. */
 const GATEWAY_UNCARRIED: Readonly<Record<string, string>> = {transport: 'transport', stallAfter: 'stall-after', autoContinue: 'auto-continue', fanOut: 'fan-out'}
 const uncarriedWhy = (rowKey: string): string => harnessKeyUncarried(rowKey)!.reason
 
@@ -303,7 +309,7 @@ export function gatewayBinding(id: string, input: GatewayInput, rows: GatewayRow
     values,
     standing: {...gatewayLinkStanding(input.reading, values),
       ...Object.fromEntries(Object.entries(GATEWAY_UNCARRIED).map(([key, rowKey]) => [key, {disabled: uncarriedWhy(rowKey)}]))},
-    writes: key => key in GATEWAY_KEYS || key === 'autoContinue' || key === 'fanOut',
+    writes: key => key in GATEWAY_KEYS || key in GATEWAY_UNCARRIED,
     write: async changes => {
       for (const {key, value} of changes) {
         if (key in GATEWAY_UNCARRIED) throw Error(uncarriedWhy(GATEWAY_UNCARRIED[key]!))
@@ -343,16 +349,20 @@ export interface AgentInput {
   readonly nowUnixMs: number
   readonly reading: Pick<AgentChainReading, 'attached' | 'budget' | 'gatewayAdmitted' | 'gatewayDoc'>
   readonly accepted: OwnerAcceptedValues
-  /** The harness the gateway binding names, and whether its owner named it (useHarnessBinding: until it has, the binding is only
-   * the shell's default and is no reading). */
+  /** The Agent's Effort: the level the session's task holds, and its write by AIKit's Action aikit.session.settings (sessionSettings.ts
+   * taskLevelOf, O-I 1006), or why neither; absent where the chain hands in no session's settings. */
+  readonly effort?: TaskLevel
+  /** The binding AIKit's gateway names, and whether it named one (chainFromModel, from the World Model's sessions slice: until it has, the
+   * binding is only the shell's default and is no reading). */
   readonly harness: {readonly binding: string; readonly resolved: boolean}
   readonly holds: ChainHolds
   /** The session's thread as rows (threadBinding.ts threadRowsOf over AIKit's encounter view — the reading the thread pane draws),
    * JSON; absent while unread. The Thread device reads the same rows (one binding feeds both). */
   readonly thread?: string
-  /** The models AIKit's catalogue names (`aikit model-catalogue show --json` entries[].model, kernel model_catalogue). */
+  /** The models AIKit's catalogue names (`aikit model-catalogue show --json` entries[].model, the World Model's models slice). */
   readonly models?: readonly string[] | null
-  /** The harnesses found on this machine (`aikit --json client status` clients[] detected, kernel harness_status). */
+  /** The agents that start on this machine, by their census slug (harnessChoices: the World Model's agents slice, O-I ticket 1003):
+   * what the Harness chooser offers. Null while the census is not read. */
   readonly harnesses?: readonly string[] | null
   /** The kernel's temporal events (the sessions provider's one read): the session's run as the stage plays it. */
   readonly events?: readonly TemporalEventLike[] | null
@@ -361,6 +371,215 @@ export interface AgentInput {
   /** Actuation's usage records of the selected session (`actuation usage list --session S`, the kernel's actuation_read {usage-list}; lane
    * K0): the model the session last reported using, where the gateway names none. Absent: not read here. */
   readonly usage?: AikitAnswer
+}
+
+/** The Harness chooser's options: the census's agents that start, by slug (the census is the one list of the agents on this machine,
+ * O-I ticket 1003; AIKit adds detail to its rows, never a row). Null while the census is not read; empty where it lists none that
+ * starts. Pure. */
+export function harnessChoices(census: CensusReading): string[] | null {
+  return census.state === 'read' ? census.agents.filter(agent => agent.starts).map(agent => agent.slug) : null
+}
+
+/** Why the Harness chooser offers nothing: the census lists no agent that starts here. */
+export const AGENT_NO_HARNESS = 'No agent on this computer starts, so there is no harness to choose. Settings › Harnesses & models says why each one does not.'
+
+/** The models AIKit's catalogue names, in its order (`aikit model-catalogue show --json` entries[].model, the World Model's models
+ * slice): the Model chooser's choices. A model's availability is the owner's to say. Null when the answer carries no entries. Pure. */
+export function catalogueModels(data: unknown): string[] | null {
+  const entries = isObj(data) ? data.entries : undefined
+  if (!Array.isArray(entries)) return null
+  return entries.flatMap(entry => (isObj(entry) && typeof entry.model === 'string' && entry.model ? [entry.model] : []))
+}
+
+// ---------------------------------------------------------------------------------------------------------------- the chain's reading
+
+/** An owner's answer as the window's shared readers hold it (owners/readers.ts). */
+interface SharedAnswer {readonly status: 'reading' | 'answered' | 'refused'; readonly value?: unknown; readonly error?: string | null}
+
+/** What the Factory chain's declared devices read (inhabitants/agentParamAddresses.ts CHAIN_DECLARATIONS): the World Model's slices they
+ * name, where the chain stands, and the two shared answers the World Model does not hold yet — Central's roster (the Skillset rack's) and
+ * AIKit's task record of the session (the Agent's turn budget). */
+export interface ChainModelInput {
+  /** The slices as the window holds them (owners/model.ts useModelSlice), by name: the CHAIN_SLICES names. */
+  readonly slices: Readonly<Partial<Record<ModelSliceName, ModelSliceReading>>>
+  readonly sessionRef: string | null
+  /** The session's register (agent/worldScope.ts): a project's name, or '' for your world's root register. */
+  readonly project: string
+  /** Why the session names no checkout, in the world scope's words (worldScope.ts gitRepositoryAbsence: no session, or your world's root
+   * register); null where it names one. */
+  readonly absent: string | null
+  readonly roster?: SharedAnswer
+  readonly task?: SharedAnswer
+  /** The kernel carrier's words when it cannot be reached: every owner is then not reached. */
+  readonly unreachable?: string | null
+}
+
+/** The chain's reading from the World Model: the reading its devices are built over (agentChainDevices.ts AgentChainReading), the binding
+ * the harness controls address, the Harness and Model choosers' choices, AIKit's gateway ecology (Scope's Calls, the Frames), and the
+ * session's checkout for the Agent's Context page. */
+export interface ChainFromModel {
+  readonly reading: AgentChainReading
+  /** The binding AIKit's gateway names; until it has (`resolved`), 'cursor' is only the shell's default and nothing writes to it. */
+  readonly binding: string
+  readonly resolved: boolean
+  /** The census's agents that start, by slug (harnessChoices); null while the census is not read. */
+  readonly harnesses: string[] | null
+  readonly models: string[] | null
+  readonly ecology: {readonly status: 'reading' | 'answered' | 'refused'; readonly value: unknown; readonly error: string | null}
+  readonly git: AgentGit
+}
+
+const GATEWAY_TITLE = 'Gateway · hermes'
+/** The parts of the slices the declared fields stand in (world_model.rs `part`: `{state: read, reading}` or `{state: refused, why}`). */
+const GATEWAY_PART: ModelField = 'sessions:gateway'
+const HARNESS_PART: ModelField = 'sessions:gateway.reading.agent'
+const SEATS_PART: ModelField = 'workcells:seats'
+const CELLS_PART: ModelField = 'workcells:workcells'
+const declared = (device: string, key: string): ModelField => chainDeclaration(device)?.fields[key] ?? `sessions:${key}`
+
+type Part = {readonly state: 'read'; readonly reading: unknown} | {readonly state: 'refused'; readonly why: string}
+const partOf = (value: unknown): Part | null => (!isObj(value) ? null
+  : value.state === 'read' ? {state: 'read', reading: value.reading}
+    : value.state === 'refused' ? {state: 'refused', why: refusalLine(typeof value.why === 'string' ? value.why : null, 'The owner gave no reason.')} : null)
+/** A slice as held: still being read, its owner's words (or the kernel's) where it holds no value, or its value. */
+function heldSlice(reading: ModelSliceReading | undefined): {state: 'reading'} | {state: 'refused'; why: string} | {state: 'held'; value: unknown} {
+  if (!reading || reading.state === 'reading') return {state: 'reading'}
+  const held = sliceValue(reading)
+  return held.ok ? {state: 'held', value: held.value} : {state: 'refused', why: refusalLine(held.reason, 'The World Model holds no value.')}
+}
+
+/** The workcell's seat of a project, from the seat instrument's reading: the one seat of the project, else the one held among several. A
+ * project with no seat, or several none of which is the one held, names no checkout, and says why. Pure. */
+export function projectSeatOf(status: unknown, project: string): {seat: SeatReading} | {why: string} {
+  const seats = parseSeatStatusJson(typeof status === 'string' ? status : JSON.stringify(status ?? null))
+  if (!seats) return {why: 'The seat instrument\'s answer is not a seat reading (`workcell seat status`).'}
+  const mine = seats.filter(seat => seat.product.toLowerCase() === project.toLowerCase())
+  const held = mine.filter(seat => seat.state !== 'free')
+  const seat = mine.length === 1 ? mine[0] : held.length === 1 ? held[0] : undefined
+  if (seat) return {seat}
+  return {why: mine.length
+    ? `${mine.length} seats of ${project} stand in the workcells (${mine.map(one => one.workcell).join(', ')}), ${held.length ? `${held.length} of them held` : 'none held'}: Git / landing names no checkout it cannot tell is the session's (\`workcell seat status\`).`
+    : `No workcell holds a seat of ${project} (\`workcell seat status\`), so the session's work has no checkout to land from.`}
+}
+
+/** The gateway's part of the reading, from the sessions slice's gateway (world_model.rs `gateway`). */
+function gatewayOf(sessions: ModelSliceReading | undefined) {
+  const slice = heldSlice(sessions)
+  const refused = (why: string, receipt: unknown = why) => ({
+    gateway: {kind: 'refused' as const, title: GATEWAY_TITLE, line: ownerRefusalLine('gateway', why), receipt: safeJson(receipt)},
+    admitted: false, doc: null as unknown, waiting: OWNER_BINDINGS.gateway.owner as string | null,
+  })
+  if (slice.state === 'reading') {
+    return {gateway: INITIAL_READING.gateway, admitted: null, doc: null as unknown, waiting: null as string | null, binding: null, ecology: {status: 'reading' as const, value: null, error: null}}
+  }
+  if (slice.state === 'refused') return {...refused(slice.why), binding: null, ecology: {status: 'refused' as const, value: null, error: slice.why}}
+  const values = {sessions: slice.value}
+  const part = partOf(declaredValue(values, GATEWAY_PART))
+  if (!part || part.state === 'refused') {
+    const why = part?.why ?? 'The World Model\'s sessions slice holds no gateway: the kernel running predates it.'
+    return {...refused(why), binding: null, ecology: {status: 'refused' as const, value: null, error: why}}
+  }
+  const binding = gatewayBindingIn(slice.value)
+  const ecology = {status: 'answered' as const, value: declaredValue(values, declared('gateway', 'frames')) ?? null, error: null}
+  const harness = partOf(declaredValue(values, HARNESS_PART))
+  if (!harness || harness.state === 'refused') return {...refused(harness?.why ?? 'AIKit\'s gateway gave no reading of its binding.'), binding, ecology}
+  const doc = harness.reading
+  if (isObj(doc) && 'refused' in doc) return {...refused(gatewayLine(doc), doc), binding, ecology}
+  return {gateway: {kind: 'reading' as const, title: GATEWAY_TITLE, line: `binding ${binding} · ${gatewayLine(doc)}`, receipt: safeJson(doc)},
+    admitted: true, doc, waiting: null as string | null, binding, ecology}
+}
+
+/** Git / landing's part of the reading, from the workcells slice: Workcell's status for its line, and the workcell's seat of the session's
+ * project for its branch and its files with no commit. No session, or your world's root register, names no checkout (`absent`). */
+function landingOf(workcells: ModelSliceReading | undefined, sessionRef: string | null, project: string, absent: string | null) {
+  const slice = heldSlice(workcells)
+  if (slice.state === 'reading') {
+    return {git: INITIAL_READING.git, admitted: null, repo: {}, waiting: null as string | null, seat: null as LandingSeat | null,
+      own: {sessionRef, project, repo: null, error: absent} as AgentGit}
+  }
+  if (slice.state === 'refused') {
+    return {git: {kind: 'refused' as const, title: 'Git', line: ownerRefusalLine('workcell', slice.why), receipt: safeJson(slice.why)}, admitted: false, repo: {},
+      waiting: OWNER_BINDINGS.workcell.owner as string | null, seat: null as LandingSeat | null, own: {sessionRef, project, repo: null, error: absent ?? slice.why} as AgentGit}
+  }
+  const values = {workcells: slice.value}
+  const cells = partOf(declaredValue(values, CELLS_PART)), seats = partOf(declaredValue(values, SEATS_PART))
+  const answered = cells?.state === 'read'
+  const ref = declaredValue(values, declared('git', 'workcell'))
+  const cellLine = answered ? (typeof ref === 'string' && ref ? `workcell ${ref}` : 'workcell status answered — no workcell_ref disclosed')
+    : ownerRefusalLine('workcell', cells?.state === 'refused' ? cells.why : 'Workcell status unavailable')
+  const found = absent ? {why: absent} : seats?.state === 'read' ? projectSeatOf(declaredValue(values, declared('git', 'branch')), project)
+    : {why: seats?.state === 'refused' ? seats.why : 'The seat instrument has not answered (`workcell seat status`).'}
+  const seat = 'seat' in found ? found.seat : null
+  const why = 'why' in found ? found.why : null
+  const uncommitted = seat && seat.dirty != null && seat.untracked != null ? seat.dirty + seat.untracked : undefined
+  const repo = seat ? {...(seat.branch ? {branch: seat.branch} : {}), ...(uncommitted !== undefined ? {uncommitted} : {}),
+    ...(seat.ahead != null ? {ahead: seat.ahead} : {}), ...(seat.behind != null ? {behind: seat.behind} : {})} : {}
+  const seatLine = seat ? `seat ${seat.workcell}/${seat.product}${seat.branch ? ` on ${seat.branch}` : ''}` : why ?? ''
+  return {
+    git: {kind: answered && seat ? 'reading' as const : 'refused' as const, title: 'Git', line: `${cellLine} · ${seatLine}`,
+      receipt: safeJson({workcell: cells ?? null, seat: seat ?? why})},
+    admitted: answered, repo, waiting: answered ? null : OWNER_BINDINGS.workcell.owner as string | null,
+    // The seat Land lands from (workcellBindings.ts gitBinding): Workcell's landing Actions name it by its workcell and product.
+    seat: seat ? {workcell: seat.workcell, product: seat.product, held: seat.state !== 'free'} as LandingSeat : null,
+    own: {sessionRef, project, repo: seat ? repo : null, error: seat ? null : why} as AgentGit,
+  }
+}
+
+/** The session's checkout as the Agent's Context page reads it (oneAgentBinding.ts AgentGit): the workcell's seat of its project, from the
+ * World Model's workcells slice, or why it names none. Pure. */
+export function sessionGitOf(workcells: ModelSliceReading | undefined, sessionRef: string | null, project: string, absent: string | null): AgentGit {
+  return landingOf(workcells, sessionRef, project, absent).own
+}
+
+/** The chain's reading from the World Model's slices its declared devices read, and the two shared answers it does not hold yet. Pure. */
+export function chainFromModel(input: ChainModelInput): ChainFromModel {
+  const {slices, sessionRef, project, absent, roster, task, unreachable} = input
+  const harnesses = harnessChoices(censusOf(slices.agents ?? {state: 'reading'}))
+  const catalogue = heldSlice(slices.models)
+  const models = catalogue.state === 'held' ? catalogueModels(catalogue.value) : null
+  if (unreachable) {
+    return {
+      reading: {
+        ...INITIAL_READING,
+        gateway: {kind: 'refused', title: GATEWAY_TITLE, line: ownerRefusalLine('gateway', unreachable, 'not-reached'), receipt: null},
+        gatewayAdmitted: false, gatewayDoc: null, gitAdmitted: false,
+        git: {kind: 'refused', title: 'Git', line: ownerRefusalLine('workcell', unreachable, 'not-reached'), receipt: null},
+        chains: [], skillsNote: ownerRefusalLine('roster', unreachable, 'not-reached'),
+        waitingOn: {gateway: OWNER_BINDINGS.gateway.owner, skillset: OWNER_BINDINGS.roster.owner, git: OWNER_BINDINGS.workcell.owner},
+      },
+      binding: 'cursor', resolved: false, harnesses, models,
+      ecology: {status: 'refused', value: null, error: unreachable}, git: {sessionRef, project, repo: null, error: absent ?? unreachable},
+    }
+  }
+  const gateway = gatewayOf(slices.sessions)
+  const landing = landingOf(slices.workcells, sessionRef, project, absent)
+  const reading: AgentChainReading = {
+    ...INITIAL_READING,
+    gateway: gateway.gateway, gatewayAdmitted: gateway.admitted, gatewayDoc: gateway.doc,
+    git: landing.git, gitAdmitted: landing.admitted, gitRepo: landing.repo, gitSeat: landing.seat,
+    waitingOn: {gateway: gateway.waiting, skillset: null, git: landing.waiting},
+  }
+  // The roster: the shared answer of the root register.
+  if (roster?.status === 'refused') {
+    Object.assign(reading, {chains: [], skillsNote: ownerRefusalLine('roster', refusalLine(roster.error ?? undefined, 'Roster reading unavailable')), identity: null})
+    reading.waitingOn.skillset = OWNER_BINDINGS.roster.owner
+  } else if (roster?.status === 'answered') {
+    const admits = rosterAdmits(roster.value)
+    Object.assign(reading, {
+      chains: rosterChains(roster.value),
+      skillsNote: admits > 0 ? `${admits} accepted agent${admits === 1 ? '' : 's'} with skill refs disclosed.` : `No accepted agents with skill refs disclosed yet — ${SKILLSETS_ARRIVE}.`,
+      identity: rosterIdentity(roster.value),
+    })
+    reading.waitingOn.skillset = admits > 0 ? null : OWNER_BINDINGS.skillset.owner
+  }
+  // The selected session's task record: a refusal or an empty answer says nothing about the agent, so it leaves the light dark rather
+  // than off; another session's record is not this one's (the shared answer is keyed by session).
+  if (sessionRef && task?.status === 'answered' && task.value) {
+    const read = taskReading(task.value)
+    reading.budget = read.used !== undefined || read.cap !== undefined ? {used: read.used, cap: read.cap} : null
+    reading.attached = true
+  }
+  return {reading, binding: gateway.binding ?? 'cursor', resolved: gateway.binding !== null, harnesses, models, ecology: gateway.ecology, git: landing.own}
 }
 
 /** The model the session last reported using: the newest usage record's `usage.model.name` that Actuation lists for it
@@ -433,7 +652,9 @@ function agentOwnValues(input: AgentInput): Record<string, Value> {
   if (doc && typeof doc.model === 'string') put(values, 'model', doc.model)
   // Where the gateway names no model, the one the session last reported using (Actuation's usage records, lane K0).
   else if (sessionRef != null && input.usage?.status === 'answered') put(values, 'model', lastUsageModelOf(input.usage.value))
-  put(values, 'effort', accepted.effort)
+  // Effort: the level the session's task starts at, as AIKit holds the task's Effort envelope (taskLevelOf); Inherit is the harness's own,
+  // which no owner reports, so it stands absent.
+  if (input.effort?.value && input.effort.value !== 'inherit') put(values, 'effort', input.effort.value)
   put(values, 'input', accepted.input)
   put(values, 'quantize', accepted.quantize)
   if (sessionRef != null) {
@@ -446,19 +667,19 @@ function agentOwnValues(input: AgentInput): Record<string, Value> {
   put(values, 'draft', held.composer.draft)
   put(values, 'sent', held.composer.sent)
   // The owners' lists the choosers and the well draw (the design's `thread`, `models` and `harnesses`, actuation__harness-model.tsx:
-  // 20-21): each the owner's own, or absent.
+  // 20-21): each the owner's own, or absent. The harnesses are the census's agents that start (harnessChoices).
   if (sessionRef != null) put(values, 'thread', input.thread)
   if (input.models) values.models = JSON.stringify(input.models)
   if (input.harnesses) values.harnesses = JSON.stringify(input.harnesses)
   return values
 }
 
-/** The rows an Agent change goes through: the address table's (agentParamAddresses.ts — effort, input, heartbeat) and the declared
- * P0 rows (AGENT_P0_ROWS below — interrupt-quantize, steer-line, new-task), each with its own write path. */
+/** The rows an Agent change goes through: the address table's (agentParamAddresses.ts — model, input, heartbeat) and the declared
+ * P0 rows (AGENT_P0_ROWS below — interrupt-quantize, steer-line, new-task), each with its own write path. Effort is the session's task's,
+ * written through AgentInput.effort. */
 export interface AgentRows {
   /** The binding's harness model (AIKit's `gateway agent model --model ID`, the address table's model row). */
   readonly model?: SdkParamRow
-  readonly effort?: SdkParamRow
   readonly input?: SdkParamRow
   readonly heartbeat?: SdkParamRow
   readonly quantize?: SdkParamRow
@@ -475,8 +696,8 @@ export type RowWrite = (row: SdkParamRow, value: unknown) => Promise<DispatchRec
 export const AGENT_P0_ROWS: Readonly<{quantize: SdkParamRow; steerLine: SdkParamRow; newTask: SdkParamRow}> = {
   quantize: {family: 'actuation', deviceInstance: 'agent', key: 'interrupt-quantize', title: 'Interrupt timing', type: 'enumerated',
     values: ['now', 'next tool', 'next turn'], writePath: 'shell.setQuantize'},
-  steerLine: {family: 'actuation', deviceInstance: 'agent', key: 'steer-line', title: 'Steer line', type: 'string', writePath: 'kernel:harness_agent_control'},
-  newTask: {family: 'software-factory', deviceInstance: 'agent', key: 'new-task', title: 'New task', type: 'string', writePath: 'kernel:harness_agent_control'},
+  steerLine: {family: 'actuation', deviceInstance: 'agent', key: 'steer-line', title: 'Steer line', type: 'string', writePath: 'act:aikit.gateway.agent'},
+  newTask: {family: 'software-factory', deviceInstance: 'agent', key: 'new-task', title: 'New task', type: 'string', writePath: 'act:aikit.gateway.agent'},
 }
 
 /** The Agent's Autonomy, retired (DLW §19.4: the Agent's pages are Run, Identity and Type, its macros Model, Effort, Budget and Input;
@@ -486,10 +707,15 @@ export const AGENT_AUTONOMY_RETIRED = 'Autonomy is retired: Scope\'s Tool calls,
 // `autonomy` is taken only to be refused in words (AGENT_AUTONOMY_RETIRED): a preset or a hold from before may still name it.
 const AGENT_WRITES = new Set(['model', 'effort', 'input', 'heartbeat', 'quantize', 'draft', 'sent', 'light', 'cap', 'autonomy'])
 
-/** The Agent's settings AIKit's gateway has no operation for, by the design's key and the row key its refusal names (aikitGatewayOps.ts):
- * Effort, Input and Interrupt timing, and the composer's words (a steer line into the running turn, or a queued task's words — AIKit's
- * `new` carries none). They stand disabled with AIKit's missing operation named. */
-const AGENT_UNCARRIED: Readonly<Record<string, string>> = {effort: 'effort', input: 'input', quantize: 'interrupt-quantize'}
+/** The Agent's settings a binding's conversation does not carry, by the design's key and the row key its refusal names (aikitGatewayOps.ts):
+ * Input (AIKit's words: it goes with each Communique, not with the conversation) and Interrupt timing, and the composer's words (a steer
+ * line into the running turn, or a queued task's words — AIKit's `new` carries none). They stand disabled with AIKit's words. Effort is
+ * the session's task's (AIKit's Action aikit.session.settings, O-I 1006): the Agent writes it where the chain hands in the session's
+ * settings (AgentInput.effort). */
+const AGENT_UNCARRIED: Readonly<Record<string, string>> = {input: 'input', quantize: 'interrupt-quantize'}
+/** Why the Agent's Effort is not pressable, or null where it writes. */
+const effortWhy = (effort: TaskLevel | undefined): string | null =>
+  (effort?.write ? null : `Effort: ${effort?.why ?? 'the chain hands in no session\'s settings, so its task\'s Effort is neither read nor set here.'}`)
 export const AGENT_SEND_UNCARRIED = `Send: AIKit's gateway carries no words into a binding's conversation — ${harnessKeyUncarried('steer-line')!.reason} ${harnessKeyUncarried('new-task')!.reason}`
 
 /** The Agent's binding: its values, and each change through its row's own write path (or held, for the composer's text). */
@@ -515,7 +741,10 @@ export function agentBinding(id: string, input: AgentInput, rows: AgentRows, wri
     standing: {...disabled(contextStanding(input.context, values)), ...disabled(REFUSED_WRITES[AGENT_DESIGN]!), ...('run' in values ? {} : {run: {disabled: RUN_UNREAD}}),
       autonomy: {disabled: AGENT_AUTONOMY_RETIRED},
       ...Object.fromEntries(Object.entries(AGENT_UNCARRIED).map(([key, rowKey]) => [key, {disabled: harnessKeyUncarried(rowKey)!.reason}])),
+      ...(effortWhy(input.effort) ? {effort: {disabled: effortWhy(input.effort)!}} : {}),
       sent: {disabled: input.sessionRef == null ? AGENT_NO_SESSION : AGENT_SEND_UNCARRIED},
+      // A census that lists no agent that starts leaves the chooser nothing to offer: it says so instead of drawing an empty list.
+      ...(input.harnesses?.length === 0 ? {harness: {disabled: AGENT_NO_HARNESS}} : {}),
       ...(rows.model?.writePath ? {} : {model: {disabled: 'Model: the row is not adopted on this chain, so nothing carries it.'}})},
     writes: key => AGENT_WRITES.has(key),
     write: async (changes: readonly ValueChange[]) => {
@@ -524,6 +753,13 @@ export function agentBinding(id: string, input: AgentInput, rows: AgentRows, wri
         if (key in AGENT_UNCARRIED) throw Error(harnessKeyUncarried(AGENT_UNCARRIED[key]!)!.reason)
         switch (key) {
           case 'model': await through(rows.model, 'Model', value); break
+          // Effort: one level for the whole of the session's task, by AIKit's Action aikit.session.settings (`task.set.effort`).
+          case 'effort': {
+            const why = effortWhy(input.effort)
+            if (why) throw Error(why)
+            await input.effort!.write!(value)
+            break
+          }
           case 'heartbeat': await through(rows.heartbeat, 'Heartbeat', value); break
           case 'draft': updateHolds(was => ({...was, composer: {...was.composer, draft: String(value)}})); break
           case 'sent': {
@@ -1459,15 +1695,15 @@ export function memberBinding(id: string, rack: Values, chosen: string | null, h
 
 // ---------------------------------------------------------------------------------------------------------------- Scope
 
-/** Scope's Tool calls on the chain (§19.12 Asks): the harness's approvals mode — ask · session · always — as the gateway's reading discloses
- * it (agentChainDevices.ts gatewayDisclosed `approvals`), and the Gateway slot's `approvals` row, whose write path is the kernel's
- * harness_agent_control — which AIKit's gateway has no operation for (aikitGatewayOps.ts), so it stands disabled. Absent: the chain hands
- * in neither. */
+/** Scope's Asks on the chain (§19.12 Asks). Tool calls is the session's answer to the harness's request to use a tool — ask · session ·
+ * always — as its task holds it (`toolCallsLevel`, sessionSettings.ts taskLevelOf: written by AIKit's Action aikit.session.settings,
+ * `task.set.tool_calls`); where the task inherits it, the harness's own approvals mode as the gateway's reading discloses it (`toolCalls`,
+ * agentChainDevices.ts gatewayDisclosed `approvals`), which is the harness's and read only. Absent: the chain hands in neither. */
 export interface ScopeAsks {
   readonly toolCalls?: Value
-  readonly toolCallsRow?: SdkParamRow
+  readonly toolCallsLevel?: TaskLevel
   /** Calls to other agents: AIKit's rule for the sender kind agent on the session's gateway bindings (callsOf), null while the gateway's
-   * ecology is unread, its refusal where it refused; and the write that sets one rule on every binding (the kernel's harness_ingress_rule). */
+   * ecology is unread, its refusal where it refused; and the write that sets one rule on every binding (AIKit's Action aikit.gateway.ingress). */
   readonly calls?: CallsReading | {readonly refused: string} | null
   readonly callsWrite?: (bindings: readonly string[], decision: CallsDecision) => Promise<void>
   /** Wait and On no answer: the session's own settings in AIKit, and their write (ScopeWaits). */
@@ -1480,7 +1716,7 @@ const CALLS_DECISIONS: readonly string[] = ['allow', 'pair', 'deny']
 /** The session's gateway bindings, and the one rule for calls from other agents they agree on (absent where they disagree or none). */
 export interface CallsReading {readonly bindings: readonly string[]; readonly decision?: CallsDecision}
 
-/** Calls to other agents on a session, from AIKit's gateway ecology (`aikit gateway ecology`; workcellReads.ts useGatewayEcology): each
+/** Calls to other agents on a session, from AIKit's gateway ecology (`aikit gateway ecology`, as the World Model's sessions slice carries it): each
  * conversation surface of the session sits on a gateway binding, which decides a call from another agent by its rule for the sender kind
  * agent, else by its one default (AIKit gateway_runtime.rs GatewayEcologySurface ingress_kinds, ingress_default). Null when the reading
  * is not the ecology. Pure. */
@@ -1504,30 +1740,35 @@ const callsWhy = (asks: ScopeAsks): string | null =>
 const callsReadingOf = (asks: ScopeAsks): CallsReading | null => (asks.calls && !('refused' in asks.calls) ? asks.calls : null)
 
 /** Scope's values (§19.12). No owner reports the reach, the write mode, the basis, the places or the receipts (the address table's world
- * rows are readings with no source: agentParamAddresses.ts:93-97), so every one is absent; Tool calls is the harness's own reading, Calls to
- * other agents AIKit's rule on the session's bindings and Wait and On no answer the session's own settings in AIKit, where the chain hands
- * them in, and the only other value is a raised reach waiting for your Confirm. */
+ * rows are readings with no source: agentParamAddresses.ts:93-97), so every one is absent; Tool calls is the session's task's level, or
+ * the harness's own reading where the task inherits it, Calls to other agents AIKit's rule on the session's bindings and Wait and On no
+ * answer the session's own settings in AIKit, where the chain hands them in, and the only other value is a raised reach waiting for your
+ * Confirm. */
 export function scopeValues(held: ChainHolds, asks: ScopeAsks = {}): Values {
   const values: Record<string, Value> = {}
   if (held.reachPending !== undefined) values.reachPending = held.reachPending
-  if (asks.toolCalls !== undefined) values.toolCalls = asks.toolCalls
+  const level = asks.toolCallsLevel?.value
+  if (level && level !== 'inherit') values.toolCalls = level
+  else if (asks.toolCalls !== undefined) values.toolCalls = asks.toolCalls
   const calls = callsReadingOf(asks)
   if (calls?.decision) values.calls = calls.decision
   Object.assign(values, waitValues(asks.waits))
   return values
 }
 
-/** Tool calls with no row to carry it. */
-const TOOL_CALLS_UNCARRIED = 'Tool calls: the Gateway\'s approvals row is not adopted on this chain, so nothing carries it.'
+/** Why Tool calls is not pressable, or null where it writes. */
+const toolCallsWhy = (asks: ScopeAsks): string | null =>
+  (asks.toolCallsLevel?.write ? null : `Tool calls: ${asks.toolCallsLevel?.why ?? 'the chain hands in no session\'s settings, so its task\'s Tool calls are neither read nor set here.'}`)
 
 const SCOPE_WRITES = (key: string) => ['reach', 'writeMode', 'toolCalls'].includes(key) || key in REFUSED_WRITES[SCOPE_DESIGN]! || key.startsWith('w:')
 
 /** Scope's refused settings, Tool calls where no row carries it, and Calls to other agents, Wait and On no answer where they are not
  * pressable. */
 function scopeStanding(asks: ScopeAsks): Record<string, Standing> {
-  // Tool calls is the harness's approvals mode, which AIKit's gateway has no operation to set (aikitGatewayOps.ts).
-  const standing: Record<string, Standing> = {...disabled(REFUSED_WRITES[SCOPE_DESIGN]!),
-    toolCalls: {disabled: asks.toolCallsRow?.writePath ? harnessKeyUncarried('approvals')!.reason : TOOL_CALLS_UNCARRIED}}
+  // Tool calls is the session's task's (AIKit's Action aikit.session.settings), pressable where the chain hands in its settings.
+  const standing: Record<string, Standing> = {...disabled(REFUSED_WRITES[SCOPE_DESIGN]!)}
+  const tools = toolCallsWhy(asks)
+  if (tools) standing.toolCalls = {disabled: tools}
   const why = callsWhy(asks)
   if (why) standing.calls = {disabled: why}
   else delete standing.calls
@@ -1544,7 +1785,7 @@ const reachOf = (value: Value | undefined): number | undefined => {
 
 /** Scope's binding: a raised reach is the view's own key, held until Confirm — nothing is sent before, and Cancel drops it — and
  * Confirm goes to the owner; the write mode goes through the world row's own write path (the shell write arm, which its dispatcher
- * refuses until WO-SF2 reads it); Tool calls through the Gateway slot's approvals row (the harness's own control). Before it lands, Escalate
+ * refuses until WO-SF2 reads it); Tool calls on the session's task by AIKit's Action aikit.session.settings. Before it lands, Escalate
  * to and the Grants page are Custody's binding's, laid in by the chain (sessionChainBindings.ts withCustodyAsks). */
 export function scopeBinding(id: string, held: ChainHolds, writeModeRow: SdkParamRow | undefined, write: RowWrite, asks: ScopeAsks = {}): DesignBinding {
   return {
@@ -1569,8 +1810,11 @@ export function scopeBinding(id: string, held: ChainHolds, writeModeRow: SdkPara
           continue
         }
         if (key === 'toolCalls') {
-          // AIKit's gateway has no operation that sets the harness's approvals mode: refused in the words it stands disabled with.
-          throw Error(asks.toolCallsRow?.writePath ? harnessKeyUncarried('approvals')!.reason : TOOL_CALLS_UNCARRIED)
+          // One level for the whole of the session's task (`task.set.tool_calls`); refused in the words it stands disabled with.
+          const why = toolCallsWhy(asks)
+          if (why) throw Error(why)
+          await asks.toolCallsLevel!.write!(value)
+          continue
         }
         if (key === 'calls') {
           const why = callsWhy(asks)

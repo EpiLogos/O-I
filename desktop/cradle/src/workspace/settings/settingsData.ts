@@ -100,8 +100,6 @@ export interface SettingsSnapshot {
   owners: Load<Record<string, OwnerMount>>;
   census: Load<CompositionReading>;
   profiles: Load<{active: string | null; profiles: ProfileDocument[]}>;
-  /** A connection staged for new chats, not yet applied (null: none). */
-  stagedDefault: string | null;
   /** Verify outcomes this session saw, per credential. */
   verifications: Record<string, VerifyResult>;
   /** Declared auth options per harness slug/client, read live when a section
@@ -122,7 +120,6 @@ const initial: SettingsSnapshot = {
   owners: {state: "reading"},
   census: {state: "reading"},
   profiles: {state: "reading"},
-  stagedDefault: readStagedDefault(),
   verifications: {},
   authFaces: {},
   skillScopes: [{scope_kind: "machine", scope_ref: null}],
@@ -415,28 +412,6 @@ export function watchPairsQuietly(pairs: {setting_ref: string; scope: ScopeAddre
   const fresh = pairs.filter((pair) => !known.has(resolutionKey(pair.setting_ref, pair.scope)));
   if (fresh.length) set({extraPairs: [...snapshot.extraPairs, ...fresh]});
   return fresh.length > 0;
-}
-
-// ---------------------------------------------------------------------------
-// the staged connection for new chats (kept until applied or discarded)
-
-const STAGED_DEFAULT_KEY = "oi-settings.staged-connection.v1";
-
-function readStagedDefault(): string | null {
-  try {
-    const value = window.sessionStorage.getItem(STAGED_DEFAULT_KEY);
-    return value && value.trim() ? value : null;
-  } catch {
-    return null;
-  }
-}
-
-export function stageDefaultConnection(provider: string | null): void {
-  try {
-    if (provider) window.sessionStorage.setItem(STAGED_DEFAULT_KEY, provider);
-    else window.sessionStorage.removeItem(STAGED_DEFAULT_KEY);
-  } catch { /* presentation state only */ }
-  set({stagedDefault: provider});
 }
 
 export function recordVerification(credential: string, result: VerifyResult): void {

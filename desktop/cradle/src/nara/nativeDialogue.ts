@@ -1,7 +1,7 @@
 import {ensureNativeCoordinateProfile,validateCoordinateExpression} from './coordinateExpression';
 /** Native dialogue transport. Canonical sessions, transcripts and draft CAS stay in AIKit. */
 import {kernelOp} from '../kernel/bridge';
-import {admissionRefusal} from '../encounter/deliveryOutcome';
+import {encounterSessionOf, encounterSessionStateOf} from '../encounter/session';
 import type {KernelTransportStatus} from '../kernel/types';
 import {encounter, EPI_PRIME_QL_BODY_REF} from '../encounter/client';
 import type {Draft, EncounterProvisioning, EncounterReading} from '../encounter/client';
@@ -11,7 +11,6 @@ import type {NaraDialogueContext} from './dialogueContext';
 import {naraIdentity} from './identity/client';
 import {clearCurrentIdentity, currentIdentity} from './identity/current';
 import type {CurrentIdentity} from './identity/current';
-import {nativeTextRuns} from './nativeTranscript';
 import {practiceBranch, type Practice} from './practice';
 import {answeringConcern, composeLivedContext, livedPracticeOf, livedTurn, withLivedDisclosure,
   type Answering, type LivedContextResult, type LivedPageSelection, type LivedTurn} from './livedContext';
@@ -48,8 +47,6 @@ export interface TurnBasis {
 }
 const sessions = new Map<string, Promise<NativeDialogue>>();
 export function cachedNativeDialogue(project: string, identity: CurrentIdentity, expression_ref: string, role: DialogueRole): Promise<NativeDialogue> | undefined {return sessions.get(keyFor(project, identity, expression_ref, role));}
-const uncertain = new Map<string, {text: string; revision: number}>();
-const submitting = new Set<string>();
 const keyFor = (project: string, identity: CurrentIdentity, expression_ref: string, role: DialogueRole) =>
   JSON.stringify([project, identity.reading.nara_ref, identity.source.source_ref, expression_ref, role]);
 
@@ -223,64 +220,36 @@ export function dialogueQuestion(text: string): string {
   } catch { /* Ordinary native user messages remain verbatim. */ }
   return text;
 }
-export function submissionUncertain(dialogue: NativeDialogue): boolean {return uncertain.has(dialogue.key);}
-export async function reconcileNativeTurn(transport: KernelTransportStatus, dialogue: NativeDialogue): Promise<boolean> {
-  const pending = uncertain.get(dialogue.key);
-  if (!pending) return true;
-  const {project} = dialogue;
-  const {agent_session} = dialogue.provisioning;
-  let before: number | undefined, blocks: EncounterReading['blocks'] = [];
-  for (let page = 0; page < 32; page++) {
-    const read = await encounter<EncounterReading>(transport, project, {action: 'view', agent_session, before});
-    if (read.schema !== 'aikit.encounter-view/v1' || read.agent_session !== agent_session) throw new Error('The native owner returned a different submission history.');
-    if (read.draft.revision <= pending.revision) return false;
-    blocks = [...read.blocks, ...blocks];
-    const matched = nativeTextRuns(blocks).some((block, index) => block.kind === 'user'
-      && (index > 0 || !read.more) && block.text.trim() === pending.text.trim());
-    if (matched) {uncertain.delete(dialogue.key); return true;}
-    const next = read.blocks[0]?.id;
-    if (!read.more || next === undefined || (before !== undefined && next >= before)) break;
-    before = next;
-  }
-  return false;
+/** The conversation of a dialogue, as the one session holds it (session.ts; O-I #1003). */
+const sessionOf = (transport: KernelTransportStatus, dialogue: NativeDialogue) =>
+  encounterSessionOf(transport, {project: dialogue.project, ref: dialogue.provisioning.agent_session, space: dialogue.provisioning.space});
+/** Whether the dialogue's last send could not be confirmed: its session's own record of it. */
+export function submissionUncertain(dialogue: NativeDialogue): boolean {
+  const phase = encounterSessionStateOf({project: dialogue.project, ref: dialogue.provisioning.agent_session})?.send?.phase;
+  return phase === 'checking' || phase === 'unknown';
 }
+/** Read the owner's record until an uncertain send is settled (the session's own reconciliation); true when nothing is uncertain. */
+export async function reconcileNativeTurn(transport: KernelTransportStatus, dialogue: NativeDialogue): Promise<boolean> {
+  if (!submissionUncertain(dialogue)) return true;
+  const session = sessionOf(transport, dialogue);
+  return session.until(() => (submissionUncertain(dialogue) ? null : true), 10_000, 'still uncertain').catch(() => false);
+}
+/** A turn to Nara or Epii, sent through the dialogue's one session (session.ts `submit`; O-I #1003): only to the live Epi-Logos body,
+ * never over an unsent draft of the person's own, within the native turn budget. */
 export async function submitNativeTurn(transport: KernelTransportStatus, dialogue: NativeDialogue, text: string, requireCurrent?: () => void): Promise<void> {
   requireCurrent?.();
-  if (submitting.has(dialogue.key)) throw new Error('A turn is already being submitted.');
-  if (uncertain.has(dialogue.key)) throw new Error('The previous submission is uncertain. Read the native record before sending again.');
+  if (submissionUncertain(dialogue)) throw new Error('The previous submission is uncertain. Read the native record before sending again.');
   if (new TextEncoder().encode(text).length > 256 * 1024) throw new Error('This disclosed identity context exceeds the native turn budget. Narrow the supplied material before sending.');
-  submitting.add(dialogue.key);
-  const {project} = dialogue;
-  const {agent_session} = dialogue.provisioning;
-  try {
-    const current = await encounter<EncounterReading>(transport, project, {action: 'view', agent_session});
-    requireCurrent?.();
-    if (current.connection?.provider?.body_ref !== EPI_PRIME_QL_BODY_REF) throw new Error('This session has no live native Epi-Logos body. Reconnect its recorded conversation before sending.');
-    for (const operation of ['draft', 'prompt']) {
-      const action = current.actions?.find(a => a.ref === `aikit.encounter.${operation}`);
-      if (!action?.enabled) throw new Error(action?.reason ?? `The native owner has not enabled ${operation} for this session.`);
-    }
-    if (current.draft.text.trim() && current.draft.text !== text) throw new Error('This native session has an unsent draft. Review it below and move its question back to the composer before sending.');
-    const accepted = await encounter<Draft>(transport, project, {action: 'draft', agent_session, basis: current.draft.revision, text});
-    if (!Number.isSafeInteger(accepted.revision) || accepted.text !== text) throw new Error('AIKit did not confirm the exact draft. Nothing was prompted.');
-    requireCurrent?.();
-    try {
-      await encounter(transport, project, {action: 'prompt', agent_session, draft_revision: accepted.revision});
-    } catch (error) {
-      // Native draft CAS conflict is also proven before provider dispatch.
-      if (!admissionRefusal(error) && !String(error).endsWith('[encounter.draft_conflict]')) {
-        uncertain.set(dialogue.key, {text, revision: accepted.revision});
-        if (await reconcileNativeTurn(transport, dialogue).catch(() => false)) return;
-        throw new Error('Submission could not be confirmed. Your question and the native draft are preserved. Read the native record; do not resend automatically.');
-      }
-      throw error;
-    }
-  } finally {submitting.delete(dialogue.key);}
+  const current = await encounter<EncounterReading>(transport, dialogue.project, {action: 'view', agent_session: dialogue.provisioning.agent_session});
+  requireCurrent?.();
+  if (current.connection?.provider?.body_ref !== EPI_PRIME_QL_BODY_REF) throw new Error('This session has no live native Epi-Logos body. Reconnect its recorded conversation before sending.');
+  if (current.draft.text.trim() && current.draft.text !== text) throw new Error('This native session has an unsent draft. Review it below and move its question back to the composer before sending.');
+  await sessionOf(transport, dialogue).submit(text);
 }
 
 /** Explicit UI recovery only; the caller retains the question before this CAS. */
 export async function clearRecoveredNativeDraft(transport: KernelTransportStatus, dialogue: NativeDialogue, draft: Draft): Promise<void> {
-  if (submissionUncertain(dialogue) || submitting.has(dialogue.key)) throw new Error('Reconcile the current submission before moving its draft.');
+  if (submissionUncertain(dialogue)) throw new Error('Reconcile the current submission before moving its draft.');
   const value = await encounter<Draft>(transport, dialogue.project, {action: 'draft', agent_session: dialogue.provisioning.agent_session, basis: draft.revision, text: ''});
   if (value.text !== '' || value.revision <= draft.revision) throw new Error('The native owner did not confirm draft recovery. The question remains in the composer.');
 }

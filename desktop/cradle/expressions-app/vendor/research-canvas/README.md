@@ -5,9 +5,18 @@ revision `7df35f822f9235331a69940cdaf484fe4a0b95c1`. `PROVENANCE.json` records e
 upstream source SHA-256 and every explicit adaptation; the private collaborator
 notice is retained as `LICENSE`.
 
-This is the static dependency closure of the actual CanvasView, TimelineSurface,
-PsychogeographicMap and StreetViewSurface components, their offline geography
-pack, and their styles. It does not mount Research Canvas's separate application,
+This is the static dependency closure of the actual CanvasView and TimelineSurface
+components and their styles. The Places map (PsychogeographicMap, retired 15 Oct,
+#762), StreetViewSurface, the offline geography pack's loaders, manifest and
+basemap, its live-service policy, the walk assembly over its gazetteer and the
+maplibre-gl imports are deleted (O-I #1009): Places is the shell's Earth atlas
+(`packages/live-shell/ui/src/projections/atlas`), the one earth viewer. The
+gazetteer index (`packages/geography/src/gazetteer.ts`), its records and their
+attribution stay, byte-exact, for one reader: the frozen legacy
+`desktop/cradle/src/CradleFrame.tsx`, which the candidate never reaches. The
+upstream transport contract still declares its Street View and geography-edge
+members, which the read-only techne transport answers empty or refuses; nothing
+renders them. It does not mount Research Canvas's separate application,
 public viewer, SQLite store, backend or workspace provider. The O:I engine supplies
 its own actual native construction, selection and repository operations.
 
@@ -26,20 +35,21 @@ Selection, opening content, zoom and scene playback remain available; dragging,
 connections, resizing, caption/note/edge editing, drawing and mutation menus or
 shortcuts are withheld. The manifest keeps both upstream and adapted hashes.
 
-Resolve `@research-canvas/{schema,domain,desktop-api,geography,viewers,node-document}`
+Resolve `@research-canvas/{schema,domain,desktop-api,viewers,node-document}`
 to the respective `packages/<name>/src/index.ts` here. Resolve
 `@research-canvas/exporter` to `browserExporter.ts`. Import `components.ts` directly;
 the whole upstream canvas barrel and unrelated instruments are intentionally not
 copied. Use the engine's single React19 instance.
 
 Runtime dependency requirements are recorded in the copied package manifests:
-`@xyflow/react ^12.8.5`, `maplibre-gl ^6.2.0`, `perfect-freehand ^1.2.2`,
+`@xyflow/react ^12.8.5`, `perfect-freehand ^1.2.2`,
 `zustand ^5.0.8`, `zod ^4.1.11`, and `@blocknote/{core,react,mantine} ^0.39.1`.
+The canvas manifest, kept byte-exact, still names `maplibre-gl` and the geography
+package, which this closure no longer carries.
 The selected components do not use the separate Palace renderer or react-three.
 
 Upstream styles are retained byte-exact for host review. The engine owns how they
 are scoped; do not blindly apply the upstream application's global shell styles.
-MapLibre's worker URL and offline pack assets remain part of the real component.
 
 Run `node vendor/research-canvas/verify-source.mjs` from expressions-app to verify
 source integrity. This is provenance evidence; functional acceptance still needs
@@ -52,11 +62,9 @@ substitutes. Native interactive acceptance belongs to the integrated engine.
 The optional `CanvasView.toolbarContainer` adaptation portals the existing zoom/fit/play toolbar into the host HUD and suppresses the duplicate ReactFlow Controls there. Omitting the prop retains the original standalone placement and controls. The source diff and adapted hash are recorded with the other capability overlays.
 
 `patches/native-host-capabilities.patch` retains native read refusals as visible
-errors with explicit retry. Hosted map/image views pass `offlineOnly`: this
-omits live network controls and refuses local-policy activation; the host need
-not construct a Research Canvas policy. `imageTitle` carries a native readable
-label. Missing image metadata is not rendered as an automatic footer. These
-are UI capabilities, not a new egress authority or source store.
+errors with explicit retry, in the Timeline (its map and image sections went
+with the map and Street View, O-I #1009). This is a UI capability, not a new
+egress authority or source store.
 
 `patches/host-selection-viewport-gesture.patch` adds optional CanvasView
 capabilities the host previously worked around: `selectedNodeIds` drives real

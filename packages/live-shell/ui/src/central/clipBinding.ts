@@ -397,7 +397,7 @@ function pageWiring(write: PageWrite, kind: Value | undefined, island: unknown, 
 export type AnswerHand = {readonly ask: (entryId: string) => Promise<void>} | {readonly refused: string}
 
 /** The hand Answer this acts through on a page read with its island: the bound Nara conversation is found for the chosen identity and the
- * open Expression (nara/answerThis.ts), and the track's Arm — the shell's one write arm (frame/tracks/useCentralTracks.ts) — says whether
+ * open Expression (nara/answerThis.ts), and the track's Arm — the shell's one write arm (the kernel's Central Set, mode_set.rs) — says whether
  * the answer is written with a receipt or waits as a proposal (manual §24.1 Arm). After the act, `after` reads the page again. Null where
  * no page is read; refused in words where no identity or Expression stands. Pure. */
 export function answeringHand(input: {transport: KernelTransportStatus; location: CentralLocation | null; island: unknown; identity: CurrentIdentity | null;
@@ -589,7 +589,7 @@ export function useCentralClip(): ClipBinding | null {
   // The open Expression a Nara conversation is bound to (the frame's native scene, as the M3 clock reads it), and a Being page's sky:
   // its Subject's saved identity, when it carries a natal chart (inhabitants/ql/devices/beingSky.ts).
   const scene = useHostedChrome()?.state?.nativeScene ?? null
-  // The track's Arm: the shell's one write arm (frame/tracks/useCentralTracks.ts "every world's Arm is the shell's one write arm").
+  // The track's Arm: the shell's one write arm (the kernel's Central Set, mode_set.rs: "arming one world arms every one").
   const arm = useAgentShellOptional()?.writeArm === true
   const beingSky = useBeingSky(transport, subjectAnswer?.phase === 'read' ? subjectAnswer.island : undefined)
   if (subject) {

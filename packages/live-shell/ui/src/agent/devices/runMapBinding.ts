@@ -11,10 +11,10 @@
 // inspection the map is drawn without them and Retry says why. A unit's custody and its retry grant's count are in neither reading, and
 // are not given. No session selected, or one with no take, names no Run, and every reading stands absent with that reason.
 // The writes: Recognise (factory_owner Recognise) and Close (factory_owner RunClose) exist and take the Run's Journey, Return and
-// Recognition; they stand in Approvals (§19.25 Whole), so here they say so once the Run is read. Retry is the attempt `retry` through factory_owner attempt-retry (lane K0;
-// desktop/cradle/kernel/src/factory_retry.rs): it takes the Run and the unit you retry, and Factory decides — it retries only what its
-// admission (`factory attempt admission`) admits from a desktop, under the host's grant, never one the desk names; given a Run
-// (`RunMapRun`) and a carrier, Retry writes through it and Factory's refusal is the press's error. Continue is `factory development
+// Recognition; they stand in Approvals (§19.25 Whole), so here they say so once the Run is read. Retry is Factory's own Action
+// factory.attempt.retry by `act` (O-I #1006, the track's retry's): it takes the Run and the unit you retry, and Factory decides — a new
+// attempt under the retry grant the unit's current one consumes, on the person's grant, refused in Factory's words for a unit that has not
+// failed or whose grant is spent; given a Run (`RunMapRun`) and a carrier, Retry writes through it and Factory's refusal is the press's error. Continue is `factory development
 // mutate` for ContinueCommission, which no kernel route carries yet (T-COVERAGE §1.2). The unit you read and Show are the shell's own
 // holds. Pure, apart from the view holds.
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
@@ -52,7 +52,7 @@ function reasons(why: string): {absent: Readonly<Record<string, string>>; refuse
     refuse: {
       recognise: `Recognise: factory_owner Recognise takes the Journey and the Return you recognise, and ${why}.`,
       close: `Close: factory_owner RunClose takes the Run and your Recognition of its Return, and ${why}.`,
-      retry: `Retry: factory_owner attempt-retry (the attempt \`retry\` under the unit's retry grant) takes the Run and the unit you retry, and ${why}. Factory retries only what its admission admits from a desktop, under the host's grant, never one the desk names.`,
+      retry: `Retry: Factory's factory.attempt.retry (the attempt \`retry\` under the unit's retry grant, on your grant) takes the Run and the unit you retry, and ${why}.`,
       continue: missing('Continue', '`factory development mutate` for ContinueCommission through the kernel (T-COVERAGE §1.2, Software Factory: "`development mutate` for ContinueCommission"; the kernel issues the mutation only for a Recognition)'),
     },
   }
@@ -70,24 +70,20 @@ export interface RunMapRun {
   readonly runRef: string
   readonly units: Readonly<Record<string, string>>
 }
-/** The Run map's owner writes: Factory's own requests through the kernel's factory_owner (ownerRoutes.ts factoryOwnerWrite), answering
- * Factory's document. Absent: no carrier stands. */
+/** The Run map's owner write: Factory's own Action factory.attempt.retry by `act` (bridge.ts kernelAct), answering Factory's document or
+ * throwing its refusal in its words. Absent: no carrier stands. */
 export interface RunMapPorts {
-  readonly owner?: (request: {kind: string; [field: string]: unknown}) => Promise<unknown>
+  readonly retry?: (input: {state: string; run_ref: string; unit_ref: string}) => Promise<unknown>
 }
-const NO_CARRIER = 'Retry: the kernel carrier is unavailable here, so Factory cannot be asked (factory_owner attempt-retry).'
+const NO_CARRIER = 'Retry: the kernel carrier is unavailable here, so Factory cannot be asked (factory.attempt.retry).'
 
-/** Retry one unit of the named Run through factory_owner attempt-retry. Factory's answer (desktop/cradle/kernel/src/factory_retry.rs,
- * oi.factory-attempt-retry/v1) stands when it retried; its refusal, or the driver's own named as such, is thrown in its words. */
-async function retryUnit(run: RunMapRun, owner: NonNullable<RunMapPorts['owner']>, value: Value | undefined): Promise<void> {
+/** Retry one unit of the named Run through Factory's factory.attempt.retry: Factory's answer stands when it retried; its refusal is thrown
+ * in its words. */
+async function retryUnit(run: RunMapRun, retry: NonNullable<RunMapPorts['retry']>, value: Value | undefined): Promise<void> {
   const node = typeof value === 'string' ? value : ''
   const unit = run.units[node]
   if (!unit) throw Error(`Retry: Factory's run reading names no unit for ${node ? `the node ${node}` : 'the press'}; choose a unit of this Run.`)
-  const answer = await owner({kind: 'attempt-retry', state_path: run.statePath, run_ref: run.runRef, workflow_unit_ref: unit}) as
-    {status?: unknown; refusal?: {message?: unknown} | null} | null
-  if (answer?.status === 'retried' || answer?.status === 'already-retried') return
-  const words = typeof answer?.refusal?.message === 'string' ? answer.refusal.message : 'Factory answered no retry.'
-  throw Error(answer?.status === 'uncertain' ? `Factory did not answer and may have run: ${words} Read the Run again before retrying.` : words)
+  await retry({state: run.statePath, run_ref: run.runRef, unit_ref: unit})
 }
 
 /** The named Run's chain as the window holds it (runJourney.ts useRunJourney): reading, Factory's answer, or its refusal in its words. */
@@ -181,7 +177,7 @@ export function runMapValues(holds: ChainHolds): Values {
 
 /** The Run map's binding. With no Run (no session selected, or none of its takes names one) every reading stands absent and every act
  * disabled naming what it takes; given a Run, its chain (`read`) is drawn once Factory answers, what is not read stands absent saying
- * why, and with a carrier Retry writes through factory_owner attempt-retry. */
+ * why, and with a carrier Retry writes through Factory's factory.attempt.retry. */
 export function runMapBinding(holds: ChainHolds, run: RunMapRun | null = null, ports: RunMapPorts = {}, read: RunMapRead | null = null): DesignBinding {
   const standing: Record<string, Standing> = {}
   const why = !run ? NO_RUN : !read ? RUN_NOT_READ : read.status === 'reading' ? RUN_READING : read.status === 'refused' ? read.error ?? RUN_READING : null
@@ -189,7 +185,7 @@ export function runMapBinding(holds: ChainHolds, run: RunMapRun | null = null, p
     : why ? reasons(why) : {absent: reasons(RUN_LACKS).absent, refuse: reasons(RUN_IN_APPROVALS).refuse}
   for (const [key, why] of Object.entries(absent)) standing[key] = {disabled: why}
   for (const [key, why] of Object.entries(refuse)) standing[key] = {disabled: why}
-  const owner = ports.owner
+  const owner = ports.retry
   if (run) {
     if (owner) delete standing.retry
     else standing.retry = {disabled: NO_CARRIER}

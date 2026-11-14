@@ -1,17 +1,45 @@
 //! Local, permission-bounded transport of Expression requests, not a second
 //! application instance or a generic privileged command endpoint.
 //!
-//! One socket carries both Expression faces: an ordinary Expression request
-//! (`oi.expression/v1` operations), or an Expression-world request — a body
+//! One socket carries three Expression faces: an ordinary Expression request
+//! (`oi.expression/v1` operations), an Expression-world request — a body
 //! whose `schema` is `oi.expression-world/v1` (the act/material/selection
-//! operations of `expression_world`).
+//! operations of `expression_world`) — or one of Expressions' own Actions, a
+//! body whose `schema` is `oi.expression-act-request/v1` (`oi act invoke
+//! expressions.*`, O-I #1008): only the ids `expression_actions` holds, so the
+//! socket never runs another owner's Action.
 use serde::{Deserialize, Serialize};
+
+/// The schema of an Action of Expressions carried to the running desktop's kernel (O-I #1008).
+pub const ACT_SCHEMA: &str = "oi.expression-act-request/v1";
 
 /// A request the Expression socket accepts.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Request {
     Expression(crate::expression::Request),
     World(crate::expression_world::Request),
+    /// One Action of Expressions' field (expression_actions.rs), by its id and its input.
+    Act {
+        action: String,
+        input: serde_json::Value,
+    },
+}
+
+impl Request {
+    /// The op a request runs as through the host's one dispatch (dispatch.rs), as a shell page's op runs: an Action of
+    /// Expressions reaches the kernel's act door as an agent's act does (the wire's channel, never the person's press).
+    pub fn op(self) -> crate::KernelOp {
+        match self {
+            Request::Expression(request) => crate::KernelOp::Expression { request },
+            Request::World(request) => crate::KernelOp::ExpressionWorld { request },
+            Request::Act { action, input } => crate::KernelOp::Act {
+                action,
+                input: Some(input),
+                project: None,
+                channel: crate::flow::Channel::Wire,
+            },
+        }
+    }
 }
 
 impl Serialize for Request {
@@ -28,6 +56,10 @@ impl Serialize for Request {
                 }
                 value.serialize(serializer)
             }
+            Request::Act { action, input } => {
+                serde_json::json!({"schema": ACT_SCHEMA, "action": action, "input": input})
+                    .serialize(serializer)
+            }
         }
     }
 }
@@ -42,8 +74,24 @@ impl<'de> Deserialize<'de> for Request {
             Some(serde_json::Value::String(s)) if s == crate::expression_world::WORLD_SCHEMA => {
                 serde_json::from_value(value).map(Request::World).map_err(D::Error::custom)
             }
+            Some(serde_json::Value::String(s)) if s == ACT_SCHEMA => {
+                #[derive(Deserialize)]
+                #[serde(deny_unknown_fields)]
+                struct Act {
+                    action: String,
+                    #[serde(default)]
+                    input: serde_json::Value,
+                }
+                let Act { action, input } = serde_json::from_value(value).map_err(D::Error::custom)?;
+                if !crate::expression_actions::holds(&action) {
+                    return Err(D::Error::custom(format!(
+                        "The Expression socket carries Expressions' own Actions only, and `{action}` is not one of them; `oi act` lists them"
+                    )));
+                }
+                Ok(Request::Act { action, input })
+            }
             Some(other) => Err(D::Error::custom(format!(
-                "Unsupported Expression request schema {other}; expected none (oi.expression/v1 operations) or {}",
+                "Unsupported Expression request schema {other}; expected none (oi.expression/v1 operations), {} or {ACT_SCHEMA}",
                 crate::expression_world::WORLD_SCHEMA
             ))),
         }
@@ -368,6 +416,126 @@ mod request_tests {
         );
         // Unknown fields still fail closed under either face.
         assert!(serde_json::from_value::<Request>(json!({"schema":"oi.expression-world/v1","operation":"act_inspect","act_ref":"a","extra":1})).is_err());
+    }
+
+    #[test]
+    fn an_action_of_expressions_round_trips_and_no_other_action_parses() {
+        let body = json!({"schema": super::ACT_SCHEMA, "action": "expressions.arm",
+            "input": {"expression_ref": "expression:a", "on": true}});
+        let act: Request = serde_json::from_value(body.clone()).unwrap();
+        assert_eq!(
+            act,
+            Request::Act {
+                action: "expressions.arm".into(),
+                input: json!({"expression_ref": "expression:a", "on": true})
+            }
+        );
+        assert_eq!(serde_json::to_value(&act).unwrap(), body);
+        assert!(matches!(
+            act.op(),
+            crate::KernelOp::Act { action, input: Some(_), project: None, channel: crate::flow::Channel::Wire }
+                if action == "expressions.arm"
+        ));
+        // Another owner's Action, an id Expressions does not hold, or a stray field: refused at the socket, in words.
+        for refused in [
+            json!({"schema": super::ACT_SCHEMA, "action": "central.day.ensure", "input": {}}),
+            json!({"schema": super::ACT_SCHEMA, "action": "expressions.nothing", "input": {}}),
+            json!({"schema": super::ACT_SCHEMA, "action": "expressions.arm", "input": {}, "channel": "person_press"}),
+        ] {
+            let error = serde_json::from_value::<Request>(refused.clone()).unwrap_err();
+            assert!(!error.to_string().is_empty(), "{refused}");
+        }
+        let other = serde_json::from_value::<Request>(
+            json!({"schema": super::ACT_SCHEMA, "action": "central.day.ensure"}),
+        )
+        .unwrap_err();
+        assert!(
+            other
+                .to_string()
+                .contains("`central.day.ensure` is not one of them"),
+            "{other}"
+        );
+    }
+}
+
+/// An agent's `oi act invoke expressions.*` crosses a real socket, as the desktop serves it (src-tauri main.rs), and runs at the
+/// kernel's act door through the one dispatch: the store's answer names what it moved, a refusal of the store's comes back in its
+/// words, and another owner's Action never reaches the kernel (O-I #1008).
+#[cfg(all(test, unix))]
+mod act_socket_tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn an_action_of_expressions_crosses_the_socket_to_the_act_door_and_no_other_does() {
+        let nanos = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        // A short path: a socket's address is bounded (`choose_endpoint`).
+        let path = std::path::Path::new("/tmp")
+            .join(format!("oi-act-{}-{nanos:x}.sock", std::process::id()));
+        let kernel = std::sync::Arc::new(std::sync::Mutex::new(crate::Kernel::new(
+            crate::flow::CentralClient::with(
+                std::path::PathBuf::from("/nonexistent/ctrl"),
+                None,
+                "test".into(),
+            ),
+        )));
+        let held = kernel.clone();
+        let server = serve_routed(&path, move |request| {
+            let outcome = crate::dispatch::dispatch(&held, request.op()).0?;
+            serde_json::to_value(outcome).map_err(|e| e.to_string())
+        })
+        .unwrap();
+        let act = |action: &str, input: serde_json::Value| {
+            call(
+                &path,
+                &Request::Act {
+                    action: action.into(),
+                    input,
+                },
+            )
+            .unwrap()
+        };
+        // Stop All with nothing playing: the store's own answer, as the act door gives it.
+        let stopped = act("expressions.scene.stop", json!({}));
+        assert_eq!(stopped["ok"], true, "{stopped}");
+        assert_eq!(stopped["outcome"]["result"], "action_dispatched");
+        let dispatch = &stopped["outcome"]["dispatch"];
+        assert_eq!(dispatch["state"], "invoked", "{stopped}");
+        assert_eq!(
+            dispatch["data"]["schema"],
+            crate::expression_actions::ANSWER_SCHEMA
+        );
+        assert_eq!(dispatch["data"]["action"], "expressions.scene.stop");
+        assert_eq!(dispatch["data"]["ref"], "expressions:all");
+        assert_eq!(dispatch["data"]["state"], "stopped");
+        // Arm a work the store does not hold: the store refuses, in its words.
+        let refused = act(
+            "expressions.arm",
+            json!({"expression_ref": "expression:none", "on": true}),
+        );
+        assert_eq!(
+            refused["outcome"]["dispatch"]["state"], "owner_refused",
+            "{refused}"
+        );
+        assert!(refused["outcome"]["dispatch"]["message"]
+            .as_str()
+            .is_some_and(|words| !words.trim().is_empty()));
+        assert!(kernel.lock().unwrap().expressions.playback.armed.is_empty());
+        // Another owner's Action is refused at the socket, before the kernel is asked.
+        let other = call(
+            &path,
+            &json!({"schema": ACT_SCHEMA, "action": "central.day.ensure", "input": {}}),
+        )
+        .unwrap();
+        assert_eq!(other["ok"], false, "{other}");
+        assert!(other["error"]
+            .as_str()
+            .is_some_and(|words| words.contains("central.day.ensure")));
+        drop(server);
+        assert!(!path.exists());
     }
 }
 

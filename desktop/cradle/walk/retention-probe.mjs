@@ -256,8 +256,10 @@ const controlListing=await (await fetch(`${BRIDGE2}/op`,{method:'POST',headers:{
 const root=controlListing.outcome.directory.location.root;
 const stamp=`retention-receipt-${Date.now()}.html`;
 const writePath=`Control/user/flows/${stamp}`;
-const write=await (await fetch(`${BRIDGE2}/op`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({op:'file_operation',location:{schema:'central.path-ref/v1',ref:`central:path:${root}:${writePath}`,root,path:writePath},request:{action:'write',expected_revision:'',content:`<p>retention receipt probe ${stamp}</p>`}})})).json();
-check(write?.outcome?.data?.outcome==='created','a kernel-mediated write creates the flow instance on the temp ground',JSON.stringify(write?.outcome?.data?.outcome??write?.error));
+// A save is Central's own `central.files.write` through the kernel's `act` (O-I 1002): the mutation is the dispatch's data.
+const write=await (await fetch(`${BRIDGE2}/op`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({op:'act',action:'central.files.write',input:{location:{schema:'central.path-ref/v1',ref:`central:path:${root}:${writePath}`,root,path:writePath},expected_revision:'',content:`<p>retention receipt probe ${stamp}</p>`}})})).json();
+const wrote=write?.outcome?.dispatch;
+check(wrote?.state==='invoked'&&wrote.data?.outcome==='created','a kernel-mediated write creates the flow instance on the temp ground',JSON.stringify(wrote?.data?.outcome??wrote?.message??wrote?.detail??write?.error));
 const events=await (await fetch(`${BRIDGE2}/events?since=0`)).json();
 check(events.receipts.some(r=>r.event==='file_changed'&&r.path===writePath),'the kernel disclosed a file_changed receipt naming the written path');
 const flowsReadsBefore=reads2['Control/user/flows']??0;

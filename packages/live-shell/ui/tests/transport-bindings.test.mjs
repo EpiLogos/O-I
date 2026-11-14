@@ -47,7 +47,7 @@ const {AgentShellProvider, useAgentShellOptional} = await import('../src/agent/A
 const {Workspace} = await import('../src/shell/workspaceContext.tsx')
 const {registerShellSetter} = await import('../src/inhabitants/sdk/shellSetters.ts')
 const {useFactoryTransport} = await import('../src/shell/transports/useFactoryTransport.tsx')
-const {useExpressionsTransport} = await import('../src/shell/transports/useExpressionsTransport.tsx')
+const {useExpressionsTransport, OVERDUB_REFUSED} = await import('../src/shell/transports/useExpressionsTransport.tsx')
 // The frame's lazy parts (a mode's bodies, its transport and tracks, a device's face) load when first drawn (shell/loadWhenDrawn.ts;
 // O-I #740); a server render cannot wait for a module, so they are fetched first and every body renders itself.
 await (await import('../src/shell/loadWhenDrawn.ts')).loadEveryPart()
@@ -112,18 +112,18 @@ test('Factory\'s readouts are the old bar\'s, and read dashes until the owner ac
   assert.match(markup, />— ▾</); assert.match(markup, />Σ — · —</)
 })
 
-test('Factory\'s Run and Stop send harness_agent_control on the bound harness, and nothing else', async () => {
+test('Factory\'s Run and Stop send the Action aikit.gateway.agent on the bound harness, and nothing else', async () => {
   const sent = []
   const real = globalThis.fetch, warn = console.warn
   console.warn = () => {}   // the old bar warned on a refused control; the refusal is asserted by the absence of a request
-  globalThis.fetch = async (url, init) => { sent.push({url, body: JSON.parse(init.body)}); return {json: async () => ({ok: true, outcome: {result: 'harness_agent_outcome', document: {state: 'running'}}})} }
+  globalThis.fetch = async (url, init) => { sent.push({url, body: JSON.parse(init.body)}); return {json: async () => ({ok: true, outcome: {result: 'action_dispatched', dispatch: {state: 'invoked', owner_operation: 'aikit.gateway.agent', data: {ok: true, schema: 1, data: {state: 'running'}}}}})} }
   try {
     const {bindings} = factory()
     bindings.play.press(); await settle()
     bindings.stop.press(); await settle()
     assert.deepEqual(sent, [
-      {url: 'http://owner.test/op', body: {op: 'harness_agent_control', binding: 'cursor', control: 'resume'}},
-      {url: 'http://owner.test/op', body: {op: 'harness_agent_control', binding: 'cursor', control: 'stop'}},
+      {url: 'http://owner.test/op', body: {op: 'act', action: 'aikit.gateway.agent', input: {binding: 'cursor', operation: 'resume'}}},
+      {url: 'http://owner.test/op', body: {op: 'act', action: 'aikit.gateway.agent', input: {binding: 'cursor', operation: 'stop'}}},
     ])
     // With no carrier there is no owner to reach: the press asks nobody.
     sent.length = 0
@@ -262,6 +262,42 @@ function native({playback = {}, saved = false, loop = false} = {}) {
 }
 const expressions = (nativeTransport, readouts) => run(useExpressionsTransport, {tempoBpm: null, readouts, nativeTransport}).bindings
 
+// O-I ticket 1008: what plays, records and is armed is the kernel's. Expressions' Set as the kernel lays it (kernel mode_set.rs), with the
+// fixture's work as its track and its Scene as a clip, each with the acts the Set gives them; the window's Set store holds it for a carrier,
+// and each press is one act through that carrier, captured at the bridge.
+const {windowSets} = await import('../src/owners/modeSets.ts')
+const WORK = 'expression:whole'
+const workInput = {expression_ref: WORK}, sceneInput = {expression_ref: WORK, scene_ref: SCENE}
+function setOf({status = null, armed = false, held = [], launch = true} = {}) {
+  return {owner: 'expressions', sources: [{slice: 'expressions', owner: 'expressions', version: 1, state: 'held'}], rows: [], takes: [], mixer: {},
+    lanes_absent: {}, acts: {}, waiting: {},
+    tracks: [{id: WORK, name: 'A working inquiry', kind: '', mix: {arm: armed},
+      acts: {arm: {action: 'expressions.arm', input: workInput, takes: 'on', words: 'arm'},
+        ...(status ? {stopTrack: {action: 'expressions.scene.stop', input: workInput, words: 'stop', done: 'A working inquiry stopped.'}} : {}),
+        ...(held.length ? {reenable: {action: 'expressions.studio.reenable', input: workInput, takes: 'target', words: 'reenable'}} : {})},
+      studio: {scene_ref: SCENE, values: {}, settings: {}, held,
+        act: {action: 'expressions.studio.set', input: sceneInput, takes: '*', words: 'studio'}}}],
+    clips: [{id: SCENE, track: WORK, label: 'Main', ...(status ? {status} : {}), acts: {
+      ...(launch ? {launch: {action: 'expressions.scene.launch', input: {launches: [sceneInput]}, words: 'launch'}} : {}),
+      ...(status !== 'recording' ? {capture: {action: 'expressions.scene.capture', input: sceneInput, words: 'capture'}} : {})}}]}
+}
+/** A carrier whose Set the window's store holds, and the Actions its presses send. */
+async function kernelHolds(set) {
+  const carrier = {kind: 'bridge', url: `http://kernel.test/${Math.random()}`}, acts = []
+  const real = globalThis.fetch
+  globalThis.fetch = async (url, init) => {
+    const body = JSON.parse(init.body), op = typeof body.op === 'object' ? body.op : body
+    if (op.op === 'act') { acts.push({action: op.action, input: op.input}); return {json: async () => ({ok: true, outcome: {result: 'action_dispatched', dispatch: {state: 'invoked', owner_operation: op.action, data: {ok: true}}}})} }
+    return {json: async () => ({ok: true, outcome: {result: 'mode_set', data: {schema: 'oi.mode-set/v1', mode: 'expressions', version: 1, set}}})}
+  }
+  try { await windowSets.read(carrier, 'expressions') } finally { globalThis.fetch = real }
+  const press = async pressing => { const was = globalThis.fetch; globalThis.fetch = async (url, init) => { const body = JSON.parse(init.body), op = typeof body.op === 'object' ? body.op : body; acts.push({action: op.action, input: op.input}); return {json: async () => ({ok: true, outcome: {result: 'action_dispatched', dispatch: {state: 'invoked', owner_operation: op.action, data: {ok: true}}}})} }
+    try { pressing(); await settle(); await settle() } finally { globalThis.fetch = was } }
+  return {carrier, acts, press}
+}
+const expressionsOver = (carrier, nativeTransport, readouts) => run(useExpressionsTransport, {tempoBpm: null, readouts, nativeTransport},
+  node => h(Workspace.Provider, {value: {transport: carrier}}, node)).bindings
+
 test('Expressions with no native reading presses nothing, and Play and Stop say why on the status bar (O-I #747, X2)', () => {
   const readouts = {position: {value: '0.00 / 8.00 s', title: 'the frame\'s'}}
   const none = expressions(undefined, readouts)
@@ -280,9 +316,9 @@ test('Expressions with no native reading presses nothing, and Play and Stop say 
   }
 })
 
-test('Expressions binds the old bar\'s working controls to the slots §10.5 and the old bar name, and no others', () => {
+test('Expressions binds the old bar\'s working controls to the slots §10.5 and the old bar name, and no others', async () => {
   const {source: bar} = native()
-  const bindings = expressions(bar)
+  const bindings = expressionsOver((await kernelHolds(setOf())).carrier, bar)
   assert.deepEqual(owner(bindings), ['arm', 'capture', 'cpu', 'draw', 'follow', 'key', 'key-map', 'loop', 'metro', 'overdub', 'play', 'position', 'quantize', 're-enable', 'record', 'root', 'scale', 'signature', 'stop', 'tempo'].sort())
   // Round 895 (OPEN 8; §10.5 "Key, root and scale | Tune the field's resonance", "Follow | Keep views with the scene"): the key row tunes
   // the plate the Resonance drives, and Follow says why it holds no switch (resonance-follow-transport-895.test.mjs).
@@ -307,40 +343,51 @@ test('Expressions binds the old bar\'s working controls to the slots §10.5 and 
   assert.match(markup, />0\.00 \/ 8\.00 s</, 'the Scene time reads the owner\'s elapsed over its working duration')
 })
 
-test('r885: Expressions\' Metronome is the open scene\'s Pulse (§10.5 "Pulse the field"): dark while Off, a press asks its owner for On', async () => {
-  const off = native()
-  const b = expressions(off.source)
+test('r885: Expressions\' Metronome is the open scene\'s Pulse (§10.5 "Pulse the field"): dark while Off, a press writes On through the Studio\'s act', async () => {
+  const off = native(), kernel = await kernelHolds(setOf())
+  const b = expressionsOver(kernel.carrier, off.source)
   assert.equal(b.metro.lit, false, 'the fixture\'s scene never set Pulse: Off, the manual\'s default')
   assert.match(b.metro.title, /^Pulse — the field pulses on the beat of its Tempo: Off\./)
   assert.equal(light(draw(b), 'metro'), 'off')
-  b.metro.press(); await settle()
-  assert.deepEqual(off.sent, await off.expected(actions => actions.applyChanges([{kind: 'panel-setting', key: 'pulse', value: true}])), 'one panel setting of its owner')
+  await kernel.press(() => b.metro.press())
+  // O-I ticket 1008: the Pulse is a setting of the Studio, so its write is one Action of the Studio's act, never the frame's editor.
+  assert.deepEqual(kernel.acts, [{action: 'expressions.studio.set', input: {...sceneInput, setting: {kind: 'panel-setting', key: 'pulse'}, value: true}}])
+  assert.deepEqual(off.sent, [], 'the frame\'s editor is asked nothing')
 })
 
-test('Expressions lights: Play and Loop from the owner\'s reading, Arm and the take mode from the shell, none from a frame that has not reported', () => {
-  const idle = draw(expressions(native().source))
-  assert.deepEqual(['play', 'loop', 'arm', 'overdub', 'record', 're-enable', 'stop'].map(id => light(idle, id)), ['off', 'off', 'off', 'off', null, null, null])
-  const playing = draw(expressions(native({playback: {scene_playing: true, scene_elapsed_seconds: 2}, saved: true, loop: true}).source))
-  assert.equal(light(playing, 'play'), 'on', 'aria-pressed was `scene_playing`')
-  assert.equal(light(playing, 'loop'), 'on', 'the Journey loop flag')
+test('Expressions lights: Play, Arm, Record and Re-enable from the kernel\'s Set, Loop from the owner\'s reading, none from a Set not read', async () => {
+  const idle = draw(expressionsOver((await kernelHolds(setOf())).carrier, native().source))
+  assert.deepEqual(['play', 'loop', 'arm', 'record', 're-enable'].map(id => light(idle, id)), ['off', 'off', 'off', 'off', 'off'])
+  const playing = draw(expressionsOver((await kernelHolds(setOf({status: 'running', armed: true, held: ['field.medium.pressure']}))).carrier,
+    native({playback: {scene_playing: false}, saved: true, loop: true}).source))
+  assert.deepEqual(['play', 'loop', 'arm', 'record', 're-enable'].map(id => light(playing, id)), ['on', 'on', 'on', 'off', 'on'],
+    'Play is the kernel\'s playing clip, not the frame\'s `scene_playing`; Arm its arm; Re-enable a value it holds')
+  const recording = draw(expressionsOver((await kernelHolds(setOf({status: 'recording', armed: true}))).carrier, native().source))
+  assert.equal(light(recording, 'record'), 'on')
+  const unread = draw(expressions(native().source))
+  assert.deepEqual(['record', 're-enable'].map(id => light(unread, id)), [null, null], 'a Set not read lights nothing')
 })
 
-test('Expressions Play and Stop send the owner requests the old bar sent', async () => {
-  const idle = native()
-  const b = expressions(idle.source)
+test('O-I ticket 1008: Expressions Play is the Scene\'s launch and Stop the Expression\'s stop, each one act of the kernel\'s Set', async () => {
+  const idle = native(), kernel = await kernelHolds(setOf())
+  const b = expressionsOver(kernel.carrier, idle.source)
   assert.equal(b.play.refused, undefined); assert.ok(b.play.press)
-  b.play.press(); await settle()
-  assert.deepEqual(idle.sent, await idle.expected(actions => actions.scene({action: 'play'})), 'Play is the Scene play request')
-  // Stopped at its start there is nothing to stop; the owner\'s reason keeps the control drawn.
+  await kernel.press(() => b.play.press())
+  assert.deepEqual(kernel.acts, [{action: 'expressions.scene.launch', input: {launches: [sceneInput]}}], 'Play launches the Scene')
+  // Nothing plays in the kernel and the field stands at its start: nothing to stop, and the owner's reason keeps the control drawn.
   assert.equal(b.stop.press, undefined); assert.match(b.stop.refused, /idle at its start/)
-
-  const running = native({playback: {scene_playing: true, scene_elapsed_seconds: 2}})
-  const r = expressions(running.source)
-  r.play.press(); r.stop.press(); await settle()
-  assert.deepEqual(running.sent, [
-    ...await running.expected(actions => actions.scene({action: 'pause'})),
-    ...await running.expected(actions => actions.scene({action: 'seek', scene_ref: SCENE, seconds: 0, sequence: 'working'})),
-  ], 'Pause while playing; Stop is one working seek to zero')
+  const running = native({playback: {scene_playing: true, scene_elapsed_seconds: 2}}), playing = await kernelHolds(setOf({status: 'running'}))
+  const r = expressionsOver(playing.carrier, running.source)
+  await playing.press(() => r.stop.press())
+  assert.deepEqual(playing.acts, [{action: 'expressions.scene.stop', input: workInput}], 'Stop is the kernel\'s stop')
+  assert.deepEqual(idle.sent.concat(running.sent), [], 'the frame decides no playback')
+  const elsewhere = native({playback: {scene_playing: true, scene_elapsed_seconds: 2}})
+  const view = expressionsOver((await kernelHolds(setOf())).carrier, elsewhere.source)
+  view.stop.press(); await settle()
+  assert.deepEqual(elsewhere.sent, await elsewhere.expected(actions => actions.scene({action: 'seek', scene_ref: SCENE, seconds: 0, sequence: 'working'})),
+    'with nothing playing in the kernel, Stop rewinds the field\'s own view of the Scene')
+  const silent = expressionsOver((await kernelHolds(setOf({launch: false}))).carrier, native().source)
+  assert.equal(silent.play.press, undefined, 'a Scene the Set gives no launch is not played'); assert.match(silent.play.refused, /does not launch/)
 })
 
 test('Expressions Loop toggles the Journey loop through the owner, and says why it cannot', async () => {
@@ -351,21 +398,23 @@ test('Expressions Loop toggles the Journey loop through the owner, and says why 
   assert.deepEqual(saved.sent, await saved.expected(actions => actions.setSceneLoop(true)))
 })
 
-test('Expressions Arm, Record and Re-enable follow the old bar: Arm decides Play, Record only stops a take, Re-enable needs a held value', () => {
-  const b = expressions(native().source)
-  assert.ok(b.arm.press && b.overdub.press, 'Arm and the take mode are the bar\'s own presentation')
+test('O-I ticket 1008: Arm is the kernel\'s arm, Record stops the take the kernel records, Re-enable gives back what it holds, and Overdub has no mode', async () => {
+  const kernel = await kernelHolds(setOf())
+  const b = expressionsOver(kernel.carrier, native().source)
   assert.equal(b.record.press, undefined, 'Record is never an immediate-record button')
-  assert.match(b.record.title, /Arm automation, then press Play/)
-  assert.equal(b['re-enable'].press, undefined, 'the orange return is live only while something is held')
-  assert.match(b.overdub.title, /Replace last take/)
-})
-
-// O-I #747 round 889, XT09 (§20.2 Transport: "Overdub | Lays a new take over the scene"): the take mode says where the next take lies.
-test('XT09 (round 889): Overdub says where the next take lies: over the scene from where the last ended, or the last take\'s span again', async () => {
-  const b = expressions(native().source)
-  assert.equal(b.overdub.title, 'Overdub is off: the next take records the last take\'s span again (Replace last take). Press to lay it over the scene from where the last take ended (Next section).')
-  const code = await readFile(new URL('../src/shell/transports/useExpressionsTransport.tsx', import.meta.url), 'utf8')
-  assert.ok(code.includes('`Overdub: the next take lies over the scene from where the last take ended (${TAKE_MODE_LABELS.append}). Press to record the last take\'s span again (${TAKE_MODE_LABELS.replace}).`'))
+  assert.match(b.record.title, /Arm, then press Play/)
+  assert.equal(b['re-enable'].press, undefined, 'the orange return is live only while the kernel holds a value')
+  await kernel.press(() => b.arm.press())
+  assert.deepEqual(kernel.acts, [{action: 'expressions.arm', input: {...workInput, on: true}}])
+  const taking = await kernelHolds(setOf({status: 'recording', armed: true, held: ['field.medium.pressure']}))
+  const t = expressionsOver(taking.carrier, native().source)
+  assert.match(t.play.refused, /A take is recording/)
+  await taking.press(() => t.record.press())
+  await taking.press(() => t['re-enable'].press())
+  await taking.press(() => t.arm.press())
+  assert.deepEqual(taking.acts, [{action: 'expressions.scene.stop', input: workInput}, {action: 'expressions.studio.reenable', input: workInput},
+    {action: 'expressions.arm', input: {...workInput, on: false}}], 'Record stops the take; Re-enable gives every held value back; Arm turns off')
+  assert.equal(t.overdub.press, undefined); assert.equal(t.overdub.refused, OVERDUB_REFUSED)
 })
 
 test('Expressions\' hook makes only the old bar\'s owner calls on its slots; the Scene\'s own calls stand on the Clip side', async () => {
@@ -374,7 +423,7 @@ test('Expressions\' hook makes only the old bar\'s owner calls on its slots; the
   assert.deepEqual(actions, ['applyChanges', 'readNow', 'scene', 'sceneEdit', 'setSceneLoop'], 'the editor requests the old bar made on a slot (Save has no slot: it is the Clip side\'s, through sendSave), and XS08\'s Quantize')
   // XS08 (round 884): the one call beyond the old bar is the transport's Quantize, the Expression's own setting, through its owner.
   assert.deepEqual([...code.matchAll(/actions\.sceneEdit\(([^)]*)\)/g)].map(m => m[1]), ["{operation: 'launch-quantize', quantize: value}"])
-  for (const call of ['takeStart(takeMode)', 'takeStop', 'STAGE_AUTOMATION_RESUME', 'createLiveSession(', 'spaceTogglesPlayback(']) assert.ok(code.includes(call), `the hook uses ${call}, as the old bar did`)
+  for (const call of ['runAct(', 'createLiveSession(', 'spaceTogglesPlayback(']) assert.ok(code.includes(call), `the hook uses ${call}`)
   assert.doesNotMatch(code, /kernelOp|fetch\(|history\('save'\)/, 'no owner call the old bar did not make on a slot')
   // What the Scene keeps while Expressions stands (⌘S, the selection's focus) is mounted here once, and nowhere else.
   assert.equal((code.match(/useSceneKeepers\(source\)/g) ?? []).length, 1)
@@ -391,13 +440,13 @@ test('Expressions\' bar is the one bar: TransportBar draws ModeTransport for eve
 
 // O-I #747 round three (manual §20.1: "Play, record, arm the Studio, and keep your gestures as a scene — The transport: Play, Record, Arm and
 // Capture"; "Capture in the transport keeps your last gestures as a new scene"): the Stage plate's Save scene… is the transport's Capture.
-test('Expressions Capture keeps the scene as it stands and makes the next from it, through the owner\'s own snapshot', async () => {
-  const idle = native()
-  const b = expressions(idle.source)
+test('Expressions Capture keeps the scene as it stands and makes the next from it, through the Scene\'s capture act', async () => {
+  const idle = native(), kernel = await kernelHolds(setOf())
+  const b = expressionsOver(kernel.carrier, idle.source)
   assert.ok(b.capture.press); assert.match(b.capture.title, /Capture — keep your gestures as a scene/)
-  b.capture.press(); await settle()
-  const row = idle.source.content.scenes.scenes.find(item => item.scene_ref === idle.source.content.basis.scene_ref)
-  assert.deepEqual(idle.sent, await idle.expected(actions => actions.scene({action: 'save-snapshot', name: row.title, next: true})))
+  await kernel.press(() => b.capture.press())
+  assert.deepEqual(kernel.acts, [{action: 'expressions.scene.capture', input: sceneInput}], 'O-I ticket 1008: one act of the kernel\'s Set')
+  assert.deepEqual(idle.sent, [])
   const none = expressions(undefined)
   assert.match(none.capture?.refused ?? '', /No Expression is open here/, 'with nothing open it says why')
 })

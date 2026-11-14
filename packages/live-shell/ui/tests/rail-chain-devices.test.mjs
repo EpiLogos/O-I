@@ -1,7 +1,7 @@
 // The rail draws its devices as the catalogue draws them (parity audit D-01, D-02, D-03, D-12, D-13, D-14): the Packet tile is Central's
 // Packet device's widget and the Graph tile the Knowledge graph's, each published by the rail's own publisher while its tile is open and no
 // chain holds the device (widgets/railChainDevices.tsx); the rail-born devices' tile keys stand at the design's defaults from the start
-// (widgets/railDevices.tsx); and the NOWs name each clearing's register and seat (widgets/railBindings.ts nowsValues). Each device is drawn
+// (widgets/railDevices.tsx). Each device is drawn
 // through the door's own entry on its real binding, mounted with React as the shell mounts it.
 import test from 'node:test'
 import assert from 'node:assert/strict'
@@ -69,7 +69,6 @@ const chain = await import('../src/widgets/railChainDevices.tsx')
 const rail = await import('../src/widgets/railBindings.ts')
 const packetDesign = (await import('../src/inhabitants/catalogue/panels/central__packet.tsx')).design
 const graphDesign = (await import('../src/inhabitants/catalogue/panels/knowledge-graph__graph.tsx')).design
-const nowsDesign = (await import('../src/inhabitants/catalogue/panels/widgets__nows.tsx')).design
 
 family.resetFamilyManifestsForTest()
 loadAgentShellFamilies()
@@ -135,36 +134,6 @@ test('Graph: with no chain, the rail publishes the Knowledge graph on Technē\'s
     assert.doesNotMatch(tile, /\bNaN\b|undefined/)
   })
   assert.equal(door.publishedDevice('knowledge-graph:graph'), undefined, 'withdrawn with its publisher')
-})
-
-test('NOWs: each clearing names its register and seat; a project\'s clearings are read in its own register and listed under Where', () => {
-  const row = (now_ref, scope_ref, purpose, extra = {}) => ({now_ref, scope_ref, purpose, lifecycle: 'active', participant_refs: ['agent:fizz'], created_at_unix_seconds: 1794300000,
-    source_ref: '', task_ref: '', source_refs: [], revision: 'r', ...extra})
-  const ground = {time: {state: 'ready', data: {civil_date: '2026-11-13', local_time: '11:02:00+00:00', policy: {timezone: 'Europe/London'}}},
-    day: {state: 'ready', data: {temporal: {lifecycle: 'open'}}}, now: {state: 'ready', data: {records: [row('n-root', 'control:root', 'Parity audit')]}},
-    placement: {state: 'ready', data: {revision: 'p'}}}
-  const projects = [{project: 'O-I', records: [row('n-oi', 'project:O-I', 'Land catalogue', {work_refs: [{repo: 'o-i', branch: 'dlw/x', worktree_path: '/Users/admin/Central/worktrees/env-3/o-i'}]}),
-    row('n-root', 'control:root', 'Parity audit')]}]
-  const values = rail.nowsValues(ground, projects)
-  const nows = JSON.parse(values.nows)
-  assert.deepEqual(nows.map(n => [n.now_ref, n.register, n.seat]), [['n-root', 'root', undefined], ['n-oi', 'O-I', 'env-3']], 'each once, with where it stands')
-  const binding = {id: 'widgets:nows', values, local: {machine() {}, where() {}, open() {}}}
-  const tile = draw(nowsDesign, binding, 'widget')
-  assert.match(tile, /your ground · fizz/)
-  assert.match(tile, /env-3 · fizz/, 'the seat it was opened in')
-  assert.doesNotMatch(tile, /· — ·/, 'no moment reads "—" for where it stands')
-  const full = draw(nowsDesign, binding, 'full')
-  assert.match(full, /Your ground/); assert.match(full, /Workcell env-3/)
-  assert.equal(rail.nowRegisterOf('project:Archetypal-Earth'), 'Archetypal-Earth')
-  assert.equal(rail.nowSeatOf([{repo: 'x', branch: 'y', worktree_path: null}]), undefined)
-})
-
-test('NOWs: a project\'s clearing closes in its own register, on its own listing', async () => {
-  const calls = []
-  const ground = {now: {state: 'ready', data: {records: [{now_ref: 'n1'}]}}, placement: {state: 'ready', data: {revision: 'p1'}}}
-  const projects = [{project: 'O-I', records: [{now_ref: 'n2', revision: 'r2'}]}]
-  await rail.nowsCloseWrites({kind: 'bridge', url: 'x'}, ground, async (...args) => { calls.push(args) }, projects).write([{key: 'close', value: 'n2'}])
-  assert.deepEqual(calls, [[{kind: 'bridge', url: 'x'}, 'n2', [{now_ref: 'n2', revision: 'r2'}], {revision: 'p1'}, 'O-I']])
 })
 
 test('Wiki: the page the agent read last is the newest tape read of one of a page\'s sources', () => {

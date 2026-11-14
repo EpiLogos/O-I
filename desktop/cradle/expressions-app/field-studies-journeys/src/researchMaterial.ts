@@ -1,14 +1,14 @@
 /** Local research presentation of the SAME native Scene. Canonical source
  * bodies/relations are never edited by these material actions. */
-import {clone,entity,uid,type Journey,type Scene} from './model.js';
+import {clone,entity,uid,type Journey,type Scene} from './model.ts';
 import type {DocumentStore} from './store.js';
 import type {ViewBasis} from './viewDrift.js';
-import {validateConnector,CONNECTOR_KEY_MAX,CONNECTOR_RECORD_MAX,type ResearchConnector} from './canvasConnectors.js';
-import {CANVAS_OBJECT_KINDS,CANVAS_TOOL_SPEC,STICKY_DEFAULT_PALETTE,isCanvasObjectKind,isPaletteKey,isShapeFill,isShapeGeometry,type CanvasObjectKind,type CanvasToolChoice,type PaletteKey,type ShapeFill,type ShapeGeometry} from './canvasShapes.js';
-import {EMBED_CARD_SIZE,MEDIA_CARD_SIZE,embedHost,embedUrlRecord,isCentralPathRef,mediaFileName,type CentralPathRef} from './canvasEmbeds.js';
-import {FRAME_TITLE_MAX,frameTitleRecord} from './canvasFrames.js';
-import {TIMELINE_CATEGORY_IDS as CATEGORY_IDS} from './timelineCategoryIds';
-import {TOUR_LIMIT,placeTourNameProblem,placeTourProblem,type PlaceTourRecord} from './placeTourRecord.js';
+import {validateConnector,CONNECTOR_KEY_MAX,CONNECTOR_RECORD_MAX,type ResearchConnector} from './canvasConnectors.ts';
+import {CANVAS_OBJECT_KINDS,CANVAS_TOOL_SPEC,STICKY_DEFAULT_PALETTE,isCanvasObjectKind,isPaletteKey,isShapeFill,isShapeGeometry,type CanvasObjectKind,type CanvasToolChoice,type PaletteKey,type ShapeFill,type ShapeGeometry} from './canvasShapes.ts';
+import {EMBED_CARD_SIZE,MEDIA_CARD_SIZE,embedHost,embedUrlRecord,isCentralPathRef,mediaFileName,type CentralPathRef} from './canvasEmbeds.ts';
+import {FRAME_TITLE_MAX,frameTitleRecord} from './canvasFrames.ts';
+import {TIMELINE_CATEGORY_IDS as CATEGORY_IDS} from './timelineCategoryIds.ts';
+import {TOUR_LIMIT,placeTourNameProblem,placeTourProblem,type PlaceTourRecord} from './placeTourRecord.ts';
 
 /** Card kinds the material admits: the image/note cards, the lane-1 A2 canvas
  * objects (sticky, shape, text) and the lane-1 A10 embed and media cards. */

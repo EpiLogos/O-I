@@ -23,17 +23,21 @@
 //     and the composition steps the heads fix (CFP's `cfp-form`, CS with its direction a `cs-select` and the walk it gives), with what a
 //     composition still takes that a unit does not carry (its context, oikonomia and basis). QL's refusal stands there in its words.
 //   - Compose (a song from the task's Intent, O-I 844) is Anima's act, under its own tenure, through its team (lead rulings, round 15).
-//     The press sends one Communique to the session's orchestrator Position (`gateway_write send`, `aikit gateway send`) carrying the
-//     Intent, the clip's Constellation and its sources, the song's identity and where the answer goes, and the desk keeps that
-//     Communique's id (composeAskOf). Anima's body delegates through its own team tool (AIKit's team_operation; the desk is never an
-//     occupant) and answers the person: `aikit gateway send --to @owner --propose --reply-to <the ask>`, a proposal Central's receiving
-//     ledger holds from its Position, its body Factory's own edit (factory.workflow-edit/v1). The desk reads the ledger (`receiving`
-//     List and Read) for the proposal from that Position that answers the ask; one for another ask, a second one, or one whose body is
-//     no edit is not taken, and said so (composeAnswerOf). The proposal goes through QL's check of the heads it gives, then Factory's
-//     admission (`factory workflow edit --check`, factory_owner `workflow-edit-check`); the person's Accept is one act, the proposal
-//     accepted in Central's ledger and the edit applied by Factory, and Discard declines it in Central. Nothing is written to the song
-//     before Accept, and each refusal is its owner's words. With no one occupying the orchestrator's Position the press is refused,
-//     naming the Position and how its body starts (`aikit inhabit --position …`); nothing is queued. The ask names the edits that are
+//     The press puts one ask to the session's orchestrator as its conversation's next turn: the session the orchestrator works on the
+//     rack, through the one send (desktop/cradle encounter/session.ts encounterSessionOf … submit, O-I 1003), carrying the Intent, the
+//     clip's Constellation and its sources, the song's identity, where the answer goes and the ask's own id, which the desk keeps
+//     (composeAskOf). REPLACED (O-I 1006): the press sent a Communique to the orchestrator's Position through AIKit's gateway
+//     (`aikit.gateway.send`), a second send beside the conversation's, and the answer replied to that Communique (`--reply-to`). Anima's
+//     body delegates through its own team tool (AIKit's team_operation; the desk is never an occupant) and answers the person:
+//     `aikit gateway send --to @owner --propose --subject "Compose: <song> · <the ask>"`, a proposal Central's receiving ledger holds
+//     from the Position it occupies, its body Factory's own edit (factory.workflow-edit/v1). The desk reads the ledger (`receiving` List,
+//     and Read of the proposal it takes) for the proposal from that Position whose subject names the ask; one naming another ask, a
+//     second one, or one whose body is no edit is not taken, and said so (composeAnswerOf). The proposal goes through QL's check of the
+//     heads it gives, then Factory's admission (`factory workflow edit --check`, factory_owner `workflow-edit-check`); the person's Accept
+//     is one act, the proposal accepted in Central's ledger and the edit applied by Factory, and Discard declines it in Central. Nothing
+//     is written to the song before Accept, and each refusal is its owner's words. With no one occupying the orchestrator's Position the
+//     press is refused, naming the Position and how its body starts (`aikit inhabit --position …`), and with no session of the
+//     orchestrator on the rack it is refused too: its conversation is where Compose asks. Nothing is queued. The ask names the edits that are
 //     Factory's, `unit` among them: a unit the song does not hold, written whole in the workflow SDK's words. Where the plan the Run
 //     answers to (the Intent panel's From) names an issue, the press first reads it as the project's map (`factory workflow map`,
 //     factory_owner `workflow-map`): its open tickets go with the ask, and Anima is asked for one unit per ticket, keyed as the map
@@ -46,11 +50,14 @@
 import {useEffect, useMemo, useState} from 'react'
 import {onOwnerChanged} from '../owners/notices'
 import type {Value} from '../frame/devices/designed'
-import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
+import {kernelOp, type KernelOpCall} from '../../../../../desktop/cradle/src/kernel/bridge'
 import type {KernelOp, KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import {aikitWriteOp, factoryOwnerWrite, ownerRouteWrite, refusalWords} from './devices/ownerRoutes'
 import type {AgentSessionTrack} from './agentRunModel'
-import {receivingWire, type ReceivingRequest} from '../../../../../desktop/cradle/src/receiving/client'
+import {encounterSessionOf} from '../../../../../desktop/cradle/src/encounter/session'
+import {sessionOfAgent} from '../widgets/agentConversation'
+import {ROOT_REGISTER} from './worldScope'
+import {receivingAnswer, receivingOp, type ReceivingRequest} from '../../../../../desktop/cradle/src/receiving/client'
 import {STATE_WORD as WAVE_STATE_WORD, type PlanCall, type PlanTarget} from './wavePlan'
 
 /** Factory's score of a song, the edit it takes and its receipt (Factory workflow_score.rs). */
@@ -68,7 +75,7 @@ const QL_CHECK = '`ql context-frame team-space check vak-block`'
 const PROPOSED = '#proposed'
 /** The cell of a unit as Anima's composition proposes it: the unit's heads with the heads the proposal gives. */
 const COMPOSED = '#composed'
-/** Compose's ask (the machine block of its Communique) and Factory's answer to an edit it checks without writing it. */
+/** Compose's ask (the machine block of the turn it puts to the orchestrator) and Factory's answer to an edit it checks without writing it. */
 export const COMPOSE_ASK = 'oi.compose-ask/v1'
 export const EDIT_RECEIPT = 'factory.workflow-edit-receipt/v1'
 /** Factory's reading of a project's map (Factory workflow_score.rs MAP_CONTRACT). */
@@ -571,7 +578,7 @@ export function scoreWiring(port: ScorePort | null, choice: (key: string) => Val
       ...(status ? {} : {'gen.status': composing
         ? 'Compose\'s word: its ask to the session\'s orchestrator, the proposal Central\'s receiving ledger holds in answer, and QL\'s check of the heads it gives and Factory\'s admission of it (factory workflow edit --check)'
         : `QL's word on the proposal: the unit's heads with the decision model's picks, checked as a Vāk-block cell (${QL_CHECK})`}),
-      ...(compose && compose.state.state !== 'unaddressed' ? {'gen.asks': 'where Compose asks: the Position the session\'s orchestrator occupies (aikit gateway who), from Central\'s agent set'} : {}),
+      ...(compose && compose.state.state !== 'unaddressed' ? {'gen.asks': 'where Compose asks: the session\'s orchestrator, in its own session on the rack, and the Position it occupies (aikit gateway who), from Central\'s agent set'} : {}),
     },
     absent: {...(status ? {'gen.status': status} : {}), ...(port.steps ? {} : {'vak.steps': STEPS_UNASKED}),
       ...(!compose ? {'gen.asks': COMPOSE_NOT_HERE} : compose.state.state === 'unaddressed' ? {'gen.asks': compose.state.why} : {})},
@@ -602,8 +609,9 @@ export function fillReadingOf(data: unknown): Record<string, unknown> {
 
 // ---------------------------------------------------------------------------------------------------------------- Compose
 
-/** Where Compose asks: the Position the session's orchestrator occupies, its agent and the agent set it orchestrates. */
-export interface ComposeAddress {readonly position: string; readonly agent: string; readonly set: string}
+/** Where Compose asks: the session the orchestrator works on the rack (its conversation, in the register it was read under), the Position
+ * it occupies (whose proposals answer), its agent and the agent set it orchestrates. */
+export interface ComposeAddress {readonly position: string; readonly agent: string; readonly set: string; readonly session: string; readonly register: string}
 export type ComposeTo = {readonly state: 'addressed'; readonly address: ComposeAddress} | {readonly state: 'refused'; readonly why: string}
 /** An owner's answer as the window holds it. */
 export interface HeldAnswer {readonly status: string; readonly value?: unknown; readonly error?: string | null}
@@ -641,7 +649,11 @@ export function composeAddressOf(track: AgentSessionTrack | null, tracks: readon
   if (!occupied) {
     return refused(`no one occupies ${held[0]}, where ${orchestrator} composes for ${setRef}: its body starts with \`aikit inhabit --position ${held[0]}\`, and nothing is asked until it does.`)
   }
-  return {state: 'addressed', address: {position: occupied, agent: orchestrator, set: setRef}}
+  // The ask is the orchestrator's conversation's next turn: the session it works in the group's space, else its session elsewhere on the
+  // rack (widgets/agentConversation.ts sessionOfAgent: a single session, never a group's).
+  const session = sessionOfAgent(tracks.filter(item => item.parentRef === group?.sessionRef), orchestrator) ?? sessionOfAgent(tracks, orchestrator)
+  if (!session) return refused(`${orchestrator} occupies ${occupied}, and no session of it stands on this rack: Compose asks in its conversation, so nothing is asked until one does.`)
+  return {state: 'addressed', address: {position: occupied, agent: orchestrator, set: setRef, session: session.sessionRef, register: session.project ?? ROOT_REGISTER}}
 }
 
 /** What Compose carries: the Intent (the task's Run's required difference), its From (the plan the Run answers to), the clip's
@@ -693,25 +705,33 @@ function mapWordsOf(map: ComposeMap | null): string[] {
     'Read each ticket: its Question is what the unit is for, its Context the unit\'s sources, its Done when the unit\'s success conditions, its Writes what the unit may change, and its claim the row the unit stands on.',
     'A blocker outside the map (waitsOutside) is no unit of this song, so no unit waits on it.', '']
 }
-/** The ask the desk keeps: the Communique's id, the Position asked, the register its answer is read in, the song's revision it was asked
- * against, and when. */
-export interface ComposeAsked {readonly communique: string; readonly position: string; readonly project: string | null; readonly revision: string; readonly at: number}
+/** The ask the desk keeps: its id (which the answer's subject names), the Position whose proposals answer and the session asked, the
+ * register its answer is read in, the song's revision it was asked against, and when. */
+export interface ComposeAsked {readonly ask: string; readonly position: string; readonly session: string; readonly project: string | null; readonly revision: string
+  readonly at: number}
 
-/** The Communique Compose sends: its words for Anima, then the ask as one JSON block (oi.compose-ask/v1). Pure. */
+/** An ask's id, from a few random characters: the one line the answer's proposal carries as its subject names it. Pure. */
+export const composeAskRefOf = (suffix: string) => `compose:${suffix}`
+/** The subject Anima's proposal carries: the song and the ask it answers, one bounded line as Central's ledger keeps it. Pure. */
+const answerSubjectOf = (name: string, ask: string) => `Compose: ${name} · ${ask}`
+
+/** The ask Compose puts to the orchestrator's conversation: its words for Anima, then the ask as one JSON block (oi.compose-ask/v1). The
+ * answer is a proposal to the person from the Position the orchestrator occupies, its subject naming the ask. Pure. */
 export function composeAskOf(address: ComposeAddress, words: ComposeWords, reading: Record<string, unknown>, target: PlanTarget, project: string | null,
-  map: ComposeMap | null = null): {body: string; revision: string} {
+  ask: string, map: ComposeMap | null = null): {body: string; revision: string} {
   const song = object(reading.song) ?? {}
   const revision = text(object(song.file)?.byteRevision)
   if (!revision) throw new Error(`Compose: Factory writes no edit of this song, so nothing can be composed into it: ${text(song.why) ?? 'no file under the project root holds it'}`)
   if (!words.intent) throw new Error(`Compose writes from the task's Intent, and it is not read: ${words.intentWhy ?? 'no intent is read here'}`)
   const name = text(song.workflowKey) ?? target.runRef
-  const answer = ['aikit gateway send --to @owner --propose --reply-to <this Communique>', `--subject "Compose: ${name}"`,
+  const subject = answerSubjectOf(name, ask)
+  const answer = ['aikit gateway send --to @owner --propose', `--from-position ${address.position}`, `--subject "${subject}"`,
     ...(project ? [`--project-world ${project}`] : []), '--body-file -'].join(' ')
   const head = map?.state === 'read' ? object(map.reading.map) ?? {} : null
-  const ask = {schema: COMPOSE_ASK, intent: words.intent, from: words.from ?? null, constellation: words.constellation, sources: words.sources,
+  const block = {schema: COMPOSE_ASK, ask, intent: words.intent, from: words.from ?? null, constellation: words.constellation, sources: words.sources,
     song: {workflowKey: name, runRef: target.runRef, statePath: target.statePath, byteRevision: revision}, set: address.set,
     map: map?.state === 'read' && head ? {ticket: head.ticket, title: head.title, url: head.url, units: list(map.reading.units), waves: list(map.reading.waves)} : null,
-    answer: {to: '@owner', propose: true, register: project, contract: EDIT_REQUEST, expectedRevision: revision, edits: [...EDIT_OPS]}}
+    answer: {to: '@owner', propose: true, from: address.position, subject, register: project, contract: EDIT_REQUEST, expectedRevision: revision, edits: [...EDIT_OPS]}}
   const body = [`Compose a first score for the song ${name}, from the task's Intent, through your team (${address.set}).`, '',
     `Intent: ${words.intent}`,
     `From: ${words.from ?? 'no plan is named'}`,
@@ -719,22 +739,9 @@ export function composeAskOf(address: ComposeAddress, words: ComposeWords, readi
     `Song: ${name} (Run ${target.runRef}, its file at revision ${revision})`, '',
     ...mapWordsOf(map),
     `Your edits are Factory's (${EDIT_REQUEST}): \`unit\` writes a unit the song does not hold, whole, in the workflow SDK's words (\`factory workflow schema\`); \`allocate\`, \`connect\` and \`heads\` change the units it holds.`,
-    `Answer the person with one proposal that replies to this Communique (\`${answer}\`), holding your score as one JSON block of ${EDIT_REQUEST} against revision ${revision}. Nothing is written to the song until QL and Factory admit it and the person accepts it.`,
-    '', '```json', JSON.stringify(ask), '```'].join('\n')
+    `Answer the person with one proposal whose subject names this ask, ${ask} (\`${answer}\`), holding your score as one JSON block of ${EDIT_REQUEST} against revision ${revision}. Nothing is written to the song until QL and Factory admit it and the person accepts it.`,
+    '', '```json', JSON.stringify(block), '```'].join('\n')
   return {body, revision}
-}
-
-/** The one Communique Compose sends: to the orchestrator's Position, through AIKit's gateway (`aikit gateway send`, the kernel's
- * gateway_write send). It carries no sender: the desk is never an occupant. Pure. */
-export const composeSendOp = (address: ComposeAddress, body: string, project: string | null): KernelOp =>
-  ({op: 'gateway_write', request: {kind: 'send', ...(project ? {project} : {}), to: address.position, body}} as KernelOp)
-
-/** The ask the desk keeps, from AIKit's answer to the send: the Communique it recorded (its reading's `communique`, by its ref, as
- * messagesBinding.ts communiqueRefOf reads it). Throws when the answer names none, since then no answer could be told from another. Pure. */
-export function composeAskedOf(sent: unknown, address: ComposeAddress, project: string | null, revision: string, at: number): ComposeAsked {
-  const communique = text(object(object(sent)?.communique)?.communique_ref)
-  if (!communique) throw new Error('Compose: AIKit\'s send answered no Communique, so its answer could not be told from another.')
-  return {communique, position: address.position, project, revision, at}
 }
 
 /** Anima's answer as the ledger holds it: waiting (with the proposals from the Position that answer something else), the proposal taken
@@ -743,24 +750,30 @@ export type ComposeAnswer = {readonly state: 'waiting'; readonly others: number}
   | {readonly state: 'answered'; readonly returnRef: string; readonly revision: string; readonly status: string; readonly proposal: SongEdit; readonly later: number}
   | {readonly state: 'refused'; readonly returnRef: string; readonly revision: string; readonly status: string; readonly why: string; readonly later: number}
 
-/** The receiving op of one register, in Central's own request (desktop/cradle/src/receiving/client.ts receivingWire). */
-const receivingOp = (project: string | null, request: ReceivingRequest): KernelOp => ({op: 'receiving', project, request: receivingWire(request)} as KernelOp)
-const receivingData = (call: {outcome?: {result?: string; data?: unknown} | null; error?: string}, asked: string): Record<string, unknown> => {
-  if (call.error) throw new Error(`Central's receiving ledger did not answer ${asked}: ${refusalWords(call.error)}`)
-  if (call.outcome?.result !== 'receiving_reading') throw new Error(`Central's receiving ledger answered ${asked} with no reading.`)
-  return object(call.outcome.data) ?? {}
+/** One request to one register's receiving ledger, in Central's own request (desktop/cradle/src/receiving/client.ts receivingOp): a reading
+ * by the kernel's `receiving` op, a decision as Central's Action through `act` (O-I 1002). Its data, or why not in words. */
+const askLedger = async (call: PlanCall, project: string | null, request: ReceivingRequest, asked: string): Promise<Record<string, unknown>> => {
+  const answer = await call(receivingOp(project, request))
+  if (answer.error) throw new Error(`Central's receiving ledger did not answer ${asked}: ${refusalWords(answer.error)}`)
+  if (answer.outcome?.result !== 'receiving_reading' && answer.outcome?.result !== 'action_dispatched') throw new Error(`Central's receiving ledger answered ${asked} with no reading.`)
+  try {
+    return object(receivingAnswer(answer as unknown as KernelOpCall, request)) ?? {}
+  } catch (cause) {
+    throw new Error(`Central's receiving ledger did not answer ${asked}: ${refusalWords(cause instanceof Error ? cause.message : String(cause))}`)
+  }
 }
 /** At most this many pages of a register are read for one answer. */
 const LEDGER_PAGES = 10
 
-/** Anima's answer to one ask, read from Central's receiving ledger: the proposals its Position made since the ask, each read for the
- * Communique it replies to. The first that replies to the ask is taken; a later one is not, nor one replying to another. */
+/** Anima's answer to one ask, read from Central's receiving ledger: the proposals its Position made since the ask, each known by its
+ * subject, the one line the ledger's page carries (central.receiving-page/v1). The first whose subject names the ask is read and taken;
+ * a later one is not, nor one naming another ask. */
 export async function composeAnswerOf(call: PlanCall, asked: ComposeAsked): Promise<ComposeAnswer> {
   const since = Math.floor(asked.at / 1000) - 60
   const rows: Record<string, unknown>[] = []
   let after = 0
   for (let page = 0; page < LEDGER_PAGES; page++) {
-    const data = receivingData(await call(receivingOp(asked.project, {kind: 'list', after, limit: 200})), 'the list of what it received')
+    const data = await askLedger(call, asked.project, {kind: 'list', after, limit: 200}, 'the list of what it received')
     for (const row of list(data.returns).map(object)) {
       if (row && row.kind === 'request' && object(row.request)?.kind === 'proposal' && object(row.declared_producer)?.ref === asked.position
         && Number(row.received_at_unix_seconds ?? 0) >= since) rows.push(row)
@@ -771,12 +784,11 @@ export async function composeAnswerOf(call: PlanCall, asked: ComposeAsked): Prom
   const answers: Record<string, unknown>[] = []
   let others = 0
   for (const row of rows.sort((a, b) => Number(a.sequence ?? 0) - Number(b.sequence ?? 0))) {
-    const reading = receivingData(await call(receivingOp(asked.project, {kind: 'read', return_ref: String(row.return_ref)})), String(row.return_ref))
-    if (object(reading.record)?.reply_to === asked.communique) answers.push(reading)
+    if (text(object(row.request)?.subject)?.includes(asked.ask)) answers.push(row)
     else others++
   }
-  const first = answers[0]
-  if (!first) return {state: 'waiting', others}
+  if (!answers[0]) return {state: 'waiting', others}
+  const first = await askLedger(call, asked.project, {kind: 'read', return_ref: String(answers[0].return_ref)}, String(answers[0].return_ref))
   const record = object(first.record) ?? {}
   const returnRef = String(first.return_ref), revision = String(first.revision), status = String(record.status)
   const later = answers.length - 1
@@ -836,15 +848,15 @@ export async function judgeProposal(call: PlanCall, score: ScoreReading, proposa
   return {state: 'admitted', why: `Anima's proposal: ${proposal.edits.length} edit${proposal.edits.length === 1 ? '' : 's'}${units}; ${heads}, and Factory admits it (factory workflow edit --check). Accept writes it into the song.`}
 }
 
-/** Accept, one act: the proposal accepted in Central's ledger with the person's authority (`receiving` Review), then the edit applied
+/** Accept, one act: the proposal accepted in Central's ledger with the person's authority (`central.receiving.review`), then the edit applied
  * by Factory. A proposal Central already holds accepted is not reviewed again, so a Factory refusal after it is repeated by pressing
  * Accept again. */
 export async function acceptComposed(call: PlanCall, project: string | null, answer: {returnRef: string; revision: string; status: string; proposal: SongEdit},
   edit: (request: SongEdit) => Promise<unknown>): Promise<void> {
   if (answer.status === 'rejected') throw new Error(`The person declined Anima's proposal in Central (${answer.returnRef}): ask again.`)
   if (answer.status !== 'accepted' && answer.status !== 'included') {
-    receivingData(await call(receivingOp(project, {kind: 'review', return_ref: answer.returnRef, expected_return_revision: answer.revision, disposition: 'accepted',
-      note: 'Accepted on the task\'s clip: Factory writes it into the song.'})), 'the acceptance')
+    await askLedger(call, project, {kind: 'review', return_ref: answer.returnRef, expected_return_revision: answer.revision, disposition: 'accepted',
+      note: 'Accepted on the task\'s clip: Factory writes it into the song.'}, 'the acceptance')
   }
   try {
     await edit(answer.proposal)
@@ -853,11 +865,11 @@ export async function acceptComposed(call: PlanCall, project: string | null, ans
   }
 }
 
-/** Discard: the proposal declined in Central's ledger (`receiving` Review rejected). One Central already settled is only forgotten. */
+/** Discard: the proposal declined in Central's ledger (`central.receiving.review` rejected). One Central already settled is only forgotten. */
 export async function declineComposed(call: PlanCall, project: string | null, answer: {returnRef: string; revision: string; status: string}): Promise<void> {
   if (answer.status !== 'pending' && answer.status !== 'needs-review') return
-  receivingData(await call(receivingOp(project, {kind: 'review', return_ref: answer.returnRef, expected_return_revision: answer.revision, disposition: 'rejected',
-    note: 'Discarded on the task\'s clip.'})), 'the declining')
+  await askLedger(call, project, {kind: 'review', return_ref: answer.returnRef, expected_return_revision: answer.revision, disposition: 'rejected',
+    note: 'Discarded on the task\'s clip.'}, 'the declining')
 }
 
 /** Compose as the clip reads it: unaddressed (why), ready to ask, asked and waiting, or answered with the owners' word. */
@@ -866,7 +878,8 @@ export type ComposeState = {readonly state: 'unaddressed'; readonly why: string}
   | {readonly state: 'answered'; readonly asked: ComposeAsked; readonly answer: Extract<ComposeAnswer, {state: 'answered'}>; readonly word: 'admitted' | 'refused' | 'checking'; readonly why: string}
   | {readonly state: 'refused'; readonly asked: ComposeAsked; readonly answer: Extract<ComposeAnswer, {state: 'refused'}>}
 
-/** Compose's acts: Ask sends the Communique (or throws why not); Accept and Discard act on the proposal taken; Drop forgets the ask. */
+/** Compose's acts: Ask puts the ask to the orchestrator's conversation (or throws why not); Accept and Discard act on the proposal taken;
+ * Drop forgets the ask. */
 export interface ComposePort {
   readonly state: ComposeState
   readonly ask: () => Promise<void>
@@ -875,12 +888,12 @@ export interface ComposePort {
 }
 
 const laterWords = (later: number) => later ? ` (${later} later proposal${later === 1 ? '' : 's'} answering the same ask ${later === 1 ? 'is' : 'are'} not taken)` : ''
-const othersWords = (others: number) => others ? ` ${others} proposal${others === 1 ? '' : 's'} from it since then answer${others === 1 ? 's' : ''} another Communique and ${others === 1 ? 'is' : 'are'} not taken.` : ''
+const othersWords = (others: number) => others ? ` ${others} proposal${others === 1 ? '' : 's'} from it since then answer${others === 1 ? 's' : ''} another ask and ${others === 1 ? 'is' : 'are'} not taken.` : ''
 
 /** Compose's word on the clip (`gen.status`), in the owners' words. Pure. */
 export function composeStatusOf(state: ComposeState): {state: string; why: string} | null {
   switch (state.state) {
-    case 'asked': return {state: 'asked', why: state.why ?? `Compose asked ${state.asked.position} (${state.asked.communique}): no proposal in Central's receiving ledger answers it yet.${othersWords(state.others)}`}
+    case 'asked': return {state: 'asked', why: state.why ?? `Compose asked ${state.asked.position} in its session ${state.asked.session} (${state.asked.ask}): no proposal in Central's receiving ledger answers it yet.${othersWords(state.others)}`}
     case 'answered': return state.word === 'checking'
       ? {state: 'asked', why: `Anima proposed (${state.answer.returnRef}): QL and Factory are checking it.`}
       : {state: state.word, why: `${state.why}${laterWords(state.answer.later)}`}
@@ -891,7 +904,7 @@ export function composeStatusOf(state: ComposeState): {state: string; why: strin
 
 /** Where Compose asks, on the clip (`gen.asks`). Pure. */
 export function composeAsksOf(state: ComposeState): string | null {
-  if (state.state === 'ready') return `${state.address.position} · ${state.address.agent}, the orchestrator of ${state.address.set}`
+  if (state.state === 'ready') return `${state.address.position} · ${state.address.agent}, the orchestrator of ${state.address.set}, in its session ${state.address.session}`
   return state.state === 'unaddressed' ? null : state.asked.position
 }
 
@@ -901,17 +914,17 @@ const askKey = (target: PlanTarget) => JSON.stringify([target.statePath, target.
 /** How often a waiting ask reads the ledger again. */
 const COMPOSE_EVERY_MS = 5000
 
-/** Compose for the task's song: the ask through AIKit's gateway, its answer read in Central's receiving ledger, the owners' word on it,
- * and the person's Accept or Discard. */
+/** Compose for the task's song: the ask as the orchestrator's conversation's next turn (the one send), its answer read in Central's
+ * receiving ledger, the owners' word on it, and the person's Accept or Discard. */
 export function useCompose(transport: KernelTransportStatus, project: string | null, to: ComposeTo, words: ComposeWords, score: ScoreReading,
   edit: (request: SongEdit) => Promise<unknown>): ComposePort {
   const target = score.state === 'read' ? score.target : null
   const key = target ? askKey(target) : null
   const [epoch, setEpoch] = useState(0)
   const asked = key ? ASKS.get(key) ?? null : null
-  const [answer, setAnswer] = useState<{communique: string; answer: ComposeAnswer | null; why?: string; word?: {state: 'admitted' | 'refused'; why: string}} | null>(null)
+  const [answer, setAnswer] = useState<{ask: string; answer: ComposeAnswer | null; why?: string; word?: {state: 'admitted' | 'refused'; why: string}} | null>(null)
   const call = useMemo(() => carried(transport), [transport])
-  const settled = answer?.communique === asked?.communique && answer?.answer && answer.answer.state !== 'waiting'
+  const settled = answer?.ask === asked?.ask && answer?.answer && answer.answer.state !== 'waiting'
   // While an ask waits, the ledger is read again every few seconds; once a proposal is taken it is judged once.
   useEffect(() => {
     if (!asked || transport.kind === 'unavailable' || settled) return
@@ -919,26 +932,26 @@ export function useCompose(transport: KernelTransportStatus, project: string | n
     const read = async () => {
       let found: ComposeAnswer
       try { found = await composeAnswerOf(call, asked) } catch (error) {
-        if (live) setAnswer({communique: asked.communique, answer: null, why: error instanceof Error ? error.message : String(error)})
+        if (live) setAnswer({ask: asked.ask, answer: null, why: error instanceof Error ? error.message : String(error)})
         return
       }
       if (!live) return
-      setAnswer({communique: asked.communique, answer: found})
+      setAnswer({ask: asked.ask, answer: found})
       if (found.state === 'answered') {
         const word = await judgeProposal(call, score, found.proposal)
-        if (live) setAnswer({communique: asked.communique, answer: found, word})
+        if (live) setAnswer({ask: asked.ask, answer: found, word})
       }
     }
     void read()
     const every = setInterval(() => { void read() }, COMPOSE_EVERY_MS)
     return () => { live = false; clearInterval(every) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [asked?.communique, settled, epoch, JSON.stringify(transport)])
-  const held = answer && asked && answer.communique === asked.communique ? answer : null
+  }, [asked?.ask, settled, epoch, JSON.stringify(transport)])
+  const held = answer && asked && answer.ask === asked.ask ? answer : null
   const found = held?.answer ?? null
   const state: ComposeState = !asked ? (to.state === 'refused' ? {state: 'unaddressed', why: to.why} : {state: 'ready', address: to.address})
     : !found || found.state === 'waiting' ? {state: 'asked', asked, others: found?.state === 'waiting' ? found.others : 0,
-      ...(held?.why ? {why: `Compose asked ${asked.position} (${asked.communique}), and its answer is not read: ${held.why}`} : {})}
+      ...(held?.why ? {why: `Compose asked ${asked.position} in its session ${asked.session} (${asked.ask}), and its answer is not read: ${held.why}`} : {})}
       : found.state === 'refused' ? {state: 'refused', asked, answer: found}
         : {state: 'answered', asked, answer: found, word: held?.word?.state ?? 'checking', why: held?.word?.why ?? ''}
   const forget = () => { if (key) ASKS.delete(key); setAnswer(null); setEpoch(n => n + 1) }
@@ -946,13 +959,16 @@ export function useCompose(transport: KernelTransportStatus, project: string | n
     state,
     ask: async () => {
       if (state.state === 'unaddressed') throw new Error(state.why)
-      if (state.state !== 'ready') throw new Error(`Compose was asked in ${state.asked.communique}: Discard its answer before another ask is sent.`)
+      if (state.state !== 'ready') throw new Error(`Compose was asked in ${state.asked.ask}: Discard its answer before another ask is sent.`)
       if (score.state !== 'read' || !key) throw new Error(score.state === 'absent' ? score.why : SCORE_NOT_HERE)
       // The plan the Run answers to, read as the project's map where it names an issue: its tickets are the song's units.
       const map = await readComposeMap(call, words.from)
-      const {body, revision} = composeAskOf(state.address, words, score.reading, score.target, project, map)
-      const sent = await ownerRouteWrite(transport, composeSendOp(state.address, body, project), '`aikit gateway send`')
-      ASKS.set(key, composeAskedOf(sent.data, state.address, project, revision, Date.now()))
+      const ask = composeAskRefOf(globalThis.crypto.randomUUID().slice(0, 8))
+      const {body, revision} = composeAskOf(state.address, words, score.reading, score.target, project, ask, map)
+      // The one send (O-I 1003): the ask is the orchestrator's conversation's next turn, the same session every presenter of it shares.
+      const at = Date.now()
+      await encounterSessionOf(transport, {project: state.address.register, ref: state.address.session}).submit(body)
+      ASKS.set(key, {ask, position: state.address.position, session: state.address.session, project, revision, at})
       setAnswer(null)
       setEpoch(n => n + 1)
     },

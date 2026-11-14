@@ -42,8 +42,10 @@ const HOME = at('Control/user/flows')
 const documentOf = (ref, title, revision = 1) => ({schema: 'oi.expression/v1', expression_ref: ref, revision, title,
   scenes: [{scene_ref: ref + ':scene:main', revision: 1, title: 'Main', entity_refs: []}], entities: {}, relations: {},
   selection: {scene_ref: ref + ':scene:main', entity_ref: null}, provenance: [], representations: [], refinements: []})
-/** `files`: name → document (or a string that does not decode). `home: false` is a home the owner cannot list. */
-function stubOwner({files = {}, open = [], home = true, override = {}} = {}) {
+/** `files`: name → document (or a string that does not decode). `home: false` is a home not made yet: the owner lists none, and
+ * a save_as that names no parent makes it (the kernel's expression_home::ensure, Central's central.flows.ensure) unless `ensure` is
+ * false, when the owner refuses in Central's words. */
+function stubOwner({files = {}, open = [], home = true, ensure = true, override = {}} = {}) {
   const held = new Map(open.map(d => [d.expression_ref, clone(d)])), stored = new Map(), calls = []
   const put = (name, document) => stored.set(HOME.path + '/' + name, {document: clone(document), revision: `file-r${stored.size + 1}`})
   for (const [name, document] of Object.entries(files)) put(name, document)
@@ -90,8 +92,12 @@ function stubOwner({files = {}, open = [], home = true, override = {}} = {}) {
       case 'save_as': {
         const d = held.get(request.expression_ref)
         if (request.expected_revision !== d.revision) return {state: 'revision_conflict', current_revision: d.revision}
+        if (!request.parent) {
+          if (!ensure) return {state: 'save_refused', owner_operation: 'central.flows.ensure', failure: {code: 'ground_unplaced', message: 'The ground has no placement for Flows yet'}}
+          home = true
+        }
         put(request.name, d)
-        const path = request.parent.path + '/' + request.name
+        const path = (request.parent ?? HOME).path + '/' + request.name
         return {state: 'saved', persisted: true, readback_verified: true, owner_operation: 'central.files.create', file: {location: at(path), revision: stored.get(path).revision}}
       }
       default: assert.fail('unexpected owner operation ' + request.operation)
@@ -128,7 +134,7 @@ test('enumerate publishes the open works, then each work that lives only as a fi
   assert.equal(CMD.closedWork(works, 'expression:absent'), null)
 })
 
-test('the save parent is the works home the owner disclosed on its last list, listed afresh when none is held, refused with the owner\'s reason', async () => {
+test('the save parent is the works home the owner disclosed on its last list, listed afresh when none is held, and none while it lists none', async () => {
   const owner = stubOwner()
   CMD.setExpressionOwner(null)
   assert.deepEqual(await CMD.worksHome(owner.channel), HOME, 'nothing held: the home is listed')
@@ -139,9 +145,9 @@ test('the save parent is the works home the owner disclosed on its last list, li
   CMD.setExpressionOwner(async () => ({}))
   CMD.setExpressionOwner(null)
   const missing = stubOwner({home: false})
-  await assert.rejects(CMD.worksHome(missing.channel), /The works home Control\/user\/flows is unavailable: Central listing requires a directory/)
+  assert.equal(await CMD.worksHome(missing.channel), null, 'a home not made yet is no parent: the save names none')
   await CMD.enumerateWorks(missing.channel, () => {}, () => true)
-  await assert.rejects(CMD.worksHome(missing.channel), /unavailable/, 'an unavailable home is never a parent')
+  assert.equal(await CMD.worksHome(missing.channel), null, 'an unavailable home is never a parent')
   CMD.setExpressionOwner(null)
 })
 
@@ -201,15 +207,33 @@ test('New is create and its blank Scene\'s material, then save_as into the home 
   CMD.setExpressionOwner(null)
 })
 
-test('a home the owner cannot list leaves a New work open and unsaved, with the owner\'s reason on the row', async () => {
+// A fresh world (`ctrl init`) has no works home until its first save (#1008's act, step 2): New's save_as names no parent and the
+// owner makes the home there; after a restart the list holds the work as its file.
+test('on a ground with no works home yet, New\'s save_as names no parent, the owner makes the home, and the work is its file after a restart', async () => {
   CMD.setExpressionOwner(null)
   const owner = stubOwner({home: false}), {ports: p, events} = ports(owner)
   const outcome = await CMD.newExpression(p, 'Untitled expression')
+  assert.equal(outcome.ok, true, outcome.error)
+  assert.ok(events.includes('save_as'), 'New saves even though the owner listed no home')
+  const saveAs = owner.calls.find(call => call.operation === 'save_as')
+  assert.equal('parent' in saveAs, false, 'the save names no parent, so the owner makes its home')
+  assert.equal(outcome.refused, null)
+  assert.deepEqual(outcome.saved, {path: 'Control/user/flows/' + saveAs.name, revision: 'file-r1'})
+  owner.held.clear()
+  const after = await CMD.enumerateWorks(owner.channel, () => {}, () => true)
+  assert.deepEqual(after.map(work => [work.open, work.location.path]), [[false, 'Control/user/flows/' + saveAs.name]])
+  CMD.setExpressionOwner(null)
+})
+
+test('a home the owner cannot make leaves a New work open and unsaved, with the owner\'s words on the row', async () => {
+  CMD.setExpressionOwner(null)
+  const owner = stubOwner({home: false, ensure: false}), {ports: p, events} = ports(owner)
+  const outcome = await CMD.newExpression(p, 'Untitled expression')
   assert.equal(outcome.ok, true)
   assert.equal(outcome.saved, null)
-  assert.match(outcome.refused, /works home Control\/user\/flows is unavailable/)
-  assert.ok(!events.includes('save_as'))
+  assert.match(outcome.refused, /Expression save \(central\.flows\.ensure\): The ground has no placement for Flows yet/)
   assert.ok(events.some(event => event.startsWith('open:')))
+  CMD.setExpressionOwner(null)
 })
 
 // ——— code-reading: the wiring React effects hide ——————————————————————————————————————————————

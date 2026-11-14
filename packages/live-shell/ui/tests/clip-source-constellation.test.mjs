@@ -484,8 +484,8 @@ test('a mode whose owner cannot make its clip of a constellation yet takes the d
     assert.match(answer.error, /missing op/, `${mode}: the refusal names the missing operation`)
   }
   // REPLACED (O-I #768, part two): Factory and Expressions refused the drop naming AIKit's task_create and the knowledge_whole resolver; their
-  // sets bring their own makers now (agent/clipBinding.ts taskMaker on useFactoryTracks.ts; components/expressions/clip/clipBinding.ts
-  // sceneMaker on modeTracks.ts expressionsTracks), as Central's does.
+  // sets brought their own makers (agent/clipBinding.ts taskMaker, deleted under O-I #1006 with the window's Factory set;
+  // components/expressions/clip/clipBinding.ts sceneMaker on modeTracks.ts expressionsTracks), as Central's does.
   // REPLACED (O-I #768, part three): Technē refused naming event_create on the temporal events projection; its set brings its own maker now
   // (techne/clipBinding.ts techneEventMaker on useTechneTracks.ts), which keeps the event in the World's walk Expression.
   // REPLACED (O-I #768, part three): Live refused naming live_clip_create on live-set; its set brings its own maker now
@@ -500,21 +500,28 @@ test('a mode whose owner cannot make its clip of a constellation yet takes the d
   assert.equal(withClipMaker(set, MODE_CLIP_MAKERS.live), set, 'a set that brings its own maker keeps it')
 })
 
-/** AIKit's session settings behind the bridge's fetch (FIXTURE): one session's reading, written against its revision (the owner's CAS) and
- * read back; a write answers the owner's refusal when the revision moved. */
+/** AIKit's session settings behind the bridge's fetch (FIXTURE): one session's reading, read by the kernel's encounter_session_settings and
+ * written by AIKit's Action aikit.session.settings through the kernel's `act` against its revision (the owner's CAS), then read back; a
+ * write answers the owner's refusal when the revision moved. REPLACED (O-I 1006): the kernel's encounter_session_settings wrote it. */
+const SETTINGS_ACTION = 'aikit.session.settings'
+/** The settings writes a fixture kernel was sent, each as AIKit's Action took it: the request and the revision expected. */
+const settingsWrites = sent => sent.filter(body => body.op === 'act' && body.action === SETTINGS_ACTION)
+  .map(body => [JSON.parse(body.input.request_json), body.input.expected_revision])
 function settingsKernel(reading) {
   const sent = []
   let held = reading
   const answer = data => ({json: async () => ({ok: true, outcome: {result: 'encounter_session_settings_reading', data}})})
+  const dispatched = dispatch => ({json: async () => ({ok: true, outcome: {result: 'action_dispatched', dispatch, receipts: []}})})
   const fetch = async (_url, init) => {
     const body = JSON.parse(init.body)
     sent.push(body)
-    if (body.op !== 'encounter_session_settings') return {json: async () => ({ok: false, error: `the fixture kernel answers no ${body.op}`})}
-    if (!body.request) return answer(held)
-    if (body.expected_revision !== held.revision) return {json: async () => ({ok: false, error: 'Session settings revision conflict; read the current settings and write again'})}
-    const source = body.request.task.set.source
+    if (body.op === 'encounter_session_settings') return answer(held)
+    if (body.op !== 'act' || body.action !== SETTINGS_ACTION) return {json: async () => ({ok: false, error: `the fixture kernel answers no ${body.op}`})}
+    if (body.input.expected_revision !== held.revision) return dispatched({state: 'owner_refused', owner_operation: SETTINGS_ACTION,
+      message: 'Session settings revision conflict; read the current settings and write again'})
+    const source = JSON.parse(body.input.request_json).task.set.source
     held = settingsOf(source, {revision: 'session-settings/02'})
-    return answer(held)
+    return dispatched({state: 'invoked', owner_operation: SETTINGS_ACTION, data: held})
   }
   return {sent, fetch}
 }
@@ -525,10 +532,10 @@ test('Factory: a constellation dropped on a session\'s track makes the session\'
   const receipt = await withKernel(aikit, () => factory.makeTaskOf(BRIDGE, session, {ref: LIVED, title: 'The lived-in world'}))
   assert.equal(receipt.ok, true, receipt.error)
   assert.match(receipt.note, /The lived-in world/)
-  const writes = aikit.sent.filter(body => body.request)
-  assert.deepEqual(writes.map(body => [body.request, body.expected_revision]), [[{task: {task_ref: 'task:fixtures', set: {source: LIVED}}}, 'session-settings/01']],
-    'one write: the bound task\'s source, against the revision read')
-  assert.ok(aikit.sent.indexOf(writes[0]) < aikit.sent.length - 1 && !aikit.sent.at(-1).request, 'the source is read back from AIKit after the write')
+  assert.deepEqual(settingsWrites(aikit.sent), [[{task: {task_ref: 'task:fixtures', set: {source: LIVED}}}, 'session-settings/01']],
+    'one write: the bound task\'s source, by AIKit\'s Action, against the revision read')
+  const write = aikit.sent.findIndex(body => body.op === 'act')
+  assert.ok(aikit.sent.slice(write + 1).some(body => body.op === 'encounter_session_settings'), 'the source is read back from AIKit after the write')
   // REPLACED (O-I #768, a fresh task): a session that held no task was refused outright, then given a task on the basis another session's
   // task gave; it asks AIKit's task creation now (the next test), and what answers is the owner's: here a kernel with no task creation, whose
   // words pass through, and nothing is written to the session's settings.
@@ -536,19 +543,18 @@ test('Factory: a constellation dropped on a session\'s track makes the session\'
   const untasked = await withKernel(idle, () => factory.makeTaskOf(BRIDGE, session, {ref: LIVED, title: 'The lived-in world'}))
   assert.equal(untasked.ok, false)
   assert.match(untasked.error, /the fixture kernel answers no encounter_task_configure/)
-  assert.equal(idle.sent.some(body => body.op === 'encounter_session_settings' && body.request), false, 'a session with no task has no settings written')
-  // The maker the Factory set carries: a session's track takes the drop; anything else, or a ref the wiki does not hold, is refused in words.
-  const maker = factory.taskMaker(BRIDGE, [track], ref => owners.constellationNamed(ROWS, ref))
-  assert.equal(maker.accepts, owners.CONSTELLATION_DRAG)
-  assert.match((await maker.run('elsewhere', LIVED)).error, /session's track/)
-  assert.match((await maker.run(trackKey(track), 'wiki:anchor:gone')).error, /no constellation the wiki/)
-  const dropped = await withKernel(settingsKernel(settingsOf(null)), () => maker.run(trackKey(track), LIVED))
-  assert.equal(dropped.ok, true, dropped.error)
-  // The Factory set the pane draws carries it (useFactoryTracks.ts factoryTrackSet): its tracks take the drop.
-  const {factoryTrackSet} = await import('../src/frame/tracks/useFactoryTracks.ts')
-  const drawn = factoryTrackSet({columns: [], tracks: [{id: trackKey(track), name: 'Fizz'}], clips: []}, null, null, BRIDGE, [track])
+  assert.deepEqual(settingsWrites(idle.sent), [], 'a session with no task has no settings written')
+  // REPLACED (O-I #1006): the maker the window's Factory set carried (taskMaker), deleted with that set: Factory's Set is the kernel's,
+  // which takes the drop and refuses it in its own words (below).
+  // The Factory Set the pane draws is the kernel's (O-I #1004), whose acts are Actions of the registry: making the session's task of a
+  // constellation is none yet (O-I #1006), so its tracks take the drop and refuse it in the Set's own words, never in silence.
+  const {kernelSetTracks} = await import('../src/frame/tracks/kernelSet.ts')
+  const {modeSetOf, setTrack} = await import('./support/modeSetFixture.mjs')
+  const waits = 'the session\'s task of a constellation dropped on it: AIKit\'s task made on the session (encounter-task-configure), which no Action of the registry carries yet (O-I #1006)'
+  const drawn = kernelSetTracks(modeSetOf({owner: 'Factory and AIKit', tracks: [setTrack(trackKey(track), 'Fizz')], waiting: {'clip.make': waits}}), {nowMs: 0})
   assert.equal(drawn.actions.makeClip.accepts, owners.CONSTELLATION_DRAG)
-  assert.match(drawn.actions.makeClip.op, /AIKit encounter-session-settings/)
+  assert.deepEqual(await drawn.actions.makeClip.run(trackKey(track), LIVED),
+    {ok: false, error: `No owner operation carries it yet — missing op: clip.make (Factory and AIKit). It waits for ${waits}.`})
 })
 
 // REPLACED (O-I #768 follow-up): PREPARED, a session's prepared task whose request a new task copied (its Central, protocol child, working
@@ -565,7 +571,7 @@ function factoryKernel({refuse = null} = {}) {
   const fetch = async (_url, init) => {
     const body = JSON.parse(init.body)
     sent.push(body)
-    if (body.op === 'encounter_session_settings' && !body.request) return ok('encounter_session_settings_reading', held.get(body.agent_session))
+    if (body.op === 'encounter_session_settings') return ok('encounter_session_settings_reading', held.get(body.agent_session))
     if (body.op === 'encounter_task_configure') {
       if (refuse) return {json: async () => ({ok: false, error: refuse})}
       const record = {schema: 'aikit.encounter-task/v1', revision: 'task-binding/01JNEW', ready: true, request: body.request}
@@ -582,10 +588,8 @@ function factoryKernel({refuse = null} = {}) {
 test('Factory: a constellation dropped on a session that holds no task makes a new task of it through AIKit\'s task creation, which takes the rest from the session, its source read back from AIKit', async () => {
   // The session's own register rides its track (agent/worldScope.ts): the task is made where its agency read listed it.
   const idle = {...track, sessionRef: 'ses-215', agentRef: null, agentName: 'Buzz', tasks: [], project: 'O-I'}
-  const maker = factory.taskMaker(BRIDGE, [track, idle], ref => owners.constellationNamed(ROWS, ref))
-  assert.match(maker.op, /encounter-task-configure/, 'the maker names AIKit\'s task creation beside the settings write')
   const aikit = factoryKernel()
-  const made = await withKernel(aikit, () => maker.run(trackKey(idle), LIVED))
+  const made = await withKernel(aikit, () => factory.makeTaskOf(BRIDGE, {sessionRef: idle.sessionRef, label: idle.agentName}, owners.constellationNamed(ROWS, LIVED), idle.project))
   assert.equal(made.ok, true, made.error)
   assert.match(made.note, /The lived-in world/)
   const configured = aikit.sent.filter(body => body.op === 'encounter_task_configure')
@@ -603,7 +607,7 @@ test('Factory: a constellation dropped on a session that holds no task makes a n
     'no other session\'s settings or task is read')
   assert.ok(aikit.sent.every(body => body.agent_session === 'ses-215'), 'only the session the drop landed on is asked')
   const at = aikit.sent.indexOf(configured[0])
-  assert.ok(aikit.sent.slice(at + 1).some(body => body.op === 'encounter_session_settings' && body.agent_session === 'ses-215' && !body.request),
+  assert.ok(aikit.sent.slice(at + 1).some(body => body.op === 'encounter_session_settings' && body.agent_session === 'ses-215'),
     'the task\'s source is read back from AIKit after it is made')
   // On AIKit's own record (REAL: the kernel's owner-route fixture, drops through the real kernel, AIKit, Central, Actuation and Workcell
   // boundary on kernel-provisioned sessions): the drop sent only the task's own, and AIKit derived the rest from the session — the agent and
@@ -634,7 +638,7 @@ test('Factory: a constellation dropped on a session that holds no task makes a n
   assert.match(real.underivable, /its participant \(central\.participant_refs\): the session has no Agency binding/)
   assert.match(real.underivable, /its provider \(provider\): the session has never opened/)
   for (const words of [real.refusal, real.underivable]) {
-    const refused = await withKernel(factoryKernel({refuse: words}), () => maker.run(trackKey(idle), LIVED))
+    const refused = await withKernel(factoryKernel({refuse: words}), () => factory.makeTaskOf(BRIDGE, {sessionRef: idle.sessionRef, label: idle.agentName}, owners.constellationNamed(ROWS, LIVED), idle.project))
     assert.equal(refused.ok, false)
     assert.ok(refused.error.endsWith(words), refused.error)
   }

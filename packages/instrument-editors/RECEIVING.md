@@ -11,8 +11,8 @@ to the shell UI's existing package dependencies. Its normal source exports
 include each editor separately, the frame, presentation, panels, contribution
 and native owner adapters. No development entrance is imported by those exports.
 
-The adopted research source needs its existing module aliases and complete
-MapLibre worker. The package exports their build adapter:
+The adopted research source needs its existing module aliases. The package
+exports their build adapter:
 
 ```ts
 import {instrumentEditorBundler} from '@epilogos/instrument-editors/vite';

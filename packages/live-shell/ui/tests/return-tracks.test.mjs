@@ -65,35 +65,42 @@ const view = (set, over = {}) => SessionGridView({set, selection: SELECT, folded
 const html = (set, over = {}) => renderToStaticMarkup(React.createElement(SessionGridView, {set, selection: SELECT, folded: {}, onFold: noop, receipt: null, onPress: noop, onDismiss: noop, ...over}))
 const {readFileSync} = await import('node:fs')
 const returns = await import('../src/frame/tracks/returnTracks.ts')
-const factory = await import('../src/frame/tracks/useFactoryTracks.ts')
 const lanes = await import('../src/frame/tracks/trackLanes.ts')
+const {kernelSetTracks} = await import('../src/frame/tracks/kernelSet.ts')
+const {modeSetOf, setClip, setTrack} = await import('./support/modeSetFixture.mjs')
 const REAL = JSON.parse(readFileSync(new URL('./fixtures/workcell-readings-2026-10-16.json', import.meta.url), 'utf8'))
+const WORKS = 'the workcell its agents work in: its gateway, machine, seat and landing (§19.23)'
+const CHOICE = 'Choosing another workcell: no owner operation carries it yet — missing op: a track\'s workcell held with its session\'s settings (AIKit encounter-session-settings).'
 
-test('the register\'s workcells are return tracks, in its order, with no clips and none of the set\'s actions', () => {
-  const tracks = returns.workcellReturns(REAL.seatStatus)
-  assert.deepEqual(tracks.map(track => track.id), REAL.seatStatus.workcells.map(cell => `workcell:${cell.name}`))
-  for (const track of tracks) { assert.equal(track.returns, true); assert.equal(track.readOnly, true); assert.equal(track.kind, 'workcell') }
-  assert.deepEqual(returns.workcellReturns(null), [], 'an unread register makes none')
-  assert.deepEqual(returns.workcellReturns({schema: 'other'}), [])
+/** The crew as the kernel's Set holds it, with the register's workcells as its return tracks (kernel mode_set.rs: `workcell:<name>`,
+ * read-only, holding no clips), drawn through the window's one projection. */
+const crewSet = (parts = {}) => kernelSetTracks(modeSetOf({
+  rows: [{id: 'r1', name: '1'}, {id: 'r2', name: '2'}],
+  tracks: [
+    setTrack('g', 'Crew', {kind: 'group', color: '#111111'}),
+    setTrack('lead', 'Lead', {kind: 'session', color: '#222222', depth: 1, parent: 'g'}),
+    setTrack('helper', 'Helper', {kind: 'session', color: '#333333', depth: 2, parent: 'lead'}),
+    setTrack('solo', 'Solo', {kind: 'session', color: '#444444', ...(parts.soloWorks ? {works_in: parts.soloWorks} : {})}),
+    ...REAL.seatStatus.workcells.map(cell => setTrack(`workcell:${cell.name}`, cell.name, {kind: 'workcell', returns: true, read_only: true})),
+  ],
+  clips: [setClip('lead#1', 'lead', 'r1', 'plan', {status: 'running'}), setClip('helper#1', 'helper', 'r1', 'dig', {status: 'stalled'}),
+    setClip('helper#2', 'helper', 'r2', 'tidy', {status: 'waiting'}), setClip('solo#1', 'solo', 'r1', 'alone', {status: 'stopped'})],
+  mixer: {activator: {meaning: 'm'}, input: {meaning: 'in'}, works: {meaning: WORKS, disabled: parts.worksDisabled ?? CHOICE}},
+}), {nowMs: 0})
+
+test('a workcell\'s return track is named by the register\'s own name for it; it holds no clips and takes none of the set\'s actions', () => {
+  const set = crewSet()
+  const tracks = set.tracks.filter(track => track.returns)
+  assert.deepEqual(tracks.map(track => track.id), REAL.seatStatus.workcells.map(cell => returns.workcellTrackId(cell.name)))
+  for (const track of tracks) { assert.equal(track.readOnly, true); assert.equal(track.kind, 'workcell') }
+  assert.equal(set.clips.some(clip => tracks.some(track => track.id === clip.trackId)), false)
   assert.equal(returns.workcellOfTrack('workcell:env-2'), 'env-2')
   assert.equal(returns.workcellOfTrack('session:x'), null)
   assert.equal(returns.workcellOfTrack('workcell:'), null)
 })
 
-test('Works in: the one workcell holding the project\'s seat; unread, with the reason, when several hold it or none does', () => {
-  const two = returns.worksInOf(REAL.seatStatus, 'O-I')
-  assert.equal(two.workcell, null, 'env-1 and env-2 both hold o-i')
-  assert.match(two.why, /2 workcells hold O-I's seat \(env-1 on dlw\/build, env-2 on dlw\/native-build\)/)
-  const one = structuredClone(REAL.seatStatus)
-  one.workcells[1].seats.find(seat => seat.product === 'o-i').state = 'free'
-  assert.deepEqual(returns.worksInOf(one, 'O-I'), {workcell: 'env-1'})
-  assert.match(returns.worksInOf(one, 'nothing-here').why, /No workcell holds nothing-here's seat/)
-  assert.match(returns.worksInOf(null, 'O-I').why, /has not answered/)
-})
-
 test('the Session grid stands the return tracks after the empty track and before Main, with no clip slots', () => {
-  const set = factory.withWorkcells({...crew(), mixer: {activator: {meaning: 'm'}}}, REAL.seatStatus)
-  const markup = html(set)
+  const markup = html(crewSet())
   const fill = markup.indexOf('sg-fill'), main = markup.indexOf('trk-main'), env1 = markup.indexOf('data-track="workcell:env-1"')
   assert.ok(fill > 0 && env1 > fill && main > env1, 'tracks · empty track · returns · Main')
   assert.ok(markup.indexOf('data-track="solo"') < fill, 'the set\'s own tracks first')
@@ -106,19 +113,13 @@ test('the Session grid stands the return tracks after the empty track and before
 test('the Arrangement lays the return tracks after the tracks and before the Main track\'s own material', () => {
   const order = lanes.mainLast([{id: 'day', main: true}, {id: 'workcell:env-1', returns: true}, {id: 'a'}, {id: 'b'}]).map(track => track.id)
   assert.deepEqual(order, ['a', 'b', 'workcell:env-1', 'day'])
-  const set = factory.withWorkcells(crew(), REAL.seatStatus)
   const view = {window: null, onWindow: noop, snap: 'free', onSnap: noop, marker: null, onMarker: noop, width: 0}
-  const markup = renderToStaticMarkup(React.createElement(ArrangementRulerView, {set, selection: SELECT, view, receipt: null, onPress: noop, onDismiss: noop}))
+  const markup = renderToStaticMarkup(React.createElement(ArrangementRulerView, {set: crewSet(), selection: SELECT, view, receipt: null, onPress: noop, onDismiss: noop}))
   assert.match(markup, /data-track="workcell:env-2"[^>]*data-return="true"/)
 })
 
-test('every session names its workcell in its In/Out section; choosing another stands disabled with the op it lacks', () => {
-  const one = structuredClone(REAL.seatStatus)
-  one.workcells[1].seats.find(seat => seat.product === 'o-i').state = 'free'
-  // Each session works in its own project's workcell (§19.1 "The project's workcell by default"): the project its agency read listed it in.
-  // REPLACED (O-I #740 lane B): every session worked in the shell's one literal project; these sessions are O-I's.
-  const ofOI = () => 'O-I'
-  const set = factory.withWorkcells({...crew(), mixer: {activator: {meaning: 'm'}, input: {meaning: 'in'}}}, one, null, ofOI)
+test('a track names the workcell the kernel\'s Set says it works in; choosing another stands disabled with the op it lacks', () => {
+  const set = crewSet({soloWorks: 'env-1'})
   const solo = set.tracks.find(track => track.id === 'solo')
   assert.equal(solo.mix.works, 'env-1')
   const cells = lanes.mixerCells(set, solo, 0)
@@ -127,36 +128,12 @@ test('every session names its workcell in its In/Out section; choosing another s
   assert.match(works.title, /missing op: a track's workcell held with its session's settings/)
   assert.equal(works.press, undefined)
   assert.match(html(set), /<small>works in<\/small>env-1/)
-  // Two workcells hold o-i: unread, and the reason on the control.
-  const both = factory.withWorkcells({...crew(), mixer: {activator: {meaning: 'm'}}}, REAL.seatStatus, null, ofOI)
+  // Two workcells hold o-i: the Set names none, and says why on the control.
+  const both = crewSet({worksDisabled: `${CHOICE} 2 workcells hold O-I's seat (env-1 on dlw/build, env-2 on dlw/native-build); nothing names the lane this track's agents are on.`})
   const unread = lanes.mixerCells(both, both.tracks.find(track => track.id === 'solo'), 0).find(cell => cell.id === 'works')
   assert.equal(unread.state, 'unread')
   assert.match(unread.title, /2 workcells hold O-I's seat/)
   for (const track of both.tracks.filter(track => track.returns)) assert.deepEqual(lanes.mixerCells(both, track, 0), [], 'a return track has no mixer row of a session')
-})
-
-test('a session of your world\'s root register names no workcell; a project\'s session its project\'s (O-I #740)', () => {
-  const one = structuredClone(REAL.seatStatus)
-  one.workcells[1].seats.find(seat => seat.product === 'o-i').state = 'free'
-  const projectOf = factory.trackProjects([{sessionRef: 'a', spaceRef: 's', group: false, project: 'O-I'}, {sessionRef: 'b', spaceRef: 's', group: false, project: ''}])
-  assert.deepEqual([projectOf({id: 's:a'}), projectOf({id: 's:b'}), projectOf({id: 'unseated'})], ['O-I', null, null], 'a track\'s project is its session\'s register; the root names none')
-  const set = factory.withWorkcells({...crew(), mixer: {activator: {meaning: 'm'}}}, one, null, track => projectOf({id: track.id === 'solo' ? 's:a' : track.id === 'lead' ? 's:b' : track.id}))
-  assert.equal(set.tracks.find(track => track.id === 'solo').mix?.works, 'env-1', 'O-I\'s session works where O-I\'s seat is held')
-  assert.equal(set.tracks.find(track => track.id === 'lead').mix?.works, undefined, 'the root register keeps no seat: no workcell is named')
-})
-
-test('Central\'s worlds: a project\'s world works where its project\'s seat is held; your own world names no workcell', () => {
-  const one = structuredClone(REAL.seatStatus)
-  one.workcells[1].seats.find(seat => seat.product === 'o-i').state = 'free'
-  const set = {columns: [], clips: [], mixer: {arm: {meaning: 'a'}}, tracks: [
-    {id: 'central:world:project:O-I', name: 'O-I', kind: 'world'}, {id: 'central:world:you', name: 'You', kind: 'world'}, {id: 'day', name: 'Day', kind: 'day', main: true}]}
-  const project = new Map([['central:world:project:O-I', 'O-I'], ['central:world:you', null]])
-  const shown = returns.withWorksIn(set, one, track => project.get(track.id) ?? null)
-  assert.equal(shown.tracks[0].mix.works, 'env-1')
-  assert.equal(shown.tracks[1].mix, undefined, 'your world holds no seat')
-  assert.equal(shown.tracks[2].mix, undefined, 'the Day is the Main track')
-  assert.match(shown.mixer.works.disabled, /^Choosing another workcell: no owner operation carries it yet/)
-  assert.equal(returns.withWorksIn({...set, mixer: undefined}, one, () => 'O-I').mixer, undefined, 'a set with no mixer row gets none')
 })
 
 // LV06 (walk of O-I 857, r46; DLW build ruling 2026-11-08, item 10): the set's owner read each part's sends and the Live adapter
@@ -205,7 +182,7 @@ const findAll = (node, match, out = []) => {
 
 test('an empty Session takes its first seat: the drop area is the seat drop, and a drop runs the seat (manual §10.3)', () => {
   const seated = []
-  const seat = {op: 'harness_agent_control new', accepts: 'application/x-oi-agent', run: payload => { seated.push(payload); return Promise.resolve({ok: true}) }}
+  const seat = {op: 'aikit.gateway.agent:new', accepts: 'application/x-oi-agent', run: payload => { seated.push(payload); return Promise.resolve({ok: true}) }}
   const pressed = []
   const tree = view({columns: [], tracks: [], clips: [], actions: {seat}}, {onPress: (key, label, run) => { pressed.push(key); run() }})
   const [drop] = findAll(tree, props => props.className === 'sg-drop')

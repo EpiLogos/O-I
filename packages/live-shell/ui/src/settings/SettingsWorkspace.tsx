@@ -15,9 +15,8 @@ import type { DesignBinding, Standing, Value, ValueChange } from '../frame/devic
 import { HostedDevice, hostState, sayOnInfoLine, setHostPage } from '../frame/devices/deviceHost'
 import { design as windowDesign, searchResults } from '../inhabitants/catalogue/panels/settings__window'
 import { SETTINGS_LOCAL_KEYS, SETTINGS_WINDOW_ID, SETTINGS_WINDOW_WIRING, automationsRequestHolds, projectScopes, searchStep, windowCoreValues } from './windowValues'
-import { useAppearancePage, useAutomationsPage, useCredentialsPage, useHarnessPage, useMachinesPage, useProductsPage, useProfilesPage, useSetupPage, useSignIn, type Act, type PagePart } from './windowPages'
+import { useAppearancePage, useAutomationsPage, useCredentialsPage, useHarnessPage, useLaunch, useMachinesPage, useProductsPage, useProfilesPage, useSetupPage, useSignIn, type Act, type PagePart } from './windowPages'
 import { themeOwned } from './presentationSetting'
-import { chatDefaultOwned } from './chatDefaultSetting'
 import { configPlansOf, ownedRef, withOwnerAnswers, withOwnerPlans, type OwnedSetting } from './ownedSettings'
 import { ShellConfigContext } from '../shell/useSet'
 import '../inhabitants/catalogue/panels/panels.css'
@@ -319,16 +318,15 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, re
   const credentials = useCredentialsPage(adapter, wanted && visited.has('connections'), held, done, signIn.logins)
   const appearance = useAppearancePage(adapter, wanted && visited.has('appearance'))
   // The owned settings: the owners outside the configuration plane, once each one's reading stands (ownedSettings.ts) — the presentation
-  // owner's theme and O:I's chat default. Their entries stand first among the owners' settings, their readings as resolutions; their
+  // owner's theme. Their entries stand first among the owners' settings, their readings as resolutions; their
   // changes are drafts like every other, and plan() and apply() take each to its own owner. An owner's new reading reaches its page only
   // while the adapter that read it is the window's.
   const owned = useMemo((): OwnedSetting[] => {
     const current = <T,>(set: (value: T) => void) => (value: T) => { if (activeAdapter.current === adapter) set(value) }
     return [
       ...(appearance.reading ? [themeOwned(adapter, appearance.reading, appearance.library, current(appearance.set))] : []),
-      ...(harness.reading && adapter.harnesses ? chatDefaultOwned(adapter.harnesses, harness.reading, current(harness.set)) : []),
     ]
-  }, [adapter, appearance.reading, appearance.library, appearance.set, harness.reading, harness.set])
+  }, [adapter, appearance.reading, appearance.library, appearance.set])
   const allEntries = useMemo(() => [...owned.map(o => o.entry), ...entries], [entries, owned])
   const allScopes = useMemo(() => ({ ...scopes, ...Object.fromEntries(owned.map(o => [ownedRef(o), o.scope])) }), [scopes, owned])
   const allReadings = useMemo(() => ({ ...readings, ...Object.fromEntries(owned.map(o => [settingKey(ownedRef(o), o.scope), o.reading])) }), [readings, owned])
@@ -339,7 +337,10 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, re
   const products = useProductsPage(adapter, wanted && (visited.has('products') || visited.has('inspection')))
   const setup = useSetupPage(adapter, wanted && setupOpened, held, done, [holds.folder, holds.make, holds.wiki, holds.where, holds.credential, holds.reference,
     holds.groundFolder, holds.groundName, holds.birthName, holds.birthDate])
-  const parts: readonly PagePart[] = [harness, credentials, signIn, appearance, profiles, machines, automations, products, setup]
+  // Launch stands beside each agent you can talk to on Harnesses & models and on Setup's Harnesses and skills step: one reading of Factory's
+  // Set for both pages (O-I #1003).
+  const launch = useLaunch(adapter, wanted && (visited.has('agents') || setupOpened))
+  const parts: readonly PagePart[] = [harness, credentials, signIn, launch, appearance, profiles, machines, automations, products, setup]
 
   // ── the window's own presses ────────────────────────────────────────────────────────────────────────────────────────────────────
   const entryOf = (ref: string) => allEntries.find(entry => entry.spec.setting_ref === ref)

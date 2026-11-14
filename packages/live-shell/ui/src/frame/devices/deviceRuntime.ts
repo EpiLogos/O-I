@@ -22,6 +22,9 @@ export interface DeviceInstance {
   enabledKey?: string
   /** Write rows through the owner (absent: every row is a reading). */
   submit?: (changes: readonly {key: string; value: ParamValue}[]) => Promise<void>
+  /** The hand moving rows before it lets go (a drag), or null once it has: the owner may preview the moves and record them on a take that
+   * records; nothing is written until the release's `submit`. Absent: a drag is only drafted. */
+  drag?: (changes: readonly {key: string; value: ParamValue}[] | null) => void
   /** Give back what someone else holds (the hand-back light). */
   handBack?: (key: string) => Promise<void>
 }

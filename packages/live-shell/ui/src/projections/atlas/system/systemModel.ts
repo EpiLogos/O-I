@@ -5,7 +5,7 @@
 //
 // It reads, and never re-derives:
 //   - the worlds Central discloses and today's set (central/centralWorlds.ts worldsOf; central/daySet.ts daySetOf through
-//     frame/tracks/useCentralTracks.ts setReadingOf): your world first, then the Day's set in its own order;
+//     central/daySet.ts setReadingOf): your world first, then the Day's set in its own order;
 //   - each world's body, `aikit.world-body/v1` on its register's root space, as the kernel's `world_body_read` answers it (project
 //     worlds by their project; kernel construction.rs read_body);
 //   - the agent sessions at work (agent/AgentSessionsProvider.tsx), each in the world its SessionSpace belongs to (system/sessionWorld.ts),
@@ -147,9 +147,9 @@ const tail = (ref: string): string => {
   return cut >= 0 ? trimmed.slice(cut + 1) : trimmed
 }
 
-/** The worlds of today's set: your world first, then each world the Day's set holds, in the set's order (useCentralTracks.ts inSet
- * keeps the disclosure's order; the System keeps the set's, which is the order the person brought them in). A world the set names
- * that Central no longer discloses is left out. Pure. */
+/** The worlds of today's set: your world first, then each world the Day's set holds, in the set's order, which is the order the person
+ * brought them in (the kernel's Central Set lays its tracks the same way, mode_set.rs). A world the set names that Central no longer
+ * discloses is left out here; the Set keeps it as a named, empty track with why. Pure. */
 export function systemWorlds(disclosed: readonly CentralWorld[], setWorlds: readonly string[]): CentralWorld[] {
   const yours = disclosed.find(world => world.kind === 'yours')
   const held = setWorlds.flatMap(ref => disclosed.filter(world => world.ref === ref && world.kind !== 'yours'))

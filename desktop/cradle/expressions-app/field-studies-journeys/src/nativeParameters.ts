@@ -1,8 +1,8 @@
 /** Reversible registry projection. Factors convert authored stage units to native units. */
-import {PARAM_REGISTRY,entityParamDefs} from '../../src/engine/paramRegistry';
-import {DEFAULT_CONFIG} from '../../src/engine/fieldDefaults';
-import {readPath} from '../../src/engine/automation';
-import {automationGroups} from './automationLinks';
+import {PARAM_REGISTRY,entityParamDefs} from '../../src/engine/paramRegistry.ts';
+import {DEFAULT_CONFIG} from '../../src/engine/fieldDefaults.ts';
+import {readPath} from '../../src/engine/automation.ts';
+import {automationGroups} from './automationLinks.ts';
 import type {Entity, Scene} from './model';
 export const WORLD_SCALE = 400;
 export interface NativeBinding {path:string;key:string;bind:string;factor:number;label:string;group:string;min:number;max:number;hardMin:number;hardMax:number;step:number;unit?:string;note?:string;defaultValue:number;scale?:'linear'|'log'}
@@ -43,8 +43,11 @@ export function baseValue(scene:Scene,key:string):number {
  const b=nativeBinding(key), value=b?readPath(scene,b.bind):scene.field.params[key];
  return typeof value==='number'&&Number.isFinite(value)?value:b?.defaultValue??0;
 }
+/** The one side rule of a Studio value (kernel expression_studio.rs reads it from the generated table): a focus tint above 0 carries the
+ * tint, so the Scene's composition carries it too. */
+export const CARRY_TINT_BIND='field.params.native_composition__orchestration__focusTintWeight';
 export function bindValue(scene:Scene,path:string,value:unknown){
- if(path==='field.params.native_composition__orchestration__focusTintWeight'&&typeof value==='number'&&value>0)scene.composition.carryTint=true;
+ if(path===CARRY_TINT_BIND&&typeof value==='number'&&value>0)scene.composition.carryTint=true;
  const keys=path.split('.');if(keys.some(k=>['__proto__','prototype','constructor'].includes(k)))throw new Error('Unsafe document path');
  let o:any=scene;for(const k of keys.slice(0,-1))o=o[k]??(o[k]={});o[keys.at(-1)!]=value;
 }

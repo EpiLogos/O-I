@@ -9,9 +9,17 @@
  * Layout only: no React, no I/O. The agent tab is pinned, and the engine's `closeSurface` refuses a pinned surface, so the
  * agent surface cannot be closed. Its body is mounted by the Workbench's `agent-shell` arm, from the tree's conversation node
  * (native/Workbench.tsx passes AgentShellCentre).
+ *
+ * A session Factory starts opens here, where it runs (manual §19.1: "It runs in a terminal in the window, or attaches to one you
+ * started outside it"; O-I ticket 1006): Factory's answer to factory.session.start names in `terminal.in_window` the agent session the
+ * window opens, AIKit's own conversation of it as a pane of the Workbench, whose composer is the session's input (sessionInWindowOf).
+ * Whichever press started it, an agent dropped on an empty track or Launch beside an agent in Settings, App hears the answer
+ * (bridge.ts onActAnswered), steps back from Settings and presents the Workbench, which opens the session's pane (Workbench.tsx
+ * openEncounter), as Sign in opens its login terminal. `terminal.outside` is the command that attaches a terminal of your own.
  */
 import {activeBindingId, closeSurface, groupOf, groupsOf, openBinding, openProjectionPane} from '../../../../../desktop/cradle/src/surface/engine'
 import type {LayoutState, Pane, SurfaceBinding, TabGroupPane} from '../../../../../desktop/cradle/src/surface/types'
+import type {EncounterRow} from '../../../../../desktop/cradle/src/encounter/EncounterList'
 import {openInstrumentAt} from '../frame/openInstrument'
 
 /** The agent surface's binding kind. The engine's SurfaceBody renders it from the tree's conversation node. */
@@ -117,4 +125,23 @@ export function agentTabClosable(layout: LayoutState): boolean {
 /** Whether a frame mode is Factory, read through a call: the aliased `agentShell` condition then narrows nothing in the frame. */
 export function isFactoryMode(mode: string): boolean {
   return mode === 'factory'
+}
+
+/** The Action whose answer opens a session in the window, and its answer's contract (Factory session.rs SESSION_CONTRACT). */
+export const SESSION_START = 'factory.session.start'
+const SESSION_CONTRACT = 'factory.session/v1'
+const recordOf = (value: unknown): Record<string, unknown> | null =>
+  value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null
+const wordOf = (value: unknown): string | null => typeof value === 'string' && value.trim() ? value : null
+
+/** The session an Action's answer opens in the window: Factory's open session's `terminal.in_window` agent session, as the row the
+ * Workbench opens (its space, the session, its project as the World's Work names it, and a title of its agent and project); null for any
+ * other Action, an answer that is no open session of Factory's, or one that names none to open in the window. Pure. */
+export function sessionInWindowOf(action: string, answer: unknown): EncounterRow | null {
+  const open = action === SESSION_START ? recordOf(answer) : null
+  if (open?.contract !== SESSION_CONTRACT || open.state !== 'open') return null
+  const session = wordOf(recordOf(recordOf(open.terminal)?.in_window)?.agent_session)
+  const space = wordOf(open.space), project = wordOf(open.project)
+  if (!session || !space || !project) return null
+  return {space, ref: session, title: `${wordOf(open.agent) ?? session} · ${project}`, project}
 }

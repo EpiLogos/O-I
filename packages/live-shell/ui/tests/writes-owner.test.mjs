@@ -44,7 +44,13 @@ test('the reads the shell makes at start-up and on its pages never retire held a
     {op: 'shared_field', request: {kind: 'snapshot'}},
     // The World's reading of the worlds alone (O-I #858): it brings no field's rows into view.
     {op: 'shared_field', request: {kind: 'worlds'}},
+    // The `receiving` op reads alone (Receiving's List, Read and Document); its writes are Central's Actions (O-I #1002).
     {op: 'receiving', project: null, request: {List: {limit: 5}}},
+    {op: 'receiving', project: null, request: {Read: {return_ref: 'r'}}},
+    {op: 'receiving', project: null, request: {Document: {source_ref: 's', document_id: 'd'}}},
+    // A file's history and a recovery's preview: `file_operation` reads alone, a save and a restore being Actions.
+    {op: 'file_operation', location: {}, request: {action: 'history'}},
+    {op: 'file_operation', location: {}, request: {action: 'recovery_preview', expected_revision: 'a', revision: 'b'}},
     {op: 'routine', request: {action: 'history'}},
     {op: 'setup', request: {action: 'discover'}},
     {op: 'central', project: null, request: {kind: 'inspect'}},
@@ -59,7 +65,10 @@ test('writes, write verbs of mixed ops and ground receipts retire held answers',
     {op: 'ground', request: {action: 'bind', request: {}}},
     {op: 'factory_owner', request: {kind: 'run-close'}},
     {op: 'factory_owner', request: {kind: 'action-invoke'}},
-    {op: 'receiving', project: null, request: {Submit: {producer_key: 'p'}}},
+    // Receiving's writes, a file's save and the Day's close: Central's Actions through `act` (O-I #1002).
+    {op: 'act', action: 'central.receiving.submit', input: {project: null, producer_key: 'p', occurred_at_unix_seconds: 1}},
+    {op: 'act', action: 'central.files.write', input: {location: {}, expected_revision: 'a', content: 'x'}},
+    {op: 'act', action: 'central.day.lifecycle', input: {project: null, day_ref: 'd', expected_revision: 'a', expected_relations_revision: 'b', lifecycle: 'closed'}},
     {op: 'routine', request: {action: 'run_now', routine_ref: 'r'}},
     {op: 'setup', request: {action: 'apply'}},
     // An act on a Live set's objects (O-I #743) writes the set as the clip, mixer and comp writes do.

@@ -1,6 +1,6 @@
 import {TransportState} from '../../src/engine/transportState';
 import {Scene,Vec3} from './model.js';
-import type {ConnectionBinding} from '../../../../../packages/oi-design-system/expressions-engine/oi/expressionBindings.mjs';
+import type {ConnectionBinding} from './expressionBindings.mjs';
 import {Camera} from './camera.js';
 /** All document writes belong to the shell. Adapters never create their own clock or UI. */
 export interface EngineFrame {
@@ -65,9 +65,7 @@ export interface FieldEngineAdapter {
  stations?():Array<{id?:string;index:number;name:string;frequencyHz:number;m:number;n:number;color:string;energy?:number;semanticNodeId?:string;affinity?:number}>;
  dispose():void;
 }
-export type EngineFactory=(canvas:HTMLCanvasElement)=>FieldEngineAdapter;
 declare global {interface Window {
- OI_ENGINE_FACTORY?:EngineFactory;
  __JOURNEY__?:unknown;
  __START_PRESENTATION__?:boolean;
  __FIELD_STUDIES__?:any;

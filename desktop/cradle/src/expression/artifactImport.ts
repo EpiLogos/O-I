@@ -19,7 +19,9 @@
  *     identity characters) — nothing is silently truncated or renamed.
  */
 import type {ExpressionDocument, Parameter} from "./types";
-import {nativeSnapshotToJourney, nativeExport, importDocuments, type NativeConfig, type StageScene} from "@epilogos/oi-design-system/expressions-engine/shell/nativeBridge.mjs";
+import {nativeSnapshotToJourney, nativeExport, importDocuments} from "../../expressions-app/field-studies-journeys/src/nativeBridge";
+import type {Scene as StageScene} from "../../expressions-app/field-studies-journeys/src/model";
+import type {NativeConfig} from "../stage/recipes";
 
 const WORLD_SCALE = 400; // the instrument's stage unit (nativeParameters.ts)
 /** The kernel's own parameter bounds (kernel/src/expression.rs); share
@@ -123,7 +125,7 @@ export function artifactToExpression(expressionRef: string, artifact: unknown, t
   const projections: ArtifactSceneProjection[] = [];
   for (const [index, scene] of journey.scenes.entries()) {
     const sceneRef = `${expressionRef}:scene:${index + 1}`;
-    const entities = Array.isArray(scene.entities) ? scene.entities as Record<string, unknown>[] : [];
+    const entities = Array.isArray(scene.entities) ? scene.entities : [];
     if (entities.length > 10) throw new TypeError(`Artifact scene ${String(scene.id)} holds ${entities.length} entities; a document scene bounds at 10`);
     const entityRefs: string[] = [];
     for (const entity of entities) {
@@ -134,14 +136,14 @@ export function artifactToExpression(expressionRef: string, artifact: unknown, t
         revision: 1,
         title: typeof entity.name === "string" && entity.name ? entity.name : String(entity.id),
         subject: null,
-        parameters: materialParameters(entity),
+        parameters: materialParameters({...entity}),
       };
     }
     document.scenes.push({scene_ref: sceneRef, revision: 1, title: typeof scene.name === "string" && scene.name ? scene.name : `Scene ${index + 1}`, entity_refs: entityRefs});
     // The stage projection: the artifact's own complete native material with
     // the document's entity refs as the engine's native IDs. Identity is one;
     // the engine adapter maintains no independent scene graph.
-    const config = structuredClone((nativeExport(scene).config)) as NativeConfig;
+    const config: NativeConfig = {...structuredClone(nativeExport(scene).config)};
     if (Array.isArray(config.entities)) {
       config.entities = (config.entities as Record<string, unknown>[]).map((native) => {
         const ref = entityRef(expressionRef, String(native.id));

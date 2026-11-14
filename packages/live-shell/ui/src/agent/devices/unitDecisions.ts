@@ -11,9 +11,9 @@
 //     factory.attempt-unit-decision-reading/v1: centralResponse, decisionResponse when the unit's resolver answered, else `unresolved`).
 // The person answers in Central's receiving field: the question offers exactly "Resume bounded work" and "Cancel bounded work", and Factory
 // takes an answer only from the unit's resolver (reviewed_response: reviewer_ref = resolverRef). Approve answers Resume, Deny answers Cancel,
-// each the person's own press through the kernel's `receiving` Review {disposition answered}. A question Factory has not put to Central yet
-// cannot be answered from here: its submission takes the retained RequestUnitDecision Action, which no reading here holds and the desk
-// composes none. Nothing is invented: a field Factory does not name is left out of the row.
+// each the person's own press: Central's `central.receiving.review` {disposition answered} through the kernel's `act` (O-I 1002). A question
+// Factory has not put to Central yet cannot be answered from here: its submission takes the retained RequestUnitDecision Action, which no
+// reading here holds and the desk composes none. Nothing is invented: a field Factory does not name is left out of the row.
 import {kernelRead} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import type {Value} from '../../frame/devices/designed'

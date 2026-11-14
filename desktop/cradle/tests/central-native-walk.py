@@ -88,7 +88,7 @@ class Walk:
         (self.root/'isolated-home').mkdir(exist_ok=True)
         (self.root/'Work/material').mkdir(parents=True,exist_ok=True)
         (self.root/'Control/relations').mkdir(parents=True,exist_ok=True)
-        actions=['central.day.ensure','central.document.create','central.document.mutate','central.receiving.submit','central.receiving.list','central.receiving.read','central.receiving.review','central.receiving.include','central.now.allocate']
+        actions=['central.document.create','central.document.mutate','central.receiving.submit','central.receiving.list','central.receiving.read','central.receiving.review','central.receiving.include','central.now.allocate']
         configs=[('placement.json','work-placement-policy',{'schema':'central.work-placement-policy/v1','scope_ref':'control:root','writable':[{'path':'Work/material','class':'repository'}],'enforcement':'native-actions','required_coverage':['file-content'],'lease_seconds':3600}),
                  ('time.json','civil-time-policy',{'schema':'central.civil-time-policy/v1','scope_ref':'control:root','timezone':'Etc/GMT+12','day_boundary_minutes':0,'automatic_day_rollover':True}),
                  ('authority.json','native-action-authority',{'schema':'central.native-action-authority/v1','scope_ref':'control:root','grants':[{'principal_ref':'human:controlled-walk','actor_kind':'human','token_sha256':hashlib.sha256(self.env['CENTRAL_NATIVE_TOKEN'].encode()).hexdigest(),'scope_refs':['control:root'],'actions':actions,'expires_at_unix_seconds':int(time.time())+3600}]})]
@@ -98,7 +98,10 @@ class Walk:
             (self.root/path).write_text(json.dumps(value))
             relations.append({'ref':'central:source:control:root:'+path,'path':path,'roles':[role],'provenance':'human-adopted','standing':'architecture-contract','treatment':'control-user','recognition':'test-only-not-personal-adoption','recorded_at_unix_seconds':int(time.time())})
         (self.root/'Control/relations/source-relations.json').write_text(json.dumps({'schema':'central.control.ground-relations/v1','project_id':'control:root','relations':relations}))
-        shutil.copyfile(HERE.parent/'documents/ql-daily-die.html',self.root/'Work/material/original.html')
+        # The ground keeps the Day form where Setup's Ground Accept keeps it (Control/forms): Central's turn makes today's page from it
+        # (the kernel's ground_form.rs day_form; O-I 1005).
+        (self.root/'Control/forms').mkdir(parents=True,exist_ok=True)
+        shutil.copyfile(HERE.parent/'documents/ql-daily-die.html',self.root/'Control/forms/ql-daily-die.html')
         (self.root/'Control/user/intent.md').write_text('original authored ground\n')
 
     def run(self):
@@ -123,17 +126,15 @@ class Walk:
         self.check('fresh kernel reopening reads exact root source',reread['content']=='concurrent external edit\n' and reread['root_register'])
         self.op({'op':'source_open','project':None,'source_ref':'unknown:source'},ok=False)
         self.check('missing source refuses rather than opening an empty editor')
-        day=self.central('ensure-day',expected_time_policy_revision=ground['time']['data']['revision'])
-        self.check('blank Day is not labelled a Daily Die',day['document_state']=='uninitialised')
-        self.op({'op':'central','project':None,'request':{'kind':'open-day'}},ok=False)
-        listing=self.op({'op':'files_list','path':'Work/material','fresh':True})['directory']
-        form=next(e['location'] for e in listing['entries'] if e['name']=='original.html')
-        read=self.op({'op':'file_read','location':form})['reading']
-        policy=self.native('central.work.policy',{})
-        document=self.central('initialise-day',day_ref=day['day_ref'],document_id='document:source-walk',expected_revision=day['revision']['revision'],expected_policy_revision=policy['revision'],form=form,expected_form_revision=read['revision'])
-        self.check('actual original form traverses large native stdin without a replacement template',len(json.dumps(document))>65536 and len(document['document']['template_payload']['fields'])==17)
+        # Today's Day opens by itself (O-I 1005): the kernel's read of today is Central's turn, which opens the Day on its civil date and
+        # makes its page from the Day form the ground keeps. Nothing is pressed.
         opened=self.central('open-day')
-        self.check('Today returns exact native current Day source/document',opened['day']['document']['document_id']==document['document_id'] and opened['location']['path']==document['source']['path'])
+        day=opened['day'];document=day['document']
+        form=document['document']['template_payload']['_oi_form_source']['location']
+        self.check('today opens by itself with its page made from the Day form',day['temporal']['lifecycle']=='open' and day['document_state']=='ready' and form['path']=='Control/forms/ql-daily-die.html')
+        self.check('actual original form traverses large native stdin without a replacement template',len(json.dumps(document))>65536 and len(document['document']['template_payload']['fields'])==17)
+        self.check('Today returns exact native current Day source/document',opened['location']['path']==document['source']['path'])
+        policy=self.native('central.work.policy',{})
         day_source=document['source']['ref']
         self.op({'op':'source_open','project':None,'source_ref':day_source})
         allocation=self.native('central.now.allocate',{'task_ref':'test:source-walk-task','purpose':'Controlled native Return join (not actual Factory execution)','source_refs':[day_source],'day_ref':day['day_ref'],'expected_policy_revision':policy['revision'],'work_refs':[{'repo':'controlled/test','branch':'controlled','worktree_path':str(self.root/'Work/material')}]})
@@ -152,12 +153,11 @@ class Walk:
             before=(self.root/document['source']['path']).read_bytes()
         # Advance the ACTUAL native civil policy by 26h in this test-only root.
         path=self.root/'Control/user/time.json';time_policy=json.loads(path.read_text());time_policy['timezone']='Pacific/Kiritimati';path.write_text(json.dumps(time_policy))
-        time_read=self.native('central.time.policy',{})
-        current=self.central('inspect')
-        self.check('rollover exposes stale today instead of silently changing editor',current['day']['state']=='stale')
-        self.op({'op':'central','project':None,'request':{'kind':'open-day'}},ok=False)
-        next_day=self.central('ensure-day',expected_time_policy_revision=time_read['revision'])
-        self.check('new civil Day allocated, prior source untouched',next_day['day_ref']!=day['day_ref'] and (self.root/document['source']['path']).read_bytes()==before)
+        # Central's turn then opens the new civil Day by itself and closes the earlier one at its turn, as Central's civil clock.
+        next_day=self.central('open-day')['day']
+        self.check('new civil Day opened by itself, prior source untouched',next_day['day_ref']!=day['day_ref'] and (self.root/document['source']['path']).read_bytes()==before)
+        prior=self.native('central.day.read',{'day_ref':day['day_ref']})
+        self.check('the earlier Day closed at its turn by Central\'s civil clock',prior['temporal']['lifecycle']=='closed' and prior['temporal'].get('lifecycle_actor_ref')=='central:civil-clock')
         held=self.op({'op':'source_reread','project':None,'source_ref':day_source})['buffer']
         self.check('held source reread never follows new Today',json.loads(held['content'])['document_id']==document['document_id'])
         self.stop();self.start()

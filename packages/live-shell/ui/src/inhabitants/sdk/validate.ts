@@ -22,7 +22,7 @@ import {allInhabitantManifests, faceKind, validateInhabitantManifest} from '../m
 import {AGENT_SHELL_ADDRESS_TABLE} from '../agentParamAddresses.ts'
 import type {DeviceDeclaration, FamilyDeclaration, ParamInput, SdkParamRow} from './define.ts'
 import {allSdkParamRows, allTransportBindings, facePresentation, familyProduct, familyWriters} from './define.ts'
-import {LIVE_EXEMPLARS, isWritePath, semanticModesFor, validateFaceSemantic} from './semantics.ts'
+import {ACTION_OWNER_PREFIXES, LIVE_EXEMPLARS, isActionId, isWritePath, semanticModesFor, validateFaceSemantic} from './semantics.ts'
 import type {LiveSemantic, SemanticInvariant} from './semantics.ts'
 import {isIconName} from './icons.ts'
 import {deviceStates, presentationsOf} from './views.ts'
@@ -149,7 +149,11 @@ export function validateSdkParam(input: ParamInput): readonly string[] {
   }
   if (input.writePath !== undefined) {
     if (!isWritePath(input.writePath)) {
-      faults.push(`writePath "${input.writePath}" is not an owner path — use kernel:<op>, shell.<setter>, or <tool>:<command>`)
+      faults.push(`writePath "${input.writePath}" is not an owner path — use act:<action-id>, kernel:<op>, shell.<setter>, or <tool>:<command>`)
+    } else if (input.writePath.startsWith('act:')) {
+      if (!isActionId(input.writePath.slice('act:'.length))) {
+        faults.push(`writePath "${input.writePath}" names no owner's Action — an Action id stands under one of ${ACTION_OWNER_PREFIXES.join(', ')}`)
+      }
     } else if (input.writePath.startsWith('kernel:')) {
       const op = input.writePath.slice('kernel:'.length)
       if (!isKernelOp(op)) {
@@ -453,7 +457,11 @@ export function validateAdmittedWorld(): WorldGateResult {
       }
       for (const path of [invariant.generates, invariant.replaceReceipt, invariant.routesTo]) {
         if (path === undefined || !isWritePath(path)) continue
-        if (path.startsWith('kernel:')) {
+        if (path.startsWith('act:')) {
+          if (!isActionId(path.slice('act:'.length))) {
+            extra.push(`${where}: write path "${path}" names no owner's Action — an Action id stands under one of ${ACTION_OWNER_PREFIXES.join(', ')}`)
+          }
+        } else if (path.startsWith('kernel:')) {
           if (!isKernelOp(path.slice('kernel:'.length))) {
             extra.push(`${where}: write path "${path}" names no kernel op — the kernel's union is KERNEL_OPS (generated from the kernel's types); pick a real op`)
           }

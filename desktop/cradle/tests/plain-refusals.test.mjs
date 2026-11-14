@@ -328,7 +328,6 @@ const SWEPT = [
   'desktop/cradle/src/contributions/factory/desk/RunPage.tsx',
   'desktop/cradle/src/contributions/factory/live/RunLiveExpression.tsx',
   'desktop/cradle/src/contributions/factory/sidebar/FactoryAgentsTab.tsx',
-  'desktop/cradle/src/encounter/AddressedComposer.tsx',
   'desktop/cradle/src/encounter/EncounterView.tsx',
   'desktop/cradle/src/epilogos/EpiLogosSurface.tsx',
   'desktop/cradle/src/explore/BeingEncounter.tsx',

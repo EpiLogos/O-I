@@ -7,8 +7,10 @@
 //     Factory dispatcher recorded each on the task it dispatched on, with the Run and the Factory state that holds it;
 //   - Factory says what each attempt is (`factory_attempt_read`, factory.attempt-reading/v1): when it was admitted, whether it
 //     has returned or failed, and whether its Return carries a Central receiving receipt;
-//   - choosing a take is Factory's own op (`factory_owner` attempt-receiving, desk/factoryReads.ts `receiveAttempt`): the Return
-//     proposed to Central's receiving field. Factory receives a whole attempt, so a stretch dragged across a take chooses the take.
+//   - choosing a take is Factory's own Action (factory.attempt.choose by `act`, desk/factoryReads.ts `chooseAttemptOf`): the Return
+//     proposed to Central's receiving field, into the Flow its Run belongs to; a Run that belongs to no Flow (a task written on a
+//     session's track) has nowhere to receive it, and Factory says so. Factory receives a whole attempt, so a stretch dragged across a
+//     take chooses the take.
 //
 // Pure TypeScript. No React.
 import type {EncounterTaskAttemptsList, ServedAttempt} from '../../../../../desktop/cradle/src/kernel/types'

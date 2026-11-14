@@ -21,9 +21,10 @@ export default defineConfig(({ command }) => ({
     },
   }],
   clearScreen: false,
-  // The point-cloud engine lives in the design-system package (which has no
-  // node_modules of its own); resolve the heavy dependency from the app's
-  // install so the lazy import stays one explicitly-loaded chunk.
+  // The point-cloud engine is the Expressions application's own source
+  // (expressions-app/src/engine), which has its own install; resolve the heavy
+  // dependency from this app's install so every body shares one three.js and
+  // the lazy import stays one explicitly-loaded chunk.
   resolve: {
     alias: {
       three: fileURLToPath(new URL("./node_modules/three", import.meta.url)),
@@ -65,7 +66,7 @@ export default defineConfig(({ command }) => ({
         // body that needs them, never by the shell.
         manualChunks(id) {
           if (id.includes("/node_modules/three/")) return "three";
-          if (id.includes("/expressions-engine/")) return "expressions-engine";
+          if (id.includes("/expressions-app/src/engine/")) return "expressions-engine";
           return undefined;
         },
       },

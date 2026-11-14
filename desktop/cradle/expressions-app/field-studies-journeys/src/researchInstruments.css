@@ -68,7 +68,7 @@
 
 /* The active instrument's tools join the Expressions rail as the same thin
    icon buttons: no second bar, no scrollbar, no boxed text buttons. */
-#instrument-tools :is(.research-tool-actions,.canvas-toolbar-hosted,.timeline-surface-controls,.timeline-toolbar,.timeline-filters,.timeline-frame,.street-view-toolbar){position:static;display:contents;margin:0;padding:0;transform:none;background:none;border:0;box-shadow:none}
+#instrument-tools :is(.research-tool-actions,.canvas-toolbar-hosted,.timeline-surface-controls,.timeline-toolbar,.timeline-filters,.timeline-frame){position:static;display:contents;margin:0;padding:0;transform:none;background:none;border:0;box-shadow:none}
 #instrument-tools button{appearance:none;display:inline-flex;align-items:center;justify-content:center;gap:4px;flex:0 0 auto;height:28px;min-width:28px;padding:5px;border:0;border-radius:7px;background:transparent;color:var(--ui-ink);font:11px/1 var(--sans);cursor:pointer}
 #instrument-tools button svg{width:16px;height:16px}
 #instrument-tools button:hover{background:var(--ui-wash)}
@@ -80,7 +80,6 @@
 #instrument-tools :is(.research-instrument-status,.research-selection-count,.timeline-tier,.timeline-filter-label,.timeline-frame-crumb,.research-evidence-absent){color:var(--ui-muted);font:10px/1.2 var(--sans);padding:0 4px;white-space:nowrap}
 #instrument-tools .timeline-filter[data-active=false]{opacity:.5}
 #instrument-tools .timeline-filter__swatch{width:8px;height:8px;border-radius:2px}
-#instrument-tools .street-view-toolbar__title{display:none}
 
 /* Wide time ranges disclose density through markers; full names become
    readable on focus or selection instead of colliding along the whole axis. */

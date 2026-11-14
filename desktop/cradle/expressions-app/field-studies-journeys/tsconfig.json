@@ -26,9 +26,6 @@
       "@research-canvas/desktop-api": [
         "../vendor/research-canvas/packages/desktop-api/src/index.ts"
       ],
-      "@research-canvas/geography": [
-        "../vendor/research-canvas/packages/geography/src/index.ts"
-      ],
       "@research-canvas/viewers": [
         "../vendor/research-canvas/packages/viewers/src/index.ts"
       ],

@@ -1,10 +1,8 @@
 import {useEffect,useRef,useState} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import type {CentralLocation} from "../kernel/types";
-import {FileTree} from "../files/FileTree";
-import {readFile} from "../files/client";
 import {NowRelations} from "../receiving/NowRelations";
-import {central,readGround,openDay,sourceLocation,type CentralGroundReading,type Reading} from "./client";
+import {readGround,openDay,sourceLocation,type CentralGroundReading,type Reading} from "./client";
 
 /** Root is an actual native work context. This body uses the same file/source
  * callbacks and document host as every other source; it owns no working store. */
@@ -16,12 +14,9 @@ export function CentralGround({project=null,refresh=0,onOpenFile}:{project?:stri
  const [version,setVersion]=useState(0);
  const [now,setNow]=useState<string>();
  const [limit,setLimit]=useState(20);
- const [chooseForm,setChooseForm]=useState(false);
- const [directories,setDirectories]=useState<string[]>([]);
- const [form,setForm]=useState<{location:CentralLocation;revision:string}>();
  const generation=useRef(0);
  const scope=useRef(project);scope.current=project;
- useEffect(()=>{setNow(undefined);setForm(undefined);setChooseForm(false);setDirectories([]);setLimit(20);},[project]);
+ useEffect(()=>{setNow(undefined);setLimit(20);},[project]);
  const reload=()=>setVersion(v=>v+1);
  useEffect(()=>{
   const ticket=++generation.current;setPending(true);setError(undefined);
@@ -46,14 +41,7 @@ export function CentralGround({project=null,refresh=0,onOpenFile}:{project?:stri
  const openSource=(reference:string)=>perform(()=>openLocated(()=>sourceLocation(transport,project,reference)));
  const openCurrent=()=>perform(()=>openLocated(async()=>(await openDay(transport,project)).location));
  const day=reading?.day.data;
- const canEnsure=reading?.time.state==="ready"&&(reading.day.state==="stale"||reading.day.error?.code==="source_or_scope_unavailable");
  const showFailure=(title:string,value:Reading<unknown>|undefined)=>value&&value.state!=="ready"?<p role="status" data-reading-state={value.state}>{title} — {value.state}: {value.error?.message??"Native reading unavailable"}</p>:null;
- const selectForm=async(location:CentralLocation)=>{
-  const originalScope=project;const selected=await readFile(transport,location);
-  if(originalScope!==scope.current)return;
-  if(!selected.content.includes('id="ql-doc"'))throw new Error("Choose the original Daily Die HTML with its retained ql-doc payload");
-  setForm({location:selected.location,revision:selected.revision});
- };
  return <section className="central-ground project-reading" aria-label={project?`${project} Day and NOW`:"Central root working ground"} aria-busy={pending}>
   <header><strong>{project?project:"Central · root meta-project"}</strong><button type="button" onClick={reload} aria-label="Refresh current ground" disabled={pending}>Refresh</button></header>
   {!project&&<p>Control is the durable authored ground. Work projects keep their own context; no child Project is required here.</p>}
@@ -65,25 +53,10 @@ export function CentralGround({project=null,refresh=0,onOpenFile}:{project?:stri
    <div className="central-current-day">
     {showFailure("Day",reading.day)}
     {reading.day.state==="ready"&&day&&<>
-     {day.document_state==="ready"?<button type="button" aria-label={project?`Open ${project} current Day`:"Open current Daily Die"} disabled={pending} onClick={openCurrent}>Open Daily Die · {day.temporal.civil_date}</button>:<p role="status">The current Day exists, but its native Daily Die document is not initialised. The temporal artifact is not the form.</p>}
+     {day.document_state==="ready"?<button type="button" aria-label={project?`Open ${project} current Day`:"Open current Daily Die"} disabled={pending} onClick={openCurrent}>Open Daily Die · {day.temporal.civil_date}</button>:<p role="status">The current Day exists, but its Daily Die page is not made yet: Central makes it from the Day form at the Day's turn (O-I 1005). The temporal artifact is not the form.</p>}
      <small>{day.day_ref}</small>
-     {day.document_state!=="ready"&&<>
-      <button type="button" onClick={()=>setChooseForm(v=>!v)} disabled={pending||reading.placement.state!=="ready"}>Choose original Day form for native initialisation</button>
-      {showFailure("Native placement authority",reading.placement)}
-     </>}
     </>}
-    {canEnsure&&<button type="button" disabled={pending} onClick={()=>void perform(()=>central(transport,project,{kind:"ensure-day",expected_time_policy_revision:reading.time.data!.revision}))}>Ensure current Day through Central</button>}
     {reading.day.state==="stale"&&day?.document_state==="ready"&&<button type="button" onClick={()=>void perform(()=>openLocated(async()=>(await openDay(transport,project,day.day_ref)).location))}>Open retained Day · {day.temporal.civil_date}</button>}
-    {chooseForm&&day&&<div>
-     <p>Select an existing source. Initialisation retains its supplied payload, including any example content. It does not regenerate the form or change the original HTML. Non-empty Day writing requires native reviewed migration and will be refused here.</p>
-     <FileTree path="" onOpen={selectForm} refresh={version} expanded={directories} onExpansion={setDirectories} onRootRef={()=>{}}/>
-     {form&&<><p>Selected original: {form.location.path} · {form.revision}</p><button type="button" disabled={pending||reading.placement.state!=="ready"} onClick={()=>void perform(async()=>{
-      const originalScope=project;await central(transport,project,{kind:"initialise-day",day_ref:day.day_ref,document_id:`document:${crypto.randomUUID()}`,expected_revision:day.revision.revision,expected_policy_revision:reading.placement.data!.revision,form:form.location,expected_form_revision:form.revision});
-      if(originalScope!==scope.current)return;
-      setChooseForm(false);setForm(undefined);
-      await openLocated(async()=>(await openDay(transport,project)).location);
-     })}>Initialise native Day from this reviewed original</button></>}
-    </div>}
    </div>
    <details><summary>Authored ground and native sources</summary>
     {showFailure("Sources",reading.sources)}

@@ -9,10 +9,11 @@
 // door, adds nothing the family did not declare, and turns the owners' readings (passed in) into the instance's values.
 //
 // Owners write, faces read (lock §0.4), and a device keeps its Live semantic at every size (lock §0.1; manual §10.4 "all three
-// show the same live settings"). A `device-instrument` declares the owner op that generates (`invariant.generates`), so its
+// show the same live settings"). A `device-instrument` declares the owner path that generates (`invariant.generates`), so its
 // instance carries a write row on that path and a `submit`, and the compact, whole and full sizes all draw it:
-//   - the Day die: the open face, written through `kernel:receiving` (mutate-field on the Day document; centralDeviceWrites.ts);
-//   - the Document: the reached page's Save, the hosted face's own (`kernel:file_operation` for a Flow).
+//   - the Day die: the open face, written through `act:central.document.mutate` (field.set on the Day document;
+//     centralDeviceWrites.ts);
+//   - the Document: the reached page's Save, the hosted face's own (`act:central.files.write` for a Flow).
 // Every other row is a reading. A light is the owner's reading and stays dark when the owner has not answered. A row whose
 // writer has no aperture refuses by name, and the draft is kept (the runtime's own law).
 import type {DeviceDeclaration, SdkParamRow} from '../../inhabitants/sdk/define'

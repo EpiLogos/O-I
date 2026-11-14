@@ -8,6 +8,7 @@ import {ContextActions} from "./ContextActions";
 import {observationIsCurrent,markObservations} from "./ComponentSelection";
 import {exactText,selectionSnapshot,type SelectionCandidate} from "./selectionModel";
 import {nativeContext,announceContext,registerSelectionValidator,PREPARED_CONTEXT_CHANGED,type PreparedContext,type PreparedItem} from "./nativeContext";
+import {packetNow,usePacket} from "./packetSlice";
 import {getContextPreview,setContextPreview,useContextPreview} from "./contextPreview";
 import {scopeGuard,selectionScopeKey} from "./scopeGuard";
 import {setContextCues} from "./selectionPresentation";
@@ -23,6 +24,19 @@ export function ContextTray({bindings,accompanying}:{bindings:Record<string,Surf
  const companionKey=selectionScopeKey(accompanying?.project,accompanying?.ref);
  useEffect(()=>{setContextPreview({});setContextCues([]);markObservations([]);},[companionKey]);
  const cueRevisions=useRef(new Map<string,number>());
+ /** Paint a packet's cues where it is the companion's (its conversation's; with none, a register's): never over a newer one. */
+ const paint=useRef((project:string,c:PreparedContext)=>{
+  const companion=latest.current.accompanying;
+  if(c.scope.agent_session!==(companion?.ref??null)||companion&&project!==companion.project)return;
+  const scope=selectionScopeKey(project,c.scope.agent_session??undefined);
+  if((cueRevisions.current.get(scope)??-1)>c.revision)return;
+  cueRevisions.current.set(scope,c.revision);if(cueRevisions.current.size>64)cueRevisions.current.delete(cueRevisions.current.keys().next().value!);
+  setContextCues(c.items.flatMap(item=>item.selection.anchor.kind==="text"?[{id:item.id,bindingId:item.selection.binding_id,sourceRef:item.selection.source_ref,start:item.selection.anchor.start,end:item.selection.anchor.end,text:item.selection.text}]:[]));
+  markObservations(c.items.flatMap(item=>item.selection.anchor.kind==="observation"?[item.selection.anchor.key]:[]));
+ }).current;
+ // The companion's packet as the World Model holds it (packetSlice.ts; O-I ticket 1005): its cues stand while it holds them.
+ const companionProject=accompanying?.project;const packet=usePacket(kernel.transport,companionProject,accompanying?.ref);const companionPacket=packet?.context;
+ useEffect(()=>{if(companionProject!==undefined&&companionPacket)paint(companionProject,companionPacket);},[companionProject,companionPacket,paint]);
  const view=useContextPreview();const retained=useRef(new Map<string,SurfaceBinding>());
  useEffect(()=>{
   let disposed=false,generation=0,busy=false;
@@ -77,7 +91,7 @@ export function ContextTray({bindings,accompanying}:{bindings:Record<string,Surf
     // Starts the existing owner service only, never a provider/Agent turn.
     await encounter(transport,project,{action:"start"});
     checkScope();
-    const current=await nativeContext(transport,project,session);
+    const current=await packetNow(transport,project,session);
     checkScope();
     const result=await nativeContext(transport,project,session,{operation:"edit",basis:current.revision,mutation:{operation:"add",selection}});
     retained.current.set(binding.id,binding);if(retained.current.size>64)retained.current.delete(retained.current.keys().next().value!);
@@ -86,15 +100,7 @@ export function ContextTray({bindings,accompanying}:{bindings:Record<string,Surf
    }catch(error){if(!disposed&&operation===generation)setContextPreview({candidate:next,title:binding.title,error:String(error)});}
    finally{busy=false;}
   };
-  const changed=(event:Event)=>{const detail=(event as CustomEvent<{project:string;value:PreparedContext;sourceWorldRef?:string}>).detail;if(!detail?.value||detail.sourceWorldRef)return;const c=detail.value;
-   const companion=latest.current.accompanying;
-   if(c.scope.agent_session!==(companion?.ref??null)||companion&&detail.project!==companion.project)return;
-   const scope=selectionScopeKey(detail.project,c.scope.agent_session??undefined);
-   if((cueRevisions.current.get(scope)??-1)>c.revision)return;
-   cueRevisions.current.set(scope,c.revision);if(cueRevisions.current.size>64)cueRevisions.current.delete(cueRevisions.current.keys().next().value!);
-   setContextCues(c.items.flatMap(item=>item.selection.anchor.kind==="text"?[{id:item.id,bindingId:item.selection.binding_id,sourceRef:item.selection.source_ref,start:item.selection.anchor.start,end:item.selection.anchor.end,text:item.selection.text}]:[]));
-   markObservations(c.items.flatMap(item=>item.selection.anchor.kind==="observation"?[item.selection.anchor.key]:[]));
-  };
+  const changed=(event:Event)=>{const detail=(event as CustomEvent<{project:string;value:PreparedContext;sourceWorldRef?:string}>).detail;if(!detail?.value||detail.sourceWorldRef)return;paint(detail.project,detail.value);};
   window.addEventListener("oi:selection-preview",present);window.addEventListener("oi:context-candidate",take);window.addEventListener(PREPARED_CONTEXT_CHANGED,changed);
   return()=>{disposed=true;generation++;unregister();window.removeEventListener("oi:selection-preview",present);window.removeEventListener("oi:context-candidate",take);window.removeEventListener(PREPARED_CONTEXT_CHANGED,changed);setContextCues([]);markObservations([]);};
  },[]);

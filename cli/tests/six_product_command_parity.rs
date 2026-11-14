@@ -123,6 +123,8 @@ mod unix {
             .env("OI_HOME", home.path())
             .env("OI_DATA_HOME", home.path().join("data"))
             .env("PATH", bin.path())
+            // The Expression socket an Action of Expressions crosses: the test's own, never a running desktop's.
+            .env("OI_EXPRESSION_SOCKET", home.path().join("expression.sock"))
             .output()
             .expect("run O:I CLI")
     }
@@ -366,6 +368,348 @@ mod unix {
             aikit_field["unavailable"].as_str().is_some(),
             "the absent owner's condition is named, not collapsed: {}",
             aikit_field
+        );
+    }
+
+    fn script(dir: &Path, name: &str, body: &str) {
+        let path = dir.join(name);
+        fs::write(&path, body).expect("write fake owner");
+        let mut permissions = fs::metadata(&path).expect("metadata").permissions();
+        permissions.set_mode(0o755);
+        fs::set_permissions(path, permissions).expect("chmod fake owner");
+    }
+
+    /// An owner answering the shared field contract (`oi.owner-action-field/v1`) with `actions`,
+    /// and running `action run <id> -` by recording its argv and the JSON on stdin.
+    fn shared_owner(dir: &Path, name: &str, field: &str) {
+        script(
+            dir,
+            name,
+            &format!(
+                "#!/bin/sh\nif [ \"$1\" = actions ]; then\n  printf '%s\\n' '{field}'\n  exit 0\nfi\n/bin/cat > \"$0.payload\"\nprintf '{name}:%s|%s|%s|%s\\n' \"$1\" \"$2\" \"$3\" \"$4\"\nexit 0\n"
+            ),
+        );
+    }
+
+    /// O-I #1002: `oi act` holds every owner's field — Central's, AIKit's, and each other owner's
+    /// `oi.owner-action-field/v1` — names an owner it cannot read, refuses a field that lists an
+    /// id outside its owner's prefix, describes an Action from its owner's own descriptor, and
+    /// routes each invocation to the owner its prefix names (a seat's to the seat instrument),
+    /// with the input on stdin, `--input -` included.
+    #[test]
+    fn act_holds_every_owners_field_and_routes_each_action_to_its_owner() {
+        let _serial = serial();
+        let home = TempDir::new().expect("home");
+        let bin = TempDir::new().expect("bin");
+        script(
+            bin.path(),
+            "ctrl",
+            "#!/bin/sh\nif [ \"$1\" = \"actions\" ]; then\n  printf '%s\\n' '{\"ok\":true,\"data\":{\"actions\":[{\"id\":\"central.doctor\",\"title\":\"Doctor\",\"mutation_class\":\"read\",\"inputs\":[]}]}}'\n  exit 0\nfi\nexit 14\n",
+        );
+        shared_owner(
+            bin.path(),
+            "factory",
+            r#"{"schema":"oi.owner-action-field/v1","owner":"factory","actions":[{"id":"factory.development.commission","title":"Submit a Commission","mutation_class":"locally-mutating","inputs":[{"name":"state","type":"path","required":true}],"output":{"type":"factory.commission-receipt/v1"},"availability":{"available":true,"reason":null}}]}"#,
+        );
+        shared_owner(
+            bin.path(),
+            "seat",
+            r#"{"schema":"oi.owner-action-field/v1","owner":"workcell","actions":[{"id":"workcell.seat.join","title":"Join a seat","mutation_class":"locally-mutating","inputs":[{"name":"workcell","type":"string","required":true}]}]}"#,
+        );
+        // The Workcell product listing a seat's id is not its own field: refused, never listed.
+        shared_owner(
+            bin.path(),
+            "workcell",
+            r#"{"schema":"oi.owner-action-field/v1","owner":"workcell","actions":[{"id":"workcell.seat.join"}]}"#,
+        );
+
+        let listed = run_oi_args(&home, &bin, &["act", "--json"]);
+        assert!(
+            listed.status.success(),
+            "{}",
+            String::from_utf8_lossy(&listed.stderr)
+        );
+        let value: serde_json::Value =
+            serde_json::from_slice(&listed.stdout).expect("field listing parses");
+        let fields = value["fields"].as_array().expect("owner fields");
+        let field = |source: &str| {
+            fields
+                .iter()
+                .find(|field| field["source"] == source)
+                .unwrap_or_else(|| panic!("no {source} field: {value}"))
+        };
+        assert_eq!(
+            fields
+                .iter()
+                .map(|field| field["owner"].as_str().unwrap())
+                .collect::<Vec<_>>(),
+            [
+                "central",
+                "ai-kit",
+                "factory",
+                "workcell",
+                "workcell",
+                "actuation",
+                "ql",
+                "expressions"
+            ]
+        );
+        assert_eq!(field("central")["count"], 1);
+        assert_eq!(field("factory")["count"], 1);
+        assert_eq!(
+            field("factory")["actions"][0]["id"],
+            "factory.development.commission"
+        );
+        assert_eq!(field("seat")["count"], 1);
+        assert!(
+            field("workcell")["unavailable"]
+                .as_str()
+                .is_some_and(|why| why.contains("not under its own prefix")),
+            "{value}"
+        );
+        for absent in ["aikit", "actuation", "ql"] {
+            assert!(
+                field(absent)["unavailable"].is_string(),
+                "{absent} is named: {value}"
+            );
+        }
+        // O-I #1008: Expressions' field is the kernel's own, listed with no app running; while no
+        // desktop answers on the Expression socket, each Action says so in words.
+        let expressions = field("expressions");
+        assert_eq!(expressions["count"], 18, "{value}");
+        for action in expressions["actions"]
+            .as_array()
+            .expect("expressions' actions")
+        {
+            assert!(action["id"]
+                .as_str()
+                .is_some_and(|id| id.starts_with("expressions.")));
+            assert_eq!(action["mutation_class"], "locally-mutating");
+            assert_eq!(action["availability"]["available"], false, "{action}");
+            assert!(
+                action["availability"]["reason"]
+                    .as_str()
+                    .is_some_and(|why| why.contains("no O:I desktop answers")),
+                "{action}"
+            );
+        }
+        let described = run_oi_args(
+            &home,
+            &bin,
+            &["act", "describe", "expressions.studio.set", "--json"],
+        );
+        assert!(described.status.success());
+        let descriptor: serde_json::Value =
+            serde_json::from_slice(&described.stdout).expect("descriptor");
+        assert_eq!(descriptor["title"], "Set a Studio value");
+        assert_eq!(descriptor["output"]["type"], "oi.expression-act/v1");
+        let refused = run_oi_args(
+            &home,
+            &bin,
+            &[
+                "act",
+                "invoke",
+                "expressions.new",
+                "--input",
+                r#"{"title": "A"}"#,
+            ],
+        );
+        assert_ne!(refused.status.code(), Some(0));
+        assert!(refused.stdout.is_empty());
+        assert!(
+            String::from_utf8_lossy(&refused.stderr)
+                .contains("runs in the O:I desktop's kernel, which holds the expression store, and no desktop answers"),
+            "{}",
+            String::from_utf8_lossy(&refused.stderr)
+        );
+
+        let described = run_oi_args(
+            &home,
+            &bin,
+            &[
+                "act",
+                "describe",
+                "factory.development.commission",
+                "--json",
+            ],
+        );
+        assert!(described.status.success());
+        let descriptor: serde_json::Value =
+            serde_json::from_slice(&described.stdout).expect("descriptor");
+        assert_eq!(descriptor["title"], "Submit a Commission");
+        let stray = run_oi_args(&home, &bin, &["act", "describe", "factory.no.such"]);
+        assert_ne!(stray.status.code(), Some(0));
+
+        let invoked = run_oi_args(
+            &home,
+            &bin,
+            &[
+                "act",
+                "invoke",
+                "factory.development.commission",
+                "--input",
+                r#"{"state": "/s"}"#,
+            ],
+        );
+        assert!(
+            invoked.status.success(),
+            "{}",
+            String::from_utf8_lossy(&invoked.stderr)
+        );
+        assert_eq!(
+            String::from_utf8_lossy(&invoked.stdout),
+            "factory:action|run|factory.development.commission|-\n"
+        );
+        assert_eq!(
+            fs::read_to_string(bin.path().join("factory.payload")).expect("factory payload"),
+            r#"{"state":"/s"}"#
+        );
+
+        let mut seat = Command::new(env!("CARGO_BIN_EXE_oi"))
+            .args(["act", "invoke", "workcell.seat.join", "--input", "-"])
+            .env("OI_HOME", home.path())
+            .env("OI_DATA_HOME", home.path().join("data"))
+            .env("PATH", bin.path())
+            .stdin(std::process::Stdio::piped())
+            .stdout(std::process::Stdio::piped())
+            .spawn()
+            .expect("run O:I CLI");
+        use std::io::Write;
+        seat.stdin
+            .take()
+            .expect("stdin")
+            .write_all(br#"{"workcell":"env-2"}"#)
+            .expect("write input");
+        let seat = seat.wait_with_output().expect("seat answered");
+        assert!(seat.status.success());
+        assert_eq!(
+            String::from_utf8_lossy(&seat.stdout),
+            "seat:action|run|workcell.seat.join|-\n"
+        );
+        assert_eq!(
+            fs::read_to_string(bin.path().join("seat.payload")).expect("seat payload"),
+            r#"{"workcell":"env-2"}"#
+        );
+    }
+
+    /// O-I #1008: with a desktop answering on the Expression socket, `oi act invoke expressions.*`
+    /// runs at its kernel's act door through the one dispatch, as the desktop serves the socket
+    /// (src-tauri main.rs: `dispatch_kernel_op(&handle, request.op())`), here a real socket the
+    /// kernel crate serves over a kernel of its own: the store's answer on stdout, its refusal in
+    /// its words, and each Action described available.
+    #[test]
+    fn act_invoke_runs_an_action_of_expressions_in_the_desktops_kernel() {
+        let _serial = serial();
+        let home = TempDir::new().expect("home");
+        let bin = TempDir::new().expect("bin");
+        // A short path: a socket's address is bounded.
+        let socket = Path::new("/tmp").join(format!("oi-cli-act-{}.sock", std::process::id()));
+        let kernel = std::sync::Arc::new(Mutex::new(oi_cradle_kernel::Kernel::new(
+            oi_cradle_kernel::flow::CentralClient::with(
+                std::path::PathBuf::from("/nonexistent/ctrl"),
+                None,
+                "test".into(),
+            ),
+        )));
+        let held = kernel.clone();
+        let server =
+            oi_cradle_kernel::expression_transport::serve_routed(&socket, move |request| {
+                let outcome = oi_cradle_kernel::dispatch::dispatch(&held, request.op()).0?;
+                serde_json::to_value(outcome).map_err(|error| error.to_string())
+            })
+            .expect("serve the Expression socket");
+        let oi = |args: &[&str]| {
+            Command::new(env!("CARGO_BIN_EXE_oi"))
+                .args(args)
+                .env("OI_HOME", home.path())
+                .env("OI_DATA_HOME", home.path().join("data"))
+                .env("PATH", bin.path())
+                .env("OI_EXPRESSION_SOCKET", &socket)
+                .output()
+                .expect("run O:I CLI")
+        };
+
+        let stopped = oi(&["act", "invoke", "expressions.scene.stop", "--input", "{}"]);
+        assert!(
+            stopped.status.success(),
+            "{}",
+            String::from_utf8_lossy(&stopped.stderr)
+        );
+        let answer: serde_json::Value =
+            serde_json::from_slice(&stopped.stdout).expect("the store's answer");
+        assert_eq!(answer["schema"], "oi.expression-act/v1");
+        assert_eq!(answer["action"], "expressions.scene.stop");
+        assert_eq!(answer["ref"], "expressions:all");
+        assert_eq!(answer["state"], "stopped");
+
+        let refused = oi(&[
+            "act",
+            "invoke",
+            "expressions.arm",
+            "--input",
+            r#"{"expression_ref": "expression:none", "on": true}"#,
+        ]);
+        assert_ne!(refused.status.code(), Some(0));
+        assert!(refused.stdout.is_empty());
+        assert!(
+            !String::from_utf8_lossy(&refused.stderr).trim().is_empty(),
+            "the store's refusal is in words"
+        );
+
+        let described = oi(&["act", "describe", "expressions.arm", "--json"]);
+        assert!(described.status.success());
+        let descriptor: serde_json::Value =
+            serde_json::from_slice(&described.stdout).expect("descriptor");
+        assert_eq!(
+            descriptor["availability"]["available"], true,
+            "{descriptor}"
+        );
+        drop(server);
+        assert!(!socket.exists());
+    }
+
+    /// O-I #1002: an AIKit Action's input reaches AIKit on stdin (`--input -`), never in argv —
+    /// a Communique's words do not sit in a process listing.
+    #[test]
+    fn act_invoke_hands_aikit_its_input_on_stdin() {
+        let _serial = serial();
+        let home = TempDir::new().expect("home");
+        let bin = TempDir::new().expect("bin");
+        script(
+            bin.path(),
+            "aikit",
+            "#!/bin/sh\n/bin/cat > \"$0.payload\"\nprintf 'aikit:%s|%s|%s|%s|%s|%s\\n' \"$1\" \"$2\" \"$3\" \"$4\" \"$5\" \"$6\"\nexit 0\n",
+        );
+        let words = r#"{"body":"The take on track 3 stands.","to":"@anima"}"#;
+        let invoked = Command::new(env!("CARGO_BIN_EXE_oi"))
+            .args([
+                "act",
+                "invoke",
+                "aikit.gateway.send",
+                "--input",
+                words,
+                "--json",
+            ])
+            .env("OI_HOME", home.path())
+            .env("OI_DATA_HOME", home.path().join("data"))
+            .env("OI_AIKIT_BIN", bin.path().join("aikit"))
+            .env("PATH", bin.path())
+            .stdin(std::process::Stdio::null())
+            .output()
+            .expect("run O:I CLI");
+        assert!(
+            invoked.status.success(),
+            "{}",
+            String::from_utf8_lossy(&invoked.stderr)
+        );
+        assert_eq!(
+            String::from_utf8_lossy(&invoked.stdout),
+            "aikit:act|invoke|aikit.gateway.send|--input|-|--json\n",
+            "the words never travel in argv"
+        );
+        assert_eq!(
+            fs::read_to_string(bin.path().join("aikit.payload")).expect("aikit payload"),
+            words
         );
     }
 

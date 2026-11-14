@@ -93,11 +93,20 @@ const takeReceipt = take => ({contract: 'factory.song-take/v1', take, unit: 'rel
   commission: {commission: {runRef: `run:TAKE${take}`}}, attempts: {runRef: `run:TAKE${take}`}, execution: 'not-requested', nextCommand: 'factory attempt action'})
 const factoryRefusal = message => ({ok: false, error: JSON.stringify({kind: 'owner-refused-or-failed', message, operation_may_have_run: false})})
 
+/** AIKit's Action a session's settings are written by, through the kernel's `act` (O-I 1006): its request as JSON, at the revision expected. */
+const SETTINGS_ACTION = 'aikit.session.settings'
+const settingsWrite = op => op.op === 'act' && op.action === SETTINGS_ACTION
+/** What a write asked: AIKit's settings request (the Action's `request_json`), or the op's own request. */
+const asked = op => (settingsWrite(op) ? JSON.parse(op.input.request_json) : op.request)
+/** The writes the kernel was sent, in order: AIKit's settings Action and Factory's ops. */
+const writesOf = kernel => kernel.sent.filter(op => settingsWrite(op) || op.request)
+
 /** A scripted kernel: AIKit's settings (a revision per change, takes kept as AIKit keeps them), the session's attempts, Factory's score
  * and Factory's perform (`perform(op, n)` answers the n-th). Every op kept. */
 function scriptedKernel(start, perform = (_op, n) => ({ok: true, outcome: {result: 'factory_development_reading', data: takeReceipt(n), receipts: []}})) {
   const kernel = {reading: start, sent: [], revisions: 0, performs: 0}
   const answer = (result, data) => ({json: async () => ({ok: true, outcome: {result, data, receipts: []}})})
+  const dispatched = dispatch => ({json: async () => ({ok: true, outcome: {result: 'action_dispatched', dispatch, receipts: []}})})
   globalThis.fetch = async (_url, init) => {
     const op = JSON.parse(init.body)
     kernel.sent.push(op)
@@ -105,18 +114,19 @@ function scriptedKernel(start, perform = (_op, n) => ({ok: true, outcome: {resul
     if (op.op === 'factory_attempt_read') return answer('factory_attempt_reading', RUN_READING)
     if (op.op === 'factory_owner' && op.request.kind === 'workflow-score-read') return answer('factory_development_reading', REAL.score_after)
     if (op.op === 'factory_owner' && op.request.kind === 'workflow-perform') return {json: async () => perform(op, ++kernel.performs)}
-    if (op.op !== 'encounter_session_settings') return {json: async () => ({ok: false, error: `unexpected ${op.op}`})}
-    if (!op.request) return answer('encounter_session_settings_reading', kernel.reading)
-    if ((op.expected_revision ?? null) !== kernel.reading.revision)
-      return {json: async () => ({ok: false, error: 'encounter.runtime: Session settings revision conflict; read the current settings and write again'})}
+    if (op.op === 'encounter_session_settings') return answer('encounter_session_settings_reading', kernel.reading)
+    if (!settingsWrite(op)) return {json: async () => ({ok: false, error: `unexpected ${op.op}`})}
+    if ((op.input.expected_revision ?? null) !== kernel.reading.revision)
+      return dispatched({state: 'owner_refused', owner_operation: SETTINGS_ACTION,
+        message: 'encounter.runtime: Session settings revision conflict; read the current settings and write again'})
     const task = {...kernel.reading.task}
-    const act = op.request.takes
+    const act = asked(op).takes
     if (act?.start) task.takes = {trace_ref: act.start.trace_ref, started_at_unix_ms: 1, running: true, variable: task.repeat_variable,
       levels: task.repeat_levels, repeats: task.repeat_repeats, stop: task.repeat_stop, ended: null}
     if (act?.end) task.takes = {...task.takes, running: false, ended: {at_unix_ms: 2, outcome: act.end.outcome,
       ...(act.end.takes !== undefined ? {takes: act.end.takes} : {}), ...(act.end.root ? {root: act.end.root} : {}), ...(act.end.reason ? {reason: act.end.reason} : {})}}
     kernel.reading = {...kernel.reading, revision: `session-settings/${++kernel.revisions}`, task}
-    return answer('encounter_session_settings_reading', kernel.reading)
+    return dispatched({state: 'invoked', owner_operation: SETTINGS_ACTION, data: kernel.reading})
   }
   return kernel
 }
@@ -144,14 +154,15 @@ test('Repeat on a song: the set starts on AIKit, Factory starts each take as a R
   const made = await songs.songTakes(transport, project, 'ses-eros', SONG, () => 1_793_000_000_000)
   stop()
   assert.equal(made.ok, true, made.error)
-  const writes = kernel.sent.filter(op => op.request)
-  assert.deepEqual(writes.map(op => op.op === 'factory_owner' ? op.request.kind : op.op),
-    ['encounter_session_settings', 'workflow-perform', 'workflow-perform', 'encounter_session_settings'], 'Repeats are the takes: one Run each')
-  const trace = writes[0].request.takes.start.trace_ref
+  // REPLACED (O-I 1006): the set started and ended by the kernel's encounter_session_settings; AIKit's Action aikit.session.settings now.
+  const writes = writesOf(kernel)
+  assert.deepEqual(writes.map(op => op.op === 'factory_owner' ? op.request.kind : op.action),
+    ['aikit.session.settings', 'workflow-perform', 'workflow-perform', 'aikit.session.settings'], 'Repeats are the takes: one Run each')
+  const trace = asked(writes[0]).takes.start.trace_ref
   assert.equal(trace, 'takes:ses-eros:1793000000000')
-  assert.deepEqual(writes[0].request, {takes: {start: {task_ref: TASK, trace_ref: trace}}})
+  assert.deepEqual(asked(writes[0]), {takes: {start: {task_ref: TASK, trace_ref: trace}}})
   assert.deepEqual(writes[1].request, {kind: 'workflow-perform', state_path: TAKER, run_ref: RUN, unit: 'release-check'})
-  assert.deepEqual(writes[3].request, {takes: {end: {task_ref: TASK, trace_ref: trace, outcome: 'made', takes: 2, root: TAKER}}},
+  assert.deepEqual(asked(writes[3]), {takes: {end: {task_ref: TASK, trace_ref: trace, outcome: 'made', takes: 2, root: TAKER}}},
     'AIKit keeps how many Factory made and where: the project\'s developmental state, which holds each take\'s Run')
   assert.equal(kernel.reading.task.takes.ended.outcome, 'made')
   assert.match(made.note, /^Factory started 2 Runs of the song release-check \(takes 1–2 of release-check: run:TAKE1, run:TAKE2\)/)
@@ -165,13 +176,13 @@ test('a song\'s takes are refused in words before any write: not launched with R
   await readSettings()
   let made = await songs.songTakes(transport, project, 'ses-eros', SONG)
   assert.deepEqual(made, {ok: false, error: settings.TAKES_WHY.notRepeat})
-  assert.equal(kernel.sent.filter(op => op.request).length, 0)
+  assert.equal(writesOf(kernel).length, 0)
   kernel = scriptedKernel(reading({repeat_variable: 'effort', repeat_levels: ['low', 'high']}))
   await readSettings()
   made = await songs.songTakes(transport, project, 'ses-eros', SONG)
   assert.deepEqual(made, {ok: false, error: songs.CANON_VARIES})
   assert.match(songs.CANON_VARIES, /each the song as its clip renders it/)
-  assert.equal(kernel.sent.filter(op => op.request).length, 0)
+  assert.equal(writesOf(kernel).length, 0)
   // Factory refuses the second take (the set moved since the render): the set ends failed with Factory's words, and the first take stands.
   const words = 'The set release-check names has moved since it was rendered (it is blake3:b now, the clip was made at blake3:a), and a take performs the song as the clip renders it. Remake it in the project that made it, then drop it here again. Nothing is performed.'
   kernel = scriptedKernel(reading(), (_op, n) => n === 1 ? {ok: true, outcome: {result: 'factory_development_reading', data: takeReceipt(1), receipts: []}} : factoryRefusal(words))
@@ -179,7 +190,7 @@ test('a song\'s takes are refused in words before any write: not launched with R
   made = await songs.songTakes(transport, project, 'ses-eros', SONG)
   assert.equal(made.ok, false)
   assert.ok(made.error.startsWith('Factory made 1 take of release-check (run:TAKE1), then refused: The set release-check names has moved'), made.error)
-  const end = kernel.sent.filter(op => op.request).at(-1).request.takes.end
+  const end = asked(writesOf(kernel).at(-1)).takes.end
   assert.deepEqual([end.outcome, end.takes, end.root], ['failed', 1, TAKER])
   assert.ok(end.reason.includes('has moved since it was rendered'), end.reason)
   // The note chosen in the score: a canon unit is a song; any other unit is none.
@@ -188,50 +199,33 @@ test('a song\'s takes are refused in words before any write: not launched with R
   assert.equal(songs.canonNoteOf(REAL.score_after, undefined), null)
 })
 
-test('Repeat\'s press on a task whose Clip view holds a song\'s note makes the song\'s takes; with no song chosen it makes the task\'s own', async () => {
-  const tracks = await import('../src/frame/tracks/useFactoryTracks.ts')
-  const {clipHostId, setViewHold} = await import('../src/frame/detail/clipBinding.ts')
-  const adapter = await source('../src/timeline/factoryTrackAdapter.ts')
-  assert.ok(/return repeat\(session, clip\.label, clip\.id\)/.test(adapter), 'the press names the clip it was made on')
-  const clip = 'space:anima:ses-eros#task/1'
-  let kernel = scriptedKernel(reading())
-  await readSettings()
-  setViewHold(clipHostId('factory', clip), 'unit', 'release-check')
-  const press = tracks.repeatPress(transport, () => reading(), () => project)
-  let made = await press('ses-eros', 'verify the change', clip)
-  assert.equal(made.ok, true, made.error)
-  assert.deepEqual(kernel.sent.filter(op => op.op === 'factory_owner').map(op => op.request.kind), ['workflow-score-read', 'workflow-perform', 'workflow-perform'],
-    'the session\'s Run is read, its score names the note a song, and each take is Factory\'s')
-  // The note chosen is no song: the task's own takes, through Actuation as #795 makes them (here AIKit hands no run, so in its words).
-  setViewHold(clipHostId('factory', clip), 'unit', 'eros-verify')
-  kernel = scriptedKernel(reading())
-  await readSettings()
-  made = await press('ses-eros', 'verify the change', clip)
-  const {TAKES_WHY} = await import('../src/agent/sessionSettings.ts')
-  assert.deepEqual(made, {ok: false, error: TAKES_WHY.noRun})
-  assert.equal(kernel.sent.some(op => op.op === 'factory_owner' && op.request.kind === 'workflow-perform'), false)
-  setViewHold(clipHostId('factory', clip), 'unit', undefined)
-})
-
-test('Repeat\'s press with a note chosen whose Run or score is not read says so and makes nothing: it never guesses the note is a task', async () => {
-  const tracks = await import('../src/frame/tracks/useFactoryTracks.ts')
-  const {clipHostId, setViewHold} = await import('../src/frame/detail/clipBinding.ts')
-  const clip = 'space:anima:ses-eros#task/1'
+// REPLACED (O-I #1004): "Repeat's press on a task whose Clip view holds a song's note makes the song's takes; with no song chosen it makes
+// the task's own" and "Repeat's press with a note chosen whose Run or score is not read says so and makes nothing", both through the
+// press the window's Factory hook composed (useFactoryTracks.ts repeatPress). Factory's Set is the kernel's now, and a task's launch from
+// the grid — Repeat's among them — waits in the Set's words for O-I #1006 (kernel mode_set.rs factory_waiting `clip.launch`). What the
+// press composed stands: which song a note chosen in the Clip view names (songOfNote, which Routine… asks too) and the song's takes
+// (songTakes, held above).
+test('the note chosen in a task\'s Clip view names a song only from Factory\'s score: a song, the task\'s own, or unread in words', async () => {
+  const songs = await import('../src/agent/songClips.ts')
   const kernel = scriptedKernel(reading())
   await readSettings()
+  const song = await songs.songOfNote(transport, project, 'ses-eros', 'release-check')
+  assert.deepEqual(song, {target: {...TARGET, unitRef: song.target.unitRef}, unit: 'release-check', name: 'release-check'})
+  assert.deepEqual(kernel.sent.filter(op => op.op === 'factory_owner').map(op => op.request.kind), ['workflow-score-read'],
+    'the session\'s Run is read, and its score names the note a song')
+  assert.equal(await songs.songOfNote(transport, project, 'ses-eros', 'eros-verify'), null, 'a note of the task\'s own unit is no song')
+  // The score not read: said, and nothing is made — it never guesses the note is a task.
   const scripted = globalThis.fetch
   globalThis.fetch = async (url, init) => {
     const op = JSON.parse(init.body)
     if (op.op === 'factory_owner' && op.request.kind === 'workflow-score-read') { kernel.sent.push(op); return {json: async () => factoryRefusal('the workflow state is locked by another writer')} }
     return scripted(url, init)
   }
-  setViewHold(clipHostId('factory', clip), 'unit', 'release-check')
-  const made = await tracks.repeatPress(transport, () => reading(), () => project)('ses-eros', 'verify the change', clip)
-  assert.equal(made.ok, false)
-  assert.match(made.error, /release-check is chosen in the Clip view, but Factory's score of the session's Run is not read .*Nothing is made\./)
+  const unread = await songs.songOfNote(transport, project, 'ses-eros', 'release-check')
+  assert.match(unread.refused, /release-check is chosen in the Clip view, but Factory's score of the session's Run is not read .*so Repeat cannot tell whether it is a song's note\. Nothing is made\./)
   assert.equal(kernel.sent.some(op => op.op === 'factory_owner' && op.request.kind === 'workflow-perform'), false, 'no take is performed')
-  assert.equal(kernel.sent.some(op => op.op === 'encounter_session_settings' && op.request), false, 'no set of takes is started')
-  setViewHold(clipHostId('factory', clip), 'unit', undefined)
+  assert.equal(kernel.sent.some(settingsWrite), false, 'no set of takes is started')
+  globalThis.fetch = scripted
 })
 
 test('Loop on a song makes each pass a take: Loop turned on with a song\'s note chosen names the song for AIKit\'s executor; with the task\'s own note it loops the task', async () => {
@@ -246,7 +240,7 @@ test('Loop on a song makes each pass a take: Loop turned on with a song\'s note 
     const wiring = clip.factoryWiring({sessionRef: 'ses-eros', n: 1}, {transport, project, settings: start, refused: null}, null, null, score,
       key => key === 'unit' ? unit : undefined)
     await wiring.acts.loop(value)
-    return kernel.sent.filter(op => op.op === 'encounter_session_settings' && op.request).map(op => op.request)
+    return kernel.sent.filter(settingsWrite).map(asked)
   }
   assert.deepEqual(await loopWith(reading({launch: 'trigger'}), 'release-check', true), [{task: {task_ref: TASK, set: {loop: true, loop_song: SONG_LOOP}}}],
     'the song\'s note names the canon unit each pass takes again, in the Run it stands in')
@@ -431,7 +425,9 @@ test('Export Song… of a range: the stretch the Arrangement\'s ruler selects, s
   assert.deepEqual(sent?.request?.units, ['eros-verify'], JSON.stringify(sent))
   // The ruler feeds the stretch with the set it was drawn on, and the take lanes carry what each take works.
   assert.match(await source('../src/inhabitants/catalogue/panels/dlw__arrangement-ruler.tsx'), /publishShownSpan\(span \? \{set, range: span\} : null\)/)
-  assert.match(await source('../src/timeline/factoryTrackAdapter.ts'), /of: \{runRef: take\.runRef, unitRef: take\.unitRef \?\? null\}/)
+  // REPLACED (O-I #1004): the window's Factory adapter named them (`of: {runRef: take.runRef, unitRef}`); the kernel's Set names each take's
+  // run and unit, and the one projection carries them onto the lane.
+  assert.match(await source('../src/frame/tracks/kernelSet.ts'), /of: \{runRef: take\.run, unitRef: take\.unit \?\? null\}/)
   const binding = await source('../src/agent/clipBinding.ts')
   assert.match(binding, /unitsInSpan\(shownSpanNow\(\), sessions && sessionRef \? scored\.reading : null\)/)
 })

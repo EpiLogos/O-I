@@ -2,8 +2,9 @@
 // the page listing reads every Flow to place it, then `useRowReadings` reads each again with `file_read`, one at a time").
 //
 // The instrument: the REAL rows (shell/ModeBrowser.tsx, mounted by React's own DOM renderer over a small DOM stand-in, so every
-// effect runs as it does in the window) over a COUNTING FAKE KERNEL — `fetch` answering the bridge's ops (`page`, `file_read`,
-// `files_list`, `day_read`) with the shapes the owners give, recording each op asked and how many were in flight together.
+// effect runs as it does in the window) over a COUNTING FAKE KERNEL — `fetch` answering the bridge's ops (`model_subscribe` for the
+// World Model's worlds slice, which carries the page owner's listing of your world; `file_read`, `files_list`, `day_read`) with the
+// shapes the kernel and the owners give, recording each op asked and how many were in flight together.
 // Channel: scripted (headless, no browser). What a person sees in the window is the lead's screen pass: UNVERIFIED here.
 //
 // A window opened again is a second GENERATION of the shell's modules (fixtures/browser-rows-one-read/loader.mjs): fresh module
@@ -12,6 +13,7 @@ import test, {after} from 'node:test'
 import assert from 'node:assert/strict'
 import {readFileSync} from 'node:fs'
 import {register} from 'node:module'
+import {worldsSliceOf} from './support/worldModelFixture.mjs'
 
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
 register('./fixtures/browser-rows-one-read/loader.mjs', {parentURL: import.meta.url, data: {compiler, reactFrom: import.meta.url}})
@@ -155,13 +157,14 @@ function pageListing({flows, carries}) {
 const dayNamesOf = count => Array.from({length: count}, (_, index) => new Date(Date.UTC(2026, 9, 20 - index)).toISOString().slice(0, 10))
 
 /** The fake kernel behind `transport.url`: every op recorded in the order asked, with how many were in flight together. `carries`
- * says which Flows the listing carries the words of; `gate` holds the page listing until released (a read still running). */
-function fakeKernel({url, flows = fixture.flows, carries = () => true, days = 0, gate = null}) {
+ * says which Flows the listing carries the words of; `gate` holds the World Model's answer until released (a read still running);
+ * `version` is the worlds slice's version the kernel holds. */
+function fakeKernel({url, flows = fixture.flows, carries = () => true, days = 0, gate = null, version = 1, cap = Infinity}) {
   const asked = []
   const state = {inflight: 0, mostInflight: 0, fileReadsInflight: 0, mostFileReadsInflight: 0}
   const original = globalThis.fetch
   const answer = op => {
-    if (op.op === 'page' && op.request.operation === 'list') return {ok: true, outcome: {result: 'page_reading', data: pageListing({flows, carries})}}
+    if (op.op === 'model_subscribe' && op.slice === 'worlds') return worldsSliceOf({}, [{folder: fixture.path, state: 'read', listing: pageListing({flows, carries})}], version)
     if (op.op === 'file_read') {
       const flow = flows.find(item => op.location.path === flowPath(item.name))
       return flow ? {ok: true, outcome: {result: 'file_read', reading: {schema: 'central.file-reading/v1', location: op.location, revision: revisionOf(flow.name), byte_len: flow.byte_len,
@@ -186,7 +189,9 @@ function fakeKernel({url, flows = fixture.flows, carries = () => true, days = 0,
     if (op.op === 'file_read') { state.fileReadsInflight++; state.mostFileReadsInflight = Math.max(state.mostFileReadsInflight, state.fileReadsInflight) }
     try {
       await null
-      if (gate && op.op === 'page') await gate.promise
+      // Past `cap` asks the kernel answers no more (a loop of asks is held still, so the suite reports it instead of hanging).
+      if (asked.length > cap) await new Promise(() => {})
+      if (gate && op.op === 'model_subscribe') await gate.promise
       return {json: async () => answer(op)}
     } finally {
       state.inflight--
@@ -196,7 +201,7 @@ function fakeKernel({url, flows = fixture.flows, carries = () => true, days = 0,
   return {
     asked, state,
     /** The ops asked, in order, by name. */
-    ops: () => asked.map(op => op.op === 'page' ? `page:${op.request.operation}` : op.op),
+    ops: () => asked.map(op => op.op),
     count: name => asked.filter(op => op.op === name).length,
     restore: () => { globalThis.fetch = original },
   }
@@ -261,7 +266,7 @@ test('(a) first draw of 13 Flows: one listing and no read of any Flow — the ro
     await quiet(kernel)
     assert.deepEqual(rows.rows(), expectedFlowRows(), 'every Flow by its title, its agents and its revision')
     assert.ok(kernel.asked.length <= 2, `at most one listing and one batch read, asked: ${kernel.ops().join(', ')}`)
-    assert.deepEqual(kernel.ops(), ['page:list'], 'the listing alone: the Flows were read once, to place them')
+    assert.deepEqual(kernel.ops(), ['model_subscribe'], 'the World Model\'s worlds slice alone: the Flows were read once, by the kernel, to place them')
     assert.equal(kernel.count('file_read'), 0, 'no Flow is read again, one at a time or otherwise')
     assert.doesNotMatch(rows.text(), /Reading the Flows…/)
     rows.close()
@@ -276,7 +281,7 @@ test('a Flow whose words the listing does not carry is read on its own, one afte
     const rows = mountRows(shell, transport, 'central-flows')
     await quiet(kernel)
     assert.deepEqual(rows.rows(), expectedFlowRows(), 'the same words, whichever way each Flow came by them')
-    assert.deepEqual(kernel.ops(), ['page:list', ...Array(5).fill('file_read')])
+    assert.deepEqual(kernel.ops(), ['model_subscribe', ...Array(5).fill('file_read')])
     assert.equal(kernel.state.mostFileReadsInflight, 1, 'the carrier never sees a pile of reads')
     rows.close()
   })
@@ -289,7 +294,7 @@ test('a listing that carries no Flow\'s words (the kernel before it does) leaves
     const rows = mountRows(shell, transport, 'central-flows')
     await quiet(kernel)
     assert.deepEqual(rows.rows(), expectedFlowRows())
-    assert.deepEqual(kernel.ops(), ['page:list', ...Array(13).fill('file_read')], 'measured: 14 ops for 13 Flows, the listing and a read of each')
+    assert.deepEqual(kernel.ops(), ['model_subscribe', ...Array(13).fill('file_read')], 'measured: 14 ops for 13 Flows, the slice and a read of each')
     assert.equal(kernel.state.mostFileReadsInflight, 1)
     rows.close()
   })
@@ -297,8 +302,9 @@ test('a listing that carries no Flow\'s words (the kernel before it does) leaves
 
 // ── (b) a return, (c) a relaunch ───────────────────────────────────────────────────────────────────────────────────────────
 
-test('(b) a return draws the last rows at once and asks the owner once behind them', async () => {
+test('(b) a return draws the last rows at once and asks the kernel nothing; a notice of a newer slice is asked once, behind the rows', async () => {
   const shell = await openWindow(1)
+  const {windowModel} = await import('../src/owners/model.ts?g=1')
   const transport = transportFor('return')
   await over({url: transport.url}, async kernel => {
     const before = mountRows(shell, transport, 'central-flows')
@@ -307,17 +313,28 @@ test('(b) a return draws the last rows at once and asks the owner once behind th
     before.close()
     await quiet(kernel)
   })
-  // The return: the owner is slow to answer, and the rows stand drawn meanwhile.
-  const held = gate()
-  await over({url: transport.url, gate: held}, async kernel => {
+  // The return: nothing has moved, so the window holds the World Model's slice at its version and asks nothing.
+  await over({url: transport.url, gate: gate()}, async kernel => {
     const back = mountRows(shell, transport, 'central-flows')
-    assert.deepEqual(back.rows(), expectedFlowRows(), 'the last reading is drawn before the owner has answered, every Flow\'s words with it')
+    assert.deepEqual(back.rows(), expectedFlowRows(), 'the last reading is drawn at once, every Flow\'s words with it')
     assert.doesNotMatch(back.text(), /Reading the Flows…/, 'no waiting status over rows that are drawn')
-    assert.deepEqual(kernel.ops(), ['page:list'], 'the listing is asked again behind them, and nothing else is asked')
+    await quiet(kernel)
+    assert.deepEqual(kernel.ops(), [], 'the return asks the kernel nothing: no notice has named a newer slice')
+    back.close()
+  })
+  // The kernel's notice names a newer worlds slice; the owner is slow to answer the next return, and the rows stand drawn meanwhile.
+  windowModel.receive([{event: 'model_changed', slice: 'worlds', version: 2}])
+  const held = gate()
+  await over({url: transport.url, gate: held, version: 2}, async kernel => {
+    const back = mountRows(shell, transport, 'central-flows')
+    assert.deepEqual(back.rows(), expectedFlowRows(), 'the last reading is drawn before the kernel has answered')
+    assert.doesNotMatch(back.text(), /Reading the Flows…/)
+    await new Promise(resolve => setImmediate(resolve))
+    assert.deepEqual(kernel.ops(), ['model_subscribe'], 'the newer slice is asked behind the rows, and nothing else is asked')
     held.release()
     await quiet(kernel)
     assert.deepEqual(back.rows(), expectedFlowRows())
-    assert.deepEqual(kernel.ops(), ['page:list'], 'the return read the owner once: the Flows come with the listing')
+    assert.deepEqual(kernel.ops(), ['model_subscribe'], 'asked once: the Flows come with the slice')
     back.close()
   })
 })
@@ -370,11 +387,11 @@ test('(c) a relaunch draws the last rows first: the window\'s kept readings reac
     const rows = mountRows(again, transport, 'central-flows')
     assert.deepEqual(rows.rows(), expectedFlowRows(), 'the first paint of the new window is the last reading, every Flow\'s words with it')
     assert.doesNotMatch(rows.text(), /Reading the Flows…/)
-    assert.deepEqual(kernel.ops(), ['page:list'])
+    assert.deepEqual(kernel.ops(), ['model_subscribe'])
     held.release()
     await quiet(kernel)
     assert.deepEqual(rows.rows(), expectedFlowRows())
-    assert.deepEqual(kernel.ops(), ['page:list'], 'the relaunch asked the owner once')
+    assert.deepEqual(kernel.ops(), ['model_subscribe'], 'the relaunch asked the kernel once: a new window holds no slice')
     rows.close()
   })
 })
@@ -392,7 +409,7 @@ test('Beings and Things: the listing is all they read — one listing shared wit
     assert.deepEqual(beings.rows(), [['Mira', 'being · O-I']])
     assert.deepEqual(things.rows(), [['The stone', 'thing · O-I']])
     assert.equal(flows.rows().length, 13, 'a Being and a Thing in the same folder are no Flow')
-    assert.deepEqual(kernel.ops(), ['page:list'], 'three categories, one owner read')
+    assert.deepEqual(kernel.ops(), ['model_subscribe'], 'three categories, one kernel read')
     for (const mounted of [flows, beings, things]) mounted.close()
   })
 })
@@ -412,4 +429,28 @@ test('Days: each listed day is read for its standing, one after another and no m
     assert.deepEqual(rows.rows()[39], [words.dayWords(dayNamesOf(40)[39]), ''], 'a day past the 31 read keeps its listed words')
     rows.close()
   })
+})
+
+test('the Agents place asks the census once: a kernel that refuses it is not asked again in a loop, and the place says why (O-I ticket 1003)', async () => {
+  // The fake kernel answers no `model_subscribe` of the agents slice: a refusal, which the window's store never holds as current. A
+  // subscription made anew on each render would ask again on each render, without end (owners/model.ts useModelSlice).
+  const {PlaceRows} = await import('../src/frame/browser/PlaceRows.tsx?g=1003')
+  const {StubWorkspaceProvider} = await import('../src/shell/workspaceContext.tsx?g=1003')
+  const transport = transportFor('agents')
+  const tree = () => createElement(StubWorkspaceProvider, {transport}, createElement(PlaceRows, {controlled: {category: 'agents', query: '', previewHost: null}}))
+  await over({url: transport.url, cap: 50}, async kernel => {
+    const container = new Element_('div')
+    document_.body.appendChild(container)
+    const root = createRoot(container)
+    flushSync(() => root.render(tree()))
+    await quiet(kernel)
+    const census = kernel.asked.filter(op => op.op === 'model_subscribe' && op.slice === 'agents').length
+    assert.ok(census >= 1 && census <= 2, `the census is asked once (the mount and its first read share one ask), not ${census} times`)
+    assert.match(container.textContent, /The agents on this computer are not read\./, 'the refusal is said in plain words')
+    flushSync(() => root.unmount())
+    document_.body.removeChild(container)
+  })
+  // A static render reads what the window holds, as a drawn page does; it needs no subscription.
+  const {renderToStaticMarkup} = await import('react-dom/server')
+  assert.doesNotThrow(() => renderToStaticMarkup(tree()))
 })

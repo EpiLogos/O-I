@@ -1,7 +1,7 @@
-import {generatedWikiAppearance} from "../../../../packages/oi-design-system/expressions-engine/oi/wikiPresentation.mjs";
+import {generatedWikiAppearance} from "../../expressions-app/field-studies-journeys/src/wikiPresentation.mjs";
 import type {Entity, ExpressionDocument, Relation} from "./types";
-import {blankScene} from "@epilogos/oi-design-system/expressions-engine/shell/model.mjs";
-import {nativeExport,type StageScene} from "@epilogos/oi-design-system/expressions-engine/shell/nativeBridge.mjs";
+import {blankScene,type Scene} from "../../expressions-app/field-studies-journeys/src/model";
+import {nativeExport} from "../../expressions-app/field-studies-journeys/src/nativeBridge";
 
 const material = nativeExport(blankScene()).config;
 export const FORMATION_BUDGET = 10;
@@ -45,7 +45,7 @@ export function expressionRenderConfig(document:ExpressionDocument, start=0):Rec
   const scene=document.scenes.find(s=>s.scene_ref===document.selection.scene_ref);
   if(!scene)throw new Error("Expression scene unavailable");
   if(!scene.presentation)return expressionConfig(document,start);
-  const config=nativeExport(scene.presentation.scene as unknown as StageScene).config;
+  const config=nativeExport(scene.presentation.scene as unknown as Scene).config;
   if(!Array.isArray(config.entities))throw new Error("Native scene occurrences unavailable");
   const membership=new Set(scene.entity_refs);
   const occurrences=config.entities as {id:string;enabled?:boolean}[];

@@ -300,18 +300,40 @@ const registered = (mode, reading) => {
   return out.value
 }
 
-test('the World cut modes take the cron track through their registration; with no World reading published nothing is added', () => {
+// Central's tracks are its Set in the kernel (`set_subscribe`, O-I #1004), held for the pane's carrier as the window holds it
+// (owners/modeSets.ts windowSets): asked over the bridge, answered in the kernel's shape (tests/support/modeSetFixture.mjs).
+const {modeSetOf, setTrack, setAnswerOf} = await import('./support/modeSetFixture.mjs')
+const {windowSets} = await import('../src/owners/modeSets.ts')
+const KERNEL = {kind: 'bridge', url: 'http://kernel.test/world-cut'}
+const holdSet = async (mode, set) => {
+  const before = globalThis.fetch
+  globalThis.fetch = async (url, init) => {
+    assert.equal(url, `${KERNEL.url}/op`)
+    assert.deepEqual(JSON.parse(init.body), {op: 'set_subscribe', mode})
+    return {json: async () => ({ok: true, outcome: setAnswerOf(mode, set)})}
+  }
+  try { assert.equal((await windowSets.read(KERNEL, mode)).state, 'held') } finally { globalThis.fetch = before }
+}
+// The Set the kernel lays while Central's worlds are unread: your world, then the Day as the Main track (mode_set.rs
+// a_slice_unread_or_refused_is_its_tracks_stated_reason_never_an_empty_success).
+const CENTRAL_UNREAD = modeSetOf({owner: 'Central', tracks: [
+  setTrack('central:world:central:wiki:root', 'Your world', {kind: 'your world', absent: 'Central\'s worlds are unread: Central\'s map is unreadable'}),
+  setTrack('central:day', 'Day', {kind: 'the Day · the Main track', main: true}),
+]})
+
+test('the World cut modes take the cron track through their registration; with no World reading published nothing is added', async () => {
   const spine = firedSpine()
   const view = worldView(spine)
-  const central = registered('base', {set: null, document: null, world: view})
-  // T-WORLDS W2: your world stands always, then the Day as the Main track; the cron track still joins after it.
+  await holdSet('central', CENTRAL_UNREAD)
+  const central = registered('base', {set: null, document: null, world: view, transport: KERNEL})
+  // T-WORLDS W2: your world stands always, then the Day as the Main track (the kernel's Set); the cron track still joins after it.
   assert.deepEqual(central.tracks.map(t => t.id), ['central:world:central:wiki:root', 'central:day', 'cron'])
   assert.equal(central.tracks.at(-1).kind, 'cron · civil-field read · every 90s · 1 firing landed')
   const technē = registered('techne', {set: null, document: null, world: view})
   assert.equal(technē.tracks.length, 7)
   assert.equal(technē.tracks.at(-1).id, 'cron')
-  assert.match(registered('factory', {set: null, document: null, world: view}).waiting, /agent sessions/, 'a mode still waiting on its owner stays waiting')
-  assert.deepEqual(registered('base', {set: null, document: null}).tracks.map(t => t.id).includes('cron'), false, 'no World reading: the mode\'s set as it was')
+  assert.match(registered('factory', {set: null, document: null, world: view}).waiting, /Set is unread: The shell has published no kernel carrier/, 'a mode whose Set is unread stays waiting, saying why')
+  assert.deepEqual(registered('base', {set: null, document: null, transport: KERNEL}).tracks.map(t => t.id).includes('cron'), false, 'no World reading: the mode\'s set as it was')
   assert.equal(registered('live', {set: null, document: null, world: view}), null, 'Live\'s tracks are not the World cut')
 })
 
@@ -363,17 +385,21 @@ test('the ruler marks the occasion with a line through the lanes and a readout w
   for (const rule of ['admitted"\\]\\s*\\{[^}]*var\\(--green\\)', 'refused"\\]\\s*\\{[^}]*var\\(--rec\\)', 'unqualified"\\]\\s*\\{[^}]*transparent']) assert.match(cssText, new RegExp(`\\.tl-light\\[data-admission="${rule}`))
 })
 
-test('the registration reads the occasion off the spine for the mode\'s set', () => {
+test('the registration reads the occasion off the spine for the mode\'s set', async () => {
   const spine = firedSpine()
   const entry = dayEvent('central:now:entry', t0 - 3_600_000, 'an entry')
   const view = worldView(spine, [entry])
   spine.selectOccasion(entry, t0)
-  const central = registered('base', {set: null, document: null, world: view})
+  await holdSet('central', CENTRAL_UNREAD)
+  const central = registered('base', {set: null, document: null, world: view, transport: KERNEL})
   assert.equal(central.occasion.ref, 'central:now:entry')
-  assert.equal(central.occasion.clipId, [...dayClipEventIndex([entry]).keys()][0], 'it stands on the Day track\'s entry')
-  assert.equal(typeof central.occasion.at, 'number')
+  assert.equal(central.occasion.year, 2026)
+  // The day's entries are no slice of the World Model yet (the kernel's Day track says so, O-I #1005): the occasion stands on no
+  // clip of Central's Set until they are.
+  assert.equal(central.occasion.clipId, undefined, 'no entry of the day lies on the Day track yet')
+  assert.match(central.tracks.find(t => t.id === 'central:day').kind, /the Day · the Main track/)
   spine.returnToNow()
-  assert.equal(registered('base', {set: null, document: null, world: view}).occasion, undefined, 'Back to Now: no occasion stood in')
+  assert.equal(registered('base', {set: null, document: null, world: view, transport: KERNEL}).occasion, undefined, 'Back to Now: no occasion stood in')
 })
 
 // ── 5 — walk rails ─────────────────────────────────────────────────────────────────────────────
@@ -442,12 +468,22 @@ test('pressing a rail\'s stop stands it through the set\'s stop focus; the focus
 test('through the registration, a stop stands its occasion on the spine by the one rule (walkStopFocus → applyWalkStopFocus)', async () => {
   const spine = firedSpine()
   const entry = dayEvent('central:now:entry', t0 - 3_600_000, 'an entry')
-  const central = registered('base', {set: null, document: null, world: worldView(spine, [entry])})
-  const days = central.walks.find(walk => walk.id === 'central:today')
-  assert.ok(days, 'today is a walk: its entries are its stops (T-WORLDS W2)')
+  const view = worldView(spine, [entry])
+  // Central's Set carries no walk while the day's entries are no slice of the World Model (O-I #1005), so the rule is read through
+  // the wrapper every World cut mode is registered with (modeTracks.ts worldCut), over a set whose walk's stop is the day's entry.
+  await holdSet('central', CENTRAL_UNREAD)
+  assert.equal(registered('base', {set: null, document: null, world: view, transport: KERNEL}).walks, undefined, 'Central\'s Set: no walk of today yet')
+  const {worldCut} = await import('../src/frame/tracks/useWorldCut.ts')
+  const entryClip = [...dayClipEventIndex([entry]).keys()][0]
+  const walked = {columns: [], tracks: [{id: 'day', name: 'Day', kind: 'day', main: true}], clips: [clip(entryClip, 'day', '', 'an entry', {at: {start: 510}})],
+    walks: [{id: 'today', name: 'Today', kind: 'day', derived: true, stops: [{id: 'today:0', label: 'an entry', clipId: entryClip, also: []}]}]}
+  const out = {}
+  const use = worldCut(() => walked)
+  const Probe = () => { out.value = use({set: null, document: null, world: view}); return null }
+  renderToStaticMarkup(React.createElement(Probe))
   assert.equal(spine.occasion(), null)
-  assert.deepEqual(await central.actions.focusStop.run('central:today', 0), {ok: true, note: `Stood ${days.stops[0].label}.`})
-  assert.equal(spine.occasion().basis.ref, 'central:now:entry', 'the day\'s face is an entry: its occasion stands on the spine')
+  assert.deepEqual(await out.value.actions.focusStop.run('today', 0), {ok: true, note: 'Stood an entry.'})
+  assert.equal(spine.occasion().basis.ref, 'central:now:entry', 'the stop\'s face is an entry: its occasion stands on the spine')
 })
 
 // ── 6 — the window: zoom, pan, snap ────────────────────────────────────────────────────────────

@@ -28,7 +28,7 @@ interface FieldEngineAdapter {
 }
 ```
 
-`EngineFrame` carries the current scene, simulation time, delta, evaluated field parameters, camera, pointer world position and selected IDs. Install `window.OI_ENGINE_FACTORY` **before** the shell bundle, or replace the bootstrap factory import in a module-hosted build. The default `PreviewAdapter` is isolated in `preview.ts`.
+`EngineFrame` carries the current scene, simulation time, delta, evaluated field parameters, camera, pointer world position and selected IDs. The application builds its engine in one place, `ProductionAdapter` (`src/production.ts`); there is no factory door through which another engine is installed (O-I ticket 1008). The default `PreviewAdapter` is isolated in `preview.ts`.
 
 This is a usable seam, not a promise that the actual engine matches it with zero adaptation. Add typed production commands and capabilities where necessary. Keep document ownership in the shell; do not let the adapter manipulate DOM, persistence or selection. Bind UI enablement to actual supported parameters and capabilities, not merely `kind: 'production'`. The shipped preview gates unsupported groups by preview status; production integration must complete parameter-level disclosure.
 

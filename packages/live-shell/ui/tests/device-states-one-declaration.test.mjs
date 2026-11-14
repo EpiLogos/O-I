@@ -75,7 +75,11 @@ test('the manual\'s states stand where the manifests and the designs disagreed; 
   // REPLACED (parity audit D-29; §16.3, §17.9): the Terminal is an instrument born on the rail and stands on no chain (widgets/railDevices.tsx),
   // so Folded, Compact, Whole and Pop-out never stood; it keeps its Widget and its Full.
   const paneBorn = {'workcell:workcell': ['widget', 'full'], 'widgets:terminal': ['widget', 'full']}
-  for (const [id, had] of Object.entries(before)) for (const view of had) if (!(id in paneBorn)) assert.ok(views.deviceStates(id).includes(view), `${id} keeps ${view}`)
+  // RETIRED (O-I ticket 1005; manual §18.2, R36): the NOWs widget went with its rail binding — a session's NOW opens and closes with
+  // its hooks, and the Day's widget shows the sessions running — so it is no device any more and keeps no state.
+  const retired = new Set(['widgets:nows'])
+  for (const id of retired) assert.equal(views.deviceStates(id), undefined, `${id} is retired`)
+  for (const [id, had] of Object.entries(before)) for (const view of had) if (!(id in paneBorn) && !retired.has(id)) assert.ok(views.deviceStates(id).includes(view), `${id} keeps ${view}`)
   for (const [id, states] of Object.entries(paneBorn)) assert.deepEqual([...views.deviceStates(id)], states, `${id}: an instrument born in a pane, its Widget and its Full`)
 })
 

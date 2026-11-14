@@ -2,7 +2,7 @@
 import type { ChangeSetDocument, ConfigResolution, PlanDocument, ScopeAddress, SettingSpec } from '../../../../../desktop/cradle/src/configuration/contracts'
 import type { ChangeRequest, ConfigPlaneSource, PlanBundle } from '../../../../../desktop/cradle/src/configuration/source'
 import { disconnectedCatalogue } from './catalogue'
-import type { AikitReadRequest, AikitWriteRequest, KernelOp, KernelOutcome, PresentationCustomTheme, PresentationDocument } from '../../../../../desktop/cradle/src/kernel/types'
+import type { AikitReadRequest, AikitWriteRequest, KernelOp, KernelOutcome, ModelSliceAnswer, PresentationCustomTheme, PresentationDocument } from '../../../../../desktop/cradle/src/kernel/types'
 import type { SystemCompositionReading } from '../../../../../desktop/cradle/src/workspace/settings/types'
 import type { HarnessSource } from '../../../../../desktop/cradle/src/configuration/harnessSource'
 import type { RemoteMachinesSource } from './machines'
@@ -76,6 +76,10 @@ export interface SetupSource {
   readonly adoption: AdoptionNative
   /** One Central action: its data, or a refusal in Central's words. */
   central(action: string, input: Readonly<Record<string, unknown>>): Promise<unknown>
+  /** One owner's Action through the registry's door (the kernel's `act`, O-I #1002), by its id and its owner's input names: its data,
+   * or the owner's refusal in its words. The Ground step grants the World its standing authority with it (Actuation's
+   * `actuation.authority.grant-world`, read back by `actuation.authority.list`; O-I #1003). */
+  act?(action: string, input: Readonly<Record<string, unknown>>): Promise<unknown>
   /** One AIKit op Setup asks (SetupAikitOp): its data, or AIKit's refusal in its words. */
   aikit?(op: SetupAikitOp): Promise<unknown>
   /** Workcell's status for this computer (`workcell status --json`, the kernel's workcell_status_read): the Workcell it answers as. */
@@ -87,6 +91,10 @@ export interface SetupSource {
   /** AIKit's own disclosure of each agent tool (`aikit harness disclose --json`, aikit.harness-disclosure/v1): its instructions (the
    * guidance layer), settings and models, as AIKit reads them; the Harnesses and skills step shows what it found. */
   harnessDisclosure?(): Promise<unknown>
+  /** The agents on this machine: the census, the World Model's agents slice as it answers (`model_subscribe`, the kernel's census.rs;
+   * O-I #1003); `fresh`, read from its owners past what the kernel holds. The Harnesses and skills step lists exactly these agents, with
+   * what each carries; Credentials asks AIKit about theirs. */
+  agents?(fresh?: boolean): Promise<ModelSliceAnswer>
   /** The person's key (the kernel's `ground_authority` op, desktop/cradle/kernel/src/ground_authority.rs): preview — whether this host can
    * keep a key here and Central's preview of the grant — and adopt, on Setup's held Ground Accept: the key made in the world's own folder,
    * only its digest sent to Central. Its answers never carry the key nor its digest. */

@@ -436,17 +436,6 @@ pub enum OwnerRequest {
         #[serde(default)]
         basis_refs: Vec<String>,
     },
-    /// The person's commission of an accepted proposal: `factory development
-    /// commission <state> -` with the caller's own
-    /// `factory.commission-request/v1` document, carried verbatim; the desktop
-    /// maps no authority. Factory validates it, derives the Journey/Run and
-    /// replays an identical request as `already-applied`; its receipt names the
-    /// commissioned project/journey/run.
-    DevelopmentCommission {
-        state_path: PathBuf,
-        #[serde(default)]
-        request: Value,
-    },
     /// The close of a Run's own lifecycle after the person's Recognition
     /// (T-FACTORY-2b): the owner's lifecycle moves in their legal order, each
     /// receipt or refusal returned verbatim. `recognition_ref` names the
@@ -470,84 +459,11 @@ pub enum OwnerRequest {
     /// kind a grant must carry for the person to act on its attempts. A
     /// reading; it grants nothing.
     AttemptAdmission {},
-    /// The person chooses an attempt: its retained Return is proposed to
-    /// Central's receiving field, in the Central Flow the Run is associated
-    /// with (`factory attempt receiving`). The caller, the capability and the
-    /// native action come from Factory's own admission reading; the target
-    /// Flow, the Central root and the state revision from its Run and attempt
-    /// readings; the grant is resolved by the host against Central's native
-    /// action authority contract with the host's own token, which reaches
-    /// Factory's environment and never the request or the reply. Absent
-    /// `authority_grant`, the host resolves the principal its token belongs to.
-    AttemptReceiving {
-        state_path: PathBuf,
-        run_ref: String,
-        attempt_ref: String,
-        #[serde(default)]
-        authority_grant: Option<String>,
-    },
-    /// The person retries a unit of a Run (the Run map's Retry, T-COVERAGE
-    /// §1.2 "the attempt `retry`"): Factory's own attempt operation `retry`
-    /// (`factory attempt action <state> -`, `factory.attempt-action/v1`),
-    /// a new attempt for the unit under the retry grant its current attempt
-    /// already consumes. Factory must admit it from a desktop caller: its
-    /// admission reading (`factory attempt admission`) names the
-    /// `attempt-retry` action, and the native action, scope and actor kind a
-    /// grant must carry; until it does, the retry is refused naming what
-    /// Factory admits. The grant is resolved by the host against Central's
-    /// native action authority contract with the host's own token, as a
-    /// choice's is. The task, parent Journey, grant ref and the disposition
-    /// come verbatim from Factory's attempt reading; the desk names only the
-    /// Run and the unit (factory_retry.rs).
-    AttemptRetry {
-        state_path: PathBuf,
-        run_ref: String,
-        workflow_unit_ref: String,
-        #[serde(default)]
-        authority_grant: Option<String>,
-    },
-    /// Stop after: the person asks a unit's current attempt to stop —
-    /// Factory's own attempt operation `request-cancellation`
-    /// (`factory attempt action <state> -`), admitted from a desktop as its
-    /// `attempt-request-cancellation` action under its own native action,
-    /// with the grant resolved by the host as a retry's is. The desk names
-    /// only the Run and the unit; the attempt is the unit's current one in
-    /// Factory's attempt reading. It stops no process: Factory's lifecycle
-    /// accepts the request or records the termination (factory_retry.rs).
-    AttemptRequestCancellation {
-        state_path: PathBuf,
-        run_ref: String,
-        workflow_unit_ref: String,
-        #[serde(default)]
-        authority_grant: Option<String>,
-    },
-    /// Launch: the person starts a unit — Factory's own `factory attempt
-    /// launch <state> -` (`factory.attempt-launch/v1`, O-I #842 round 21),
-    /// which assembles the unit's `start-serial` from the owners' readings,
-    /// admitted from a desktop as its `attempt-launch` action under its own
-    /// native action, with the grant resolved by the host as a retry's is.
-    /// The desk names the Run, the unit and the task, and carries the owners'
-    /// readings verbatim: AIKit's model realisation on the session that
-    /// carries the unit (`aikit compose --realise`), and AIKit's praxis
-    /// receipt with the NOW context it was resolved against and Central's
-    /// placement where the unit names them. Factory reads each one and
-    /// refuses a missing one in that owner's words (factory_retry.rs).
-    AttemptLaunch {
-        state_path: PathBuf,
-        run_ref: String,
-        workflow_unit_ref: String,
-        task_ref: String,
-        #[serde(default)]
-        aikit_realisation: Value,
-        #[serde(default)]
-        praxis_receipt: Option<Value>,
-        #[serde(default)]
-        now_context_ref: Option<String>,
-        #[serde(default)]
-        placement: Option<Value>,
-        #[serde(default)]
-        authority_grant: Option<String>,
-    },
+    /// `factory session list <state>` → `factory.session-list/v1`: the sessions Factory started in the state's project, open or
+    /// ended, each with the tasks written on it (O-I #1006), so the Set lays a session as a track from its start and a task as a
+    /// clip before it runs. A session's acts (its task run, stopped, retried or chosen, the session ended) are Factory's own
+    /// Actions, by the registry's `act`; the kernel composes none of them.
+    SessionList { state_path: PathBuf },
     /// `factory attempt decision submit <state> -` with the retained
     /// `RequestUnitDecision` Action document, carried verbatim (lane W3,
     /// T-COVERAGE §1.2): Factory submits the unit's question to Central's
@@ -887,7 +803,7 @@ impl std::fmt::Debug for AuthorityToken {
 impl OwnerRequest {
     /// The person's own act this request is, named as Factory's command (`factory development pads-write`), or None. These are
     /// exactly the requests that present the person's authority: the host's native action token, with the human grant it holds in
-    /// Central's native action authority contract (a Run's close, a Return received, a unit retried, stopped or launched, a pad
+    /// Central's native action authority contract (a Run's close, a pad
     /// written, a preset saved or recalled, a rack's macros turned, a hold taken or given back, a Run's plan set, and a task offered,
     /// revoked, accepted or taken up at a star). Each runs on that token only by the shell window's channel, by flow.rs's one rule
     /// (`CentralClient::factory_person`, O-I #747 round 896 item 4); by a wire it is refused in words before Factory is asked. An act
@@ -896,12 +812,6 @@ impl OwnerRequest {
     pub fn person_act(&self) -> Option<String> {
         let command = match self {
             OwnerRequest::RunClose { .. } => "run close",
-            OwnerRequest::AttemptReceiving { .. } => "attempt receiving",
-            OwnerRequest::AttemptRetry { .. } => "attempt action retry",
-            OwnerRequest::AttemptRequestCancellation { .. } => {
-                "attempt action request-cancellation"
-            }
-            OwnerRequest::AttemptLaunch { .. } => "attempt launch",
             OwnerRequest::PadsWrite { .. } => "development pads-write",
             OwnerRequest::PadsPresetSave { .. } => "development pads-preset-save",
             OwnerRequest::PadsPresetRecall { .. } => "development pads-preset-recall",
@@ -959,6 +869,7 @@ impl OwnerRequest {
                 | OwnerRequest::Inhabitation { .. }
                 | OwnerRequest::CurrentWork { .. }
                 | OwnerRequest::AttemptAdmission { .. }
+                | OwnerRequest::SessionList { .. }
                 | OwnerRequest::AttemptDecisionRead { .. }
                 | OwnerRequest::PadsRead { .. }
                 | OwnerRequest::PadsDue { .. }
@@ -1002,10 +913,12 @@ fn owner_call(args: &[std::ffi::OsString], input: Option<&[u8]>) -> Result<Value
 }
 
 /// The same, with environment variables the owner's own process is given: the
-/// person's token the rule gave, for the one act that reaches Central through
-/// Factory (`AttemptReceiving`, by the press). It is the only way the token
-/// reaches a Factory child: every child starts without it (`flow::child`),
-/// whatever the host's own environment holds (O-I #747 round 896 1V, M1).
+/// host's own binding to Central, for a unit's decision Factory submits there
+/// (`decision_endpoint`). No person's token reaches a Factory child this way:
+/// every child starts without it (`flow::child`), whatever the host's own
+/// environment holds (O-I #747 round 896 1V, M1); a Factory act on the
+/// person's grant goes by the registry's `act`, which hands it (action.rs
+/// `REGISTRY_PERSON_ACTS`).
 fn owner_call_env(
     args: &[std::ffi::OsString],
     input: Option<&[u8]>,
@@ -2077,145 +1990,25 @@ pub fn owner(
                 &["factory.developmental-mutation-receipt/v1"],
             )
         }
-        OwnerRequest::DevelopmentCommission {
-            state_path,
-            request,
-        } => {
-            if request["contract"] != "factory.commission-request/v1" {
-                return Err(incompatible(
-                    "A commission carries a factory.commission-request/v1 document",
-                ));
-            }
-            let body = serde_json::to_vec(&request).map_err(|e| incompatible(e.to_string()))?;
-            let args: Vec<std::ffi::OsString> = vec![
-                "development".into(),
-                "commission".into(),
-                path_arg(&state_path),
-                "-".into(),
-                "--json".into(),
-            ];
-            expect_contract(
-                owner_call(&args, Some(&body))?,
-                &["factory.commission-receipt/v1"],
-            )
-        }
         OwnerRequest::AttemptAdmission {} => expect_contract(
             owner_call(
                 &["attempt".into(), "admission".into(), "--json".into()],
                 None,
             )?,
-            &[receiving::ADMISSION_CONTRACT],
+            &[ADMISSION_CONTRACT],
         ),
-        OwnerRequest::AttemptReceiving {
-            state_path,
-            run_ref,
-            attempt_ref,
-            authority_grant,
-        } => {
-            let token = person;
-            let contract = authority_contract_for(&state_path);
-            let environment: Vec<(&str, String)> = token
-                .iter()
-                .map(|token| ("CENTRAL_NATIVE_TOKEN", token.as_str().to_owned()))
-                .collect();
-            let mut read =
-                |args: &[std::ffi::OsString], input: Option<&[u8]>| owner_call(args, input);
-            let mut receive = |args: &[std::ffi::OsString], input: Option<&[u8]>| {
-                owner_call_env(args, input, &environment)
-            };
-            Ok(receiving::attempt_receiving(
-                &mut read,
-                &mut receive,
-                &state_path,
-                &run_ref,
-                &attempt_ref,
-                receiving::ReceivingAuthority {
-                    grant: authority_grant,
-                    token,
-                    contract: contract.as_deref(),
-                    now_unix_seconds: now_unix_seconds(),
-                    central_binary: std::env::var_os("OI_CENTRAL_CTRL_BIN").map(PathBuf::from),
-                },
-            ))
-        }
-        OwnerRequest::AttemptRetry {
-            state_path,
-            run_ref,
-            workflow_unit_ref,
-            authority_grant,
-        } => {
-            let contract = authority_contract_for(&state_path);
-            let mut call =
-                |args: &[std::ffi::OsString], input: Option<&[u8]>| owner_call(args, input);
-            Ok(retry::attempt_retry(
-                &mut call,
-                &state_path,
-                &run_ref,
-                &workflow_unit_ref,
-                retry::AttemptAuthority {
-                    grant: authority_grant,
-                    token: person,
-                    contract: contract.as_deref(),
-                    now_unix_seconds: now_unix_seconds(),
-                },
-            ))
-        }
-        OwnerRequest::AttemptRequestCancellation {
-            state_path,
-            run_ref,
-            workflow_unit_ref,
-            authority_grant,
-        } => {
-            let contract = authority_contract_for(&state_path);
-            let mut call =
-                |args: &[std::ffi::OsString], input: Option<&[u8]>| owner_call(args, input);
-            Ok(retry::attempt_request_cancellation(
-                &mut call,
-                &state_path,
-                &run_ref,
-                &workflow_unit_ref,
-                retry::AttemptAuthority {
-                    grant: authority_grant,
-                    token: person,
-                    contract: contract.as_deref(),
-                    now_unix_seconds: now_unix_seconds(),
-                },
-            ))
-        }
-        OwnerRequest::AttemptLaunch {
-            state_path,
-            run_ref,
-            workflow_unit_ref,
-            task_ref,
-            aikit_realisation,
-            praxis_receipt,
-            now_context_ref,
-            placement,
-            authority_grant,
-        } => {
-            let contract = authority_contract_for(&state_path);
-            let mut call =
-                |args: &[std::ffi::OsString], input: Option<&[u8]>| owner_call(args, input);
-            Ok(retry::attempt_launch(
-                &mut call,
-                &state_path,
-                &run_ref,
-                &workflow_unit_ref,
-                retry::LaunchReadings {
-                    task_ref,
-                    aikit_realisation,
-                    praxis_receipt,
-                    now_context_ref,
-                    placement,
-                },
-                retry::AttemptAuthority {
-                    grant: authority_grant,
-                    token: person,
-                    contract: contract.as_deref(),
-                    now_unix_seconds: now_unix_seconds(),
-                },
-            ))
-        }
+        OwnerRequest::SessionList { state_path } => expect_contract(
+            owner_call(
+                &[
+                    "session".into(),
+                    "list".into(),
+                    path_arg(&state_path),
+                    "--json".into(),
+                ],
+                None,
+            )?,
+            &[SESSION_LIST_CONTRACT],
+        ),
         OwnerRequest::AttemptDecisionSubmit {
             state_path,
             request,
@@ -2753,6 +2546,10 @@ pub const PADS_RUN_BEGIN: &str = "factory.prompt-pads-run/v1";
 pub const PADS_RUN_RECORD: &str = "factory.prompt-pads-record/v1";
 /// Where a task stands in Factory: its Runs and units (`factory attempt units`).
 pub const ATTEMPT_TASK_UNITS_READING: &str = "factory.attempt-task-units-reading/v1";
+/// Factory's own reading of what its attempts admit from a desktop (`factory attempt admission`).
+const ADMISSION_CONTRACT: &str = "factory.attempt-admission/v1";
+/// Factory's sessions of a project (`factory session list`, O-I #1006).
+pub const SESSION_LIST_CONTRACT: &str = "factory.session-list/v1";
 pub const PADS_PRESETS_READING: &str = "factory.prompt-pads-presets/v1";
 pub const PADS_PRESET_RECEIPT: &str = "factory.prompt-pads-preset-write/v1";
 /// The capability a pad's writer presents (Factory `PADS_CAPABILITY_REF`).
@@ -3814,12 +3611,6 @@ pub(crate) fn run_scope(state_path: &Path, contract: &Path) -> Result<String, St
         })
 }
 
-#[path = "factory_receiving.rs"]
-mod receiving;
-
-#[path = "factory_retry.rs"]
-mod retry;
-
 /// The host's native action authority for one close: the grant ref and token
 /// it holds, the contract the grant resolves against, and the reading clock.
 pub struct CloseAuthority<'a> {
@@ -4012,6 +3803,116 @@ pub(crate) fn grant_held_by(
         "{AUTHORITY_GRANT_PREFIX}{}",
         first["principal_ref"].as_str()?
     ))
+}
+
+/// The action of Factory's admission (`factory attempt admission <state>`) one of Factory's session acts is admitted as, on the
+/// person's grant (O-I #1006): a task run is a launch, its stop a request to cancel, a retry Factory's retry, and a choice the
+/// receiving of its Return. None: no session act.
+pub(crate) fn session_admission(action: &str) -> Option<&'static str> {
+    Some(match action {
+        "factory.task.run" => "attempt-launch",
+        "factory.task.stop" => "attempt-request-cancellation",
+        "factory.attempt.retry" => "attempt-retry",
+        "factory.attempt.choose" => "attempt-receiving",
+        _ => return None,
+    })
+}
+
+/// The person's grant one of Factory's session acts presents, resolved by the host on their press: the human grant the host's
+/// token holds in the native action authority contract above the Run's Factory state, for the native action, scope and actor
+/// kind Factory's admission names for the act. Factory is handed the grant's ref and reads no token.
+pub(crate) fn session_grant(
+    state: &Path,
+    action: &str,
+    token: Option<&AuthorityToken>,
+) -> Result<String, String> {
+    let (executable, suite_route) = owner_executable();
+    session_grant_at(
+        &executable,
+        suite_route,
+        state,
+        action,
+        token,
+        std::env::var_os("OI_CENTRAL_ROOT").map(PathBuf::from),
+        now_unix_seconds(),
+    )
+}
+
+/// [`session_grant`] through the given Factory executable, under the given Central root, at the given time.
+fn session_grant_at(
+    executable: &Path,
+    suite_route: bool,
+    state: &Path,
+    action: &str,
+    token: Option<&AuthorityToken>,
+    central_root: Option<PathBuf>,
+    now: u64,
+) -> Result<String, String> {
+    let admitted_as = session_admission(action).ok_or_else(|| {
+        format!("{action} is no session act Factory admits on the person's grant.")
+    })?;
+    let token = token.ok_or_else(|| {
+        format!("{action} presents the person's grant, and the host holds no native action token (CENTRAL_NATIVE_TOKEN or ~/.central/native-token), so nothing was asked of Factory.")
+    })?;
+    // What Factory admits the act as, for this Run's state: the native action, the scope and the actor kind a grant must carry.
+    let reading = owner_call_at(
+        executable,
+        suite_route,
+        &[
+            "attempt".into(),
+            "admission".into(),
+            path_arg(state),
+            "--json".into(),
+        ],
+        None,
+        &[],
+    )
+    .and_then(|reading| expect_contract(reading, &[ADMISSION_CONTRACT]))
+    .map_err(|error| {
+        format!(
+            "Factory's admission for {action} cannot be read: {}",
+            error.message
+        )
+    })?;
+    let admitted = reading["actions"]
+        .as_array()
+        .and_then(|actions| {
+            actions
+                .iter()
+                .find(|entry| entry["actionRef"] == admitted_as)
+        })
+        .ok_or_else(|| {
+            format!("Factory's admission names no {admitted_as} action for {action}.")
+        })?;
+    let named = |key: &str| {
+        admitted[key]
+            .as_str()
+            .filter(|text| !text.trim().is_empty())
+            .ok_or_else(|| format!("Factory's {admitted_as} admission names no {key}."))
+    };
+    let (native_action, scope, actor_kind) = (
+        named("nativeAction")?,
+        named("scopeRef")?,
+        named("actorKind")?,
+    );
+    let contract = read_authority_contract(authority_under(state, central_root).as_deref())?;
+    let grant = grant_held_by(&contract, token, actor_kind).ok_or_else(|| {
+        format!("No native action authority grant names the host: no one {actor_kind} principal in the contract holds the host's token, so {action} was not asked of Factory.")
+    })?;
+    match grant_refusal(
+        &contract,
+        &grant,
+        Some(token),
+        now,
+        &Wanted {
+            action: native_action,
+            scope,
+            actor_kind: Some(actor_kind),
+        },
+    ) {
+        Some(reason) => Err(reason),
+        None => Ok(grant),
+    }
 }
 
 /// Close a Run's own lifecycle after the person's Recognition. Returns the
@@ -4369,6 +4270,104 @@ mod owner_tests {
         );
     }
 
+    /// O-I #1006 (review F8): the grant a session act presents is the host's, resolved here as Factory's admission names it for
+    /// the act; Factory is handed its ref. A token that holds no human grant, a grant that does not list the act's native action
+    /// or cover the Run's scope, and no token at all are refused before Factory is asked to act.
+    #[test]
+    fn a_session_act_s_grant_is_the_human_grant_the_host_s_token_holds_for_what_factory_admits() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = std::env::temp_dir().join(format!("oi-f8-grant-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        let world = dir.join("Central");
+        let state = world.join("Work/notes/.factory/development-state.json");
+        std::fs::create_dir_all(world.join("Control/user")).unwrap();
+        let grant = |actions: &[&str]| {
+            serde_json::json!({
+                "schema": AUTHORITY_CONTRACT_SCHEMA,
+                "grants": [{"principal_ref": "human:owner", "actor_kind": "human",
+                    "token_sha256": token_sha256("the-person-s-token"), "actions": actions,
+                    "scope_refs": ["control:root", "project:notes"], "expires_at_unix_seconds": 4_000_000_000u64}],
+            })
+        };
+        let contract = world.join(AUTHORITY_CONTRACT_REL);
+        // Factory's own admission for the Run's state, as `factory attempt admission <state> --json` answers it.
+        let fake = dir.join("factory");
+        let admission = dir.join("admission.json");
+        let admitted = |scope: &str| {
+            let action = |reference: &str, native: &str| {
+                serde_json::json!({"actionRef": reference, "nativeAction": native, "scopeRef": scope,
+                    "actorKind": "human"})
+            };
+            serde_json::json!({"contract": ADMISSION_CONTRACT, "actions": [
+                action("attempt-receiving", "central.receiving.submit"),
+                action("attempt-retry", "factory.attempt.retry"),
+                action("attempt-request-cancellation", "factory.attempt.request-cancellation"),
+                action("attempt-launch", "factory.attempt.launch"),
+            ]})
+        };
+        std::fs::write(
+            &fake,
+            format!(
+                "#!/bin/sh\nprintf '%s\\n' \"$*\" >> \"{}/calls.txt\"\ncat \"{}\"\n",
+                dir.display(),
+                admission.display()
+            ),
+        )
+        .unwrap();
+        std::fs::set_permissions(&fake, std::fs::Permissions::from_mode(0o755)).unwrap();
+        crate::test_stub::settle_stub(&fake);
+        let token = AuthorityToken::for_test("the-person-s-token");
+        let resolve = |action: &str, token: Option<&AuthorityToken>| {
+            session_grant_at(&fake, false, &state, action, token, None, 1_000)
+        };
+
+        std::fs::write(&admission, admitted("project:notes").to_string()).unwrap();
+        std::fs::write(
+            &contract,
+            grant(&[
+                "factory.attempt.launch",
+                "factory.attempt.request-cancellation",
+                "factory.attempt.retry",
+                "central.receiving.submit",
+            ])
+            .to_string(),
+        )
+        .unwrap();
+        for action in [
+            "factory.task.run",
+            "factory.task.stop",
+            "factory.attempt.retry",
+            "factory.attempt.choose",
+        ] {
+            assert_eq!(
+                resolve(action, token.as_ref()),
+                Ok("central:native-action-authority#human:owner".to_owned()),
+                "{action}"
+            );
+        }
+        let calls = std::fs::read_to_string(dir.join("calls.txt")).unwrap_or_default();
+        assert!(
+            calls
+                .lines()
+                .all(|call| call == format!("attempt admission {} --json", state.display())),
+            "Factory is asked its admission for the Run's state, and nothing else: {calls}"
+        );
+
+        let refused = |action: &str, token: Option<&AuthorityToken>| {
+            resolve(action, token).expect_err("refused before Factory acts")
+        };
+        assert!(refused("factory.task.run", None).contains("no native action token"));
+        let stranger = AuthorityToken::for_test("someone-else-s-token");
+        assert!(refused("factory.task.run", stranger.as_ref()).contains("holds the host's token"));
+        std::fs::write(&contract, grant(&["factory.attempt.launch"]).to_string()).unwrap();
+        assert!(refused("factory.attempt.retry", token.as_ref())
+            .contains("action not granted: the grant does not list factory.attempt.retry"));
+        std::fs::write(&admission, admitted("project:elsewhere").to_string()).unwrap();
+        assert!(refused("factory.task.run", token.as_ref())
+            .contains("scope not granted: the grant does not cover project:elsewhere"));
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
     fn strings(args: Vec<std::ffi::OsString>) -> Vec<String> {
         args.into_iter()
             .map(|arg| arg.to_string_lossy().into_owned())
@@ -4495,19 +4494,6 @@ mod owner_tests {
         );
         assert!(!error.operation_may_have_run);
         assert!(started.elapsed() < std::time::Duration::from_secs(10));
-    }
-
-    #[test]
-    fn a_commission_carries_only_a_factory_commission_request() {
-        let wire: OwnerRequest = serde_json::from_value(serde_json::json!({
-            "kind":"development-commission","state_path":"/ground/.factory/development-state.json",
-            "request":{"contract":"factory.developmental-mutation-request/v1"}}))
-        .unwrap();
-        let error = owner(wire, None, None).unwrap_err();
-        assert!(
-            format!("{error:?}").contains("factory.commission-request/v1"),
-            "{error:?}"
-        );
     }
 
     #[test]
@@ -4782,11 +4768,8 @@ mod owner_tests {
         let request: OwnerRequest =
             serde_json::from_value(serde_json::json!({"kind": "locate", "all": true})).unwrap();
         assert!(request.needs_world());
-        let request: OwnerRequest = serde_json::from_value(serde_json::json!({"kind": "development-commission", "state_path": "/s.json", "request": {"contract": "factory.commission/v1"}})).unwrap();
-        assert!(matches!(
-            request,
-            OwnerRequest::DevelopmentCommission { .. }
-        ));
+        // A commission is Factory's own Action (`act factory.development.commission`, O-I #1002), never a kind of this op.
+        assert!(serde_json::from_value::<OwnerRequest>(serde_json::json!({"kind": "development-commission", "state_path": "/s.json", "request": {"contract": "factory.commission-request/v1"}})).is_err());
     }
 }
 

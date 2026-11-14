@@ -1,6 +1,6 @@
 /** Presentation of AIKit's native declaration/observation envelope. */
 export interface HarnessLayer {
- layer:string;posture:string;native?:{name:string}[];composed?:{name:string}[];
+ layer:string;posture:string;native?:{name:string;detail?:string}[];composed?:{name:string}[];
  activation?:string;drift?:{name:string;note:string}[];
 }
 export interface HarnessProfileReading {
@@ -23,7 +23,7 @@ export function HarnessDisclosure({reading}:{reading:unknown}) {
    <p className="oi-note">{row.activation?.reason??"Session activation has not been observed."}</p>
    {row.disclosure.layers.map(layer=><section key={layer.layer}>
     <p><strong>{words(layer.layer)}</strong> · {words(layer.posture)}</p>
-    {layer.native?.length?<p className="oi-note">Native: {layer.native.map(entry=>entry.name).join(", ")}</p>:null}
+    {layer.native?.length?<p className="oi-note">Native: {layer.native.map(entry=>entry.detail?`${entry.name} (${entry.detail})`:entry.name).join(", ")}</p>:null}
     {layer.composed?.length?<p className="oi-note">Composed: {layer.composed.map(entry=>entry.name).join(", ")}</p>:null}
     {layer.layer==="tools"&&<p className="oi-note">Native tools observation: {words(row.native_tools?.state??"unobserved")}</p>}
     {layer.activation&&<p className="oi-note">Declared activation: {words(layer.activation)}. Target loading has not been observed.</p>}

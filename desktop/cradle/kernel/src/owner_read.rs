@@ -2,8 +2,8 @@
 //! immutable inputs under the kernel lock, then run owner processes without
 //! holding the ordered mutation/event queue. Admission stays with each owner.
 use crate::{
-    agent_prepared::PreparedWorld, files, flow::ReceivingRequest, focus, owner_relation,
-    read_cache, retained_files, CentralClient, Kernel, KernelOp, KernelOpOutcome, KernelOpResult,
+    agent_prepared::PreparedWorld, files, focus, owner_relation, read_cache, retained_files,
+    CentralClient, Kernel, KernelOp, KernelOpOutcome, KernelOpResult,
 };
 use serde_json::Value;
 use std::path::PathBuf;
@@ -436,7 +436,8 @@ impl PreparedRead {
             });
         }
         match op {
-            KernelOp::Receiving { request: ReceivingRequest::List { .. } | ReceivingRequest::Read { .. } | ReceivingRequest::Document { .. }, .. }
+            KernelOp::Receiving { .. }
+            | KernelOp::FileOperation { .. }
             | KernelOp::GitRepositoryRead { .. }
             | KernelOp::GitDiffRead { .. }
             | KernelOp::ConfigRegistryRead
@@ -486,7 +487,7 @@ impl PreparedRead {
                 temporal: None,
                 graph: None,
             }),
-            KernelOp::Central { request, .. } if !crate::owner_write::central_write(request) => Some(Self {
+            KernelOp::Central { .. } => Some(Self {
                 client: client.clone(),
                 world,
                 op: op.clone(),
@@ -520,7 +521,6 @@ impl PreparedRead {
             | KernelOp::InhabitationRead { .. }
             | KernelOp::WikiProjectionRead { .. }
             | KernelOp::WikiProjectionSources
-            | KernelOp::ChatDefaultRead
             | KernelOp::CredentialList
             | KernelOp::CredentialDiscover
             | KernelOp::HarnessAuthDescribe { .. }
@@ -528,7 +528,6 @@ impl PreparedRead {
             | KernelOp::ProfileRead { .. }
             | KernelOp::ConfigReceipts
             | KernelOp::AgentCard { .. }
-            | KernelOp::EncounterJoin { .. }
             | KernelOp::FlowChangedSince { .. }
             | KernelOp::KnowledgeImpact { .. }
             // Lane K1: the seat instrument, Central's source returns and
@@ -575,7 +574,6 @@ impl PreparedRead {
                 | KernelOp::ProfileList
                 | KernelOp::ProfileRead { .. }
                 | KernelOp::ConfigReceipts
-                | KernelOp::EncounterJoin { .. }
                 | KernelOp::FlowChangedSince { .. }
                 | KernelOp::KnowledgeImpact { .. }
                 | KernelOp::WorldBodyRead { .. }
@@ -622,19 +620,25 @@ impl PreparedRead {
                 },
             });
         }
+        // A file's history and a recovery's preview; a write and a restore are Central's Actions (`act`, O-I #1002).
+        if let KernelOp::FileOperation { location, request } = &self.op {
+            let data = files::operate(&self.client, location, &request.request())?;
+            return Ok(KernelOpOutcome {
+                read_scopes: None,
+                receipts: vec![],
+                result: KernelOpResult::FileOperation { data },
+            });
+        }
         // Inbox reads may fan out across many project registers at startup.
         // They do not alter kernel state and must not hold up native editing.
-        // Submit/review/include/recover are prepared writes (owner_write.rs).
-        if let KernelOp::Receiving {
-            project, request, ..
-        } = &self.op
-        {
+        // Submit, review, include and recover are Central's Actions (`act`, O-I #1002).
+        if let KernelOp::Receiving { project, request } = &self.op {
             if let Some(project) = project {
                 disclosed(&self.world.read()?, project)?;
             }
             let data = self
                 .client
-                .receiving(project.as_deref(), request)
+                .receiving(project.as_deref(), &request.request())
                 .map_err(|error| error.to_string())?;
             return Ok(KernelOpOutcome {
                 read_scopes: None,
@@ -1164,9 +1168,6 @@ impl PreparedRead {
                 }
                 KernelOpResult::WikiProjectionSourcesReading { data }
             }
-            KernelOp::ChatDefaultRead => KernelOpResult::ChatDefaultReading {
-                document: crate::chat_defaults::read()?,
-            },
             op @ (KernelOp::CredentialList
             | KernelOp::CredentialDiscover
             | KernelOp::HarnessAuthDescribe { .. }) => {
@@ -1199,23 +1200,6 @@ impl PreparedRead {
                     world_ref.as_deref(),
                 )?,
             },
-            KernelOp::EncounterJoin {
-                session,
-                request_ref,
-                reply,
-            } => {
-                // Central discloses the context anchor; the lifecycle store
-                // itself is the AIKit owner's, never renderer-supplied.
-                let world = self.world.read()?;
-                let cwd = PathBuf::from(
-                    world["root"]
-                        .as_str()
-                        .ok_or("Central root location unavailable")?,
-                );
-                KernelOpResult::EncounterJoined {
-                    reading: crate::encounter::assemble(&cwd, session, request_ref, reply.as_ref()),
-                }
-            }
             KernelOp::SharedField { request } => KernelOpResult::SharedFieldReading {
                 data: crate::shared_field::reading(request)?,
             },
@@ -1551,17 +1535,6 @@ fn schema_is(data: Value, schema: &str, source: &str) -> Result<Value, crate::ma
     })
 }
 
-/// Whether a Receiving request only reads (the ledger's list, one Return, a document): every other is a prepared write
-/// (owner_write.rs), and only those come by the shell window's press channel (`crate::person_press`).
-pub(crate) fn receiving_reads(request: &ReceivingRequest) -> bool {
-    matches!(
-        request,
-        ReceivingRequest::List { .. }
-            | ReceivingRequest::Read { .. }
-            | ReceivingRequest::Document { .. }
-    )
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1594,7 +1567,6 @@ mod tests {
             json!({"op": "credential_list"}),
             json!({"op": "profile_list"}),
             json!({"op": "config_receipts"}),
-            json!({"op": "chat_default_read"}),
             json!({"op": "wiki_projection_sources"}),
         ] {
             assert!(prepared(&read), "{read} is prepared");
@@ -1605,7 +1577,6 @@ mod tests {
             json!({"op": "shared_field", "request": {"kind": "enter"}}),
             json!({"op": "shared_field", "request": {"kind": "observe-stop", "observer_ref": "o"}}),
             json!({"op": "credential_revoke", "credential": "credential:x"}),
-            json!({"op": "chat_default_discard"}),
         ] {
             assert!(!prepared(&write), "{write} is not a prepared read");
         }

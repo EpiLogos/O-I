@@ -117,7 +117,7 @@ test('#747 X1: opening another Expression binds the live field again on its scen
 // O-I #747 round two (lead's ruling of 29 Oct): a live field held on the scene is let go and opened again around each of the person's
 // authored acts — a scene switched, a view kept, a control changed — never released on leaving Live (Live may still be playing).
 test('#747: the lease says, before the engine is configured, whether a frame would replace the authored scene it holds', async () => {
- const {withRetainedField}=await import('../../../../../packages/oi-design-system/expressions-engine/oi/retained-capability.mjs');
+ const {withRetainedField}=await import('../src/retainedField.mjs');
  class Base{constructor(){this.capabilities={notes:[]};this.configured=0;}configuration(){this.configured++;return 'configured';}}
  const Adapter=withRetainedField(Base,400);
  const adapter=new Adapter({addEventListener(){}});

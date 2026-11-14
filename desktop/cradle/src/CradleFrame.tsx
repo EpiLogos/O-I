@@ -14,8 +14,7 @@ import {userFlowsArea} from "./flow/instances";
 import {fileOperation,type FileMutation} from "./files/client";
 import {DRAFT_KEY} from "./flow/DraftSurface";
 import {readUnplacedDraft} from "./flow/unplacedDrafts";
-import {DOCUMENT_FORMS,resolveDocumentForm} from "./flow/documentForms";
-import {central,readGround} from "./central/client";
+import {DOCUMENT_FORMS} from "./flow/documentForms";
 import {createFormInPlace} from "./flow/createInPlace";
 import type {LeftHost} from "./workspace/left/host";
 import {createExpression} from "./workspace/left/createExpression";
@@ -727,32 +726,10 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
    * discloses the Day source's canonical ref, and that disclosure is the
    * only identity the desktop opens it by (never a ref derived from a
    * path). The Day document is a root-register source; its strips route to
-   * the root register's receiving field. Since the owner's 2026-09-26
-   * correction, Today opens the Day as its document: a fresh civil day is
-   * native blank text until the Day document is initialised from the
-   * retained original form, so the Today affordance completes that act from
-   * the roster's own die — never a substitute shell — before opening. */
+   * the root register's receiving field. The Day opens itself on its civil
+   * date and gets its page from the Day form at Central's turn (the
+   * kernel's central.rs `day`, O-I 1005), so Today only opens it. */
   const openToday = async () => {
-    let ground = await readGround(kernel.transport, null);
-    if (ground.day.state !== "ready") {
-      // No current Day yet: ensure it through Central's own route.
-      if (ground.time.state !== "ready" || !ground.time.data) throw new Error("Central's civil time is unavailable; the current Day cannot be ensured");
-      await central(kernel.transport, null, {kind: "ensure-day", expected_time_policy_revision: ground.time.data.revision});
-      ground = await readGround(kernel.transport, null);
-    }
-    const day = ground.day.data;
-    if (!day) throw new Error("Central's Day reading did not yield a Day to open");
-    if (day.document_state !== "ready") {
-      // Initialise the Day document from the retained original form — the
-      // same reviewed route the Daily ground panel offers, with the roster's
-      // own die, never an invented payload.
-      const form = DOCUMENT_FORMS.find(f => f.kind === "document-42" && f.file === "ql-daily-die.html");
-      if (!form) throw new Error("The Day form is missing from the document roster");
-      if (ground.placement.state !== "ready" || !ground.placement.data) throw new Error("Central's native placement authority is unavailable; the Day document cannot be initialised");
-      const formLocation = await resolveDocumentForm(kernel.transport, form, kernel.snapshot.navigator?.root?.work.projects);
-      const original = await readFile(kernel.transport, formLocation);
-      await central(kernel.transport, null, {kind: "initialise-day", day_ref: day.day_ref, document_id: `document:${crypto.randomUUID()}`, expected_revision: day.revision.revision, expected_policy_revision: ground.placement.data.revision, form: formLocation, expected_form_revision: original.revision});
-    }
     // The Day's buffer comes from the owner's Day route (root-register
     // sources have no project-scoped source read); the surface then binds
     // to the ref that reading disclosed.
@@ -1798,12 +1775,12 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       onMessage={message=>setWindowError(message)}
       onNewChat={()=>setState(s=>({...s,accompanying:undefined}))}
       onChoose={row=>factoryChoose(row)}
-      onProvision={async provisionProject=>{
+      onProvision={async (provisionProject,agent)=>{
         // New-chat first Send: the kernel provisions the conversation (the
         // owner's own SessionSpace sequence, one op) and this binds it — the
         // parked draft is applied and sent by the chat face once the shared
         // observer is live. No chooser.
-        const provisioned=await encounterProvision(kernel.transport,provisionProject);
+        const provisioned=await encounterProvision(kernel.transport,provisionProject,{agent});
         setState(s=>({...s,accompanying:{ref:provisioned.agent_session,project:provisionProject,space:provisioned.space}}));
       }}/>;
   // Sidebar C6: the chat row for the encounter that is the active surface

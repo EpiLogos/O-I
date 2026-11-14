@@ -365,39 +365,6 @@ test('a drop with no op to carry it is refused in words naming the op, and sends
   })
 })
 
-test('the empty track still seats an agent as it did: a chat is told apart by its payload, anything else goes to the seat it replaces', async () => {
-  await withBridge(ownersAnswer, async (transport, stub) => {
-    const seated = []
-    const original = {op: 'harness_agent_control:new', accepts: AGENT_CHAIN_MIME, run: payload => { seated.push(payload); return Promise.resolve({ok: true, note: 'started'}) }}
-    const set = {columns: [], tracks: [], clips: [], actions: {grain: 'whole harness', seat: original}}
-    const wrapped = reopen.withChatSeat(set, {transport})
-    assert.equal(wrapped.actions.seat.accepts, AGENT_CHAIN_MIME, 'the grid still accepts the one drag type')
-    assert.equal(wrapped.actions.grain, 'whole harness', 'the rest of the actions stand')
-    assert.match(wrapped.actions.seat.op, /encounter reconnect/, 'the op it names for a chat')
-    assert.match(wrapped.actions.seat.op, /harness_agent_control:new/, 'and the op it keeps for an agent')
-    const agent = encodeChainDrag({family: 'agent', ref: 'agent:fizz', label: 'Fizz'})
-    assert.deepEqual(await wrapped.actions.seat.run(agent), {ok: true, note: 'started'})
-    assert.deepEqual(seated, [agent])
-    assert.deepEqual(stub.calls, [], 'an agent drop sends nothing of ours')
-    const chat = await chatOf('O-I', S_CHAT_OLD)
-    const receipt = await wrapped.actions.seat.run(model.encodeChatDrag(chat))
-    assert.equal(receipt.ok, true)
-    assert.equal(seated.length, 1, 'a chat never reaches the agent seat')
-    assert.equal(stub.writes().length, 1)
-    // A set that carries no seat (no harness binding): a chat can still be reopened, an agent is refused in words.
-    const bare = reopen.withChatSeat({columns: [], tracks: [], clips: []}, {transport})
-    assert.equal(bare.actions.seat.accepts, AGENT_CHAIN_MIME)
-    const refused = await bare.actions.seat.run(agent)
-    assert.equal(refused.ok, false)
-    assert.match(refused.error, /harness/)
-    // No carrier at all: the seat says so and sends nothing.
-    const before = stub.calls.length
-    const unreached = reopen.withChatSeat(set, {transport: {kind: 'unavailable', reason: 'no carrier'}})
-    assert.equal((await unreached.actions.seat.run(model.encodeChatDrag(chat))).ok, false)
-    assert.equal(stub.calls.length, before)
-  })
-})
-
 // ---- the drop on the rail ----------------------------------------------------------------------------------------------
 
 test('dropped on the rail, a chat reopens and its agent\'s tile opens holding it', async () => {

@@ -70,16 +70,16 @@ test('rename, reorder and remove mutate only collection references, preserving s
   item=(await list()).items[0];await editManifestMembership(transport,item.collectionMemberships[0],{kind:'remove'});
   doc=JSON.parse(files.get(path));assert.deepEqual(doc.featured.map(e=>e.id),['s0','s2']);
   for(const [p,c] of originalBodies)assert.equal(files.get(p),c);
-  const writes=t.ops.filter(o=>o.op==='file_operation');assert.equal(writes.length,3);assert.ok(writes.every(o=>o.location.path===path&&o.request.expected_revision));
+  const writes=t.ops.filter(o=>o.op==='act');assert.equal(writes.length,3);assert.ok(writes.every(o=>o.action==='central.files.write'&&o.input.location.path===path&&o.input.expected_revision));
  });
 });
 
 test('native manifest CAS race is not retried and uncertain post-write readback is named',async()=>{
  const {files}=specimen();const t=memoryTransport(files);const old=t.handle;
- t.fetch=async(_url,init)=>({json:async()=>{const op=JSON.parse(init.body);if(op.op==='file_operation')files.set(path,files.get(path)+' ');return {ok:true,outcome:await old(op)};}});
- await use(t,async()=>{const item=(await list()).items[0];await assert.rejects(editManifestMembership(transport,item.collectionMemberships[0],{kind:'rename',title:'candidate'}),/conflict/);assert.equal(t.ops.filter(o=>o.op==='file_operation').length,1);assert.equal(JSON.parse(files.get(path)).featured[0].name,'Source 0');});
+ t.fetch=async(_url,init)=>({json:async()=>{const op=JSON.parse(init.body);if(op.op==='act')files.set(path,files.get(path)+' ');return {ok:true,outcome:await old(op)};}});
+ await use(t,async()=>{const item=(await list()).items[0];await assert.rejects(editManifestMembership(transport,item.collectionMemberships[0],{kind:'rename',title:'candidate'}),/conflict/);assert.equal(t.ops.filter(o=>o.op==='act').length,1);assert.equal(JSON.parse(files.get(path)).featured[0].name,'Source 0');});
  let writes=0;const u=memoryTransport(files);const handle=u.handle;
- u.fetch=async(_url,init)=>({json:async()=>{const op=JSON.parse(init.body);if(op.op==='file_read'&&writes)return {ok:false,error:'offline after successful write'};if(op.op==='file_operation')writes++;return {ok:true,outcome:await handle(op)};}});
+ u.fetch=async(_url,init)=>({json:async()=>{const op=JSON.parse(init.body);if(op.op==='file_read'&&writes)return {ok:false,error:'offline after successful write'};if(op.op==='act')writes++;return {ok:true,outcome:await handle(op)};}});
  await use(u,async()=>{const item=(await list()).items[0];const r=await editManifestMembership(transport,item.collectionMemberships[0],{kind:'remove'});assert.equal(r.state,'saved_unverified');assert.match(r.message,/Saved at.*offline/);assert.equal(JSON.parse(files.get(path)).featured.length,2);});
 });
 

@@ -131,13 +131,13 @@ test('the one Session and one Arrangement are the tracks pane\'s: the Factory tr
   const frames = await read('shell/modeFrames.ts')
   assert.match(frames, /factory: seedWithoutTracksPane\(seedFactoryCentre\),/, 'the Factory seed is the mode table\'s; the tracks are Session view, never a pane')
   // Ticket K: the World cut modes' registrations are wrapped by `worldCut` (useWorldCut.ts), which adds the spine's readings.
-  // REPLACED (O-I #743, round four): the registration was `worldCut(useFactoryTracks)`; the session's and task's own acts on AIKit wrap
-  // the same hook (agent/factoryTaskActs.ts withTaskActs), which reads the same agency store.
-  assert.match(await read('frame/tracks/modeTracks.ts'), /factory: worldCut\(withTaskActs\(useFactoryTracks\)\)/, 'Factory\'s tracks are its registration of the one pane')
-  assert.match(await read('agent/factoryTaskActs.ts'), /useAgencySessions\(transport\)/, 'its acts read the sessions from the agency store\'s one poll')
-  const tracksHook = await read('frame/tracks/useFactoryTracks.ts')
-  assert.match(tracksHook, /useAgencySessions\(transport\)/, 'the sessions are the agency store\'s one poll')
-  assert.match(tracksHook, /harnessAgentControl\(transport, harness\.binding, control\)/, 'stop and retry reach the one owner path the grid\'s buttons used')
+  // REPLACED (O-I #1004): the registration was `worldCut(withTaskActs(useFactoryTracks))`, a set assembled in the window from the agency
+  // store's poll; Factory's Set is the kernel's now, built from the World Model's slices and asked for by `set_subscribe`.
+  const table = await read('frame/tracks/modeTracks.ts')
+  assert.match(table, /factory: worldCut\(kernelModeTracks\('factory'\)\)/, 'Factory\'s tracks are its registration of the one pane: its Set in the kernel')
+  assert.doesNotMatch(table, /useFactoryTracks|withTaskActs/, 'no window assembly stands beside it')
+  await assert.rejects(read('frame/tracks/useFactoryTracks.ts'), /ENOENT/, 'the React assembly is gone')
+  assert.match(await read('frame/tracks/kernelSet.ts'), /useModeSet\(transport, mode\)/, 'the tracks are the Set the kernel answers')
 })
 
 test('no stylesheet rule styles a retired view: the agent tab\'s CSS holds the thread body only', async () => {

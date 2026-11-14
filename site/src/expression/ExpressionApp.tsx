@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { validateJourney } from '@epilogos/oi-design-system/expressions-engine/shell/model.mjs';
-import { PublicField } from '../library/native-player.mjs';
+import { PublicField, validateNativeJourney } from '../library/native-player.mjs';
 
 /* The Expression page: one published member of the essay's Expression layer, rendered in full.
    The index is read from ./essay/expressions/index.json, the journey body is fetched, its SHA-256 is
@@ -79,7 +78,7 @@ async function load(id: string): Promise<Loaded> {
   }
   let journey: Journey;
   try {
-    journey = validateJourney(JSON.parse(new TextDecoder().decode(bytes)));
+    journey = validateNativeJourney(JSON.parse(new TextDecoder().decode(bytes)));
   } catch (error) {
     throw new FailureError({ kind: 'invalid', title: 'The Expression is not a valid journey.', detail: error instanceof Error ? error.message : String(error) });
   }

@@ -43,13 +43,12 @@ api.assertInstrumentReadingScope(reading,view,scene.id);
 const unrelated={...reading,subject:{...reading.subject,subject_ref:'unrelated:subject'},expressions:[]};assert.throws(()=>api.assertInstrumentReadingScope(unrelated,view,scene.id),/No source reading is bound/);
 const stale={...unrelated,expressions:[{expression_ref:view.document.expression_ref,scene_ref:binding.scene_ref,revision:String(view.document.revision+1)}]};assert.throws(()=>api.assertInstrumentReadingScope(stale,view,scene.id),/No source reading is bound/);
 const ownerTime=await models.dataSource.loadTimelineView();if(!reading.temporal?.length)assert.equal(ownerTime.nodes.length,0,'no current date is invented');
-const ownerPlaces=await models.places.getLocatedNodes(reading.subject.subject_ref);if(!reading.spatial?.length)assert.equal(ownerPlaces.length,0,'basemap geography is not native personal place data');
+assert.equal(models.places,undefined,'the hosted Places map\'s located-place read retired: Places is the shell\'s Earth atlas');
 assert.equal(models.dataSource.saveTimelineLayout,undefined,'no memory-only layout save presented as persistence');
 await assert.rejects(models.timeline.getTimelineWalk('unrelated:subject',{startYear:0,endYear:3000}),/does not address/);
-await assert.rejects(models.places.getLocatedNodes('unrelated:subject'),/does not address/);
 assert.throws(()=>api.expressionTextFromNote(JSON.stringify([{type:'heading',content:[]}])),/plain text/);
 assert.throws(()=>api.expressionTextFromNote(JSON.stringify([{type:'paragraph',content:[{type:'text',text:'cannot discard formatting',styles:{bold:true}}]}])),/Rich text/);
-const result={status:'passed',artifact,source:actual.source,expression_ref:actual.document.expression_ref,revision:actual.document.revision,scene_ref:binding.scene_ref,nodes:canvas.nodes.length,relations:canvas.edges.length,temporal:ownerTime.nodes.length,places:ownerPlaces.length,checks:['real native identities and exact occurrence mapping','native positions roundtrip','exact plain text roundtrip','source relations preserved','matching native Expression revision accepted','foreign and stale scope refused','dates and places never invented','no memory-only layout writes','cross-scope repository requests refused','unsupported rich text refused']};
+const result={status:'passed',artifact,source:actual.source,expression_ref:actual.document.expression_ref,revision:actual.document.revision,scene_ref:binding.scene_ref,nodes:canvas.nodes.length,relations:canvas.edges.length,temporal:ownerTime.nodes.length,checks:['real native identities and exact occurrence mapping','native positions roundtrip','exact plain text roundtrip','source relations preserved','matching native Expression revision accepted','foreign and stale scope refused','dates never invented','no memory-only layout writes','cross-scope repository requests refused','unsupported rich text refused']};
 console.log(JSON.stringify(result));
 } finally {await rm(temporary,{recursive:true,force:true});}
 });

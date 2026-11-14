@@ -15,9 +15,9 @@
 import type {Cite, Family, Field, Occurrence} from '../projections/atlas/src/types/field'
 import {admitOccurrences, checkOccurrence, refuse, type AdmissionRefusal, type Checked} from '../projections/occurrence'
 import {paletteOfRef} from '../projections/atlas/provider/suiteReading'
-import {listWorldPages, readPageOwned, type PageReading} from '../../../../../desktop/cradle/src/personal/pageOwner'
+import {readPageOwned, type PageReading} from '../../../../../desktop/cradle/src/personal/pageOwner'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
-import {readWorlds} from './centralWorlds'
+import {readWorldPages, readWorlds} from './centralWorlds'
 
 export type PageOccurrenceKind = 'being' | 'thing'
 
@@ -123,12 +123,12 @@ export async function readWorldPagesForEarth(transport: KernelTransportStatus): 
   if (worlds.state !== 'read') return {readings: [], unread: [worlds.state === 'unavailable' ? worlds.reason : 'Central\'s worlds are still being read']}
   const readings: PageReading[] = [], unread: string[] = []
   for (const world of worlds.worlds) {
-    try {
-      const listing = await listWorldPages(transport, world.folder, PAGES_PER_WORLD)
-      for (const page of listing.pages.filter(item => item.form === 'being' || item.form === 'thing')) {
-        try { readings.push(await readPageOwned(transport, page.location)) } catch (cause) { unread.push(`${page.location.path}: ${cause instanceof Error ? cause.message : String(cause)}`) }
-      }
-    } catch (cause) { unread.push(`${world.name}: ${cause instanceof Error ? cause.message : String(cause)}`) }
+    // Each world's pages as the World Model holds them (centralWorlds.ts readWorldPages), within the page owner's own bound.
+    const pages = await readWorldPages(transport, world)
+    if (pages.state !== 'read') { unread.push(`${world.name}: ${pages.state === 'unavailable' ? pages.reason : 'its pages are still being read'}`); continue }
+    for (const page of pages.listing.pages.slice(0, PAGES_PER_WORLD).filter(item => item.form === 'being' || item.form === 'thing')) {
+      try { readings.push(await readPageOwned(transport, page.location)) } catch (cause) { unread.push(`${page.location.path}: ${cause instanceof Error ? cause.message : String(cause)}`) }
+    }
   }
   return {readings, unread}
 }

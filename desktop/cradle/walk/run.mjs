@@ -21,8 +21,7 @@
  */
 
 import { spawn, execFileSync } from "node:child_process";
-import { mkdirSync, writeFileSync, readFileSync, realpathSync } from "node:fs";
-import { createRequire } from "node:module";
+import { mkdirSync, writeFileSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium, webkit } from "playwright";
@@ -31,16 +30,7 @@ import { normalizeRegistry, resolveScenarioNames, classifyFailure, DisposerStack
 const here = dirname(fileURLToPath(import.meta.url));
 const cradleRoot = resolve(here, "..");
 const artifactsDir = join(here, "artifacts");
-// A borrowed node_modules can redirect a workspace package into another
-// checkout. Prove the engine dependency belongs to this exact worktree before
-// building or recording a native/browser acceptance receipt.
 const repositoryRoot = resolve(cradleRoot, "../..");
-const expectedEngineProvenance = realpathSync(join(repositoryRoot, "packages/oi-design-system/expressions-engine/PROVENANCE.json"));
-const loadedEngineProvenance = realpathSync(createRequire(import.meta.url).resolve("@epilogos/oi-design-system/expressions-engine/PROVENANCE.json"));
-if (loadedEngineProvenance !== expectedEngineProvenance) {
-  throw new Error(`The walk's engine dependency resolves outside its checkout: ${loadedEngineProvenance}. Run npm ci inside this checkout's desktop/cradle; do not borrow another checkout's node_modules.`);
-}
-const engineProvenance = JSON.parse(readFileSync(loadedEngineProvenance, "utf8"));
 // The dirty-tree digest reads the whole repo's diff; a tree carrying parallel
 // receipt restamps exceeds execFileSync's 1 MB default buffer, so widen it —
 // the digest hashes whatever the diff is, it does not parse it.
@@ -53,9 +43,9 @@ const sourceContext = {
   // so a receipt binds to the exact uncommitted state that produced it and a
   // reused build can be told from current source.
   dirty_digest: dirtyTreeDigest(runGit),
-  engine_provenance_path: loadedEngineProvenance,
-  engine_source: engineProvenance.source,
-  engine_revision: engineProvenance.sha,
+  // The engine is this checkout's own source (desktop/cradle/expressions-app),
+  // imported by path: its revision is the repository's.
+  engine_source: "desktop/cradle/expressions-app",
 };
 // How the served bytes were obtained (fresh build, reused dist or external
 // URL) with a bundle fingerprint — filled once the preview is up, so every

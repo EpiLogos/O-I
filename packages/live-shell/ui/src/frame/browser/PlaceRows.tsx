@@ -2,8 +2,9 @@
 // a read the shell already asks, held once for the window (owners/ownerCall.ts useOwnerOp, useHeldRead):
 //   - You: Central's root disclosure (world_browse, central/centralWorlds.ts centralRoot), its day surface (files_list at
 //     Control/user/day) and the identities the Studio's Nara chain keeps (nara_identity list);
-//   - Agents: Central's agent profiles (the agent_definition roster, owners/readers.ts useRosterAgents) and AIKit's harnesses
-//     (aikit_read harness-disclose);
+//   - Agents: Central's agent profiles (the agent_definition roster, owners/readers.ts useRosterAgents) and the agents on this
+//     computer, which are the census (the World Model's agents slice through model_subscribe, O-I ticket 1003), each with what AIKit
+//     reads of it (aikit_read harness-disclose) as detail on its row;
 //   - Machines: Workcell's status for this machine (workcell_status_read, owners/readers.ts useWorkcellAnswer) and the machines Workcell
 //     declares (workcell_read machine-list);
 //   - Work: Central's Work projects (world_browse), and Add folder… (Setup's Projects step for a folder, §10.11).
@@ -16,6 +17,7 @@
 import {useState, type ReactNode} from 'react'
 import {createPortal} from 'react-dom'
 import type {KernelOp, KernelOutcome, KernelTransportStatus, RootWorld} from '../../../../../../desktop/cradle/src/kernel/types'
+import {censusOf} from '../../../../../../desktop/cradle/src/agency/census'
 import {Refusal, refusalWords} from '../../../../../../desktop/cradle/src/shared/Refusal.tsx'
 import {centralRoot, centralRootHeld} from '../../central/centralWorlds'
 import {CENTRAL_DAYS_PATH, dayEntriesOf} from '../../central/daySurface'
@@ -24,6 +26,7 @@ import {useWorkspace} from '../../shell/workspaceContext'
 import {addFolderFromBrowser, seatWorldFromBrowser} from '../../shell/ModeBrowser'
 import {chooseFolder} from '../../settings/folderChooser'
 import {openSettings} from '../../settings/host'
+import {useModelSlice} from '../../owners/model'
 import {useHeldRead, useOwnerOp} from '../../owners/ownerCall'
 import type {OwnerReading} from '../../owners/ownerReading'
 import {useRosterAgents, useWorkcellAnswer} from '../../owners/readers'
@@ -70,11 +73,19 @@ function useYouParts(transport: KernelTransportStatus): Part[] {
 
 function useAgentParts(transport: KernelTransportStatus): Part[] {
   const roster = useRosterAgents(transport)
-  const harnesses = useOpValue(transport, {op: 'aikit_read', request: {kind: 'harness-disclose'}}, 'owner_route_reading',
+  // The agents on this computer are the census, the one list of them (O-I ticket 1003); what AIKit reads of each is detail on its row.
+  const census = censusOf(useModelSlice(transport, 'agents'))
+  const disclosure = useOpValue(transport, {op: 'aikit_read', request: {kind: 'harness-disclose'}}, 'owner_route_reading',
     'AIKit did not answer aikit harness disclose.', outcome => outcome.data as unknown)
   const agents: Part = roster.state === 'ready' ? {rows: agentRows(roster.agents)}
     : roster.state === 'error' ? {rows: [], refused: {said: 'Your roster is not read.', error: roster.error}} : {rows: [], waiting: 'Reading your roster…'}
-  return [agents, partOf(harnesses, 'AIKit did not say which harnesses it reads.', harnessRows, 'Reading the harnesses…')]
+  const onComputer: Part = census.state === 'read' ? {rows: harnessRows(census.agents, disclosure.status === 'answered' ? disclosure.value : null)}
+    : census.state === 'unavailable' ? {rows: [], refused: {said: 'The agents on this computer are not read.', error: census.why}}
+      : {rows: [], waiting: 'Reading the agents on this computer…'}
+  // AIKit's detail refused leaves each agent's row without it, and says why once.
+  const detail: Part = census.state === 'read' && census.agents.length && disclosure.status === 'refused'
+    ? {rows: [], refused: {said: 'AIKit did not say what it reads of each agent.', error: disclosure.error}} : {rows: []}
+  return [agents, onComputer, detail]
 }
 
 function useMachineParts(transport: KernelTransportStatus): Part[] {
@@ -107,7 +118,7 @@ const MARKS: Readonly<Record<PlaceRow['kind'], ReactNode>> = {
 
 /** What a place says when it has no row: its own words. */
 const EMPTY: Readonly<Record<PlaceId, string>> = {
-  you: 'Nothing of yours is disclosed yet.', agents: 'Your roster holds no agent yet, and AIKit reads no harness.',
+  you: 'Nothing of yours is disclosed yet.', agents: 'Your roster holds no agent yet, and Actuation detects no agent on this computer.',
   machines: 'Workcell names no machine yet.', work: 'Your Work holds no project yet: Add folder… brings one in.',
   packs: PACKS_WAIT.said,
 }

@@ -22,7 +22,10 @@ export function assertPreparedContext(value:unknown,session?:string):asserts val
   if(s.anchor.kind!=="text"&&s.anchor.kind!=="observation")throw new Error("Unknown native selection anchor");
  }
 }
-export async function nativeContext(transport:KernelTransportStatus,project:string,session:string|undefined,request:ContextOperation={operation:"read"},sourceWorldRef?:string):Promise<PreparedContext>{
+/** One operation on AIKit's prepared context, by the kernel's `encounter` op: an edit or an adoption (the owner's own writes; AIKit
+ * declares no Action for them), or a hosted world's read through its host. The packet of this World is read from the World Model's
+ * slice, never here (packetSlice.ts; O-I ticket 1005). */
+export async function nativeContext(transport:KernelTransportStatus,project:string,session:string|undefined,request:ContextOperation,sourceWorldRef?:string):Promise<PreparedContext>{
  const op={op:"encounter" as const,project,request:{action:"context" as const,agent_session:session,request}};
  const response=await kernelOp(transport,sourceWorldRef?{op:"hosted_native",source_world_ref:sourceWorldRef,request:op}:op);
  if(response.error||response.outcome?.result!=="encounter_reading")throw new Error(response.error??"The native prepared-context operation is unavailable");
@@ -46,8 +49,6 @@ export async function validatePreparedItem(item:PreparedItem,context?:PreparedCo
 export type ContextProvider=(scope:{transport:KernelTransportStatus;project:string;session:string;sourceWorldRef?:string})=>Promise<void>;
 const providers=new Set<ContextProvider>();
 export function registerContextProvider(provider:ContextProvider){providers.add(provider);return()=>{providers.delete(provider);};}
-export async function reviewedContext(transport:KernelTransportStatus,project:string,session:string,sourceWorldRef?:string):Promise<ContextExpectation>{
- for(const provider of providers)await provider({transport,project,session,sourceWorldRef});
- const value=await nativeContext(transport,project,session,{operation:"read"},sourceWorldRef);for(const item of value.items)await validatePreparedItem(item,value,sourceWorldRef);return contextExpectation(value);
-}
+/** Run each provider before a turn reads the prepared context: the Send's review (packetSlice.ts) asks it first. */
+export async function runContextProviders(scope:Parameters<ContextProvider>[0]):Promise<void>{for(const provider of providers)await provider(scope);}
 export function clearSnapshotApprovals(sourceWorldRef?:string){for(const key of snapshotApprovals)if(JSON.parse(key)[0]===(sourceWorldRef??null))snapshotApprovals.delete(key);}

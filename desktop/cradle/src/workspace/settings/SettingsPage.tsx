@@ -14,6 +14,8 @@ import {goTo, placeLabel, useSettingsNav} from "./settingsNav";
 import {stagedChanges} from "./changeModel";
 import {PendingStrip, ReviewSheet} from "./ReviewSheet";
 import {searchIndex, searchSettings} from "./settingsSearch";
+import {useCensus} from "../../agency/census";
+import {useKernel} from "../../kernel/KernelProvider";
 import {StatusSection} from "./sections/StatusSection";
 import {HarnessesSection} from "./sections/HarnessesSection";
 import {CredentialsSection, discoverKeys, type Discovery} from "./sections/CredentialsSection";
@@ -43,7 +45,9 @@ function Search() {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
   const input = useRef<HTMLInputElement>(null);
-  const index = useMemo(() => searchIndex(data), [data]);
+  // The agents are found where the Harnesses section draws them: the census (O-I #1003).
+  const census = useCensus(useKernel().transport);
+  const index = useMemo(() => searchIndex(data, census), [data, census]);
   const results = useMemo(() => searchSettings(index, query), [index, query]);
   const land = (at: number) => {
     const hit = results[at];

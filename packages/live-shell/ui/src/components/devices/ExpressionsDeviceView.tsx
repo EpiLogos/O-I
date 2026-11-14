@@ -2,8 +2,9 @@
 // compact on the rack the person adds to (`ExpressionsRackDevice`, mounted by components/NativeDeviceRack.tsx), whole in the
 // browser's pool (`ExpressionsFieldWhole`), full in a pane (frame/devices/devicePane.tsx reads the device this module publishes
 // to the door). All three are `DeviceView` over the one `DeviceInstance` that `expressionsFieldDevice` builds from the retained
-// editor's reading, and all three write through the one `apply` of the editor — so a change in any size is the same change.
-import {useEffect, useMemo, useRef, useState, type ReactNode} from 'react'
+// editor's reading with the Studio of the kernel's Set laid over it, and all three write through the Studio's one act (O-I ticket
+// 1008; fieldDeviceSend.ts studioApply) — so a change in any size is the same change.
+import {useContext, useEffect, useMemo, useRef, useState, type ReactNode} from 'react'
 import {sameEditorBasis, type NativeEditorBasis, type NativeEditorChange, type NativeEditorReading, type NativeEditorReply, type NativeEditorRequest} from '@epilogos/expressions-boundary/editor'
 import type {SdkParamRow} from '../../inhabitants/sdk/define'
 import type {DeviceInstance, DeviceSize} from '../../frame/devices/deviceRuntime'
@@ -15,8 +16,11 @@ import type {Apply, CaptureCurrent} from '../nativeDeviceCustody'
 import {modulationOf, modulationView} from '../nativeModulation'
 import {NATIVE_BINDINGS} from '@epilogos/expressions-boundary/parameters'
 import {claimDevice, type DeviceClaim} from './devicePublication'
-import {expressionsDeviceId, expressionsFieldDevice, expressionsFieldEntry, inCompactOrder, type FieldDeviceSend} from './expressionsDevice'
-import {fieldDeviceSend} from './fieldDeviceSend'
+import {expressionsDeviceId, expressionsFieldDevice, expressionsFieldEntry, inCompactOrder, studioReading, type FieldDeviceDrag, type FieldDeviceSend} from './expressionsDevice'
+import {fieldDeviceSend, studioApply, studioDrag, studioHolds, type StudioDrag, type WorkStudio} from './fieldDeviceSend'
+import {Workspace} from '../../shell/workspaceContext'
+import {useModeSet} from '../../owners/modeSets'
+import {runAct, setActRunner} from '../../frame/tracks/kernelSet'
 import {ExpressionsPicture, hasPicture} from './ExpressionsPicture'
 import {ModulationLine} from './ModulationLine'
 import {PHYSICS_KEYS, physicsDesignBinding, type PhysicsPress} from './physicsBinding'
@@ -70,9 +74,39 @@ export function openFieldDeviceFull(family: string, title: string): string | nul
 }
 
 /** The device for a host: only readings while the work is busy or waiting on the owner's acknowledgement, else the device that writes. */
-export function hostedFieldDevice(family: string, host: Pick<FieldHost, 'reading' | 'locked'>, send: FieldDeviceSend): DeviceInstance | null {
-  return expressionsFieldDevice(host.reading, family, host.locked ? null : send)
+export function hostedFieldDevice(family: string, host: Pick<FieldHost, 'reading' | 'locked'>, send: FieldDeviceSend, drag: FieldDeviceDrag | null = null): DeviceInstance | null {
+  return expressionsFieldDevice(host.reading, family, host.locked ? null : send, drag)
 }
+
+/** The Studio the kernel's Expressions Set gives a work (O-I ticket 1008): its track's Studio (the values and settings of the Scene it has
+ * selected, and the act that writes them), whether a take records on that Scene, the track's Re-enable, and the runner of its acts. Null
+ * while the Set holds no Studio of the work: then nothing of the field devices writes. */
+export function useWorkStudio(expressionRef: string | null): WorkStudio | null {
+  const transport = useContext(Workspace)?.transport ?? null
+  const set = useModeSet(transport, 'expressions')
+  const runner = useMemo(() => transport ? setActRunner(transport) : null, [transport])
+  return useMemo(() => {
+    if (!expressionRef || !runner || set.state !== 'held') return null
+    const track = set.answer.set.tracks.find(row => row.id === expressionRef)
+    const studio = track?.studio
+    if (!studio) return null
+    const recording = set.answer.set.clips.some(clip => clip.track === expressionRef && clip.id === studio.scene_ref && clip.status === 'recording')
+    return {expression_ref: expressionRef, studio, recording, reenable: track.acts?.reenable ?? null, runner}
+  }, [expressionRef, runner, set])
+}
+
+/** A host's reading with its work's Studio laid over it, and the write each change is: what the Studio takes through its act, the rest
+ * through the host's own apply (fieldDeviceSend.ts studioApply). Read at each press, so a new reading or Set never strands a write. */
+export function useStudioHost<H extends {readonly reading: NativeEditorReading | null; readonly apply: Apply}>(host: H): {reading: NativeEditorReading | null; apply: Apply; work: WorkStudio | null} {
+  const work = useWorkStudio(host.reading?.basis.expression_ref ?? null)
+  const reading = useMemo(() => host.reading ? studioReading(host.reading, work?.studio ?? null) : null, [host.reading, work])
+  const latest = useRef({host, work})
+  latest.current = {host, work}
+  const apply = useMemo<Apply>(() => (changes, basis) =>
+    studioApply({reading: latest.current.host.reading, apply: latest.current.host.apply}, latest.current.work, changes, basis ?? latest.current.host.reading?.basis ?? EMPTY_BASIS), [])
+  return {reading, apply, work}
+}
+const EMPTY_BASIS = {expression_ref: '', revision: 0, scene_ref: '', authored_revision: 0} as NativeEditorBasis
 
 /** The device, its picture, and its place at the door. The device is rebuilt from the reading, never kept: nothing of the owner's is held here. */
 export function useFieldDevice(family: string, host: FieldHost) {
@@ -82,37 +116,51 @@ export function useFieldDevice(family: string, host: FieldHost) {
 /** Several field devices over one host at once (the Studio's sections hold eleven): each built as `useFieldDevice` builds one — the
  * same send through the host's one apply, the same picture, the same claim at the door — so a device in the Studio is the device on
  * the rack, in the pool and in a pane. `families` is a fixed list for the life of the caller. */
-export function useFieldDevices(families: readonly string[], host: Omit<FieldHost, 'reading'> & {readonly reading: NativeEditorReading | null}): {family: string; id: string; device: DeviceInstance | null; picture: (size: DeviceSize) => ReactNode}[] {
+export function useFieldDevices(families: readonly string[], given: Omit<FieldHost, 'reading'> & {readonly reading: NativeEditorReading | null}): {family: string; id: string; device: DeviceInstance | null; picture: (size: DeviceSize) => ReactNode}[] {
   const aperture = useNativeInputRetention()
-  const latest = useRef({host, aperture})
-  latest.current = {host, aperture}
+  // Each value a device shows is the Studio the kernel's Set gives its Scene, and each change one write of the Studio's act (O-I ticket 1008).
+  const studio = useStudioHost(given)
+  const host = useMemo(() => ({...given, reading: studio.reading}), [given, studio.reading])
+  const chrome = useHostedChrome()
+  const stageRun = chrome?.run ?? null
+  const latest = useRef({host, aperture, studio, stageRun})
+  latest.current = {host, aperture, studio, stageRun}
   const key = families.join('|')
+  // A drag previews on the field and lands in a take that records; its release is the one write, through the send below.
+  const drags = useMemo(() => new Map<string, StudioDrag>(families.map(family => [family, studioDrag(() => ({
+    run: latest.current.stageRun, work: latest.current.studio.work,
+    automated: target => { const lanes = latest.current.host.reading?.scene?.automation; return Array.isArray(lanes) && lanes.some(lane => lane.target === target && lane.enabled) },
+    revision: () => latest.current.host.reading?.basis.revision ?? null,
+  }))])), [key])
   const sends = useMemo(() => new Map(families.map(family => [family, fieldDeviceSend(family, {
-    apply: (changes, basis) => latest.current.host.apply(changes, basis),
+    apply: (changes, basis) => { const reply = latest.current.studio.apply(changes, basis); drags.get(family)?.settled(reply); return reply },
     captureCurrent: () => latest.current.host.captureCurrent(),
     aperture: () => latest.current.aperture,
-  })])), [key])
+  })])), [key, drags])
   const pictures = useMemo(() => new Map(families.map(family => [family, (size: DeviceSize): ReactNode => {
     const now = latest.current
     // A picture is asked for only of a device that stands, and a device stands only over a reading.
-    return now.host.reading ? <ExpressionsPicture family={family} size={size} reading={now.host.reading} apply={now.host.apply} captureCurrent={now.host.captureCurrent}
+    return now.host.reading ? <ExpressionsPicture family={family} size={size} reading={now.host.reading} apply={now.studio.apply} captureCurrent={now.host.captureCurrent}
       disabled={now.host.locked} aperture={now.aperture} /> : null
   }])), [key])
   // No reading, no device: a field device is the owner's reading of the open work, never a default. A family whose catalogue design
   // draws on value keys the engine reports publishes its binding with it (fieldDesignBinding), and the design draws in every place.
   // Resonance's tattva: the live scene's M2 condition the frame announces, and the map's name for its coordinate (qlCoordinateName.ts).
-  const chrome = useHostedChrome()
   const condition = chrome?.state?.instrumentCondition ?? null
-  // The scene's lanes and the values the frame holds off them (manual §20.1 Rules): each value shows what moves it, and its hand-back.
-  // Keyed by what the frame announces, so a new announcement of the same holds keeps every binding as it was.
-  const holdsKey = JSON.stringify(chrome?.state?.automationHolds ?? []), stageRun = chrome?.run ?? null
-  const lanes = useMemo<FieldLanes>(() => ({run: stageRun, holds: JSON.parse(holdsKey) as FieldLanes['holds']}), [stageRun, holdsKey])
+  // The scene's lanes and the values the kernel holds off them (manual §20.1 Rules; the Set's Studio `held`): each value shows what moves
+  // it, and its hand-back, the track's Re-enable of that one value. Keyed by what the Set says, so the same holds keep every binding.
+  const work = studio.work
+  const holdsKey = JSON.stringify(studioHolds(work, host.reading?.basis ?? null))
+  const reenableAct = work?.reenable ?? null, runner = work?.runner ?? null
+  const lanes = useMemo<FieldLanes>(() => ({run: stageRun, holds: JSON.parse(holdsKey) as FieldLanes['holds'],
+    reenable: reenableAct && runner ? (target: string) => runAct(runner, reenableAct, target).then(receipt => { if (!receipt.ok) throw new Error(receipt.error) }) : null}),
+  [stageRun, holdsKey, reenableAct, runner])
   const tattvaName = useCoordinateName(condition?.tattva_ref ?? null)
   // Resonance's Body source: M2's body constants (QL's table) and the hand's choice of source (fieldDesignBinding.ts resonanceBody).
   const bodyTable = useBodyTable()
   const holds = useHolds()
   const devices = useMemo(() => families.map(family => {
-    const device = host.reading ? hostedFieldDevice(family, {reading: host.reading, locked: host.locked}, sends.get(family)!) : null
+    const device = host.reading ? hostedFieldDevice(family, {reading: host.reading, locked: host.locked}, sends.get(family)!, drags.get(family)!) : null
     const binding = device ? fieldDesignBinding(family, device, host.reading, sends.get(family) ?? null,
       {condition, name: tattvaName, table: bodyTable, held: holds[expressionsDeviceId(family)] ?? {}}, lanes) : undefined
     return {family, id: expressionsDeviceId(family), device, picture: pictures.get(family)!, ...(binding ? {binding} : {})}

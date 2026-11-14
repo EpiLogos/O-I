@@ -189,6 +189,20 @@ pub(crate) fn invoke(
     args: &[std::ffi::OsString],
     input: Option<Vec<u8>>,
 ) -> Result<Value, Error> {
+    invoke_in(executable, args, input, None, MATERIAL_LIMIT, &[], &[])
+}
+
+/// [`invoke`] in a directory of the caller's: an owner that resolves its scope from where it runs (AIKit's project, through
+/// `oi act invoke`) is asked from that place.
+pub(crate) fn invoke_in(
+    executable: &PathBuf,
+    args: &[std::ffi::OsString],
+    input: Option<Vec<u8>>,
+    cwd: Option<&std::path::Path>,
+    limit: std::time::Duration,
+    withheld: &[&str],
+    given: &[(&str, &str)],
+) -> Result<Value, Error> {
     if input.as_ref().is_some_and(|v| v.len() > 64 * 1024) {
         return Err(Error::new(
             "resource-limit",
@@ -197,6 +211,15 @@ pub(crate) fn invoke(
         ));
     }
     let mut command = crate::flow::child(executable);
+    for variable in withheld {
+        command.env_remove(variable);
+    }
+    for (variable, value) in given {
+        command.env(variable, value);
+    }
+    if let Some(cwd) = cwd {
+        command.current_dir(cwd);
+    }
     #[cfg(unix)]
     {
         use std::os::unix::process::CommandExt;
@@ -223,7 +246,7 @@ pub(crate) fn invoke(
     let write_error = input.and_then(|input| child.stdin.take().unwrap().write_all(&input).err());
     // Bounded like every owner call (owner_process.rs): an owner that never
     // answers is stopped at the limit and named, with whatever it started.
-    let deadline = std::time::Instant::now() + MATERIAL_LIMIT;
+    let deadline = std::time::Instant::now() + limit;
     let status = loop {
         match child.try_wait() {
             Ok(Some(status)) => break status,
@@ -251,7 +274,7 @@ pub(crate) fn invoke(
                     "timeout",
                     format!(
                         "{owner} {operation} did not answer within {} s; if it writes, its effect is uncertain — read the owner's state before retrying",
-                        MATERIAL_LIMIT.as_secs()
+                        limit.as_secs()
                     ),
                     true,
                 ));
@@ -279,11 +302,14 @@ pub(crate) fn invoke(
         return Err(Error::new("process-error", error, true));
     }
     if !status.success() {
-        return Err(Error::new(
-            "owner-refused-or-failed",
-            String::from_utf8_lossy(&errors.0),
-            true,
-        ));
+        // The owner's words: what it said on stderr, else its answer on stdout (an owner that refuses in a JSON document).
+        let said = String::from_utf8_lossy(&errors.0).trim().to_owned();
+        let words = if said.is_empty() {
+            String::from_utf8_lossy(&output.0).trim().to_owned()
+        } else {
+            said
+        };
+        return Err(Error::new("owner-refused-or-failed", words, true));
     }
     serde_json::from_slice(&output.0).map_err(|e| Error::new("incompatible", e, true))
 }

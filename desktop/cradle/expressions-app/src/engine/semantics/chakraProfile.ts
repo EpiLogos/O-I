@@ -1,5 +1,5 @@
 import type { ResonanceAnchor } from '../cymaticResonator';
-import { CHAKRA_DEFINITIONS, type ChakraDefinition } from './chakraSemantics';
+import { CHAKRA_DEFINITIONS, type ChakraDefinition } from './chakraSemantics.ts';
 
 export const CHAKRA_PROFILE_ID = 'chakra-seven-v1';
 

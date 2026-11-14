@@ -1,5 +1,5 @@
 // Lane K0 (T-COVERAGE §1.2, W3's last three routes): each control bound through its kernel route, and its refusal the owner's words.
-//   the Run map's Retry (software-factory:run-map, §19.25)       factory_owner attempt-retry (kernel/src/factory_retry.rs)
+//   the Run map's Retry (software-factory:run-map, §19.25)       Factory's own Action factory.attempt.retry, by the kernel's act
 //   the Skillset rack's Issue (Bypass, the rack's upkeep pages)   aikit_write bypass-issue (`aikit bypass issue`)
 //   Ground hygiene's Release orphans and sandboxes (§18.5; since #725 the Workcell's Left behind page, §19.23)
 //                                                                workcell_read sandboxes, workcell_write release-orphans
@@ -7,10 +7,9 @@
 //
 // Channels, each claim carried by one:
 // - REAL (desktop/cradle/kernel/tests/fixtures/owner-routes/*-2026-10-22.json): Workcell's own report of a fixture lifecycle server and
-//   its refusal for an unreachable one (read only); AIKit's bypass issue and its two refusals in an isolated home; Factory's admission
-//   reading as the installed Factory answers it.
+//   its refusal for an unreachable one (read only); AIKit's bypass issue and its two refusals in an isolated home.
 // - SCRIPTED: a kernel behind the bridge's fetch that records each op it is sent and answers it as the kernel answers (owner_route_reading,
-//   factory_development_reading, or the kernel's Error envelope); the catalogue designs rendered through the runtime's host to static
+//   action_dispatched for an Action by `act`, or the kernel's Error envelope); the catalogue designs rendered through the runtime's host to static
 //   markup. No owner state is written: every write goes to the scripted kernel.
 // Not a screen pass.
 import test from 'node:test'
@@ -67,7 +66,6 @@ const leftBehind = binding => carryPages({id: 'factory:workcell', values: {}}, [
 const kernelFixture = name => JSON.parse(readFileSync(new URL(`../../../../desktop/cradle/kernel/tests/fixtures/owner-routes/${name}`, import.meta.url), 'utf8'))
 const SANDBOXES = kernelFixture('workcell-sandboxes-2026-10-22.json')
 const BYPASS = kernelFixture('aikit-bypass-issue-2026-10-22.json')
-const factoryRs = readFileSync(new URL('../../../../desktop/cradle/kernel/src/factory.rs', import.meta.url), 'utf8')
 const routesRs = readFileSync(new URL('../../../../desktop/cradle/kernel/src/owner_routes.rs', import.meta.url), 'utf8')
 
 /** The kernel's Error envelope for an owner's refusal (owner_routes.rs `wire`), as the bridge carries it. */
@@ -103,20 +101,20 @@ function draws(design, binding) {
 // ── the Run map's Retry ─────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 const RUN = {statePath: '/Users/admin/Central/Work/Factory/.factory/state', runRef: 'run:one', units: {'work-inspect': 'unit:inspect-source'}}
-const ADMITS_NO_RETRY = 'Factory admits no retry from a desktop caller: its attempt admission (factory attempt admission) names no attempt-retry action, only attempt-receiving.'
+// Factory's own refusal of a unit whose current attempt has not failed (Factory's engine; session.rs `retry`), as `act` carries it.
+const NOT_FAILED = 'Factory refused factory.attempt.retry: unit:inspect-source has not failed or gone quiet, so there is nothing to retry'
+const bridge = await import('../../../../desktop/cradle/src/kernel/bridge.ts')
+const dispatched = data => ({result: 'action_dispatched', dispatch: {state: 'invoked', data}, receipts: []})
 
-test('Run map · Retry is the kernel\'s factory_owner attempt-retry: the request the kernel deserialises, the unit the node stands for', async () => {
-  // The kernel's own request: OwnerRequest::AttemptRetry, serde kebab-case, with the fields the binding sends.
-  assert.match(factoryRs, /AttemptRetry \{\s+state_path: PathBuf,\s+run_ref: String,\s+workflow_unit_ref: String,/)
-  assert.match(factoryRs, /#\[serde\(tag = "kind", rename_all = "kebab-case"\)\]\s+pub enum OwnerRequest/)
+test('Run map · Retry is Factory\'s own Action factory.attempt.retry by the kernel\'s act: its input, the unit the node stands for', async () => {
   bind.resetHolds()
-  const owner = kernel(op => (op.op === 'factory_owner' ? {result: 'factory_development_reading', data: {contract: 'oi.factory-attempt-retry/v1', status: 'retried',
-    changed: true, attemptRef: 'attempt:desk-retry:ab', refusal: null}} : null))
+  const owner = kernel(op => (op.op === 'act' && op.action === 'factory.attempt.retry'
+    ? dispatched({contract: 'factory.session-task/v1', state: 'retried', run_ref: 'run:one', unit_ref: 'unit:inspect-source', attempt_ref: 'attempt:r2'}) : null))
   const transport = {kind: 'bridge', url: 'http://run-map.fixture'}
-  const binding = runMap.runMapBinding(bind.chainHolds(), RUN, {owner: request => routes.factoryOwnerWrite(transport, request, '`factory attempt action` retry')})
+  const binding = runMap.runMapBinding(bind.chainHolds(), RUN, {retry: input => bridge.kernelAct(transport, 'factory.attempt.retry', input)})
   assert.equal(binding.standing.retry, undefined, 'a Run named and a carrier: Retry stands')
   await withKernel(owner, () => binding.write([{key: 'retry', value: 'work-inspect'}]))
-  assert.deepEqual(owner.sent, [{op: 'factory_owner', request: {kind: 'attempt-retry', state_path: RUN.statePath, run_ref: 'run:one', workflow_unit_ref: 'unit:inspect-source'}}])
+  assert.deepEqual(owner.sent, [{op: 'act', action: 'factory.attempt.retry', input: {state: RUN.statePath, run_ref: 'run:one', unit_ref: 'unit:inspect-source'}}])
   // A node Factory names no unit for is not asked.
   await assert.rejects(binding.write([{key: 'retry', value: 'barrier-gate'}]), /names no unit for the node barrier-gate/)
   assert.equal(owner.sent.length, 1)
@@ -124,18 +122,14 @@ test('Run map · Retry is the kernel\'s factory_owner attempt-retry: the request
 
 test('Run map · Factory\'s refusal is the press\'s error in Factory\'s words; with no Run named, Retry stands disabled saying so', async () => {
   bind.resetHolds()
-  // The kernel's document when the installed Factory admits no desktop retry (factory_retry.rs; its admission reading is REAL).
-  const answers = [{status: 'refused', changed: false, refusal: {source: 'owner', step: 'admission', message: ADMITS_NO_RETRY}},
-    {status: 'uncertain', changed: true, refusal: {source: 'owner', step: 'retry', message: 'Software Factory attempt stopped at its 300 s bound'}}]
-  for (const answer of answers) {
-    const binding = runMap.runMapBinding(bind.chainHolds(), RUN, {owner: async () => ({contract: 'oi.factory-attempt-retry/v1', ...answer})})
-    await assert.rejects(binding.write([{key: 'retry', value: 'work-inspect'}]), {message: answer.status === 'refused' ? ADMITS_NO_RETRY
-      : 'Factory did not answer and may have run: Software Factory attempt stopped at its 300 s bound Read the Run again before retrying.'})
-  }
+  const owner = kernel(op => (op.op === 'act' ? {result: 'action_dispatched', dispatch: {state: 'owner_refused', message: NOT_FAILED}, receipts: []} : null))
+  const transport = {kind: 'bridge', url: 'http://run-map.fixture'}
+  const binding = runMap.runMapBinding(bind.chainHolds(), RUN, {retry: input => bridge.kernelAct(transport, 'factory.attempt.retry', input)})
+  await withKernel(owner, () => assert.rejects(binding.write([{key: 'retry', value: 'work-inspect'}]), {message: NOT_FAILED}))
   // No Run on the Main track (today): disabled, naming the route and why; a Run without a carrier says so instead.
   const none = runMap.runMapBinding(bind.chainHolds())
   assert.equal(none.standing.retry.disabled, runMap.RUN_MAP_REFUSE.retry)
-  assert.match(none.standing.retry.disabled, /factory_owner attempt-retry .* no Run is named on the Main track/)
+  assert.match(none.standing.retry.disabled, /factory\.attempt\.retry .* no Run is named on the Main track/)
   await assert.rejects(none.write([{key: 'retry', value: 'work-inspect'}]), {message: runMap.RUN_MAP_REFUSE.retry})
   const noCarrier = runMap.runMapBinding(bind.chainHolds(), RUN)
   assert.match(noCarrier.standing.retry.disabled, /kernel carrier is unavailable/)

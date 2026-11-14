@@ -27,36 +27,19 @@
       "resolved": "desktop/cradle/expressions-app/node_modules/react-dom/client.js"
     },
     {
-      "name": "complete worker route and optimizer protection",
-      "receivers": 2
-    },
-    {
-      "name": "actual offline MapLibre worker",
-      "rendered_initial": true,
-      "set_data_revision": 2,
-      "resize": true,
-      "removed": true,
-      "external_requests": []
+      "name": "every research alias names a source that stands, and both receivers resolve it there",
+      "receivers": 2,
+      "aliases": [
+        "@research-canvas/schema",
+        "@research-canvas/domain",
+        "@research-canvas/desktop-api",
+        "@research-canvas/viewers",
+        "@research-canvas/node-document",
+        "@research-canvas/exporter"
+      ]
     }
   ],
   "errors": [],
   "native_claims": false,
-  "console": [],
-  "worker": {
-    "url_scheme": "blob",
-    "features": [
-      {
-        "id": 7,
-        "properties": {
-          "revision": 2
-        },
-        "coordinates": [
-          20.0006103515625,
-          10.001310360636921
-        ]
-      }
-    ],
-    "errors": []
-  },
   "passed": true
 }

@@ -250,7 +250,8 @@ function naraTurn(kept) {
     read: async (_t, dialogue, block) => { read.push(block); return {dialogue, blockId: block, answer: 'Wide, because you wrote…', question: 'q', basis: {}} },
     flow: async () => ({location: LOCATION}),
     retain: async (_t, _flow, nara) => { kept.push(nara); return {revision: 'r2', entryId: 'nara-answer-1', already: false} },
-    sleep: async () => {}, everyMs: 1, waitMs: 100,
+    // Her conversation's session, watched until the turn ends (answerThis.ts STEPS.answer): each later view in turn.
+    answer: async (_t, _dialogue, after) => { for (;;) { const block = answer.answeredBlock((views.shift() ?? views.at(-1)).blocks, after); if (block !== null) return block } },
   }}
 }
 

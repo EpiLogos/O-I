@@ -1,6 +1,6 @@
 /** Current view correspondence, never a semantic graph or a subject matcher. */
 import type {KernelConversion} from './kernelDocumentBridge.js';
-import type {ConnectionBinding} from '../../../../../packages/oi-design-system/expressions-engine/oi/expressionBindings.mjs';
+import type {ConnectionBinding} from './expressionBindings.mjs';
 export function nativeConnections(view:KernelConversion|undefined):Record<string,ConnectionBinding[]> {
  if(!view)return {};
  return Object.fromEntries(Object.entries(view.bindings).map(([sceneId,binding])=>{

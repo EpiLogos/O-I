@@ -8,5 +8,7 @@ export class PublicField {
  pointerAt(clientX:number,clientY:number):boolean;pointerOff():void;burst(clientX:number,clientY:number):boolean;pointerSettings():{mode:string;click:string};
  inspect():{frames:number;active:boolean;playing:boolean;camera:Camera;scene?:string};
 }
+/** Validates and normalises an `oi.journey` body; throws a readable Error when it is not one. */
+export function validateNativeJourney(value:unknown):any;
 export function loadNativeJourney(descriptor:NativeBodyDescriptor):Promise<{journey:any;sceneMap:Record<string,string>;entityMap:Record<string,string>}|null>;
 export function projectComposition(composition:Edition['publication']['composition'],sceneRef:string,nativeJourney?:any,nativeSceneMap?:Record<string,string>):unknown;

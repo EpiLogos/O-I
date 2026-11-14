@@ -1,32 +1,18 @@
 import {useEffect,useRef,useState} from "react";
 import {Glyph} from "../../workspace/Glyph";
-import {nativeContext,PREPARED_CONTEXT_CHANGED,type PreparedContext} from "../../context/nativeContext";
+import {usePacket} from "../../context/packetSlice";
 import {SituationView} from "../../context/SituationView";
 import {PreparedContextView} from "../../context/PreparedContextView";
 import {ActiveContext,type ActiveContextTab} from "../../expressions/ActiveContext";
 import {useKernel} from "../../kernel/KernelProvider";
 
-/** The count the strip's Context control carries: read once per scope, then
- * kept live by the one announcement the prepared-context owner already
- * publishes — never a second standing reader beside PreparedContextView. */
+/** The count the strip's Context control carries: the packet as the World
+ * Model holds it (packetSlice.ts usePacket; O-I ticket 1005) — the slice
+ * PreparedContextView holds, and the edits announced over it. */
 function usePreparedCount(project?:string,session?:string):{count?:number;error?:string} {
   const {transport}=useKernel();
-  const [reading,setReading]=useState<{count?:number;error?:string}>({});
-  useEffect(()=>{
-    if(!project){setReading({});return;}
-    let active=true;
-    void nativeContext(transport,project,session)
-      .then(value=>{if(active)setReading({count:value.items.length});})
-      .catch(reason=>{if(active)setReading({error:reason instanceof Error?reason.message:String(reason)});});
-    const changed=(event:Event)=>{
-      const detail=(event as CustomEvent<{project:string;value:PreparedContext;sourceWorldRef?:string}>).detail;
-      if(detail?.sourceWorldRef||detail?.project!==project||!detail.value)return;
-      if(detail.value.scope.agent_session===(session??null))setReading({count:detail.value.items.length});
-    };
-    window.addEventListener(PREPARED_CONTEXT_CHANGED,changed);
-    return()=>{active=false;window.removeEventListener(PREPARED_CONTEXT_CHANGED,changed);};
-  },[project,session,transport]);
-  return reading;
+  const packet=usePacket(transport,project||undefined,session);
+  return packet?.context?{count:packet.context.items.length}:packet?.error?{error:packet.error}:{};
 }
 
 export interface ContextPreparationProps {

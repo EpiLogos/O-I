@@ -315,12 +315,16 @@ test('a journey\'s page launched as Reading opens its Expression, not its Flow; 
 
 // ── Nara's answer quoted into your Day, as your press ───────────────────────────────────────────────────────────────────────────────
 
-test('the receiving wire carries the producer a submission declares', async () => {
+test('a submission goes as Central\'s central.receiving.submit, carrying the producer it declares (O-I #1002)', async () => {
   const client = await import(`${cradle}receiving/client.ts`)
   const producer = {ref: 'agent-session/nara-1', actor_kind: 'agent', attribution: 'verified'}
-  const wire = client.receivingWire({kind: 'submit', producer_key: 'p', source_ref: 's', document_id: 'd', expected_source_revision: 'r', occurred_at_unix_seconds: 1,
-    proposal: {operation: 'field.append'}, declared_producer: producer})
-  assert.deepEqual(wire.Submit.declared_producer, producer)
+  const submission = {kind: 'submit', producer_key: 'p', source_ref: 's', document_id: 'd', expected_source_revision: 'r', occurred_at_unix_seconds: 1,
+    proposal: {operation: 'field.append'}, declared_producer: producer}
+  // The input the kernel's own builder made (flow.rs CentralClient::receiving): the kernel gives it the person's token because it is an
+  // agent's answer the person carries (action.rs person_invocation, #765).
+  assert.deepEqual(client.receivingAction(null, submission), {action: 'central.receiving.submit', input: {project: null, producer_key: 'p', occurred_at_unix_seconds: 1,
+    source_ref: 's', document_id: 'd', expected_source_revision: 'r', proposal: {operation: 'field.append'}, declared_producer: producer}})
+  assert.equal(client.receivingWire(submission), null, 'the `receiving` op carries no write')
 })
 
 test('Nara\'s answer quoted into your Day names Nara\'s session as its producer, and its Return is read back from Central', async () => {
@@ -339,14 +343,14 @@ test('Nara\'s answer quoted into your Day names Nara\'s session as its producer,
   let submitted = null
   const ops = kernel(op => {
     if (op.op === 'encounter') return {result: 'encounter_reading', data: view}
+    if (op.op === 'act' && op.action === 'central.receiving.submit') {
+      submitted = op.input
+      return {result: 'action_dispatched', dispatch: {state: 'invoked', owner_operation: op.action, data: {schema: 'central.receiving-reading/v1', return_ref: 'return:1', revision: 'rr1',
+        included: false, source_changed_by_arrival_or_review: false, record: {return_ref: 'return:1', status: 'pending', source_ref: submitted.source_ref,
+          document_id: submitted.document_id, author: {principal_ref: 'human:probe', actor_kind: 'human'}, declared_producer: submitted.declared_producer, proposal: submitted.proposal}}}}
+    }
     assert.equal(op.op, 'receiving')
     if (op.request.List) return {result: 'receiving_reading', data: {schema: 'central.receiving-page/v1', returns: submitted ? [{return_ref: 'return:1', source_ref: target.document.source.ref, document_id: 'day:probe'}] : [], more: false}}
-    if (op.request.Submit) {
-      submitted = op.request.Submit
-      return {result: 'receiving_reading', data: {schema: 'central.receiving-reading/v1', return_ref: 'return:1', revision: 'rr1', included: false, source_changed_by_arrival_or_review: false,
-        record: {return_ref: 'return:1', status: 'pending', source_ref: submitted.source_ref, document_id: submitted.document_id, author: {principal_ref: 'human:probe', actor_kind: 'human'},
-          declared_producer: submitted.declared_producer, proposal: submitted.proposal}}}
-    }
     if (op.request.Read) return {result: 'receiving_reading', data: {schema: 'central.receiving-reading/v1', return_ref: 'return:1', revision: 'rr1', included: false, source_changed_by_arrival_or_review: false,
       record: {return_ref: 'return:1', status: 'pending', source_ref: submitted.source_ref, document_id: submitted.document_id, author: {principal_ref: 'human:probe', actor_kind: 'human'},
         declared_producer: submitted.declared_producer, proposal: submitted.proposal}}}
@@ -358,8 +362,10 @@ test('Nara\'s answer quoted into your Day names Nara\'s session as its producer,
   assert.equal(proposed.record.declared_producer.ref, SESSION)
   assert.equal(proposed.record.status, 'pending')
   // Asked again, the Return is read back from Central by its producer key's contribution: nothing is submitted twice.
-  const before = ops.filter(op => op.request?.Submit).length
+  const submissions = () => ops.filter(op => op.op === 'act' && op.action === 'central.receiving.submit').length
+  const before = submissions()
+  assert.equal(before, 1)
   const again = await owner.proposeAnswerForDay(TRANSPORT, target, 'p0_quick_thoughts', answer)
-  assert.equal(ops.filter(op => op.request?.Submit).length, before)
+  assert.equal(submissions(), before)
   assert.equal(again.return_ref, 'return:1')
 })

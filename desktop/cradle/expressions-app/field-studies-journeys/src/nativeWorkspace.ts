@@ -17,7 +17,7 @@ import {kernelDocumentToJourney,type KernelConversion,type KernelExpressionDocum
 import {nestedDocumentReads} from './nestedReads.js';
 import {type NestedDocumentLike,type NestedGraph} from './nestedOccurrence.js';
 import {nativeConnections} from './nativeCorrespondence.js';
-import type {ConnectionBinding} from '../../../../../packages/oi-design-system/expressions-engine/oi/expressionBindings.mjs';
+import type {ConnectionBinding} from './expressionBindings.mjs';
 import {prepareCompositionEdit,joinOccasion,validOccasion,workHoldsEdits} from './kernelComposition.js';
 import {NativeOpenIntent} from './nativeOpenIntent.js';
 import {NativeSelectionQueue} from './nativeSelectionQueue.js';
@@ -114,11 +114,12 @@ export function isGenuineWorkspaceSwitch(state:{booted:boolean}):boolean{
 }
 /** O-I #763 (#709): a local draft edited in a hosted frame has no recovery address the host selected, so it cannot be kept as a
  * draft when another work opens. It is kept as a work in its world's folder instead, by New's one route (nativeWorking.ts makeWork, the
- * shell's New and starters take it too): the works home the owner's list discloses is read first, so a home it cannot list refuses before
- * anything is made; the draft is made a new native Expression and saved into that home, read back. A refusal at any step throws the
+ * shell's New and starters take it too): the draft is made a new native Expression and saved into the works home the owner's list
+ * discloses — or, none listed yet, the one the owner makes at that save (worksHomeLocation) — read back. A refusal at any step throws the
  * owner's own words, a refused file among them: the draft is kept only once it stands as a work in its folder. */
 export async function keepDraftAsWork(owner:(request:Record<string,unknown>)=>Promise<unknown>,journey:Journey,id:string=crypto.randomUUID()):Promise<{expression_ref:string;title:string;path:string}>{
- const home:CentralLocation=worksHomeLocation((await owner({operation:'list'}) as {home?:{path?:string;location?:CentralLocation;error?:string}}|null)?.home);
+ const listed=worksHomeLocation((await owner({operation:'list'}) as {home?:{path?:string;location?:CentralLocation;error?:string}}|null)?.home);
+ const home=async()=>listed;
  const made=await makeWork(owner,{journey},{id,home});
  if(made.refused!==null||!made.saved)throw new Error(made.refused??'The works home was not written.');
  return {expression_ref:made.document.expression_ref,title:made.document.title,path:made.saved.path};

@@ -87,7 +87,7 @@ test('the chain asks Factory\'s workflow inspection for the shown Run (REAL): ev
     assert.deepEqual(Object.keys(chain.inspection.value.legs).sort(), WORK.map(node => node.semanticRef).sort(), 'a leg for each unit of the map')
     for (const leg of Object.values(chain.inspection.value.legs)) assert.deepEqual(leg, {attempts: 0}, 'not started: no status, no attempt')
     assert.deepEqual(chain.inspection.value.barriers, [])
-    const drawn = runMap.runMapBinding(bind.chainHolds(), {statePath: STATE, runRef: RUN, units: {}}, {owner: async () => ({status: 'retried'})}, answered(chain))
+    const drawn = runMap.runMapBinding(bind.chainHolds(), {statePath: STATE, runRef: RUN, units: {}}, {retry: async () => ({state: 'retried'})}, answered(chain))
     const nodes = JSON.parse(drawn.values.nodes)
     for (const node of nodes.filter(node => node.kind === 'work')) assert.deepEqual(node.leg, {attempts: 0}, `${node.id} carries its leg`)
     assert.equal(nodes.find(node => node.kind === 'destination').leg, undefined, 'only a unit has a leg')
@@ -119,7 +119,7 @@ test('a failed unit, a barrier still waiting and a second page (FAKE, the inspec
     bind.holdView(runMap.RUN_MAP_ID, 'unit', first.id)
     const sent = []
     const drawn = runMap.runMapBinding(bind.chainHolds(), {statePath: STATE, runRef: RUN, units: {[first.id]: first.semanticRef}},
-      {owner: async request => { sent.push(request); return {status: 'retried'} }}, answered(chain))
+      {retry: async input => { sent.push(input); return {state: 'retried'} }}, answered(chain))
     const nodes = JSON.parse(drawn.values.nodes)
     assert.deepEqual(nodes.find(node => node.id === first.id).leg, {status: 'failed', attempts: 2})
     assert.deepEqual(nodes.find(node => node.id === 'barrier-roots').waits, [first.label], 'the barrier names the unit still out as the map labels it')
@@ -130,7 +130,7 @@ test('a failed unit, a barrier still waiting and a second page (FAKE, the inspec
     assert.doesNotMatch(markup, /The unit has not failed or gone quiet/, 'a failed unit\'s Retry is not refused for want of a leg')
     assert.doesNotMatch(markup, /\bNaN\b|undefined|data-device-fault/)
     await drawn.write([{key: 'retry', value: first.id}])
-    assert.deepEqual(sent, [{kind: 'attempt-retry', state_path: STATE, run_ref: RUN, workflow_unit_ref: first.semanticRef}], 'Retry asks Factory for that unit')
+    assert.deepEqual(sent, [{state: STATE, run_ref: RUN, unit_ref: first.semanticRef}], 'Retry asks Factory\'s factory.attempt.retry for that unit')
   } finally { kernel.restore(); bind.resetHolds() }
 })
 
@@ -140,7 +140,7 @@ test('an inspection Factory refuses leaves the map drawn without legs, and Retry
     const chain = await journeys.readRunJourney(kernel.transport, STATE, RUN)
     assert.equal(chain.inspection.value, undefined)
     assert.match(chain.inspection.error, /Run has no native attempt field/)
-    const drawn = runMap.runMapBinding(bind.chainHolds(), {statePath: STATE, runRef: RUN, units: {}}, {owner: async () => ({status: 'retried'})}, answered(chain))
+    const drawn = runMap.runMapBinding(bind.chainHolds(), {statePath: STATE, runRef: RUN, units: {}}, {retry: async () => ({state: 'retried'})}, answered(chain))
     const nodes = JSON.parse(drawn.values.nodes)
     assert.equal(nodes.length, NODES.length, 'the run reading\'s map is still drawn')
     assert.ok(nodes.every(node => node.leg === undefined && node.waits === undefined), 'no leg is invented')
@@ -155,6 +155,6 @@ test('a reading that is not Factory\'s inspection is refused by name, and an unr
     const chain = await journeys.readRunJourney(kernel.transport, STATE, RUN)
     assert.match(chain.inspection.error, /factory\.workflow-inspection\/v1/)
   } finally { kernel.restore() }
-  const bare = runMap.runMapBinding(bind.chainHolds(), {statePath: STATE, runRef: RUN, units: {}}, {owner: async () => ({status: 'retried'})}, answered({run: alone, journey: null, runs: {}}))
+  const bare = runMap.runMapBinding(bind.chainHolds(), {statePath: STATE, runRef: RUN, units: {}}, {retry: async () => ({state: 'retried'})}, answered({run: alone, journey: null, runs: {}}))
   assert.equal(bare.standing.retry.disabled, runMap.NO_INSPECT)
 })

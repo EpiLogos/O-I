@@ -5,9 +5,11 @@
 //     selection the move already landed on, so it adds none), the clip's own view holds are set (frame/detail/clipBinding.ts
 //     setViewHold: which editor shows, the note chosen, the song opened inside a note), and Clip view comes forward
 //     (frame/menu/objectDoor.ts showClipView);
-//   - a routine: Settings opens on Automations in the routine's work context with the routine chosen (settings/host.ts openSettings).
-// Nothing here writes an owner. The frame publishes the clip door (useClipHomeDoor, from App.tsx); where no frame publishes one, opening a
-// clip is refused in words.
+//   - a routine: Settings opens on Automations in the routine's work context with the routine chosen (settings/host.ts openSettings);
+//   - a track (an agent session where it runs, from face 2 of the Day, O-I ticket 1007): its mode stands landing on the track, as a clip's
+//     does, and THE selection names it — in Factory the selected session (agent/AgentShellContext.tsx sessionOfSelection); no Clip view.
+// Nothing here writes an owner. The frame publishes the door (useClipHomeDoor, from App.tsx); where no frame publishes one, opening a clip
+// or a track is refused in words.
 import {useEffect, useRef, useState} from 'react'
 import type {Value} from './devices/designed'
 import {setViewHold} from './detail/clipBinding'
@@ -23,15 +25,18 @@ export type NodeHome =
   | {readonly kind: 'routine'; readonly routine: string; readonly name?: string
     /** The routine's work context: '' this AIKit home, else the project's name. */
     readonly project: string; readonly returnLabel?: string}
+  /** A track of a mode (in Factory, an agent session's: its `trackKey`), named by `title`. */
+  | {readonly kind: 'track'; readonly mode: SurfMode; readonly track: string; readonly title: string}
 
-type ClipHome = Extract<NodeHome, {kind: 'clip'}>
-let door: ((home: ClipHome) => void) | null = null
+/** What the frame's door opens: a clip, or a track. */
+type FrameHome = Extract<NodeHome, {kind: 'clip' | 'track'}>
+let door: ((home: FrameHome) => void) | null = null
 
-/** The frame's door for a clip (App.tsx, through useClipHomeDoor). */
-export function publishClipHomeDoor(next: ((home: ClipHome) => void) | null): void { door = next }
+/** The frame's door for a clip or a track (App.tsx, through useClipHomeDoor). */
+export function publishClipHomeDoor(next: ((home: FrameHome) => void) | null): void { door = next }
 
-/** The words when no frame here opens a clip. */
-export const NO_CLIP_HOME = 'No window here opens a clip where it lives: the frame publishes no door to its modes and Clip view.'
+/** The words when no frame here opens a clip or a track. */
+export const NO_CLIP_HOME = 'No window here opens a clip or a track where it lives: the frame publishes no door to its modes and Clip view.'
 
 /** Open a thing where it lives. Throws in words where this window cannot. */
 export function openWhereItLives(home: NodeHome): void {
@@ -42,27 +47,28 @@ export function openWhereItLives(home: NodeHome): void {
     return
   }
   if (!door) throw new Error(NO_CLIP_HOME)
-  if (home.view) for (const [key, value] of Object.entries(home.view.holds)) setViewHold(home.view.id, key, value)
+  if (home.kind === 'clip' && home.view) for (const [key, value] of Object.entries(home.view.holds)) setViewHold(home.view.id, key, value)
   door(home)
 }
 
-/** What an opened clip lands on: the clip THE selection names (App.tsx selectTrackItem makes it). */
-export interface ClipLanding {readonly kind: 'clip'; readonly ref: string; readonly title: string; readonly track?: string}
-/** The frame's mode switch (App.tsx chooseMode), which may land on a clip with the mode. */
+/** What an opened clip or track lands on: the clip or the track THE selection names (App.tsx selectTrackItem makes it). */
+export interface ClipLanding {readonly kind: 'clip' | 'track'; readonly ref: string; readonly title: string; readonly track?: string}
+/** The frame's mode switch (App.tsx chooseMode), which may land on a clip or a track with the mode. */
 export type ChooseMode = (mode: SurfMode, landing?: ClipLanding) => void
 
-export const clipLanding = (home: ClipHome): ClipLanding => ({kind: 'clip', ref: home.clip, title: home.title, ...(home.track ? {track: home.track} : {})})
+export const clipLanding = (home: FrameHome): ClipLanding => (home.kind === 'track' ? {kind: 'track', ref: home.track, title: home.title}
+  : {kind: 'clip', ref: home.clip, title: home.title, ...(home.track ? {track: home.track} : {})})
 
-/** The door's first half: the mode the clip lives in stands, landing on the clip — one move, so the open is one stop on the trail. A clip
+/** The door's first half: the mode the clip or track lives in stands, landing on it — one move, so the open is one stop on the trail. One
  * in the mode the frame stands in already needs no switch: the selection alone is the move. */
-export function standClipHome(home: ClipHome, frame: {readonly mode: SurfMode; readonly chooseMode: ChooseMode}): void {
+export function standClipHome(home: FrameHome, frame: {readonly mode: SurfMode; readonly chooseMode: ChooseMode}): void {
   if (frame.mode !== home.mode) frame.chooseMode(home.mode, clipLanding(home))
 }
 
-/** The frame's half of the act: the mode the clip lives in stands first, then THE selection names the clip and Clip view comes forward,
- * once the mode's frame has rendered (the selection is made in the mode it belongs to). */
+/** The frame's half of the act: the mode the clip or track lives in stands first, then THE selection names it — and, for a clip, Clip view
+ * comes forward — once the mode's frame has rendered (the selection is made in the mode it belongs to). */
 export function useClipHomeDoor(mode: SurfMode, chooseMode: ChooseMode, select: (target: ClipLanding) => void): void {
-  const pending = useRef<ClipHome | null>(null)
+  const pending = useRef<FrameHome | null>(null)
   const [asked, ask] = useState(0)
   const now = useRef({mode, chooseMode, select})
   now.current = {mode, chooseMode, select}
@@ -79,7 +85,7 @@ export function useClipHomeDoor(mode: SurfMode, chooseMode: ChooseMode, select: 
     if (!home || home.mode !== mode) return
     pending.current = null
     select(clipLanding(home))
-    showClipView()
+    if (home.kind === 'clip') showClipView()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, asked])
 }

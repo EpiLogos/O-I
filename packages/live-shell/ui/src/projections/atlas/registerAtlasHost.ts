@@ -1,16 +1,16 @@
-// The Earth projection's admission into the shell (T-ATLAS-HOST): one centre panel for the lens bar, and the atlas as the
-// `projection.earth` and `projection.constellation` pane kinds through the cradle's module door
-// (desktop/cradle/src/surface/projectionModules.ts). Called once from App.tsx.
+// The Earth projection's admission into the shell (T-ATLAS-HOST): the atlas as the `projection.earth` and `projection.constellation`
+// pane kinds through the cradle's module door (desktop/cradle/src/surface/projectionModules.ts), the one way it mounts. The centre panel
+// it once registered too never mounted in the candidate (App.tsx: the centre is the pane tree in every mode, FOUNDATION F2) and is gone
+// (O-I #1009). Called once from App.tsx.
 //
 // Follow and pin (manual §10.2, FOUNDATION F2; the mockup's `follow`, which turns the Earth to the subject): a pane of either
 // kind follows the selection and turns the atlas to it, unless the pane is pinned — a pinned pane turns to its pinned subject
 // and keeps it while the selection moves elsewhere. The atlas turns by its own navigation (the manifestation of the
 // occurrence whose owner ref is the subject); a subject the atlas does not draw turns nothing, and says nothing it cannot back.
 
-import {registerPanel} from '../../shell/panels'
 import {detectTransport} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import {registerProjectionModule, type PaneSubject, type ProjectionModuleContext, type ProjectionModuleHandle} from '../../../../../../desktop/cradle/src/surface/projectionModules'
-import {AtlasEarthPane, atlasHandle, attachAtlas, type AtlasAttachment, type AtlasView} from './AtlasProjectionPanel'
+import {atlasHandle, attachAtlas, type AtlasAttachment, type AtlasView} from './AtlasProjectionPanel'
 import {focusGraphOnOpen} from '../../techne/subject/graphFocus'
 import {turnAtlasTo} from './places/placesHost'
 import {suitePlaces} from './provider/suiteStanding'
@@ -18,7 +18,6 @@ import type {Model} from './src/data/model'
 import type {AppState} from './src/state/store'
 import type {Occurrence} from './src/types/field'
 
-export const ATLAS_PANEL_ID = 'projection.earth'
 export const ATLAS_MODULE_ID = 'atlas-earth'
 
 let registered = false
@@ -26,15 +25,6 @@ let registered = false
 export function registerAtlasHost(): void {
   if (registered) return
   registered = true
-  registerPanel({
-    id: ATLAS_PANEL_ID,
-    title: 'Earth',
-    slot: 'center',
-    component: AtlasEarthPane,
-    navigation: false,
-    order: 30,
-    note: 'The Archetypal-Earth atlas: the globe and the graph over the World\'s corpus',
-  })
   registerProjectionModule({id: ATLAS_MODULE_ID, kind: 'projection.earth', follows: true, create: context => mountKind(context, 'earth')})
   registerProjectionModule({id: ATLAS_MODULE_ID, kind: 'projection.constellation', follows: true, create: context => mountKind(context, 'graph')})
 }
@@ -63,7 +53,7 @@ async function mountKind(context: ProjectionModuleContext, view: AtlasView): Pro
     // an atlas handed to this pane turns to the pane's subject as a shown pane does
     if (told !== false) turning?.visible(true)
   }
-  // a handover the mount refused is said in the pane's body, in the centre pane's words (AtlasEarthPane)
+  // a handover the mount refused is said in the pane's body
   const refused = (error: unknown) => {
     if (!live) return
     const line = document.createElement('p')

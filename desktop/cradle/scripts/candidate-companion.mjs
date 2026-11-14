@@ -48,7 +48,8 @@ function defaults(env = process.env) {
     skill: env.EPI_QL_SKILL_PATH ?? join(env.EPI_ACTUATION_ROOT ?? join(central, "worktrees/env-1/actuation"), "experiments/ql-runtime/prime/skills/ql-relational"),
     research: env.EPI_ACTUATION_RESEARCH_BINARY ?? join(HOME, ".local/bin/actuation-research"),
     ctrl: env.OI_CENTRAL_CTRL_BIN ?? join(HOME, ".local/bin/ctrl"),
-    template: env.AIKIT_AGENCY_MINT_TEMPLATE ?? join(central, "worktrees/env-1/ai-kit/crates/aikit-cli/tests/fixtures/mint-agency-template.json"),
+    // the Actuation the World's standing authority is granted in and each chat's Agency is minted under (O-I #1003)
+    actuationBin: env.OI_ACTUATION_BIN ?? join(env.EPI_ACTUATION_ROOT ?? join(central, "worktrees/env-1/actuation"), "target/debug/actuation"),
     redisServer: env.EPI_REDIS_SERVER ?? "/opt/homebrew/bin/redis-server",
     liveKev: env.EPI_DECISION_PROVIDER ?? join(HOME, ".aikit/decision-provider.json"),
     redisPort: Number(env.EPI_CANDIDATE_REDIS_PORT ?? 6391),
@@ -62,16 +63,16 @@ export async function provisionCompanion({profileDir, ground, worldsRoot, oi, pr
   const d = {...defaults(baseEnv), ...overrides};
   const home = join(profileDir, "aikit-home");
   const required = [["aikit (the candidate build)", d.aikit], ["actuation checkout", d.actuation], ["Epi Prime distribution (EPI_PRIME_DIR)", join(d.epiPrime, "tools/epi-distribution.mjs")], ["owner instrument", d.instrument], ["ql", d.ql], ["prime-agent", d.prime], ["QL skill", d.skill],
-    ["actuation-research", d.research], ["ctrl", d.ctrl], ["agency template", d.template], ["redis-server", d.redisServer], [`launcher (${join(d.actuation, "target/debug/actuation-epi-prime")})`, join(d.actuation, "target/debug/actuation-epi-prime")]];
+    ["actuation-research", d.research], ["ctrl", d.ctrl], ["actuation", d.actuationBin], ["redis-server", d.redisServer], [`launcher (${join(d.actuation, "target/debug/actuation-epi-prime")})`, join(d.actuation, "target/debug/actuation-epi-prime")]];
   for (const [name, path] of required) if (!existsSync(path)) throw new Error(`the companion needs ${name}: ${path} is missing`);
   const projectDir = join(ground, "Work", project);
   if (!existsSync(projectDir)) throw new Error(`the companion's project ${project} has no directory at ${projectDir} (--companion-project)`);
   for (const sub of ["tools", "faculty", "faculty-evidence", "services"]) mkdirSync(join(home, sub), {recursive: true});
 
   // The environment every AIKit call and every launched process shares: the candidate home, the candidate build, an `oi` that routes `aikit` there.
-  const template = join(home, "agency-template.json");
-  copyFileSync(d.template, template);
-  const launchedEnv = {AIKIT_HOME: home, OI_AIKIT_BIN: d.aikit, OI_BIN: oi ?? "oi", OI_REAL_BIN: oi ?? "oi", AIKIT_AGENCY_MINT_TEMPLATE: template, OI_CENTRAL_ROOT: ground,
+  // The World's standing authority lives in the profile's own Actuation store, never the person's (~/.actuation).
+  const launchedEnv = {AIKIT_HOME: home, OI_AIKIT_BIN: d.aikit, OI_BIN: oi ?? "oi", OI_REAL_BIN: oi ?? "oi", OI_ACTUATION_BIN: d.actuationBin,
+    ACTUATION_AUTHORITY_STORE: join(home, "actuation-authority"), OI_CENTRAL_ROOT: ground,
     // the kernel's co-reference fallback: the project a chat conversation belongs to when the panel names none (without it the panel has no project to provision for)
     OI_CENTRAL_PROJECT_QUERY: project};
   const env = {...baseEnv, ...launchedEnv};
@@ -104,6 +105,16 @@ export async function provisionCompanion({profileDir, ground, worldsRoot, oi, pr
   launchedEnv.OI_BIN = routerPath; env.OI_BIN = routerPath;
   const summary = {home, project, steps: []};
   const step = (name, detail) => { summary.steps.push({step: name, ...(detail !== undefined ? {detail} : {})}); log(`candidate: companion  ${name}${detail !== undefined ? "  " + (typeof detail === "string" ? detail : JSON.stringify(detail)).slice(0, 200) : ""}`); };
+
+  // 0 — the World's standing authority, held by the person: the root and the project as AIKit resolves it (the world each chat's
+  // Agency is minted for), granted through Actuation (O-I #1003).
+  const context = native("project-context");
+  const resolvedProject = context.json?.data?.project ?? context.json?.project;
+  if (context.status !== 0 || typeof resolvedProject !== "string") throw new Error(`AIKit did not resolve the companion's project ${project}: ${context.raw}`);
+  const world = /^(project|control):/.test(resolvedProject) ? resolvedProject : `project:${resolvedProject}`;
+  const granted = spawnSync(d.actuationBin, ["authority", "grant-world", "--holder", "human:owner", "--world", "control:root", "--world", world, "--json"], {encoding: "utf8", env});
+  if (granted.status !== 0) throw new Error(`Actuation did not grant the World's standing authority: ${(granted.stdout + granted.stderr).slice(0, 600)}`);
+  step("authority", {worlds: ["control:root", world]});
   const cleanups = [];
 
   // 1 — the Prime distribution, the coherent faculty configuration, the new launcher

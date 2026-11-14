@@ -1,7 +1,6 @@
 /** Research Canvas presentation of native owner readings. No repository or
  * semantic record is minted here. Layout coordinates belong to the view. */
 import type {CanvasNode,CanvasEdge} from '@research-canvas/schema';
-import type {PlacesRepository,LocatedGraphNode} from '@research-canvas/domain';
 import type {TimelineRepository} from '@research-canvas/desktop-api';
 import {bundleFromTechneReadings,type TechneReadingLite} from '../../vendor/research-canvas/packages/desktop-api/src/techneBundle';
 import {createTechneTransport} from '../../vendor/research-canvas/packages/desktop-api/src/techneTransport';
@@ -180,7 +179,6 @@ export async function readingInstruments(raw:unknown,titles:ReadonlyMap<string,s
   nodes:joined.nodes.map(({node,layout})=>({...note(node.graphNodeId,joined.canvasId,node.title,node.summary??'',layout.positionX,layout.positionY),graph:node})),
   edges:joined.edges.map(e=>edge(e.id,joined.canvasId,e.sourceGraphNodeId,e.targetGraphNodeId,e.relationKind))};
  const workspaceId=bundle.workspaceId;
- const capabilities={geographyEdges:{available:false,reason:'This source does not disclose movement routes. Select a source with native route records.'},archetypalExpressions:{available:false,reason:'This source does not disclose dated archetype/place assertions.'}};
  const dataSource:TimelineDataSource={
   // lane-2 T16: a card colour persists through the Scene's timeline layout record (researchMaterial 'timeline-layout', style).
   styleCapability:{available:true},
@@ -198,14 +196,9 @@ export async function readingInstruments(raw:unknown,titles:ReadonlyMap<string,s
   const view=await dataSource.loadTimelineView(range);
   return {earthboundNodes:view.nodes.map(({node,anchor})=>({graphNodeId:node.graphNodeId,title:node.title,date:anchor.validFrom,precision:anchor.precision,entityType:node.entityType,placeName:null,x:Number(/^(-?\d+)/.exec(anchor.validFrom)?.[1]),colorTag:null})).filter(n=>Number.isFinite(n.x)),archetypeLayers:[]};
  }};
- const assertScope=(scope:string)=>{if(scope!==reading.subject.subject_ref)throw new Error('Place request does not address this reading');};
- const places:PlacesRepository={
-  async getLocatedNodes(scope){assertScope(scope);return (await transport.listLocatedGraphNodes()).filter((n):n is LocatedGraphNode=>n.place!==null);},
-  async getGeographyEdges(scope){assertScope(scope);if(!capabilities.geographyEdges.available)return [];throw new Error('A movement-route owner is required');},
-  async getArchetypeExpressionsForPlace(scope,ref){assertScope(scope);if(!bundle.nodes.some(n=>n.graphNodeId===ref&&n.place))throw new Error('This place is absent from the reading');return [];},
-  async getRelatedNodesForPlace(scope,ref){assertScope(scope);const result=await dataSource.expandNode!(ref);return result.neighbours;},
- };
- return {reading,bundle,canvas,dataSource,timeline,places,capabilities};
+ // The hosted Places map and its located-place and movement-route reads retired: Places is the shell's Earth atlas (T-PLACES-ONTO-ATLAS;
+ // O-I #1009, one earth viewer: packages/live-shell/ui/src/projections/atlas/places/).
+ return {reading,bundle,canvas,dataSource,timeline};
 }
 
 /** The Expression material is plain text. Rich note structures must not be

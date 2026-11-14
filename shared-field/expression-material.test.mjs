@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {filterExpressionComposition, validateExpressionComposition, frozenExpressionHtml} from './expression-projection.mjs';
-import {blankJourney, validateJourney} from '../packages/oi-design-system/expressions-engine/shell/model.mjs';
+import {blankJourney, validateJourney} from '../desktop/cradle/expressions-app/field-studies-journeys/src/model.ts';
 
 const authored = () => JSON.parse(readFileSync(new URL('../desktop/cradle/material/factory-expressions/scene/work-passage.expression.json', import.meta.url), 'utf8'));
 

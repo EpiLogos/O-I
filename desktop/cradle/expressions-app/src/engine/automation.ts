@@ -11,7 +11,7 @@ import type {MorphDriveState} from './morphSignal';
  * re-renders never touch it.
  */
 
-import { AutomationLane, AutomationEasing, AutomationWaveform, PointCloudConfig } from './types';
+import type { AutomationLane, AutomationEasing, AutomationWaveform, PointCloudConfig } from './types';
 
 export interface LaneRuntime {
   cycle?: number;

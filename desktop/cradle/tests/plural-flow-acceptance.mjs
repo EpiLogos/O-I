@@ -11,7 +11,8 @@
 // Phases run against one persistent scratch (PF_SCRATCH) so the run can be
 // resumed: setup · bring-in · ask · side · changed · report.
 // Required: PF_SESSION_SPACE (candidate aikit-session-space), PF_CTRL (Central
-// ctrl with central.flow.*). Optional: PF_PI, PF_TEMPLATE, PF_SCRATCH.
+// ctrl with central.flow.*). Optional: PF_PI, PF_ACTUATION (the Actuation each world's standing authority is granted in;
+// the suite's own by default), PF_SCRATCH.
 import {execFileSync, spawnSync} from "node:child_process";
 import {createHash, randomBytes} from "node:crypto";
 import {existsSync, mkdirSync, readFileSync, writeFileSync, rmSync} from "node:fs";
@@ -25,7 +26,7 @@ const need = name => { const v = process.env[name]; if (!v) throw new Error(`${n
 const SS = need("PF_SESSION_SPACE");
 const CTRL = need("PF_CTRL");
 const PI = process.env.PF_PI ?? join(homedir(), ".local/bin/pi");
-const TEMPLATE = process.env.PF_TEMPLATE ?? join(homedir(), "Central/Work/O-I/.aikit/sf6-agency/agency-request.json");
+const ACTUATION = process.env.PF_ACTUATION ?? "actuation";
 const S = resolve(process.env.PF_SCRATCH ?? "/private/tmp/plural-flow-lab");
 const dirs = {central: join(S, "central"), home: join(S, "home"), project: join(S, "project"), shim: join(S, "shim")};
 const REMOTE = process.env.PF_REMOTE; // e.g. frank@100.92.62.101 — a second Workcell's owner
@@ -48,8 +49,11 @@ const REMOTE_GATEWAY_PORT = process.env.PF_REMOTE_GATEWAY_PORT ?? "7790";
 const REMOTE_HOST_IP = process.env.PF_REMOTE_HOST_IP; // the tailnet address the lab gateway binds
 const env = {
   ...process.env, AIKIT_HOME: dirs.home, CENTRAL_ROOT: dirs.central, AIKIT_CENTRAL_ROOT: dirs.central,
-  CENTRAL_CTRL_BIN: CTRL, AIKIT_AGENCY_MINT_TEMPLATE: TEMPLATE,
+  CENTRAL_CTRL_BIN: CTRL, OI_ACTUATION_BIN: ACTUATION, ACTUATION_AUTHORITY_STORE: join(dirs.home, "actuation-authority"),
 };
+// The World's standing authority each chat's Agency is minted under (O-I #1003), held by the person: the root and the bound project,
+// granted in the world's own Actuation store (one store per world: a renewal supersedes the holder's earlier grant for the root).
+const grantWorld = project => sh(ACTUATION, ["authority", "grant-world", "--holder", "human:owner", "--world", "control:root", "--world", `project:${project}`, "--json"]);
 delete env.CENTRAL_NATIVE_TOKEN;
 const sh = (bin, args, options = {}) => {
   const r = spawnSync(bin, args, {encoding: "utf8", env: {...env, ...(options.env ?? {})}, cwd: options.cwd ?? dirs.project, maxBuffer: 64 * 1024 * 1024});
@@ -152,6 +156,7 @@ const phases = {
     if (!ctrl("central.init", {}).ok) throw new Error("central init");
     mkdirSync(join(dirs.central, "Control/user/flows"), {recursive: true});
     sh(SS.replace(/aikit-session-space$/, "aikit"), ["--json", "-C", dirs.project, "project", "bind", "flowlab", "--directory", dirs.project, "--no-default-skill-sets"]);
+    grantWorld("flowlab");
     // A real authority source and civil-time policy in this scratch Central: the
     // owner's resident gets a credential granted for exactly one action, and the
     // Day boundary falls a few minutes into the run so a Day really rolls.
@@ -365,7 +370,6 @@ const phases = {
     const rsh = (cmd, input) => { const r = spawnSync("ssh", ["-o", "BatchMode=yes", REMOTE, cmd], {encoding: "utf8", input, maxBuffer: 16 * 1024 * 1024}); if (r.status !== 0) throw new Error(`ssh: ${(r.stderr || r.stdout).slice(-600)}`); return r.stdout; };
     // The cleanup goes over stdin: a pkill pattern in an ssh command line would match the shell running it.
     rsh("bash -s", `pkill -f '${REMOTE_ROOT}/home' 2>/dev/null; rm -rf ${REMOTE_ROOT}/home ${REMOTE_ROOT}/project ${REMOTE_ROOT}/central; mkdir -p ${REMOTE_ROOT}/home ${REMOTE_ROOT}/project/docs ${REMOTE_ROOT}/central\n`);
-    rsh(`cat > ${REMOTE_ROOT}/template.json`, readFileSync(TEMPLATE, "utf8"));
     rsh(`cat > ${REMOTE_ROOT}/project/docs/passage.md`, PASSAGE);
     if (FIXTURE) rsh(`cat > ${REMOTE_ROOT}/conversation_provider.py`, readFileSync(FIXTURE, "utf8"));
     const session = "agent-session/pf-ash-o", space = "session-space/pf-ash-o", agentRef = "agent/ash-omarchy";
@@ -374,10 +378,11 @@ const phases = {
 set -euo pipefail
 R=${REMOTE_ROOT}
 export PATH=${REMOTE_BIN}:/home/frank/.cargo/bin:/home/frank/.local/bin:/home/frank/.local/share/mise/shims:/usr/bin:/bin
-export AIKIT_HOME=$R/home CENTRAL_ROOT=$R/central AIKIT_CENTRAL_ROOT=$R/central AIKIT_AGENCY_MINT_TEMPLATE=$R/template.json
+export AIKIT_HOME=$R/home CENTRAL_ROOT=$R/central AIKIT_CENTRAL_ROOT=$R/central ACTUATION_AUTHORITY_STORE=$R/home/actuation-authority
 SS="aikit-session-space -C $R/project"
 ctrl --json --root $R/central action run central.init '{}' >/dev/null
 aikit --json -C $R/project project bind flowlab-remote --directory $R/project --no-default-skill-sets >/dev/null
+actuation authority grant-world --holder human:owner --world control:root --world project:flowlab-remote --json >/dev/null
 $SS encounter-configure --provider-json '${JSON.stringify(FIXTURE ? providerJson(`${REMOTE_ROOT}/conversation_provider.py`, `${REMOTE_ROOT}/provider.log`, "Pi (remote acceptance)") : {protocol: "pi-rpc", id: "pi", label: "Pi (remote acceptance)", argv: ["/home/frank/.local/share/mise/shims/pi", "--mode", "rpc"]})}' >/dev/null
 $SS encounter-start >/dev/null
 sleep 3
@@ -448,7 +453,7 @@ $SS encounter-agency-admit --agent-session ${session} --sender human:${state.ann
     for (const d of Object.values(B)) mkdirSync(d, {recursive: true});
     mkdirSync(join(B.project, "docs"), {recursive: true});
     writeFileSync(join(B.project, "docs/passage.md"), PASSAGE);
-    const benv = {...env, AIKIT_HOME: B.home, CENTRAL_ROOT: B.root, AIKIT_CENTRAL_ROOT: B.root};
+    const benv = {...env, AIKIT_HOME: B.home, CENTRAL_ROOT: B.root, AIKIT_CENTRAL_ROOT: B.root, ACTUATION_AUTHORITY_STORE: join(B.home, "actuation-authority")};
     delete benv.CENTRAL_NATIVE_TOKEN;
     const run = (bin, args, extra = {}) => { const r = spawnSync(bin, args, {encoding: "utf8", env: {...benv, ...extra}, cwd: B.project, maxBuffer: 64 * 1024 * 1024}); if (r.status !== 0) throw new Error(`${bin} ${args.slice(0, 3).join(" ")}: ${r.stderr || r.stdout}`); return r.stdout; };
     const cb = (action, input, extra = {}) => JSON.parse(run(CTRL, ["--json", "--root", B.root, "action", "run", action, JSON.stringify(input)], extra));
@@ -468,6 +473,7 @@ $SS encounter-agency-admit --agent-session ${session} --sender human:${state.ann
     if (!day.ok) throw new Error("world B day: " + JSON.stringify(day));
     const aikit = SS.replace(/aikit-session-space$/, "aikit");
     run(aikit, ["--json", "-C", B.project, "project", "bind", "flowlab-b", "--directory", B.project, "--no-default-skill-sets"]);
+    run(ACTUATION, ["authority", "grant-world", "--holder", "human:owner", "--world", "control:root", "--world", "project:flowlab-b", "--json"]);
     run(SS, ["-C", B.project, "encounter-configure", "--provider-json", JSON.stringify({protocol: "pi-rpc", id: "pi", label: "Pi (world B)", argv: [PI, "--mode", "rpc"]})]);
     run(SS, ["-C", B.project, "encounter-start"], {CENTRAL_NATIVE_TOKEN: ""});
     await sleep(1500);

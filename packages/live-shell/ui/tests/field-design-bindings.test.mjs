@@ -168,40 +168,39 @@ test('Morph reads the engine\'s own phases and Resonance its stations from the o
 })
 
 // O-I #747, manual §20.1 Rules: "A parameter shows what moves it. When you take hold of a value a lane holds, the hand-back light comes on.
-// Press it to give the value back." A field device reads the scene's lanes and the values the frame announces it holds (automationHolds,
-// each target with the value held on it): a value an enabled lane plays stands automated; moving it takes hold of it in the frame (stage live
-// hold), never a document write; while it is held its row shows the held value, not the document's; and its hand-back light (the kit's
-// Re-enable) gives that one value back (stage automation resume, naming its target), when the row shows the document's value again.
+// Press it to give the value back." A field device reads the scene's lanes and the values the kernel holds off them (the Set's Studio
+// `held`, each target with the value held on it: fieldDeviceSend.ts studioHolds): a value an enabled lane plays stands automated; moving it
+// is one write of the Studio's act, as any value's (O-I ticket 1008: the kernel holds it off its lane, and the frame follows the Set); while
+// it is held its row shows the held value; and its hand-back light (the kit's Re-enable) gives that one value back through the track's
+// Re-enable, naming its target, when the row shows the Scene's value again. The frame is sent nothing from here.
 const laneOn = (id, target, enabled = true) => ({id, enabled, target, type: 'lfo', wave: 'sine', min: 0, max: 1, rate: 1, phase: 0,
   blend: 'replace', duration: 1, delay: 0, loop: 'loop', firedAt: null})
 
-test('#747: a value a lane plays shows its lane; the hand takes hold of it in the frame, not the document; its hand-back light gives that value back', async () => {
+test('#747: a value a lane plays shows its lane; the hand writes it through the Studio\'s act; its hand-back light gives that value back through the kernel', async () => {
   const views = await import(src('components/devices/ExpressionsDeviceView.tsx'))
   const pressure = 'field.' + nativeKey('medium.pressure'), coupling = 'field.' + nativeKey('medium.coupling')
   const factor = NATIVE_BINDINGS.find(row => row.path === 'medium.pressure').factor ?? 1
   const r = reading({params: {[nativeKey('medium.pressure')]: 6}})
   r.scene.automation = [laneOn('lane-1', pressure), laneOn('lane-2', coupling, false)]
-  const sent = [], ran = []
-  let answer = {ok: true}
-  const run = async command => {ran.push(command); return answer}
+  const sent = [], ran = [], given = []
+  const run = async command => {ran.push(command); return {ok: true}}
+  const reenable = async target => {given.push(target)}
   const device = {...model.expressionsFieldDevice(r, 'medium', null), submit: async changes => {sent.push(changes)}}
   const plain = views.fieldDesignBinding('medium', device, r, null)
-  assert.equal(plain.standing?.['medium.pressure']?.automated, undefined, 'without the frame\'s lanes nothing is claimed')
-  const binding = views.fieldDesignBinding('medium', device, r, null, {}, {run, holds: []})
+  assert.equal(plain.standing?.['medium.pressure']?.automated, undefined, 'without the lanes nothing is claimed')
+  const binding = views.fieldDesignBinding('medium', device, r, null, {}, {run, holds: [], reenable})
   assert.equal(binding.standing['medium.pressure'].automated, true, 'an enabled lane plays it')
   assert.equal(binding.standing['medium.coupling']?.automated, undefined, 'a lane switched off plays nothing')
   assert.equal(binding.values['medium.pressure'], 6 * factor, 'unheld, the row shows the document\'s value')
   const design = await designOf('medium')
   assert.match(renderToStaticMarkup(h(HostedDevice, {designed: design, binding, view: 'whole', nav: {}})), /data-automated="on"/, 'the parameter shows its lane')
   await binding.write([{key: 'medium.pressure', value: 8 * factor}, {key: 'mediumEnabled', value: true}])
-  assert.deepEqual(ran, [{command: 'live', action: 'hold', target: pressure, value: 8}], 'the hand takes hold in the frame, in the engine\'s units')
-  assert.deepEqual(sent, [[{key: 'enabled', value: true}]], 'the held value writes no document; the rest goes as before')
-  answer = {ok: false, error: 'No enabled automation drives this parameter, so there is nothing to hold.'}
-  await assert.rejects(binding.write([{key: 'medium.pressure', value: 9 * factor}]), /nothing to hold/, 'a refused hold says the frame\'s words')
-  assert.equal(sent.length, 1, 'and writes nothing')
-  answer = {ok: true}; ran.length = 0
-  // The frame announces the hold with its value: the row shows the value the field plays, while the document keeps 6.
-  const held = views.fieldDesignBinding('medium', device, r, null, {}, {run, holds: [{target: pressure, value: 8}]})
+  assert.equal(sent.length, 1, 'one write, as any value\'s: the Studio\'s act holds a value its lane plays (the kernel)')
+  assert.deepEqual([...sent[0]].sort((a, b) => a.key.localeCompare(b.key)), [{key: 'enabled', value: true}, {key: 'medium.pressure', value: 8}],
+    'the held value goes with the rest, in the engine\'s units')
+  assert.deepEqual(ran, [], 'the frame is told nothing from here: it follows the Set')
+  // The Set says the kernel holds it, with its value: the row shows the value the field plays.
+  const held = views.fieldDesignBinding('medium', device, r, null, {}, {run, holds: [{target: pressure, value: 8}], reenable})
   assert.equal(held.standing['medium.pressure'].automated, 'overridden', 'the hand-back light is on')
   assert.equal(held.values['medium.pressure'], 8 * factor, 'the held value stands on its row, not the document\'s')
   assert.equal(held.values['medium.coupling'], binding.values['medium.coupling'], 'a value not held shows the document\'s')
@@ -210,9 +209,12 @@ test('#747: a value a lane plays shows its lane; the hand takes hold of it in th
   assert.match(markup, /Give Pressure back to its automation lane|back to its automation lane/, 'the light is a button')
   assert.match(markup, new RegExp(`aria-label="Pressure"[^>]*aria-valuenow="${8 * factor}"|aria-valuenow="${8 * factor}"[^>]*aria-label="Pressure"`), 'the control draws the held value')
   held.standing['medium.pressure'].onReenable()
-  assert.deepEqual(ran, [{command: 'automation', action: 'resume', target: pressure}], 'pressing it gives that one value back')
-  // Given back, the frame holds nothing: the row shows the document's value again, and the lane plays it.
-  const back = views.fieldDesignBinding('medium', device, r, null, {}, {run, holds: []})
+  assert.deepEqual(given, [pressure], 'pressing it gives that one value back, through the track\'s Re-enable')
+  assert.deepEqual(ran, [], 'and sends the frame nothing')
+  const noReenable = views.fieldDesignBinding('medium', device, r, null, {}, {run, holds: [{target: pressure, value: 8}]})
+  assert.equal(noReenable.standing['medium.pressure'].onReenable, undefined, 'where the Set offers no Re-enable, the light is no button')
+  // Given back, the kernel holds nothing: the row shows the Scene's value again, and the lane plays it.
+  const back = views.fieldDesignBinding('medium', device, r, null, {}, {run, holds: [], reenable})
   assert.equal(back.values['medium.pressure'], 6 * factor, 'given back, the row shows the document\'s value again')
   assert.equal(back.standing['medium.pressure'].automated, true)
 })
@@ -234,8 +236,8 @@ test('#747: Physics shows its lanes and its held values on its own keys, in its 
   assert.equal(lit.standing[path], undefined, 'nothing stands on a key the design does not draw')
   assert.equal(lit.values.radius, 0.25 * 400)
   await lit.write([{key: 'radius', value: 200}])
-  assert.deepEqual(ran, [{command: 'live', action: 'hold', target, value: 0.5}], 'moving Radius takes hold of it in the frame, in stage units')
-  assert.deepEqual(sent, [], 'and writes no document')
+  assert.deepEqual(sent, [[{key: path, value: 0.5}]], 'moving Radius writes it through the Studio\'s act, in stage units')
+  assert.deepEqual(ran, [], 'and sends the frame nothing')
   const held = views.fieldDesignBinding('physics', device, p, null, {}, {run, holds: [{target, value: 0.5}]})
   assert.equal(held.standing.radius.automated, 'overridden')
   assert.equal(held.values.radius, 200, 'the held value stands on Radius, in px')

@@ -238,6 +238,29 @@ fn main() {
             eprintln!("Change watch live");
         }
     }
+    // The World Model (world_model.rs; O-I #1001), read once now on its own
+    // thread and kept by the watch and the kernel's writes; each move of a
+    // slice is recorded in the event log, so /event-replay carries it.
+    {
+        let asked = Arc::clone(&kernel);
+        let told = Arc::clone(&kernel);
+        let via: Arc<
+            dyn Fn(oi_cradle_kernel::KernelOp) -> Result<oi_cradle_kernel::KernelOpOutcome, String>
+                + Send
+                + Sync,
+        > = Arc::new(move |op| match NATIVE_FIELD.get() {
+            Some(field) => oi_cradle_kernel::dispatch::dispatch_with(&asked, field, op).0,
+            None => oi_cradle_kernel::dispatch::dispatch(&asked, op).0,
+        });
+        let changed = Arc::new(move |slice, version| {
+            if let Ok(mut kernel) = told.lock() {
+                kernel.record_model_moved(slice, version);
+            }
+        });
+        if let Err(error) = oi_cradle_kernel::world_model::Model::global().start(via, changed) {
+            eprintln!("{error}; each slice is read when it is first asked for");
+        }
+    }
     // The one SharedField client for this identity (O-I #858), held for the
     // bridge's life: each transaction it takes is recorded in the event log,
     // so /event-replay carries it like any other receipt.

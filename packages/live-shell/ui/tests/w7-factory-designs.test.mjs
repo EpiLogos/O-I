@@ -200,7 +200,7 @@ test('4 · the Run map: no Run is named on the Main track, so its readings stand
   bind.resetHolds()
   const binding = runMap.runMapBinding(bind.chainHolds())
   for (const key of ['run', 'nodes', 'edges', 'ret', 'recognition', 'journey']) assert.match(binding.standing[key].disabled, /no Run is named on the Main track/, key)
-  assert.match(binding.standing.retry.disabled, /factory_owner attempt-retry \(the attempt `retry`/)
+  assert.match(binding.standing.retry.disabled, /Factory's factory\.attempt\.retry \(the attempt `retry`/)
   assert.match(binding.standing.continue.disabled, /`factory development mutate` for ContinueCommission/)
   assert.match(binding.standing.recognise.disabled, /factory_owner Recognise takes the Journey and the Return/)
   await assert.rejects(() => binding.write([{key: 'close', value: true}]), /factory_owner RunClose/)

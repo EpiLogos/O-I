@@ -1,5 +1,7 @@
 # Evidence — lane B (O-I side)
 
+> Retired copy (O-I ticket 1008, 14 Nov 2026): the compiled engine copy at `packages/oi-design-system/expressions-engine` is deleted. The one engine is `desktop/cradle/expressions-app/src/engine`, built in `field-studies-journeys/src/production.ts`; its model and defaults are `field-studies-journeys/src/model.ts`. Paths into the copy below are a record of their date.
+
 Per-claim evidence for `INVENTORY-DRAFT.md`. Paths are absolute unless prefixed with
 `cradle/` (= `/Users/admin/Central/Work/O-I/desktop/cradle/`) or `ds/` (=
 `/Users/admin/Central/Work/O-I/packages/oi-design-system/`).

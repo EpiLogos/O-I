@@ -1,5 +1,6 @@
 //! Live proof that one kernel op opens a working conversation with a named
-//! Agent of the current World and that a prompt lands an assistant answer.
+//! Agent of the current World (through the one provision, O-I #1003, with the
+//! census's first agent you can talk to) and that a prompt lands an answer.
 //! Ignored by default: it provisions real owner state and spends ONE prompt.
 //!
 //! ```text
@@ -16,6 +17,7 @@ fn reading(kernel: &mut Kernel, request: EncounterRequest) -> Value {
         .apply(KernelOp::Encounter {
             project: String::new(),
             request,
+            channel: Default::default(),
         })
         .expect("encounter op");
     let KernelOpResult::EncounterReading { data } = outcome.result else {
@@ -33,6 +35,7 @@ fn one_op_opens_an_agent_conversation_that_answers() {
         .apply(KernelOp::AgentConversation {
             project: String::new(),
             agent_ref: agent_ref.clone(),
+            agent: None,
         })
         .expect("open the agent conversation");
     let KernelOpResult::EncounterProvisioned { data } = outcome.result else {
@@ -50,13 +53,14 @@ fn one_op_opens_an_agent_conversation_that_answers() {
         .apply(KernelOp::AgentConversation {
             project: String::new(),
             agent_ref: agent_ref.clone(),
+            agent: None,
         })
         .expect("reopen the agent conversation");
     let KernelOpResult::EncounterProvisioned { data: again } = again.result else {
         panic!("reopen returned the wrong result variant");
     };
     assert_eq!(again["agent_session"], session.as_str());
-    assert_eq!(again["agency"], "retained", "{again}");
+    assert_eq!(again["agency"], "retained-native-binding", "{again}");
 
     let status = reading(
         &mut kernel,
@@ -114,6 +118,7 @@ fn one_op_opens_an_agent_conversation_that_answers() {
         .apply(KernelOp::AgentConversation {
             project: String::new(),
             agent_ref: agent_ref.clone(),
+            agent: None,
         })
         .expect("reopen after the owner restarted");
     let KernelOpResult::EncounterProvisioned { data: reopened } = reopened.result else {

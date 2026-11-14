@@ -5,9 +5,9 @@
 // and placed by its island through the page owner (kernel/src/page.rs `list`): your world's folder is Control/user/flows (Central's
 // one creation door in Control ground), a project's its human ground (ProjectCentral/user, whose door is projectcentral.source.create).
 // A file that is no page is named by the listing, never shown as a clip.
-import {kernelRead} from '../../../../../desktop/cradle/src/kernel/bridge'
 import type {KernelTransportStatus, RootWorld} from '../../../../../desktop/cradle/src/kernel/types'
-import {listWorldPages, type PageListing} from '../../../../../desktop/cradle/src/personal/pageOwner'
+import type {PageListing} from '../../../../../desktop/cradle/src/personal/pageOwner'
+import {modelSlice, sliceValue} from '../owners/model'
 
 /** Your world's folder: the root register's one creation door (Central's ordinary_policy admits files only under Control/user/flows). */
 export const YOUR_WORLD_FOLDER = 'Control/user/flows'
@@ -31,31 +31,14 @@ export type CentralWorldsReading =
   | {readonly state: 'unavailable'; readonly reason: string}
   | {readonly state: 'read'; readonly worlds: readonly CentralWorld[]}
 
-/** The worlds in Central's disclosure of its root: yours first, then each project whose ProjectCentral keeps a human ground and a
- * wiki, in the disclosure's order. A project without them is no world yet, and is left out. Pure. */
-export function worldsOf(root: RootWorld): CentralWorld[] {
-  const yours: CentralWorld = {ref: root.control.agent_wiki.wiki.space_ref ?? 'central:wiki:root', name: 'Your world', kind: 'yours', folder: YOUR_WORLD_FOLDER, project: null}
-  const projects = root.work.projects.flatMap((project): CentralWorld[] => {
-    const ground = project.projectcentral
-    const ref = ground?.agent_wiki?.wiki?.space_ref
-    if (!ref || !ground.user?.exists || !ground.user.path) return []
-    // Its name is its own where Central keeps one (central.world.name, O-I #743), else its project's folder name.
-    return [{ref, name: project.world_name?.trim() || project.name, kind: 'project', folder: ground.user.path, project: project.name,
-      ...(project.manifest_revision ? {revision: project.manifest_revision} : {})}]
-  })
-  return [yours, ...projects]
-}
+/** How a read of the worlds is asked: `fresh` reads them from Central first, past every held reading (the read before a write). */
+export interface WorldsRead {readonly fresh?: boolean}
 
-/** How often, and how far apart, the world browse is asked again while its first browse has not yet disclosed a root. */
-export const ROOT_SETTLE = {tries: 6, apartMs: 400} as const
-
-/** Central's root disclosure through the kernel's world browse, as its worlds. A refusal is the reading, named. The kernel answers
- * before its first browse has finished (a snapshot with no navigator root and no error): that is asked again, a few times apart,
- * and only then read as the absence it is (r13: the browser's Worlds rows read the first answer and kept it). */
-/** `fresh` asks the kernel again for the first browse too (a read that precedes a write). */
-export async function readWorlds(transport: KernelTransportStatus | undefined, settle: {readonly tries: number; readonly apartMs: number} = ROOT_SETTLE, fresh = false): Promise<CentralWorldsReading> {
-  const root = await readRoot(transport, settle, fresh)
-  return root.state === 'read' ? {state: 'read', worlds: worldsOf(root.root)} : root
+/** The worlds of Central's root, from the World Model's worlds slice (kernel world_model.rs `worlds_of`): yours first, then each project
+ * whose ProjectCentral keeps a human ground and a wiki, in Central's disclosure's order. A refusal is the reading, named. */
+export async function readWorlds(transport: KernelTransportStatus | undefined, read: WorldsRead = {}): Promise<CentralWorldsReading> {
+  const slice = await worldsSlice(transport, read)
+  return slice.ok ? {state: 'read', worlds: slice.value.worlds} : {state: 'unavailable', reason: slice.reason}
 }
 
 /** How the window holds Central's root disclosure (owners/ownerCall.ts useHeldRead): the browser's Places and the projects a new
@@ -69,20 +52,25 @@ export async function centralRoot(transport: KernelTransportStatus): Promise<Roo
   return root.root
 }
 
-/** Central's root disclosure itself (your world, and every project of its Work), read as readWorlds reads it: the browser's Places
- * read your world and your Work from it (frame/browser/places.ts). */
-export async function readRoot(transport: KernelTransportStatus | undefined, settle: {readonly tries: number; readonly apartMs: number} = ROOT_SETTLE, fresh = false): Promise<
+/** Central's root disclosure itself (your world, and every project of its Work), from the World Model's worlds slice: the browser's
+ * Places read your world and your Work from it (frame/browser/places.ts). */
+export async function readRoot(transport: KernelTransportStatus | undefined, read: WorldsRead = {}): Promise<
   {readonly state: 'read'; readonly root: RootWorld} | {readonly state: 'unavailable'; readonly reason: string}> {
-  if (!transport) return {state: 'unavailable', reason: 'the shell published no kernel carrier to this pane'}
-  if (transport.kind === 'unavailable') return {state: 'unavailable', reason: transport.reason}
-  for (let attempt = 1; ; attempt++) {
-    const answer = await kernelRead(transport, {op: 'world_browse'}, {fresh: fresh || attempt > 1})
-    if (answer.error || answer.outcome?.result !== 'world_read') return {state: 'unavailable', reason: answer.error ?? 'Central did not disclose its worlds'}
-    const navigator = answer.outcome.snapshot.navigator
-    if (navigator?.root) return {state: 'read', root: navigator.root}
-    if (navigator?.error || attempt >= settle.tries) return {state: 'unavailable', reason: navigator?.error ?? 'Central returned no root disclosure'}
-    await new Promise(resolve => setTimeout(resolve, settle.apartMs))
-  }
+  const slice = await worldsSlice(transport, read)
+  return slice.ok ? {state: 'read', root: slice.value.root} : {state: 'unavailable', reason: slice.reason}
+}
+
+/** What the World Model's worlds slice holds (kernel world_model.rs `worlds`). */
+interface WorldsValue {
+  readonly root: RootWorld
+  readonly worlds: readonly CentralWorld[]
+  readonly pages: readonly ({readonly folder: string; readonly state: 'read'; readonly listing: PageListing} | {readonly folder: string; readonly state: 'refused'; readonly why: string})[]
+}
+
+async function worldsSlice(transport: KernelTransportStatus | undefined, read: WorldsRead): Promise<{ok: true; value: WorldsValue} | {ok: false; reason: string}> {
+  if (!transport) return {ok: false, reason: 'the shell published no kernel carrier to this pane'}
+  if (transport.kind === 'unavailable') return {ok: false, reason: transport.reason}
+  return sliceValue<WorldsValue>(await modelSlice(transport, 'worlds', read))
 }
 
 export type WorldPagesReading =
@@ -90,16 +78,12 @@ export type WorldPagesReading =
   | {readonly state: 'unavailable'; readonly reason: string}
   | {readonly state: 'read'; readonly listing: PageListing}
 
-/** One world's pages through the page owner's listing. A folder the owner says does not exist holds no pages yet; any other refusal
- * is the reading, named. */
-export async function readWorldPages(transport: KernelTransportStatus | undefined, world: Pick<CentralWorld, 'folder'>): Promise<WorldPagesReading> {
-  if (!transport) return {state: 'unavailable', reason: 'the shell published no kernel carrier to this pane'}
-  if (transport.kind === 'unavailable') return {state: 'unavailable', reason: transport.reason}
-  try {
-    return {state: 'read', listing: await listWorldPages(transport, world.folder)}
-  } catch (cause) {
-    const reason = cause instanceof Error ? cause.message : String(cause)
-    if (/No such file or directory/i.test(reason)) return {state: 'read', listing: {schema: 'oi.page-list/v1', path: world.folder, pages: [], not_pages: [], more: false}}
-    return {state: 'unavailable', reason}
-  }
+/** One world's pages, from the World Model's worlds slice: each world Central discloses is held with its pages (a folder the owner says
+ * does not exist holds none yet). A folder that is no world's, or whose listing the owner refused, is the reading, named. */
+export async function readWorldPages(transport: KernelTransportStatus | undefined, world: Pick<CentralWorld, 'folder'>, read: WorldsRead = {}): Promise<WorldPagesReading> {
+  const slice = await worldsSlice(transport, read)
+  if (!slice.ok) return {state: 'unavailable', reason: slice.reason}
+  const held = slice.value.pages.find(entry => entry.folder === world.folder)
+  if (!held) return {state: 'unavailable', reason: `${world.folder} is no world's folder Central discloses.`}
+  return held.state === 'read' ? {state: 'read', listing: held.listing} : {state: 'unavailable', reason: held.why}
 }

@@ -99,7 +99,6 @@ const pane = () => new FakeNode('div')
 const stub = await import(mountStub)
 const panel = await import(new URL('../src/projections/atlas/AtlasProjectionPanel.tsx', import.meta.url).href)
 const {lifetimeLive} = await import(new URL('../src/projections/atlas/src/ui/lifetime.ts', import.meta.url).href)
-panel.bindAtlasScope({namespace: 'test.atlas-dispose', workspaceId: 'w1'})
 
 
 // The held pane's handover and the attach's teardown (projections/atlas/AtlasProjectionPanel.tsx; T-ATLAS-DISPOSE). The

@@ -1,11 +1,13 @@
-//! The Day's form in a new world (O-I #740; manual §10.11 Ground, §18.2 Day). Today's Day is made from the Day form
-//! (`central.rs` InitialiseDay reads it through Central's file route) and its page reads that form where it stands
-//! (`_oi_form_source`, DayDieFace.tsx). The owner's ground carries the forms in its O-I project (`Work/O-I/desktop/cradle/documents`,
-//! documentForms.ts); a world Setup makes has no such project, so its Day could never be made.
+//! The Day's form in a new world (O-I #740; manual §10.11 Ground, §18.2 Day). Today's Day is made from the Day form at the
+//! Day's turn: Central's `central.day.turn` makes the page from the form the person saved in the Day's settings (`day_form`, its
+//! path and the revision they read it at, Central #362; O-I #1005), and its page reads that form where it stands (`_oi_form_source`,
+//! DayDieFace.tsx). The owner's ground carries the forms in its O-I project (`Work/O-I/desktop/cradle/documents`, documentForms.ts); a
+//! world Setup makes has no such project, so its Day could never be made.
 //!
 //! This route keeps the application's own Day form — the very bytes in `desktop/cradle/documents`, compiled into the kernel — in the
 //! world's ground through Central's own operation (`central.ground.form.preview` / `.adopt`, `Control/forms/<name>`), on Setup's held
-//! Ground Accept. A ground whose O-I project carries the form changes nothing; a form that stands is never replaced.
+//! Ground Accept. A ground whose O-I project carries the form changes nothing; a form that stands is never replaced. Each answer names
+//! the form as the Day's settings save it (`day_form`): Setup's Accept saves that one, at that revision (settings/windowPages.ts).
 use crate::flow::CentralClient;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -16,6 +18,28 @@ pub const DAY_FORM_NAME: &str = "ql-daily-die.html";
 pub const DAY_FORM: &str = include_str!("../../documents/ql-daily-die.html");
 /// Where the owner's ground carries the forms: its O-I project's documents (documentForms.ts, `Work/O-I` + `DOCUMENT_FORM_DIR`).
 pub const PROJECT_FORMS: &str = "Work/O-I/desktop/cradle/documents";
+/// Where a ground keeps the forms Setup gives it (Central's ground_founding.rs `FORMS_DIR`, kept by Setup's Ground Accept).
+pub const GROUND_FORMS: &str = "Control/forms";
+
+/// The Day form as the Day's settings save it (`central.day.settings.write` `day_form`, Central #362): `{path, revision}`, its path
+/// under the Central root and the revision Central's file route gives it now. The one the ground's O-I project carries, else the one
+/// the ground keeps itself; None where neither stands or its owner withholds it. Central's turn makes today's page from the form saved,
+/// at that revision alone.
+pub fn day_form(client: &CentralClient) -> Option<Value> {
+    [PROJECT_FORMS, GROUND_FORMS]
+        .into_iter()
+        .find_map(|directory| {
+            let entry = crate::files::list(client, directory)
+                .ok()?
+                .entries
+                .into_iter()
+                .find(|entry| {
+                    entry.kind == "file" && entry.name == DAY_FORM_NAME && entry.retrieval_allowed
+                })?;
+            let reading = crate::files::read(client, &entry.location).ok()?;
+            Some(json!({"path": entry.location.path, "revision": reading.revision}))
+        })
+}
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(tag = "operation", rename_all = "snake_case", deny_unknown_fields)]
@@ -40,11 +64,13 @@ fn central(client: &CentralClient, action: &str, input: Value) -> Result<Value, 
     client.run(action, input).map_err(|e| e.to_string())
 }
 
-/// Preview or keep the Day's form in this world's ground (`Request`).
+/// Preview or keep the Day's form in this world's ground (`Request`). Each answer names the form as the Day's settings save it
+/// (`day_form`), null while none stands.
 pub fn operate(client: &CentralClient, request: &Request) -> Result<Value, String> {
     if carried_by_project(client) {
         return Ok(
-            json!({"schema":SCHEMA,"name":DAY_FORM_NAME,"carried_by":PROJECT_FORMS,"kept":false,"state":"project"}),
+            json!({"schema":SCHEMA,"name":DAY_FORM_NAME,"carried_by":PROJECT_FORMS,"kept":false,"state":"project",
+                "day_form":day_form(client)}),
         );
     }
     let preview = central(
@@ -53,14 +79,17 @@ pub fn operate(client: &CentralClient, request: &Request) -> Result<Value, Strin
         json!({"name":DAY_FORM_NAME,"content":DAY_FORM}),
     )?;
     match request {
-        Request::Preview => Ok(json!({"schema":SCHEMA,"name":DAY_FORM_NAME,"central":preview})),
+        Request::Preview => Ok(
+            json!({"schema":SCHEMA,"name":DAY_FORM_NAME,"central":preview,"day_form":day_form(client)}),
+        ),
         Request::Keep {
             acceptance_ref,
             expected_digest,
         } => {
             if preview["state"] == "present" {
                 return Ok(
-                    json!({"schema":SCHEMA,"name":DAY_FORM_NAME,"kept":false,"state":"present","reason":preview["reason"]}),
+                    json!({"schema":SCHEMA,"name":DAY_FORM_NAME,"kept":false,"state":"present","reason":preview["reason"],
+                        "day_form":day_form(client)}),
                 );
             }
             let receipt = central(
@@ -72,7 +101,7 @@ pub fn operate(client: &CentralClient, request: &Request) -> Result<Value, Strin
             crate::read_cache::written();
             Ok(
                 json!({"schema":SCHEMA,"name":DAY_FORM_NAME,"kept":receipt["adopted"] == true,"state":"present",
-                "source_path":receipt["source_path"]}),
+                "source_path":receipt["source_path"],"day_form":day_form(client)}),
             )
         }
     }
@@ -118,6 +147,11 @@ mod tests {
         client.run("central.init", json!({"project":null})).unwrap();
         let preview = operate(&client, &Request::Preview).unwrap();
         assert_eq!(preview["central"]["state"], "absent", "{preview}");
+        assert_eq!(
+            preview["day_form"],
+            Value::Null,
+            "no form stands yet: {preview}"
+        );
         let kept = operate(
             &client,
             &Request::Keep {
@@ -136,6 +170,13 @@ mod tests {
         assert!(entry.retrieval_allowed);
         let read = crate::files::read(&client, &entry.location).unwrap();
         assert_eq!(read.content, DAY_FORM);
+        // The form as the Day's settings save it: where it stands, at the revision Central's file route gives it.
+        let saved = json!({"path": "Control/forms/ql-daily-die.html", "revision": read.revision});
+        assert_eq!(kept["day_form"], saved, "{kept}");
+        assert_eq!(
+            operate(&client, &Request::Preview).unwrap()["day_form"],
+            saved
+        );
         let again = operate(
             &client,
             &Request::Keep {
@@ -145,6 +186,7 @@ mod tests {
         )
         .unwrap();
         assert_eq!(again["kept"], false, "kept once");
+        assert_eq!(again["day_form"], saved, "{again}");
         let _ = std::fs::remove_dir_all(&home);
     }
 }

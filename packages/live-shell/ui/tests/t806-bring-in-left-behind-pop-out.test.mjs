@@ -1,12 +1,13 @@
 // Ticket 806 — bringing a world into today works or refuses in words; a device's reasons are prose; a pop-out keeps its reasons.
 //   - Bring-in (manual §18.1 "To bring a world into today, drag it from the browser onto an empty track"; §18.2 Whole, Close: "Close
-//     routine, Close now, Open today"): today's set is kept in today's Day (central/daySet.ts). While Central names an earlier Day
+//     routine, Close now"): today's set is kept in today's Day (central/daySet.ts). While Central names an earlier Day
 //     (the kernel's Inspect marks it `stale`, central.rs Request::Inspect), the set had no seat at all: a drag fell on nothing and a
-//     double-click said "Open Central's Session", which stood open. The seat now stands whenever Central discloses its worlds, and
-//     refuses in the Day owner's words, naming the press that opens today (Close now, then Open today, on the Day device).
+//     double-click said "Open Central's Session", which stood open. Today's Day opens itself at Central's turn (central.day.turn,
+//     O-I 1005), so no press opens it. Since O-I #1004 Central's Set is the kernel's, which carries no seat
+//     until the Day set's write is one Action (O-I #1005): a world brought in is refused in the Set's own words for what it waits for.
 //     Run against the owner (28 Oct, a scratch Central root whose Day pointer was a day behind its civil-time policy): the set's write
 //     (`central.document.mutate` field.set on `original:meta`) lands in the EARLIER Day; `central.day.close-carry` closes it and names
-//     tomorrow; `central.day.ensure` then points at today, whose document Open today makes; the write then lands in today's Day.
+//     tomorrow; Central's turn then opens today and makes its page; the write then lands in today's Day.
 //   - Left behind (§19.23 "What a run leaves behind"): the worlds' and bindings' reads showed Workcell's failure envelope raw
 //     (`{"kind":"unavailable","message":"No such file or directory (os error 2)","operation_may_have_run":false}`, capture 13). Each
 //     refusal on the page is now a sentence in Workcell's words.
@@ -49,8 +50,8 @@ globalThis.document ??= {getElementById: () => null, createElement: () => ({}), 
 const {createElement} = await import('react')
 const {renderToStaticMarkup} = await import('react-dom/server')
 const daySet = await import('../src/central/daySet.ts')
-const adapter = await import('../src/timeline/centralTrackAdapter.ts')
-const tracksHook = await import('../src/frame/tracks/useCentralTracks.ts')
+const {kernelSetTracks} = await import('../src/frame/tracks/kernelSet.ts')
+const {modeSetOf, setTrack} = await import('./support/modeSetFixture.mjs')
 const {WorldRowList, seatWorldFromBrowser} = await import('../src/shell/ModeBrowser.tsx')
 const groundDevices = await import('../src/central/devices/groundDevices.ts')
 const groundBind = await import('../src/central/devices/groundBindings.ts')
@@ -92,68 +93,25 @@ const WORLDS = {state: 'read', worlds: [
   {ref: 'central:wiki:root', name: 'Your world', kind: 'yours', folder: 'Control/user/flows', project: null},
   {ref: 'central:wiki:project:O-I', name: 'O-I', kind: 'project', folder: 'Work/O-I/ProjectCentral/user', project: 'O-I'}]}
 
-test('a world refused today says why in the Day owner\'s words and names the press that opens today: Close now, then Open today', () => {
-  const words = daySet.bringInRefusal('O-I', STALE, null)
-  assert.match(words, /^O-I cannot come into today/)
-  assert.ok(!words.includes(STALE_WORDS), 'past the boundary is no refusal: the two Days and the press, never Central\'s raw words (walk 13 Nov)')
-  assert.match(words, /Mon 19 Oct/, 'the Day Central names')
-  assert.match(words, /Wed 28 Oct/, 'civil today')
-  assert.match(words, /today's set is kept in today's Day/, 'why the Day matters to the set')
-  assert.match(words, /Day device/)
-  assert.ok(words.indexOf('Close now') >= 0 && words.indexOf('Close now') < words.indexOf('Open today'), 'Close now first, then Open today')
-  assert.doesNotMatch(words, /[{}]/, 'prose, never an envelope')
-  // The Day Central names is closed already: Open today alone opens today.
-  const closed = daySet.bringInRefusal('O-I', STALE_CLOSED, null)
-  assert.match(closed, /Open today/)
-  assert.doesNotMatch(closed, /Close now/)
-  // Today's Day without its document yet: Open today makes it.
-  const unmade = daySet.bringInRefusal('O-I', UNMADE, null)
-  assert.match(unmade, /Wed 28 Oct has no document yet/)
-  assert.match(unmade, /Open today/)
-  assert.doesNotMatch(unmade, /Close now/)
-  // Central's ground did not answer, or is being read: said so.
-  assert.match(daySet.bringInRefusal('O-I', null, 'the carrier is down'), /Central's ground did not answer: the carrier is down/)
-  assert.match(daySet.bringInRefusal('O-I', null, null), /still being read/)
-  // Today's Day stands: nothing to refuse.
-  assert.equal(daySet.bringInRefusal('O-I', READY, null), null)
-})
+// Central's Set is the kernel's (O-I #1004), and seating a world on its empty track is today's set written on the Day's revision, which
+// the Set does not compose into one Action yet (O-I #1005): the Set carries no seat, and says what the seat waits for.
+const SEAT_WAITS = 'today\'s set, kept in today\'s Day document (`meta.set`) and written on the Day\'s revision (central.document.mutate), which the Set does not compose into one Action yet (O-I #1005)'
+const centralSet = () => kernelSetTracks(modeSetOf({owner: 'Central · its worlds, their pages and today\'s Day, through the Action registry',
+  tracks: [setTrack('central:world:central:wiki:root', 'Your world'), setTrack('central:day', 'Day', {main: true})], waiting: {'track.seat': SEAT_WAITS}}), {nowMs: 0})
 
-test('while today\'s set cannot be written, the empty track still takes a world, and refuses it in those words; a set that can seat keeps its own seat', async () => {
-  const none = {state: 'none', reason: STALE_WORDS}
-  const added = []
-  const projected = adapter.projectCentralTracks({civil: {state: 'reading'}, worlds: WORLDS, set: none, controls: {addWorld: async world => { added.push(world.ref) }}})
-  assert.equal(projected.actions?.seat, undefined, 'the adapter offers no seat on a set it cannot read (the drop fell on nothing)')
-  const seated = tracksHook.withWorldSeat(projected, WORLDS, world => daySet.bringInRefusal(world.name, STALE, null))
-  assert.equal(seated.actions.seat.accepts, adapter.CENTRAL_WORLD_DRAG, 'the drop is taken')
-  const answer = await seated.actions.seat.run('central:wiki:project:O-I')
-  assert.equal(answer.ok, false)
-  assert.equal(answer.error, daySet.bringInRefusal('O-I', STALE, null), 'refused in the Day owner\'s words')
-  assert.deepEqual(await seated.actions.seat.run('central:wiki:project:nowhere'), {ok: false, error: '"central:wiki:project:nowhere" is no world Central discloses.'})
-  assert.deepEqual(added, [], 'nothing is written into an earlier Day')
-  for (const kept of ['launch', 'stopTrack', 'removeTrack']) assert.equal(seated.actions[kept], projected.actions?.[kept], `${kept} stays as the adapter gave it`)
-  // A set that seats keeps its own seat, untouched.
-  const readSet = {state: 'read', civilDate: '2026-10-28', set: daySet.EMPTY_SET}
-  const live = adapter.projectCentralTracks({civil: {state: 'reading'}, worlds: WORLDS, set: readSet, controls: {addWorld: async world => { added.push(world.ref) }}})
-  assert.equal(tracksHook.withWorldSeat(live, WORLDS, () => 'never asked'), live, 'the owner\'s own seat stands')
-  await live.actions.seat.run('central:wiki:project:O-I')
-  assert.deepEqual(added, ['central:wiki:project:O-I'], 'and writes the world into today\'s set')
-  // No worlds disclosed: no world can be named, so nothing is offered.
-  const unread = adapter.projectCentralTracks({civil: {state: 'reading'}, worlds: {state: 'reading'}, set: none})
-  assert.equal(tracksHook.withWorldSeat(unread, {state: 'reading'}, () => 'never'), unread)
-})
-
-test('the Central tracks pass their set through the refusing seat, on the ground the Day reads (code-reading: the binding is cut by removing it)', () => {
-  const source = read('frame/tracks/useCentralTracks.ts')
-  assert.match(source, /withWorldSeat\(\s*withWorksIn\(projectCentralTracks\(/, 'the projected set is offered the refusing seat')
-  assert.match(source, /bringInRefusal\(world\.name, groundReading, groundError\)/, 'in the Day owner\'s words')
-  assert.match(source, /const groundReading = ground\.reading, groundError = ground\.error/, 'from the ground the Day device reads (useCentralGroundAnswer)')
-})
-
-test('a double-click or Enter on a world goes through that seat: the refusal comes back, and the row list says it as an alert, not a status', async () => {
-  const projected = adapter.projectCentralTracks({civil: {state: 'reading'}, worlds: WORLDS, set: {state: 'none', reason: STALE_WORDS}, controls: {}})
-  const set = tracksHook.withWorldSeat(projected, WORLDS, world => daySet.bringInRefusal(world.name, STALE, null))
+test('while the Set cannot seat a world, the empty track offers no drop, and a world brought in from the browser is refused in the Set\'s words', async () => {
+  const set = centralSet()
+  assert.equal(set.actions.seat, undefined, 'no seat the Set does not carry')
   const answer = await seatWorldFromBrowser(WORLDS.worlds[1], {presented: 'session', set})
-  assert.deepEqual(answer, {ok: false, error: daySet.bringInRefusal('O-I', STALE, null)})
+  assert.deepEqual(answer, {ok: false, error: `O-I cannot come into today from here yet: seating a world waits for ${SEAT_WAITS}.`})
+  // A set that holds no world (another mode's) does not speak for seating one.
+  const other = kernelSetTracks(modeSetOf({tracks: [setTrack('space:a:session:1', 'Answer')], waiting: {'track.seat': 'an agent seated on a new track'}}), {nowMs: 0})
+  assert.match((await seatWorldFromBrowser(WORLDS.worlds[1], {presented: 'session', set: other})).error, /^Open Central's Session to bring O-I into today/)
+})
+
+test('a double-click or Enter on a world goes through the drawn set: the refusal comes back, and the row list says it as an alert, not a status', async () => {
+  const answer = await seatWorldFromBrowser(WORLDS.worlds[1], {presented: 'session', set: centralSet()})
+  assert.equal(answer.ok, false)
   const refused = html(createElement(WorldRowList, {worlds: WORLDS.worlds, onSeat() {}, said: null, fault: answer.error}))
   assert.match(refused, /role="alert"[^>]*data-seat-fault[^>]*>O-I cannot come into today/, 'the refusal stands as an alert under the rows')
   assert.doesNotMatch(refused, /role="status"/)

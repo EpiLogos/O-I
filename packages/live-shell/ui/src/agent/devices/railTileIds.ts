@@ -17,7 +17,8 @@ export const APPROVALS_ID = 'factory:main:approvals'
 
 /** The drag a message of Messages' conversation carries onto a track (§19.24 Rules: "To turn one into work, drag it onto the agent's
  * track"; O-I ticket 757), held here beside Messages' id so Factory's tracks take it without loading Messages' binding: JSON of the
- * CommuniqueDrag below (messagesBinding.ts conversationRows writes it; frame/tracks/useFactoryTracks.ts withDelegateDrop reads it). */
+ * CommuniqueDrag below (messagesBinding.ts conversationRows writes it; Factory's Set, the kernel's, reads it where its tracks take a
+ * message as a task). */
 export const COMMUNIQUE_DRAG = 'application/x-oi-communique'
 export const COMMUNIQUE_DRAG_SCHEMA = 'oi.communique-drag/v1'
 

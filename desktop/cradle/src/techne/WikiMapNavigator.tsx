@@ -1,4 +1,4 @@
-import {wikiDisplayName} from "../../../../packages/oi-design-system/expressions-engine/oi/wikiPresentation.mjs";
+import {wikiDisplayName} from "../../expressions-app/field-studies-journeys/src/wikiPresentation.mjs";
 import {useEffect, useRef, useState, type ReactNode} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import {Glyph} from "../workspace/Glyph";

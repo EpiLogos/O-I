@@ -3,8 +3,10 @@
  * manual §10.11) and a folder of work to bring in (the browser's Work place, Add folder…). The chooser only selects: what the folder
  * is, and what is made of it, are its owners' readings and Accepts. */
 
-/** Why a window that is not the native host has no folder chooser. */
+/** Why a window that is not the native host has no folder chooser, for a new ground: Setup's Ground step takes its folder typed. */
 export const NO_NATIVE_FOLDER_CHOOSER = 'The system\'s folder chooser is the native app\'s: this window (the development browser) has none. Type the folder\'s path instead.'
+/** The same, for a folder of work: nothing here takes a typed path, and Setup's Projects step lists the folders Central finds. */
+export const NO_NATIVE_WORK_FOLDER_CHOOSER = 'The system\'s folder chooser is the native app\'s: this window (the development browser) has none. Setup\'s Projects step (Settings → Setup) lists the folders of work Central finds.'
 
 /** Whether this window is the native host's (the Tauri webview), which carries the folder chooser. */
 export const nativeFolderChooser = (): boolean => typeof window !== 'undefined' && !!(window as unknown as {__TAURI_INTERNALS__?: unknown}).__TAURI_INTERNALS__
@@ -13,7 +15,7 @@ export const nativeFolderChooser = (): boolean => typeof window !== 'undefined' 
 export type FolderPurpose = 'ground' | 'work'
 /** The folder the person chooses in the system's chooser, or null when they cancel. Refused, in words, outside the native host. */
 export async function chooseFolder(purpose: FolderPurpose): Promise<string | null> {
-  if (!nativeFolderChooser()) throw new Error(NO_NATIVE_FOLDER_CHOOSER)
+  if (!nativeFolderChooser()) throw new Error(purpose === 'work' ? NO_NATIVE_WORK_FOLDER_CHOOSER : NO_NATIVE_FOLDER_CHOOSER)
   const {invoke} = await import('@tauri-apps/api/core')
   const picked = await invoke<string | null>('choose_folder', {purpose})
   return typeof picked === 'string' && picked.trim() ? picked : null

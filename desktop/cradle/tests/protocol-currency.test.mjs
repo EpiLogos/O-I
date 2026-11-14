@@ -14,7 +14,7 @@ test('a seventh owner enters Settings navigation and search without a product co
  assert.equal(rows.length,7);assert.deepEqual(rows.at(-1),{id:'seventh-owner',label:'Seventh owner'});
  assert.deepEqual(restoreSettingsPlace({kind:'product',id:'seventh-owner'}),{kind:'product',id:'seventh-owner'});
  assert.equal(placeLabel({kind:'product',id:'seventh-owner'}),'Seventh owner');
- const found=searchSettings(searchIndex(snapshot),'seventh');
+ const found=searchSettings(searchIndex(snapshot,{state:'reading'}),'seventh');
  assert.equal(found.length,1);assert.deepEqual(found[0].place,{kind:'product',id:'seventh-owner'});
  snapshot.census={state:'failed',error:'offline'};snapshot.registry.value.mounts=[{owner_ref:'seventh-owner'}];
  assert.deepEqual(settingsProducts(snapshot),[{id:'seventh-owner',label:'Seventh owner'}]);

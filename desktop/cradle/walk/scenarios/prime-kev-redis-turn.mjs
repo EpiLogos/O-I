@@ -27,7 +27,7 @@
 //   EPI_DECISION_PROVIDER         aikit.decision-provider/v1 of the running Kev                  default ~/.aikit/decision-provider.json
 //   EPI_TOOLS_ROOT                where the Prime distribution is installed                       default <aikit home>/tools
 //   EPI_ACTUATION_ROOT, EPI_PRIME_DIR, EPI_ACTUATION_PRIME_BINARY, EPI_PRIME_AGENT_BINARY, EPI_QL_BIN, EPI_QL_ROOT, EPI_QL_REVISION,
-//   EPI_QL_SKILL_PATH, EPI_ACTUATION_RESEARCH_BINARY, EPI_FACULTY_CONFIG, AIKIT_AGENCY_MINT_TEMPLATE, OI_CENTRAL_CTRL_BIN
+//   EPI_QL_SKILL_PATH, EPI_ACTUATION_RESEARCH_BINARY, EPI_FACULTY_CONFIG, OI_ACTUATION_BIN, OI_CENTRAL_CTRL_BIN
 //   OI_WALK_BRIDGE_PORT           default random
 import {execFileSync, spawn, spawnSync} from "node:child_process";
 import {chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync} from "node:fs";
@@ -62,7 +62,8 @@ const SKILL = env0.EPI_QL_SKILL_PATH ?? join(HOME, "Central/Work/Actuation/exper
 const RESEARCH = env0.EPI_ACTUATION_RESEARCH_BINARY ?? join(HOME, ".local/bin/actuation-research");
 const OWNER_INSTRUMENT = env0.EPI_OWNER_INSTRUMENT ?? join(HOME, "Central/Work/Actuation/experiments/ql-runtime/native-owner-instrument/target/debug/actuation-ql-owner-instrument");
 const FACULTY = env0.EPI_FACULTY_CONFIG ?? null;   // generated from the instrument when not given: a stored pin goes stale when the instrument is rebuilt
-const TEMPLATE = env0.AIKIT_AGENCY_MINT_TEMPLATE ?? join(HOME, "Central/worktrees/env-1/ai-kit/crates/aikit-cli/tests/fixtures/mint-agency-template.json");
+// The Actuation the World's standing authority is granted in and each chat's Agency is minted under (O-I #1003).
+const ACTUATION_BIN = env0.OI_ACTUATION_BIN ?? join(ACTUATION, "target/debug/actuation");
 const CTRL = env0.OI_CENTRAL_CTRL_BIN ?? join(HOME, ".local/bin/ctrl");
 const BODY = "agent-body/epi-prime-ql";
 const PROVIDER_ID = "epi-prime-ql-candidate";
@@ -72,7 +73,7 @@ const say = (step, detail) => { record.steps.push({step, ...(detail !== undefine
 const save = () => { mkdirSync(dirname(artifact), {recursive: true}); writeFileSync(record.ok ? artifact : artifact.replace(/\.json$/, ".failure.json"), JSON.stringify(record, null, 2) + "\n"); };
 
 if (env0.OI_WALK_REAL_PROVIDER !== "1") { console.log("SKIP: a real turn spends plan quota; set OI_WALK_REAL_PROVIDER=1 to authorise it. No model was prompted."); process.exit(0); }
-for (const [name, path] of [["aikit", AIKIT], ["aikit-session-space", SESSION_SPACE], ["walk-bridge", BRIDGE_BIN], ["redis election", REDIS], ["decision provider", KEV], ["launcher", LAUNCHER], ["prime-agent", PRIME], ["ql", QL], ["skill path", SKILL], ["actuation-research", RESEARCH], ["owner instrument", OWNER_INSTRUMENT], ["mint template", TEMPLATE], ["ctrl", CTRL]]) {
+for (const [name, path] of [["aikit", AIKIT], ["aikit-session-space", SESSION_SPACE], ["walk-bridge", BRIDGE_BIN], ["redis election", REDIS], ["decision provider", KEV], ["launcher", LAUNCHER], ["prime-agent", PRIME], ["ql", QL], ["skill path", SKILL], ["actuation-research", RESEARCH], ["owner instrument", OWNER_INSTRUMENT], ["actuation", ACTUATION_BIN], ["ctrl", CTRL]]) {
   if (!existsSync(path)) { console.error(`missing ${name}: ${path}`); process.exit(2); }
 }
 // the walk law: the model is pinned, never inherited
@@ -114,7 +115,8 @@ for (const d of [root, projectRoot, ociHome, aikitHome, run]) mkdirSync(d, {recu
 const router = join(run, "oi-owner-router.mjs");
 writeFileSync(router, `#!/usr/bin/env node\nimport {spawnSync} from "node:child_process";\nconst a = process.argv.slice(2);\nif (a[0] === "aikit") { const c = spawnSync(${JSON.stringify(AIKIT)}, a.slice(1), {stdio: "inherit"}); process.exit(c.status ?? 1); }\nconst c = spawnSync(process.env.OI_REAL_BIN || "oi", a, {stdio: "inherit"}); process.exit(c.status ?? 1);\n`);
 chmodSync(router, 0o755);
-const env = {...env0, OI_CENTRAL_ROOT: root, OI_HOME: ociHome, OI_CENTRAL_PROJECT_QUERY: "Field", AIKIT_HOME: aikitHome, OI_AIKIT_BIN: AIKIT, OI_BIN: router, AIKIT_AGENCY_MINT_TEMPLATE: TEMPLATE};
+const env = {...env0, OI_CENTRAL_ROOT: root, OI_HOME: ociHome, OI_CENTRAL_PROJECT_QUERY: "Field", AIKIT_HOME: aikitHome, OI_AIKIT_BIN: AIKIT, OI_BIN: router,
+  OI_ACTUATION_BIN: ACTUATION_BIN, ACTUATION_AUTHORITY_STORE: join(base, "actuation-authority")};
 delete env.CENTRAL_NATIVE_TOKEN;
 const sh = (cmd, args, extra = {}) => execFileSync(cmd, args, {encoding: "utf8", env, maxBuffer: 64 * 1024 * 1024, ...extra});
 const native = (...p) => JSON.parse(sh(AIKIT, ["--json", "session-space", "-C", projectRoot, ...p]));
@@ -135,6 +137,8 @@ try {
   ctrl("projectcentral.init", {project: "Field", project_id: projectId});
   const bind = top("-C", projectRoot, "project", "bind", "field-walk", "--directory", projectRoot, "--no-default-skill-sets");
   if (!bind.ok) throw new Error(JSON.stringify(bind));
+  // The World's standing authority, held by the person: the root and the bound project each chat's Agency is minted for.
+  sh(ACTUATION_BIN, ["authority", "grant-world", "--holder", "human:owner", "--world", "control:root", "--world", "project:field-walk", "--json"]);
   const realRelations = JSON.parse(readFileSync(join(HOME, "Central/Control/relations/source-relations.json"), "utf8"));
   mkdirSync(join(root, "Control/relations"), {recursive: true}); mkdirSync(join(root, "Control/user"), {recursive: true});
   writeFileSync(join(root, "Control/relations/source-relations.json"), JSON.stringify({schema: "central.control.ground-relations/v1", project_id: "control:root", relations: realRelations.relations.filter(r => ["Control/user/placement.json", "Control/user/civil-time-policy.json"].includes(r.path))}, null, 1));

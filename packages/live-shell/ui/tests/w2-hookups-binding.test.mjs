@@ -1,7 +1,5 @@
-// W2's two hookups in the rail and on Factory's Main track (builder A's pure writes, central/devices; their own tests are
+// W2's hookup on Factory's Main track (the NOWs widget and its Close went with O-I #1005: a session's NOW opens and closes with its hooks) (builder A's pure writes, central/devices; their own tests are
 // tests/central-person-writes.test.mjs):
-//   NOWs' Close (§23.6)          widgets/railDevices.tsx useNowsBinding → railBindings.ts nowsCloseWrites → nowsClose.ts closeNowClearing
-//                                (central.now.lifecycle on the listing's revision and central.work.policy's)
 //   Approvals' Approve (§19.13)  agent/devices/FactoryDeviceChain.tsx → receiptBindings.ts approvalsBinding `approve` port →
 //                                sourceReturnAccept.ts acceptSourceReturn (projectcentral.source.return_accept, by the anchor's person)
 // Channels:
@@ -45,12 +43,9 @@ globalThis.document ??= {getElementById: () => null, createElement: () => ({}), 
 const {createElement} = await import('react')
 const {renderToStaticMarkup} = await import('react-dom/server')
 const host = await import('../src/frame/devices/deviceHost.tsx')
-const rail = await import('../src/widgets/railBindings.ts')
-const nows = await import('../src/central/devices/nowsClose.ts')
 const accept = await import('../src/central/devices/sourceReturnAccept.ts')
 const bind = await import('../src/agent/devices/designBindings.ts')
 const rec = await import('../src/agent/devices/receiptBindings.ts')
-const {design: nowsDesign} = await import('../src/inhabitants/catalogue/panels/widgets__nows.tsx')
 const {design: approvalsDesign} = await import('../src/inhabitants/catalogue/panels/software-factory__approvals.tsx')
 
 const W2 = JSON.parse(readFileSync(new URL('./fixtures/person-writes-2026-10-21.json', import.meta.url), 'utf8'))
@@ -96,54 +91,6 @@ async function withKernel(owner, run) {
 }
 const bridge = url => ({kind: 'bridge', url})
 const invoked = owner => owner.sent.filter(body => body.op === 'invoke_action').map(body => [body.invocation.action, body.invocation.input])
-
-// ── NOWs' Close ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-
-// The ground as Central's `inspect` gives it (oi.central-ground/v1), its NOW leg and its placement leg (central.work.policy) REAL.
-const failed = action => ({state: 'failed', action, error: {message: `${action} did not answer`}})
-const GROUND = {schema: 'oi.central-ground/v1', project: null, time: failed('central.time.policy'), day: failed('central.day.read'),
-  now: {state: 'ready', action: 'central.now.list', data: W2.nowList.data}, sources: failed('projectcentral.change.horizon'),
-  placement: {state: 'ready', action: 'central.work.policy', data: {revision: W2.workPolicy.revision}}}
-const ROW = W2.nowList.data.records[0]
-
-test('REAL — the NOWs\' Close press writes central.now.lifecycle on the clearing\'s listed revision and the work policy\'s, through the kernel', async () => {
-  const owner = kernel({'central.now.lifecycle': input => (input.expected_policy_revision === W2.workPolicy.revision ? {lifecycle: 'closed'} : {refuse: 'policy moved'})})
-  const binding = {id: 'rail:nows', values: rail.nowsValues(GROUND), ...rail.nowsCloseWrites(bridge('http://nows.fixture'), GROUND, nows.closeNowClearing)}
-  assert.equal(binding.writes('close'), true)
-  assert.equal(binding.writes('machine'), false, 'the machine shown is the hand\'s')
-  assert.equal(binding.standing, undefined, 'with a carrier, Close stands enabled')
-  await withKernel(owner, () => binding.write([{key: 'close', value: ROW.now_ref}]))
-  assert.deepEqual(invoked(owner), [['central.now.lifecycle',
-    {now_ref: ROW.now_ref, expected_revision: ROW.revision.revision, expected_policy_revision: W2.workPolicy.revision, lifecycle: 'closed'}]])
-  // Central's own refusal, in its words: the policy moved under the ground the tile read.
-  const moved = {...GROUND, placement: {state: 'ready', action: 'central.work.policy', data: {revision: 'central.content-fnv1a64/v1:1:old'}}}
-  await assert.rejects(withKernel(owner, () => rail.nowsCloseWrites(bridge('http://nows.fixture'), moved, nows.closeNowClearing).write([{key: 'close', value: ROW.now_ref}])), /policy moved/)
-})
-
-test('the NOWs\' Close refused before Central is asked: no carrier (drawn on the design), the policy unread, the listing unread, nothing open', async () => {
-  const owner = kernel({'central.now.lifecycle': () => assert.fail('not asked')})
-  const noPolicy = {...GROUND, placement: failed('central.work.policy')}
-  await assert.rejects(withKernel(owner, () => rail.nowsCloseWrites(bridge('http://nows.fixture'), noPolicy, nows.closeNowClearing).write([{key: 'close', value: ROW.now_ref}])), /central\.work\.policy/)
-  await assert.rejects(withKernel(owner, () => rail.nowsCloseWrites(bridge('http://nows.fixture'), null, nows.closeNowClearing).write([{key: 'close', value: ROW.now_ref}])), /listing has not answered/)
-  await assert.rejects(withKernel(owner, () => rail.nowsCloseWrites(bridge('http://nows.fixture'), GROUND, nows.closeNowClearing).write([{key: 'close', value: undefined}])), /open a moment first/)
-  await assert.rejects(rail.nowsCloseWrites(bridge('http://nows.fixture'), GROUND, nows.closeNowClearing).write([{key: 'day', value: 'x'}]), /day is a reading/)
-  const away = rail.nowsCloseWrites({kind: 'unavailable', reason: 'the browser stack has no kernel'}, GROUND, nows.closeNowClearing)
-  assert.match(away.standing.close.disabled, /no kernel carrier stands, so Central's central\.now\.lifecycle cannot be asked — the browser stack has no kernel/)
-  await assert.rejects(away.write([{key: 'close', value: ROW.now_ref}]), /no kernel carrier stands/)
-  assert.deepEqual(owner.sent, [], 'no refusal dispatched anything')
-  // The design draws on the binding — Close's reason in Full (its control bar), no NaN, no undefined, never its fixtures' moments.
-  const binding = {id: 'rail:nows', values: {...rail.nowsValues(GROUND), open: ROW.now_ref}, local: {machine: () => {}, open: () => {}}, ...away}
-  drawsOn(nowsDesign, binding, /Reconcile the capability matrix|Back up the bimba graph|Device run: Live, Quaternal/, [away.standing.close.disabled])
-})
-
-test('the rail\'s NOWs binding hands railBindings.nowsCloseWrites the ground it read and closeNowClearing (loaded at the press) — the Close is no longer refused as absent', () => {
-  const source = read('widgets/railDevices.tsx')
-  // REPLACED (parity audit D-03): with each project's listing too, so a project's clearing closes in its own register.
-  assert.match(source, /\.\.\.nowsCloseWrites\(transport, reading\.status === 'read' \? reading\.ground : null, closeNow, projects\)/)
-  assert.match(source, /const closeNow: typeof closeNowClearing = \(\.\.\.args\) => import\('\.\.\/central\/devices\/nowsClose'\)\.then\(module => module\.closeNowClearing\(\.\.\.args\)\)/,
-    'closeNowClearing itself, loaded at the press')
-  assert.doesNotMatch(source + read('widgets/railBindings.ts'), /NOW_CLOSE_ABSENT/, 'REPLACED: the missing-op refusal is gone')
-})
 
 // ── Approvals' Approve ───────────────────────────────────────────────────────────────────────────────────────────────────────────
 

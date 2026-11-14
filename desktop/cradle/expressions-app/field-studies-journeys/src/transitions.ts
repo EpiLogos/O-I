@@ -1,7 +1,7 @@
-import {esc} from './icons';
-import {TRANSITION_KINDS,WIPE_DIRECTIONS,DIP_AT_MIN,DIP_AT_MAX,DIP_AT_DEFAULT,SWITCH_MODES,CURVE_TYPES,type TransitionKind,type WipeDirection,type TransitionParams,type TransitionSpec,type SwitchMode,type CurveType,type TransitionCurve,type CurveHandle} from '../../src/engine/transitionMath';
-import {validateCurveEdit,valueAt,type Interpolation} from './propertyTracks';
-import {laneFrame,toPixel,handlePosition,samplePath,moveHandle,PATH_SPACE,type Points,type HandleEnd} from './curveLane';
+import {esc} from './icons.ts';
+import {TRANSITION_KINDS,WIPE_DIRECTIONS,DIP_AT_MIN,DIP_AT_MAX,DIP_AT_DEFAULT,SWITCH_MODES,CURVE_TYPES,type TransitionKind,type WipeDirection,type TransitionParams,type TransitionSpec,type SwitchMode,type CurveType,type TransitionCurve,type CurveHandle} from '../../src/engine/transitionMath.ts';
+import {validateCurveEdit,valueAt,type Interpolation} from './propertyTracks.ts';
+import {laneFrame,toPixel,handlePosition,samplePath,moveHandle,PATH_SPACE,type Points,type HandleEnd} from './curveLane.ts';
 
 /** Lane-3 E11, pure logic: the typed transition per seam, its validation, the seam glyph and chooser HTML, and the timeline
  * write. The arithmetic the production compositor uses (dip weights, the wipe's held rectangle, the pass parameters, the
@@ -11,7 +11,7 @@ import {laneFrame,toPixel,handlePosition,samplePath,moveHandle,PATH_SPACE,type P
  * the default every existing document already has, so an unchanged seam keeps the document byte-identical. */
 
 export {TRANSITION_KINDS,WIPE_DIRECTIONS,DIP_AT_MIN,DIP_AT_MAX,DIP_AT_DEFAULT,SWITCH_MODES,CURVE_TYPES,dipWeights,wipeHoldRect,paintedPassParams,srgbUnit,renderTargetAction,transitionColourOf,holdFit,holdSampleUv,compositeMirror}
- from '../../src/engine/transitionMath';
+ from '../../src/engine/transitionMath.ts';
 export type {TransitionKind,WipeDirection,TransitionParams,TransitionSpec,PaintedPassParams,RenderTargetAction,HoldFit,PixelSize,SwitchMode,CurveType,TransitionCurve,CurveHandle}
  from '../../src/engine/transitionMath';
 

@@ -24,12 +24,12 @@
 //
 // Approvals neither reads nor sets the answer to a tool call (§19.14: which acts wait for you "are set on the Scope of the agent that asks
 // (§19.12): its Asks, Wait and On no answer. Approvals shows them and never sets them"; the design draws no `approvals`): it is Scope's
-// Tool calls, the Gateway slot's own `approvals` row read and set on Scope (agentChainDevices.ts gatewayDisclosed, kernel
-// harness_agent_control, which AIKit's gateway has no operation for; designBindings.ts ScopeAsks), and Approvals is handed no Gateway (ticket 788). Its queue
+// Tool calls, the Gateway slot's own `approvals` row read and set on Scope (agentChainDevices.ts gatewayDisclosed, AIKit's Action
+// aikit.gateway.agent, which has no approvals operation; designBindings.ts ScopeAsks), and Approvals is handed no Gateway (ticket 788). Its queue
 // is the shown session's pending consent requests (AIKit's encounter view `permissions`, the Thread's own reading, threadBinding.ts
 // pendingPermissions), each answered with the harness's own choice (allow once, allow always, reject) through the encounter's `permission`
 // verb. Wait and On no answer are the asking agent's Scope's (§19.12), and Approvals "shows them and never sets them" (§19.14): two
-// readings, which no owner reports yet (Hermes' approvals.timeout is not a harness_agent_control field, harnessAgentControl.ts:15-26), so
+// readings, which no owner reports yet (Hermes' approvals.timeout is no aikit.gateway.agent input, harnessAgentControl.ts:7-11), so
 // they stand absent with the reading they wait for and no write of them is taken (ticket 804); the proposals are
 // Central's source returns, which the kernel reads since lane K1 (`source_returns_read`, central.source-returns/v1: workcellReads.ts) —
 // the pending and applying ones stand in the queue. Approve accepts one through Central's projectcentral.source.return_accept, the person's
@@ -41,8 +41,11 @@
 // the question Factory put to Central; Allow always is refused (a unit decision takes one answer). A skill's proposed revision (O-I 772,
 // manual §19.7 "The proposal waits in Approvals, and in the page") stands as a proposal with its Result for each condition, answered
 // Accept or Discard through the Refining page's own verbs: AIKit's (aikit_write refinement-accept · refinement-discard), and Central's for a
-// Control skill's revision that waits there (designBindings.ts refinementsOf, answerRefinement). Pure, apart from the view holds
-// (designBindings.ts holdView).
+// Control skill's revision that waits there (designBindings.ts refinementsOf, answerRefinement). What a session yielded at its end (O-I
+// ticket 1007, manual §18.2: "it lands on face 2 as a proposal") stands as a proposal from Central's reading of today's Day (the World
+// Model's day slice, dayBinding.ts dayYieldsOf), answered Keep or Drop through Central's receiving Review, and to keep it its Include onto
+// face 2 of today's page (central/devices/centralDeviceWrites.ts keepSessionYield, dropSessionYield, handed in as ports). Pure, apart from
+// the view holds (designBindings.ts holdView).
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
 import type {EncounterReading, NativePermission, PermissionDecision} from '../../../../../../desktop/cradle/src/encounter/client'
@@ -57,6 +60,7 @@ import {pendingPermissions, verbStanding} from './threadBinding'
 import {unitAnswer, unitRows, waitingDecisions, type UnitDecisionsRead} from './unitDecisions'
 import {LEDGER_ID, APPROVALS_ID} from './railTileIds'
 import {NOTIFICATIONS_ABSENT, notificationLedgerOf, type NotifyLedgerAnswer} from '../../widgets/railBindings'
+import type {DayYield} from '../../central/devices/dayBinding'
 
 type Obj = Record<string, unknown>
 const isObj = (value: unknown): value is Obj => !!value && typeof value === 'object' && !Array.isArray(value)
@@ -357,10 +361,10 @@ export const APPROVE_UNWIRED = 'Approve: this chain does not carry Central\'s pr
  * through invoke_action as every answer to a return is (centralWrite), but this chain does not pass it. */
 export const REJECT_UNWIRED = 'Deny: this chain does not carry Central\'s projectcentral.source.return_reject to the return (no rejecting port is passed here).'
 /** The answers to a review and a recognition (§19.14 "What waits"), each refused with what Approvals is not handed or the op it lacks: no
- * review row stands in the queue (the take you choose to stand is chosen in the take lanes, through Factory's factory_owner
- * attempt-receiving: owners/attemptTakes.ts, factoryTakes.ts), and no recognition row (the Run's return is the journey reading the Run map
+ * review row stands in the queue (the take you choose to stand is chosen in the take lanes, through Factory's factory.attempt.choose:
+ * owners/attemptTakes.ts, factoryTakes.ts), and no recognition row (the Run's return is the journey reading the Run map
  * reads, which carries Recognise and Close: runMapBinding.ts). */
-const NO_REVIEW = 'no review waits in this queue: Approvals is not handed the take you chose to stand (the take lanes choose it through Factory\'s factory_owner attempt-receiving, agent/factoryTakes.ts), so no review row stands to answer.'
+const NO_REVIEW = 'no review waits in this queue: Approvals is not handed the take you chose to stand (the take lanes choose it through Factory\'s factory.attempt.choose, agent/factoryTakes.ts), so no review row stands to answer.'
 const NO_RECOGNITION = 'no recognition waits in this queue: Approvals is not handed the journey reading\'s returns (the Run map reads the Run and carries Recognise and Close: agent/devices/runMapBinding.ts).'
 export const APPROVALS_ANSWERS_REFUSED: Readonly<Record<string, string>> = {
   confirm: `Confirm: ${NO_REVIEW}`,
@@ -401,6 +405,10 @@ export interface ApprovalsInput {
   readonly refinements?: AikitAnswer | null
   /** AIKit's settings of the shown session (its Scope's Wait and On no answer, and what its executor did with its asks); null while unread. */
   readonly settings?: Pick<EncounterSessionSettingsReading, 'track' | 'asks'> | null
+  /** What today's sessions yielded at their end (O-I ticket 1007), as Central's reading of today's Day holds them (the World Model's day
+   * slice: dayBinding.ts dayYieldsOf), with the revision of today's page a kept one lands on (todaysPageRevisionOf), or why they are not
+   * read. Absent: not read here. */
+  readonly yields?: {readonly rows: readonly DayYield[]; readonly pageRevision: string | null} | {readonly unread: string} | null
 }
 
 /** A proposed revision's id in the queue. */
@@ -419,6 +427,25 @@ export function refinementRows(refinements: readonly Refinement[], nowUnixMs: nu
 }
 const refinementsRead = (input: ApprovalsInput): Refinement[] | null =>
   (input.refinements?.status === 'answered' ? refinementsOf(input.refinements.value) : null)
+
+/** What a session yielded, as the queue's id of it. */
+export const YIELD_ROW = 'yield:'
+const counted = (n: number, one: string) => `${n} ${one}${n === 1 ? '' : 's'}`
+/** What today's sessions yielded at their end that waits for you, as the queue's proposals (O-I ticket 1007): each yield Central keeps
+ * pending, {id yield:<its return>, kind proposal, who (the session's agent, else its session), text (what it yielded), where (face 2 of
+ * today's Day), session, age (seconds since it was filed), yielded {session, receipts, changes, account}}. A kept, dropped or unread one
+ * waits no more. Pure. */
+export function yieldRows(rows: readonly DayYield[], tracks: readonly AgentSessionTrack[] | null | undefined, nowUnixMs: number | undefined): Record<string, Value>[] {
+  return rows.filter(row => row.status === 'pending' && !row.unread).map(row => {
+    const track = tracks?.find(item => item.sessionRef === row.session && !item.group)
+    return {id: `${YIELD_ROW}${row.returnRef}`, kind: 'proposal', who: track?.agentName ?? track?.agentRef ?? row.session,
+      text: `What it yielded at its end: ${counted(row.receipts, 'receipt')}, ${counted(row.changes, 'change')}`, where: 'Today\'s Day · face 2',
+      session: track?.purpose ?? row.session, ...(row.filedAtUnixMs !== null && nowUnixMs ? {age: Math.max(0, Math.round((nowUnixMs - row.filedAtUnixMs) / 1000))} : {}),
+      yielded: {session: row.session, receipts: row.receipts, changes: row.changes, ...(row.account ? {account: row.account} : {})}} as unknown as Record<string, Value>
+  })
+}
+/** The yields as the queue holds them: the rows when read, null when not read or not handed here. */
+const yieldsRead = (input: ApprovalsInput) => (input.yields && 'rows' in input.yields ? input.yields : null)
 
 /** The tool a consent request names (its tool call's kind or title). */
 function toolOf(request: NativePermission): string | undefined {
@@ -491,8 +518,10 @@ export function approvalsValues(input: ApprovalsInput): Values {
   const units = input.units ? unitRows(input.units, input.session, input.nowUnixMs) : null
   const read = refinementsRead(input)
   const refined = read ? refinementRows(read, input.nowUnixMs) : null
-  if (requests || proposals || units || refined) {
-    const rows = [...(proposals ?? []), ...(refined ?? []), ...(units ?? []), ...(requests ?? [])]
+  const yields = yieldsRead(input)
+  const yielded = yields ? yieldRows(yields.rows, input.tracks, input.nowUnixMs) : null
+  if (requests || proposals || units || refined || yielded) {
+    const rows = [...(proposals ?? []), ...(yielded ?? []), ...(refined ?? []), ...(units ?? []), ...(requests ?? [])]
     values.queue = JSON.stringify(rows)
     values.light = rows.length ? 'lit' : 'dark'
   }
@@ -512,8 +541,8 @@ export interface ApprovalsPorts {
   /** Decline one returned proposal through Central (projectcentral.source.return_reject {project, return_ref}), with the row as Central lists
    * it. Rejects with Central's words. Absent: Deny on a proposal stands disabled. */
   readonly reject?: (row: SourceReturnEntry) => Promise<unknown>
-  /** Answer one unit decision's question through Central's receiving Review (the kernel's `receiving` op, the person's press), in the
-   * register its return belongs to. Absent: no carrier stands. */
+  /** Answer one unit decision's question through Central's receiving Review (`central.receiving.review` by the kernel's `act`, the
+   * person's press), in the register its return belongs to. Absent: no carrier stands. */
   readonly answerUnit?: (project: string | null, review: {kind: 'review'; return_ref: string; expected_return_revision: string; disposition: 'answered'; answer: string}) => Promise<unknown>
   /** Answer a skill's proposed revision through AIKit (aikit_write refinement-accept · refinement-discard), the Refining page's own verbs.
    * Absent: no carrier stands. */
@@ -524,7 +553,19 @@ export interface ApprovalsPorts {
   /** Open a skill's proposed revision where it belongs, the Skillset rack's Refining page with its member chosen (designBindings.ts
    * openRefinement). Absent: Open on a refinement refuses saying so. */
   readonly openRefinement?: (member: string) => void | Promise<void>
+  /** Keep what a session yielded: Central's receiving Review accepting its Return on today's page as read, then its Include onto face 2
+   * of that page (centralDeviceWrites.ts keepSessionYield, the person's presses). Absent: Keep stands disabled. */
+  readonly keepYield?: (row: DayYield, pageRevision: string) => Promise<unknown>
+  /** Drop it: Central's receiving Review rejecting its Return (centralDeviceWrites.ts dropSessionYield). Absent: Drop stands disabled. */
+  readonly dropYield?: (row: DayYield) => Promise<unknown>
 }
+
+/** Keep and Drop where the chain hands no hand that answers a session's yield. */
+export const KEEP_UNWIRED = 'Keep: this chain does not carry Central\'s receiving Review and Include to what a session yielded (no keeping port is passed here).'
+export const DROP_UNWIRED = 'Drop: this chain does not carry Central\'s receiving Review to what a session yielded (no dropping port is passed here).'
+/** Keep or Drop on a yield where the yields are not read: Central's words for why, else that they are not handed here. */
+const yieldsUnread = (verb: string, input: ApprovalsInput) =>
+  `${verb}: ${input.yields && 'unread' in input.yields ? input.yields.unread : 'what today\'s sessions yielded is not read here'}, so no yield stands to answer.`
 
 /** Accept and Discard on a refinement where no carrier stands. */
 export const REFINE_UNWIRED = 'The kernel carrier is unavailable here, so AIKit cannot be asked (aikit_write refinement-accept · refinement-discard).'
@@ -566,7 +607,10 @@ export function approvalsBinding(input: ApprovalsInput, ports: ApprovalsPorts, i
   if (absent || unread) standing.queue = {disabled: absent ?? `Central's returned work of these projects was not read: ${unread}`}
   for (const [key, why] of Object.entries(APPROVALS_ANSWERS_REFUSED)) standing[key] = {disabled: why}
   if (!ports.refine) for (const key of ['refineAccept', 'refineDiscard']) standing[key] = {disabled: REFINE_UNWIRED}
+  if (!ports.keepYield) standing.keep = {disabled: KEEP_UNWIRED}
+  if (!ports.dropYield) standing.drop = {disabled: DROP_UNWIRED}
   const refinements = refinementsRead(input)
+  const yields = yieldsRead(input)
   return {
     // `id` is the chain's own (Factory's Main track, or Central's: CentralDevices.tsx); the view's settings are the one Approvals'.
     id,
@@ -574,7 +618,7 @@ export function approvalsBinding(input: ApprovalsInput, ports: ApprovalsPorts, i
     standing,
     local: Object.fromEntries(APPROVALS_LOCAL.map(key => [key, (value: Value | undefined) => holdView(APPROVALS_ID, key, value)])),
     writes: key => key === 'allowOnce' || key === 'allowAlways' || key === 'deny' || key === 'approve' || key === 'reject' || key in APPROVALS_REFUSE
-      || key in APPROVALS_ANSWERS_REFUSED || key === 'refineAccept' || key === 'refineDiscard' || key === 'open',
+      || key in APPROVALS_ANSWERS_REFUSED || key === 'refineAccept' || key === 'refineDiscard' || key === 'keep' || key === 'drop' || key === 'open',
     write: async (changes: readonly ValueChange[]) => {
       for (const {key, value} of changes) {
         if (key === 'allowOnce' || key === 'allowAlways' || key === 'deny') {
@@ -618,6 +662,19 @@ export function approvalsBinding(input: ApprovalsInput, ports: ApprovalsPorts, i
           const row = refinements?.find(item => item.member === member)
           if (!row) throw Error(`${member}: no proposed revision of ${member} stands in AIKit's list.`)
           await answerRefinement(row, key === 'refineAccept' ? 'accept' : 'discard', {write: ports.refine, central: ports.refineCentral})
+          continue
+        }
+        if (key === 'keep' || key === 'drop') {
+          // What a session yielded, as Central lists it in today's Day now: kept onto face 2 of today's page as it was read, or dropped.
+          const verb = key === 'keep' ? 'Keep' : 'Drop'
+          if (key === 'keep' ? !ports.keepYield : !ports.dropYield) throw Error(key === 'keep' ? KEEP_UNWIRED : DROP_UNWIRED)
+          if (!yields) throw Error(yieldsUnread(verb, input))
+          const ref = typeof value === 'string' && value.startsWith(YIELD_ROW) ? value.slice(YIELD_ROW.length) : String(value)
+          const row = yields.rows.find(item => item.returnRef === ref)
+          if (!row || row.status !== 'pending') throw Error(`${verb}: that yield waits no more among what today's Day lists now.`)
+          if (key === 'drop') { await ports.dropYield!(row); continue }
+          if (!yields.pageRevision) throw Error('Keep: today\'s page is not read, so what was yielded cannot land on its face 2; nothing was kept.')
+          await ports.keepYield!(row, yields.pageRevision)
           continue
         }
         if (key === 'open') {

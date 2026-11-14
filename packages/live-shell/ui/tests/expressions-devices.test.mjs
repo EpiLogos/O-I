@@ -4,7 +4,8 @@ import {register} from 'node:module'
 
 // T-DEVICES-EXPRESSIONS: the Expressions field devices (physics, pointer, relational, medium, contacts, morph, focus, colour, ink,
 // depth, resonance) as devices of the runtime — compact on the rack, whole in the pool, full in a pane — all through DeviceView,
-// over the retained editor's reading and its one apply. Loader as live-browser-chain.test.mjs.
+// over the retained editor's reading with the Set's Studio laid over it, each change one write of the Studio's act (O-I ticket 1008).
+// Loader as live-browser-chain.test.mjs.
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
 register(`data:text/javascript,${encodeURIComponent(`
 import ts from ${JSON.stringify(compiler)};
@@ -139,12 +140,12 @@ test('compact is the catalogue\'s four most-played controls in its order, at mos
   }
 })
 
-test('owners write, faces read: every row names the owner\'s write path, in the grammar, and a device without an owner to write is only readings', () => {
+test('owners write, faces read: every row names the Studio\'s act it writes through, in the grammar, and a device without an owner to write is only readings', () => {
   for (const family of FIELD) {
     const device = build(family, reading(), async () => ({ok: true}))
     assert.equal(typeof device.submit, 'function')
     for (const row of device.rows) {
-      assert.equal(row.writePath, 'kernel:native_expression', `${family}.${row.key}`)
+      assert.equal(row.writePath, 'act:expressions.studio.set', `${family}.${row.key}`)
       assert.ok(isWritePath(row.writePath))
     }
     assert.equal(build(family, reading(), null).submit, undefined, `${family}: the work is busy, so nothing here writes`)
@@ -362,6 +363,179 @@ test('the private owner holds a number while the owner has not answered: cleared
 // ── 5 — one device, three sizes, the same settings ────────────────────────
 
 const draw = (device, size, extra = {}) => renderToStaticMarkup(createElement(DeviceView, {device, size, ...extra}))
+
+// ── 5 — the Set's Studio and its act (O-I ticket 1008) ─────────────────────
+
+// The Studio the kernel's Expressions Set gives the fixture's work (kernel mode_set.rs Studio), its act as the Set lays it, and a runner as
+// the Set's acts run (frame/tracks/kernelSet.ts SetActRunner): each Action it is asked for is kept, and answered as the kernel answers.
+const STUDIO_ACT = {action: 'expressions.studio.set', input: {expression_ref: 'expr:fixture', scene_ref: 'scene:fixture'}, takes: '*',
+  words: 'Expressions\' expressions.studio.set: a value of the field (bind) or a device setting (setting)'}
+const studioOf = (over = {}) => ({scene_ref: 'scene:fixture', values: {}, settings: {}, act: STUDIO_ACT, held: [], ...over})
+const runnerOf = (acts, answer = async () => ({schema: 'oi.expressions-action/v1'})) => ({
+  act: async (action, input) => { acts.push({action, input}); return answer(action, input) },
+  shell: async () => ({ok: false, error: 'no shell setter'})})
+const workOf = (acts, {studio = {}, recording = false, answer} = {}) =>
+  ({expression_ref: 'expr:fixture', studio: studioOf(studio), recording, reenable: null, runner: runnerOf(acts, answer)})
+
+test('O-I ticket 1008: each value a device shows is the Set\'s Studio, laid over the reading\'s Scene; a Studio of another Scene leaves the reading', () => {
+  const speed = binding('toroidalMorph.oscillationSpeed')
+  const r = reading({values: {'toroidalMorph.oscillationSpeed': 1.5, 'toroidalMorph.driveDepth': 0.25}, engine: {mediumPlane: 'vertical'}})
+  const studio = studioOf({values: {[speed.bind]: 2.5}, settings: {'field-setting:mediumPlane': 'horizontal', 'morph-setting:law': 'phi', 'morph-setting:trajectory': 'toroidalHopf'}})
+  const laid = model.studioReading(r, studio)
+  assert.equal(build('morph', laid).values['toroidalMorph.oscillationSpeed'], 2.5, 'the Studio\'s value at its bind')
+  assert.equal(build('morph', laid).values['toroidalMorph.driveDepth'], 0.25, 'a value the Studio does not carry stays the reading\'s')
+  assert.equal(build('physics', laid).values['set:mediumPlane'], 'XZ · horizontal', 'a setting at the path the Studio reads it at')
+  assert.equal(laid.scene.morph.law, 'phi')
+  assert.equal(laid.scene.engine.driveShape, undefined, 'a setting the Studio says the Scene does not hold is taken away')
+  assert.equal(r.scene.engine.mediumPlane, 'vertical', 'the reading is never written')
+  assert.equal(model.studioReading(r, studioOf({scene_ref: 'scene:other', values: {[speed.bind]: 9}})), r, 'another Scene\'s Studio leaves the reading')
+  assert.equal(model.studioReading(r, null), r, 'no Studio leaves the reading')
+})
+
+test('O-I ticket 1008: a change is one write of the Studio\'s act; what the Studio does not take stays the editor\'s; no Studio, or another Scene\'s, is refused in words', async () => {
+  const r = reading(), acts = [], applied = []
+  const host = {reading: r, apply: async (changes, at) => { applied.push({changes, at}); return {ok: true, reading: r} }}
+  const speed = binding('toroidalMorph.oscillationSpeed')
+  const reply = await sender.studioApply(host, workOf(acts), [{kind: 'parameter', target: 'field.' + speed.key, value: 2}], r.basis)
+  assert.deepEqual(reply, {ok: true, reading: r})
+  assert.deepEqual(acts, [{action: 'expressions.studio.set', input: {expression_ref: 'expr:fixture', scene_ref: 'scene:fixture', bind: speed.bind, value: 2}}],
+    'one value: one Action, by its bind')
+  assert.deepEqual(applied, [], 'the editor is asked for nothing')
+  // A device's commit of a value and its light: one Action carrying both.
+  acts.length = 0
+  const morph = build('morph', r, sender.fieldDeviceSend('morph', {apply: (changes, at) => sender.studioApply(host, workOf(acts), changes, at), captureCurrent: current, aperture: () => null}))
+  await morph.submit([{key: 'toroidalMorph.oscillationSpeed', value: 2}, {key: 'enabled', value: true}])
+  assert.equal(acts.length, 1, 'one commit, one Action')
+  assert.deepEqual(acts[0].input.changes, [{bind: speed.bind, value: 2}, {setting: {kind: 'morph-setting', key: 'morphEnabled'}, value: true}])
+  // What the Studio does not carry (here the order of your controls) is the editor's own edit.
+  acts.length = 0
+  const order = {kind: 'chosen-order', entry_ids: ['a', 'b']}
+  await sender.studioApply(host, workOf(acts), [order], r.basis)
+  assert.deepEqual(applied, [{changes: [order], at: r.basis}])
+  assert.deepEqual(acts, [])
+  // Refusals, in words: no Studio of the work, another Scene's, and the kernel's own.
+  const value = [{kind: 'parameter', target: 'field.' + speed.key, value: 2}]
+  assert.deepEqual(await sender.studioApply(host, null, value, r.basis), {ok: false, error: sender.STUDIO_UNREAD})
+  assert.deepEqual(await sender.studioApply(host, workOf(acts, {studio: {scene_ref: 'scene:other'}}), value, r.basis), {ok: false, error: sender.STUDIO_ELSEWHERE})
+  const refused = await sender.studioApply(host, workOf(acts, {answer: async () => { throw Error('expressions.studio.set: out of range') }}), value, r.basis)
+  assert.deepEqual(refused, {ok: false, error: 'expressions.studio.set: out of range'})
+})
+
+test('O-I ticket 1008: the values the kernel holds off their lanes are the Set\'s, each with the Studio\'s value at its bind', () => {
+  const pressure = binding('medium.pressure'), target = 'field.' + pressure.key
+  const work = workOf([], {studio: {held: [target, 'field.unknown'], values: {[pressure.bind]: 7}}})
+  assert.deepEqual(sender.studioHolds(work, {scene_ref: 'scene:fixture'}), [{target, value: 7}])
+  assert.deepEqual(sender.studioHolds(work, {scene_ref: 'scene:other'}), [], 'another Scene holds nothing here')
+  assert.deepEqual(sender.studioHolds(null, {scene_ref: 'scene:fixture'}), [])
+})
+
+test('O-I ticket 1008: the frame holds what the kernel holds: a kernel hold the frame lacks is held, a frame hold the kernel gave back is resumed', () => {
+  const a = 'field.medium.pressure', b = 'field.resonance.damping'
+  assert.deepEqual(sender.holdsToFollow([{target: a, value: 7}], []), [{command: 'live', action: 'hold', target: a, value: 7}])
+  assert.deepEqual(sender.holdsToFollow([{target: a, value: 7}], [{target: a, value: 7}]), [], 'held alike: nothing is sent')
+  assert.deepEqual(sender.holdsToFollow([{target: a, value: 8}], [{target: a, value: 7}]), [{command: 'live', action: 'hold', target: a, value: 8}], 'the kernel\'s value')
+  assert.deepEqual(sender.holdsToFollow([], [{target: b, value: 2}]), [{command: 'automation', action: 'resume', target: b}], 'Re-enable gave it back')
+})
+
+// A clock the drag runs on: time moves only as the test moves it, and each timer due by then runs in order.
+function testClock() {
+  let now = 0
+  const timers = []
+  const clock = {now: () => now, after: (ms, run) => { const timer = {at: now + ms, run}; timers.push(timer); return timer },
+    clear: timer => { const at = timers.indexOf(timer); if (at >= 0) timers.splice(at, 1) }}
+  const advance = to => {
+    for (;;) {
+      timers.sort((a, b) => a.at - b.at)
+      const next = timers[0]
+      if (!next || next.at > to) break
+      timers.shift(); now = next.at; next.run()
+    }
+    now = to
+  }
+  return {clock, advance}
+}
+const settle = () => new Promise(resolve => setImmediate(resolve))
+
+/** Drag a field device's value for `seconds`, the pointer moving every 8 ms (a 120 Hz pointer), then let go: the Actions the drag and its
+ * release send, and the frame's commands. The release is what the host does (deviceHost.tsx): its drafts go to the device's send, then the
+ * drag is told the hand let go. */
+async function dragFor(seconds, {recording, automated = false}) {
+  const {clock, advance} = testClock()
+  const acts = [], frame = [], r = reading()
+  const work = workOf(acts, {recording})
+  const run = async command => { frame.push(command); return {ok: true} }
+  const drag = sender.studioDrag(() => ({run, work, automated: () => automated}), clock)
+  const host = {reading: r, apply: async () => ({ok: true, reading: r})}
+  const send = sender.fieldDeviceSend('morph', {apply: (changes, at) => { const reply = sender.studioApply(host, work, changes, at); drag.settled(reply); return reply },
+    captureCurrent: current, aperture: () => null})
+  const device = model.expressionsFieldDevice(r, 'morph', send, drag)
+  const key = 'toroidalMorph.oscillationSpeed', end = seconds * 1000
+  let moves = 0, value = 1
+  for (let at = 0; at <= end; at += 8) { advance(at); value = 1 + at / end; device.drag([{key, value}]); moves++ }
+  await device.submit([{key, value}])
+  device.drag(null)
+  advance(end + 100)
+  for (let i = 0; i < 5; i++) await settle()
+  return {moves, acts, frame, samples: acts.filter(act => act.input.gesture === 'sample'), writes: acts.filter(act => act.input.gesture === undefined), value}
+}
+
+test('O-I ticket 1008: a 5-second drag while a take records previews on the field, lands one sample in the take each 50 ms at most, and writes once, on its release', async t => {
+  const recorded = await dragFor(5, {recording: true})
+  t.diagnostic(`a 5-second recorded drag: ${recorded.moves} pointer moves; ${recorded.samples.length} sample Actions (gesture: sample, no receipt each); `
+    + `${recorded.writes.length} write Action (its release, the one receipt); ${recorded.frame.filter(command => command.action === 'set').length} previews on the field`)
+  assert.ok(recorded.moves > 600, 'the pointer moved every 8 ms')
+  assert.ok(recorded.samples.length <= 101 && recorded.samples.length >= 95, `at most one sample each 50 ms over 5 s (${recorded.samples.length})`)
+  for (const sample of recorded.samples) {
+    assert.equal(sample.action, 'expressions.studio.set')
+    assert.deepEqual(Object.keys(sample.input).sort(), ['bind', 'expression_ref', 'gesture', 'scene_ref', 'value'], 'a sample is a value of the field, never a setting')
+  }
+  assert.equal(recorded.writes.length, 1, 'the release is the one write')
+  assert.deepEqual(recorded.writes[0].input.value, recorded.value, 'and it writes where the hand let go')
+  assert.ok(recorded.frame.filter(command => command.action === 'set').length >= recorded.samples.length, 'every sample was previewed on the field')
+  assert.deepEqual(recorded.frame.at(-1), {command: 'live', action: 'release'}, 'once the write has answered, the field lets the preview go')
+  const plain = await dragFor(5, {recording: false})
+  assert.equal(plain.samples.length, 0, 'with no take recording, a drag sends no Action while it moves')
+  assert.equal(plain.writes.length, 1, 'its release writes once')
+  const held = await dragFor(1, {recording: false, automated: true})
+  assert.deepEqual(held.frame.slice(-2).map(command => command.action), ['hold', 'release'], 'a value a lane plays is held on the field before the preview is let go, as the kernel holds it')
+})
+
+test('O-I ticket 1008: a release lets the preview go once the field reads its write, or after a while, never before; a refused write at once', async () => {
+  const flush = async () => { for (let i = 0; i < 6; i++) await settle() }
+  const release = async ({refused = false} = {}) => {
+    const {clock, advance} = testClock()
+    const acts = [], frame = [], r = reading()
+    const work = workOf(acts, refused ? {answer: async () => { throw new Error('the kernel refused it') }} : {})
+    let revision = 4, at = 0
+    const run = async command => { frame.push(command); return {ok: true} }
+    const drag = sender.studioDrag(() => ({run, work, automated: () => false, revision: () => revision}), clock)
+    const host = {reading: r, apply: async () => ({ok: true, reading: r})}
+    const send = sender.fieldDeviceSend('morph', {apply: (changes, basis) => { const reply = sender.studioApply(host, work, changes, basis); drag.settled(reply); return reply },
+      captureCurrent: current, aperture: () => null})
+    const device = model.expressionsFieldDevice(r, 'morph', send, drag)
+    device.drag([{key: 'toroidalMorph.oscillationSpeed', value: 1.5}])
+    // A refused write is the device's refusal to say (its submit rejects with the kernel's words).
+    await device.submit([{key: 'toroidalMorph.oscillationSpeed', value: 1.5}]).catch(() => {})
+    device.drag(null)
+    const after = async ms => { at += ms; advance(at); await flush() }
+    const released = () => frame.some(command => command.action === 'release')
+    return {after, released, read: () => { revision = 5 }}
+  }
+  const read = await release()
+  await read.after(10); await read.after(400)
+  assert.equal(read.released(), false, 'the field still shows the revision before the write: the preview stands over it')
+  read.read()
+  await read.after(60)
+  assert.equal(read.released(), true, 'the field reads the write: the preview is let go')
+  const unread = await release()
+  await unread.after(10); await unread.after(sender.SHOWN_WITHIN_MS - 100)
+  assert.equal(unread.released(), false)
+  await unread.after(200)
+  assert.equal(unread.released(), true, `the preview is let go after ${sender.SHOWN_WITHIN_MS} ms, read or not`)
+  const refused = await release({refused: true})
+  await refused.after(10)
+  assert.equal(refused.released(), true, 'a refused write moves nothing, so the preview is let go at once')
+})
 
 test('one device draws compact, whole and full over the same rows and the same light, and a new reading moves all three', () => {
   const entry = entryOf('medium')

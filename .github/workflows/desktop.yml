@@ -6,8 +6,12 @@ name: O:I desktop
 # and the native Tauri host. The legacy everyday desktop (CradleFrame and the
 # surfaces only it reaches) is frozen while its replacement is built: no job
 # here exercises it, and its own workflows run only on dispatch. The CLI is
-# gated by verify.yml; kernel tests that need built owner executables are
-# marked ignored and run through `oi dev gate`.
+# gated by verify.yml. Kernel tests that need the installed owners are marked
+# ignored, and `cargo test` here does not run them: the foundation's five acts
+# (desktop/cradle/kernel/tests/foundation.rs) run in the landing tier through
+# gates/foundation/run.sh on a machine that holds the owners, and `oi dev gate`
+# runs them against the owner build it makes; the other ignored tests run only
+# when asked by name (`cargo test --test <file> -- --ignored`).
 
 on:
   pull_request:

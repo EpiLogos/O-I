@@ -114,10 +114,13 @@ pub(crate) struct PreparedPlace {
 impl PreparedPlace {
     /// The owners' answers, outside the kernel lock.
     pub(crate) fn resolve(self) -> Result<Place, String> {
-        let world = self.world.read()?;
-        let cwd = location(&world, (!self.project.is_empty()).then_some(&*self.project))?;
-        let project_ref = project_ref(&self.client, &self.aikit, &self.reads, &self.project, &cwd)?;
-        Ok(Place { cwd, project_ref })
+        place_of(
+            &self.client,
+            &self.aikit,
+            &self.reads,
+            &self.world.read()?,
+            &self.project,
+        )
     }
 }
 
@@ -146,6 +149,21 @@ impl Kernel {
         let project_ref = self.agent_project_ref(project, &cwd)?;
         Ok(Place { cwd, project_ref })
     }
+}
+
+/// Where a conversation is held (O-I #1003): the World's root for the root World (an empty Project label), else the
+/// disclosed Project's location, with the ProjectRef bound there ([`project_ref`]). Provisioning a conversation and every
+/// encounter read of it resolve the one place, so a conversation the root World opens is the one its reads find.
+pub(crate) fn place_of(
+    client: &CentralClient,
+    aikit: &agency::Client,
+    reads: &Mutex<read_cache::OwnerReadCache>,
+    world: &Value,
+    project: &str,
+) -> Result<Place, String> {
+    let cwd = location(world, (!project.is_empty()).then_some(project))?;
+    let project_ref = project_ref(client, aikit, reads, project, &cwd)?;
+    Ok(Place { cwd, project_ref })
 }
 
 /// The working directory an agent op runs in: the World's root for the root
@@ -260,8 +278,6 @@ enum AgentRead {
     },
     Settings {
         agent_session: String,
-        request: Option<Value>,
-        expected_revision: Option<String>,
     },
     /// The owner's task creation (`encounter-task-configure`): a write, its
     /// request verbatim.
@@ -542,21 +558,13 @@ impl PreparedAgent {
                     || self.aikit.task_read(&cwd, agent_session),
                 )?,
             },
-            AgentRead::Settings {
-                agent_session,
-                request,
-                expected_revision,
-            } => {
+            AgentRead::Settings { agent_session } => {
                 let project_ref =
                     project_ref(&self.client, &self.aikit, &self.reads, project, &cwd)?;
                 KernelOpResult::EncounterSessionSettingsReading {
-                    data: self.aikit.session_settings(
-                        &cwd,
-                        &project_ref,
-                        agent_session,
-                        request.as_ref(),
-                        expected_revision.as_deref(),
-                    )?,
+                    data: self
+                        .aikit
+                        .session_settings(&cwd, &project_ref, agent_session)?,
                 }
             }
             AgentRead::TaskConfigure {
@@ -819,9 +827,9 @@ impl Kernel {
     pub fn prepare_agent_read(&mut self, op: &KernelOp) -> Result<Option<PreparedAgent>, String> {
         let (project, read) = match op {
             KernelOp::AgencyRead { project } => (Some(project.clone()), AgentRead::Agency),
-            KernelOp::Encounter { project, request } => {
-                (Some(project.clone()), AgentRead::Encounter(request.clone()))
-            }
+            KernelOp::Encounter {
+                project, request, ..
+            } => (Some(project.clone()), AgentRead::Encounter(request.clone())),
             KernelOp::EncounterTaskRead {
                 project,
                 agent_session,
@@ -834,14 +842,10 @@ impl Kernel {
             KernelOp::EncounterSessionSettings {
                 project,
                 agent_session,
-                request,
-                expected_revision,
             } => (
                 Some(project.clone()),
                 AgentRead::Settings {
                     agent_session: agent_session.clone(),
-                    request: request.clone(),
-                    expected_revision: expected_revision.clone(),
                 },
             ),
             KernelOp::EncounterTaskConfigure {
@@ -1409,6 +1413,7 @@ else:
                 after: 0,
                 limit: 8,
             },
+            channel: Default::default(),
         };
         let answered = kernel.prepare_agent_read(&read).unwrap().unwrap().execute();
         assert!(!kernel.encounter_refs.contains_key("agent-session/x"));
@@ -1426,6 +1431,7 @@ else:
             request: agency::EncounterRequest::Status {
                 agent_session: "agent-session/elsewhere".into(),
             },
+            channel: Default::default(),
         };
         assert!(kernel.apply(outside).is_err());
         assert_eq!(aikit.calls("encounter"), 1);
@@ -1447,47 +1453,20 @@ else:
         let owner = crate::tests::FakeOwner::spawn_counter("session-settings");
         let aikit = FakeAikit::new("session-settings");
         let mut kernel = owner.kernel_with_agency(aikit.client());
-        let settings = |agent_session: &str, request: Option<Value>, expected: Option<&str>| {
-            KernelOp::EncounterSessionSettings {
-                project: String::new(),
-                agent_session: agent_session.into(),
-                request,
-                expected_revision: expected.map(Into::into),
-            }
+        // A read: a change to the settings is AIKit's Action aikit.session.settings, which the kernel's `act` carries (O-I #1006).
+        let settings = |agent_session: &str| KernelOp::EncounterSessionSettings {
+            project: String::new(),
+            agent_session: agent_session.into(),
         };
-        let read = kernel
-            .apply(settings("agent-session/x", None, None))
-            .unwrap();
+        let read = kernel.apply(settings("agent-session/x")).unwrap();
         assert!(matches!(
             read.result,
             KernelOpResult::EncounterSessionSettingsReading { ref data }
                 if data["agent_session"] == "agent-session/x" && data["request"].is_null()
         ));
-        let change = serde_json::json!({"track": {"solo": true}});
-        let written = kernel
-            .apply(settings(
-                "agent-session/x",
-                Some(change.clone()),
-                Some("session-settings/1"),
-            ))
-            .unwrap();
-        assert!(matches!(
-            written.result,
-            KernelOpResult::EncounterSessionSettingsReading { ref data }
-                if data["request"] == change && data["expected"] == "session-settings/1"
-        ));
-        // Another Project's session and a revision without a change never reach the owner.
-        assert!(kernel
-            .apply(settings("agent-session/elsewhere", Some(change), None))
-            .is_err());
-        assert!(kernel
-            .apply(settings(
-                "agent-session/x",
-                None,
-                Some("session-settings/1")
-            ))
-            .is_err());
-        assert_eq!(aikit.calls("encounter-session-settings"), 2);
+        // Another Project's session never reaches the owner.
+        assert!(kernel.apply(settings("agent-session/elsewhere")).is_err());
+        assert_eq!(aikit.calls("encounter-session-settings"), 1);
         // Many tracks ask once; an empty list and another Project's session never reach the owner.
         let list = |agent_sessions: &[&str]| KernelOp::EncounterSessionSettingsList {
             project: String::new(),
@@ -1505,7 +1484,7 @@ else:
         assert!(kernel
             .apply(list(&["agent-session/x", "agent-session/elsewhere"]))
             .is_err());
-        assert_eq!(aikit.calls("encounter-session-settings"), 3);
+        assert_eq!(aikit.calls("encounter-session-settings"), 2);
     }
 
     #[test]

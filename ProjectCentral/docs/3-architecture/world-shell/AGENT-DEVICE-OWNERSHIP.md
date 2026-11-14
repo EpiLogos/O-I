@@ -75,11 +75,13 @@ with `ParamAddress`) is the neutral shape going forward.
 §14 parameter addresses: every agent-shell control renders through
 `src/inhabitants/agentParamAddresses.ts` — one typed address
 `{family, device-instance, key, type, range?, unit?, write-path}` per
-control, 28 addresses across the five families (corrected 9 October 2026
+control, 39 addresses across the five families (corrected 9 October 2026
 from 29, verdict fault F4: the table enumerates the parameter-bearing
-controls the devices render — gateway 7 + agent 7 + skillset 4 + world 5 +
-git 5, one-to-one with the pool's rendered rows; the admit lights are the
-rack's readings, not §14 parameters); the device pool and rack
+controls the devices render — gateway 7 + agent 7 + skillset 12 + world 5 +
+git 8, one-to-one with the pool's rendered rows; the admit lights are the
+rack's readings, not §14 parameters; the skillset rack's Refining page
+added eight, and Git / landing's Ahead, Behind and Land as three, O-I
+ticket 1006); the device pool and rack
 derive their rows from the admitted manifests
 (`src/inhabitants/agentDeviceCatalogue.ts`), never a hardcoded table, and
 admit lights are readings (harness binding, roster acceptance, workcell

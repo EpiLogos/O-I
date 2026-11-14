@@ -20,6 +20,7 @@ import {CHAT_PREVIEW_EVENT} from "./previewGate";
 import {PermissionCard} from "./PermissionCard";
 import {StatusLine} from "./StatusLine";
 import type {ConnectionFacts} from "./harness";
+import {agentName as censusAgentName,censusConnections,talkingAgents,useCensus} from "../../agency/census";
 import {editedPaths,inFlightRow,turnStopFromEnd,workMarksOf,type Tape} from "../tape/model";
 import "./chat.css";
 
@@ -91,7 +92,8 @@ export function AgentChat({session,accompanying,project,agentName="World",situat
    * project (kernel `encounter_provision`) and bind it — the composition root
    * sets its binding so the shared observer mounts and the parked draft is
    * applied and sent. Undefined in fixtures: fresh Send there is inert. */
-  onProvision?:(project:string)=>Promise<void>;
+  /** Provision a new conversation in `project` with `agent`, the census agent the person chose (O-I #1003). */
+  onProvision?:(project:string,agent?:string)=>Promise<void>;
   /** A selected live roster identity; otherwise the active profile is read. */
   identity?:AgentIdentityReading;
   /** Developer preview: attachment paths stay local in fixtures, so they are
@@ -138,6 +140,12 @@ export function AgentChat({session,accompanying,project,agentName="World",situat
   const flushed=useRef<string>();
   const heldModel=useRef<{intent?:ModelIntent;stage:"draft"|"model"|"select"|"send";issued?:boolean;retries?:number;failed?:boolean}>({stage:"draft"});
   const [provisioning,setProvisioning]=useState(false);
+  // --- which agent a new conversation is with: the census's agents a person can talk to (O-I #1003); the person's choice, else the first.
+  const census=useCensus(kernel.transport);
+  const starting=talkingAgents(census);
+  const [chosenAgent,setChosenAgent]=useState<string>();
+  const newChatAgent=starting.find(agent=>agent.slug===chosenAgent)?.slug??starting[0]?.slug;
+  const agentsWhy=census.state==="reading"?"Reading the agents on this machine…":census.state==="unavailable"?census.why:starting.length?undefined:"No agent on this machine can be talked to: none starts that AIKit opens a conversation with.";
   const [composerFocusToken,setComposerFocusToken]=useState(0);
   /** The held model choice for the NEXT conversation — persisted, shown by
    * the fresh composer's model chip. */
@@ -212,7 +220,7 @@ export function AgentChat({session,accompanying,project,agentName="World",situat
     if(!onProvision){onMessage?.("Provisioning a new conversation is not available in this view.");return;}
     pendingSend.current=true;heldModel.current={stage:"draft",intent:modelIntent};
     setProvisioning(true);
-    onProvision(provisionProject)
+    onProvision(provisionProject,newChatAgent)
       .catch(error=>{pendingSend.current=false;onMessage?.(refusalWords("Couldn't open a new conversation.",error));})
       .finally(()=>setProvisioning(false));
   };
@@ -320,7 +328,7 @@ export function AgentChat({session,accompanying,project,agentName="World",situat
         <ChatComposer reading={state.reading} draft={state.draft} pending={state.pending} busy={state.busy&&!state.pending} error={state.send?undefined:state.error} editable={!!state.reading&&allowed("draft")}
           promptAllowed={allowed("prompt")&&state.send?.phase!=="checking"} promptReason={action("prompt")?.reason??undefined} cancelAllowed={allowed("cancel")}
           onDraft={actions.change} onSend={send} onCancel={actions.cancel} agentName={agentLabel} sendState={state.send} onRetry={()=>void actions.retrySend()} unreachable={!!state.unreachable}
-          connection={{project:state.project||undefined,onSetup:()=>openAgentSetup({project:state.project||undefined,destination:{owner:"ai-kit",topic:"harness"},reason:state.error??"Harness, model or credential setup",refresh:()=>actions.refreshProviders()}),status,model:state.model,modelActions:{refresh:actions.readModel,select:actions.selectModel},mode:state.mode,onMode:id=>void actions.selectMode(id),currentFacts:connectionFacts,onRefreshProviders:()=>void actions.refreshProviders(),providers:state.providers,resume:state.resume,onProvider:provider=>void actions.connect(provider),onReconnect:provider=>void actions.reconnect(provider),openAllowed:allowed("open"),openReason:action("open")?.reason??undefined}}
+          connection={{project:state.project||undefined,onSetup:()=>openAgentSetup({project:state.project||undefined,destination:{owner:"ai-kit",topic:"harness"},reason:state.error??"Harness, model or credential setup",refresh:()=>actions.refreshProviders()}),status,model:state.model,modelActions:{refresh:actions.readModel,select:actions.selectModel},mode:state.mode,onMode:id=>void actions.selectMode(id),currentFacts:connectionFacts,onRefreshProviders:()=>void actions.refreshProviders(),providers:censusConnections(census,state.providers),resume:state.resume,onProvider:provider=>void actions.connect(provider),onReconnect:provider=>void actions.reconnect(provider),openAllowed:allowed("open"),openReason:action("open")?.reason??undefined}}
           tools={{subject:subject.location?{title:subject.title,attach:()=>attachLocation(subject.location!)}:undefined,pickFiles:attachFiles}}
           draftFailed={state.draftFailed} onRecover={()=>void actions.recover()} paged={state.before!==undefined} onLatest={actions.latest} focusToken={composerFocusToken}/>
       </>
@@ -346,7 +354,8 @@ export function AgentChat({session,accompanying,project,agentName="World",situat
         <ChatComposer reading={undefined} draft={localDraft} pending={false} busy={choosing||provisioning} error={undefined} editable={!choosing&&!provisioning}
           promptAllowed={!choosing&&!provisioning} cancelAllowed={false}
           onDraft={setLocal} onSend={send} onCancel={()=>{}} agentName={agentLabel}
-          connection={{status:undefined,providers:[],resume:undefined,onProvider:()=>{},onReconnect:()=>{},openAllowed:false,openReason:undefined,modelIntent,onModelIntent:chooseModelIntent}}
+          connection={{status:undefined,providers:[],resume:undefined,onProvider:()=>{},onReconnect:()=>{},openAllowed:false,openReason:undefined,modelIntent,onModelIntent:chooseModelIntent,
+            agents:starting.map(agent=>({slug:agent.slug,name:censusAgentName(agent),version:agent.version})),agent:newChatAgent,onAgent:setChosenAgent,agentsWhy}}
           tools={{pickFiles:attachFiles}} drafting provisionProject={provisionProject}
           draftFailed={false} onRecover={()=>{}} paged={false} onLatest={()=>{}} focusToken={composerFocusToken}/>
       </div>}

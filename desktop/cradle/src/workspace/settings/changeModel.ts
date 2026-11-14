@@ -1,10 +1,10 @@
 /**
  * The one change path of Settings (docs/cradle/12-SETTINGS.md §2):
  *
- *   stage (config_desired_hold, or the staged new-chat connection)
+ *   stage (config_desired_hold)
  *     → review (one sheet; the owner's plans are read, their digests kept)
  *     → apply  (re-plan; any digest or staged value that moved since review
- *               refuses as stale; else config_apply + chat_default_hold)
+ *               refuses as stale; else config_apply)
  *     → read back (the owners' own disclosures re-read; a row is "Applied ✓"
  *               only when the readback equals what was asked for).
  *
@@ -14,26 +14,24 @@
 import type {ChangeSetDocument, ConfigResolution, PlanDocument, ScopeAddress} from "../../configuration/contracts";
 import {compactScope} from "../../configuration/contracts";
 import type {ChangeRequest} from "../../configuration/source";
-import {effectiveChatDefault} from "../../configuration/harnessSource";
 import {briefValue, effectInWords, onOff} from "./sectionModel";
 import {harnessName} from "../../agent/chat/harness";
 import {modelDisplayName} from "../../agent/chat/modelPresentation";
 import {MODEL_DEFAULT_SETTING, modelDefaults} from "./harnessCapabilities";
 import {
-  expect, invalidateComposition, invalidateResolutions, loadResolutions, loadSuite, plain, plane, resolutionKey, settingsSnapshot, stageDefaultConnection, watchPairsQuietly,
+  invalidateComposition, invalidateResolutions, loadResolutions, loadSuite, plain, plane, resolutionKey, settingsSnapshot, watchPairsQuietly,
   type SettingsSnapshot,
 } from "./settingsData";
 import type {SettingsPlace} from "./settingsNav";
 
 export const CAPABILITIES_REF = "ai-kit:skills:skills.capabilities";
-export const DEFAULT_CONNECTION_KEY = "chat-default";
 
 export interface StagedChange {
   /** One reviewable line. */
   key: string;
   /** The owner request it rides (several skill toggles can share one). */
   requestKey: string;
-  kind: "config" | "chat-default";
+  kind: "config";
   title: string;
   scopeLabel: string;
   from: string;
@@ -44,7 +42,6 @@ export interface StagedChange {
   place: SettingsPlace;
   request?: ChangeRequest;
   capability?: {id: string; enabled: boolean; scope: ScopeAddress};
-  provider?: string;
 }
 
 export function scopeLabel(scope: ScopeAddress): string {
@@ -64,13 +61,6 @@ export function skillRowId(scope: ScopeAddress, id: string): string {
 }
 export function settingRowId(settingRef: string): string {
   return `setting:${settingRef}`;
-}
-export const DEFAULT_CONNECTION_ROW = "setting:default-connection";
-
-/** The providers' labels, for the connection lines. */
-function providerLabel(data: SettingsSnapshot, id: string): string {
-  const rows = data.suite.state === "ok" && data.suite.value.harness.providers.state === "ok" ? data.suite.value.harness.providers.rows : [];
-  return rows.find((row) => row.id === id)?.label ?? id;
 }
 
 /** Review the actual native choice, not the number of entries in its table. */
@@ -95,13 +85,6 @@ function modelDefaultsInWords(data: SettingsSnapshot, value: unknown): string {
   return names.length ? names.sort((a, b) => a.localeCompare(b)).join("; ") : "Harness default";
 }
 
-/** The connection a new chat opens with right now (the owner rows' law). */
-export function currentConnection(data: SettingsSnapshot): string | null {
-  if (data.suite.state !== "ok") return null;
-  const providers = data.suite.value.harness.providers.state === "ok" ? data.suite.value.harness.providers.rows : [];
-  return effectiveChatDefault(providers, data.suite.value.harness.heldDefault?.value ?? null)?.provider ?? null;
-}
-
 function activeIds(resolution: ConfigResolution | undefined): Set<string> {
   const value = resolution?.native.active?.value;
   return new Set(Array.isArray(value) ? value.filter((id): id is string => typeof id === "string") : []);
@@ -122,16 +105,6 @@ export function isStaged(resolution: ConfigResolution): boolean {
 export function stagedChanges(data: SettingsSnapshot): StagedChange[] {
   const changes: StagedChange[] = [];
   const registry = data.registry.state === "ok" ? data.registry.value : null;
-  if (data.stagedDefault) {
-    const from = currentConnection(data);
-    changes.push({
-      key: DEFAULT_CONNECTION_KEY, requestKey: DEFAULT_CONNECTION_KEY, kind: "chat-default",
-      title: "Default connection for new chats", scopeLabel: "This machine",
-      from: from ? providerLabel(data, from) : "the suite's default", to: providerLabel(data, data.stagedDefault),
-      effectKind: "new-chats", effect: effectInWords("new-chats"), rowId: DEFAULT_CONNECTION_ROW,
-      place: {kind: "section", id: "harnesses"}, provider: data.stagedDefault,
-    });
-  }
   for (const resolution of Object.values(data.resolutions)) {
     const desired = resolution.desired;
     if (!isStaged(resolution) || !desired) continue;
@@ -227,10 +200,6 @@ export async function stageSetting(request: ChangeRequest): Promise<void> {
 
 /** Undo one staged line. */
 export async function undoChange(change: StagedChange): Promise<void> {
-  if (change.kind === "chat-default") {
-    stageDefaultConnection(null);
-    return;
-  }
   if (change.capability) {
     const data = settingsSnapshot();
     const resolution = data.resolutions[resolutionKey(CAPABILITIES_REF, change.capability.scope)];
@@ -247,8 +216,7 @@ export async function discardAll(changes: StagedChange[]): Promise<void> {
   for (const change of changes) {
     if (seen.has(change.requestKey)) continue;
     seen.add(change.requestKey);
-    if (change.kind === "chat-default") stageDefaultConnection(null);
-    else if (change.request) await discard(change.request.setting_ref, change.request.scope);
+    if (change.request) await discard(change.request.setting_ref, change.request.scope);
   }
   await loadResolutions();
 }
@@ -285,7 +253,7 @@ function uniqueRequests(changes: StagedChange[]): [string, ChangeRequest][] {
 }
 
 function stagedValue(change: StagedChange): string {
-  return change.kind === "chat-default" ? change.provider ?? "" : JSON.stringify(change.request?.value ?? change.request?.secret_reference ?? null);
+  return JSON.stringify(change.request?.value ?? change.request?.secret_reference ?? null);
 }
 
 async function planAll(changes: StagedChange[]): Promise<{digests: Record<string, string>; refusals: Record<string, string>}> {
@@ -342,28 +310,19 @@ export async function applyReviewed(reviewed: ReviewedPlan): Promise<ApplyOutcom
         applyError = plain(cause);
       }
     }
-    const connection = reviewed.changes.find((change) => change.kind === "chat-default");
-    let connectionError: string | null = null;
-    if (connection?.provider) {
-      try {
-        await expect({op: "chat_default_hold", provider: connection.provider}, "chat_default_held");
-      } catch (cause) {
-        connectionError = plain(cause);
-      }
-    }
     // 4 · read back from the owners (every applied pair is read, staged or not).
     watchPairsQuietly(uniqueRequests(reviewed.changes).map(([, request]) => ({setting_ref: request.setting_ref, scope: request.scope})));
     invalidateComposition();
     invalidateResolutions();
     // Model defaults render and confirm from native resolutions. Other settings
-    // can change suite facts (including skill activation), and new-chat defaults
-    // need heldDefault. Avoid that full disclosure only for model-default Apply.
-    const needsSuite = reviewed.changes.some((change) => change.kind === "chat-default" || change.request?.setting_ref !== MODEL_DEFAULT_SETTING);
+    // can change suite facts (including skill activation). Avoid that full
+    // disclosure only for model-default Apply.
+    const needsSuite = reviewed.changes.some((change) => change.request?.setting_ref !== MODEL_DEFAULT_SETTING);
     await Promise.all([loadResolutions(), ...(needsSuite ? [loadSuite()] : [])]);
     const after = settingsSnapshot();
     const rows: Record<string, RowResult> = {};
     for (const change of reviewed.changes) {
-      rows[change.key] = readBack(change, reviewed, after, changeset, applyError, connectionError);
+      rows[change.key] = readBack(change, reviewed, after, changeset, applyError);
     }
     // 5 · release what the owners confirmed.
     const confirmed = new Set(uniqueRequests(reviewed.changes).map(([key]) => key));
@@ -371,7 +330,6 @@ export async function applyReviewed(reviewed: ReviewedPlan): Promise<ApplyOutcom
     for (const [key, request] of uniqueRequests(reviewed.changes)) {
       if (confirmed.has(key)) await (await plane()).discardDesired(request.setting_ref, request.scope).catch(() => undefined);
     }
-    if (connection && rows[connection.key].state === "applied") stageDefaultConnection(null);
     await loadResolutions();
     const appliedCount = Object.values(rows).filter((row) => row.state === "applied").length;
     return {kind: "applied", rows, appliedCount, total: reviewed.changes.length, readAt: Date.now()};
@@ -384,12 +342,7 @@ function sameValue(a: unknown, b: unknown): boolean {
   return JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
 }
 
-function readBack(change: StagedChange, reviewed: ReviewedPlan, after: SettingsSnapshot, changeset: ChangeSetDocument | null, applyError: string | null, connectionError: string | null): RowResult {
-  if (change.kind === "chat-default") {
-    if (connectionError) return {state: "refused", reason: connectionError};
-    const held = after.suite.state === "ok" ? after.suite.value.harness.heldDefault?.value : undefined;
-    return held === change.provider ? {state: "applied"} : {state: "partial", reason: "The new connection didn't read back as held."};
-  }
+function readBack(change: StagedChange, reviewed: ReviewedPlan, after: SettingsSnapshot, changeset: ChangeSetDocument | null, applyError: string | null): RowResult {
   const refusal = reviewed.refusals[change.requestKey];
   if (refusal) return {state: "refused", reason: refusal};
   if (applyError) return {state: "refused", reason: applyError};

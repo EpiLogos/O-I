@@ -82,7 +82,6 @@ export const DEVICE_STATES: Readonly<Record<string, readonly DeviceView[]>> = {
   'techne:lens': CHAIN_AND_PANE,
   'techne:palace': CHAIN_AND_PANE,
   'widgets:files': RAIL_AND_PANE_VIEWS,
-  'widgets:nows': RAIL_AND_PANE_VIEWS,
   // The Terminal stands on no chain (widgets/railDevices.tsx): its tile on the rail and its Full in a pane (§17.9, §16.3).
   'widgets:terminal': RAIL_AND_PANE_VIEWS,
   'widgets:trail': RAIL_AND_PANE_VIEWS,

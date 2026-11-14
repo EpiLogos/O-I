@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {readFile} from 'node:fs/promises'
 import {register} from 'node:module'
+import {worldsSliceOf} from './support/worldModelFixture.mjs'
 
 // Lane Q: Settings reads its registry, its resolutions and the owner's apply qualification when Settings is opened (or its
 // reading is first asked for), not at boot — the panel stands mounted, hidden, for the whole session. Channel: scripted over
@@ -98,16 +99,16 @@ test('the Preferences workspace reads its registry and resolutions only once it 
   assert.match(panel, /active=\{visible\}/, 'the always-mounted panel passes whether it is open')
 })
 
-test('O-I #758: the native adapter offers the world\'s projects as scopes, from Central\'s disclosure (world_browse), asked only when asked for', async () => {
+test('O-I #758: the native adapter offers the world\'s projects as scopes, from Central\'s disclosure (the World Model\'s worlds), asked only when asked for', async () => {
   const transport = {kind: 'bridge', url: 'http://bridge.test/settings-projects'}
   const stub = bridge(transport.url, {
-    world_browse: {ok: true, outcome: {result: 'world_read', snapshot: {navigator: {root: {work: {projects: [{name: 'O-I'}, {name: 'Central'}, {name: 'O-I'}]}}}}}},
+    model_subscribe: worldsSliceOf({work: {projects: [{name: 'O-I'}, {name: 'Central'}, {name: 'O-I'}]}}),
   })
   try {
     const adapter = await connectNativeSettings(transport, {ownerEpoch: 'epoch-p', isCurrent: () => true})
     assert.deepEqual(stub.calls, [], 'connecting asks nothing')
     assert.deepEqual(await adapter.projectChoices(), [
       {address: {scope_kind: 'project', scope_ref: 'O-I'}, title: 'O-I'}, {address: {scope_kind: 'project', scope_ref: 'Central'}, title: 'Central'}])
-    assert.deepEqual(stub.calls, ['world_browse'])
+    assert.deepEqual(stub.calls, ['model_subscribe'])
   } finally { stub.restore() }
 })

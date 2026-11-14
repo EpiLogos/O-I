@@ -111,10 +111,10 @@ test('1R-surface.10: a frame not hosted posts nothing, not even to itself', () =
   assert.deepEqual(posted, []);
 });
 
-// Every module the frame's pages (index, legacy, library, render) load, type-only imports aside.
+// Every module the frame's pages (index, library) load, type-only imports aside.
 const strip = source => source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"`\\])\/\/[^\n]*/g, '$1');
 function framePagesModules() {
-  const pages = ['index.html', 'legacy.html', 'library.html', 'render.html'];
+  const pages = ['index.html', 'library.html'];
   const entries = pages.flatMap(page => [...readFileSync(join(app, page), 'utf8').matchAll(/<script[^>]*\bsrc="\/([^"]+)"/g)].map(m => join(app, m[1])));
   assert.equal(entries.length, pages.length);
   const file = base => {

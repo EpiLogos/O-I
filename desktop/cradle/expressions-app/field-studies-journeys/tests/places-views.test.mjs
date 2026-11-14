@@ -106,11 +106,11 @@ test('no Places view is written from the frame any more: Places is the shell\'s 
  assert.doesNotMatch(instruments,/selected==='m4'/,'no retired Places lens is left in the research workspace');
 });
 
-test('the frame\'s stylesheets carry no rule of the retired Places map (#762): its surface, toolbar, layers, time control, location panel and street-view dock are gone', ()=>{
+test('the frame\'s stylesheets carry no rule of the retired Places map (#762): its surface, toolbar, layers, time control, location panel, street-view dock and Street View surface are gone', ()=>{
  for(const sheet of ['src/researchInstrumentStyles.css','src/researchInstruments.css']){
   const css=read(resolve(engine,sheet));
   assert.doesNotMatch(css,/psychogeographic|places-basemap|places-time|places-location-panel|research-places|research-street-view/,`${sheet} names nothing of the map`);
  }
- // the Street View surface is the vendor's own and still drawn (vendor/research-canvas/packages/canvas/src/streetview): its rules stay
- assert.match(read(resolve(engine,'src/researchInstrumentStyles.css')),/\.street-view-surface/);
+ // the vendor's Street View surface went with them (O-I #1009, one earth viewer: Places is the shell's Earth atlas), and its rules with it
+ for(const sheet of ['src/researchInstrumentStyles.css','src/researchInstruments.css'])assert.doesNotMatch(read(resolve(engine,sheet)),/street-view/,`${sheet} names nothing of the Street View surface`);
 });

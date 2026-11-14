@@ -59,25 +59,35 @@ const defaults = (overrides = {}, revision = null) => ({
   previous_task: null, standing: 'intent',
 })
 
-// A scripted owner behind the bridge: it keeps one session's settings, a revision per change, and refuses a stale one.
+// A scripted owner behind the bridge: it keeps one session's settings, a revision per change, and refuses a stale one. The settings are
+// read by the kernel's encounter_session_settings and written by AIKit's Action aikit.session.settings through the kernel's `act` (O-I
+// 1006: its request as JSON, at the revision expected), which answers the settings as they now stand, or AIKit's refusal in its words.
+const SETTINGS_ACTION = 'aikit.session.settings'
+const dispatched = dispatch => ({json: async () => ({ok: true, outcome: {result: 'action_dispatched', dispatch, receipts: []}})})
 function scriptedOwner(start = defaults()) {
   const owner = {reading: start, sent: [], revisions: 0}
   globalThis.fetch = async (_url, init) => {
     const op = JSON.parse(init.body)
     owner.sent.push(op)
-    const answer = data => ({json: async () => ({ok: true, outcome: {result: 'encounter_session_settings_reading', data, receipts: []}})})
-    if (op.op !== 'encounter_session_settings') return {json: async () => ({ok: false, error: `unexpected ${op.op}`})}
-    if (!op.request) return answer(owner.reading)
-    if ((op.expected_revision ?? null) !== owner.reading.revision)
-      return {json: async () => ({ok: false, error: 'encounter.runtime: Session settings revision conflict; read the current settings and write again'})}
+    if (op.op === 'encounter_session_settings')
+      return {json: async () => ({ok: true, outcome: {result: 'encounter_session_settings_reading', data: owner.reading, receipts: []}})}
+    if (op.op !== 'act' || op.action !== SETTINGS_ACTION || op.input?.agent_session?.[0] !== owner.reading.agent_session)
+      return {json: async () => ({ok: false, error: `unexpected ${op.op}`})}
+    if ((op.input.expected_revision ?? null) !== owner.reading.revision)
+      return dispatched({state: 'owner_refused', owner_operation: SETTINGS_ACTION,
+        message: 'encounter.runtime: Session settings revision conflict; read the current settings and write again'})
+    const request = JSON.parse(op.input.request_json)
     const task = {...owner.reading.task}
-    for (const [key, value] of Object.entries(op.request.task?.set ?? {})) task[key] = value ?? defaults().task[key]
-    const track = {...owner.reading.track, ...op.request.track}
+    for (const [key, value] of Object.entries(request.task?.set ?? {})) task[key] = value ?? defaults().task[key]
+    const track = {...owner.reading.track, ...request.track}
     owner.reading = {...owner.reading, revision: `session-settings/${++owner.revisions}`, task, track}
-    return answer(owner.reading)
+    return dispatched({state: 'invoked', owner_operation: SETTINGS_ACTION, data: owner.reading})
   }
   return owner
 }
+/** The settings writes the owner was sent, each as AIKit's Action took it: the revision expected and the request. */
+const writesTo = owner => owner.sent.filter(op => op.op === 'act' && op.action === SETTINGS_ACTION)
+  .map(op => ({expected_revision: op.input.expected_revision, request: JSON.parse(op.input.request_json)}))
 const transport = {kind: 'bridge', url: 'http://owner.test'}
 // The register the session was read under (its world-wide agency row's `project`, agent/worldScope.ts). REPLACED (O-I #740 lane B):
 // factory.SETTINGS_PROJECT, the shell's one literal project.
@@ -200,14 +210,15 @@ test('Clip view: the owner\'s values stand on the clip, and each change is writt
   for (const key of ['launch', 'then', 'loop', 'loop.until', 'loop.cap', 'repeat.variable', 'repeat.levels', 'repeat.repeats', 'repeat.stop'])
     assert.equal(binding.standing[key], undefined, `${key}: enabled on its owner`)
   await binding.write([{key: 'then', value: 'stop'}])
-  const write = owner.sent.find(op => op.request)
-  assert.deepEqual(write, {op: 'encounter_session_settings', project: 'O-I', agent_session: 'ses-214', expected_revision: 'session-settings/0',
-    request: {task: {task_ref: 'task:correlate', set: {then: 'stop'}}}})
+  // REPLACED (O-I 1006): the write was the kernel's encounter_session_settings with a request; it is AIKit's Action, the request as JSON.
+  const write = owner.sent.find(op => op.op === 'act')
+  assert.deepEqual(write, {op: 'act', action: 'aikit.session.settings', project: 'O-I', input: {agent_session: ['ses-214'],
+    request_json: JSON.stringify({task: {task_ref: 'task:correlate', set: {then: 'stop'}}}), expected_revision: 'session-settings/0'}})
   assert.equal(entry.snapshot().value.revision, 'session-settings/1', 'the standing reading is read again: every reader sees the change')
   assert.equal(entry.snapshot().value.task.then, 'stop')
   const next = factory.factoryClipBinding({ref: taskRef, tracks: [track], events: null, settings: contextOf(entry)})
   await next.write([{key: 'env.agent.effort', value: JSON.stringify([[0, 3]])}])
-  assert.equal(owner.sent.filter(op => op.request).at(-1).expected_revision, 'session-settings/1', 'the next change is made on the new revision')
+  assert.equal(writesTo(owner).at(-1).expected_revision, 'session-settings/1', 'the next change is made on the new revision')
   assert.deepEqual(entry.snapshot().value.task.effort, [[0, 'high']])
 })
 
@@ -220,7 +231,7 @@ test('Clip view: Loop and what a Repeat varies are written to AIKit in its words
   await write('launch', 'repeat')
   await write('repeat.levels', 'opus, sonnet')
   await write('then', 'again')
-  assert.deepEqual(owner.sent.filter(op => op.request).map(op => [op.expected_revision, op.request.task.set]), [
+  assert.deepEqual(writesTo(owner).map(op => [op.expected_revision, op.request.task.set]), [
     ['session-settings/0', {loop: true}], ['session-settings/1', {loop_cap: 5}], ['session-settings/2', {launch: 'repeat'}],
     ['session-settings/3', {repeat_levels: ['opus', 'sonnet']}], ['session-settings/4', {then: 'again'}]])
   const read = factory.factoryClipBinding({ref: taskRef, tracks: [track], events: null, settings: contextOf(entry)}).values
@@ -247,7 +258,7 @@ test('Tasks device: Mode, To and a single Effort go to the owner; Launch, Retry 
   assert.equal(binding.values.mode, 'trigger'); assert.equal(binding.values.effort, 'inherit')
   for (const key of ['mode', 'then', 'to', 'effort', 'toolCalls', 'register', 'form']) assert.equal(binding.standing[key], undefined, key)
   await binding.write([{key: 'mode', value: 'toggle'}])
-  assert.equal(owner.sent.filter(op => op.request)[0].expected_revision, undefined, 'a session with no settings yet is written without a revision')
+  assert.equal(writesTo(owner)[0].expected_revision, undefined, 'a session with no settings yet is written without a revision')
   const after = tasks.tasksBinding({...input, settings: contextOf(entry)}, null, {selectTask() {}, queue: async () => {}})
   await after.write([{key: 'effort', value: 'high'}])
   assert.deepEqual(entry.snapshot().value.task.effort, [[0, 'high']])
@@ -259,45 +270,32 @@ test('Tasks device: Mode, To and a single Effort go to the owner; Launch, Retry 
   await assert.rejects(() => unread.write([{key: 'mode', value: 'gate'}]), {message: settings.SETTINGS_WHY.notHere})
 })
 
-test('the mixer row: each session\'s Telemetry reads its own setting, and a press writes that session\'s alone; Solo asks no owner', async () => {
-  const {factoryTrackAdapter, FACTORY_TELEMETRY_OP} = await import('../src/timeline/factoryTrackAdapter.ts')
-  const quiet = {...track, sessionRef: 'ses-300', purpose: 'widget tests', tasks: []}
-  const pressed = []
-  const port = {
-    of: session => session === 'ses-214' ? {telemetry: false, solo: true} : null,  // AIKit's own Solo, which the mixer does not read
-    set: async (session, setting, on) => { pressed.push([session, setting, on]); return {ok: true, note: `${setting} ${on}`} },
-  }
-  const set = factoryTrackAdapter.project({tracks: [track, quiet], nowUnixMs: T(14, 30), settings: port})
-  const mine = set.tracks.find(item => item.id === trackKey(track)), theirs = set.tracks.find(item => item.id === trackKey(quiet))
-  assert.equal(mine.mix.activator, false, 'muted: it keeps working, in silence')
-  // REPLACED (round 858, §16.1, §16.6): Solo is what you attend to, the shell's (tests/solo-attention.test.mjs), never AIKit's launch gate.
-  assert.equal(mine.mix.solo, undefined, 'AIKit\'s session Solo is not read as the mixer\'s')
-  assert.equal(theirs.mix?.activator, undefined, 'a session unread draws its settings unread')
-  assert.equal(set.mixer.activator.disabled, undefined); assert.match(set.mixer.solo.disabled, /what you attend to/, 'no attention handed here')
-  assert.equal(set.mixer.monitor.disabled !== undefined, true, 'Watch still names the op it lacks')
-  assert.equal(set.actions.mixer.activator.op, FACTORY_TELEMETRY_OP)
-  await set.actions.mixer.activator.run(mine.id, true)
-  assert.equal(set.actions.mixer.solo, undefined, 'the settings carry no Solo')
-  assert.deepEqual(pressed, [['ses-214', 'telemetry', true]])
-  assert.deepEqual(await set.actions.mixer.activator.run('space:none:nobody', true), {ok: false, error: '"space:none:nobody" is not a session of this work.'})
-  const unported = factoryTrackAdapter.project({tracks: [track], nowUnixMs: T(14, 30)})
-  assert.match(unported.mixer.activator.disabled, /missing op/, 'no settings read here: Telemetry says what it lacks')
-  // The write a press makes: the track's own setting, no task in it.
+// REPLACED (O-I #1004): "the mixer row: each session's Telemetry reads its own setting, and a press writes that session's alone" and "a
+// track's Stop is that session's own", both through the window's Factory adapter's ports onto AIKit's settings and the encounter owner.
+// Factory's Set is the kernel's now (kernel mode_set.rs factory_mixer, factory_waiting): a session's Telemetry and its own Stop are acts
+// on AIKit's session, whose settings are no slice of the World Model yet, so the Set carries each as disabled in its words until O-I #1006
+// composes them. Solo stays what you attend to, never AIKit's launch gate (round 858, §16.1, §16.6; tests/solo-attention.test.mjs).
+test('the mixer row and a track\'s Stop are the kernel\'s Set: what waits says so in its words, and nothing reaches AIKit from them', async () => {
+  const {kernelSetTracks} = await import('../src/frame/tracks/kernelSet.ts')
+  const {modeSetOf, setTrack} = await import('./support/modeSetFixture.mjs')
+  const telemetry = 'Telemetry: no owner operation carries it yet — missing op: the session\'s own Telemetry on AIKit (encounter-session-settings), whose settings are no slice of the World Model yet (O-I #1006).'
+  const stop = 'a session\'s stop on its own encounter owner, or the bound harness\'s (aikit.gateway.agent on the harness binding, which is no slice of the World Model yet) (O-I #1006)'
+  const set = kernelSetTracks(modeSetOf({owner: 'Factory', tracks: [setTrack(trackKey(track), 'correlate occurrences', {kind: 'session'})],
+    mixer: {
+      activator: {meaning: 'Telemetry: on, the session feeds the widgets', disabled: telemetry},
+      solo: {meaning: 'You attend to the soloed sessions alone', disabled: 'Solo: what you attend to is the shell\'s, and the kernel\'s Set carries none of it yet (O-I #1006).'},
+      monitor: {meaning: 'Watch', disabled: 'Watch: no owner operation carries it yet — missing op: shell.setSessionWatch(sessionRef, "in" | "auto" | "off"), a per-session watch the widgets read (shell).'},
+    },
+    waiting: {'track.stop': stop, 'set.stop-all': stop}}), {nowMs: T(14, 30)})
+  assert.equal(set.mixer.activator.disabled, telemetry, 'Telemetry says what it lacks')
+  assert.match(set.mixer.solo.disabled, /what you attend to/, 'no attention handed here')
+  assert.match(set.mixer.monitor.disabled, /missing op/, 'Watch still names the op it lacks')
+  assert.equal(set.actions.mixer, undefined, 'no mixer write the Set does not carry')
+  assert.equal(set.actions.stopTrack, undefined)
+  assert.equal(set.actions.stopAll, undefined)
+  assert.equal(set.actions.waiting['track.stop'], stop, 'a track\'s Stop waits in the Set\'s words')
+  // The write a Telemetry press will make: the track's own setting, no task in it.
   assert.deepEqual(settings.trackSettingChange('telemetry', false), {track: {telemetry: false}})
-})
-
-test('a track\'s Stop is that session\'s own: its running turn cancelled on its encounter owner, said without the harness\'s grain', async () => {
-  const {factoryTrackAdapter, FACTORY_SESSION_STOP_OP, FACTORY_STOP_ALL_OP} = await import('../src/timeline/factoryTrackAdapter.ts')
-  const stopped = [], harness = []
-  const set = factoryTrackAdapter.project({tracks: [track], nowUnixMs: T(14, 30),
-    controls: {control: async word => { harness.push(word); return {ok: true, note: word} }},
-    sessionStop: async session => { stopped.push(session); return {ok: true, note: 'stopped'} }})
-  assert.equal(set.actions.stopTrack.op, FACTORY_SESSION_STOP_OP)
-  assert.equal(set.actions.stopTrack.grain, null, 'it acts on the one track pressed')
-  assert.deepEqual(await set.actions.stopTrack.run(trackKey(track)), {ok: true, note: 'stopped'})
-  assert.deepEqual(stopped, ['ses-214']); assert.deepEqual(harness, [], 'the harness is not stopped')
-  assert.equal(set.actions.stopAll.op, FACTORY_STOP_ALL_OP, 'Stop All stays the harness\'s')
-  assert.deepEqual(await set.actions.stopTrack.run('space:none:nobody'), {ok: false, error: '"space:none:nobody" is not a session of this work.'})
   const source = await (await import('node:fs/promises')).readFile(new URL('../src/inhabitants/catalogue/panels/dlw__session-grid.tsx', import.meta.url), 'utf8')
   assert.match(source, /trackStop\.grain !== undefined \? \(trackStop\.grain \?/, 'the grid says a stop\'s own grain, or none')
 })

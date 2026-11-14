@@ -1,5 +1,7 @@
 # Critic log — wave 3, MYTHEME whole-family second half (12 journeys) — zcode:enrich-critic-m2, 2026-10-06
 
+> Retired copy (O-I ticket 1008, 14 Nov 2026): the compiled engine copy at `packages/oi-design-system/expressions-engine` is deleted. The one engine is `desktop/cradle/expressions-app/src/engine`, built in `field-studies-journeys/src/production.ts`; its model and defaults are `field-studies-journeys/src/model.ts`. Paths into the copy below are a record of their date.
+
 Subject: `desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-*.journey.json`
 bound order 1–12 of the whole-mytheme family second half: myth-hypostasis,
 narrative-fanon, narrative-jung-aion, apollo-eros-daphne-peneus (worker A,

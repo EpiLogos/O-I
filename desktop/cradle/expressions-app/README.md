@@ -46,9 +46,11 @@ this tree is source and is committed.
 
 ## What lives here
 
-- `src/` — the engine (WebGL point-cloud field, glyph sampling, physics) and
-  the legacy workbench (`legacy.html` still builds from it). The default
-  application entry (`index.html` → `src/native.ts`) is the journey editor.
+- `src/` — the engine (WebGL point-cloud field, glyph sampling, physics),
+  built in one place, `field-studies-journeys/src/production.ts`. The
+  application entry (`index.html` → `src/native.ts`) is the journey editor;
+  `library.html` is the Library. The legacy workbench and the Physis renderer
+  pages were retired by O-I ticket 1008.
 - `field-studies-journeys/` — the Expressions application itself: the
   journey/expression editor, its Library, capture and toolbelt.
   `scripts/build.mjs` typechecks it and emits the offline standalone page.

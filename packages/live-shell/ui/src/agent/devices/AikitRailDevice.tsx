@@ -8,7 +8,7 @@ import {useEffect, useMemo, useSyncExternalStore} from 'react'
 import type {AikitWriteRequest, KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {publishDevice, publishedDevice, subscribeDeviceDoor, useSelectedDeviceId} from '../../frame/devices/deviceDoor'
 import {useOptionalContinuity} from '../../continuity/workspace'
-import {useOwnerOp} from '../../owners/ownerCall'
+import {useSkillSetsAnswer} from '../../owners/readers'
 import {useAgentSessionsOptional} from '../AgentSessionsProvider'
 import {useAgentShellOptional} from '../AgentShellContext'
 import {trackKey} from '../agentRunModel'
@@ -78,10 +78,10 @@ export function AikitRailDevice({transport}: {transport: KernelTransportStatus})
   const upkeep = useMemo((): RackUpkeep => ({unused, sources, collate, bypasses, procedures, ...(previewed ? {adoption} : {}), ...(chosenProcedure ? {procedure} : {}),
     ...(transport.kind !== 'unavailable' ? {write: request => ownerRouteWrite(transport, aikitWriteOp(request as AikitWriteRequest), `\`aikit ${request.kind.replace('-', ' ')}\``)} : {})}),
   [unused, sources, collate, bypasses, procedures, previewed, adoption, chosenProcedure, procedure, transport])
-  // Package's sets: AIKit's set list (agent_definition skillsets), the one the Skillset rack reads.
-  const setListOp = useMemo(() => (asked ? {op: 'agent_definition' as const, project: register, request: {action: 'skillsets' as const}} : null), [asked, register])
-  const setListRead = useOwnerOp(transport, setListOp, 'agent_definition_reading').reading
-  const setList = useMemo(() => unread ?? {status: setListRead.status, value: setListRead.value?.data ?? null, error: setListRead.error ? refusalWords(setListRead.error) : null},
+  // Package's sets: AIKit's set list (agent_definition skillsets), the one owner reading the agent browser reads too (owners/readers.ts),
+  // asked while the instrument is.
+  const setListRead = useSkillSetsAnswer(transport, register, asked).reading
+  const setList = useMemo(() => unread ?? {status: setListRead.status, value: setListRead.value ?? null, error: setListRead.error ? refusalWords(setListRead.error) : null},
     [setListRead, unread?.error]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const binding = useMemo(() => aikitInstrumentBinding({holds, run, agent, rack: agent ? rackValues : null, asked, upkeep, ...(context ? {context} : {}), ...(asked ? {setList} : {}), project}),

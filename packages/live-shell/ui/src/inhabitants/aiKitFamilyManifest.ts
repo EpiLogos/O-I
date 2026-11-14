@@ -30,7 +30,7 @@ export function aiKitFamilyManifest(): FamilyManifest {
         note: 'AIKit\'s instrument: Run, Context, Sources, Adopt, Package and Procedures, on the selected run (DLW §19.26).'},
       // Messages (DLW §19.24): an instrument born on the rail — its tile and its Full only, in every mode (agent/devices/messagesBinding.ts).
       {id: 'messages', presentations: statePresentations('ai-kit:messages'), liveSemantic: 'device-instrument',
-        invariant: {generatesAbsent: 'Born on the rail: it reads AIKit\'s population and the open agent\'s conversation (kernel inhabitation_read); Send goes to the open agent\'s Position through `aikit gateway send` (kernel gateway_write), and Voice fills the composer through the kernel\'s dictation.'},
+        invariant: {generatesAbsent: 'Born on the rail: it reads AIKit\'s population and the open agent\'s conversation (kernel inhabitation_read); Send goes to the open agent\'s Position through `aikit gateway send` (the Action aikit.gateway.send, through the kernel\'s act), and Voice fills the composer through the kernel\'s dictation.'},
         note: 'Messages: your agents and groups, each with its conversation, through the Agency gateway; the gateway\'s mark in its head.'},
     ],
     params: {grammar: 'aikit/parameter-address/v1'},

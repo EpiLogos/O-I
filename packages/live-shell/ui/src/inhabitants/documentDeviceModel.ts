@@ -4,7 +4,7 @@
  *
  * The outcomes are the design's five names, carried verbatim; the
  * classifier maps the ACTUAL save-path results onto them:
- * - the Day die path (DayFormSession.save + receiving mutate-field): no
+ * - the Day die path (DayFormSession.save + central.document.mutate): no
  *   edits staged → unchanged; acknowledged field writes with matching
  *   receipts → saved; the owner's "source changed; review" block → stale;
  *   a missing/contradictory acknowledgement → conflict; an unavailable or

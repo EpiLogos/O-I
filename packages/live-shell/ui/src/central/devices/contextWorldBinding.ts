@@ -205,9 +205,10 @@ const SCOPE_MISSING = (what: string, op: string, owner: string) => `${what}: no 
 export const CENTRAL_SCOPE_REFUSED: Readonly<Record<string, string>> = {
   reach: SCOPE_MISSING('Reach', 'the scope reach write on the session\'s context, enforced on its reads (WO-SF2)', 'Software Factory'),
   writeMode: SCOPE_MISSING('Write mode', 'write-arm enforcement on the session\'s writes (WO-SF2): propose · draft · direct', 'Software Factory'),
-  // The Asks page (manual §19.12 Asks): the dialogue's session stands behind no harness gateway the kernel controls.
-  toolCalls: SCOPE_MISSING('Tool calls', 'the harness\'s approvals mode for the dialogue\'s session (AIKit\'s gateway has no operation that sets a harness\'s approvals mode, and this session has no gateway binding)', 'Actuation'),
-  calls: SCOPE_MISSING('Calls to other agents', 'a rule for calls from other agents on the dialogue\'s session: AIKit keeps one by sender kind on a gateway binding (the kernel\'s harness_ingress_rule), and this session holds no conversation on AIKit\'s gateway', 'AIKit'),
+  // The Asks page (manual §19.12 Asks), in AIKit's words for what owns each (O-I 1006): Tool calls is the session's task's, Calls to other
+  // agents a rule on each gateway binding of the session. Central's Scope is handed neither.
+  toolCalls: 'Tool calls: the answer to the harness\'s request to use a tool is the session\'s task\'s Tool calls, which AIKit\'s Action aikit.session.settings writes (`task.set.tool_calls`); Central\'s Scope is handed the dialogue\'s session\'s Wait and On no answer, not its task, so it does not set it here (AIKit).',
+  calls: 'Calls to other agents: AIKit keeps a rule for calls from other agents by sender kind on each gateway binding of a session (its Action aikit.gateway.ingress), and the dialogue\'s session holds no conversation on AIKit\'s gateway, so no binding of it takes one (AIKit).',
   wait: WAIT_REFUSE.wait,
   noAnswer: WAIT_REFUSE.noAnswer,
 }

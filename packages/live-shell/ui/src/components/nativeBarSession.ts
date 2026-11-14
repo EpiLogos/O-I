@@ -25,7 +25,7 @@ export interface LiveSessionClock {
 }
 /** About 20 Hz: the rate the property take samples at. */
 export const LIVE_INTERVAL_MS = 50
-const REAL_CLOCK: LiveSessionClock = {now: () => performance.now(), after: (ms, run) => setTimeout(run, ms), clear: handle => clearTimeout(handle as ReturnType<typeof setTimeout>)}
+export const REAL_CLOCK: LiveSessionClock = {now: () => performance.now(), after: (ms, run) => setTimeout(run, ms), clear: handle => clearTimeout(handle as ReturnType<typeof setTimeout>)}
 
 /** One parameter's gesture controller. `deps` is read at each call, so a re-render that changes the runner or the automation reading never
  * strands a gesture. Order on commit is fixed: the final value is streamed, the write (or hold) settles, then the override is released, so the

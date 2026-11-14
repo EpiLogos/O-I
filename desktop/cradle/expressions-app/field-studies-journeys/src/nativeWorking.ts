@@ -590,9 +590,11 @@ export class NativeWorking {
 
 /** The works home the owner's works listing discloses (its `list` reply's `home`, kernel expression_home.rs WORKS_HOME, FOUNDATION N1): its
  * location, or the owner's reason it has none. */
-export function worksHomeLocation(home:{path?:string;location?:CentralLocation;error?:string}|null|undefined):CentralLocation{
- if(home?.location)return home.location;
- throw new Error(home?.error?`The works home ${home.path??''} is unavailable: ${home.error}`:'The native owner disclosed no works home.');
+/** The parent a save into the works home names: the home's location as the owner listed it, or null while the owner lists none (a ground
+ * `ctrl init` made has no home until its first save) — save_as then names no parent, and the owner makes the home at that save (kernel
+ * expression.rs save_as → expression_home::ensure, Central's own `central.flows.ensure`), refusing in Central's words when it cannot. */
+export function worksHomeLocation(home:{path?:string;location?:CentralLocation;error?:string}|null|undefined):CentralLocation|null{
+ return home?.location??null;
 }
 /** The frame's own actor on every native write of a new work (as NativeWorking's create and edit). */
 export const WORK_ACTOR='human:expressions-app';
@@ -620,7 +622,7 @@ const reasonOf=(cause:unknown)=>cause instanceof Error?cause.message:String(caus
  * Whether that refusal stops the caller is the caller's: New and a starter open the work and name it; the keep refuses. `current` is asked
  * after the work is made; once false, nothing further is written. */
 export async function makeWork(owner:(request:Record<string,unknown>)=>Promise<unknown>,made:{journey:Journey},
- ports:{id:string;home:CentralLocation|(()=>Promise<CentralLocation>)|null;current?:()=>boolean}):Promise<MadeWork>{
+ ports:{id:string;home:CentralLocation|(()=>Promise<CentralLocation|null>)|null;current?:()=>boolean}):Promise<MadeWork>{
  const ref=`expression:authored-${ports.id}`;
  let document:MadeWork['document'];
  // A refused create is said in the owner's own words (its state and detail), as a refused edit is.
@@ -636,10 +638,11 @@ export async function makeWork(owner:(request:Record<string,unknown>)=>Promise<u
  * characters, its receipt read back (requireSavedExpression). `refused` is the owner's words when it would not save it; the work stands.
  * New's route takes it after its create; a work's Duplicate (the shell's duplicateWork, O-I #747 round 894) takes it after the owner's fork. */
 export async function saveIntoWorksHome(owner:(request:Record<string,unknown>)=>Promise<unknown>,work:{expression_ref:string;revision:number;title:string},
- id:string,home:CentralLocation|(()=>Promise<CentralLocation>)):Promise<Pick<MadeWork,'saved'|'refused'>>{
+ id:string,home:CentralLocation|(()=>Promise<CentralLocation|null>)):Promise<Pick<MadeWork,'saved'|'refused'>>{
  try{
+  // No home listed yet: the save names no parent and the owner makes the home (worksHomeLocation).
   const parent=typeof home==='function'?await home():home;
-  const reply=await owner({operation:'save_as',expression_ref:work.expression_ref,expected_revision:work.revision,parent,
+  const reply=await owner({operation:'save_as',expression_ref:work.expression_ref,expected_revision:work.revision,...(parent?{parent}:{}),
    name:materialFileName(`${work.title} ${id.slice(0,8)}`),operation_ref:`operation:expression:${id}`,actor:WORK_ACTOR,actor_kind:'human'}) as ExpressionResult;
   requireSavedExpression(reply);
   return {saved:{path:reply.file.location.path,revision:reply.file.revision},refused:null};

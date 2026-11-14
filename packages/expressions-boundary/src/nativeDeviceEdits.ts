@@ -4,7 +4,7 @@ import type {Journey, Scene, Entity, NativeDeviceChange, NativeMorphSettingChang
 import {FIELD_PANEL_SETTINGS, type FieldPanelSettingKey} from './nativeFieldPanelSettings';
 import {ENTITY_SETTING_EXEMPT_FROM_LOCK, validateNativeEntitySettingChange} from './nativeEntitySettings';
 import {clone, pin, validateJourney} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/model';
-import {NATIVE_BINDINGS, entityTargets, bindValue} from './parameters';
+import {NATIVE_BINDINGS, entityTargets, bindValue, CARRY_TINT_BIND} from './parameters';
 import {effectiveScene, isShared, toggleShared, useLocalPointer, writeShared} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/sharedSettings';
 import {sharedFieldBinding} from './nativeSharedSettings';
 import {offsetAutomatedTarget, resolvedAutomation} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/automationLinks';
@@ -19,12 +19,22 @@ import {validateNativeFieldMaterialChange, validateNativeInkModeChange} from './
 
 export const NATIVE_COLOUR_MODES = COLOR_DISTRIBUTION_MODES;
 export const NATIVE_COLOUR_PALETTES = COLOR_PALETTES;
+/** The Colour Field's settings and their admitted values (`colour-setting`): the kernel's Studio reads them from its generated table
+ * (expression_studio.json, held equal to these by tests/studio-table.test.mjs). */
+export const NATIVE_COLOUR_SETTINGS = {colorEnabled: [false, true], colorMode: NATIVE_COLOUR_MODES.map(mode => mode.id)} as const;
+/** The shared medium's settings and their admitted values (`field-setting`), each written at `engine.<key>`. */
+export const NATIVE_FIELD_SETTINGS = {
+  mediumEnabled: [false, true], resonanceEnabled: [false, true], collisionEnabled: [false, true], pairwiseEnabled: [false, true],
+  mediumDimension: ['2D', '3D'], mediumPlane: ['vertical', 'horizontal'], collisionMode: ['obstacle', 'vessel'],
+} as const;
+/** Solver cardinalities: discrete, though their registry step may also describe useful UI increments (grid resolution in fours). */
+export const NATIVE_WHOLE_PARAMETERS = ['medium.iterations', 'medium.gridRes', 'particleCount', 'cymatics.modeCount'] as const;
 export function validateNativeColourChange(change: unknown): NativeColourChange {
   if (!change || typeof change !== 'object' || Array.isArray(change)) throw Error('Choose an admitted native Colour Field edit.');
   const row = change as Record<string, unknown>, keys = row.kind === 'colour-setting' ? ['kind','key','value'] : row.kind === 'colour-palette' ? ['kind','colors'] : row.kind === 'colour-preset' ? ['kind','palette_id'] : ['kind','value'];
   if (Object.keys(row).some(key => !keys.includes(key))) throw Error('A Colour Field edit cannot carry foreign scope or entity operands.');
   const colour = (value: unknown) => typeof value === 'string' && /^#[\da-f]{6}$/i.test(value);
-  const valid = row.kind === 'colour-setting' ? row.key === 'colorEnabled' ? typeof row.value === 'boolean' : row.key === 'colorMode' && NATIVE_COLOUR_MODES.some(mode => mode.id === row.value)
+  const valid = row.kind === 'colour-setting' ? typeof row.key === 'string' && Object.hasOwn(NATIVE_COLOUR_SETTINGS, row.key) && (NATIVE_COLOUR_SETTINGS[row.key as keyof typeof NATIVE_COLOUR_SETTINGS] as readonly unknown[]).includes(row.value)
     : row.kind === 'colour-palette' ? Array.isArray(row.colors) && row.colors.length >= 2 && row.colors.length <= 8 && Array.from(row.colors).every(colour)
     : row.kind === 'colour-background' ? colour(row.value)
     : row.kind === 'colour-preset' && typeof row.palette_id === 'string' && NATIVE_COLOUR_PALETTES.some(palette => palette.id === row.palette_id);
@@ -115,7 +125,7 @@ function parameter(journey: Journey, scene: Scene, target: string, value: number
   if (value < binding.hardMin || value > binding.hardMax) throw Error(`${binding.label} must be between ${binding.hardMin} and ${binding.hardMax}.`);
   // Solver cardinalities are discrete even though their registry step may
   // also describe useful UI increments (e.g. grid resolution in fours).
-  if (['medium.iterations', 'medium.gridRes', 'particleCount', 'cymatics.modeCount'].includes(binding.path) && !Number.isInteger(value * binding.factor)) throw Error(`${binding.label} requires a whole number.`);
+  if ((NATIVE_WHOLE_PARAMETERS as readonly string[]).includes(binding.path) && !Number.isInteger(value * binding.factor)) throw Error(`${binding.label} requires a whole number.`);
   const entityId = 'entityId' in binding && typeof binding.entityId === 'string' ? binding.entityId : undefined;
   const entity = entityId ? editableEntity(scene, entityId) : undefined;
   const localPath = entity ? binding.bind.slice(7) : binding.bind;
@@ -136,7 +146,7 @@ function parameter(journey: Journey, scene: Scene, target: string, value: number
     else bindValue(scene, binding.bind, value);
   }
   if (entity) transformObjectStates(entity, binding.bind, before, value);
-  if (binding.bind === 'field.params.native_composition__orchestration__focusTintWeight' && value > 0) scene.composition.carryTint = true;
+  if (binding.bind === CARRY_TINT_BIND && value > 0) scene.composition.carryTint = true;
 }
 
 /** Read only the evaluated production configuration supplied by the engine.
@@ -178,10 +188,7 @@ export function applyNativeDeviceChanges(journey: Journey, sceneId: string, chan
       entity.force.kind = change.value;
       transformObjectStates(entity, 'entity.force.kind', before, change.value);
     } else if (change.kind === 'field-setting') {
-      const valid = ['mediumEnabled', 'resonanceEnabled', 'collisionEnabled', 'pairwiseEnabled'].includes(change.key) ? typeof change.value === 'boolean'
-        : change.key === 'mediumDimension' ? change.value === '2D' || change.value === '3D'
-        : change.key === 'mediumPlane' ? change.value === 'vertical' || change.value === 'horizontal'
-        : change.key === 'collisionMode' ? change.value === 'obstacle' || change.value === 'vessel' : false;
+      const valid = Object.hasOwn(NATIVE_FIELD_SETTINGS, change.key) && (NATIVE_FIELD_SETTINGS[change.key as keyof typeof NATIVE_FIELD_SETTINGS] as readonly unknown[]).includes(change.value);
       if (!valid) throw Error('Choose an admitted shared-medium setting.');
       const path = 'engine.' + change.key;
       if (!writeShared(draft, scene, path, change.value)) bindValue(scene, path, change.value);

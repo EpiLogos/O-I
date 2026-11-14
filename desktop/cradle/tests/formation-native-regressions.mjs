@@ -17,7 +17,7 @@ const server=createServer(async(request,response)=>{
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 try {
   const url=`http://127.0.0.1:${server.address().port}/field-studies-journeys/field-studies.html`;
-  for(const [name,file] of [['compiler-retention','../../../scripts/vendor-expressions-engine.test.mjs'],['emitted-formation','emitted-formation-modules.test.mjs'],['formation-authoring','formation-authoring-native.mjs'],['candidate-cache','candidate-cache-native.mjs']]) {
+  for(const [name,file] of [['emitted-formation','emitted-formation-modules.test.mjs'],['formation-authoring','formation-authoring-native.mjs'],['candidate-cache','candidate-cache-native.mjs']]) {
     await new Promise((resolve,reject)=>{
       const child=spawn(process.execPath,[fileURLToPath(new URL(file,import.meta.url))],{
         stdio:'inherit',env:{...process.env,OI_TEST_URL:url,OI_TEST_ARTIFACTS:`tests/artifacts/${name}-native`},

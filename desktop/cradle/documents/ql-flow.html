@@ -1275,15 +1275,27 @@ function currentSel(){
   if(!f.contains(r.startContainer)||!f.contains(r.endContainer)) return null; return {r,f,text:s.toString().trim()};
 }
 function placeTool(){ const c=currentSel(); if(!c||!c.text){ tool.hidden=true; return; } const b=c.r.getBoundingClientRect(); tool.hidden=false; tool.style.left=(b.left+b.width/2+window.scrollX)+'px'; tool.style.top=(b.top+window.scrollY)+'px'; }
-document.addEventListener('selectionchange',()=>{ clearTimeout(placeTool._t); placeTool._t=setTimeout(placeTool,120); });
+document.addEventListener('selectionchange',()=>{ clearTimeout(placeTool._t); placeTool._t=setTimeout(()=>{ placeTool(); postSel(); },120); });
+function toPacket(c,e){ D.packet.push({id:uid(),entryId:e.id,scope:'selection',label:num(e)+' ('+e.author+')',text:c.text,at:now()}); touch(); syncPk(); }
 function act(kind){
   const c=currentSel(); if(!c) return; const e=entryOf(c.f.dataset.entry); const anchor=c.text.slice(0,240);
   if(kind==='hl'){ const mark=document.createElement('mark'); try{ c.r.surroundContents(mark); }catch(err){ mark.append(c.r.extractContents()); c.r.insertNode(mark); } e.html=c.f.innerHTML; if(e.author==='H') e.touched=true; touch(); }
   else if(kind==='note'){ const n={id:uid(),entryId:e.id,anchor,author:'F',timing:'during',text:'',at:now(),replies:[]}; D.notes.push(n); touch(); render(); const el=$('[data-note="'+n.id+'"] .text'); if(el) el.focus(); }
-  else if(kind==='packet'){ D.packet.push({id:uid(),entryId:e.id,scope:'selection',label:num(e)+' ('+e.author+')',text:c.text,at:now()}); touch(); syncPk(); }
+  else if(kind==='packet'){ toPacket(c,e); }
   else if(kind==='answer'){ answer(e.id,anchor); }
   window.getSelection().removeAllRanges(); tool.hidden=true;
 }
+/* The selection crosses the host bridge (O-I ticket 1005; world-shell.md §9.3 Capture, selection → packet): hosted, the page tells its
+   host the passage selected in an entry (oi:selection: its words and its entry; empty words when none stands), and the host's
+   oi:to-packet is this page's own To packet on that passage — the one selected, or the one last told while the press took the focus
+   away. Standing alone, nothing is posted. */
+let toldSel=null, heldSel=null;
+function postSel(){ if(window.parent===window) return; const c=currentSel(), text=c&&c.text?c.text:'', entry=text?c.f.dataset.entry:null;
+  if(text) heldSel={f:c.f,text}; const told=JSON.stringify([text,entry]); if(told===toldSel) return; toldSel=told;
+  window.parent.postMessage({type:'oi:selection',text,entry},'*'); }
+window.addEventListener('message',ev=>{ if(ev.source!==window.parent||!ev.data||ev.data.type!=='oi:to-packet') return;
+  const c=currentSel()||heldSel; const e=c&&c.f.isConnected?entryOf(c.f.dataset.entry):null; if(!c||!e) return;
+  toPacket(c,e); heldSel=null; window.getSelection().removeAllRanges(); tool.hidden=true; postSel(); });
 
 /* ---------- media ---------- */
 const LIMIT=12*1024*1024;

@@ -19,8 +19,8 @@ try{
 export async function projectionGeometry(page){
   return page.evaluate(async()=>{
     const {projectionChanges}=await import('/src/knowledge/expressionProjection.ts');
-    const {GlyphSampler}=await import('/node_modules/@epilogos/oi-design-system/expressions-engine/engine/GlyphSampler.mjs');
-    const {project,defaultCamera}=await import('/node_modules/@epilogos/oi-design-system/expressions-engine/shell/camera.mjs');
+    const {GlyphSampler}=await import('/expressions-app/src/engine/GlyphSampler.ts');
+    const {project,defaultCamera}=await import('/expressions-app/field-studies-journeys/src/camera.ts');
     const sampler=new GlyphSampler();
     // These are the unnormalised native glyph formation's material units:
     // EntityRuntime BASE_SCALE=.56 and shell WORLD_SCALE=400.

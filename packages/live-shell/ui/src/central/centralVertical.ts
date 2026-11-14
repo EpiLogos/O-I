@@ -105,20 +105,25 @@ export type DayDocumentStanding =
   | {state: 'ready'; dayRef: string; civilDate: string; sourceRef: string; documentId: string; revision: string}
   | {state: 'uninitialised'; dayRef: string; civilDate: string; owner: string; op: string; remedy: string; message: string}
   | {state: 'refused'; dayRef: string; civilDate: string; message: string}
-  /** No Day has been opened in this ground yet (a fresh world): Central names no current Day; Open today starts it. Not a refusal. */
+  /** Today's Day is not open yet: Central names no current Day, or an earlier one. It opens by itself at the Day's turn (O-I 1005). Not a
+   * refusal. */
   | {state: 'unopened'; dayRef: string; civilDate: string; message: string}
 
 export const DAY_OWNER = 'Central (root register)'
-/** What a person reads where no Day is open yet. */
-export const DAY_UNOPENED = 'No Day is open yet. Open today starts it.'
-/** Central's words when it names no current Day (ctrl temporal.rs, day_moves.rs): before the first Day is opened. */
-/** What a person reads once the day's boundary has passed and today's Day is not open yet: the last Day Central kept, and the way on. */
-export const dayTurned = (pointer: string | null): string => `Today has not opened yet${pointer ? ` (the last Day was ${civilDayName(pointer) ?? pointer})` : ''}. Open today opens it.`
+/** What a person reads where no Day is open yet: the Day opens by itself, at Central's turn (manual §18.2, O-I 1005). */
+export const DAY_UNOPENED = 'No Day is open yet. Central opens today\'s Day by itself on its civil date.'
+/** What a person reads once the day's boundary has passed and today's Day is not open yet: the last Day Central kept, and that it opens
+ * by itself. */
+export const dayTurned = (pointer: string | null): string => `Today has not opened yet${pointer ? ` (the last Day was ${civilDayName(pointer) ?? pointer})` : ''}. Central opens it by itself at the Day's turn.`
+/** What a person reads where their civil-time policy keeps the Day from turning by itself (Central's `central.day.turn` refuses it): no
+ * Day opens until their days are kept again, in Setup's Ground step. */
+export const DAY_HELD = 'Your civil-time policy keeps the Day from turning by itself, so today has not opened. Keep your days in Settings › Setup › Ground'
 /** Central's words when its today pointer names an earlier Day (ctrl temporal.rs): the boundary passed and today is not opened yet. */
 export const isTurnedDay = (words: string | null | undefined): boolean => /today pointer is stale|today pointer belongs to an earlier civil Day/i.test(words ?? '')
 export const isUnopenedDay = (words: string | null | undefined): boolean => /no DayRef or current today pointer/i.test(words ?? '')
-export const DAY_INITIALISE_OP = 'central · initialise-day'
-export const DAY_INITIALISE_REMEDY = 'The owner\'s explicit native initialisation writes the Day document from the retained form (expected revisions and the policy revision are its own). The Day die docks here once the document exists.'
+/** The Action that makes today's page: Central's turn, from the Day form (O-I 1005). */
+export const DAY_TURN_OP = 'central · central.day.turn'
+export const DAY_PAGE_REMEDY = 'Central makes today\'s page from the Day form at the Day\'s turn. The Day die docks here once the page exists.'
 
 /** The request the Day document device sends for one day (the `central` op). */
 export function dayOpenRequest(dayRef: string): {kind: 'open-day'; day_ref: string} {
@@ -135,7 +140,7 @@ export function interpretDayOpen(dayRef: string, answer: {data?: unknown; error?
     // Past the boundary, opening "today" meets Central's stale pointer (walk 13 Nov): today has not opened yet, never a refusal.
     if (isTurnedDay(answer.error)) return {state: 'unopened', dayRef, civilDate, message: dayTurned(null)}
     if (/no native document yet/i.test(answer.error)) {
-      return {state: 'uninitialised', dayRef, civilDate, owner: DAY_OWNER, op: DAY_INITIALISE_OP, remedy: DAY_INITIALISE_REMEDY, message: answer.error}
+      return {state: 'uninitialised', dayRef, civilDate, owner: DAY_OWNER, op: DAY_TURN_OP, remedy: DAY_PAGE_REMEDY, message: answer.error}
     }
     return {state: 'refused', dayRef, civilDate, message: answer.error}
   }
@@ -263,15 +268,17 @@ export function currentDayOf(ground: CentralGroundReading): {standing: DayDocume
   if (day.state !== 'ready' || !day.data) {
     // A ground that keeps no time zone for its days has no Day: the way on is Setup's Ground step, not Central's raw denial.
     const words = wantsCivilTime(ground) ? NO_CIVIL_TIME : day.error?.message ?? `Central's Day reading is ${day.state}.`
-    if (ground.time.state === 'ready' && isUnopenedDay(day.error?.message)) return {standing: {state: 'unopened', dayRef, civilDate: civilDate ?? 'today', message: DAY_UNOPENED}, aperture: null, pointer}
+    // Central's turn opens today's Day by itself; where the person's policy keeps it from turning, nothing opens until it is kept again.
+    const held = ground.time.state === 'ready' && ground.time.data?.policy?.automatic_day_rollover === false
+    if (ground.time.state === 'ready' && isUnopenedDay(day.error?.message)) return {standing: {state: 'unopened', dayRef, civilDate: civilDate ?? 'today', message: held ? DAY_HELD : DAY_UNOPENED}, aperture: null, pointer}
     // The boundary passed (walk 13 Nov, just after midnight): Central's today pointer names an earlier Day. That is no refusal: today
-    // has not opened yet, and Open today opens it (canEnsureDay admits the ensure on a stale Day).
-    if (ground.time.state === 'ready' && day.state === 'stale') return {standing: {state: 'unopened', dayRef, civilDate: civilDate ?? 'today', message: dayTurned(pointer)}, aperture: null, pointer}
+    // has not opened yet, and Central's turn opens it.
+    if (ground.time.state === 'ready' && day.state === 'stale') return {standing: {state: 'unopened', dayRef, civilDate: civilDate ?? 'today', message: held ? DAY_HELD : dayTurned(pointer)}, aperture: null, pointer}
     return {standing: {state: 'refused', dayRef, civilDate: civilDate ?? 'today', message: words}, aperture: null, pointer}
   }
   const reading = day.data
   if (reading.document_state !== 'ready' || !reading.document) {
-    return {standing: {state: 'uninitialised', dayRef, civilDate: reading.temporal.civil_date, owner: DAY_OWNER, op: DAY_INITIALISE_OP, remedy: DAY_INITIALISE_REMEDY,
+    return {standing: {state: 'uninitialised', dayRef, civilDate: reading.temporal.civil_date, owner: DAY_OWNER, op: DAY_TURN_OP, remedy: DAY_PAGE_REMEDY,
       message: `Central's Day reading holds no Day document for ${reading.temporal.civil_date} (document_state ${reading.document_state ?? 'not given'}).`}, aperture: null, pointer}
   }
   try {
@@ -291,14 +298,6 @@ export function wantsCivilTime(ground: CentralGroundReading | null): boolean {
 }
 /** The way on where a ground keeps no civil-time policy (manual §10.11 Ground): Setup's Ground step keeps your days, on its held Accept. */
 export const NO_CIVIL_TIME = 'Central keeps no Day in this ground yet: it has no time zone for your days. Give it one in Settings › Setup › Ground'
-
-/** Whether the owner's ensure is the act that stands: the civil-time policy answered and today's Day reading is stale, or its source is
- * unavailable. Ported from desktop/cradle/src/central/CentralGround.tsx:49 (`canEnsure`), the ground panel's own rule for its
- * "Ensure current Day through Central" press. */
-export function canEnsureDay(ground: CentralGroundReading | null): boolean {
-  if (!ground || ground.time.state !== 'ready' || !ground.time.data) return false
-  return ground.day.state === 'stale' || ground.day.error?.code === 'source_or_scope_unavailable'
-}
 
 /** Whether Close now stands: Central names a Day, open, whose reading gives the relations revision a close is checked against. Today's
  * or an earlier one (a Day is often closed after its boundary); only the Day Central names, never one the person selected. */

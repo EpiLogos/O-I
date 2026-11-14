@@ -52,7 +52,7 @@ test('the registry holds every tile of both old docks, once each (code-reading: 
   assert.equal(new Set(ids).size, ids.length, 'no widget twice')
   // REPLACED (#725): the Diff tile — retired in the 22 Oct manual rewrite: reading what changed is the Diff page of Files (§23.4, §23.2), so
   // the Files tile holds it and no Diff tile is registered.
-  for (const id of ['agent', 'packet', 'trail', 'field', 'nows', 'sky', 'terminal', 'files', 'web', 'graph', 'frames', 'ledger', 'approvals']) assert.ok(ids.includes(id), id)
+  for (const id of ['agent', 'packet', 'trail', 'field', 'sky', 'terminal', 'files', 'web', 'graph', 'frames', 'ledger', 'approvals']) assert.ok(ids.includes(id), id)
   assert.ok(!ids.includes('diff'), 'no Diff tile: Files carries the Diff page')
   // Sessions left the rail: it is a view now (DLW §16.1 "The views are not devices"; lock §0.3.1; R4). REPLACED (O-I #744): Agents and
   // Results stand on Factory's rail again, as the manual's §19 "On the rail" and Factory's opening name them (tests/rail-tiles-per-mode).

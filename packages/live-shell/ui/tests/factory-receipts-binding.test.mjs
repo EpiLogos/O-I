@@ -138,8 +138,8 @@ test('the Ledger only reads: its filters are the view\'s; Open log selects the r
 
 // REPLACED (#788): "Approvals: the Default answer is the Gateway's approvals key — the same read and the same write". §19.14: "the default
 // answer is the Gateway's Approvals (§19.2). Approvals shows them and never sets them", and the redrawn design (software-factory__approvals
-// .tsx) draws no `approvals`. The default answer is read and set on the Gateway alone: its `approvals` row, through kernel
-// harness_agent_control, which AIKit's gateway has no operation for (designBindings.ts GATEWAY_KEYS; factory-devices.test.mjs, factory-design-binding.test.mjs).
+// .tsx) draws no `approvals`. The default answer is read and set on the Gateway alone: its `approvals` row, through the Action
+// aikit.gateway.agent, which AIKit's gateway has no operation for (designBindings.ts GATEWAY_KEYS; factory-devices.test.mjs, factory-design-binding.test.mjs).
 // Approvals is handed no Gateway.
 test('REPLACED (#788) — Approvals reads and sets no default answer (the Gateway\'s, §19.2, §19.14); the queue is the shown session\'s consent requests', async () => {
   bind.resetHolds()

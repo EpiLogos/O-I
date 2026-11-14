@@ -88,11 +88,14 @@ test('barPointer is null outside Interact, and inside it reports mode, click and
 })
 
 test('barEngineLight: recording outranks held, held outranks running, and no playback reads unknown', () => {
-  const light = (state, playback) => bar.barEngineLight(state, playback)
-  assert.deepEqual([light({propertyRecording: true}, {field_paused: false}).kind, light({propertyRecording: true}, {field_paused: false}).label], ['recording', 'Recording'])
+  const light = (state, playback, take = false) => bar.barEngineLight(state, playback, take)
+  // O-I ticket 1008: a take of the Studio records in the kernel; the Set says so, the frame's state does not.
+  assert.deepEqual([light({}, {field_paused: false}, true).kind, light({}, {field_paused: false}, true).label, light({}, {field_paused: false}, true).title],
+    ['recording', 'Recording', 'A take of the Studio is recording.'])
+  assert.equal(light({propertyRecording: true}, {field_paused: false}).kind, 'running', 'the frame\'s own take is no reading of it')
   assert.equal(light({recording: true}, {field_paused: false}).kind, 'recording')
   assert.equal(light({recording: true}, {field_paused: true}).kind, 'recording')
-  assert.equal(light({propertyRecording: true}, {field_paused: true}).kind, 'recording')
+  assert.equal(light({}, {field_paused: true}, true).kind, 'recording')
   assert.deepEqual([light({}, null).kind, light({}, null).label], ['unknown', 'Engine'])
   assert.equal(light({}, undefined).kind, 'unknown')
   assert.deepEqual([light({}, {field_paused: true}).kind, light({}, {field_paused: true}).label], ['held', 'Held'])
@@ -212,14 +215,14 @@ test('BarPointerGroup renders nothing outside Interact; in Interact it shows thr
 })
 
 test('BarEngineLight labels the engine state and carries the matching data-kind', () => {
-  const render = (state, playback) => renderToStaticMarkup(createElement(BarEngineLight, {state, playback}))
+  const render = (state, playback, recording) => renderToStaticMarkup(createElement(BarEngineLight, {state, playback, recording}))
   const cases = [
-    [{propertyRecording: true}, null, 'recording', 'Engine: Recording'],
+    [null, null, 'recording', 'Engine: Recording', true],
     [null, {field_paused: true}, 'held', 'Engine: Held'],
     [null, {field_paused: false}, 'running', 'Engine: Running'],
   ]
-  for (const [state, playback, kind, label] of cases) {
-    const tag = render(state, playback).match(/<output[^>]*>/)[0]
+  for (const [state, playback, kind, label, recording] of cases) {
+    const tag = render(state, playback, recording).match(/<output[^>]*>/)[0]
     assert.equal(attr(tag, 'data-kind'), kind)
     assert.equal(attr(tag, 'aria-label'), label)
   }
@@ -243,20 +246,9 @@ test('BarValue shows the base beside its real label, the effective only when aut
   assert.ok(/ disabled=""/.test(off.match(/<input[^>]*>/)[0]))
 })
 
-test('arm + Play starts a take, Stop finishes it, and a blocked take never blocks Play', () => {
-  const route = input => bar.barPlayRoute(input)
-  assert.deepEqual(route({armed: false, recording: false, startReason: null}), {route: 'play', blockedReason: null}, 'unarmed Play is a plain Scene play')
-  assert.deepEqual(route({armed: true, recording: false, startReason: null}), {route: 'take-start', blockedReason: null})
-  assert.deepEqual(route({armed: true, recording: false, startReason: 'Choose a local numeric property in the toolbelt first.'}),
-    {route: 'play', blockedReason: 'Choose a local numeric property in the toolbelt first.'}, 'the Scene plays and the reason is named')
-  assert.equal(route({armed: false, recording: false, startReason: 'x'}).blockedReason, null, 'an unarmed bar says nothing about takes')
-  assert.equal(route({armed: true, recording: true, startReason: 'x'}).route, 'take-stop')
-  assert.equal(route({armed: false, recording: true, startReason: null}).route, 'take-stop', 'a running take stops whatever the arm shows')
-})
-
-test('Re-enable automation is hidden until the frame reports held parameters', () => {
-  assert.deepEqual(bar.barResume(null), {visible: false, count: 0})
-  assert.deepEqual(bar.barResume({hostMode: 'expressions', sceneCount: 1}), {visible: false, count: 0})
-  assert.deepEqual(bar.barResume({hostMode: 'expressions', sceneCount: 1, automationHeld: 0}), {visible: false, count: 0})
-  assert.deepEqual(bar.barResume({hostMode: 'expressions', sceneCount: 1, automationHeld: 3}), {visible: true, count: 3})
+// O-I ticket 1008: Arm, Play, Stop and Re-enable are the kernel's Set's acts (shell/transports/useExpressionsTransport.tsx), so the bar keeps
+// no route of its own between a play and a take, and no count of what the frame holds.
+test('the bar model keeps no take route and no held count: they are the kernel\'s', () => {
+  assert.equal(bar.barPlayRoute, undefined)
+  assert.equal(bar.barResume, undefined)
 })

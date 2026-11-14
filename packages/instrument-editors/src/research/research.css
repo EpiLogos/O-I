@@ -13,7 +13,6 @@
 .instrument-research[data-depth=compact] .place-facets-panel,.instrument-research[data-depth=compact] .research-street-view,.instrument-research[data-depth=compact] .research-source-list{display:none}
 .instrument-research[data-depth=compact] .instrument-research-home>div:empty{display:none}
 .instrument-research[data-depth=full]{min-height:420px}
-.instrument-research .maplibregl-map{height:100%;width:100%}
 .instrument-research .research-timeline,.instrument-research .research-places{height:100%;min-height:0;flex:1}
 .instrument-research .instrument-toolbar>span{overflow:hidden;text-overflow:ellipsis;max-width:240px;white-space:nowrap}
 .research-reading-basis{font-size:10px;padding:3px 8px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;color:var(--editor-muted,#a0a1a5)}

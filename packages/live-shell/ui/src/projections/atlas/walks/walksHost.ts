@@ -9,7 +9,8 @@
 //   holds it (places/placesHost.ts turnAtlasTo, the one door), else flies to its camera (flyAtlasTo).
 // - The atlas's own visits: a subject's occurrence the atlas opens (its manifest view, a click on the globe) is a place you visit, named by
 //   the world's place there when it holds one (placesHost.ts turnToPlace's own match: the subject, at the same point).
-// - The world the walk belongs to: the book's world (setWalkWorld, from the pane), read at each act; a change of world reads that world's walk.
+// - The world the walk belongs to: the World the window is open on, by its owner (setWalkWorld, from the attach as it reads the World the
+//   host names; AtlasProjectionPanel.tsx), read at each act; a change of world reads that world's walk.
 // - Part two (#760): the moment in force is the occasion the time spine stands on (the spine the shell publishes to its panes,
 //   projections/timelinePaneHost.ts), as a moment at its instant; an occasion stood while Record runs is a visit at that moment, where the
 //   World stands. The thing a visit keeps is the occurrence the World or the graph opens, by its subject's owner ref (Occurrence.subject_ref:
@@ -52,7 +53,7 @@ const WORLD_TITLES: Readonly<Record<string, string>> = {central: 'Central', 'epi
 let worldKey = 'central'
 const worldListeners = new Set<() => void>()
 
-/** The book's world (the pane keeps it current): the walk read and written is that world's. */
+/** The World the window is open on, by its owner (`world_scope.owner`; the attach sets it): the walk read and written is that World's. */
 export function setWalkWorld(key: string | undefined): void {
   const next = key || 'central'
   if (next === worldKey) return

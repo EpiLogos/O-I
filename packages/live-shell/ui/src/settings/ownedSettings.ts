@@ -1,7 +1,7 @@
 // The settings whose owners stand outside the configuration plane, on the window's one path (manual §10.10: "Every setting an owner contributes
 // stands as one row"; "A change is local until you review it … Review changes asks each owner to plan your changes … Apply sends the plans the
-// owners made. Each owner answers in the same table"). The presentation owner's theme (presentationSetting.ts) and O:I's chat default
-// (chatDefaultSetting.ts) contribute nothing to the configuration registry; each stands here as an entry with its reading as a resolution, so
+// owners made. Each owner answers in the same table"). The presentation owner's theme (presentationSetting.ts) contributes nothing to the
+// configuration registry; it stands here as an entry with its reading as a resolution, so
 // the engine (SettingsWorkspace.tsx) holds a change of it as a draft like every other, and asks its own owner to plan it, apply it and, where
 // the owner keeps a wider value, reset it. The plans and the answers join the configuration plane's in one Review and one answer table.
 // Pure, apart from the owners' operations each setting carries.

@@ -571,7 +571,7 @@ test('a key the view holds goes to the binding\'s own hand at once — its drop 
 // ── §16.3 a device has the views of the places it stands in ─────────────────────────────────────────────────────────────
 
 test('views by place: a monitor draws its tile and its Full, its window holds its Full, and no place draws a fold, a compact or a Whole of it', async () => {
-  const {design: nows} = await import('../src/inhabitants/catalogue/panels/widgets__nows.tsx')
+  const {design: nows} = await import('../src/inhabitants/catalogue/panels/widgets__trail.tsx')
   assert.equal(nows.kind, 'monitor')
   assert.deepEqual(host.viewsOf(nows), ['widget', 'full'])
   for (const view of ['folded', 'compact', 'whole']) assert.equal(host.viewIn(nows, view), null, view)
@@ -590,7 +590,7 @@ test('views by place: a monitor draws its tile and its Full, its window holds it
 
 test('views by place: the head offers only the marks of the places a device stands in', async () => {
   const marks = {select: () => {}, expand: () => {}, expanded: false, full: () => {}, popout: () => {}, fold: () => {}, unfold: () => {}, rail: () => {}, close: () => {}}
-  const {design: nows} = await import('../src/inhabitants/catalogue/panels/widgets__nows.tsx')
+  const {design: nows} = await import('../src/inhabitants/catalogue/panels/widgets__trail.tsx')
   assert.deepEqual(Object.keys(host.navWithin(nows, marks)).sort(), ['close', 'full', 'popout', 'rail'], 'a monitor: ⤢, ↗, the rail and its ✕')
   const {design: link} = await import('../src/inhabitants/catalogue/panels/workcell__link.tsx')
   assert.deepEqual(Object.keys(host.navWithin(link, marks)).sort(), ['close', 'expand', 'expanded', 'full', 'popout', 'rail', 'select'], 'Link: no fold')

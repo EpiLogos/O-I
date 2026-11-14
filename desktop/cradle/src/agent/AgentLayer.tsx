@@ -16,7 +16,7 @@ import type {EncounterRow} from "../encounter/EncounterList";
 import {expressionReadingOf,useEncounterSession} from "../encounter/session";
 import {modeClass} from "../encounter/nativeMode";
 import {EXPRESSION_COMPOSE_EVENT} from "../expression/summon";
-import {encounter,encounterProvision} from "../encounter/client";
+import {encounter,encounterProvision,type ProvisionChoice} from "../encounter/client";
 import {listFiles} from "../files/client";
 import type {SurfaceBinding} from "../surface/types";
 import type {CentralLocation, KernelTransportStatus} from "../kernel/types";
@@ -79,7 +79,7 @@ export interface AgentLayerProps {
   /** Factory centre's existing conversation, rather than its side-panel curation. */
   conversation?: boolean;
   prepareAgents?: boolean;
-  onProvision?: (project: string,preferredBodyRef?:string) => Promise<AgentAccompanying>;
+  onProvision?: (project: string,choice:ProvisionChoice) => Promise<AgentAccompanying>;
   /** Existing host route may retain/open the acknowledged Encounter binding. */
   onChoose?: (row:EncounterRow,current?:()=>boolean) => Promise<void>;
   subject: AgentSubject;
@@ -330,17 +330,17 @@ export function AgentLayer({project:projectProp,sourceWorldRef,current,conversat
             tape={tape} onOpenActivity={offered.some(entry=>entry.id==="Activity")?openActivity:undefined} connectionFacts={connectionFacts} onArtifact={path=>void openArtifact(path)}
             onReference={onReference?reference=>onReference({...reference,transport:kernel.transport}):undefined}
             onNewChat={()=>onAccompanying(undefined)} onChoose={choose}
-            onProvision={async provisionProject=>{
+            onProvision={async (provisionProject,agent)=>{
               const belongs=captureReceiver();
               if(!belongs())throw new Error("The conversation presentation retired before provisioning.");
               if(onProvision){
-                const value=await onProvision(provisionProject,preferredBodyRef);
+                const value=await onProvision(provisionProject,{agent,preferredBodyRef});
                 if(!belongs())throw new Error("The conversation presentation retired after native provisioning; inspect its owner before selecting it.");
                 if(value.project!==provisionProject||!value.ref||!value.space)throw new Error("The provisioned conversation has a different native destination.");
                 onAccompanying(value);return;
               }
               if(sourceWorldRef)throw new Error("This native World has not disclosed a qualified conversation provisioning operation.");
-              const provisioned=await encounterProvision(kernel.transport,provisionProject,preferredBodyRef);
+              const provisioned=await encounterProvision(kernel.transport,provisionProject,{agent,preferredBodyRef});
               if(!belongs())throw new Error("The native conversation was provisioned, but its presentation retired; inspect the retained owner before choosing it.");
               const value={ref:provisioned.agent_session,project:provisioned.project,space:provisioned.space};
               learnTitles([{ref:provisioned.agent_session,project:provisioned.project,space:provisioned.space,title:provisioned.space}]);

@@ -105,7 +105,7 @@ import {naraFormGeometry} from './naraFormField.js';
 import type {NativeM3Reading} from '../../../src/nara/nativeM3';
 import {createEvidenceField,type PrivateEvidenceField} from './naraEvidenceField.js';
 import {applyResearchMaterial,applyConnectorRecord,pruneResearchOccurrence,runCanvasImport,type CanvasImportHost,type ResearchMaterialAction} from './researchMaterial.js';
-import type {ConnectionBinding} from '../../../../../packages/oi-design-system/expressions-engine/oi/expressionBindings.mjs';
+import type {ConnectionBinding} from './expressionBindings.mjs';
 import type {KernelConversion,KernelSceneBody} from './kernelDocumentBridge.js';
 import {installSceneBodies} from './sceneBodies.js';
 import {prepareNativeSceneBody} from './nativeSceneBody.js';
@@ -196,7 +196,7 @@ let kernelScratchId:string|null=null;
 try{if(window.__JOURNEY__)initial=validateJourney(window.__JOURNEY__);else if(!startsWithNativeReference){try{const last=localStorage.getItem('oi.field-studies.last');const {read,origins}=readLibraryWithOrigins();const saved=read.journeys.find(j=>j.id===last);if(saved){initial=saved;const origin=last?origins.get(last):undefined;if(origin?.kind==='kernel-ref')bootKernelRef=origin.ref;}}catch{/* An opaque or private origin must still open cleanly. */}}}catch(err){startupError=err instanceof Error?err.message:String(err);}
 function initialiseBelts(j:Journey){initialiseShared(j);initialiseSources(j);for(const s of [...j.scenes,...Object.values(j.savedScenes??{})])if(!s.toolbelt)s.toolbelt=clone(workspace.entries).map(e=>e.scope==='named'&&!s.entities.some(v=>v.id===e.entityId)?{id:e.id,key:e.key,scope:'selected' as const}:e);return j;}
 const store=new DocumentStore(initialiseSceneSaves(initialiseBelts(initial)));let engine:FieldEngineAdapter;
-try{engine=window.OI_ENGINE_FACTORY?window.OI_ENGINE_FACTORY($<HTMLCanvasElement>('field-canvas')):new ProductionAdapter($<HTMLCanvasElement>('field-canvas'));(window as any).OI_DEBUG_ENGINE=engine;}catch(err){$('stage').innerHTML='<p style="padding:110px 40px">The native WebGL field could not start. '+esc(err instanceof Error?err.message:err)+'</p>';throw err;}
+try{engine=new ProductionAdapter($<HTMLCanvasElement>('field-canvas'));(window as any).OI_DEBUG_ENGINE=engine;}catch(err){$('stage').innerHTML='<p style="padding:110px 40px">The native WebGL field could not start. '+esc(err instanceof Error?err.message:err)+'</p>';throw err;}
 let timelineTrack=true;let sceneIndex=0;let selected:string[]=[];let textId:string|null=null;let tab:InspectorContext['tab']='field';let motionTab:InspectorContext['motionTab']='sequence';let stepIndex=0;let search='';let editing=false,inspectorOpen=false,timelineOpen=false,presenting=false,shapePickerOpen=false,tool:Tool='interact';let shapeChoice:Shape='text',glyphChoice='O';let camera=defaultCamera();let placementStep=false,keepPlacing=false,pinRepeat=false;
 let propertyTake:null|{sceneId:string;armed:number;start:number;elapsed:number;tracks:PropertyTrack[];lastSample:number;limit?:number}=null;let appendTake=false,trackPreview=false;const takeWindows=new Map<string,{start:number;end:number}>();
 let width=innerWidth,height=innerHeight;let simTime=0,sceneElapsed=0;let fieldPaused=matchMedia('(prefers-reduced-motion: reduce)').matches,scenePlaying=false,journeyPlaying=false;let lastTime=performance.now(),lastUI=0;let toastTimeout=0,lastLibraryWrite=0;let transitionStart=0,transitionDuration=0;let transitionBackground='#f4f2eb',transitionSceneId='';let transitionEasing:ChainEasing='linear';let autosaveErrorShown=false;let captureSettings=defaultCapture();let recordPerformanceWarned=false;let currentVideo:{blob:Blob;mime:string;url:string;source:DesktopScene;settings:CaptureSettings}|null=null;let recordingSource:DesktopScene|null=null;/* O-I #747 round 891 (XT12/XT14): what the take is made from, read when the recording starts; a render chosen by Import, and its Remake. */let recordingMade:RenderSource|null=null,recordingStarted=0;let remaking:{kind:'picture'|'film';moved:boolean}|null=null,remakeTimer=0;let renderOpen:{kind:'picture'|'film';source:RenderSource;name:string}|null=null;let takeWaiters:(()=>void)[]=[];let recordingSettings:CaptureSettings|null=null;const recorder=new LiveRecorder();
@@ -2216,7 +2216,7 @@ function soundSceneTake(rate:number){
  if(said)toast(said,6500);
 }
 /** O-I #747 (lead's ruling of 29 Oct): a live field held on the scene meets every authored change — a scene switched, a view kept, a control
- * changed — before the engine does. The lease would refuse the change (retained-capability.mjs retainedRefuses); instead it is let go
+ * changed — before the engine does. The lease would refuse the change (retainedField.mjs retainedRefuses); instead it is let go
  * around the person's act and opened again once the scene is still (nativeField.ts rebind), and the act is named. */
 function rebindAroundAct(frame:EngineFrame){
  if(!nativeField)return;

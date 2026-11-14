@@ -7,6 +7,7 @@ import type {EncounterRow} from '../../../../../desktop/cradle/src/encounter/Enc
 import {NativePreparedContext} from './NativePreparedContext'
 import {preparedContextScopeKey,type NativePreparedContextScope} from '../native/preparedContextBinding'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
+import type {ProvisionChoice} from '../../../../../desktop/cradle/src/encounter/client'
 
 /** Presentation over the canonical Agent panel/shared native session. The
  * parent owns retained layout, native admission, provisioning and source open. */
@@ -16,7 +17,7 @@ export interface NativeAgencyParticipationProps {
   subject?: AgentSubject
   mode?: WorkspaceMode
   onAccompanying: (value: AgentAccompanying | undefined) => void
-  onProvision?: (project: string,preferredBodyRef?:string) => Promise<AgentAccompanying>
+  onProvision?: (project: string,choice:ProvisionChoice) => Promise<AgentAccompanying>
   onChoose?: (row:EncounterRow,current?:()=>boolean) => Promise<void>
   onOpenSubject?: (subject: AgentSubject) => void
   onError?: (message: string) => void

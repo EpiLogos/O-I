@@ -165,7 +165,7 @@ test('2 · Approve answers Resume and Deny answers Cancel, as the person, throug
   assert.match(approvals({units: null}).standing.allowOnce.disabled, /conversation is not read yet/)
 })
 
-test('3 · the chain reads the Runs the shown session\'s takes name, Factory\'s decision reading of each asked question, and answers through the kernel\'s receiving op', async () => {
+test('3 · the chain reads the Runs the shown session\'s takes name, Factory\'s decision reading of each asked question, and answers through the receiving client (Central\'s central.receiving.review by act)', async () => {
   const kernel = fakeKernel(op => ({ok: true, outcome: op.op === 'factory_development_read' ? {result: 'factory_development_reading', data: RUN_READING}
     : {result: 'factory_development_reading', data: DECISION()}}))
   let got
@@ -619,7 +619,8 @@ test('15 · Approvals: a proposed revision waits as a proposal with its Result f
   // the rail's publisher (AgentRailDevices.tsx) composes and publishes it in every mode, and the Main track draws that door entry.
   const chain = read('agent/devices/AgentRailDevices.tsx')
   assert.match(chain, /useAikitRead\(transport, REFINEMENT_LIST\)/)
-  assert.match(chain, /\n\s+refinements, settings: shownSettings\}/)
+  // O-I ticket 1007: it is handed what today's sessions yielded too (approvals-answers-binding.test.mjs answers them).
+  assert.match(chain, /\n\s+refinements, settings: shownSettings, yields\}/)
   // Approvals is one device (§19.14): Central's Main track answers a refinement too, with the same AIKit read and the one write
   // (ownerRoutes.ts refinementWrite) the Refining page presses.
   const centralChain = read('central/devices/CentralDevices.tsx')
@@ -627,6 +628,10 @@ test('15 · Approvals: a proposed revision waits as a proposal with its Result f
   assert.match(centralChain, /refinements: (\w+)Refinements/)
   for (const source of [chain, centralChain]) assert.match(source, /refinementWrite\(transport\)/, 'one write for both chains')
   assert.match(centralChain, /\{refine: refineWrite\}/)
+  // A session's yield is kept and dropped by the same two Central writes on both chains (centralDeviceWrites.ts).
+  for (const source of [chain, centralChain]) {
+    assert.match(source, /keepYield: \(row, revision\) => keepSessionYield\(transport, row, revision\), dropYield: row => dropSessionYield\(transport, row\)/)
+  }
   bind.resetHolds()
 })
 
@@ -696,7 +701,8 @@ test('17 · a Control skill\'s revision: Accept hands it to Central, where the p
   // Central's own acts, through the kernel's invoke_action with the person's own authority, at the digest the person reviewed.
   const routes = read('agent/devices/ownerRoutes.ts')
   assert.match(routes, /accept: 'control\.skills\.revision\.accept', discard: 'control\.skills\.revision\.discard'/)
-  assert.match(routes, /centralAct\(transport, CENTRAL_REVISION_ACTS\[verb\], \{scope: handed\.scope, name: handed\.name, expected_proposed_digest: handed\.proposedDigest\}\)/)
+  // A machine's or a project's skill is named with its machine or project (ctrl control_skills.rs resolve_skill_location; O-I ticket 1005).
+  assert.match(routes, /centralAct\(transport, CENTRAL_REVISION_ACTS\[verb\], \{scope: handed\.scope, name: handed\.name, expected_proposed_digest: handed\.proposedDigest,\s*\.\.\.\(handed\.machine \? \{machine: handed\.machine\} : \{\}\), \.\.\.\(handed\.project \? \{project: handed\.project\} : \{\}\)\}\)/)
   // REPLACED (parity D-09): Approvals was composed by Factory's chain, published only while it stood; the rail claims its tile in every mode, so
   // the rail's publisher (AgentRailDevices.tsx) composes and publishes it in every mode, and the Main track draws that door entry.
   const chain = read('agent/devices/FactoryDeviceChain.tsx')

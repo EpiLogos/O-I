@@ -1,13 +1,14 @@
-//! The harness-agent session surface: `KernelOp::HarnessAgentRead/Control`
-//! route the AIKit gateway's canonical conversation control through the
-//! owner's own CLI. The kernel owns no session state: the gateway's answer
-//! passes through verbatim, and its refusal is named data — proven here
-//! against the exact candidate executable with an isolated AIKIT_HOME where
-//! no gateway runs (CI-safe: offline honesty is the contract under test).
+//! The harness-agent session surface: `KernelOp::HarnessAgentRead` reads the
+//! AIKit gateway's sessions through the owner's own CLI, and a control is the
+//! registry's `aikit.gateway.agent` through the kernel's `act` (O-I #1002).
+//! The kernel owns no session state: the gateway's answer passes through
+//! verbatim, and its refusal is named data — proven here against the exact
+//! candidate executable with an isolated AIKIT_HOME where no gateway runs
+//! (CI-safe: offline honesty is the contract under test).
 
 use oi_cradle_kernel::agency::Client;
 use oi_cradle_kernel::flow::CentralClient;
-use oi_cradle_kernel::{HarnessAgentControl, Kernel, KernelOp, KernelOpResult};
+use oi_cradle_kernel::{Kernel, KernelOp, KernelOpResult};
 
 fn candidate() -> std::path::PathBuf {
     let path = std::path::PathBuf::from(
@@ -86,133 +87,121 @@ fn the_read_surfaces_the_gateway_sessions_document_verbatim() {
     assert_eq!(document["sessions"][0]["session_id"], "s-1");
 }
 
+/// A fake `oi` (`OI_BIN`): `act describe` names the Action a write; `act invoke` records its argv and the JSON on stdin and
+/// answers one canned envelope, as AIKit's route answers through the registry.
+fn fake_oi(dir: &std::path::Path, canned: &str) -> std::path::PathBuf {
+    let path = dir.join("oi-fake");
+    let d = dir.display();
+    std::fs::write(
+        &path,
+        format!(
+            "#!/bin/sh\nif [ \"$1 $2\" = 'act describe' ]; then printf '%s' '{{\"id\":\"aikit.gateway.agent\",\"mutation_class\":\"externally-mutating\"}}'; exit 0; fi\nprintf '%s' \"$*\" > {d}/argv.txt\ncat > {d}/stdin.txt\nprintf '%s' '{canned}'\n"
+        ),
+    )
+    .unwrap();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o755)).unwrap();
+    }
+    path
+}
+
+/// A control is the registry's `aikit.gateway.agent` (O-I #1002): the kernel's `act` hands `oi act invoke` the binding and
+/// the operation — and the model, for `model` — on stdin, and AIKit's answer comes back verbatim. AIKit's own argv for it, and
+/// its refusal of a value on an operation that takes none, are AIKit's own (aikit-cli act.rs `route_argv`, gateway_ops.rs
+/// `conversation_operation`), so they hold by every door.
 #[test]
-fn lifecycle_controls_reach_the_gateway_as_the_canonical_verbs() {
+fn a_control_is_the_registrys_gateway_agent_action() {
     let dir = unique_dir("control");
-    let fake = fake_aikit(
-        &dir,
-        r#"{"ok":true,"data":{"type":"new","started":true},"schema":1}"#,
-        true,
-    );
-    let mut kernel = Kernel::with_agency(
-        CentralClient::discover(),
-        Client::with(fake, Some(dir.clone())),
-    );
-    let outcome = kernel
-        .apply(KernelOp::HarnessAgentControl {
-            binding: "gateway-binding/t".to_owned(),
-            control: HarnessAgentControl::New,
-            model: None,
-        })
-        .expect("the control routes through the owner CLI");
-    let KernelOpResult::HarnessAgentOutcome {
-        control, document, ..
-    } = outcome.result
-    else {
-        panic!("the control answers with the outcome");
-    };
-    assert_eq!(control, HarnessAgentControl::New);
-    assert_eq!(document["type"], "new");
-    let argv = std::fs::read_to_string(dir.join("argv.txt")).unwrap();
-    assert!(argv.contains(" new"), "the canonical verb travels: {argv}");
+    let canned = r#"{"ok":true,"data":{"type":"conversation","binding_ref":"gateway-binding/t","operation":{"op":"model","model":"gpt-5"}},"schema":1}"#;
+    std::env::set_var("OI_BIN", fake_oi(&dir, canned));
+    // No Central here: a root-register Action runs where the kernel is.
+    let mut kernel = Kernel::new(CentralClient::with(
+        dir.join("absent-central"),
+        None,
+        "O-I".into(),
+    ));
+    for (input, expected) in [
+        (
+            serde_json::json!({"binding": "gateway-binding/t", "operation": "new"}),
+            serde_json::json!({"binding": "gateway-binding/t", "operation": "new"}),
+        ),
+        (
+            serde_json::json!({"binding": "gateway-binding/t", "operation": "model", "model": "gpt-5"}),
+            serde_json::json!({"binding": "gateway-binding/t", "operation": "model", "model": "gpt-5"}),
+        ),
+    ] {
+        let op: KernelOp = serde_json::from_value(serde_json::json!({
+            "op": "act", "action": "aikit.gateway.agent", "input": input
+        }))
+        .expect("the shell's control is a kernel act");
+        let outcome = kernel
+            .apply(op)
+            .expect("the control routes through the registry");
+        let KernelOpResult::ActionDispatched {
+            dispatch,
+            reads_only,
+        } = outcome.result
+        else {
+            panic!("the control answers with the Action's dispatch");
+        };
+        assert!(!reads_only);
+        let dispatch = serde_json::to_value(dispatch).unwrap();
+        assert_eq!(dispatch["state"], "invoked", "{dispatch}");
+        assert_eq!(
+            dispatch["data"],
+            serde_json::from_str::<serde_json::Value>(canned).unwrap(),
+            "AIKit's answer, verbatim"
+        );
+        let argv = std::fs::read_to_string(dir.join("argv.txt")).unwrap();
+        assert_eq!(argv, "act invoke aikit.gateway.agent --input - --json");
+        let stdin: serde_json::Value =
+            serde_json::from_str(&std::fs::read_to_string(dir.join("stdin.txt")).unwrap()).unwrap();
+        assert_eq!(stdin, expected);
+    }
+    std::env::remove_var("OI_BIN");
 }
 
-/// The rack's Model is AIKit's `gateway agent <B> model --model <ID>` (aikit-cli
-/// cli.rs GatewayAgentArgs `model`, gateway_ops.rs conversation_operation):
-/// the one value-carrying conversation operation AIKit has. The id travels as
-/// AIKit's own flag, never as an invented `configure` carrier.
-#[test]
-fn the_model_control_carries_the_model_id_as_aikits_own_flag() {
-    let dir = unique_dir("model");
-    let fake = fake_aikit(
-        &dir,
-        r#"{"ok":true,"data":{"type":"conversation","binding_ref":"gateway-binding/t","operation":{"op":"model","model":"gpt-5"},"result":{"available":false,"reason":"this conversation has no agent backing"}},"schema":1}"#,
-        true,
-    );
-    let mut kernel = Kernel::with_agency(
-        CentralClient::discover(),
-        Client::with(fake, Some(dir.clone())),
-    );
-    let op: KernelOp = serde_json::from_value(serde_json::json!({
-        "op": "harness_agent_control", "binding": "gateway-binding/t", "control": "model", "model": "gpt-5"
-    }))
-    .expect("the shell's model call is a kernel op");
-    let outcome = kernel
-        .apply(op)
-        .expect("the model control routes through the owner CLI");
-    let KernelOpResult::HarnessAgentOutcome {
-        control, document, ..
-    } = outcome.result
-    else {
-        panic!("the control answers with the outcome");
-    };
-    assert_eq!(control, HarnessAgentControl::Model);
-    assert_eq!(document["operation"]["model"], "gpt-5");
-    let argv = std::fs::read_to_string(dir.join("argv.txt")).unwrap();
-    assert!(
-        argv.ends_with("--json gateway agent --binding gateway-binding/t model --model gpt-5"),
-        "AIKit's own argv travels: {argv}"
-    );
-}
-
-/// A value rides only the control AIKit gives a value to: a model on `stop`
-/// is refused before anything is asked, and `configure` is no control at all.
-#[test]
-fn a_value_on_a_control_aikit_gives_none_is_refused() {
-    let dir = unique_dir("misplaced");
-    let fake = fake_aikit(&dir, r#"{"ok":true,"data":{},"schema":1}"#, true);
-    let mut kernel = Kernel::with_agency(
-        CentralClient::discover(),
-        Client::with(fake, Some(dir.clone())),
-    );
-    let error = kernel
-        .apply(KernelOp::HarnessAgentControl {
-            binding: "gateway-binding/t".to_owned(),
-            control: HarnessAgentControl::Stop,
-            model: Some("gpt-5".to_owned()),
-        })
-        .expect_err("a model on stop is refused");
-    assert!(error.contains("model"), "named: {error}");
-    assert!(!dir.join("argv.txt").exists(), "nothing reached AIKit");
-    let configure = serde_json::from_value::<KernelOp>(serde_json::json!({
-        "op": "harness_agent_control", "binding": "b", "control": "configure", "value": {"effort": "high"}
-    }));
-    assert!(configure.is_err(), "configure is no AIKit operation");
-}
-
-/// Against the real AIKit (OI_AIKIT_BIN) and a gateway this test does not
-/// start: `OI_AIKIT_GATEWAY_HOME` names an isolated AIKIT_HOME whose gateway
-/// serves `OI_AIKIT_GATEWAY_BINDING`. The model and pause/resume controls
-/// reach it with AIKit's own argv and its answer comes back verbatim.
-#[ignore = "requires OI_AIKIT_BIN and an isolated running gateway (OI_AIKIT_GATEWAY_HOME, OI_AIKIT_GATEWAY_BINDING)"]
+/// Against the real registry (`OI_BIN`, routing to `OI_AIKIT_BIN`) and a
+/// gateway this test does not start: `AIKIT_HOME` names an isolated home
+/// whose gateway serves `OI_AIKIT_GATEWAY_BINDING`. The model and
+/// pause/resume controls reach it as `aikit.gateway.agent` and its answer
+/// comes back verbatim, inside AIKit's envelope.
+#[ignore = "requires OI_BIN, OI_AIKIT_BIN and an isolated running gateway (AIKIT_HOME, OI_AIKIT_GATEWAY_BINDING)"]
 #[test]
 fn the_rack_controls_reach_a_real_gateway() {
-    let home = std::path::PathBuf::from(std::env::var_os("OI_AIKIT_GATEWAY_HOME").unwrap());
     let binding = std::env::var("OI_AIKIT_GATEWAY_BINDING").unwrap();
-    let mut kernel = Kernel::with_agency(
-        CentralClient::discover(),
-        Client::with(candidate(), Some(home)),
-    );
-    let mut answer = |control, model: Option<&str>| {
-        let outcome = kernel
-            .apply(KernelOp::HarnessAgentControl {
-                binding: binding.clone(),
-                control,
-                model: model.map(str::to_owned),
-            })
-            .expect("the control reaches the gateway");
-        let KernelOpResult::HarnessAgentOutcome { document, .. } = outcome.result else {
-            panic!("the control answers with the outcome");
+    let dir = unique_dir("rack");
+    let mut kernel = Kernel::new(CentralClient::with(
+        dir.join("absent-central"),
+        None,
+        "O-I".into(),
+    ));
+    let mut answer = |operation: &str, model: Option<&str>| {
+        let mut input = serde_json::json!({"binding": binding, "operation": operation});
+        if let Some(model) = model {
+            input["model"] = serde_json::json!(model);
+        }
+        let op: KernelOp = serde_json::from_value(
+            serde_json::json!({"op": "act", "action": "aikit.gateway.agent", "input": input}),
+        )
+        .unwrap();
+        let outcome = kernel.apply(op).expect("the control reaches the gateway");
+        let KernelOpResult::ActionDispatched { dispatch, .. } = outcome.result else {
+            panic!("the control answers with the Action's dispatch");
         };
-        eprintln!("{document}");
-        document
+        let dispatch = serde_json::to_value(dispatch).unwrap();
+        eprintln!("{dispatch}");
+        assert_eq!(dispatch["state"], "invoked", "{dispatch}");
+        dispatch["data"]["data"].clone()
     };
-    let model = answer(HarnessAgentControl::Model, Some("gpt-5"));
+    let model = answer("model", Some("gpt-5"));
     assert_eq!(model["operation"]["op"], "model", "{model}");
     assert_eq!(model["operation"]["model"], "gpt-5", "{model}");
-    let paused = answer(HarnessAgentControl::Pause, None);
+    let paused = answer("pause", None);
     assert_eq!(paused["result"]["paused"], true, "{paused}");
-    let resumed = answer(HarnessAgentControl::Resume, None);
+    let resumed = answer("resume", None);
     assert_eq!(resumed["result"]["paused"], false, "{resumed}");
 }
 

@@ -19,7 +19,7 @@ Common placement/fullscreen remains under InstrumentPresentation and its host. I
 
 Compact Timeline reveals native zoom/Fit and Chronology/Relations controls. Compact Places reveals the actual native Globe/Flat/Fit controls; native facet filters, imagery and inspector return at full depth. Full additionally offers selected-facet provenance and optional exact-anchor opening. Native Timeline/Places editing, source inspection, source-backed filtering, map offline attribution, imagery budget and source refusal messages remain the mature implementation.
 
-Required native import aliases are unchanged: @research-canvas/{schema,domain,desktop-api,geography,viewers,node-document,exporter}, React/ReactDOM and maplibre-gl resolve to the installed cradle/vendor paths already declared by the parent package. No dependency install, new clock, globe, semantic store, or native write verb was added.
+Required native import aliases are unchanged: @research-canvas/{schema,domain,desktop-api,viewers,node-document,exporter} and React/ReactDOM resolve to the installed cradle/vendor paths already declared by the parent package (the geography alias and maplibre-gl went with the hosted map, O-I #1009). No dependency install, new clock, globe, semantic store, or native write verb was added.
 
 ## Full lane-qualified target mapping
 

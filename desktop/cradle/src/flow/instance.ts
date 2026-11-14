@@ -152,7 +152,7 @@ export function mintBlankInstance(participants?: QlDocParticipant[], now = new D
  * authored by the person's identity unless a declared participant is given —
  * an answering agent's entry declares the live agent's own initial and the
  * session ref it answered from. */
-export function appendEntry(instanceHtml: string, text: string, opts?: {participant?: QlDocParticipant; replyTo?: {entryId: string; anchor: string | null}; relations?: Relation[]; addressees?: string[]; operationRef?: string; html?: string; entryId?: string; basisRevision?: number; kind?: EntryKind}, now = new Date()): { html: string; documentId: string | null; entry: QlDocEntry } {
+export function appendEntry(instanceHtml: string, text: string, opts?: {participant?: QlDocParticipant; replyTo?: {entryId: string; anchor: string | null}; relations?: Relation[]; addressees?: string[]; intent?: "contribution" | "response" | "work"; operationRef?: string; html?: string; entryId?: string; basisRevision?: number; kind?: EntryKind}, now = new Date()): { html: string; documentId: string | null; entry: QlDocEntry } {
   const doc = parseInstance(instanceHtml);
   if (isCurrentFormat(doc)) return appendPlural(instanceHtml, doc, text, opts, now);
   // A container's rules (an entry's kind, the circle's holder) are the plural form's: an earlier form keeps none of them.
@@ -201,7 +201,7 @@ function appendPlural(instanceHtml: string, doc: QlDoc, text: string, opts: Para
   const relations: Relation[] = opts?.relations ?? (opts?.replyTo ? [{type: "reply", entryId: opts.replyTo.entryId, anchor: opts.replyTo.anchor, ...(opts.basisRevision !== undefined ? {revision: opts.basisRevision} : {})}] : []);
   const operationRef = opts?.operationRef ?? `ui:${crypto.randomUUID()}`;
   const result = appendContribution(next, {
-    operationRef, authorKey: author.key, html: opts?.html ?? textToHtml(text), at: now.toISOString(), relations, addressees: opts?.addressees, basisRevision: opts?.basisRevision, entryId: opts?.entryId,
+    operationRef, authorKey: author.key, html: opts?.html ?? textToHtml(text), at: now.toISOString(), relations, addressees: opts?.addressees, ...(opts?.intent ? {intent: opts.intent} : {}), basisRevision: opts?.basisRevision, entryId: opts?.entryId,
     ...(opts?.kind ? {kind: opts.kind} : {}),
   }, {kind: "system"});
   return {html: embedDocument(instanceHtml, result.doc), documentId: result.doc.meta.documentId, entry: result.entry};

@@ -259,10 +259,11 @@ export function useRosterAnswer(transport: KernelTransportStatus, project: strin
 }
 
 /** AIKit's SkillSets in a register (project null = the root), shared. */
-export function useSkillSetsAnswer(transport: KernelTransportStatus, project: string | null) {
+/** AIKit's SkillSets for `project`, shared by every reader of them; `asked` false reads nothing (a device closed). */
+export function useSkillSetsAnswer(transport: KernelTransportStatus, project: string | null, asked = true) {
   installNotices()
   const epoch = useSpineEpoch()
-  return useOwnerReading(skillSetsReadingKey(transport, project), readSkillSetsOf(transport, project), epoch)
+  return useOwnerReading(asked ? skillSetsReadingKey(transport, project) : null, readSkillSetsOf(transport, project), epoch)
 }
 
 /** The machine's workcell standing, shared. */

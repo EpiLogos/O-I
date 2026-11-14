@@ -12,9 +12,21 @@ const useLayoutIso: typeof useLayoutEffect = typeof HTMLElement === 'undefined' 
 import {Icon as CutIcon, type IconName} from '../../inhabitants/sdk/Icon'
 import type {SlotBinding, SlotWords, TransportBindings, TransportSlotId} from './slots'
 import {nextFold, type FoldState} from './fold'
-import {LinkSlot} from './LinkSlot'
+import {loadWhenDrawn} from '../../shell/loadWhenDrawn'
 import {HomeSlot} from './HomeSlot'
 import './transport.css'
+
+/** Link (§19.19) draws at once, standing disabled until its owners answer; its binding (Workcell's status, AIKit's population and
+ * remotes: ./LinkSlot.tsx) loads when it first draws, not with the window's first script (tests/first-load-budget.test.mjs LOADS_LATER). */
+function LinkWaiting({words}: {words?: SlotWords}) {
+  const label = words?.label ?? 'Link'
+  return <span className="transport-slot transport-link">
+    <button type="button" className="native-control transport-text transport-word" data-slot="link" aria-label={label} title={`${label}: waiting for its owners to answer`}
+      disabled aria-disabled>{words?.face ?? label}</button>
+    <button type="button" className="native-control transport-link-more" aria-label="Link's settings" disabled aria-disabled>▾</button>
+  </span>
+}
+const LinkSlot = loadWhenDrawn<{words?: SlotWords}>('Link', () => import('./LinkSlot').then(module => module.LinkSlot), LinkWaiting)
 
 /** Each pressable slot's specimen mark (icon-cut.html); the slots without one are readouts or wear a word. */
 const MARKS: Partial<Record<TransportSlotId, IconName>> = {

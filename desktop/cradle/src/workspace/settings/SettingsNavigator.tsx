@@ -2,12 +2,15 @@
  * The left body in Settings mode (docs/cradle/12-SETTINGS.md §1, 10-SIDEBARS
  * law 1: one frame, changing body): the task sections first, then PRODUCTS —
  * one page per product. Counts are the owners' own numbers from the shared
- * settings snapshot; a count that could not be read is simply absent.
+ * settings snapshot, the Harnesses count the census's (the World Model's
+ * agents); a count that could not be read is simply absent.
  */
 import {useEffect, useState, type ReactNode} from "react";
 import {ensureSettingsLoaded, useSettings, type SettingsSnapshot} from "./settingsData";
 import {goTo, samePlace, SECTIONS, useSettingsNav, type SectionId} from "./settingsNav";
-import {readyHarnesses, skillCounts, credentialCards} from "./sectionModel";
+import {agentCounts, skillCounts, credentialCards} from "./sectionModel";
+import {useCensus, type CensusReading} from "../../agency/census";
+import {useKernel} from "../../kernel/KernelProvider";
 import {SettingsProductRows} from "./SettingsProductRows";
 import {settingsProducts} from "./settingsProducts";
 import "./settings-page.css";
@@ -27,9 +30,12 @@ function Icon({name}: {name: SectionId | "product"}) {
   return <svg className="settings-nav-icon" width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{ICON[name]}</svg>;
 }
 
-/** The count a section carries in the navigator, from the owners' reads. */
-export function sectionCount(id: SectionId, data: SettingsSnapshot): number | null {
-  if (id === "harnesses") return data.suite.state === "ok" ? readyHarnesses(data.suite.value).length : null;
+/** The count a section carries in the navigator, from the owners' reads.
+ * Beside Harnesses: the census's agents that start on this machine (the
+ * World Model's agents, O-I #1003), the cards that section draws as
+ * starting. */
+export function sectionCount(id: SectionId, data: SettingsSnapshot, census: CensusReading): number | null {
+  if (id === "harnesses") return agentCounts(census)?.starting ?? null;
   if (id === "credentials") return data.credentials.state === "ok" ? credentialCards(data).filter((card) => card.binding && !card.binding.revoked).length : null;
   if (id === "skills") {
     const counts = data.suite.state === "ok" ? skillCounts(data.suite.value) : null;
@@ -41,12 +47,13 @@ export function sectionCount(id: SectionId, data: SettingsSnapshot): number | nu
 export function SettingsNavigator() {
   const data = useSettings();
   const nav = useSettingsNav();
+  const census = useCensus(useKernel().transport);
   const [productsOpen, setProductsOpen] = useState(true);
   useEffect(() => ensureSettingsLoaded(), []);
   return <nav className="settings-nav" aria-label="Settings sections" data-settings-navigator>
     <ul className="settings-nav-list">
       {SECTIONS.map((section) => {
-        const count = sectionCount(section.id, data);
+        const count = sectionCount(section.id, data, census);
         const current = samePlace(nav.place, {kind: "section", id: section.id});
         return <li key={section.id}>
           <button type="button" className="settings-nav-row" aria-current={current ? "page" : undefined} data-settings-section={section.id} onClick={() => goTo({kind: "section", id: section.id})}>

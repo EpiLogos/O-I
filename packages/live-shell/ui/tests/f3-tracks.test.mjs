@@ -94,15 +94,23 @@ test('every mode has its tracks by registration, and the views know no mode', as
   assert.deepEqual(Object.keys(MODE_TRACKS).sort(), [...SURF_MODES].sort())
   assert.equal(MODE_TRACKS.live({set, document}).tracks.length, 2)
   const world = {source: {sets: [{columns: [{id: 'd', name: 'd'}], tracks: [{id: 'day', name: 'Day', kind: 'day'}], clips: []}, {columns: [{id: 'd', name: 'd'}], tracks: [{id: 'run', name: 'Run', kind: 'run'}], clips: []}]}}
-  // Central's and Factory's tracks read their owners: hooks, rendered as the pane renders them.
+  // Central's and Factory's tracks are their Sets in the kernel (`set_subscribe`, O-I #1004), rendered as the pane renders them: with no
+  // kernel carrier each says why, never an empty success.
   const out = {}
   const Probe = ({mode, reading}) => { out[mode] = MODE_TRACKS[mode](reading); return null }
-  renderToStaticMarkup(React.createElement(Probe, {mode: 'base', reading: {set: null, document: null}}))
-  // T-WORLDS W2 (manual §18.1): Central's tracks are today's worlds — yours always — and the Day is the Main track, flagged main.
-  assert.deepEqual(out.base.tracks.map(t => t.id), ['central:world:central:wiki:root', 'central:day'], 'Central: your world and the Day, the Main track, even unread (T-WORLDS W2)')
-  assert.equal(out.base.tracks.at(-1).main, true, 'the Day is last, as Live keeps its Main track')
-  renderToStaticMarkup(React.createElement(Probe, {mode: 'factory', reading: {set: null, document: null}}))
-  assert.match(out.factory.waiting, /agent sessions/, 'Factory: waiting on the agency, said')
+  for (const mode of ['base', 'factory']) {
+    renderToStaticMarkup(React.createElement(Probe, {mode, reading: {set: null, document: null}}))
+    assert.equal(out[mode].tracks, undefined, `${mode}: no tracks without its Set`)
+    assert.match(out[mode].waiting, /Set is unread: The shell has published no kernel carrier/, `${mode}: the Set unread, and why`)
+  }
+  // T-WORLDS W2 (manual §18.1): Central's tracks are today's worlds — yours always — and the Day is the Main track, flagged main. The
+  // kernel lays them even unread (mode_set.rs a_slice_unread_or_refused_is_its_tracks_stated_reason_never_an_empty_success); the
+  // window draws the Set's tracks in the Set's order.
+  const {modeSetOf, setTrack} = await import('./support/modeSetFixture.mjs')
+  const {kernelSetTracks} = await import('../src/frame/tracks/kernelSet.ts')
+  const central = kernelSetTracks(modeSetOf({owner: 'Central', tracks: [setTrack('central:world:central:wiki:root', 'Your world', {absent: 'Central\'s worlds are unread: Central\'s map is unreadable'}), setTrack('central:day', 'Day', {main: true})]}), {nowMs: 0})
+  assert.deepEqual(central.tracks.map(t => t.id), ['central:world:central:wiki:root', 'central:day'], 'Central: your world and the Day, the Main track (T-WORLDS W2)')
+  assert.equal(central.tracks.at(-1).main, true, 'the Day is last, as Live keeps its Main track')
   renderToStaticMarkup(React.createElement(Probe, {mode: 'techne', reading: {set: null, document: null}}))
   assert.equal(out.techne.tracks.length, 6, 'Technē: its six native streams, named even unread')
   assert.deepEqual(mergeSets(world.source.sets).columns.map(c => c.id), ['d'])

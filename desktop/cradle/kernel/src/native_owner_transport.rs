@@ -25,6 +25,11 @@ pub fn admitted(request: &KernelOp) -> bool {
             | KernelOp::Encounter { .. }
             | KernelOp::EncounterTaskRead { .. }
             | KernelOp::Expression { .. }
+    ) || matches!(
+        // Receiving's writes are Central's Actions (O-I #1002): a hosted review, include or submit travels as `act`, and runs
+        // as any wire act does, so a person act is refused in words before Central is asked.
+        request,
+        KernelOp::Act { action, .. } if action.starts_with("central.receiving.")
     )
 }
 fn qualified(world: &str) -> bool {

@@ -1,5 +1,7 @@
 # Lane 3 findings — the 3:3 Expressions editor today
 
+> Retired copy (O-I ticket 1008, 14 Nov 2026): the compiled engine copy at `packages/oi-design-system/expressions-engine` is deleted. The one engine is `desktop/cradle/expressions-app/src/engine`, built in `field-studies-journeys/src/production.ts`; its model and defaults are `field-studies-journeys/src/model.ts`. Paths into the copy below are a record of their date.
+
 Scope: the expressions instrument as it stands in the cradle
 (`Work/O-I/desktop/cradle/expressions-app/`, the vendored source of record)
 plus the cradle-side bindings that carry its documents

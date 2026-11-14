@@ -1,5 +1,7 @@
 # Wave protocol — Expression enrichment 2026-10
 
+> Retired copy (O-I ticket 1008, 14 Nov 2026): the compiled engine copy at `packages/oi-design-system/expressions-engine` is deleted. The one engine is `desktop/cradle/expressions-app/src/engine`, built in `field-studies-journeys/src/production.ts`; its model and defaults are `field-studies-journeys/src/model.ts`. Paths into the copy below are a record of their date.
+
 You are one content lane of the enrichment programme (owner brief 2026-10-06,
 NOW clearing `central:now:control:root:664e4c586f97ea62f3fe955be0a277d5bb6527231108d74ba66a26e9971f4dab`,
 lane branch `enrich/expressions-20261006` in the O-I repo). You re-author the

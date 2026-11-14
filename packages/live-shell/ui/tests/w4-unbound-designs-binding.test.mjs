@@ -120,18 +120,21 @@ test('Scope\'s Asks on Factory\'s Scope: every key of it classified, each settin
   const binding = carriedScope()
   for (const key of [...ASKS_OWN, ...ASKS_CUSTODY]) assert.equal(classify(binding, key), 'absent', `${key} stands disabled with why`)
   // REPLACED (round 859): Calls to other agents was a missing op (AIKit's GatewayIngressPolicy decided by a sender's own id or its one
-  // default, never by kind). AIKit keeps a rule by sender kind now, between the two (`aikit gateway ingress`, the kernel's
-  // harness_ingress_rule); a Scope handed no carrier names it.
+  // default, never by kind). AIKit keeps a rule by sender kind now, between the two (`aikit gateway ingress`); a Scope handed no carrier
+  // names it. REPLACED (O-I 1006): its carrier was the kernel's harness_ingress_rule; it is AIKit's Action aikit.gateway.ingress.
   assert.equal(binding.standing.calls.disabled, bind.CALLS_REFUSE.uncarried)
-  assert.match(binding.standing.calls.disabled, /^Calls to other agents: no carrier to AIKit's ingress rule for the sender kind agent \(the kernel's harness_ingress_rule\) stands on this chain\.$/)
+  assert.match(binding.standing.calls.disabled, /^Calls to other agents: no carrier to AIKit's ingress rule for the sender kind agent \(its Action aikit\.gateway\.ingress\) stands on this chain\.$/)
   // REPLACED (round 860): Wait and On no answer were missing ops (Hermes keeps its own approvals timeout and holds no request). AIKit owns
-  // them now: each is the session's own setting (track wait, track no_answer, through the kernel's encounter_session_settings), and AIKit's
-  // executor answers a request at its Wait as the person chose. A Scope handed no carrier names it.
+  // them now: each is the session's own setting (track wait, track no_answer), and AIKit's executor answers a request at its Wait as the
+  // person chose. A Scope handed no carrier names it. REPLACED (O-I 1006): written through the kernel's encounter_session_settings; by
+  // AIKit's Action aikit.session.settings now.
   assert.equal(binding.standing.wait.disabled, bind.WAIT_REFUSE.wait)
   assert.equal(binding.standing.noAnswer.disabled, bind.WAIT_REFUSE.noAnswer)
-  assert.match(binding.standing.wait.disabled, /^Wait: no carrier to AIKit's Wait on the session's own settings \(the kernel's encounter_session_settings, track wait\) stands on this chain\.$/)
+  assert.match(binding.standing.wait.disabled, /^Wait: no carrier to AIKit's Wait on the session's own settings \(its Action aikit\.session\.settings, track wait\) stands on this chain\.$/)
   for (const key of ['wait', 'noAnswer']) assert.doesNotMatch(binding.standing[key].disabled, /missing op|Hermes/, key)
-  assert.match(binding.standing.toolCalls.disabled, /^Tool calls: the Gateway's approvals row is not adopted on this chain/)
+  // REPLACED (O-I 1006): Tool calls was the harness's approvals mode through the Gateway's approvals row, which AIKit's gateway has no
+  // operation for. AIKit names its owner: the session's task's Tool calls, by aikit.session.settings; a Scope handed no settings says so.
+  assert.match(binding.standing.toolCalls.disabled, /^Tool calls: the chain hands in no session's settings/)
   // Before it lands and Escalate to are Factory's custody record's (CustodyAssign --review-gate, --escalate-to), in Custody's own words.
   assert.equal(binding.standing.gate.disabled, chain.CUSTODY_REFUSE.gate)
   assert.equal(binding.standing.escalate.disabled, chain.CUSTODY_REFUSE.escalate)
@@ -182,16 +185,19 @@ test('Calls to other agents reads AIKit\'s ingress rule for agents on each gatew
   assert.match(refused.standing.calls.disabled, /^Calls to other agents: AIKit's gateway did not answer/)
   assert.equal(written.length, 1, 'a refused press reaches no owner')
 
-  // The carrier: the kernel's harness_ingress_rule, one binding at a time; AIKit's refusal comes back in its words.
+  // The carrier: AIKit's Action aikit.gateway.ingress through the kernel's `act`, one binding at a time; AIKit's answer is the binding's
+  // policy as it now stands, and its refusal comes back in its words. REPLACED (O-I 1006): the kernel's harness_ingress_rule.
   const sent = []
-  const invoke = async (_transport, op) => { sent.push(op); return {outcome: {result: 'harness_ingress_outcome', binding: op.binding, document: {type: 'ingress-rule-set', binding_ref: op.binding, kind: op.kind, decision: op.decision}}} }
+  const policy = op => ({type: 'ingress-rule-set', binding_ref: op.input.binding, ingress: {default: 'allow', kinds: {[op.input.kind]: op.input.decision}}})
+  const invoke = async (_transport, op) => { sent.push(op); return {outcome: {result: 'action_dispatched', dispatch: {state: 'invoked', owner_operation: 'aikit.gateway.ingress', data: {ok: true, data: policy(op)}}}} }
   const document = await control.harnessIngressRule({kind: 'tauri'}, 'gateway-binding/bo', 'agent', 'pair', invoke)
-  assert.deepEqual(sent, [{op: 'harness_ingress_rule', binding: 'gateway-binding/bo', kind: 'agent', decision: 'pair'}])
+  assert.deepEqual(sent, [{op: 'act', action: 'aikit.gateway.ingress', input: {binding: 'gateway-binding/bo', kind: 'agent', decision: 'pair'}}])
   assert.equal(document.type, 'ingress-rule-set')
   await control.harnessIngressRule({kind: 'tauri'}, 'gateway-binding/bo', 'agent', null, invoke)
-  assert.equal(sent[1].decision, null, 'no decision clears the rule: the binding\'s default decides again')
+  assert.equal(sent[1].input.decision, 'clear', 'no decision clears the rule: the binding\'s default decides again')
   await assert.rejects(control.harnessIngressRule({kind: 'tauri'}, 'gateway-binding/x', 'agent', 'deny', async () => ({outcome: null, error: 'gateway-binding/x is not bound on this gateway'})), /gateway-binding\/x is not bound on this gateway/)
-  await assert.rejects(control.harnessIngressRule({kind: 'tauri'}, 'gateway-binding/x', 'agent', 'deny', async () => ({outcome: {result: 'harness_agent_outcome', document: {}}})), /AIKit did not answer the ingress rule/)
+  await assert.rejects(control.harnessIngressRule({kind: 'tauri'}, 'gateway-binding/x', 'agent', 'deny', async () => ({outcome: {result: 'action_dispatched', dispatch: {state: 'owner_refused', owner_operation: 'aikit.gateway.ingress', message: 'unknown gateway binding gateway-binding/x'}}})), /unknown gateway binding gateway-binding\/x/)
+  await assert.rejects(control.harnessIngressRule({kind: 'tauri'}, 'gateway-binding/x', 'agent', 'deny', async () => ({outcome: {result: 'action_dispatched', dispatch: {state: 'invoked', owner_operation: 'aikit.gateway.ingress', data: {}}}})), /AIKit did not answer the ingress rule/)
   await assert.rejects(control.harnessIngressRule({kind: 'unavailable', reason: 'No kernel carrier here.'}, 'gateway-binding/x', 'agent', 'deny'), /No kernel carrier here/)
 })
 

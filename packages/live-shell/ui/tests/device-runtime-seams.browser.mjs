@@ -88,7 +88,7 @@ const central = inhabitantManifest('central')!
 const windows = {popOut() { seen.opened.push('pop-out') }, redock() {}, poppedOut: () => false} as any
 const day = centralDeviceEntries({transport: UNAVAILABLE, faces: central.faces, manifest: central, reads: {day: {standing: facts.standing, face: null, revision: null}} as any,
   day: facts.aperture, conversation: null, flow: null, impact: null, deviceWindows: windows, dayStanding: facts.standing}).find(entry => entry.id === 'central:day-die')!
-const dayBinding = dayDesignBinding(day.id, facts, dayValuesOf(facts, null), {turn: async () => {}, openToday: async () => {}})
+const dayBinding = dayDesignBinding(day.id, facts, dayValuesOf(facts, null), {turn: async () => {}, closeNow: async () => {}})
 publishDevice(day.id, centralPublication(day, dayBinding))
 
 // ---- 3. the Agent, with its own Full act
@@ -204,7 +204,7 @@ try {
     const panes = await page.evaluate(() => window.__seen.panes)
     assert.deepEqual(panes, ['projection.device central:day-die'], `${label}: the device pane, for the Day`)
     const text = await page.locator('#pane').innerText()
-    // Past the boundary (walk 13 Nov): today not opened yet, with Open today — never Central's stale-pointer words.
+    // Past the boundary (walk 13 Nov): today not opened yet, opening by itself at the Day's turn (O-I ticket 1005) — never Central's stale-pointer words.
     assert.match(text, /Today has not opened yet/, `${label}: the Day's page, today not opened yet`)
     assert.doesNotMatch(text, /earlier civil Day|today pointer/, `${label}: never Central's raw words`)
     assert.equal(await page.locator('#pane iframe').count(), 0, 'never the design\'s template')

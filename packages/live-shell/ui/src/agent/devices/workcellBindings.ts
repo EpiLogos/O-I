@@ -14,7 +14,8 @@
 //     tracked_changes, untracked, ahead_main, behind_main, admission}]}]) — the seat instrument's own reading, which the kernel runs
 //     since lane K1 as `seat_status_read` (workcellReads.ts useSeatStatusAnswer: slow, read once and on demand). A free seat still lists
 //     the zones of lanes that left (release clears workers, not zones): a zone on a free seat is no claim, so it is not read as one;
-//   git_repository_read — the chain's git reading (agentChainDevices.ts gitRepoReading: head_branch, the repo root's dirty_files);
+//   the chain's Git / landing reads the workcell's seat of the session's project from that same seat reading, as the World Model's
+//     workcells slice carries it (designBindings.ts projectSeatOf: its live_branch, and tracked_changes with untracked; O-I ticket 1006);
 //     `central.git.census` answered `unavailable_capability: No eligible Connector implements GitState` through the CLI here;
 //   `aikit gateway who --project-world project:O-I --json` (aikit.population-reading/v1), which the kernel runs as inhabitation_read
 //     {kind: population} (usePopulationAnswer.ts): local_workcell_ref, remotes [{workcell_ref, gateway_ref, status reachable |
@@ -26,19 +27,23 @@
 //   `workcell connections show <label> --json` (workcell.connection/v1, the kernel's workcell_read {connections-show} since lane W3: real
 //     shape in desktop/cradle/kernel/tests/fixtures/owner-routes/workcell-connections-2026-10-21.json): each connection's granted
 //     operations, credential reference, remote software and when it connected — the Remote carrier's grant, credRef, software and since.
-// The writes: the Seat's Join and Release go to the seat instrument through the kernel's seat_write (lane W3, desktop/cradle/kernel/src/
-// owner_routes.rs SeatWrite; ownerRoutes.ts): `seat join WORKCELL PRODUCT --actor A [--branch B] [--new-lane] [--region P…]
+// The writes: the Seat's Join and Release are the seat instrument's Actions `workcell.seat.join` and `workcell.seat.release`, through the
+// kernel's `act` (O-I 1002; ownerRoutes.ts seatWriteOp): `seat join WORKCELL PRODUCT --actor A [--branch B] [--new-lane] [--region P…]
 // [--recover-dirt-branch NAME] --json` and `seat release WORKCELL PRODUCT --actor A --json`, attributed to the desk's actor; the instrument
-// writes the machine's register and answers central.workcell-seat-result/v1 (an `owner_changed` receipt when it says it wrote it), and the
-// seat reading is asked again. The Floor stands disabled: seat_write carries no `--min-free-gb`. `workcell-cli git commit|push` and `seat
-// land` do not exist; moving a session to another machine, joining the link and its Share have no owner operation; Workcell's connect and
-// machine declarations (workcell_write) have no control on these designs. Each stands disabled with that reason.
+// writes the machine's register and answers central.workcell-seat-result/v1 (an `owner_changed` receipt when the instrument takes it), and
+// the seat reading is asked again. The Floor stands disabled: the join Action takes a floor of its own (`min_free_gb`, `--min-free-gb`), but
+// the Seat page holds no Floor (manual §19.16; a seat below the floor is the Checkouts page's finding), so Join keeps the register's.
+// Land is Workcell's own Actions on the held seat, through the kernel's `act` (O-I 1006): `workcell lane commit|push|land --workcell W
+// --product P` (workcell.lane.commit, .push, .land), each answering workcell.landing/v1 or refusing in Workcell's words. No owner commits on
+// a cadence, so Commit stands disabled; Push and Land as are the hand's, and Land waits while Push is Off. Moving a session to another machine, joining the link and its
+// Share have no owner operation; Workcell's connect and machine declarations (workcell_write) have no control on these designs. Each
+// stands disabled with that reason.
 // Pure, apart from the view holds (designBindings.ts holdView).
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
 import type {SeatWriteRequest} from '../../../../../../desktop/cradle/src/kernel/types'
 import {parseSeatStatusJson} from '../../inhabitants/centralHygieneModel'
-import {chainDeviceId, type AgentChainReading} from './agentChainDevices'
+import {chainDeviceId, type AgentChainReading, type LandingSeat} from './agentChainDevices'
 import {chainHolds, holdView, viewHolds, type ChainHolds} from './chainHolds'
 import {familyFaceDevice} from './mainTrackBindings'
 import {offersOf, planOf, probeFields, probesByLabel} from './workcellMaterial'
@@ -83,33 +88,117 @@ export interface WorkcellAnswer {
 
 // ---------------------------------------------------------------------------------------------------------------- Git / landing
 
+/** Git / landing's settings no owner carries. */
 export const GIT_REFUSE = {
-  'commit-policy': missing('Commit', 'workcell-cli git commit (the address table\'s write path names a command that does not exist)', 'Workcell'),
-  'push-policy': missing('Push', 'workcell-cli git push (no such command)', 'Workcell'),
-  landAs: missing('Land as', 'a landing form held by the seat (no owner holds it)', 'Workcell'),
-  land: missing('Land', 'workcell-cli seat land (no such command; the seat instrument has no kernel op)', 'Workcell'),
+  'commit-policy': 'Commit: no owner commits on a cadence (per turn or per task). Land commits the work that has no commit (Workcell\'s workcell.lane.commit), then pushes the lane and lands it.',
 } as const
+/** Why Land cannot be asked. */
+export const LAND_REFUSE = {
+  carrier: 'Land: the kernel carrier is unavailable here, so Workcell cannot be asked (`workcell lane land`, the Action workcell.lane.land).',
+  seat: 'Land: no seat of the project is named here (`seat status`), so there is no lane to land.',
+  free: 'Land: the seat is free, so it holds no lane to land. Join it first (the Seat page\'s Join, workcell.seat.join).',
+  push: 'Land: Push is Off, so the work stays on this machine and Land waits. Set Push to On land.',
+} as const
+/** Workcell's landing Actions (`workcell lane commit|push|land`), which Land runs in this order. */
+export type LaneAction = 'workcell.lane.commit' | 'workcell.lane.push' | 'workcell.lane.land'
+export const LANE_WORDS: Readonly<Record<LaneAction, string>> = {
+  'workcell.lane.commit': '`workcell lane commit`', 'workcell.lane.push': '`workcell lane push`', 'workcell.lane.land': '`workcell lane land`',
+}
+/** Push and Land as are the hand's, from the manual's defaults (§19.16: Push Off, Land as a draft merge request). */
+const GIT_LOCAL = ['push-policy', 'landAs', 'sel'] as const
+const GIT_DEFAULTS: Readonly<Record<string, Value>> = {'push-policy': 'off', landAs: 'draft'}
 
-/** Git / landing's values: the chain's git reading — its light, the checkout's branch and the files with no commit. The seat, the
- * branch against main, the commits, the diff's sums, the checks and the policies have no reading a kernel op reaches here. */
+/** Git / landing's writes: Workcell's landing Actions through the kernel's `act` (ownerRoutes.ts actOp). Absent: no carrier stands. */
+export interface GitPorts {
+  readonly lane?: (action: LaneAction, input: Readonly<Record<string, unknown>>) => Promise<unknown>
+}
+
+/** Workcell's refusal of a commit that finds none of the lane's work (Workcell's pull request 130, landing.rs lane_commit): no change inside the lane's
+ * regions — the union of every zone's regions on the register seat, the whole seat where no zone names one — or none at all but the seat's
+ * own link. The seat's `uncommitted` counts the whole seat, so Land asks for the commit, and on these words goes on to push what the lane
+ * has committed; the work outside the regions stays as it is, and the words name it. */
+export const NOTHING_TO_COMMIT = /^nothing to commit: /
+
+/** What Land's commit did, as the device answers it (`landed`): from Workcell's answer, the files it committed, the lane's regions and what
+ * it left outside them (`left_outside`), each only where Workcell names it; or Workcell's words where it found none of the lane's work. */
+export type Landed =
+  | {readonly committed?: number; readonly regions?: readonly string[]; readonly left_outside?: readonly string[]}
+  | {readonly said: string}
+
+/** The device's answer from Workcell's commit answer (ownerRoutes.ts OwnerRouteAnswer: its `data` is workcell.landing/v1). Pure. */
+export function landedOf(answer: unknown): Landed {
+  const doc = isObj(answer) && isObj(answer.data) ? answer.data : isObj(answer) ? answer : {}
+  const paths = (value: unknown) => (Array.isArray(value) ? value.filter((path): path is string => typeof path === 'string') : undefined)
+  const committed = num(doc.files), regions = paths(doc.regions), leftOutside = paths(doc.left_outside)
+  return {...(committed !== undefined ? {committed} : {}), ...(regions ? {regions} : {}), ...(leftOutside ? {left_outside: leftOutside} : {})}
+}
+
+/** Git / landing's values: the chain's git reading — its light, the seat's branch, its files with no commit and its commits against
+ * main — the hand's Push, Land as and file shown, and what the last Land's commit left outside the lane's regions (`landed`, the view's
+ * until the next Land). The commits, the diff's sums and the checks have no reading a kernel op reaches here. */
 export function gitValues(reading: Pick<AgentChainReading, 'gitAdmitted' | 'gitRepo'>, holds: ChainHolds): Values {
   const values: Record<string, Value> = {}
   if (reading.gitAdmitted === true) values.light = 'lit'
   if (reading.gitAdmitted === false) values.light = 'dark'
   put(values, 'branch', reading.gitRepo.branch)
   put(values, 'uncommitted', reading.gitRepo.uncommitted)
-  put(values, 'sel', viewHolds(holds, GIT_ID).sel)
+  put(values, 'ahead', reading.gitRepo.ahead)
+  put(values, 'behind', reading.gitRepo.behind)
+  const view = viewHolds(holds, GIT_ID)
+  for (const key of GIT_LOCAL) put(values, key, view[key] ?? GIT_DEFAULTS[key])
+  put(values, 'landed', view.landed)
   return values
 }
 
-export function gitBinding(git: Pick<AgentChainReading, 'gitAdmitted' | 'gitRepo'>, holds: ChainHolds): DesignBinding {
+/** The Actions one Land press runs, in order, from the values as they stand (the design's "Commit the work, push the branch and open a
+ * draft merge request"): the work with no commit committed, the lane pushed, and the lane landed as Land as says. Land waits while Push
+ * is Off (LAND_REFUSE.push). Workcell refuses what it cannot do, in its words (a draft where the project is not on GitHub). Pure. */
+export function landSteps(values: Values, seat: LandingSeat): {action: LaneAction; input: Record<string, unknown>}[] {
+  const at = {workcell: seat.workcell, product: seat.product}
+  const lane = typeof values.branch === 'string' ? values.branch : seat.product
+  return [
+    ...(typeof values.uncommitted === 'number' && values.uncommitted > 0
+      ? [{action: 'workcell.lane.commit' as const, input: {...at, message: `The work of lane ${lane}, committed by Land`}}] : []),
+    {action: 'workcell.lane.push' as const, input: at},
+    {action: 'workcell.lane.land' as const, input: {...at, as: typeof values.landAs === 'string' ? values.landAs : 'draft'}},
+  ]
+}
+
+export function gitBinding(git: Pick<AgentChainReading, 'gitAdmitted' | 'gitRepo' | 'gitSeat'>, holds: ChainHolds, ports: GitPorts = {}): DesignBinding {
+  const seat = git.gitSeat ?? null
+  const landWhy = !ports.lane ? LAND_REFUSE.carrier : !seat ? LAND_REFUSE.seat : !seat.held ? LAND_REFUSE.free : null
   return {
     id: GIT_ID,
     values: gitValues(git, holds),
-    standing: disabled(GIT_REFUSE),
-    local: held(GIT_ID, ['sel']),
-    writes: key => key in GIT_REFUSE,
-    write: async (changes: readonly ValueChange[]) => { for (const {key} of changes) throw Error(GIT_REFUSE[key as keyof typeof GIT_REFUSE] ?? reading(key)) },
+    standing: {...disabled(GIT_REFUSE), ...(landWhy ? {land: {disabled: landWhy}} : {})},
+    local: held(GIT_ID, GIT_LOCAL),
+    writes: key => key === 'land' || key in GIT_REFUSE,
+    write: async (changes: readonly ValueChange[]) => {
+      for (const {key} of changes) {
+        if (key !== 'land') throw Error(GIT_REFUSE[key as keyof typeof GIT_REFUSE] ?? reading(key))
+        if (landWhy) throw Error(landWhy)
+        // What the hand holds when it presses (the holds as they stand then); each step waits on the one before it. The commit's answer
+        // is the device's as soon as it comes, so a push refused after it still leaves what the commit left outside drawn.
+        const now = gitValues(git, chainHolds())
+        if (now['push-policy'] !== 'on land') throw Error(LAND_REFUSE.push)
+        holdView(GIT_ID, 'landed', undefined)
+        for (const step of landSteps(now, seat!)) {
+          if (step.action !== 'workcell.lane.commit') {
+            await ports.lane!(step.action, step.input)
+            continue
+          }
+          let landed: Landed
+          try {
+            landed = landedOf(await ports.lane!(step.action, step.input))
+          } catch (cause) {
+            const words = cause instanceof Error ? cause.message : String(cause)
+            if (!NOTHING_TO_COMMIT.test(words)) throw cause
+            landed = {said: words}
+          }
+          holdView(GIT_ID, 'landed', JSON.stringify(landed))
+        }
+      }
+    },
   }
 }
 
@@ -117,10 +206,10 @@ export function gitBinding(git: Pick<AgentChainReading, 'gitAdmitted' | 'gitRepo
 
 export const SEAT_REFUSE = {
   /** Join or Release where no carrier stands. */
-  join: 'Join: the kernel carrier is unavailable here, so the seat instrument cannot be asked (`seat join` through the kernel\'s seat_write).',
-  release: 'Release: the kernel carrier is unavailable here, so the seat instrument cannot be asked (`seat release` through the kernel\'s seat_write).',
-  /** Floor: the register's floor is read; the join through the kernel does not carry another. */
-  floor: missing('Floor', 'a join floor through the kernel (seat_write carries no `--min-free-gb`, so Join keeps the register\'s floor)', 'Workcell'),
+  join: 'Join: the kernel carrier is unavailable here, so the seat instrument cannot be asked (`seat join`, the Action workcell.seat.join).',
+  release: 'Release: the kernel carrier is unavailable here, so the seat instrument cannot be asked (`seat release`, the Action workcell.seat.release).',
+  /** Floor: the register's floor is read; the Seat page sets no other. */
+  floor: 'Floor: Join keeps the register\'s floor. The join Action takes one of its own (`min_free_gb`, the instrument\'s `--min-free-gb`), but the Seat page holds no Floor (manual §19.16): a seat below the floor is the Checkouts page\'s finding.',
 } as const
 /** Join or Release before a product and a seat are chosen. */
 export const SEAT_CHOOSE = 'Choose a product and a seat first: Join and Release name both (`seat join|release WORKCELL PRODUCT`).'
@@ -175,7 +264,7 @@ export interface SeatInput {
   readonly holds: ChainHolds
 }
 
-/** The Seat's writes: the seat instrument through the kernel's seat_write (ownerRoutes.ts). Absent: no carrier stands. */
+/** The Seat's writes: the seat instrument's Actions through the kernel's `act` (ownerRoutes.ts seatWriteOp). Absent: no carrier stands. */
 export interface SeatPorts {
   readonly seat?: (request: SeatWriteRequest) => Promise<unknown>
 }

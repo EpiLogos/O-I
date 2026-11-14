@@ -1,46 +1,47 @@
 import {Refusal} from "../shared/Refusal";
-import {useCallback,useEffect,useRef,useState} from "react";
+import {useEffect,useRef,useState} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import type {AgentSubject} from "../agent/AgentLayer";
-import {nativeContext,announceContext,approveCapturedSnapshot,validatePreparedItem,PREPARED_CONTEXT_CHANGED,type PreparedContext,type PreparedItem,type ContextOperation} from "./nativeContext";
+import {nativeContext,announceContext,approveCapturedSnapshot,validatePreparedItem,type PreparedContext,type PreparedItem,type ContextOperation} from "./nativeContext";
+import {refreshPacket,usePacket} from "./packetSlice";
 import {useContextPreview,addPreviewToContext} from "./contextPreview";
 import {revealContextCue} from "./selectionPresentation";
-import {newerContext} from "./scopeGuard";
 import {SelectionResolution} from "./SelectionResolution";
 import {EditorIcon} from "../editor/EditorIcon";
 import "./prepared-context.css";
 type PreparedContextProps={project?:string;session?:string;sourceWorldRef?:string;onOpenSubject?:(subject:AgentSubject)=>void};
+/** The owner's writes on a prepared context: an edit, or its register's adopted into the conversation. Its read is the World Model's. */
+type ContextWrite=Extract<ContextOperation,{operation:"edit"|"adopt"}>;
 export function PreparedContextView(props:PreparedContextProps){
  const {transport}=useKernel();
  return <ScopedPreparedContext key={JSON.stringify([props.sourceWorldRef,props.project,props.session,transport])} {...props}/>;
 }
 function ScopedPreparedContext({project,session,sourceWorldRef,onOpenSubject}:PreparedContextProps){
  const {transport}=useKernel();const preview=useContextPreview();
- const [context,setContext]=useState<PreparedContext>();const [unbound,setUnbound]=useState<PreparedContext>();
+ // The packet as the World Model holds it (packetSlice.ts usePacket; O-I ticket 1005): this conversation's, and its register's beside it
+ // while one stands, each with the edits announced over it until the slice holds them; a hosted world's from its host.
+ const packet=usePacket(transport,project,session,sourceWorldRef);const register=usePacket(transport,session&&!sourceWorldRef?project:undefined,undefined);
+ const context=packet?.context,unbound=register?.context;
  const [error,setError]=useState<string>();const [busy,setBusy]=useState(false);
  const mounted=useRef(true);useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;};},[]);
- const scopeKey=JSON.stringify([sourceWorldRef,project,session,transport]);const scopeRef=useRef(scopeKey);scopeRef.current=scopeKey;
- const load=useCallback(async()=>{const requested=scopeKey;if(project===undefined)return;const next=await nativeContext(transport,project,session,{operation:"read"},sourceWorldRef);if(!mounted.current||scopeRef.current!==requested)return;setContext(previous=>newerContext(previous,next));announceContext(project,next,sourceWorldRef);if(session&&!sourceWorldRef){const unbound=await nativeContext(transport,project,undefined,{operation:"read"});if(scopeRef.current===requested)setUnbound(previous=>newerContext(previous,unbound));}},[sourceWorldRef,project,session,transport,scopeKey]);
- useEffect(()=>{let active=true;setContext(undefined);setUnbound(undefined);setError(undefined);
-  if(project!==undefined)void nativeContext(transport,project,session,{operation:"read"},sourceWorldRef).then(next=>{if(active){setContext(previous=>newerContext(previous,next));announceContext(project,next,sourceWorldRef);}}).catch(e=>{if(active)setError(String(e));});
-  if(project!==undefined&&session&&!sourceWorldRef)void nativeContext(transport,project,undefined,{operation:"read"}).then(next=>{if(active)setUnbound(previous=>newerContext(previous,next));}).catch(()=>{});
-  const changed=(event:Event)=>{const {project:ownerProject,value,sourceWorldRef:ownerWorld}=(event as CustomEvent<{project:string;value:PreparedContext;sourceWorldRef?:string}>).detail??{};if(ownerWorld!==sourceWorldRef||ownerProject!==project||!value)return;if(value.scope.agent_session===(session??null)){setContext(previous=>newerContext(previous,value));setError(undefined);}else if(value.scope.agent_session===null)setUnbound(previous=>newerContext(previous,value));};
-  window.addEventListener(PREPARED_CONTEXT_CHANGED,changed);const focus=()=>void load().catch(e=>{if(active)setError(String(e));});window.addEventListener("focus",focus);
-  return()=>{active=false;window.removeEventListener(PREPARED_CONTEXT_CHANGED,changed);window.removeEventListener("focus",focus);};
- },[sourceWorldRef,project,session,load,transport]);
- const perform=async(request?:ContextOperation)=>{if(project===undefined||busy)return;setBusy(true);setError(undefined);try{if(request){const next=await nativeContext(transport,project,session,request,sourceWorldRef);if(!mounted.current)return;setContext(previous=>newerContext(previous,next));announceContext(project,next,sourceWorldRef);}else await load();}catch(e){if(mounted.current)setError(String(e));}finally{if(mounted.current)setBusy(false);}};
+ // A newer packet stands over a write that failed on the one before it.
+ useEffect(()=>{setError(undefined);},[context?.revision,context?.digest]);
+ const failure=error??(context?undefined:packet?.error);
+ // An edit's answer is announced (the views that show this packet hold it until the slice does); an adoption moves the register's packet
+ // too, and Refresh asks for the packet again: each reads the World Model's slice fresh.
+ const perform=async(request?:ContextWrite)=>{if(project===undefined||busy)return;setBusy(true);setError(undefined);try{if(request){const next=await nativeContext(transport,project,session,request,sourceWorldRef);if(!mounted.current)return;announceContext(project,next,sourceWorldRef);if(request.operation!=="adopt")return;}await refreshPacket(transport,project,session,sourceWorldRef);}catch(e){if(mounted.current)setError(String(e));}finally{if(mounted.current)setBusy(false);}};
  const reveal=(item:PreparedItem)=>{const s=item.selection;onOpenSubject?.({ref:s.source_ref,title:s.title,project:s.source_project??project,kind:s.anchor.kind==="text"?"source":"file",revision:s.source_revision??undefined,dirty:s.working_copy});if(s.anchor.kind==="text"){const cue={id:item.id,bindingId:s.binding_id,sourceRef:s.source_ref,start:s.anchor.start,end:s.anchor.end,text:s.text};requestAnimationFrame(()=>revealContextCue(cue));}};
  return <section className="prepared-context" aria-label="Selected context">
-  <header><strong>Prepared</strong><small>{context?`${context.items.length} prepared · not sent`:project!==undefined?(error?"Unavailable":"Loading…"):"No destination"}</small><button type="button" className="oi-tool" title="Refresh context" aria-label="Refresh prepared context" disabled={busy||project===undefined} onClick={()=>void perform()}><EditorIcon name="refresh"/></button></header>
+  <header><strong>Prepared</strong><small>{context?`${context.items.length} prepared · not sent`:project!==undefined?(failure?"Unavailable":"Loading…"):"No destination"}</small><button type="button" className="oi-tool" title="Refresh context" aria-label="Refresh prepared context" disabled={busy||project===undefined} onClick={()=>void perform()}><EditorIcon name="refresh"/></button></header>
   {!sourceWorldRef&&preview.candidate&&<div className="context-preview"><small>Current selection · {preview.title}</small><p>{preview.candidate.text.slice(0,180)}{preview.candidate.text.length>180?"…":""}</p><button type="button" className="oi-action" disabled={preview.busy||!!preview.candidate.error} onClick={addPreviewToContext}>{preview.busy?"Adding…":"Add to context"}</button></div>}
-  {error&&<Refusal className="oi-note" said="Couldn't prepare this context. No selection was turned into a plain-text attachment instead." error={error}/>}
+  {failure&&<Refusal className="oi-note" said="Couldn't prepare this context. No selection was turned into a plain-text attachment instead." error={failure}/>}
   {project===undefined&&<p className="oi-note">Select a native Project context to prepare material. Central source identity is retained.</p>}
   {context&&<>
    {context.items.length===0&&!preview.candidate&&<p className="oi-note">{sourceWorldRef?"Selections prepared in this World will appear here.":"Highlight text, then choose Add to context. Use the picker for a component."}</p>}
    <ul className="prepared-context-items">{context.items.map(item=><PreparedRow sourceWorldRef={sourceWorldRef} canReveal={!!onOpenSubject} project={project} key={item.id} item={item} context={context} busy={busy} onReveal={()=>reveal(item)} onRemove={()=>void perform({operation:"edit",basis:context.revision,mutation:{operation:"remove",id:item.id}})} onExpression={expression=>void perform({operation:"edit",basis:context.revision,mutation:{operation:"add",selection:item.selection,expression}})}/>)}</ul>
    {context.items.length>0&&<button type="button" className="oi-action context-clear" disabled={busy} onClick={()=>void perform({operation:"edit",basis:context.revision,mutation:{operation:"clear"}})}>Clear prepared context</button>}
   </>}
-  {session&&context&&unbound&&unbound.items.length>0&&<div className="context-preview"><p>{unbound.items.length} selections prepared for this Project without a conversation.</p><button type="button" className="oi-action" disabled={busy} onClick={()=>void perform({operation:"adopt",basis:context.revision,project_basis:unbound.revision}).then(()=>load()).catch(e=>setError(String(e)))}>Use in this conversation</button></div>}
+  {session&&context&&unbound&&unbound.items.length>0&&<div className="context-preview"><p>{unbound.items.length} selections prepared for this Project without a conversation.</p><button type="button" className="oi-action" disabled={busy} onClick={()=>void perform({operation:"adopt",basis:context.revision,project_basis:unbound.revision})}>Use in this conversation</button></div>}
   {!session&&context&&<p className="oi-note">Prepared for {project}; no Agent is running or receiving this material. Choose a conversation, then explicitly use these selections.</p>}
  </section>;
 }

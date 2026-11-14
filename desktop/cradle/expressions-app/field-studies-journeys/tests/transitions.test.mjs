@@ -271,7 +271,7 @@ test('E11c single implementation: the engine owns the pure helpers, transitions.
  assert.doesNotMatch(math,/^\s*import\s/m,'transitionMath.ts has no imports');
  assert.doesNotMatch(pass,/field-studies-journeys/,'the engine does not import the app');
  assert.match(pass,/from '\.\/transitionMath'/);
- assert.match(transitions,/from '\.\.\/\.\.\/src\/engine\/transitionMath'/);
+ assert.match(transitions,/from '\.\.\/\.\.\/src\/engine\/transitionMath\.ts'/);
  for(const name of ['dipWeights','wipeHoldRect','paintedPassParams','srgbUnit','renderTargetAction','transitionColourOf'])
   assert.doesNotMatch(transitions,new RegExp(`function ${name}\\b`),`${name} is defined once, in the engine`);
  assert.match(math,/export function dipWeights\(/);

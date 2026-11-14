@@ -15,7 +15,9 @@
 import {Refusal} from "../../shared/Refusal";
 import {useEffect, useState} from "react";
 import {ensureAuthFaces, useSettings, type AuthLoginOption} from "./settingsData";
-import {harnessName, providerId, readyHarnesses} from "./sectionModel";
+import {harnessName, providerId, signInClients} from "./sectionModel";
+import {useCensus} from "../../agency/census";
+import {useKernel} from "../../kernel/KernelProvider";
 
 /** The declared login command, as text: a public command, not a secret. */
 const commandText = (entry: AuthLoginOption): string => (entry.argv ?? []).join(" ");
@@ -78,21 +80,22 @@ export function HarnessAuth({harness}: {harness: string}) {
   </div>;
 }
 
-/** The logins one provider's Credentials card gains: every ready harness
- * whose own profile declares a runnable login serving that provider. Cards
- * render runnable logins only — a note-only harness's note lives on its own
- * setup card, where it is attributable. */
+/** The logins one provider's Credentials card gains: every agent of the
+ * census AIKit has a client for (O-I #1003) whose own profile declares a
+ * runnable login serving that provider. Cards render runnable logins only —
+ * a note-only harness's note lives on its own setup card, where it is
+ * attributable. */
 export function ProviderLogins({provider}: {provider: string}) {
   const data = useSettings();
-  const ready = data.suite.state === "ok" ? readyHarnesses(data.suite.value) : [];
-  const slugs = ready.map((row) => row.client).join(",");
+  const ready = signInClients(useCensus(useKernel().transport));
+  const slugs = ready.join(",");
   useEffect(() => { ensureAuthFaces(slugs ? slugs.split(",") : []); }, [slugs]);
   const matches: {harness: string; entry: AuthLoginOption}[] = [];
-  for (const row of ready) {
-    const face = data.authFaces[row.client];
+  for (const client of ready) {
+    const face = data.authFaces[client];
     if (face?.state !== "ok") continue;
     for (const entry of face.value.own_login) {
-      if (entry.runnable && providerId(entry.provider_ref) === provider) matches.push({harness: row.client, entry});
+      if (entry.runnable && providerId(entry.provider_ref) === provider) matches.push({harness: client, entry});
     }
   }
   if (matches.length === 0) return null;

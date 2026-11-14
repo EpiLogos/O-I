@@ -23,13 +23,16 @@
 // {run, course, summary, recognised?: {at}} (the journey reading's returns and recognitions). A proposal that is a skill's proposed revision
 // (§19.7 "The proposal waits in Approvals, and in the page") carries `refinement`: {member, owner, stale, revision, inUse, why: [{task,
 // reason}], result: [{condition, proposed, inUse}] (met · not met · open), resultWhy}; the Review page reads its Result for each condition.
+// A proposal that is what a session yielded at its end (O-I ticket 1007; manual §18.2: it lands on face 2 of today's Day as a proposal you
+// keep or drop) carries `yielded`: {session, receipts, changes, account}.
 // Answers, each its own key set to the item's id, by kind:
 //   a proposal: approve (Central's projectcentral.source.return_accept, held), changes (projectcentral.source.return_comment), reject
 //     (Deny; no owner operation declines a return yet, held); a skill's proposed revision: refineAccept (Accept, held) and refineDiscard
-//     (Discard), the Refining page's own;
+//     (Discard), the Refining page's own; what a session yielded: keep (Keep: Central's receiving Review accepts it and its Include lands
+//     it on face 2 of today's page, held) and drop (Drop: the Review rejects it);
 //   a request: allowOnce (Approve: the harness's consent, allow once, held), deny (reject once, held), open (where it belongs: a run in
 //     Factory, a Day in Central, an agent in Messages);
-//   a review: confirm (factory_owner AttemptReceiving, held), reviewChanges (Changes), collect (Workcell's collect, which no kernel route
+//   a review: confirm (Factory's factory.attempt.choose, held), reviewChanges (Changes), collect (Workcell's collect, which no kernel route
 //     reaches yet);
 //   a recognition: recognise (factory_owner Recognise), close (factory_owner RunClose, held; it follows a Recognition), continue
 //     (ContinueCommission, whose route the kernel issues only for a Recognition).
@@ -83,6 +86,7 @@ interface Recognition {readonly run?: string; readonly course?: string; readonly
 type Outcome = 'met' | 'not met' | 'open'
 interface Refinement {readonly member: string; readonly revision?: string; readonly inUse?: string; readonly owner?: string; readonly stale: boolean
   readonly why: readonly {task?: string; reason: string}[]; readonly result: readonly {condition: string; proposed: Outcome; inUse: Outcome}[]; readonly resultWhy?: string}
+interface Yielded {readonly session?: string; readonly receipts?: number; readonly changes?: number; readonly account?: string}
 interface Item {
   readonly id: string
   readonly kind?: Kind
@@ -106,6 +110,8 @@ interface Item {
   readonly options?: {readonly allowOnce?: string; readonly deny?: string}
   /** A skill's proposed revision (§19.7), answered Accept or Discard. */
   readonly refinement?: Refinement
+  /** What a session yielded at its end (O-I ticket 1007), answered Keep or Drop: its receipts and changes, and its own account. */
+  readonly yielded?: Yielded
   /** A consent request (be2n ruling 1): the line that says the words shown are not the ones sent, and the request as it was sent. */
   readonly differs?: string
   readonly raw?: string
@@ -193,6 +199,10 @@ function refinementOf(x: unknown): Refinement | undefined {
     result: list(r.result).flatMap(c => (word(c.condition) ? [{condition: saidOf(c.condition), proposed: outcome(c.proposed), inUse: outcome(c.inUse)}] : [])),
     resultWhy: whoOf(r.resultWhy)}
 }
+function yieldedOf(x: unknown): Yielded | undefined {
+  const r = rec(x)
+  return r ? {session: whoOf(r.session), receipts: count(r.receipts), changes: count(r.changes), account: word(r.account) === undefined ? undefined : saidOf(r.account)} : undefined
+}
 function recognitionOf(x: unknown): Recognition | undefined {
   const r = rec(x)
   return r ? {run: whoOf(r.run), course: whoOf(r.course), summary: whoOf(r.summary), recognisedAt: whoOf(rec(r.recognised)?.at)} : undefined
@@ -210,7 +220,7 @@ function queueOf(v: V): Item[] | undefined {
     rows.push({id: word(o.id) ?? `item:${n}`, kind: KINDS.includes(o.kind as Kind) ? o.kind as Kind : undefined, who: whoOf(o.who), text: typeof o.text === 'string' ? plainText(o.text) : '',
       where: whereOf(o.where), session: whoOf(o.session), age: typeof o.age === 'number' && Number.isFinite(o.age) && o.age >= 0 ? o.age : undefined, flag: word(o.flag) === undefined ? undefined : saidOf(o.flag), urgent: o.urgent === true,
       diff: Array.isArray(o.diff) ? o.diff.filter((l): l is string => typeof l === 'string').map(blockText) : undefined, denied: o.state === 'denied', by: whoOf(o.by), opened: o.opened === true,
-      review: reviewOf(o.review), recognition: recognitionOf(o.recognition), options: optionsOf(o.options), refinement: refinementOf(o.refinement),
+      review: reviewOf(o.review), recognition: recognitionOf(o.recognition), options: optionsOf(o.options), refinement: refinementOf(o.refinement), yielded: yieldedOf(o.yielded),
       differs: whoOf(o.differs), raw: rawOf(o.raw), lines: linesOf(o.text), denySays: whoOf(o.denySays)})
   }
   return rows
@@ -369,6 +379,9 @@ const orderRadio = (p: ViewProps) => <Radio {...st(p, 'order')} label="Order" do
 const followToggle = (p: ViewProps) => { const now = boolOf(p.v, 'follow')
   return <Toggle {...st(p, 'follow')} label="Follow" does={SAYS.follow} on={now === true} unknown={now === undefined} onChange={x => p.set('follow', x)} /> }
 
+/** What Keep and Drop do to what a session yielded (O-I ticket 1007). */
+const KEEP_SAYS = 'Keeps what the session yielded: it lands on face 2 of today\'s Day, with a receipt.'
+const DROP_SAYS = 'Drops what the session yielded. Nothing of it lands.'
 /** Beside a request's Deny where it will send the cancelled outcome (be2q ruling 3): the line, in standing words, on the face. */
 const cancels = (item: Item) => (item.denySays && !item.options ? [<p key="cancels" className="ap-where ap-cancels" role="note">{item.denySays}</p>] : [])
 /** The answers to one item, each an action on its own key set to the item's id (`short`: the tile's three). Open opens the item where it
@@ -385,6 +398,7 @@ function answers(p: ViewProps, item: Item | undefined, {short, cut, none}: {read
   if (item?.refinement) return [act('refineAccept', 'Accept', 'Keeps the proposal as the member\'s next revision. AIKit records the change, and History can take it back.', true,
     item.refinement.stale ? 'Drafted against a revision no longer in use: Discard it.' : undefined),
     act('refineDiscard', 'Discard', 'Drops the proposal. The revision in use stays.'), ...(short ? [] : [open])]
+  if (item?.yielded) return [act('keep', 'Keep', KEEP_SAYS, true), act('drop', 'Drop', DROP_SAYS), ...(short ? [] : [open])]
   // A request whose words are not shown as they were sent is not approved from here (be2o ruling 2): these faces have no room for the line
   // and the raw form, so in Approve's place stands Read as sent, which chooses the item and opens the pane, where both stand beside the
   // pane's own Approve. One press, no hold: it sends no answer, so it does not stand as the owner's answer key stands. Where no pane opens
@@ -555,7 +569,7 @@ const paneButton = (p: ViewProps, item: Item, key: string, label: string, does: 
 export const shortSays = (label: string) => `No room here to read it beside ${label}. Make the window or the pane taller.`
 /** The key and the name of the answer that approves an item of each kind, on the pane: the one that is not live in a pane too short. */
 const approving = (item: Item): readonly [string, string] | undefined => (item.kind === 'request' ? ['allowOnce', item.options?.allowOnce ?? 'Approve']
-  : item.refinement ? ['refineAccept', 'Accept'] : item.kind === 'proposal' ? ['approve', 'Approve'] : item.kind === 'recognition' ? ['recognise', 'Recognise'] : undefined)
+  : item.refinement ? ['refineAccept', 'Accept'] : item.yielded ? ['keep', 'Keep'] : item.kind === 'proposal' ? ['approve', 'Approve'] : item.kind === 'recognition' ? ['recognise', 'Recognise'] : undefined)
 /** What one turn of a wheel over a part that scrolls inside the pane moves (be2s ruling 2; DLW build ruling 2026-11-12). The pane and
  * that part are read as one length: going down, the pane moves first, to its end, and only then the part; going up, the part first,
  * to its top, and only then the pane. So a long request under the pointer does not hold the wheel while the answers lie below the
@@ -598,7 +612,7 @@ function ApprovalsPane({p}: {p: ViewProps}) {
     const seen = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(read)
     for (const part of [el, answer]) seen?.observe(part)
     return () => { seen?.disconnect(); fonts?.removeEventListener?.('loadingdone', read) }
-  }, [item?.id, item?.kind, item?.differs, item?.denySays, item?.options?.allowOnce, item?.options?.deny, !!item?.refinement])
+  }, [item?.id, item?.kind, item?.differs, item?.denySays, item?.options?.allowOnce, item?.options?.deny, !!item?.refinement, !!item?.yielded])
   // The wheel over the list or the scrolled part, in a pane that itself scrolls (be2s ruling 2). The listener is the page's own, not
   // React's: React listens to the wheel passively, and this one takes the turn from the browser.
   useEffect(() => {
@@ -653,7 +667,12 @@ function ApprovalsPane({p}: {p: ViewProps}) {
             {item.refinement.result.map((c, i) => <li key={`r${i}`} data-state={c.proposed === 'met' ? 'satisfied' : c.proposed === 'not met' ? 'unsatisfied' : 'indeterminate'}>{c.condition}<span>{c.proposed} · {c.inUse}</span></li>)}
           </ul>}
           {item.refinement?.resultWhy && <p className="ap-note">{item.refinement.resultWhy}</p>}
-          {item.kind === 'proposal' && !item.refinement && <pre className="ap-diff" aria-label="Diff">
+          {item.yielded && <ul className="ap-review" aria-label="What it yielded">
+            <li data-state="satisfied">Receipts<span>{item.yielded.receipts ?? NONE}</span></li>
+            <li data-state="satisfied">Changes<span>{item.yielded.changes ?? NONE}</span></li>
+          </ul>}
+          {item.yielded && <p className="ap-note">{item.yielded.account ?? 'It gave no account of itself.'}</p>}
+          {item.kind === 'proposal' && !item.refinement && !item.yielded && <pre className="ap-diff" aria-label="Diff">
             {item.diff === undefined ? 'No reading of the diff.' : item.diff.map((line, n) => <span key={n} data-d={line.startsWith('+') ? 'add' : line.startsWith('-') ? 'del' : undefined}>{line || ' '}{'\n'}</span>)}
           </pre>}
           {item.kind === 'review' && (item.review ? <ul className="ap-review">
@@ -681,6 +700,9 @@ function ApprovalsPane({p}: {p: ViewProps}) {
             </> : item.refinement ? <>
               {paneButton(p, item, 'refineAccept', 'Accept', 'Keeps the proposal as the member\'s next revision; History can take it back.', tight('refineAccept'))}
               {paneButton(p, item, 'refineDiscard', 'Discard', 'Drops the proposal. The revision in use stays.')}
+            </> : item.yielded ? <>
+              {paneButton(p, item, 'keep', 'Keep', KEEP_SAYS, tight('keep'))}
+              {paneButton(p, item, 'drop', 'Drop', DROP_SAYS)}
             </> : item.kind === 'proposal' ? <>
               {paneButton(p, item, 'approve', 'Approve', 'The change lands, with a receipt.', tight('approve'))}
               {paneButton(p, item, 'changes', 'Changes', 'Asks for a different result. Say what to change in the thread.')}
@@ -771,6 +793,11 @@ const REFINEMENT_ROW = {id: 'refine:skill/central/docs-methodology', kind: 'prop
     result: [{condition: 'Not met: the plan names each gate by its command', proposed: 'open', inUse: 'open'}],
     resultWhy: 'Open: the takes ran, but no take answered a Success condition.'}}
 const refinementQueue = () => JSON.stringify([...JSON.parse(sampleQueue()) as unknown[], REFINEMENT_ROW])
+/** [O-I #1007] What a session yielded at its end, waiting to be kept on face 2 of today's Day or dropped. */
+const YIELD_ROW = {id: 'yield:central:return:control:root:sample-morning-pages', kind: 'proposal', who: 'Flint', where: 'Today\'s Day · face 2',
+  text: 'What it yielded at its end: 3 receipts, 1 change', session: 'Morning pages', age: 1260,
+  yielded: {session: 'agent-session/morning-pages', receipts: 3, changes: 1, account: 'Drafted the second section of the essay.'}}
+const yieldQueue = () => JSON.stringify([...JSON.parse(sampleQueue()) as unknown[], YIELD_ROW])
 
 export const design: DesignedDevice = {
   id: 'software-factory:approvals',
@@ -785,6 +812,7 @@ export const design: DesignedDevice = {
     'Urgent only': {show: 'urgent', pick: 'req:deploy'},
     'Declined when nobody answered': {noAnswer: 'deny', queue: sampleQueue(true), pick: 'req:rm', desktop: 'refused'},
     'A skill refinement': {queue: refinementQueue(), pick: REFINEMENT_ROW.id},
+    'A session yielded': {queue: yieldQueue(), pick: YIELD_ROW.id},
     'No readings': Object.fromEntries(['light', 'show', 'order', 'follow', 'desktop', 'wait', 'noAnswer', 'messages', 'queue', 'pick'].map(k => [k, undefined])),
   },
 

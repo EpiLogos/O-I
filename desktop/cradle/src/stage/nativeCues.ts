@@ -1,10 +1,10 @@
 /** Semantic cue leases projected into the window's existing native field.
  * No canvas, animation clock, particle generator or retained-field lease. */
 import {formNames, type ExpressionOptions, type FormName} from "@epilogos/oi-design-system/expression";
-import {MAX_FORMATIONS} from "@epilogos/oi-design-system/expressions-engine/engine/fieldModel.mjs";
-import {blankScene, entity} from "@epilogos/oi-design-system/expressions-engine/shell/model.mjs";
-import {nativeExport} from "@epilogos/oi-design-system/expressions-engine/shell/nativeBridge.mjs";
-import {defaultCamera, stageScale, unproject} from "@epilogos/oi-design-system/expressions-engine/shell/camera.mjs";
+import {MAX_FORMATIONS} from "../../expressions-app/src/engine/fieldModel";
+import {blankScene, entity} from "../../expressions-app/field-studies-journeys/src/model";
+import {nativeExport} from "../../expressions-app/field-studies-journeys/src/nativeBridge";
+import {defaultCamera, stageScale, unproject} from "../../expressions-app/field-studies-journeys/src/camera";
 import type {EngineSurface} from "./engineSurface";
 
 const PRESENTATION = "oi-semantic-cues";
@@ -103,7 +103,7 @@ export class NativeCues {
     if(signature===this.signature){this.surface.canvas.style.zIndex="var(--oi-z-stage-overlay)";return;}
     const scene=blankScene("Application cues");scene.id=PRESENTATION;
     scene.field.params.count=4096;scene.field.params.size=1.1;scene.field.params.opacity=.7;
-    scene.engine={...(scene.engine as Record<string,unknown>),resonanceEnabled:false,morphEnabled:false,relationalEnabled:false};
+    scene.engine={...scene.engine,resonanceEnabled:false,morphEnabled:false,relationalEnabled:false};
     scene.entities=visible.map(({cue,rect})=>{
       const position=unproject(rect.x+rect.width/2,rect.y+rect.height/2,defaultCamera(),width,height);
       const formation=entity(cue.name,cue.form?GLYPHS[cue.name as FormName]:(rect.height>rect.width?"I":"—"),position);

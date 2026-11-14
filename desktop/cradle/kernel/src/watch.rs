@@ -1079,6 +1079,12 @@ fn canonical(path: &Path) -> PathBuf {
     std::fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf())
 }
 
+/// Stop the process's change watch: nothing it watches is announced again (the kept readings stop being written with it). For
+/// the end of a World's process, before its folder is removed: the gate's teardown, a host's quit.
+pub fn stop_global() {
+    Watch::global().stop();
+}
+
 /// Start the process's change watch over the roots its owners read, calling
 /// `announce` with the wire names of what moved (`Scope::wire`) and the
 /// watch's change count, debounced. On failure the watch stays degraded -
@@ -1087,7 +1093,12 @@ pub fn start_global(
     configured_root: Option<&Path>,
     announce: impl Fn(Vec<String>, u64) + Send + Sync + 'static,
 ) -> Result<(), String> {
-    let announce = Arc::new(announce);
+    // The World Model is kept by the same notices (world_model.rs): the slices whose scopes moved are read again on its thread,
+    // before the host is told. Without the model's thread running this does nothing.
+    let announce = Arc::new(move |scopes: Vec<String>, epoch: u64| {
+        crate::world_model::Model::global().scopes_moved(&scopes);
+        announce(scopes, epoch)
+    });
     let clock = Arc::clone(&announce);
     start_clock_notices(move |epoch| clock(vec!["clock".to_owned()], epoch));
     let Some(roots) = Roots::resolve(configured_root) else {
