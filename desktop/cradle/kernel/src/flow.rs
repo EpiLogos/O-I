@@ -1626,6 +1626,12 @@ pub struct SourceReturnEntry {
     /// older Central, and then carried absent.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub comments: Option<u64>,
+    /// The Return's own schema: `central.source-return/v2` is a
+    /// commissioned-maintenance Return, accepted on the person's credential
+    /// in that mode (the shell's sourceReturnAccept.ts, O-I 1005); absent
+    /// from an older Central, and then carried absent.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub schema: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]

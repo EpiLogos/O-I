@@ -320,7 +320,8 @@ export interface SeatRow { product: string; state: string; registered_branch: st
 /** Central's returned-work proposals for one project (`projectcentral.source.returns`, kernel `source_returns_read`, flow.rs `SourceReturns`). */
 export interface SourceReturnsReading { schema: "central.source-returns/v1"; entries: SourceReturnEntry[]; more: boolean; next_before: string | null; authored_source_mutated: boolean }
 /** One return: `status` is Central's own word — pending, applying, accepted or rejected. */
-export interface SourceReturnEntry { return_ref: string; source_ref: string; basis_revision: string; status: string; agent_session_ref: string; current_revision: string; /** The reviewers' comments on this Return (Central#290); absent from an older Central. */ comments?: number | null }
+export interface SourceReturnEntry { return_ref: string; source_ref: string; basis_revision: string; status: string; agent_session_ref: string; current_revision: string; /** The reviewers' comments on this Return (Central#290); absent from an older Central. */ comments?: number | null;
+  /** The Return's own schema: `central.source-return/v2` is a commissioned-maintenance Return, accepted on the person's credential in that mode (live-shell sourceReturnAccept.ts, O-I #1005); absent from an older Central. */ schema?: string }
 /** AIKit's declared gateway endpoints of other Workcells (`aikit gateway remote list --json`, kernel `gateway_remotes_read`): the envelope's data, verbatim. */
 export interface GatewayRemotesReading { schema: "aikit.gateway-remotes/v1"; remotes: GatewayRemote[] }
 /** One declared remote: its token's location, never the token. */
