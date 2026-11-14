@@ -76,6 +76,28 @@ fn owner_unreachable(output: &std::process::Output) -> bool {
         && (text.contains("No such file or directory") || text.contains("Connection refused"))
 }
 
+/// Why no encounter owner is started for `cwd`: the folder it would stand in is gone, or the folder that holds its home
+/// (`AIKIT_HOME`, else `$HOME/.aikit`). A World or a project's folder removed while a window still reads it leaves its owner
+/// unreachable, and AIKit's start would make that ground again (its state and its home) with a resident owner standing in it
+/// until its idle close. A first start, whose home is not made yet, starts as before: only its folder must stand.
+fn owner_ground_gone(cwd: &Path, home: Option<&Path>) -> Option<String> {
+    let home_folder = match home {
+        Some(home) => home.parent().map(Path::to_path_buf),
+        None => std::env::var_os("HOME").map(PathBuf::from),
+    };
+    [Some(cwd.to_path_buf()), home_folder]
+        .into_iter()
+        .flatten()
+        .filter(|folder| !folder.as_os_str().is_empty())
+        .find(|folder| !folder.is_dir())
+        .map(|folder| {
+            format!(
+                "AIKit's encounter owner is unreachable, and none is started: the folder it would stand in, {}, is gone",
+                folder.display()
+            )
+        })
+}
+
 #[derive(Clone, Debug)]
 pub struct Client {
     executable: PathBuf,
@@ -1640,6 +1662,12 @@ impl Client {
         project_ref: &str,
         request: &EncounterRequest,
     ) -> Result<Value, String> {
+        // Asked for itself, or by a verb that found the owner unreachable (below): never where the ground is gone.
+        if matches!(request, EncounterRequest::Start) {
+            if let Some(gone) = owner_ground_gone(cwd, self.home.as_deref()) {
+                return Err(gone);
+            }
+        }
         let sessions = request.sessions();
         if !sessions.is_empty() {
             let spaces = self.read_project(cwd, project_ref)?;
@@ -2843,6 +2871,84 @@ esac"#,
         );
         let down = client.gateway_agent(None, "telegram", "sessions").unwrap();
         assert_eq!(down["error"]["code"], "owner_unreachable");
+    }
+
+    /// A World (or a project's folder) removed while a window still reads it: its encounter owner is unreachable, and the kernel
+    /// starts none there. AIKit's start makes the folder's ground again (its state and its home) and leaves a resident owner
+    /// standing in a removed World (the gate's deleted worlds, 14 Nov: the World Model's re-read after the removal started one in
+    /// each). Where the folder stands, an unreachable owner is still started, as before. Channels: SCRIPTED — a faked AIKit that
+    /// logs its calls and answers as an owner nobody listens for.
+    #[test]
+    fn an_unreachable_owner_is_not_started_where_its_folder_is_gone() {
+        let dir = std::env::temp_dir().join(format!("oi-owner-gone-test-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let log = dir.join("calls.log");
+        let stub = dir.join("aikit");
+        write_executable_stub(
+            &stub,
+            &format!(
+                r#"#!/bin/sh
+echo "$*" >> '{log}'
+case " $* " in
+  *" encounter-start "*) echo '{{"ok":true,"data":{{"started":true}}}}' ;;
+  *) echo "encounter.runtime: No such file or directory (os error 2)" >&2; exit 1 ;;
+esac"#,
+                log = log.display()
+            ),
+        );
+        let world = dir.join("world");
+        let central = world.join("home").join("Central");
+        std::fs::create_dir_all(&central).unwrap();
+        let client = Client::with(stub, Some(world.join("home").join(".aikit")));
+        // The Packet slice's read of the root session's prepared context: the World Model asks it after every watched move.
+        let read = EncounterRequest::Context {
+            agent_session: None,
+            request: serde_json::json!({"operation": "read"}),
+        };
+        let starts = || {
+            std::fs::read_to_string(&log)
+                .unwrap_or_default()
+                .lines()
+                .filter(|line| line.contains("encounter-start"))
+                .count()
+        };
+
+        let _ = retry_busy(|| client.encounter(&central, "project:central", &read));
+        assert_eq!(
+            starts(),
+            1,
+            "an unreachable owner of a standing World is started once"
+        );
+
+        std::fs::remove_dir_all(&world).unwrap();
+        let error =
+            retry_busy(|| client.encounter(&central, "project:central", &read)).unwrap_err();
+        assert_eq!(starts(), 1, "no owner is started in a removed World");
+        assert!(error.contains("is gone"), "{error}");
+        assert!(error.contains(&central.display().to_string()), "{error}");
+        let started =
+            retry_busy(|| client.encounter(&central, "project:central", &EncounterRequest::Start))
+                .unwrap_err();
+        assert_eq!(starts(), 1, "nor when the start is asked for itself");
+        assert!(started.contains("is gone"), "{started}");
+
+        // Its home's folder gone, the World's own folder standing: nothing makes the home again either.
+        std::fs::create_dir_all(&central).unwrap();
+        let elsewhere = Client::with(dir.join("aikit"), Some(dir.join("gone").join(".aikit")));
+        let error =
+            retry_busy(|| elsewhere.encounter(&central, "project:central", &read)).unwrap_err();
+        assert_eq!(
+            starts(),
+            1,
+            "no owner is started for a home whose folder is gone"
+        );
+        assert!(
+            error.contains(&dir.join("gone").display().to_string()),
+            "{error}"
+        );
+        assert!(!dir.join("gone").exists());
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     /// O-I 768: a Factory task session (the desktop's `encounter_provision`) asks for the task Action with `--for-task`, which
