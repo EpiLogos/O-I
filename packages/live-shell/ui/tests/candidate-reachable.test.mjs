@@ -136,6 +136,7 @@ test('the roots are the pages the candidate ships and opens: the shell, the host
   assert.deepEqual(ENTRIES, ['packages/live-shell/ui/index.html', 'desktop/cradle/expressions-app/index.html', 'desktop/cradle/expressions-app/library.html'])
   assert.deepEqual(roots().map(([script]) => relative(repo, script)),
     ['packages/live-shell/ui/src/main.tsx', 'desktop/cradle/expressions-app/src/native.ts', 'desktop/cradle/expressions-app/src/library.ts'])
+  assert.deepEqual(UNOPENED, [], 'the frame builds only the pages the candidate opens (O-I ticket 1008)')
   for (const page of UNOPENED) for (const script of pageScripts(join(repo, page))) assert.ok(!product.has(script), `${page} is built but nothing in the candidate opens it`)
   assert.ok(product.has(join(repo, 'desktop/cradle/src/expressions/hostedApp.ts')), 'hostedApp.ts, which opens index.html and library.html, is itself product')
 })

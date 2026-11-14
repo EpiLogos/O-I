@@ -150,7 +150,6 @@
       "routes": ["/api/events", "/api/hardware", "/api/media", "/api/overlay", "/api/scenes", "/api/state", "/api/telemetry"],
       "files": [
         "desktop/cradle/expressions-app/field-studies-journeys/src/physis.ts",
-        "desktop/cradle/expressions-app/src/physis/render.ts",
         "desktop/cradle/expressions-app/src/physis/hardware.ts"
       ]
     },

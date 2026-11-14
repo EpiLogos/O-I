@@ -65,9 +65,7 @@ export interface FieldEngineAdapter {
  stations?():Array<{id?:string;index:number;name:string;frequencyHz:number;m:number;n:number;color:string;energy?:number;semanticNodeId?:string;affinity?:number}>;
  dispose():void;
 }
-export type EngineFactory=(canvas:HTMLCanvasElement)=>FieldEngineAdapter;
 declare global {interface Window {
- OI_ENGINE_FACTORY?:EngineFactory;
  __JOURNEY__?:unknown;
  __START_PRESENTATION__?:boolean;
  __FIELD_STUDIES__?:any;

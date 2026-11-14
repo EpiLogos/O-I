@@ -144,10 +144,10 @@ test('Morph moves between a form and its change along M3′\'s torus at nine to 
   assert.doesNotMatch(shader, /rMajor \* 0\.42/);
 });
 
-// The editor gives a symbol its form (O-I #852): a form picked from the library is kept on the symbol beside the text it draws, drawn
-// as a fold, codon, hexagram or card of the same address, stepped a line or an axis, and its change added as the next link, so the
-// sequence's Morph carries the one into the other along M3′'s torus.
-test('the editor keeps a picked form on its symbol, draws it as any of the four, steps it, and morphs it to its change', () => {
+// A symbol's form (O-I #852): a form picked from the library is kept on the symbol beside the text it draws, drawn as a fold, codon,
+// hexagram or card of the same address, and stepped a line or an axis. (The retired legacy workbench's picker and entity editor,
+// whose wiring this test also read, were deleted with that host by O-I ticket 1008.)
+test('a library form draws as any of the four, steps, and stays on its symbol only while its text draws it', () => {
   const forms = G.GLYPH_CATEGORIES.find((c) => c.id === 'm3-forms');
   assert.deepEqual(forms.items[0].form, { kind: 'hexagram', address: 0 });
   assert.deepEqual(forms.items.find((item) => item.char === 'Kn♦').form, { kind: 'card', address: 0b100011 }, 'a court by its first codon');
@@ -160,17 +160,6 @@ test('the editor keeps a picked form on its symbol, draws it as any of the four,
   // A plain glyph keeps no form; text typed over a form's glyph leaves the form behind.
   assert.equal(G.formOfText({ text: 'A♥', form: card }, 'A♥'), card);
   assert.equal(G.formOfText({ text: 'A♥', form: card }, 'WORD'), undefined);
-  // The picker hands the form with the glyph; the editor keeps it, steps it and adds its change as a link.
-  const picker = readFileSync(fileURLToPath(new URL('../components/GlyphPicker.tsx', import.meta.url)), 'utf8');
-  assert.match(picker, /onPick\(item\.char, item\.form\)/);
-  const editor = readFileSync(fileURLToPath(new URL('../components/EntityEditor.tsx', import.meta.url)), 'utf8');
-  assert.match(editor, /onPick=\{\(char, form\) => onUpdate\(\{ shape: \{ \.\.\.entity\.shape, text: char, form \} \}\)\}/);
-  assert.match(editor, /onDraw\(m3FormShape\(stepM3Form\(form, step\)\)\)/, 'a step moves the symbol\'s form');
-  assert.match(editor, /onDraw\(m3FormShape\(\{ kind: k\.kind, address: form\.address \}\)\)/, 'drawn as any of the four');
-  assert.match(editor, /onDraw=\{\(next\) => onUpdate\(\{ shape: \{ \.\.\.entity\.shape, \.\.\.next \} \}\)\}/);
-  assert.match(editor, /onMorph\(m3FormShape\(stepM3Form\(form, step\)\)\)/, 'its change');
-  assert.match(editor, /onMorph=\{\(next\) => addLink\(\{ kind: 'glyph', \.\.\.next \}\)\}/, 'is the next link');
-  assert.match(editor, /formOfText\(entity\.shape, /, 'typed text keeps the form only while it draws it');
 });
 
 function sheet(resolution, mask) {

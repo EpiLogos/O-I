@@ -1,5 +1,7 @@
 # Dependency map — cradle ↔ oi-design-system, and the cradle's suite placement
 
+> Retired copy (O-I ticket 1008, 14 Nov 2026): the compiled engine copy at `packages/oi-design-system/expressions-engine` is deleted. The one engine is `desktop/cradle/expressions-app/src/engine`, built in `field-studies-journeys/src/production.ts`; its model and defaults are `field-studies-journeys/src/model.ts`. Paths into the copy below are a record of their date.
+
 ## 1. How the cradle consumes the design system
 
 **Mechanism: npm `file:` dependency, consumed through the package's `exports` map.**

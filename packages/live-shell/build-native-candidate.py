@@ -22,7 +22,7 @@ SOURCE_FILES = [REPO / path for path in ['Cargo.toml', 'Cargo.lock', 'cli/Cargo.
 FRONTEND_SOURCE_DIRS = [REPO / path for path in ['desktop/cradle/src', 'desktop/cradle/expressions-app/src', 'desktop/cradle/expressions-app/field-studies-journeys/src', 'desktop/cradle/expressions-app/field-studies-journeys/scripts', 'desktop/cradle/expressions-app/vendor/research-canvas/packages', 'packages/live-shell/ui/src', 'packages/field-engine/src', 'packages/expressions-boundary/src', 'packages/instrument-editors/src']]
 FRONTEND_SOURCE_DIRS += [REPO / 'packages/oi-design-system/themes']
 SOURCE_DIRS += FRONTEND_SOURCE_DIRS[-1:]
-SOURCE_FILES += [REPO / path for path in ['packages/live-shell/ui/index.html', 'desktop/cradle/expressions-app/index.html', 'desktop/cradle/expressions-app/legacy.html', 'desktop/cradle/expressions-app/render.html', 'desktop/cradle/expressions-app/library.html', 'desktop/cradle/expressions-app/field-studies-journeys/tsconfig.json']]
+SOURCE_FILES += [REPO / path for path in ['packages/live-shell/ui/index.html', 'desktop/cradle/expressions-app/index.html', 'desktop/cradle/expressions-app/library.html', 'desktop/cradle/expressions-app/field-studies-journeys/tsconfig.json']]
 SOURCE_FILES.append(HERE / 'application-support.py')
 SOURCE_FILES.append(HERE / 'build-source-archive.py')
 # Tauri consumes these outside Cargo's normal/build module graph. Capture even

@@ -1,5 +1,7 @@
 # Expression enrichment — brief for a multi-agent session
 
+> Retired copy (O-I ticket 1008, 14 Nov 2026): the compiled engine copy at `packages/oi-design-system/expressions-engine` is deleted. The one engine is `desktop/cradle/expressions-app/src/engine`, built in `field-studies-journeys/src/production.ts`; its model and defaults are `field-studies-journeys/src/model.ts`. Paths into the copy below are a record of their date.
+
 *2026-10-06. Written for a fresh session that will run several subagents. Paste the whole file as the opening prompt, or point the session at it.*
 
 ## 0. What you are doing, in one paragraph
