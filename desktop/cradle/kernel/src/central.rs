@@ -510,6 +510,7 @@ fn owner_of(action: &str) -> &str {
         "workcell" | "seat" => "Workcell",
         "actuation" => "Actuation",
         "ql" | "nara" => "QL",
+        "expressions" => "Expressions",
         other => other,
     }
 }
@@ -888,6 +889,24 @@ mod tests {
         );
         assert_eq!(laid[0].2["owner"], "Factory");
         assert_eq!(laid[3].2["owner"], "Central");
+    }
+
+    /// An act of Expressions names its product, and what it moved as the store answered (O-I #1008): the work's file where one
+    /// was made, opened or saved, else the work's ref.
+    #[test]
+    fn an_act_of_expressions_names_expressions_and_the_work_it_moved() {
+        assert_eq!(owner_of("expressions.studio.set"), "Expressions");
+        assert_eq!(
+            subject_of(&json!({"ref": "expression:a", "expression_ref": "expression:a", "scene_ref": "scene:1"}))
+                .as_deref(),
+            Some("expression:a")
+        );
+        assert_eq!(
+            subject_of(&json!({"ref": "expression:a",
+                "location": {"path": "Control/user/flows/a.expression.json"}}))
+            .as_deref(),
+            Some("Control/user/flows/a.expression.json")
+        );
     }
 
     /// An act of the person's press made before their credential exists (Setup's time policy and placement, adopted before the
