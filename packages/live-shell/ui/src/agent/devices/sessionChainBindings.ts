@@ -61,7 +61,7 @@ const reading = (key: string) => `${key} is a reading: its owner reports it; not
 
 // Telemetry is the session's own setting on AIKit (lane K0 corrected): `encounter-session-settings` `track.telemetry`, written through
 // the kernel's encounter_session_settings against the revision that stands (agent/sessionSettings.ts trackSettingChange) — the Session
-// view's mixer reads and writes it (timeline/factoryTrackAdapter.ts FACTORY_TELEMETRY_OP). Solo is what you attend to, never what runs
+// view's mixer is where it is pressed, once Factory's Set (the kernel's, mode_set.rs) carries it as an act. Solo is what you attend to, never what runs
 // (§16.1, §16.6): the shell holds it on the book (agent/AgentShellContext.tsx setSolo), and AIKit's own session Solo, a gate on its
 // executor's launches, is never written. The Run device is handed neither, so it names each route and stands disabled here.
 // AIKit's gateway agent controls (`aikit gateway agent --binding B pause|resume`) address a gateway binding's connector, never a session.

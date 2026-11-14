@@ -35,8 +35,6 @@ export async function load(u, c, n) {
 }`)}`, import.meta.url)
 
 globalThis.document = {getElementById: () => null, createElement: () => ({}), head: {appendChild: () => {}}}
-const {NOT_FACTORY_WORK} = await import('../src/timeline/factoryTrackAdapter.ts')
-const {taskLaunchPort} = await import('../src/agent/factoryTaskActs.ts')
 const {clipLaunchPress} = await import('../src/inhabitants/catalogue/panels/dlw__session-grid.tsx')
 const settings = await import('../src/agent/sessionSettings.ts')
 const factory = await import('../src/agent/clipBinding.ts')
@@ -51,65 +49,9 @@ const session = (state, n = 1) => ({sessionRef: 'ses-795', purpose: 'run the fix
     {n: n + 1, title: null, state: 'unknown', startUnixMs: null, lastActivityUnixMs: null, softStop: true, disclosure: null}]})
 // ---------------------------------------------------------------------------------------------------------------- A Factory task's ▶
 
-// (BD r24, O-I 804) A task AIKit names a task_ref for is Factory's work, so its Launch is the task's own, the one the Agent rack presses
-// (agent/factoryTaskActs.ts launchSessionTask, taskBindings.ts launchTask), and its stop Factory's Stop after of its unit
-// (stopAfterTask); a task that is not Factory's work (no Factory state, no unit Factory names, no attempt of it current) says so before
-// anything of Factory's moves. The grid's ▶ on Factory's Set waits for that Launch to be the Set's own Action (O-I #1006): Factory's Set
-// is the kernel's since O-I #1004, and its acts are Actions of the registry, so the carrier is proved here as the rack presses it.
-test('(BD r24) the ▶\'s carrier: Factory locates the session\'s register, and the rack\'s own Launch and Stop after run there in their owners\' words', async () => {
-  const sent = []
-  const answers = {
-    locate: {locations: [{state: 'located', project: 'O-I', location: {statePath: '/state/o-i', projectRef: 'project:o-i'}}]},
-    'custody-list': {schema: 'factory.work-custody-listing/v1', project_ref: 'project:o-i', count: 1, custody: [{schema: 'factory.work-custody/v1',
-      custody_ref: 'custody:c1', position_ref: 'central:position:o-i:builder', work_ref: 'task:fixtures', state: 'in-progress', run_ref: 'run:r1', workflow_unit_ref: 'unit:build'}]},
-    'attempt-launch': {contract: 'oi.factory-attempt-launch/v1', runRef: 'run:r1', workflowUnitRef: 'unit:build', status: 'launched', changed: true,
-      attemptRef: 'attempt:01', taskRef: 'task:fixtures', refusal: null},
-    'attempt-task-units': {contract: 'factory.attempt-task-units-reading/v1', taskRef: 'task:fixtures', units: [{runRef: 'run:r1', workflowUnitRef: 'unit:build',
-      currentAttemptRef: 'attempt:01', status: 'running', attempts: 1, runRevision: 2, required: true}]},
-    'attempt-request-cancellation': {status: 'cancel-requested', refusal: null},
-  }
-  globalThis.fetch = async (_url, init) => {
-    const op = JSON.parse(init.body)
-    sent.push(op)
-    const ok = (result, data, extra = {}) => ({json: async () => ({ok: true, outcome: {result, data, receipts: [], ...extra}})})
-    if (op.op === 'factory_owner') return ok('factory_development_reading', answers[op.request.kind])
-    if (op.op === 'encounter' && op.request.action === 'model-read') return ok('encounter_reading', {agent_session: 'ses-795', native_session_id: 'native-1',
-      standing: 'observed', model_observation: {current_model_id: 'claude-opus-5', available_models: [{modelId: 'claude-opus-5', name: 'Claude Opus 5'}], standing: 'observed'}})
-    if (op.op === 'model_catalogue') return ok('model_catalogue_reading', {entries: [{model: 'model:claude-opus-5',
-      declared_routes: [{kind: 'provider-native', provider: 'provider:anthropic', provider_native_ids: ['claude-opus-5']}]}]})
-    if (op.op === 'aikit_write') return ok('owner_route_reading', {realisation: {schema: 'aikit.model-realisation/v2', selected: true}}, {route: 'aikit compose --realise'})
-    return {json: async () => ({ok: false, error: `unexpected ${op.op}`})}
-  }
-  const asked = () => sent.splice(0).map(op => op.op === 'factory_owner' ? op.request.kind : op.op === 'encounter' ? op.request.action : op.op)
-  const carrier = taskLaunchPort(transport, () => project)
-  const launched = await carrier.launch('ses-795', 'task:fixtures')
-  assert.deepEqual(launched, {ok: true, note: 'Software Factory launched unit:build of run:r1 for task:fixtures as attempt:01, on model:claude-opus-5 as AIKit realised it on ses-795.',
-    document: {status: 'launched', attemptRef: 'attempt:01'}})
-  const launchedOps = [...sent]
-  assert.deepEqual(asked(), ['locate', 'custody-list', 'model-read', 'model_catalogue', 'aikit_write', 'attempt-launch'])
-  assert.deepEqual(launchedOps[0].request, {kind: 'locate', project: 'O-I'}, 'located in the register the session was read under')
-  assert.equal(launchedOps[5].request.state_path, '/state/o-i')
-  assert.deepEqual(await carrier.stop('ses-795', 'task:fixtures'), {ok: true, note: 'Software Factory was asked to stop unit:build of run:r1, the unit task:fixtures stands current on.'})
-  assert.deepEqual(asked(), ['locate', 'attempt-task-units', 'attempt-request-cancellation'])
-  // Factory's own refusal comes back in its words; a register Factory keeps no state for asks nothing more.
-  answers['attempt-launch'] = {...answers['attempt-launch'], status: 'refused', attemptRef: null, refusal: {source: 'owner', step: 'launch', message: 'Factory links run:r1 to no Journey'}}
-  assert.deepEqual(await carrier.launch('ses-795', 'task:fixtures'), {ok: false, error: 'Factory links run:r1 to no Journey'})
-  // Not Factory's work, said so before anything of Factory's moves: no unit named for the task, no attempt of it current, no Factory state.
-  sent.length = 0
-  answers['custody-list'] = {...answers['custody-list'], count: 0, custody: []}
-  answers['attempt-task-units'] = {...answers['attempt-task-units'], units: []}
-  const noUnit = await carrier.launch('ses-795', 'task:fixtures')
-  assert.equal(noUnit.document.status, NOT_FACTORY_WORK); assert.match(noUnit.error, /^Launch: Factory names no unit for task:fixtures/)
-  assert.deepEqual(asked(), ['locate', 'custody-list', 'attempt-task-units'], 'nothing realised, nothing launched')
-  const noneCurrent = await carrier.stop('ses-795', 'task:fixtures')
-  assert.equal(noneCurrent.document.status, NOT_FACTORY_WORK); assert.match(noneCurrent.error, /^Stop after: no attempt of task:fixtures is current/)
-  assert.deepEqual(asked(), ['locate', 'attempt-task-units'])
-  answers.locate = {locations: [{state: 'absent', project: 'O-I'}]}
-  const absent = await carrier.launch('ses-795', 'task:fixtures')
-  assert.equal(absent.ok, false); assert.equal(absent.document.status, NOT_FACTORY_WORK); assert.match(absent.error, /^Launch: Factory keeps no state for O-I/)
-  assert.deepEqual(asked(), ['locate'])
-})
-
+// REPLACED (O-I #1006): the ▶'s carrier over the rack's Launch and Factory's Stop after (taskLaunchPort, deleted with the window's
+// Factory set). A task's ▶ on Factory's Set is the Set's own Action, factory.task.run, and its track's Stop factory.task.stop
+// (kernel mode_set.rs; tests/factory-tracks.test.mjs), each run to its end against the real Factory by the gate's act 4.
 test('the grid\'s launch button: a Gate clip launches on press and stops on release; every other clip launches on a click', () => {
   const pressed = []
   const onPress = (key, what, run) => pressed.push([key, what, run()])

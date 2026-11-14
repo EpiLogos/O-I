@@ -210,18 +210,8 @@ test('a song\'s clip dropped on a session\'s track, from another project, is one
     assert.match(stale.error, /The song's file changed since it was read/)
   } finally { k.restore() }
   assert.equal((await songs.dropSong({kind: 'bridge', url: 'x'}, {...track, agentRef: null}, payload)).error, songs.DROP_NO_AGENT)
-  // The maker Factory's set carries takes the song's drag beside the constellation's, and hands it to the drop.
-  const clip = await import('../src/agent/clipBinding.ts')
-  const {trackKey} = await import('../src/agent/agentRunModel.ts')
-  const eros = {sessionRef: 'ses-eros', purpose: null, agentRef: 'agent/anima-eros', agentName: 'Eros', agentAccepted: true, spaceRef: null, spaceLabel: null, depth: 0,
-    parentRef: null, group: false, memberRefs: [], tasks: [], needle: null, telemetryOn: true, budget: {used: null, max: null}, disclosure: null, project: 'song-taker'}
-  const dropped = []
-  const maker = clip.taskMaker({kind: 'bridge', url: 'x'}, [eros], () => null, async (_transport, on, song) => { dropped.push([on, song]); return {ok: true} })
-  assert.deepEqual(maker.alsoAccepts, [songs.SONG_CLIP_DRAG])
-  assert.deepEqual(await maker.run(trackKey(eros), songs.songPayload(row)), {ok: true})
-  assert.deepEqual(dropped, [[{sessionRef: 'ses-eros', label: 'Eros', agentRef: 'agent/anima-eros', project: 'song-taker'}, payload]])
-  assert.match((await maker.run('elsewhere', songs.songPayload(row))).error, /Only a session's track takes a song's clip/)
-  assert.match((await maker.run(trackKey(eros), 'central:constellation:nope')).error, /no constellation the wiki's reading holds/, 'a constellation stays the constellation\'s')
+  // REPLACED (O-I #1006): the maker the window's Factory set carried (agent/clipBinding.ts taskMaker), which took the song's drag
+  // beside the constellation's and handed it to this drop, is deleted with that set: Factory's Set is the kernel's, and its clip.make waits.
 })
 
 test('the score draws the dropped clip as one note with the thread form canon, its song inside it, which a double-click opens', async () => {

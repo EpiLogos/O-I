@@ -35,7 +35,6 @@ globalThis.document ??= {getElementById: () => null, createElement: () => ({}), 
 const adapter = await import('../src/timeline/centralTrackAdapter.ts')
 const acts = await import('../src/frame/menu/objectActions.ts')
 const factory = await import('../src/timeline/factoryTrackAdapter.ts')
-const taskActs = await import('../src/agent/factoryTaskActs.ts')
 
 // O-I #743, round four (manual §10.9 "the acts on every object"; §18.1 Central's worlds and their pages; §19.1 Factory's sessions and
 // tasks): the owner operations Central's and Factory's dimmed acts waited for, carried. SCRIPTED over fixture sets whose controls record
@@ -110,24 +109,6 @@ test('every act still dimmed in Central names what it waits for, in the kernel\'
   }
 })
 
-/** A kernel behind the bridge's fetch: each op sent is kept, and answered by `answer`. */
-function kernel(answer) {
-  const sent = []
-  const fetch = async (_url, init) => {
-    const body = JSON.parse(init.body)
-    sent.push(body)
-    const reply = answer(body)
-    return {json: async () => reply.error ? {ok: false, error: reply.error} : {ok: true, outcome: reply}}
-  }
-  return {fetch, sent}
-}
-async function withKernel(owner, run) {
-  const real = globalThis.fetch
-  globalThis.fetch = owner.fetch
-  try { return await run() } finally { globalThis.fetch = real }
-}
-const bridge = {kind: 'bridge', url: 'http://kernel.fixture'}
-
 // FIXTURE: two sessions of one Project (agent/agentRunModel.ts tracks), the first holding a task, and a group (a SessionSpace).
 const sessions = [
   {spaceRef: 'session-space/s', sessionRef: 'agent-session/a', agentName: 'Builder', purpose: null, group: false, project: 'O-I', tasks: []},
@@ -135,38 +116,7 @@ const sessions = [
   {spaceRef: 'session-space/g', sessionRef: 'agent-session/g', spaceLabel: 'The lane', purpose: null, group: true, project: 'O-I', tasks: []},
 ]
 const key = track => `${track.spaceRef}:${track.sessionRef}`
-const [a, b, g] = sessions.map(key)
-const factorySet = (status = 'done') => ({columns: [{id: 'batch:1', name: '1'}, {id: 'batch:2', name: '2'}],
-  tracks: sessions.map(track => ({id: key(track), name: track.agentName ?? track.spaceLabel, kind: track.group ? 'group' : 'session'})),
-  clips: [{id: factory.factoryTaskRef(a, 1), trackId: a, columnId: 'batch:1', label: 'Fixtures', status}], actions: {owner: 'AIKit'}})
-function factoryActs(names = {}) {
-  const calls = []
-  const ok = what => async (...args) => { calls.push([what, ...args]); return {ok: true, note: what} }
-  return {calls, acts: {remove: ok('remove'), copy: ok('copy'), blank: ok('blank'), rename: ok('rename'), detach: ok('detach'),
-    nameOf: session => names[session] ?? null, projectOf: session => session === 'agent-session/elsewhere' ? 'QL' : 'O-I'}}
-}
-
-test('Factory\'s task Delete, Paste and Insert, and a session\'s Rename and Remove from the set, are AIKit\'s acts', async () => {
-  const {calls, acts: port} = factoryActs({'agent-session/b': 'The reviewer'})
-  const set = factory.withFactoryTaskActs(factorySet(), sessions, port)
-  const x = set.actions
-  assert.deepEqual(set.tracks.map(track => track.name), ['Builder', 'The reviewer', 'The lane'], 'a session wears its own name')
-  assert.equal((await x.deleteClip.run(factory.factoryTaskRef(a, 1))).ok, true)
-  assert.match((await x.pasteClip.run(factory.factoryTaskRef(a, 1), a, 'batch:2', false)).error, /A session holds one task: Builder holds Fixtures/)
-  assert.equal((await x.pasteClip.run(factory.factoryTaskRef(a, 1), b, 'batch:1', false)).ok, true)
-  assert.equal((await x.pasteClip.run(factory.factoryTaskRef(a, 1), b, 'batch:1', true)).ok, true)
-  assert.match((await x.insertClip.run(a, 'batch:2')).error, /A session holds one task/)
-  assert.equal((await x.insertClip.run(b, 'batch:1')).ok, true)
-  assert.equal((await x.renameTrack.run(b, ' Reviews ')).ok, true)
-  assert.equal((await x.removeTrack.run(b)).ok, true)
-  assert.match((await x.removeTrack.run(g)).error, /a group of sessions/)
-  assert.match((await x.renameTrack.run('nowhere', 'X')).error, /is not a session of this work/)
-  assert.deepEqual(calls, [['remove', 'agent-session/a'], ['copy', 'agent-session/a', 'agent-session/b'], ['copy', 'agent-session/a', 'agent-session/b'],
-    ['remove', 'agent-session/a'], ['blank', 'agent-session/b'], ['rename', 'agent-session/b', 'Reviews'], ['detach', 'agent-session/b']])
-  // A running task is stopped before it is taken off its session.
-  const running = factory.withFactoryTaskActs(factorySet('running'), sessions, factoryActs().acts)
-  assert.match((await running.actions.deleteClip.run(factory.factoryTaskRef(a, 1))).error, /is running on Builder: stop it first/)
-})
+const [a, b] = sessions.map(key)
 
 // REPLACED (O-I #1004): "with AIKit's acts and without a carrier", over the window's Factory set and its registered waiting words
 // (MODE_WAITING.factory). Factory's Set is the kernel's now, and so are the words each act it does not carry waits in.
@@ -183,30 +133,4 @@ test('every act still dimmed in Factory names what it waits for, in the kernel\'
     ...acts.objectMenu({kind: 'row', id: 'batch:1', name: '1'}, set, menuContext()),
   ])
   assert.match(kernelSource, /\("clip\.duplicate", "a second task on one session: AIKit keeps one task per session/)
-})
-
-test('Factory\'s acts reach AIKit through the kernel: the task named on its revision read now, a blank task naming its purpose only', async () => {
-  const owner = kernel(body => {
-    if (body.op === 'encounter_task_read') return {result: 'encounter_task_reading', data: {schema: 'aikit.encounter-task/v1', revision: 'task-binding/7', request: {central: {task_ref: 'task:fixtures'}}}}
-    if (body.op === 'encounter_task_remove') return {result: 'encounter_owner_act', data: {schema: 'aikit.encounter-task-removal/v1', agent_session: body.agent_session, outcome: 'removed'}}
-    if (body.op === 'encounter_task_copy') return {result: 'encounter_owner_act', data: {schema: 'aikit.encounter-task-copy/v1', from_task_ref: 'task:fixtures', task_ref: 'task:fixtures-copy-1', settings_refused: null}}
-    if (body.op === 'encounter_task_configure') return {result: 'encounter_task_reading', data: {schema: 'aikit.encounter-task/v1'}}
-    if (body.op === 'encounter_session_detach') return {result: 'encounter_owner_act', data: {schema: 'oi.encounter-session-detach/v1', spaces: ['session-space/s']}}
-    return {error: `unexpected op ${body.op}`}
-  })
-  await withKernel(owner, async () => {
-    const port = taskActs.factoryTaskActs(bridge, () => 'O-I', () => null)
-    assert.equal((await port.remove('agent-session/a')).ok, true)
-    assert.deepEqual(owner.sent.find(body => body.op === 'encounter_task_remove'),
-      {op: 'encounter_task_remove', project: 'O-I', agent_session: 'agent-session/a', task_ref: 'task:fixtures', expected_revision: 'task-binding/7'})
-    const copied = await port.copy('agent-session/a', 'agent-session/b')
-    assert.match(copied.note, /task:fixtures is copied onto the session as task:fixtures-copy-1/)
-    assert.deepEqual(owner.sent.find(body => body.op === 'encounter_task_copy'), {op: 'encounter_task_copy', project: 'O-I', agent_session: 'agent-session/b', from_session: 'agent-session/a'})
-    assert.equal((await port.blank('agent-session/b')).ok, true)
-    const blank = owner.sent.find(body => body.op === 'encounter_task_configure')
-    assert.equal(blank.request.purpose, 'A new task')
-    assert.ok(!('source' in blank.request), 'a blank task names no constellation')
-    assert.match(blank.request.task_ref, /^task:a-new-task-/)
-    assert.match((await port.detach('agent-session/b')).note, /off the set \(detached from its space\)/)
-  })
 })

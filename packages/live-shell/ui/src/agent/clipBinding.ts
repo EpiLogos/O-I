@@ -12,13 +12,14 @@
 //     and cap, Launch mode, Then, Quantize, what a Repeat varies, envelopes and its source (the constellation it was made of, taskSourceOf)
 //     — from the session's settings on their owner (AIKit `encounter-session-settings`, agent/sessionSettings.ts), every default stated by
 //     the owner, in the manual's words, which are the owner's: read and written as they are, with no table between them.
-// A constellation dropped on a session's track makes the session's task of it (makeTaskOf, the maker the Factory set carries: taskMaker).
+// A constellation dropped on a session's track would make the session's task of it (makeTaskOf); Factory's Set (the kernel's) carries no
+// clip maker yet and says what it waits for (its `clip.make`), so no drop reaches it.
 // A song's clip dropped there (Material › Songs, O-I #844) is one unit of the song the session's Run performs, with the thread form canon
 // (songClips.ts dropSong); File › Export Song… makes the selected task's song one clip (songClips.ts exportSong, answered here while
 // Factory's Clip view stands), and with a session's track selected, that track's row of it, with a stretch selected on the
 // Arrangement's ruler, the units that ran in it (exportChoiceOf, songClips.ts unitsInSpan). Loop turned on with a song's note chosen
 // names the song for AIKit's executor, which makes each pass a take of it (songClips.ts loopSongChange); Repeat makes the song's
-// takes (frame/tracks/useFactoryTracks.ts repeatPress); the note chosen is published for Routine… on a song (chosenNoteOf,
+// takes where Factory's Set (the kernel's) carries a Repeat, which it does not yet; the note chosen is published for Routine… on a song (chosenNoteOf,
 // songClips.ts routineOfSong).
 // Every per-task setting writes through its seam in agent/devices/taskBindings.ts TASK_SEAMS, against the settings' standing
 // revision. The Intent panel (§19.1, the design's D3 panel): its Success conditions are the words the person typed for the task, kept with
@@ -37,8 +38,7 @@ import {useContext, useEffect, useMemo, useRef, useState} from 'react'
 import type {Value, Values} from '../frame/devices/designed'
 import {clipBinding, type ClipBinding, type ClipWiring} from '../frame/detail/clipBinding'
 import {madeOfValues, withMadeOf, type ClipSource} from '../frame/detail/clipSource'
-import {CONSTELLATION_DRAG} from '../frame/browser/constellationFocus'
-import {constellationNamed, constellationsNow, useConstellations, type Constellation} from '../owners/constellations'
+import {constellationNamed, useConstellations, type Constellation} from '../owners/constellations'
 import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
 import type {CentralLocation, EncounterSessionSettingsReading, FactoryAttemptArtifacts, KernelTransportStatus, NativeDirectory} from '../../../../../desktop/cradle/src/kernel/types'
 import {attemptArtifacts} from '../../../../../desktop/cradle/src/contributions/factory/desk/factoryReads'
@@ -57,7 +57,7 @@ import {composeAddressOf, rackRowsOf, scorePortOf, scoreValuesOf, scoreWiring, u
   type ScorePort, type ScoreReading} from './scoreBinding'
 import {usePopulationAnswer} from './devices/usePopulationAnswer'
 import {useCentralAction} from '../central/devices/useCentralReadings'
-import type {WorldActionReceipt, WorldTrackActions} from '../timeline/worldTrackAdapter'
+import type {WorldActionReceipt} from '../timeline/worldTrackAdapter'
 import {clipHostId, setViewHold, useViewHoldsVersion, viewHoldsOf} from '../frame/detail/clipBinding'
 import {useSelectedClip} from '../frame/detail/ClipBox'
 import {useDetailReading} from '../frame/detail/detailReading'
@@ -65,14 +65,13 @@ import {timelineReading, useTimelinePanePresentation} from '../projections/timel
 import {factoryTaskRef, parseFactoryTaskRef} from '../timeline/factoryTrackAdapter'
 import {readSettingsOf, settingsReadingEntry, taskReadingEntry, useSettingsAnswer} from '../owners/readers'
 import {useAgentSessionsOptional} from './AgentSessionsProvider'
-import {projectOfSession, ROOT_REGISTER} from './worldScope'
+import {projectOfSession} from './worldScope'
 import {eventsForSession, trackKey, type AgentSessionTrack, type TaskClip, type TemporalEventLike} from './agentRunModel'
 import {TASK_SEAMS, settingSubject, type TaskAddress, type TaskSeamContext, type TaskSetting} from './devices/taskBindings'
 import {useSessionCustody} from './devices/sessionCustody'
 import {MENU_ACT} from '../native/openStudio'
 import {sayOnInfoLine} from '../frame/devices/deviceHost'
-import {canonNoteOf, dropSong, exportSong, loopSongChange, publishChosenNote, SONG_CLIP_DRAG, songOfPayload, unitsInSpan, type ChosenNote,
-  type ExportChoice} from './songClips'
+import {canonNoteOf, exportSong, loopSongChange, publishChosenNote, unitsInSpan, type ChosenNote, type ExportChoice} from './songClips'
 import {shownSpanNow} from '../frame/tracks/tracksDoor'
 import {clipValuesOfSettings, settingsRefusal, SETTINGS_RESULT, SETTINGS_WHY, writeSessionSettings} from './sessionSettings'
 
@@ -914,32 +913,3 @@ export async function makeNewTaskOf(transport: KernelTransportStatus, session: S
   return {ok: true, note: `${session.label} has a new task made of ${title} (${kept.task_ref}); AIKit reads its source as ${title}.`}
 }
 
-type Maker = NonNullable<WorldTrackActions['makeClip']>
-
-/** The maker the Factory set carries (frame/tracks/useFactoryTracks.ts; frame/tracks/clipMakers.ts withClipMaker): a constellation dropped
- * on a session's track makes that session's task of it (makeTaskOf), or, on a session that holds none, a new task of it that AIKit completes
- * from the session's standing (makeNewTaskOf). A song's clip dropped there (its row's drag, SONG_CLIP_DRAG, taken as the maker's
- * `alsoAccepts` where the tracks take more than one drag: tracks-844.patch) is one unit of the song the session's Run performs, with the
- * thread form canon, given to the track's agent (songClips.ts dropSong). A drop on another track, or of a ref the wiki's reading does not
- * hold, is refused in words. */
-export function taskMaker(transport: KernelTransportStatus, tracks: readonly AgentSessionTrack[],
-  named: (ref: string) => Constellation | null = ref => constellationNamed(constellationsNow().rows, ref),
-  songs: typeof dropSong = dropSong): Maker {
-  const maker = {accepts: CONSTELLATION_DRAG, alsoAccepts: [SONG_CLIP_DRAG] as readonly string[],
-    op: 'AIKit encounter-session-settings: the session\'s task takes the constellation as its source (task.source); on a session that holds '
-      + 'none, AIKit encounter-task-configure makes a new task of its purpose and source, the rest from the session\'s standing; its source read '
-      + 'back from AIKit. A song\'s clip: Factory workflow edit canon on the song the session\'s Run performs',
-    run: async (trackId: string, payload: string): Promise<WorldActionReceipt> => {
-      const track = tracks.find(item => trackKey(item) === trackId && !item.group)
-      const song = songOfPayload(payload)
-      if (!track) return {ok: false, error: song ? 'Only a session\'s track takes a song\'s clip: drop it on a session, whose Run\'s song it joins.'
-        : 'Only a session\'s track makes a task of a constellation: drop it on a session.'}
-      const label = track.agentName ?? track.purpose ?? track.sessionRef
-      if (song) return songs(transport, {sessionRef: track.sessionRef, label, agentRef: track.agentRef ?? null, project: track.project ?? ROOT_REGISTER}, song)
-      const ref = payload.trim()
-      const found = named(ref)
-      if (!found) return {ok: false, error: `${ref} is no constellation the wiki's reading holds now.`}
-      return makeTaskOf(transport, {sessionRef: track.sessionRef, label}, found, track.project ?? ROOT_REGISTER)
-    }}
-  return maker
-}
