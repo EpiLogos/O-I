@@ -2011,12 +2011,10 @@ fn git(cwd: &Path, args: &[&str]) -> Result<String, String> {
     Ok(String::from_utf8_lossy(&output.stdout).into_owned())
 }
 
-/// A project of this World holding a workcell seat (O-I #1006), as Setup and Workcell make one: Setup's Ground Accept, the
-/// project made by Central's own Actions over a repository standing on main, the person's standing grant naming it beside the
-/// World's root, the World's first workcell declared by Workcell and its seat joined, read back from the World's register.
-/// Answers the checkout the seat holds.
-fn seat_a_project(world: &World, project: &str) -> Result<PathBuf, String> {
-    keep_ground(world)?;
+/// A project of this World, as Setup makes one: made by Central's own Actions over a repository standing on main, and the
+/// person's standing grant naming it beside the World's root, so a session's Agency is minted in the project's world. Answers its
+/// folder.
+fn a_project(world: &World, project: &str) -> Result<PathBuf, String> {
     let central = world.central();
     // A project of the World, made by Central's own Actions, and a repository standing on main.
     let work = central.join("Work").join(project);
@@ -2048,6 +2046,16 @@ fn seat_a_project(world: &World, project: &str) -> Result<PathBuf, String> {
         "actuation.authority.grant-world",
         json!({"holder": "human:owner", "world": ["control:root", format!("project:{project}")]}),
     )?;
+    Ok(work)
+}
+
+/// A project of this World holding a workcell seat (O-I #1006), as Setup and Workcell make one: Setup's Ground Accept, the
+/// project (`a_project`), the World's first workcell declared by Workcell and its seat joined, read back from the World's register.
+/// Answers the checkout the seat holds.
+fn seat_a_project(world: &World, project: &str) -> Result<PathBuf, String> {
+    keep_ground(world)?;
+    a_project(world, project)?;
+    let central = world.central();
     // The World's first workcell, declared by Workcell, and its seat joined by the seat instrument in this World.
     let declared = action(
         world,
