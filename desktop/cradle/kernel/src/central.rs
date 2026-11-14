@@ -272,19 +272,26 @@ const RECEIPT_ANSWER_BYTES: usize = 12 * 1024;
 /// What one act lays into the Day of the civil date it happened on (manual §18.2 "a write arrives with its receipt"; O-I #1005
 /// for the gate's act 5, the whole of it O-I #1007): an Action that writes, a passage sent to an agent, a Factory act. Taken from
 /// the op before it runs, laid once its owner answered; a refused act lays none, and an Action the kernel took as a reading lays
-/// none. The receipt is Central's record of what the act did, never the person's writing, so it carries no one's credential.
+/// none. Central lays a receipt only on a credential that grants it (Central #362), so it goes as the act came (flow.rs `Channel`):
+/// an act of the person's own press lays its receipt on their credential, and one that came by a wire carries no one's, so its
+/// receipt is not asked for (an agent's own acts lay theirs on the agent's credential: O-I #1007).
 pub(crate) struct Receipt {
     act: String,
     owner: String,
     input: Value,
     subject: Option<String>,
+    channel: crate::flow::Channel,
 }
 
 impl Receipt {
     /// What `op` lays when its owner answers, if it is an act that lays one.
     pub(crate) fn of(op: &crate::KernelOp) -> Option<Self> {
         match op {
-            crate::KernelOp::InvokeAction { invocation, .. } => {
+            crate::KernelOp::InvokeAction {
+                invocation,
+                channel,
+                ..
+            } => {
                 let action = invocation.action.as_str();
                 if matches!(action, TURN | RECEIPT_RECORD) || action.starts_with("action:decision.")
                 {
@@ -297,31 +304,40 @@ impl Receipt {
                     subject: subject_of(&input)
                         .or_else(|| Some(invocation.target_ref.clone()).filter(|r| !r.is_empty())),
                     input,
+                    channel: *channel,
                 })
             }
+            // A passage sent to an agent, with or without the context it carries.
             crate::KernelOp::Encounter {
-                request: crate::agency::EncounterRequest::Prompt { agent_session, .. },
+                request:
+                    crate::agency::EncounterRequest::Prompt { agent_session, .. }
+                    | crate::agency::EncounterRequest::PromptContext { agent_session, .. },
                 ..
             } => Some(Self {
                 act: "encounter.prompt".into(),
                 owner: "AIKit".into(),
                 input: Value::Null,
                 subject: Some(agent_session.clone()),
+                channel: crate::flow::Channel::Wire,
             }),
-            crate::KernelOp::FactoryOwner { request, .. } if !request.is_read() => {
+            crate::KernelOp::FactoryOwner {
+                request, channel, ..
+            } if !request.is_read() => {
                 let input = serde_json::to_value(request).unwrap_or(Value::Null);
                 Some(Self {
                     act: format!("factory.{}", input["kind"].as_str().unwrap_or("act")),
                     owner: "Factory".into(),
                     subject: subject_of(&input),
                     input,
+                    channel: *channel,
                 })
             }
             _ => None,
         }
     }
 
-    /// Lay it into today's Day of the root register, once its owner answered. A Central whose catalogue names no receipt record is
+    /// Lay it into today's Day of the root register, once its owner answered, on the credential its channel carries
+    /// (`CentralClient::by_channel`). An act that came by a wire lays none, and a Central whose catalogue names no receipt record is
     /// not asked; a receipt Central refuses is said on the host's log and leaves the act as it was.
     pub(crate) fn lay(
         self,
@@ -331,6 +347,9 @@ impl Receipt {
         let Ok(outcome) = result else {
             return;
         };
+        if self.channel != crate::flow::Channel::PersonPress {
+            return;
+        }
         let answer = match &outcome.result {
             crate::KernelOpResult::ActionDispatched {
                 dispatch: crate::action::ActionDispatch::Invoked { data, .. },
@@ -359,7 +378,7 @@ impl Receipt {
         let input = json!({"project": null, "receipt_id": receipt_id, "act": self.act, "owner": self.owner,
             "subject": subject, "source": source, "receipt": bounded(answer),
             "occurred_at_unix_seconds": at.as_secs()});
-        match client.run(RECEIPT_RECORD, input) {
+        match client.by_channel(self.channel).run(RECEIPT_RECORD, input) {
             Ok(_) => crate::world_model::Model::global().written(&[crate::world_model::Slice::Day]),
             Err(error) => eprintln!("the Day's receipt of {} was not laid: {error}", self.act),
         }
@@ -438,4 +457,89 @@ fn bounded(answer: Value) -> Value {
     }
     kept.insert("truncated".into(), json!(true));
     Value::Object(kept)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::flow::Channel;
+
+    /// Central as receipts reach it: its catalogue names the receipt record, and each receipt laid is written down with the credential
+    /// it came with (`none` for none).
+    fn central_laying_receipts(tag: &str) -> (CentralClient, std::path::PathBuf) {
+        let dir =
+            std::env::temp_dir().join(format!("oi-kernel-receipts-{tag}-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(
+            dir.join("list.json"),
+            r#"{"ok":true,"data":{"actions":[{"id":"central.day.receipt.record","mutation_class":"locally-mutating"}]}}"#,
+        )
+        .unwrap();
+        let path = dir.join("central-fake");
+        std::fs::write(
+            &path,
+            format!(
+                "#!/bin/sh\ncase \"$4\" in\n  action.list) cat '{d}/list.json' ;;\n  central.day.receipt.record) printf '%s\\n' \"${{CENTRAL_NATIVE_TOKEN:-none}}\" >> '{d}/laid'; echo '{{\"ok\":true,\"data\":{{\"recorded\":true}}}}' ;;\n  *) echo '{{\"ok\":false,\"error\":{{\"message\":\"unexpected action\"}}}}' ;;\nesac\n",
+                d = dir.display()
+            ),
+        )
+        .unwrap();
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o755)).unwrap();
+        }
+        // The host's credential, as the person's press would carry it (under test, the client's own: flow.rs `for_person`).
+        let client =
+            CentralClient::with(path, None, "o-i".to_owned()).with_person_token("person-token");
+        (client, dir)
+    }
+
+    /// A page saved, as the shell's `act` invokes Central's file write.
+    fn saved(channel: Channel) -> crate::KernelOp {
+        crate::KernelOp::InvokeAction {
+            project: None,
+            invocation: crate::action::ActionInvocation {
+                action: "central.files.write".into(),
+                target_ref: "central.files.write".into(),
+                input: Some(json!({"location": {"path": "Control/user/flows/page.html"}})),
+            },
+            channel,
+        }
+    }
+
+    fn answered() -> Result<crate::KernelOpOutcome, String> {
+        Ok(crate::KernelOpOutcome {
+            receipts: Vec::new(),
+            read_scopes: None,
+            result: crate::KernelOpResult::ActionDispatched {
+                dispatch: crate::action::ActionDispatch::Invoked {
+                    owner_operation: "central.files.write".into(),
+                    data: json!({"revision": "r2"}),
+                },
+                reads_only: false,
+            },
+        })
+    }
+
+    /// Central lays a receipt only on a credential that grants it (Central #362; O-I #1005). An act that came by the person's own press
+    /// lays its receipt on their credential; one that came by a wire carries no one's, so its receipt is not asked for.
+    #[test]
+    fn a_receipt_is_laid_on_the_persons_credential_only_for_an_act_of_their_press() {
+        let (client, dir) = central_laying_receipts("press");
+        Receipt::of(&saved(Channel::PersonPress))
+            .expect("a write lays a receipt")
+            .lay(&client, &answered());
+        Receipt::of(&saved(Channel::Wire))
+            .expect("a write lays a receipt")
+            .lay(&client, &answered());
+        let laid = std::fs::read_to_string(dir.join("laid")).unwrap_or_default();
+        let _ = std::fs::remove_dir_all(&dir);
+        assert_eq!(
+            laid.lines().collect::<Vec<_>>(),
+            ["person-token"],
+            "the press's receipt on the person's credential, and none asked for the wire's"
+        );
+    }
 }
