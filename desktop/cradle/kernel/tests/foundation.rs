@@ -1762,7 +1762,8 @@ fn send_a_passage(world: &World, page: &SavedPage, agent: &str) -> Result<String
 
 /// Act 3: send a passage to each agent that starts and get each answer in the page, read back from the conversation's view
 /// and from Central. The passage the person selects in the page goes into the Packet first (Capture), and the Send carries it:
-/// the answer names the code only the selected words hold (O-I #1005).
+/// the answer names the code only the selected words hold (O-I #1005). A conversation in a project's register holds its Packet
+/// and Scope there too (`a_conversation_in_a_project`).
 #[test]
 #[ignore = "foundation act: runs the installed owners in a fresh home and spends a provider prompt per agent"]
 fn act_3_send_a_passage_and_get_the_answer() {
@@ -1773,11 +1774,13 @@ fn act_3_send_a_passage_and_get_the_answer() {
         let page = save_a_page(world, "foundation-passage")?;
         let mut failed = Vec::new();
         let mut answered = Vec::new();
+        let mut answering = Vec::new();
         for agent in chosen_agents(world)? {
             match send_a_passage(world, &page, &agent) {
                 Ok(session) => {
                     println!("{agent} answered in {session} and in the page");
                     answered.push(session);
+                    answering.push(agent);
                 }
                 Err(why) => {
                     println!("{agent}: {why}");
@@ -1790,12 +1793,130 @@ fn act_3_send_a_passage_and_get_the_answer() {
                 failed.push(why);
             }
         }
+        // A conversation in a project's register holds its Packet and Scope there too, with the first agent that answered.
+        if let Some(agent) = answering.first() {
+            match a_conversation_in_a_project(world, &page, agent) {
+                Ok(session) => println!("{agent}'s conversation in a project holds its Packet and Scope: {session}"),
+                Err(why) => failed.push(format!("a conversation in a project: {why}")),
+            }
+        }
         if failed.is_empty() {
             Ok(())
         } else {
             Err(failed.join("; "))
         }
     });
+}
+
+/// A conversation in a project's register holds its Packet and Scope there (O-I #1005), as the Packet and Scope read them: a project
+/// of this World (`a_project`), the World Model's worlds read afresh (as the change watch has them read when a project comes), a
+/// conversation with `agent` opened in the project's register (`encounter_provision`), a passage of the page brought to that
+/// conversation's Packet through AIKit's own edit in that register, then the World Model's packet and scope slices read afresh: the
+/// project's part holds the session's Packet with the passage, and the session's own settings in AIKit. No prompt is sent. Answers
+/// the session.
+fn a_conversation_in_a_project(world: &World, page: &SavedPage, agent: &str) -> Result<String, String> {
+    let project = "passage-project";
+    a_project(world, project).map_err(|e| format!("making the project {project}: {e}"))?;
+    let fresh = |slice: &str| -> Result<Value, String> {
+        let answer = world.send(json!({"op": "model_subscribe", "slice": slice, "fresh": true}))?;
+        let data = result_of(&answer, "model_slice")
+            .map_err(|e| format!("model_subscribe {slice} {e}"))?["data"]
+            .clone();
+        if data["state"] != "read" {
+            return Err(format!(
+                "the World Model's {slice} slice is {}: {}",
+                data["state"],
+                data["error"].as_str().unwrap_or("no state")
+            ));
+        }
+        Ok(data["value"].clone())
+    };
+    let worlds = fresh("worlds")?;
+    let known = worlds["root"]["work"]["projects"]
+        .as_array()
+        .is_some_and(|rows| rows.iter().any(|row| row["name"] == project));
+    if !known {
+        return Err(format!(
+            "the World Model's worlds hold no project {project}: {}",
+            clip(&worlds["root"]["work"])
+        ));
+    }
+    let provisioned = world
+        .send(json!({"op": "encounter_provision", "project": project, "agent": agent}))
+        .map_err(|e| format!("opening a conversation with {agent} in {project}: {e}"))?;
+    let session = provisioned["data"]["agent_session"]
+        .as_str()
+        .map(str::to_owned)
+        .ok_or_else(|| {
+            format!(
+                "the conversation with {agent} in {project} named no session: {}",
+                clip(&provisioned)
+            )
+        })?;
+    let encounter = |request: Value| -> Result<Value, String> {
+        let name = request["action"].as_str().unwrap_or("?").to_owned();
+        let answer = world.send(json!({"op": "encounter", "project": project, "request": request}))?;
+        result_of(&answer, "encounter_reading")
+            .map(|v| v["data"].clone())
+            .map_err(|e| format!("encounter {name} in {project} {e}"))
+    };
+    let context = encounter(
+        json!({"action": "context", "agent_session": session, "request": {"operation": "read"}}),
+    )?;
+    let basis = context["revision"].as_u64().ok_or_else(|| {
+        format!(
+            "the Packet in {project} named no revision: {}",
+            clip(&context)
+        )
+    })?;
+    let selected = format!("a passage {agent} reads in {project}");
+    let path = page.location["path"].as_str().unwrap_or_default();
+    let selection = json!({"source_ref": page.location["ref"], "source_revision": null, "source_project": null,
+        "title": format!("{project} · a passage"), "owner": "oi.document-packet", "binding_id": page.location["ref"],
+        "text": selected, "working_copy": false, "captured_at": utc_now(),
+        "anchor": {"kind": "observation", "document_id": path, "key": "packet:0", "selector": "#ql-doc packet[0]",
+            "role": "selection", "node_ref": path, "url": null}});
+    encounter(json!({"action": "context", "agent_session": session,
+        "request": {"operation": "edit", "basis": basis, "mutation": {"operation": "add", "selection": selection}}}))
+    .map_err(|e| format!("bringing a passage to the Packet in {project}: {e}"))?;
+    // The Packet as the device reads it for a conversation in the project: the packet slice's part of that register.
+    let packet = fresh("packet")?;
+    let register = &packet["projects"];
+    let held = &register["reading"][project];
+    let part = &held["reading"]["sessions"][session.as_str()];
+    if part["state"] != "read" {
+        return Err(format!(
+            "the World Model's packet holds no Packet of {session} in {project}: {}",
+            clip(if register["state"] != "read" {
+                register
+            } else if held["state"] != "read" {
+                held
+            } else {
+                part
+            })
+        ));
+    }
+    let holds = part["reading"]["items"].as_array().is_some_and(|items| {
+        items
+            .iter()
+            .any(|item| item["selection"]["text"] == selected.as_str())
+    });
+    if !holds {
+        return Err(format!(
+            "the Packet of {session} in {project} does not hold the passage `{selected}`: {}",
+            clip(&part["reading"])
+        ));
+    }
+    // Scope as the device reads it for that conversation: the session's own settings in AIKit, read in the project's register.
+    let scope = fresh("scope")?;
+    let settings = &scope["projects"]["reading"][project]["reading"][session.as_str()];
+    if settings["state"] != "read" || settings["reading"]["agent_session"] != session.as_str() {
+        return Err(format!(
+            "the World Model's scope holds no settings of {session} in {project}: {}",
+            clip(&scope["projects"])
+        ));
+    }
+    Ok(session)
 }
 
 /// The conversations and the page as Session and Arrangement view draw them (O-I #1004): each answered conversation a track of
