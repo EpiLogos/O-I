@@ -5518,6 +5518,75 @@ mod tests {
         }
     }
 
+    /// Today's Day turns on one ask that offers no form (O-I 1005): Central makes today's page only from the Day form the person saved
+    /// in the Day's settings (`day_form`, at the revision they read it) and refuses a form offered with the turn (Central #362). So where
+    /// today's Day stands without its page and the ground carries a Day form, the kernel still asks the turn once, with the project alone.
+    #[test]
+    fn the_days_turn_is_asked_once_and_offers_no_form() {
+        let _serial = day_read_guard();
+        let dir =
+            std::env::temp_dir().join(format!("oi-kernel-day-turn-no-form-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let _ = std::fs::remove_file(dir.join("asks"));
+        std::fs::write(
+            dir.join("turn.json"),
+            DAY_UNINITIALISED.replace(
+                "\"document_state\"",
+                r#""turn":{"opened":false,"document":{"state":"wants-form"},"closed":[]},"document_state""#,
+            ),
+        )
+        .unwrap();
+        std::fs::write(
+            dir.join("list.json"),
+            r#"{"ok":true,"data":{"actions":[{"id":"central.day.turn","mutation_class":"locally-mutating"}]}}"#,
+        )
+        .unwrap();
+        // The ground carries a Day form, where the kernel once looked for one to offer with the turn.
+        let location = |path: &str| {
+            serde_json::json!({"schema": "central.path-ref/v1", "ref": format!("central:path:/w/Central:{path}"),
+                "root": "/w/Central", "path": path})
+        };
+        std::fs::write(
+            dir.join("forms.json"),
+            serde_json::json!({"ok": true, "data": {"schema": "central.directory-reading/v1", "location": location("Control/forms"),
+                "entries": [{"name": "ql-daily-die.html", "location": location("Control/forms/ql-daily-die.html"), "kind": "file",
+                    "byte_len": 10, "retrieval_allowed": true}],
+                "automatic_agent_or_model_invocation": false}})
+            .to_string(),
+        )
+        .unwrap();
+        let path = dir.join("central-fake");
+        std::fs::write(
+            &path,
+            format!(
+                "#!/bin/sh\ncase \"$4\" in\n  action.list) cat '{d}/list.json' ;;\n  central.day.turn) printf '%s\\n' \"$5\" >> '{d}/asks'; cat '{d}/turn.json' ;;\n  central.files.list) cat '{d}/forms.json' ;;\n  *) echo '{{\"ok\":false,\"error\":{{\"message\":\"unexpected action\"}}}}' ;;\nesac\n",
+                d = dir.display()
+            ),
+        )
+        .unwrap();
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o755)).unwrap();
+        }
+        let mut kernel = Kernel::new(CentralClient::with(path, None, "o-i".to_owned()));
+        kernel
+            .apply(KernelOp::DayRead { day_ref: None })
+            .expect("today's Day is read after its turn");
+        let asks: Vec<serde_json::Value> = std::fs::read_to_string(dir.join("asks"))
+            .unwrap()
+            .lines()
+            .map(|line| serde_json::from_str(line).unwrap())
+            .collect();
+        let _ = std::fs::remove_dir_all(&dir);
+        assert_eq!(asks.len(), 1, "the turn is asked once: {asks:?}");
+        assert!(
+            asks[0].get("form").is_none(),
+            "the turn is offered no form: {}",
+            asks[0]
+        );
+    }
+
     #[test]
     fn day_read_refuses_a_stale_today_pointer_by_name() {
         let _serial = day_read_guard();
