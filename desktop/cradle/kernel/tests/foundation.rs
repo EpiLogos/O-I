@@ -909,9 +909,18 @@ fn law_holds(world: &World, starting: &[(String, String)]) -> Act {
     let mut unread = Vec::new();
     for (slug, _) in starting {
         let law = row_of(&rows, slug)?["carries"]["law"].clone();
-        match law["file"].as_str() {
-            Some(file) => files.push(file.to_owned()),
-            None => unread.push(format!(
+        match (law["file"].as_str(), law["home"].as_array()) {
+            (Some(file), _) => files.push(file.to_owned()),
+            // An agent that reads only a file in its own home carries no world's floor, and the census says so in AIKit's terms.
+            (None, Some(home)) if !home.is_empty() => println!(
+                "{slug} reads only {} in its own home: {}",
+                home.iter()
+                    .filter_map(Value::as_str)
+                    .collect::<Vec<_>>()
+                    .join(", "),
+                law["why"].as_str().unwrap_or_default()
+            ),
+            (None, _) => unread.push(format!(
                 "{slug} shows no law: {}",
                 law["why"].as_str().unwrap_or("the census names no file")
             )),
@@ -969,13 +978,25 @@ fn law_holds(world: &World, starting: &[(String, String)]) -> Act {
                     clip(&reading)
                 )
             })?;
-        if &law != floor {
+        // The census carries Central's reading of that floor, and how far the floor reaches the agent beside it.
+        let mut read = law.clone();
+        let reach = read
+            .as_object_mut()
+            .and_then(|fields| fields.remove("reach"))
+            .unwrap_or_default();
+        if &read != floor {
             return Err(format!(
                 "Central reads {file}, the floor {slug} reads, as {}; the census carries {}",
                 clip(floor),
                 clip(&law)
             ));
         }
+        let Some(reaches) = reach["why"].as_str() else {
+            return Err(format!(
+                "the census says nothing of how far {file} reaches {slug}: {}",
+                clip(&law)
+            ));
+        };
         let carried = floor["statements"].as_array().cloned().unwrap_or_default();
         if floor["state"] != "rendered"
             || !carried
@@ -992,7 +1013,7 @@ fn law_holds(world: &World, starting: &[(String, String)]) -> Act {
             .filter_map(|row| row["topic"].as_str())
             .collect();
         println!(
-            "{slug} reads {file}, rendered by Central, carrying the law: {}",
+            "{slug} reads {file}, rendered by Central, carrying the law: {} ({reaches})",
             topics.join(", ")
         );
     }

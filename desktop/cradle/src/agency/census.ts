@@ -15,12 +15,17 @@ export interface LawStatement {file: string; topic: string; standing: string}
 
 /** What an agent carries (census.rs carries_of; O-I #1003): the model AIKit asks for when a chat opens with it, the skill set it gets
  * (the Skill Sets AIKit selects and the skills they give it), and the law its floor carries (Central's floor reading of the instruction
- * file AIKit names for it). A part its owner does not answer says why. */
+ * file AIKit says it reads in a project, with how far that floor reaches it: `reach`, from where AIKit says it looks). A part its owner
+ * does not answer says why. */
 export interface AgentCarries {
   model: {id: string; name?: string; provider?: string} | {own: true; why: string} | {why: string};
   skills: {sets: string[]; skills: string[]} | {why: string};
-  law: {file: string; state: "rendered" | "foreign" | "absent"; renderer?: string; statements: LawStatement[]; why?: string} | {file?: string; why: string};
+  law: {file: string; state: "rendered" | "foreign" | "absent"; renderer?: string; statements: LawStatement[]; reach?: LawReach; why?: string} | {file?: string; why: string};
 }
+
+/** How far the world's floor reaches an agent (census.rs reach_of): `ancestors` in every project of the world, `repository` and
+ * `workdir` only at the world's root; `why` says it in words. */
+export interface LawReach {scope: string; why: string}
 
 /** One census row: an agent harness, whether it starts and whether a person can talk to it, and AIKit's detail on it when AIKit has
  * some. */
@@ -57,6 +62,7 @@ export function carriesOf(raw: unknown): AgentCarries | undefined {
   const why = (part: Record<string, unknown>, what: string) => text(part.why) ?? `The census says nothing of ${what}.`;
   const id = text(model.model_id), name = text(model.model_name), provider = text(model.native_provider);
   const file = text(law.file), state = law.state === "rendered" || law.state === "foreign" || law.state === "absent" ? law.state : undefined;
+  const reach = record(law.reach), scope = text(reach?.scope), reaches = text(reach?.why);
   const statements = Array.isArray(law.statements) ? law.statements.flatMap((item): LawStatement[] => {
     const statement = record(item), path = text(statement?.file);
     return statement && path ? [{file: path, topic: text(statement.topic) ?? path, standing: text(statement.standing) ?? "unknown"}] : [];
@@ -64,7 +70,7 @@ export function carriesOf(raw: unknown): AgentCarries | undefined {
   return {
     model: id ? {id, ...(name ? {name} : {}), ...(provider ? {provider} : {})} : model.own === true ? {own: true, why: why(model, "its model")} : {why: why(model, "its model")},
     skills: Array.isArray(skills.sets) ? {sets: strings(skills.sets), skills: strings(skills.skills)} : {why: why(skills, "its skill set")},
-    law: file && state ? {file, state, ...(text(law.renderer) ? {renderer: text(law.renderer)} : {}), statements, ...(text(law.why) ? {why: text(law.why)} : {})}
+    law: file && state ? {file, state, ...(text(law.renderer) ? {renderer: text(law.renderer)} : {}), statements, ...(scope && reaches ? {reach: {scope, why: reaches}} : {}), ...(text(law.why) ? {why: text(law.why)} : {})}
       : {...(file ? {file} : {}), why: why(law, "the law it carries")},
   };
 }

@@ -47,8 +47,8 @@ pub fn read(via: &dyn Fn(KernelOp) -> Result<KernelOpOutcome, String>) -> Result
     Ok(census_of(&detection, &clients, aikit_why, &floor, probe))
 }
 
-/// Central's reading of the floors the detected agents read (O-I #1003): the instruction files AIKit names for them (each client
-/// row's `guidance`), by file name at the world's root, read once for all; or why Central gave none.
+/// Central's reading of the floors the detected agents read (O-I #1003): the instruction files AIKit says they read in a project
+/// (each client row's `project_guidance`), by file name at the world's root, read once for all; or why Central gave none.
 fn floor_reading(
     via: &dyn Fn(KernelOp) -> Result<KernelOpOutcome, String>,
     detection: &Value,
@@ -86,21 +86,89 @@ fn floor_reading(
     Ok(value["data"].clone())
 }
 
-/// The files at a world's root that an AIKit client row says its harness reads: its guidance layer's files by name
-/// (`~/.claude/CLAUDE.md` → `CLAUDE.md`), Markdown only.
+/// The files an AIKit client row says its harness reads in the project it works in (`project_guidance.files`, in the order it
+/// prefers them), the Markdown ones only: a floor is rendered only as Markdown.
 fn floor_files(client: &Value) -> Vec<String> {
-    client["guidance"]
+    names(&client["project_guidance"]["files"])
+        .into_iter()
+        .filter(|name| name.ends_with(".md"))
+        .map(str::to_owned)
+        .collect()
+}
+
+/// The strings of a JSON array; none where it is not one.
+fn names(value: &Value) -> Vec<&str> {
+    value
         .as_array()
-        .map(|names| {
-            names
-                .iter()
-                .filter_map(Value::as_str)
-                .filter_map(|path| path.rsplit('/').next())
-                .filter(|name| name.ends_with(".md"))
-                .map(str::to_owned)
-                .collect()
-        })
+        .map(|items| items.iter().filter_map(Value::as_str).collect())
         .unwrap_or_default()
+}
+
+/// The law an agent carries (O-I #1003): the floor Central renders among the files AIKit says it reads in a project, as Central
+/// reads it, with how far that floor reaches it (`reach`); or, where AIKit names no such file, why, in the words of what AIKit
+/// names: a file it reads only in its own home (`home`), a file that is not Markdown, or none.
+fn law_of(slug: &str, aikit: &Value, floor: &Result<Value, String>) -> Value {
+    let files = floor_files(aikit);
+    let Some(first) = files.first() else {
+        let in_project = names(&aikit["project_guidance"]["files"]);
+        let named = names(&aikit["guidance"]);
+        return if !in_project.is_empty() {
+            json!({"why": format!(
+                "AIKit names {} as what {slug} reads in a project, and Central renders a floor only as Markdown files, so no floor reaches it",
+                in_project.join(", ")
+            )})
+        } else if !named.is_empty() && named.iter().all(|path| path.starts_with("~/") || path.starts_with('/')) {
+            json!({"home": named, "why": format!(
+                "{slug} reads {} in its own home and nothing in a project, so no world's floor reaches it",
+                named.join(", ")
+            )})
+        } else if !named.is_empty() {
+            json!({"why": format!(
+                "AIKit names {} as what {slug} reads, not what it reads in a project, so no floor reaches it",
+                named.join(", ")
+            )})
+        } else {
+            json!({"why": format!("AIKit names no instruction file {slug} reads, so no floor reaches it")})
+        };
+    };
+    let reading = match floor {
+        Err(why) => return json!({"file": first, "why": format!("Central did not read the floor: {why}")}),
+        Ok(reading) => reading,
+    };
+    let rows = reading["floors"].as_array().cloned().unwrap_or_default();
+    let row_of = |file: &str| rows.iter().find(|row| row["file"] == file).cloned();
+    // The first file it reads that Central holds a floor in; else the first it reads, as Central reads it (absent).
+    let chosen = files
+        .iter()
+        .find_map(|file| row_of(file).filter(|row| row["state"] == "rendered" || row["state"] == "foreign"))
+        .or_else(|| row_of(first));
+    let Some(mut law) = chosen else {
+        return json!({"file": first, "why": format!("Central's floor reading names no {first}")});
+    };
+    let file = law["file"].as_str().unwrap_or(first).to_owned();
+    if let Some(reach) = reach_of(slug, aikit, &file) {
+        law["reach"] = reach;
+    }
+    law
+}
+
+/// How far the world's floor reaches an agent (`{scope, why}`), from where AIKit says it looks for its instruction files in a
+/// project: `ancestors` reaches it in every project under the world's root; `repository` and `workdir` only at the root.
+fn reach_of(slug: &str, aikit: &Value, file: &str) -> Option<Value> {
+    let scope = aikit["project_guidance"]["reach"].as_str()?;
+    let why = match scope {
+        "ancestors" => format!(
+            "{slug} reads {file} where it works and in every folder above, so this floor reaches it in every project of the world"
+        ),
+        "repository" => format!(
+            "{slug} reads {file} from its repository's root down to where it works, so this floor reaches it only when it works at the world's root, not in a project's repository"
+        ),
+        "workdir" => format!(
+            "{slug} reads {file} only in the folder it works in, so this floor reaches it only when it works at the world's root"
+        ),
+        other => format!("AIKit says {slug} looks for {file} in a way Central does not know ({other})"),
+    };
+    Some(json!({"scope": scope, "why": why}))
 }
 
 /// AIKit's reason for one part of a client row it could not read, in AIKit's words: its `carries_reason` joins one sentence per
@@ -165,36 +233,9 @@ fn carries_of(
         (None, _) => json!({"why": aikit_reason(aikit, "Skill Sets")
             .unwrap_or_else(|| format!("AIKit's client status names no Skill Sets for {slug}"))}),
     };
-    let law = match (&silent, floor_files(aikit).into_iter().next()) {
-        (Some(why), _) => json!({"why": why}),
-        (None, None) => {
-            let named: Vec<&str> = aikit["guidance"]
-                .as_array()
-                .map(|names| names.iter().filter_map(Value::as_str).collect())
-                .unwrap_or_default();
-            json!({"why": if named.is_empty() {
-                format!("AIKit names no instruction file {slug} reads, so no floor reaches it")
-            } else {
-                format!(
-                    "AIKit names {} as what {slug} reads, and Central renders a floor only as Markdown files, so no floor reaches it",
-                    named.join(", ")
-                )
-            }})
-        }
-        (None, Some(file)) => match floor {
-            Err(why) => {
-                json!({"file": file, "why": format!("Central did not read the floor: {why}")})
-            }
-            Ok(reading) => match reading["floors"]
-                .as_array()
-                .and_then(|floors| floors.iter().find(|row| row["file"] == file.as_str()))
-            {
-                Some(row) => row.clone(),
-                None => {
-                    json!({"file": file, "why": format!("Central's floor reading names no {file}")})
-                }
-            },
-        },
+    let law = match &silent {
+        Some(why) => json!({"why": why}),
+        None => law_of(slug, aikit, floor),
     };
     json!({"model": model, "skills": skills, "law": law})
 }
@@ -610,9 +651,11 @@ mod tests {
         let clients = [
             json!({"client": "claude", "harness": "claude-code", "conversation": {"opens": true, "protocol": "acp"},
                    "model_default": {"model_id": "claude-opus-5-5", "model_name": null}, "skill_sets": ["foundation"],
-                   "skills": ["wayfinder"], "guidance": ["~/.claude/CLAUDE.md"]}),
+                   "skills": ["wayfinder"], "guidance": ["~/.claude/CLAUDE.md"],
+                   "project_guidance": {"files": ["CLAUDE.md"], "reach": "ancestors"}}),
             json!({"client": "codex", "harness": "codex", "conversation": {"opens": true, "protocol": "acp"},
-                   "model_default": null, "skill_sets": [], "skills": [], "guidance": ["~/.codex/AGENTS.md"]}),
+                   "model_default": null, "skill_sets": [], "skills": [], "guidance": ["~/.codex/AGENTS.md"],
+                   "project_guidance": {"files": ["AGENTS.md"], "reach": "repository"}}),
         ];
         let floor = Ok(
             json!({"schema": "central.floor-reading/v1", "root": "/w/Central", "floors": [
@@ -637,9 +680,17 @@ mod tests {
             claude["law"]["statements"][0]["topic"],
             "Smallest sufficient"
         );
+        // It reads CLAUDE.md in every folder above where it works: the world's floor reaches it in every project.
+        assert_eq!(claude["law"]["reach"]["scope"], "ancestors");
         let codex = &census["agents"][1]["carries"];
         assert_eq!(codex["model"]["own"], true, "no default: its own model");
         assert_eq!(codex["law"]["state"], "absent");
+        // It looks no higher than its repository's root: the world's floor reaches it only at the world's root.
+        assert_eq!(codex["law"]["reach"]["scope"], "repository");
+        assert!(codex["law"]["reach"]["why"]
+            .as_str()
+            .unwrap()
+            .contains("only when it works at the world's root"));
         // Central unread: each floor says why, in Central's words; the model and skill set stand.
         let unread = census_of(&detection(), &clients, None, &no_floor(), answers);
         let law = &unread["agents"][0]["carries"]["law"];
@@ -666,7 +717,8 @@ mod tests {
                    "carries_reason": "AIKit could not read its model defaults: Unrecognised model defaults schema; \
                                       AIKit could not read the Skill Sets this context selects: no such set"}),
             json!({"client": "codex", "harness": "codex", "conversation": {"opens": true, "protocol": "acp"},
-                   "model_default": null, "skill_sets": [], "skills": [], "guidance": [".goosehints"]}),
+                   "model_default": null, "skill_sets": [], "skills": [], "guidance": [],
+                   "project_guidance": {"files": [".goosehints"], "reach": "repository"}}),
         ];
         let answers = |program: &Path| Started::Answered {
             words: format!("{} 1.0", program.display()),
@@ -694,6 +746,47 @@ mod tests {
             law.contains(".goosehints") && law.contains("Markdown"),
             "{law}"
         );
+    }
+
+    #[test]
+    fn the_floor_an_agent_reads_is_the_first_of_its_files_central_holds_and_a_home_file_is_named_as_home() {
+        let answers = |program: &Path| Started::Answered {
+            words: format!("{} 1.0", program.display()),
+            seconds: 0.1,
+        };
+        let floor = Ok(json!({"schema": "central.floor-reading/v1", "root": "/w/Central", "floors": [
+            {"file": "AGENTS.md", "state": "absent", "statements": []},
+            {"file": "CLAUDE.md", "state": "rendered", "statements": [
+                {"file": "craft/plain-words.md", "topic": "Plain words", "standing": "durable"}]}
+        ]}));
+        let row = |client: &str, harness: &str, guidance: Value, project: Value| {
+            json!({"client": client, "harness": harness, "conversation": {"opens": true, "protocol": "acp"},
+                   "model_default": null, "skill_sets": [], "skills": [], "guidance": guidance, "project_guidance": project})
+        };
+        let law = |clients: &[Value], at: usize| {
+            census_of(&detection(), clients, None, &floor, answers)["agents"][at]["carries"]["law"].clone()
+        };
+        // Of AGENTS.md and CLAUDE.md, the one Central holds a floor in is the law it carries.
+        let both = law(
+            &[row("claude", "claude-code", json!([]), json!({"files": ["AGENTS.md", "CLAUDE.md"], "reach": "ancestors"}))],
+            0,
+        );
+        assert_eq!(both["file"], "CLAUDE.md");
+        assert_eq!(both["statements"][0]["topic"], "Plain words");
+        // A file it reads only in its own home is named as that, and no floor of the world is claimed for it.
+        let home = law(
+            &[row("claude", "claude-code", json!(["~/.openclaw/workspace/AGENTS.md"]), Value::Null)],
+            0,
+        );
+        assert_eq!(home["home"], json!(["~/.openclaw/workspace/AGENTS.md"]));
+        assert!(home.get("file").is_none(), "{home}");
+        assert!(home["why"].as_str().unwrap().contains("in its own home"), "{home}");
+        // An AIKit that names files without saying which it reads in a project gets no floor guessed from their names.
+        let unplaced = law(&[row("claude", "claude-code", json!(["CLAUDE.md"]), Value::Null)], 0);
+        assert!(unplaced.get("file").is_none(), "{unplaced}");
+        assert!(unplaced["why"].as_str().unwrap().contains("not what it reads in a project"), "{unplaced}");
+        let none = law(&[row("claude", "claude-code", json!([]), Value::Null)], 0);
+        assert_eq!(none["why"], "AIKit names no instruction file claude-code reads, so no floor reaches it");
     }
 
     #[test]

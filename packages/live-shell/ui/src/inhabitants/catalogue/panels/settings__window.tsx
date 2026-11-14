@@ -580,7 +580,8 @@ function Carries({h, span}: {h: Rec; span: number}) {
         {h.sets === undefined ? txt(h.skillsWhy) ?? NONE : sets.length ? sets.join(', ') : 'none selected'}{skills.length > 0 && <small>{skills.length} skill{skills.length === 1 ? '' : 's'}</small>}</dd></div>
       <div><dt>Law</dt><dd className={law?.length ? undefined : 'st-dim'}
         data-i={`Law${file ? ` · ${file}` : ''}|${law?.length ? law.map(s => `${txt(s.topic) ?? NONE} (${txt(s.file) ?? NONE}, ${txt(s.standing) ?? NONE})`).join('; ') : txt(h.lawWhy) ?? 'Its floor carries no statement.'}`}>
-        {law?.length ? law.map(s => txt(s.topic) ?? txt(s.file)).join(' · ') : txt(h.lawWhy) ?? 'no statement'}{file && <small>{file}{txt(h.lawState) && h.lawState !== 'rendered' ? ` · ${h.lawState}` : ''}</small>}</dd></div>
+        {law?.length ? law.map(s => txt(s.topic) ?? txt(s.file)).join(' · ') : txt(h.lawWhy) ?? 'no statement'}{file && <small>{file}{txt(h.lawState) && h.lawState !== 'rendered' ? ` · ${h.lawState}` : ''}{txt(h.lawReach) && h.lawEverywhere !== true ? ' · only at your world\'s root' : ''}</small>}
+        {txt(h.lawReach) && <small className="st-dim" data-law-reach={h.lawEverywhere === true ? 'everywhere' : 'root'}>{txt(h.lawReach)}</small>}</dd></div>
     </dl>
   </td></tr>
 }

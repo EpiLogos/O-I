@@ -302,7 +302,8 @@ export function searchStep(count: number, hit: number, key: string): {hit: numbe
 
 /** What an agent carries as the pages draw it (census.ts AgentCarries; O-I #1003): `model` its model (`modelId`, `modelProvider`), or
  * `modelWhy`; `sets` and `skills` the skill set it gets, or `skillsWhy`; `lawFile` the instruction file its floor is, `law` [{topic, file,
- * standing}] the statements that floor carries with `lawState` (rendered, foreign or absent), and `lawWhy` why it carries none. Pure. */
+ * standing}] the statements that floor carries with `lawState` (rendered, foreign or absent), `lawReach` how far that floor reaches it
+ * (and `lawEverywhere` when it reaches it in every project of the world), and `lawWhy` why it carries none. Pure. */
 export function carriesValues(carries: AgentCarries | undefined): Record<string, unknown> {
   if (!carries) return {}
   const {model, skills, law} = carries
@@ -311,6 +312,7 @@ export function carriesValues(carries: AgentCarries | undefined): Record<string,
     ...('sets' in skills ? {sets: skills.sets, skills: skills.skills} : {skillsWhy: skills.why}),
     ...(law.file ? {lawFile: law.file} : {}),
     ...('state' in law ? {lawState: law.state, ...(law.renderer ? {lawRenderer: law.renderer} : {}), law: law.statements.map(row => ({topic: row.topic, file: row.file, standing: row.standing}))} : {}),
+    ...('state' in law && law.reach ? {lawReach: law.reach.why, lawEverywhere: law.reach.scope === 'ancestors'} : {}),
     ...(law.why ? {lawWhy: law.why} : 'state' in law && law.state === 'absent' ? {lawWhy: `There is no ${law.file} at your world's root: no law reaches it.`} : {}),
   }
 }

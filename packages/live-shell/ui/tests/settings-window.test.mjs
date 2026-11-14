@@ -2005,23 +2005,31 @@ test('CODE-DERIVED — Harnesses & models shows what each agent that starts carr
     {slug: 'claude-code', harness_ref: 'harness/claude-code', executable: '/x/claude', starts: true, talks: true, version: '2.1.323', aikit: {client: 'claude', harness: 'claude-code'},
       carries: {model: {model_id: 'claude-opus-5-5', model_name: 'Claude Opus 5.5'}, skills: {sets: ['foundation'], skills: ['engineering-methodology', 'wayfinder']},
         law: {file: 'CLAUDE.md', state: 'rendered', renderer: 'control.floor.render', statements: [{file: 'authorship-and-return/propose-not-write.md', topic: 'Authorship', standing: 'adopted'},
-          {file: 'world/shape-of-the-world.md', topic: 'Shape of the world', standing: 'adopted'}]}}},
+          {file: 'world/shape-of-the-world.md', topic: 'Shape of the world', standing: 'adopted'}], reach: {scope: 'ancestors', why: 'claude-code reads CLAUDE.md where it works and in every folder above, so this floor reaches it in every project of the world'}}}},
     {slug: 'codex', harness_ref: 'harness/codex', executable: '/x/codex', starts: true, talks: true, version: 'codex-cli 0.155.1', aikit: {client: 'codex', harness: 'codex'},
       carries: {model: {own: true, why: 'AIKit holds no model default for codex: a new chat opens with its own model'}, skills: {sets: [], skills: []},
         law: {file: 'AGENTS.md', why: 'Central did not read the floor: no control.floor.read here'}}},
-    {slug: 'gemini', harness_ref: 'harness/gemini', executable: '/x/gemini', starts: false, talks: false, why: 'gemini did not start', aikit: null}]}}
+    {slug: 'gemini', harness_ref: 'harness/gemini', executable: '/x/gemini', starts: false, talks: false, why: 'gemini did not start', aikit: null},
+    // kimi reads AGENTS.md only in the folder it works in: the world's floor reaches it only at the world's root, and the page says so.
+    {slug: 'kimi', harness_ref: 'harness/kimi', executable: '/x/kimi', starts: true, talks: true, version: 'kimi, version 1.6', aikit: {client: 'kimi', harness: 'kimi'},
+      carries: {model: {own: true, why: 'AIKit holds no model default for kimi: a new chat opens with its own model'}, skills: {sets: [], skills: []},
+        law: {file: 'AGENTS.md', state: 'rendered', statements: [{file: 'craft/plain-words.md', topic: 'Plain words', standing: 'durable'}],
+          reach: {scope: 'workdir', why: 'kimi reads AGENTS.md only in the folder it works in, so this floor reaches it only when it works at the world\'s root'}}}}]}}
   const census = censusOf({state: 'held', answer})
   assert.deepEqual(census.agents[0].carries, {model: {id: 'claude-opus-5-5', name: 'Claude Opus 5.5'}, skills: {sets: ['foundation'], skills: ['engineering-methodology', 'wayfinder']},
     law: {file: 'CLAUDE.md', state: 'rendered', renderer: 'control.floor.render', statements: [{file: 'authorship-and-return/propose-not-write.md', topic: 'Authorship', standing: 'adopted'},
-      {file: 'world/shape-of-the-world.md', topic: 'Shape of the world', standing: 'adopted'}]}})
+      {file: 'world/shape-of-the-world.md', topic: 'Shape of the world', standing: 'adopted'}], reach: {scope: 'ancestors', why: 'claude-code reads CLAUDE.md where it works and in every folder above, so this floor reaches it in every project of the world'}}})
   assert.equal(census.agents[2].carries, undefined, 'an agent that did not start carries nothing')
   const rows = Object.fromEntries(JSON.parse(win.harnessValues(null, null, census).harnesses).map(row => [row.agent, row]))
   assert.deepEqual([rows['claude-code'].model, rows['claude-code'].sets, rows['claude-code'].law.map(row => row.topic), rows['claude-code'].lawFile],
     ['Claude Opus 5.5', ['foundation'], ['Authorship', 'Shape of the world'], 'CLAUDE.md'])
   assert.deepEqual([rows.codex.model, rows.codex.modelWhy, rows.codex.sets, rows.codex.law, rows.codex.lawWhy],
     [undefined, 'AIKit holds no model default for codex: a new chat opens with its own model', [], undefined, 'Central did not read the floor: no control.floor.read here'])
+  assert.deepEqual([rows['claude-code'].lawEverywhere, rows.kimi.lawEverywhere, rows.kimi.law.map(row => row.topic)], [true, false, ['Plain words']])
+  assert.ok(rows.kimi.lawReach.includes('only when it works at the world\'s root'), rows.kimi.lawReach)
   const page = drawn({harnesses: win.harnessValues(null, null, census).harnesses}, 'harnesses')
-  for (const shown of ['Claude Opus 5.5', 'foundation', 'Authorship · Shape of the world', 'CLAUDE.md', escaped('AIKit holds no model default for codex')]) assert.ok(page.includes(shown), `drawn: ${shown}`)
+  for (const shown of ['Claude Opus 5.5', 'foundation', 'Authorship · Shape of the world', 'CLAUDE.md', escaped('AIKit holds no model default for codex'),
+    escaped('so this floor reaches it in every project of the world'), escaped('AGENTS.md · only at your world\'s root'), 'data-law-reach="root"']) assert.ok(page.includes(shown), `drawn: ${shown}`)
   assert.ok(!page.includes('data-carries="gemini"'), 'nothing carried is drawn for an agent that does not start')
 })
 
