@@ -237,8 +237,9 @@ test('the harness\'s document supplies the gateway rows only under the carrier\'
   assert.deepEqual(model.gatewayDisclosed({refused: {message: 'no'}}), {})
   assert.deepEqual(model.gatewayDisclosed(null), {})
   assert.equal(model.gatewayLine({schema: 's', binding: 'b'}), 'schema s · binding b')
-  assert.deepEqual(model.gitRepoReading({repo_root: '/r', head_branch: 'main', worktrees: [{path: '/x', dirty_files: 9}, {path: '/r', dirty_files: 2}]}), {branch: 'main', uncommitted: 2})
-  assert.deepEqual(model.gitRepoReading({repo_root: '/r', worktrees: []}), {})
+  // REPLACED (O-I ticket 1006): gitRepoReading read the primary checkout's repository document for the chain's Git; Git / landing reads the
+  // workcell's seat of the session's project (factory-design-binding.test.mjs, designBindings.ts projectSeatOf).
+  assert.equal('gitRepoReading' in model, false)
   assert.deepEqual(model.taskReading({turns: {used: 2, cap: 8}, custody: 'review', autonomy: 'auto'}), {used: 2, cap: 8}, 'a task record\'s custody or autonomy word is no Agent setting: the Autonomy is retired')
   assert.equal(model.budgetLine({used: 2}), '2')
   assert.equal(model.budgetLine(null), undefined)

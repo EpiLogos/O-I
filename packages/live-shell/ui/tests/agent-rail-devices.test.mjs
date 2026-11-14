@@ -249,6 +249,9 @@ const GATEWAY_READ = {state: 'read', reading: {ecology: HARNESS_CAPTURE.gateway_
 // sessions slice carries the gateway and the binding it names (the kernel's own test reads it from the ecology: world_model.rs
 // the_sessions_slice_carries_the_gateway_its_binding_and_that_bindings_harness_reading), and the Gateway declares the field it reads.
 test('the harness binding is the one the sessions slice\'s gateway names, and lists no agents: the agents here are the census\'s (O-I ticket 1003)', async () => {
+  for (const gone of ['agent/useHarnessBinding.ts', 'agent/devices/useAgentChainReading.ts', 'agent/devices/useModelCatalogue.ts']) {
+    assert.throws(() => read(gone), {code: 'ENOENT'}, `${gone}: no reader of an owner stands beside the World Model the declarations read`)
+  }
   const {gatewayBindingIn, chainDeclaration} = await import('../src/inhabitants/agentParamAddresses.ts')
   assert.equal(chainDeclaration('gateway').fields.binding, 'sessions:gateway.reading.binding', 'the Gateway declares the field its binding reads')
   assert.equal(chainDeclaration('agent').fields.harnesses, 'agents:agents', 'the Harness chooser\'s agents are the census\'s')

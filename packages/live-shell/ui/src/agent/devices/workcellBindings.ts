@@ -14,7 +14,8 @@
 //     tracked_changes, untracked, ahead_main, behind_main, admission}]}]) — the seat instrument's own reading, which the kernel runs
 //     since lane K1 as `seat_status_read` (workcellReads.ts useSeatStatusAnswer: slow, read once and on demand). A free seat still lists
 //     the zones of lanes that left (release clears workers, not zones): a zone on a free seat is no claim, so it is not read as one;
-//   git_repository_read — the chain's git reading (agentChainDevices.ts gitRepoReading: head_branch, the repo root's dirty_files);
+//   the chain's Git / landing reads the workcell's seat of the session's project from that same seat reading, as the World Model's
+//     workcells slice carries it (designBindings.ts projectSeatOf: its live_branch, and tracked_changes with untracked; O-I ticket 1006);
 //     `central.git.census` answered `unavailable_capability: No eligible Connector implements GitState` through the CLI here;
 //   `aikit gateway who --project-world project:O-I --json` (aikit.population-reading/v1), which the kernel runs as inhabitation_read
 //     {kind: population} (usePopulationAnswer.ts): local_workcell_ref, remotes [{workcell_ref, gateway_ref, status reachable |

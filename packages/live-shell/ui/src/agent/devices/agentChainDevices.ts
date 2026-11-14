@@ -1,8 +1,8 @@
 // Factory's agent chain as devices of the runtime (manual §6, §10.4; lock §2.3; ticket T-DEVICES-FACTORY): gateway → agent →
 // skills → scope → landing, each one a DeviceInstance the three sizes draw. Pure: the rows are the verified address table's
 // (inhabitants/agentParamAddresses.ts:67-105, reused unchanged), the slots and their Live semantics are the admitted
-// manifests' (inhabitants/agentDeviceCatalogue.ts:33-85), the readings are the owners' (the chain's reads, ported to
-// useAgentChainReading.ts), and a write goes where the row's own write path says, through the one resolver
+// manifests' (inhabitants/agentDeviceCatalogue.ts:33-85), the readings are the owners' (the World Model's slices the chain's declarations
+// name, designBindings.ts chainFromModel), and a write goes where the row's own write path says, through the one resolver
 // (agentNativeDispatch.ts:66, injected here as `write`). A row without a write path is a reading; a light is the owner's
 // reading and dark when unknown; nothing here invents a value, a default or a control. The shell's own flags (effort, steer,
 // heartbeat, write arm — agent/AgentShellContext.tsx) are the shell's presentation of a press with the defaults it starts
@@ -173,16 +173,6 @@ export function taskReading(data: unknown): {used?: number; cap?: number} {
     ...(typeof used === 'number' ? {used} : {}),
     ...(typeof cap === 'number' ? {cap} : {}),
   }
-}
-
-/** The git seat's branch and uncommitted files, as the repository owner discloses them (the cradle reads the same op:
- * desktop/cradle/src/git/RepositoryContext.tsx:5 — head_branch, and per worktree dirty_files). */
-export function gitRepoReading(doc: unknown): {branch?: string; uncommitted?: number} {
-  if (!isObj(doc)) return {}
-  const branch = typeof doc.head_branch === 'string' && doc.head_branch ? doc.head_branch : undefined
-  const here = Array.isArray(doc.worktrees) ? doc.worktrees.find(tree => isObj(tree) && tree.path === doc.repo_root) : undefined
-  const dirty = isObj(here) && typeof here.dirty_files === 'number' ? here.dirty_files : undefined
-  return {...(branch ? {branch} : {}), ...(dirty !== undefined ? {uncommitted: dirty} : {})}
 }
 
 /** The gateway rows' values, only where the harness's own document discloses them under the carrier's own field names
