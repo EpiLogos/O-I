@@ -27,7 +27,7 @@
     "act": "the-day-holds-it-and-closes",
     "test": "act_5_the_day_holds_it_and_closes",
     "standing": "green",
-    "reason": "14 Nov 2026 (export of 209b30305, codex; Central#362's ctrl c714f4a, AIKit 347de5ae, Factory 6665ed6a, Workcell b558b43f, oi b2592c58): in a fresh World, today's Day opened by itself on the civil day, its page made from the Day form Setup keeps; Central's own reading of it (central.day.read) held the page saved, the passage sent to codex and answered, and the Factory task run (its attempt with its diff), each laid in the Day as its act's receipt; the Day closed by itself at its turn and today is the next civil day (#1005)"
+    "reason": "14 Nov 2026 (export of b2c3b3ce0, codex; Central main 61549e0's ctrl, AIKit da17416a (ai-kit#640), Factory ab11ed5, Workcell 654c814, oi 9be6a52): in a fresh World, today's Day opened by itself on the civil day, its page made from the Day form Setup keeps; every act's receipt from the Central, AIKit, Actuation, Workcell and Factory cores lay in it as an entry naming its act, its subject and its source, as Central's own reading of the Day (central.day.read) gives them back; codex's conversation, ended by its End, and its session seated in Factory each stood done on today's face 2, started and ended as its own lifecycle record keeps them; what each yielded at its end waited on face 2 as a proposal, one kept onto the page (central.receiving.review, then include) and one dropped; the Day closed by itself at its turn, the close filed 26 entries with the 14 the acts laid among them, and today is the next civil day (#1005, #1007)"
   },
   {
     "act": "make-an-expression-and-keep-a-take",
