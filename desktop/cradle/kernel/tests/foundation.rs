@@ -8,7 +8,7 @@
 //! 2. See the agents on this machine that start.
 //! 3. Send a passage to one and get the answer in the page.
 //! 4. Run a Factory task to its end.
-//! 5. See the Day hold all of it and close.
+//! 5. See the Day hold all of it, the day's sessions on its face 2, and close.
 //!
 //! Ignored by default: they start real owners, and acts 3 and 5 spend a provider prompt. `gates/foundation/run.sh` runs one act per
 //! process and checks the outcome against `gates/foundation/acts.json`:
@@ -2756,43 +2756,499 @@ fn read_day(world: &World, day_ref: &str) -> Result<Value, String> {
     central_owner(world, "central.day.read", json!({"day_ref": day_ref}))
 }
 
-/// The Day, as Central reads it, holds an entry naming `subject`.
-fn day_holds(world: &World, day_ref: &str, act: &str, subject: &str) -> Act {
-    let day = read_day(world, day_ref)?;
-    if day.to_string().contains(subject) {
-        Ok(())
+/// One entry of the Day (Central's reading `receipts`, or what a close filed, `filed.entries`): the one laid for `act` that names
+/// `names` as what it moved (`subject`) or as the session it was made in (`session`), standing at `source`.
+fn entry_of<'a>(entries: &'a Value, act: &str, names: &str, source: &str) -> Option<&'a Value> {
+    entries.as_array()?.iter().find(|entry| {
+        entry["act"] == act
+            && (entry["subject"] == names || entry["session"] == names)
+            && entry["source"] == source
+    })
+}
+
+/// The Day's entries as one line each (act · subject · source), for a failure to say what the Day does hold.
+fn entries_said(entries: &Value) -> String {
+    let said: Vec<String> = entries
+        .as_array()
+        .into_iter()
+        .flatten()
+        .map(|entry| {
+            format!(
+                "{} · {} · {}",
+                entry["act"].as_str().unwrap_or("?"),
+                entry["subject"].as_str().unwrap_or("?"),
+                entry["source"].as_str().unwrap_or("?")
+            )
+        })
+        .collect();
+    if said.is_empty() {
+        "none".into()
     } else {
-        Err(format!(
-            "the Day {day_ref} holds no entry for {act} ({subject})"
-        ))
+        said.join("; ")
     }
 }
 
-/// Act 5: the Day opens by itself, holds acts 1–4 and closes by itself at its turn, read back from Central.
+/// The Day, as Central reads it (`central.day.read`), holds the entry laid for `act` (manual §18.2 "a write arrives with its receipt";
+/// O-I #1007): its act, what it moved (or the session it was made in) and where it stands, as Central keeps them. Answers the entry.
+fn day_holds(
+    world: &World,
+    day_ref: &str,
+    act: &str,
+    names: &str,
+    source: &str,
+) -> Result<Value, String> {
+    let day = read_day(world, day_ref)?;
+    entry_of(&day["receipts"], act, names, source)
+        .cloned()
+        .ok_or_else(|| {
+            format!(
+                "the Day {day_ref} holds no entry of {act} naming {names} at {source}; it holds {}",
+                entries_said(&day["receipts"])
+            )
+        })
+}
+
+/// The Day holds an entry laid for `act` that names what it moved and where it stands, whatever their spelling: an act whose subject
+/// the gate does not name in advance (the Day's settings saved). Answers the entry.
+fn day_holds_act(world: &World, day_ref: &str, act: &str) -> Result<Value, String> {
+    let day = read_day(world, day_ref)?;
+    day["receipts"]
+        .as_array()
+        .and_then(|entries| {
+            entries.iter().find(|entry| {
+                entry["act"] == act
+                    && entry["subject"].as_str().is_some_and(|s| !s.is_empty())
+                    && entry["source"].as_str().is_some_and(|s| !s.is_empty())
+            })
+        })
+        .cloned()
+        .ok_or_else(|| {
+            format!(
+                "the Day {day_ref} holds no entry of {act} naming what it moved and where; it holds {}",
+                entries_said(&day["receipts"])
+            )
+        })
+}
+
+/// The conversation ended by its End, as the window offers it and presses it (manual §19.1 "End session ends it"; O-I #1007): the
+/// conversation's view names `aikit.session.end` among its Actions, enabled once its turn has settled, and one press runs it through
+/// the registry (`act`). Read back from AIKit's answer: the session ended, its End recorded under the ref its start was.
+fn end_the_conversation(world: &World, session: &str) -> Act {
+    let deadline = Instant::now() + Duration::from_secs(120);
+    loop {
+        let view = encounter_reading(world, json!({"action": "view", "agent_session": session}))?;
+        let end = view["actions"].as_array().and_then(|actions| {
+            actions
+                .iter()
+                .find(|action| action["ref"] == "aikit.session.end")
+                .cloned()
+        });
+        match end {
+            Some(end) if end["enabled"] == true => break,
+            None => {
+                return Err(format!(
+                    "the conversation {session} offers no End among its Actions: {}",
+                    clip(&view["actions"])
+                ))
+            }
+            Some(end) if Instant::now() > deadline => {
+                return Err(format!(
+                    "the conversation {session} does not offer its End within 120 s: {}",
+                    end["reason"].as_str().unwrap_or("no reason given")
+                ))
+            }
+            Some(_) => std::thread::sleep(Duration::from_secs(2)),
+        }
+    }
+    let answer = action(
+        world,
+        "aikit.session.end",
+        json!({"agent_session": session}),
+    )?;
+    // A route Action answers with its route's own reply (`aikit session end --json`): AIKit's envelope around the End.
+    let ended = answer
+        .get("data")
+        .filter(|data| data.is_object())
+        .unwrap_or(&answer);
+    if ended["schema"] != "aikit.encounter-end/v1"
+        || ended["ended"] != true
+        || ended["agent_session"] != session
+    {
+        return Err(format!(
+            "aikit.session.end did not end the session {session}: {}",
+            clip(&answer)
+        ));
+    }
+    println!(
+        "the conversation {session} ended by its End, recorded under {}",
+        ended["session_ref"]
+    );
+    Ok(())
+}
+
+/// Where `session` stands on today's face 2 (manual §18.2 "The sessions of the day, in three lists: done, running, queued"; O-I
+/// #1007), as the window reads it: the World Model's sessions slice read fresh, its Day part. Answers the list and the entry.
+fn face_two_of(world: &World, session: &str) -> Result<(String, Value), String> {
+    let answer =
+        world.send(json!({"op": "model_subscribe", "slice": "sessions", "fresh": true}))?;
+    let slice = result_of(&answer, "model_slice")
+        .map_err(|e| format!("model_subscribe sessions {e}"))?["data"]
+        .clone();
+    if slice["state"] != "read" {
+        return Err(format!(
+            "the World Model's sessions slice is {}: {}",
+            slice["state"],
+            slice["error"].as_str().unwrap_or("no state")
+        ));
+    }
+    let day = &slice["value"]["day"];
+    if day["state"] != "read" {
+        return Err(format!(
+            "face 2 holds no sessions of the day: {}",
+            day["why"].as_str().unwrap_or("no reason given")
+        ));
+    }
+    for list in ["done", "running", "queued"] {
+        let found = day["reading"][list]
+            .as_array()
+            .and_then(|rows| rows.iter().find(|row| row["agent_session"] == session));
+        if let Some(entry) = found {
+            return Ok((list.to_owned(), entry.clone()));
+        }
+    }
+    Err(format!(
+        "today's face 2 lists no session {session}: {}",
+        clip(&day["reading"])
+    ))
+}
+
+/// A session that ended, on today's face 2 among the done with its start and its end, read back from its own record (AIKit's
+/// lifecycle, `aikit session lifecycle history`): the instants face 2 shows are the ones the record keeps (O-I #1007, #1016).
+fn done_on_face_two(world: &World, session: &str) -> Act {
+    let deadline = Instant::now() + Duration::from_secs(60);
+    let entry = loop {
+        let found = face_two_of(world, session);
+        match found {
+            Ok((list, entry)) if list == "done" => break entry,
+            Ok((list, entry)) if Instant::now() > deadline => {
+                return Err(format!(
+                    "the session {session} stands on face 2 as {list}, not done: {}",
+                    clip(&entry)
+                ))
+            }
+            Err(why) if Instant::now() > deadline => return Err(why),
+            _ => std::thread::sleep(Duration::from_secs(2)),
+        }
+    };
+    let id = entry["session"].as_str().ok_or_else(|| {
+        format!(
+            "face 2's entry for {session} names no record: {}",
+            clip(&entry)
+        )
+    })?;
+    let record = owner(
+        world,
+        "OI_AIKIT_BIN",
+        "aikit",
+        &["session", "lifecycle", "history", id, "--json"],
+    )?;
+    let record = record.get("data").cloned().unwrap_or(record);
+    let instants = |kind: &str| -> Value {
+        record["events"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .filter(|event| event["kind"] == kind)
+            .map(|event| event["recorded_at_unix_ms"].clone())
+            .collect()
+    };
+    let (starts, ends) = (instants("session-started"), instants("session-ended"));
+    let none = |list: &Value| list.as_array().is_none_or(Vec::is_empty);
+    if none(&starts) || none(&ends) || entry["starts"] != starts || entry["ends"] != ends {
+        return Err(format!(
+            "face 2 shows the session {session} starting {} and ending {}; its record {id} keeps {starts} and {ends}",
+            entry["starts"], entry["ends"]
+        ));
+    }
+    println!(
+        "the session {session} stands done on today's face 2, started {starts} and ended {ends} as its record {id} keeps them"
+    );
+    Ok(())
+}
+
+/// What `session` yielded at its end, waiting on today's face 2 as a proposal (manual §18.2 "What a session yields when it ends …
+/// arrives on face 2 as a proposal you keep or drop"; O-I #1007), as face 2 and Approvals read it (the World Model's Day slice), then
+/// kept as Approvals' Keep presses it (Central's receiving review, accepted on the Day page's revision, and its inclusion) or dropped
+/// as its Drop does (the review, rejected), each by `act`. Read back from Central: the yield's Return stands included, its words on
+/// face 2's field of the Day's page, or rejected. Answers the entries the presses laid.
+fn keep_or_drop(
+    world: &World,
+    day_ref: &str,
+    session: &str,
+    keep: bool,
+) -> Result<Vec<Value>, String> {
+    let deadline = Instant::now() + Duration::from_secs(60);
+    let waiting = loop {
+        let day = world.model("day")?;
+        let found = day["value"]["yields"]
+            .as_array()
+            .and_then(|rows| rows.iter().find(|row| row["session"] == session))
+            .cloned();
+        match found {
+            Some(row) if row["status"] == "pending" => break row,
+            Some(row) if Instant::now() > deadline => {
+                return Err(format!(
+                    "what the session {session} yielded stands {} on face 2, not waiting: {}",
+                    row["status"],
+                    clip(&row)
+                ))
+            }
+            None if Instant::now() > deadline => {
+                return Err(format!(
+                    "nothing the session {session} yielded waits on today's face 2: the Day slice holds {}",
+                    clip(&day["value"]["yields"])
+                ))
+            }
+            _ => std::thread::sleep(Duration::from_secs(1)),
+        }
+    };
+    let return_ref = waiting["return_ref"]
+        .as_str()
+        .ok_or_else(|| format!("the yield names no Return: {}", clip(&waiting)))?
+        .to_owned();
+    let page = read_day(world, day_ref)?;
+    let source_revision = page["document"]["revision"]["revision"].clone();
+    let mut review = json!({"project": null, "return_ref": return_ref,
+        "expected_return_revision": waiting["revision"],
+        "disposition": if keep { "accepted" } else { "rejected" }});
+    if keep {
+        review["expected_source_revision"] = source_revision.clone();
+    }
+    let reviewed = action(world, "central.receiving.review", review)?;
+    if keep {
+        action(
+            world,
+            "central.receiving.include",
+            json!({"project": null, "return_ref": return_ref,
+                "expected_return_revision": reviewed["revision"], "expected_source_revision": source_revision}),
+        )?;
+    }
+    let back = read_day(world, day_ref)?;
+    let row = back["yields"]
+        .as_array()
+        .and_then(|rows| {
+            rows.iter()
+                .find(|row| row["return_ref"] == return_ref.as_str())
+        })
+        .cloned()
+        .unwrap_or(Value::Null);
+    let stands = if keep { "included" } else { "rejected" };
+    if row["status"] != stands {
+        return Err(format!(
+            "what the session {session} yielded was {}, but Central reads its Return {}: {}",
+            if keep { "kept" } else { "dropped" },
+            row["status"],
+            clip(&row)
+        ));
+    }
+    if keep {
+        let document = &back["document"]["document"];
+        let field = document["fields"].as_array().and_then(|fields| {
+            fields
+                .iter()
+                .find(|field| field["template_pointer"] == "/fields/p2_operations")
+        });
+        let kept = field.is_some_and(|field| {
+            document["contributions"].as_array().is_some_and(|rows| {
+                rows.iter().any(|row| {
+                    row["field_id"] == field["id"]
+                        && row["removed"] != true
+                        && row["html"]
+                            .as_str()
+                            .is_some_and(|html| html.contains(session))
+                })
+            })
+        });
+        if !kept {
+            return Err(format!(
+                "what the session {session} yielded was kept, but the Day's page holds it on no face 2 field: {}",
+                clip(&document["contributions"])
+            ));
+        }
+    }
+    println!(
+        "what the session {session} yielded ({} receipts) waited on face 2 and was {}",
+        waiting["receipts"].as_array().map_or(0, Vec::len),
+        if keep { "kept" } else { "dropped" }
+    );
+    let mut laid = vec![day_holds(
+        world,
+        day_ref,
+        "central.receiving.review",
+        &return_ref,
+        "control:root",
+    )?];
+    if keep {
+        laid.push(day_holds(
+            world,
+            day_ref,
+            "central.receiving.include",
+            &return_ref,
+            "control:root",
+        )?);
+    }
+    Ok(laid)
+}
+
+/// The Factory task's acts, each an entry of the Day naming what it moved and standing in the project it ran in, and its session on
+/// face 2 with its start and end, what it yielded dropped from face 2 as Approvals' Drop presses it. Answers the entries.
+fn the_factory_task_in_the_day(
+    world: &World,
+    day_ref: &str,
+    attempt: &str,
+) -> Result<Vec<Value>, String> {
+    let project = "project:atelier";
+    let ran = day_holds(world, day_ref, "factory.task.run", attempt, project)?;
+    let session = ran["session"]
+        .as_str()
+        .ok_or_else(|| {
+            format!(
+                "the Day's entry of the task's run names no session: {}",
+                clip(&ran)
+            )
+        })?
+        .to_owned();
+    let mut laid = vec![ran];
+    for act in [
+        "factory.session.start",
+        "factory.task.write",
+        "factory.session.end",
+    ] {
+        laid.push(day_holds(world, day_ref, act, &session, project)?);
+    }
+    let stopped = read_day(world, day_ref)?["receipts"]
+        .as_array()
+        .and_then(|entries| {
+            entries
+                .iter()
+                .find(|entry| entry["act"] == "factory.task.stop" && entry["source"] == project)
+                .cloned()
+        })
+        .ok_or_else(|| {
+            format!("the Day {day_ref} holds no entry of factory.task.stop in {project}")
+        })?;
+    laid.push(stopped);
+    done_on_face_two(world, &session)?;
+    laid.extend(keep_or_drop(world, day_ref, &session, false)?);
+    Ok(laid)
+}
+
+/// What the close filed (manual §18.2; O-I #1007 "Closing the day files it"): the closed Day read back from Central
+/// (`central.day.read`), its filing closed by Central's civil clock and naming each entry the Day held, as the Day held it.
+fn the_close_filed(world: &World, day_ref: &str, held: &[Value]) -> Act {
+    let read = read_day(world, day_ref)?;
+    let filed = &read["filed"];
+    if filed["day_ref"] != day_ref || filed["closed_by"] != "central:civil-clock" {
+        return Err(format!(
+            "the Day {day_ref} closed, but Central reads no filing of it by its civil clock: {}",
+            clip(filed)
+        ));
+    }
+    let entries = &filed["entries"];
+    for entry in held {
+        let id = entry["receipt_id"].as_str().unwrap_or_default();
+        let filed_it = entries.as_array().is_some_and(|rows| {
+            rows.iter().any(|row| {
+                row["receipt_id"] == id
+                    && row["act"] == entry["act"]
+                    && row["subject"] == entry["subject"]
+                    && row["source"] == entry["source"]
+            })
+        });
+        if !filed_it {
+            return Err(format!(
+                "the close of {day_ref} filed no entry {id} ({} · {} · {}); it filed {}",
+                entry["act"],
+                entry["subject"],
+                entry["source"],
+                entries_said(entries)
+            ));
+        }
+    }
+    println!(
+        "the close of {day_ref} filed {} entries, the {} the acts laid among them",
+        filed["count"],
+        held.len()
+    );
+    Ok(())
+}
+
+/// Act 5: the Day opens by itself and holds each act as an entry naming its act, what it moved and where it stands (Setup's first
+/// acts, the page saved, the passage sent, the conversation ended by its End, the Factory task's acts); the sessions of the day
+/// stand on its face 2 with their start and end, read back from their own record, and what each yielded waits there as a
+/// proposal, the conversation's kept and the Factory session's dropped; the Day closes by itself at its turn, and its close files
+/// every entry. Read back from Central, AIKit and the World Model as the window reads it (O-I #1007).
 #[test]
 #[ignore = "foundation act: runs the installed owners in a fresh home, spends a provider prompt and waits for the Day's turn"]
 fn act_5_the_day_holds_it_and_closes() {
     // Setup adopts this computer's zone, the Day turning at its midnight: the zone whose midnight comes soonest after the acts.
-    let (zone, turns_at) = zone_turning_soonest(Duration::from_secs(12 * 60))
+    let (zone, turns_at) = zone_turning_soonest(Duration::from_secs(15 * 60))
         .unwrap_or_else(|why| panic!("no zone for the Day's turn: {why}"));
     std::env::set_var("TZ", &zone);
     println!("this computer's zone is {zone}: the Day turns at {turns_at}");
     run("the-day-holds-it-and-closes", |world| {
         let day_ref = today_opens_itself(world)?;
-        let page = save_a_page(world, "foundation-day-page")?;
-        day_holds(
+        let mut held = Vec::new();
+        // Setup's first acts, made before the person's credential, laid at their own instants once it came; then the Day's form saved.
+        for file in [
+            ("central.time.policy.adopt", "civil-time-policy.json"),
+            ("central.ground.placement.adopt", "placement.json"),
+        ] {
+            let at = format!("central:source:control:root:Control/user/{}", file.1);
+            held.push(day_holds(world, &day_ref, file.0, &at, &at)?);
+        }
+        held.push(day_holds_act(
             world,
             &day_ref,
-            "the page saved",
+            "central.day.settings.write",
+        )?);
+        let page = save_a_page(world, "foundation-day-page")?;
+        let (path, at) = (
             page.location["path"].as_str().unwrap_or_default(),
-        )?;
+            page.location["ref"].as_str().unwrap_or_default(),
+        );
+        held.push(day_holds(world, &day_ref, "central.files.write", path, at)?);
         let agent = chosen_agents(world)?.remove(0);
         let session = send_a_passage(world, &page, &agent)?;
-        day_holds(world, &day_ref, "the passage sent and answered", &session)?;
+        held.push(day_holds(
+            world,
+            &day_ref,
+            "encounter.prompt",
+            &session,
+            "control:root",
+        )?);
+        end_the_conversation(world, &session)?;
+        held.push(day_holds(
+            world,
+            &day_ref,
+            "aikit.session.end",
+            &session,
+            "control:root",
+        )?);
+        done_on_face_two(world, &session)?;
+        held.extend(keep_or_drop(world, &day_ref, &session, true)?);
         // The Factory task (act 4) is held when it runs; the Day's own close is read either way, and the act stands on both.
         let factory = run_a_factory_task(world)
-            .and_then(|attempt| day_holds(world, &day_ref, "the Factory task run", &attempt));
+            .and_then(|attempt| the_factory_task_in_the_day(world, &day_ref, &attempt));
+        if let Ok(laid) = &factory {
+            held.extend(laid.iter().cloned());
+        }
+        println!(
+            "the Day {day_ref} holds {}",
+            entries_said(&read_day(world, &day_ref)?["receipts"])
+        );
         the_day_closes_at_its_turn(world, &day_ref)?;
-        factory
+        the_close_filed(world, &day_ref, &held)?;
+        factory.map(|_| ())
     });
 }
