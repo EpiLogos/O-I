@@ -3,7 +3,7 @@
   "rule": "Counts of kernel ops named in device and view code (packages/live-shell/ui/src) other than the foundation doors. Each count may only fall.",
   "totals": {
     "direct-read": 124,
-    "non-action-write": 110
+    "non-action-write": 106
   },
   "files": {
     "packages/live-shell/ui/src/agent/AgentDockTileBody.tsx": {
@@ -51,7 +51,7 @@
       "direct-read": 8
     },
     "packages/live-shell/ui/src/agent/factoryTaskActs.ts": {
-      "non-action-write": 7
+      "non-action-write": 3
     },
     "packages/live-shell/ui/src/agent/harnessAgentControl.ts": {
       "non-action-write": 1
