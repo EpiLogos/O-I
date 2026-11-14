@@ -56,3 +56,9 @@ Resolve the skill through AIKit; Methods compose them (`aikit method list`).
 `~/Central/AGENTS.md` (`CLAUDE.md` → it) is rendered from
 `Control/agents/governance/**` by this skill's `render-context.py` (doors only,
 under 4096 bytes; `--check` reports drift).
+
+## Verification
+
+`bash verify.sh` beside this file verifies the strap (`--skip-projection` leaves
+out the projection check). Prove what the start carried by reading it back, not
+by reading this Skill.
