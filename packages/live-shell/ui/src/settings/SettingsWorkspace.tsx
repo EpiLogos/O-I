@@ -337,7 +337,7 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, re
   const products = useProductsPage(adapter, wanted && (visited.has('products') || visited.has('inspection')))
   const setup = useSetupPage(adapter, wanted && setupOpened, held, done, [holds.folder, holds.make, holds.wiki, holds.where, holds.credential, holds.reference,
     holds.groundFolder, holds.groundName, holds.birthName, holds.birthDate])
-  // Launch stands beside each agent that starts on Harnesses & models and on Setup's Harnesses and skills step: one reading of Factory's
+  // Launch stands beside each agent you can talk to on Harnesses & models and on Setup's Harnesses and skills step: one reading of Factory's
   // Set for both pages (O-I #1003).
   const launch = useLaunch(adapter, wanted && (visited.has('agents') || setupOpened))
   const parts: readonly PagePart[] = [harness, credentials, signIn, launch, appearance, profiles, machines, automations, products, setup]

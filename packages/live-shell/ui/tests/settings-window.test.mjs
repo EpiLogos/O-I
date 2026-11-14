@@ -2180,7 +2180,7 @@ test('CODE-DERIVED — a census read while AIKit\'s client status did not answer
   assert.equal(censusOf({state: 'held', answer: LOGIN_CENSUS}).aikitWhy, undefined)
 })
 
-test('CODE-DERIVED — Launch beside each agent that starts: Factory\'s Set says where a session can start, the press runs factory.session.start through the registry\'s door with the agent, and Factory\'s answer is read back (O-I ticket 1003)', async () => {
+test('CODE-DERIVED — Launch beside each agent you can talk to: Factory\'s Set says where a session can start, the press runs factory.session.start through the registry\'s door with the agent, and Factory\'s answer is read back (O-I ticket 1003)', async () => {
   const setOf = (acts, waiting = {}) => ({state: 'held', answer: {schema: 'oi.mode-set/v1', mode: 'factory', version: 3, set: {acts, waiting}}})
   const seatIn = project => ({action: 'factory.session.start', input: {world: '/w/Central', project}, takes: 'agent',
     words: `Factory's factory.session.start: the agent seated on a new track in ${project}`, done: `The agent is seated on a new track in ${project}: its session is open.`})
@@ -2218,11 +2218,14 @@ test('CODE-DERIVED — Launch beside each agent that starts: Factory\'s Set says
   assert.match(win.launchSaid('codex', opened('atelier', false)), /, and AIKit's SessionStart hook did not keep its record \(AIKit's hook dispatch could not start: No such file\)\.$/)
   // Drawn on Harnesses & models: Launch beside the agent that starts, none beside the one that does not; several projects are chosen
   // between once, above the agents; a Set with no seat says why on the press.
-  const harnesses = json([{agent: 'codex', harness: 'Codex', starts: true, talks: true}, {agent: 'gemini', harness: 'Gemini', starts: false, talks: false, why: 'it exited 1'}])
+  const harnesses = json([{agent: 'codex', harness: 'Codex', starts: true, talks: true},
+    {agent: 'pi', harness: 'Pi', starts: true, talks: false, why: 'AIKit has no conversation adapter for pi'},
+    {agent: 'gemini', harness: 'Gemini', starts: false, talks: false, why: 'it exited 1'}])
   const launches = markup => [...markup.matchAll(/data-i="(Launch\|[^"]*)"( data-disabled="true")?/g)].map(match => [match[1], !!match[2]])
   const single = drawn({harnesses, launchProjects: '["atelier"]'}, 'harnesses')
   assert.deepEqual(launches(single).map(([words, off]) => [words.split('|')[1], off]),
-    [['Starts a session of Codex in atelier: Factory seats it on a new track there, with this World, the project and today&#x27;s Day.', false]], 'one Launch, beside Codex, which starts')
+    [['Starts a session of Codex in atelier: Factory seats it on a new track there, with this World, the project and today&#x27;s Day.', false]],
+    'one Launch, beside Codex, which you can talk to: none beside Pi, which starts but AIKit opens no conversation with, or Gemini, which does not start')
   assert.doesNotMatch(single, /Sessions start in/, 'one project: nothing to choose')
   const choose = drawn({harnesses, launchProjects: '["atelier","kiln"]'}, 'harnesses')
   assert.match(choose, /aria-label="Sessions start in"/)

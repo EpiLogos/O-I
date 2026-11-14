@@ -698,16 +698,17 @@ fn census_starting(world: &World) -> Result<Vec<String>, String> {
 /// window reads it (Settings › Harnesses & models, Setup's Harnesses step): a model default for one agent and a Skill Set made
 /// by AIKit itself, as a person makes them in AIKit's own tools; the census asked afresh, as the window's Read again asks it
 /// (the census is not re-read on AIKit's churn); and each agent's model and Skill Sets checked against AIKit's own client status.
-fn carries_hold(world: &World, starting: &[(String, String)]) -> Act {
+/// The model default is `chosen`: an agent and one of the models its own session advertised, as a person chooses it in the model
+/// table (AIKit's default is a harness-native id from the session's model observation, model_defaults.rs), never one guessed.
+fn carries_hold(
+    world: &World,
+    starting: &[(String, String)],
+    chosen: Option<&(String, String)>,
+) -> Act {
     let aikit = |args: &[&str]| owner(world, "OI_AIKIT_BIN", "aikit", args);
-    let (first, _) = starting
-        .first()
-        .ok_or("no agent harness on this machine starts")?;
-    let model = if first == "codex" {
-        "gpt-5.5"
-    } else {
-        "claude-opus-5-5"
-    };
+    let (first, model) = chosen.ok_or(
+        "no session of an agent you can talk to advertised a model, so no model default is chosen from one, as a person chooses it",
+    )?;
     let value = json!({first.as_str(): {"model_id": model}}).to_string();
     let plan = aikit(&[
         "--json",
@@ -850,7 +851,294 @@ fn carries_hold(world: &World, starting: &[(String, String)]) -> Act {
     Ok(())
 }
 
-/// Act 2: see the agents on this machine that start, read back from the census, and what each carries.
+/// The census asked afresh, as the window's Read again asks it: its rows, or the refusal in the kernel's words.
+fn census_afresh(world: &World) -> Result<Vec<Value>, String> {
+    let answer = world.send(json!({"op": "model_subscribe", "slice": "agents", "fresh": true}))?;
+    let data = result_of(&answer, "model_slice")
+        .map_err(|e| format!("model_subscribe agents {e}"))?["data"]
+        .clone();
+    if data["state"] != "read" {
+        return Err(format!(
+            "the census asked afresh is {}: {}",
+            data["state"],
+            data["error"].as_str().unwrap_or("no state")
+        ));
+    }
+    Ok(data["value"]["agents"]
+        .as_array()
+        .cloned()
+        .unwrap_or_default())
+}
+
+/// The law each agent that starts carries, read from its rendered floor (O-I #1003; world-shell.md §9.3 "Agents that start, with
+/// the skill set and the law each carries"). A statement written on the root world's tier 0, as a person writes one, is adopted
+/// on the person's press (Central's control.law.adopt), which renders the floor again with each agent's instruction file a link to
+/// it. Then Central's own reading of those floors (control.floor.read) and the census asked afresh: each agent carries what
+/// Central reads its floor to carry, the adopted statement among it.
+fn law_holds(world: &World, starting: &[(String, String)]) -> Act {
+    keep_ground(world)?;
+    let row_of = |rows: &[Value], slug: &str| -> Result<Value, String> {
+        rows.iter()
+            .find(|row| row["slug"] == slug)
+            .cloned()
+            .ok_or_else(|| format!("the census does not list {slug}, which starts"))
+    };
+    // The instruction file each agent reads, as AIKit names it and the census carries it.
+    let rows = census_afresh(world)?;
+    let mut files = Vec::new();
+    let mut unread = Vec::new();
+    for (slug, _) in starting {
+        let law = row_of(&rows, slug)?["carries"]["law"].clone();
+        match law["file"].as_str() {
+            Some(file) => files.push(file.to_owned()),
+            None => unread.push(format!(
+                "{slug} shows no law: {}",
+                law["why"].as_str().unwrap_or("the census names no file")
+            )),
+        }
+    }
+    files.sort();
+    files.dedup();
+    // A statement on tier 0, written as a person writes one, and its revision as Central reads it.
+    let central = world.central();
+    let statement = "craft/plain-words.md";
+    let path = format!("Control/agents/governance/{statement}");
+    let written = central.join(&path);
+    std::fs::create_dir_all(written.parent().unwrap_or(&central))
+        .and_then(|()| {
+            std::fs::write(
+                &written,
+                "# Plain words\n\nSay what a thing does in the words a person uses for it.\n",
+            )
+        })
+        .map_err(|e| format!("the statement {path}: {e}"))?;
+    let root = central.to_string_lossy().into_owned();
+    let location = json!({"schema": "central.path-ref/v1",
+        "ref": format!("central:path:{root}:{path}"), "root": root, "path": path});
+    let read = central_owner(world, "central.files.read", json!({"location": location}))?;
+    let revision = read["revision"]
+        .as_str()
+        .ok_or_else(|| format!("Central reads {path} with no revision: {}", clip(&read)))?;
+    // The person's press adopts it; the floor is rendered again, each instruction file but the floor itself a link to it.
+    let links: Vec<&String> = files.iter().filter(|file| *file != "AGENTS.md").collect();
+    let adopted = action(
+        world,
+        "control.law.adopt",
+        json!({"statement": statement, "expected_revision": revision, "files": links}),
+    )?;
+    if let Some(why) = adopted["floor"]["refused"].as_str() {
+        return Err(format!(
+            "control.law.adopt adopted {statement}, and Central did not render the floor: {why}"
+        ));
+    }
+    // Central's own reading of each floor, and the census asked afresh.
+    let reading = central_owner(world, "control.floor.read", json!({"files": files}))?;
+    let floors = reading["floors"].as_array().cloned().unwrap_or_default();
+    let rows = census_afresh(world)?;
+    for (slug, _) in starting {
+        let law = row_of(&rows, slug)?["carries"]["law"].clone();
+        let Some(file) = law["file"].as_str() else {
+            continue;
+        };
+        let floor = floors
+            .iter()
+            .find(|row| row["file"] == file)
+            .ok_or_else(|| {
+                format!(
+                    "Central's floor reading names no {file}: {}",
+                    clip(&reading)
+                )
+            })?;
+        if &law != floor {
+            return Err(format!(
+                "Central reads {file}, the floor {slug} reads, as {}; the census carries {}",
+                clip(floor),
+                clip(&law)
+            ));
+        }
+        let carried = floor["statements"].as_array().cloned().unwrap_or_default();
+        if floor["state"] != "rendered"
+            || !carried
+                .iter()
+                .any(|row| row["file"] == statement && row["standing"] == "durable")
+        {
+            return Err(format!(
+                "{file}, the floor {slug} reads, does not carry the statement adopted ({statement}): {}",
+                clip(floor)
+            ));
+        }
+        let topics: Vec<&str> = carried
+            .iter()
+            .filter_map(|row| row["topic"].as_str())
+            .collect();
+        println!(
+            "{slug} reads {file}, rendered by Central, carrying the law: {}",
+            topics.join(", ")
+        );
+    }
+    if unread.is_empty() {
+        Ok(())
+    } else {
+        Err(unread.join("; "))
+    }
+}
+
+/// Where Launch seats an agent (O-I #1003): a project of this World holding a workcell seat, the seat act Factory's Set offers for
+/// it (set_subscribe factory: `seat`, kernel mode_set.rs), and today's Day as it opened by itself.
+struct LaunchSeat {
+    central: PathBuf,
+    project: &'static str,
+    checkout: PathBuf,
+    input: Value,
+    takes: String,
+    day_ref: String,
+}
+
+fn launch_seat(world: &World) -> Result<LaunchSeat, String> {
+    let project = "atelier";
+    let checkout = seat_a_project(world, project)?;
+    let day_ref = today_opens_itself(world)?;
+    let answer = world.send(json!({"op": "set_subscribe", "mode": "factory", "fresh": true}))?;
+    let set = result_of(&answer, "mode_set").map_err(|e| format!("set_subscribe factory {e}"))?
+        ["data"]["set"]
+        .clone();
+    let seat = set["acts"]["seat"].clone();
+    let takes = seat["takes"].as_str().unwrap_or_default().to_owned();
+    if seat["action"] != "factory.session.start" || takes != "agent" {
+        return Err(format!(
+            "Factory's Set offers no seat act for {project}, which holds a workcell seat: {}",
+            clip(&set["acts"])
+        ));
+    }
+    Ok(LaunchSeat {
+        central: world.central(),
+        project,
+        checkout,
+        input: seat["input"].clone(),
+        takes,
+        day_ref,
+    })
+}
+
+/// One Launch (O-I #1003; world-shell.md §9.2 "The session starts oriented: its world, its project, today's Day ... come with the
+/// start"), as Settings' press runs it (windowPages.ts launchAgent): the seat act run with the agent in the place it takes. Read
+/// back from Factory: the session open in the seat's checkout, in this World and the project. From AIKit: its SessionStart record
+/// kept, the session itself (AIKit's own status of it), and what the hook gives the harness at its start naming the project and
+/// today's Day. The session is then ended by Factory's own Action, whatever was read. Answers the models the session advertised
+/// (by the ids a model default names), the one it runs, and apart from them whether its start was oriented.
+struct Launched {
+    advertised: Vec<String>,
+    current: String,
+    oriented: Act,
+}
+
+fn launch(world: &World, seat: &LaunchSeat, agent: &str) -> Result<Launched, String> {
+    let mut input = seat.input.clone();
+    input[seat.takes.as_str()] = json!(agent);
+    let opened = action(world, "factory.session.start", input)
+        .map_err(|e| format!("Launch of {agent}: {e}"))?;
+    let session = opened["session"]
+        .as_str()
+        .ok_or_else(|| format!("Launch of {agent} opened no session: {}", clip(&opened)))?
+        .to_owned();
+    let project = seat.project;
+    let read = (|| -> Result<Launched, String> {
+        if opened["state"] != "open"
+            || opened["world"].as_str().map(PathBuf::from).as_ref() != Some(&seat.central)
+            || opened["project"] != project
+            || opened["checkout"].as_str() != Some(&seat.checkout.to_string_lossy())
+        {
+            return Err(format!(
+                "Launch of {agent} did not open its session in this World's {project}, in the seat's checkout: {}",
+                clip(&opened)
+            ));
+        }
+        let record = &opened["record"];
+        if record["kept"] != true {
+            return Err(format!(
+                "{agent}'s session opened, and AIKit's SessionStart hook kept no record of it: {}",
+                clip(record)
+            ));
+        }
+        let status = owner_in(
+            &seat.checkout,
+            "OI_AIKIT_BIN",
+            "aikit",
+            &[
+                "session-space",
+                "encounter",
+                "--request-json",
+                &json!({"action": "status", "agent_session": session}).to_string(),
+            ],
+        )
+        .map_err(|e| format!("AIKit does not read {agent}'s session back: {e}"))?;
+        let observation = &status["model_observation"];
+        let advertised: Vec<String> = observation["available_models"]
+            .as_array()
+            .map(|models| {
+                models
+                    .iter()
+                    .filter_map(|model| model["modelId"].as_str().map(str::to_owned))
+                    .collect()
+            })
+            .unwrap_or_default();
+        let current = observation["current_model_id"]
+            .as_str()
+            .unwrap_or_default()
+            .to_owned();
+        // What the hook gives the harness at its start: its project and today's Day.
+        let ground = record["answer"]["hookSpecificOutput"]["additionalContext"]
+            .as_str()
+            .unwrap_or_default();
+        let oriented = if ground.contains(&seat.day_ref) && ground.contains(project) {
+            Ok(())
+        } else {
+            Err(format!(
+                "{agent}'s session started without its project and today's Day ({}): AIKit's SessionStart hook gave it {}",
+                seat.day_ref,
+                if ground.is_empty() {
+                    format!(
+                        "nothing (its answer {}; its words {})",
+                        clip(&record["answer"]),
+                        clip(&record["words"])
+                    )
+                } else {
+                    ground.chars().take(600).collect::<String>()
+                }
+            ))
+        };
+        println!(
+            "Launch of {agent}: session {session} open in {}, running {current} of {advertised:?}; {}",
+            seat.checkout.display(),
+            match &oriented {
+                Ok(()) => format!("started with {project} and {}", seat.day_ref),
+                Err(_) => "started without its orientation".to_owned(),
+            }
+        );
+        Ok(Launched {
+            advertised,
+            current,
+            oriented,
+        })
+    })();
+    let ended = action(
+        world,
+        "factory.session.end",
+        json!({"world": seat.central, "project": project, "session": session}),
+    );
+    let read = read?;
+    match ended {
+        Ok(ended) if ended["state"] == "ended" => Ok(read),
+        Ok(ended) => Err(format!(
+            "factory.session.end did not end {agent}'s session: {}",
+            clip(&ended)
+        )),
+        Err(why) => Err(format!("ending {agent}'s session: {why}")),
+    }
+}
+
+/// Act 2: see the agents on this machine that start, read back from the census, what each carries (its model, its Skill Sets and
+/// the law of its floor), and Launch beside each one you can talk to.
 #[test]
 #[ignore = "foundation act: runs the installed owners in a fresh home"]
 fn act_2_see_the_agents_that_start() {
@@ -875,7 +1163,60 @@ fn act_2_see_the_agents_that_start() {
                 "the window's agents are not the ones that start: missing {missing:?}, listed but not starting {extra:?}"
             ));
         }
-        carries_hold(world, &starting)
+        // Each part is read whatever the others' outcome, and the act says every failure.
+        let mut failures = Vec::new();
+        if let Err(why) = law_holds(world, &starting) {
+            failures.push(why);
+        }
+        // Launch beside each agent you can talk to, before any model default: what each session advertises is what a person
+        // chooses a default from in the model table.
+        let mut launched = Vec::new();
+        let seat = launch_seat(world);
+        match &seat {
+            Ok(seat) => {
+                for agent in chosen_agents(world)? {
+                    match launch(world, seat, &agent) {
+                        Ok(session) => {
+                            if let Err(why) = &session.oriented {
+                                failures.push(why.clone());
+                            }
+                            launched.push((agent, session.advertised, session.current));
+                        }
+                        Err(why) => failures.push(why),
+                    }
+                }
+            }
+            Err(why) => failures.push(why.clone()),
+        }
+        // A model default chosen from what a session advertised, other than the model it ran, and carried by the census.
+        let chosen = launched
+            .iter()
+            .find(|(_, models, _)| !models.is_empty())
+            .map(|(agent, models, current)| {
+                let other = models.iter().find(|model| *model != current);
+                (agent.clone(), other.unwrap_or(&models[0]).clone())
+            });
+        if let Err(why) = carries_hold(world, &starting, chosen.as_ref()) {
+            failures.push(why);
+        }
+        // Launch again: the session runs the default.
+        if let (Ok(seat), Some((agent, model))) = (&seat, &chosen) {
+            match launch(world, seat, agent) {
+                Ok(session) if session.current == *model => {
+                    println!("{agent}'s session runs its model default, {model}")
+                }
+                Ok(session) => failures.push(format!(
+                    "{agent}'s model default is {model}, and its session runs {}",
+                    session.current
+                )),
+                Err(why) => failures.push(why),
+            }
+        }
+        if failures.is_empty() {
+            Ok(())
+        } else {
+            Err(failures.join("; "))
+        }
     });
 }
 
@@ -1302,14 +1643,35 @@ fn write_and_run(
     Ok((ran, state.to_owned(), run.to_owned()))
 }
 
-/// A Factory task run to its end in a fresh World with a project, through Factory's own Actions as the window presses them (`act`):
-/// an agent of the census seated on a track in the checkout the project's workcell seat holds, a task written and run, its log
-/// streaming, its end an attempt with its diff in that checkout; a second task stopped (paused, then cancelled); the session ended.
-/// Each effect read back from Factory, AIKit, git in the checkout, and Factory's Set (`set_subscribe` factory: the session a track,
-/// the task a clip on it, its attempt a take under it). Answers the attempt's ref.
-fn run_a_factory_task(world: &World) -> Result<String, String> {
+/// git in one folder, the gate's commits signed by the gate.
+fn git(cwd: &Path, args: &[&str]) -> Result<String, String> {
+    let output = Command::new("git")
+        .args([
+            "-c",
+            "user.name=foundation",
+            "-c",
+            "user.email=foundation@local",
+        ])
+        .args(args)
+        .current_dir(cwd)
+        .output()
+        .map_err(|e| format!("git could not start: {e}"))?;
+    if !output.status.success() {
+        return Err(format!(
+            "git {} refused: {}",
+            args.join(" "),
+            String::from_utf8_lossy(&output.stderr)
+        ));
+    }
+    Ok(String::from_utf8_lossy(&output.stdout).into_owned())
+}
+
+/// A project of this World holding a workcell seat (O-I #1006), as Setup and Workcell make one: Setup's Ground Accept, the
+/// project made by Central's own Actions over a repository standing on main, the person's standing grant naming it beside the
+/// World's root, the World's first workcell declared by Workcell and its seat joined, read back from the World's register.
+/// Answers the checkout the seat holds.
+fn seat_a_project(world: &World, project: &str) -> Result<PathBuf, String> {
     keep_ground(world)?;
-    let project = "atelier";
     let central = world.central();
     // A project of the World, made by Central's own Actions, and a repository standing on main.
     let work = central.join("Work").join(project);
@@ -1322,37 +1684,19 @@ fn run_a_factory_task(world: &World) -> Result<String, String> {
     adopt["project"] = project.into();
     adopt["project_id"] = project.into();
     action(world, "central.ground.project.adopt", adopt)?;
-    let git = |cwd: &Path, args: &[&str]| -> Result<String, String> {
-        let output = Command::new("git")
-            .args([
-                "-c",
-                "user.name=foundation",
-                "-c",
-                "user.email=foundation@local",
-            ])
-            .args(args)
-            .current_dir(cwd)
-            .output()
-            .map_err(|e| format!("git could not start: {e}"))?;
-        if !output.status.success() {
-            return Err(format!(
-                "git {} refused: {}",
-                args.join(" "),
-                String::from_utf8_lossy(&output.stderr)
-            ));
-        }
-        Ok(String::from_utf8_lossy(&output.stdout).into_owned())
-    };
     std::fs::write(
         work.join("README.md"),
-        "# Atelier\n\nA project of the foundation gate's World.\n",
+        &format!("# {project}\n\nA project of the foundation gate's World.\n"),
     )
     .and_then(|()| std::fs::write(work.join("NOTES.md"), "# Notes\n"))
     .map_err(|e| format!("the project's files: {e}"))?;
     git(&work, &["init", "--quiet", "--initial-branch", "main"])?;
     // The project's whole folder, its ProjectCentral with it: a checkout of it is the project wherever it stands (AIKit's seat rule).
     git(&work, &["add", "--all"])?;
-    git(&work, &["commit", "--quiet", "-m", "The atelier begins"])?;
+    git(
+        &work,
+        &["commit", "--quiet", "-m", &format!("The {project} begins")],
+    )?;
     // A session's Agency is minted in the project's world: the person's standing grant names it beside the World's root.
     action(
         world,
@@ -1373,7 +1717,7 @@ fn run_a_factory_task(world: &World) -> Result<String, String> {
     action(
         world,
         "workcell.seat.join",
-        json!({"workcell": "env-1", "product": project, "actor": "human:owner", "branch": "atelier-foundation"}),
+        json!({"workcell": "env-1", "product": project, "actor": "human:owner", "branch": format!("{project}-foundation")}),
     )?;
     let register: Value = serde_json::from_slice(
         &std::fs::read(central.join("Control/machines/workcells.register.json"))
@@ -1386,6 +1730,18 @@ fn run_a_factory_task(world: &World) -> Result<String, String> {
             clip(&register)
         ));
     }
+    Ok(checkout)
+}
+
+/// A Factory task run to its end in a fresh World with a project, through Factory's own Actions as the window presses them (`act`):
+/// an agent of the census seated on a track in the checkout the project's workcell seat holds, a task written and run, its log
+/// streaming, its end an attempt with its diff in that checkout; a second task stopped (paused, then cancelled); the session ended.
+/// Each effect read back from Factory, AIKit, git in the checkout, and Factory's Set (`set_subscribe` factory: the session a track,
+/// the task a clip on it, its attempt a take under it). Answers the attempt's ref.
+fn run_a_factory_task(world: &World) -> Result<String, String> {
+    let project = "atelier";
+    let central = world.central();
+    let checkout = seat_a_project(world, project)?;
     let skill = give_the_agents_their_practice(world)?;
     println!("every harness carries {skill}, in the Skill Set foundation");
     let outcome = (|| -> Result<String, String> {

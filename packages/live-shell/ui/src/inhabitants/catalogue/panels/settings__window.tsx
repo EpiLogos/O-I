@@ -601,11 +601,12 @@ function LaunchIn({p}: {p: ViewProps}) {
     value={project ?? ''} options={projects.map(x => ({value: x, label: x}))} onChange={value => p.set('launchIn', value)} />
 }
 
-/** Launch, beside an agent that starts (O-I #1003): Factory seats it on a new track in the project chosen, its session opened with this
- * World, that project and today's Day (factory.session.start through Factory's Set's seat act); what Factory answered is read back. */
+/** Launch, beside an agent you can talk to (O-I #1003): Factory seats it on a new track in the project chosen, its session opened with
+ * this World, that project and today's Day (factory.session.start through Factory's Set's seat act, whose session AIKit opens: an
+ * agent that starts but that AIKit opens no conversation with has no Launch, its why on its row); what Factory answered is read back. */
 function LaunchPress({p, h}: {p: ViewProps; h: Rec}) {
   const agent = txt(h.agent), name = txt(h.harness) ?? agent ?? NONE
-  if (h.starts !== true || !agent) return null
+  if (h.talks !== true || !agent) return null
   const {projects, project, why} = launchOf(p), standing = st(p, 'launch')
   return <Action {...standing} label="Launch" does={`Starts a session of ${name}${project ? ` in ${project}` : ''}: Factory seats it on a new track there, with this World, the project and today's Day.`}
     disabled={standing.disabled ?? why ?? (project ? undefined : projects.length ? 'Choose the project it starts in first.' : 'Factory\'s Set is being read.')}
@@ -613,7 +614,7 @@ function LaunchPress({p, h}: {p: ViewProps; h: Rec}) {
 }
 
 /** The agents on this machine in Setup's Harnesses and skills step: exactly the census (O-I #1003), each with whether it starts, what
- * it carries, and Launch beside each one that starts. */
+ * it carries, and Launch beside each one you can talk to. */
 function SetupAgents({p, reading}: {p: ViewProps; reading: Rec | undefined}) {
   const agents = Array.isArray(reading?.agents) ? reading!.agents.filter(rec) : undefined
   return <>

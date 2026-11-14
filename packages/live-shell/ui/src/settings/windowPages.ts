@@ -214,8 +214,8 @@ export async function launchAgent(set: ModeSetReading | null, act: SetupSource['
   return launchSaid(agent, await act(seat.act.action, {...bound, [seat.act.takes ?? 'agent']: agent}))
 }
 
-/** Launch (O-I #1003: "Launch starts a session that comes with its world, its project and today's Day"; R36), beside each agent that
- * starts on Harnesses & models and on Setup's Harnesses and skills step: one press seats the agent on a new track of Factory's, through
+/** Launch (O-I #1003: "Launch starts a session that comes with its world, its project and today's Day"; R36), beside each agent you
+ * can talk to on Harnesses & models and on Setup's Harnesses and skills step: one press seats the agent on a new track of Factory's, through
  * the seat act Factory's Set offers for the project chosen (kernel mode_set.rs: factory.session.start bound to this World and a project
  * that holds a workcell seat, taking the agent) and the registry's door (SetupSource.act, the kernel's `act`). The window computes no
  * World and no seat: where the Set offers none, its own words say why (launchSeats). What Factory answered is read back (launchSaid).

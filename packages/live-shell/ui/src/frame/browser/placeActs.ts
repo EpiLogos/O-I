@@ -72,8 +72,8 @@ export async function openPlaceRow(row: PlaceRow, ports: PlaceActPorts): Promise
 /** What a row carries when dragged: its drag type, its payload, and its words (the drag's plain text). Null: no target takes it. Pure. */
 export function placeRowDrag(row: PlaceRow): {readonly type: string; readonly data: string; readonly words: string} | null {
   if (row.seat) return {type: CENTRAL_WORLD_DRAG, data: row.seat.ref, words: row.label}
-  // An agent of your roster, or an agent of the census that starts (its ref `harness:<slug>`, which the seat act turns into the slug).
-  if (row.kind === 'agent' || (row.kind === 'harness' && row.starts)) return {type: AGENT_CHAIN_MIME, data: encodeChainDrag({family: 'agent', ref: row.ref, label: row.label}), words: row.label}
+  // An agent of your roster, or an agent of the census you can talk to (its ref `harness:<slug>`, which the seat act turns into the slug).
+  if (row.kind === 'agent' || (row.kind === 'harness' && row.talks)) return {type: AGENT_CHAIN_MIME, data: encodeChainDrag({family: 'agent', ref: row.ref, label: row.label}), words: row.label}
   if (row.kind === 'day' && documentTargetOf(row.ref)) return {type: CENTRAL_DOCUMENT_DRAG, data: row.ref, words: row.label}
   if (row.kind === 'machine' || row.kind === 'workcell') return {type: RUNNING_DRAG, data: JSON.stringify({kind: row.kind, ref: row.ref, label: row.label}), words: row.label}
   return null

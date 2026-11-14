@@ -60,9 +60,10 @@ export interface PlaceRow {
   readonly seat?: {readonly ref: string; readonly name: string}
   /** A Day a double-click opens: its listed entry. */
   readonly day?: NativeFileEntry
-  /** An agent of the census that starts (a Harnesses row): it drags as an agent, and an empty track it is dropped on seats it there
-   * (Factory's seat act, kernel mode_set.rs). One that does not start drags nowhere. */
-  readonly starts?: boolean
+  /** An agent of the census you can talk to (a Harnesses row: it starts and AIKit opens a conversation with it): it drags as an
+   * agent, and an empty track it is dropped on seats it there (Factory's seat act, kernel mode_set.rs, whose session AIKit opens).
+   * One you cannot talk to drags nowhere. */
+  readonly talks?: boolean
 }
 
 const plural = (count: number, one: string, many = `${one}s`) => `${count} ${count === 1 ? one : many}`
@@ -141,7 +142,7 @@ export function harnessRows(agents: readonly CensusAgent[], disclosure: unknown 
     const said = !agent.starts ? `It does not start${why}`
       : agent.talks ? `It starts${at} and you can talk to it.` : `It starts${at} but you cannot talk to it${why}`
     const layers = layersOf.get(agent.slug) ?? []
-    return {key: `harness:${agent.slug}`, ref: `harness:${agent.slug}`, label: name, kind: 'harness' as const, starts: agent.starts,
+    return {key: `harness:${agent.slug}`, ref: `harness:${agent.slug}`, label: name, kind: 'harness' as const, talks: agent.talks,
       meta: !agent.starts ? 'does not start' : agent.talks ? 'you can talk to it' : 'you cannot talk to it', group: 'Harnesses',
       words: `${name} — an agent on this computer. ${said}${layers.length ? ` AIKit reads its ${layers.join(', ')}.` : ''}`}
   })
