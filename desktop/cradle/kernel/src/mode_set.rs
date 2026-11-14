@@ -1621,7 +1621,8 @@ fn factory(sessions: &Read, field: &Read, cells: &Read) -> ModeSet {
         }
     }
     // The sessions Factory ran a task on in a project of this World that the root register does not list: each its own track, laid
-    // from Factory's record, its menu's End session ending it (factory.session.end; manual §19.1).
+    // from Factory's record, its menu's End session ending it (factory.session.end; manual §19.1), and a message dropped on it written
+    // as its next task (factory.task.write, its words the instruction; §19.24 "To turn one into work, drag it onto the agent's track").
     for (id, seated) in &seated {
         let harness = seated
             .harness
@@ -1640,18 +1641,32 @@ fn factory(sessions: &Read, field: &Read, cells: &Read) -> ModeSet {
                 harness.map_or_else(|| "its harness unnamed".to_owned(), |harness| format!("its harness {harness}")),
                 seated.space
             ),
-            acts: BTreeMap::from([(
-                "endSession".to_owned(),
-                done(
-                    act(
-                        "factory.session.end",
-                        json!({"world": seated.world, "project": seated.project, "session": seated.session}),
-                        None,
-                        "Factory's factory.session.end: the session ended — a running turn stopped, its record closed, its body released",
+            acts: BTreeMap::from([
+                (
+                    "endSession".to_owned(),
+                    done(
+                        act(
+                            "factory.session.end",
+                            json!({"world": seated.world, "project": seated.project, "session": seated.session}),
+                            None,
+                            "Factory's factory.session.end: the session ended — a running turn stopped, its record closed, its body released",
+                        ),
+                        format!("{name}'s session has ended: its record is closed."),
                     ),
-                    format!("{name}'s session has ended: its record is closed."),
                 ),
-            )]),
+                (
+                    "writeTask".to_owned(),
+                    done(
+                        act(
+                            "factory.task.write",
+                            json!({"world": seated.world, "project": seated.project, "session": seated.session}),
+                            Some("instruction"),
+                            "Factory's factory.task.write: the words dropped on the session's track written as its next task, a Run Factory commissions for it",
+                        ),
+                        format!("A task is written on {name}'s session: run it from its clip."),
+                    ),
+                ),
+            ]),
             ..Track::default()
         });
     }
@@ -1852,25 +1867,30 @@ fn factory(sessions: &Read, field: &Read, cells: &Read) -> ModeSet {
             act("shell.setSolo", Value::Null, Some("on"), SOLO_WORDS),
         ),
     ]);
+    let seat_in = |world: &str, project: &str| {
+        done(
+            act(
+                "factory.session.start",
+                json!({"world": world, "project": project}),
+                Some("agent"),
+                &format!("Factory's factory.session.start: the agent seated on a new track in {project}, its session opened in the checkout {project}'s workcell seat holds and its record opened"),
+            ),
+            format!("The agent is seated on a new track in {project}: its session is open."),
+        )
+    };
     match seats.as_slice() {
         [(world, project)] => {
-            acts.insert(
-                "seat".into(),
-                done(
-                    act(
-                        "factory.session.start",
-                        json!({"world": world, "project": project}),
-                        Some("agent"),
-                        &format!("Factory's factory.session.start: the agent seated on a new track in {project}, its session opened in the checkout {project}'s workcell seat holds and its record opened"),
-                    ),
-                    format!("The agent is seated on a new track in {project}: its session is open."),
-                ),
-            );
+            acts.insert("seat".into(), seat_in(world, project));
         }
         [] => {
             waiting.insert("track.seat".into(), "an agent seated on a new track: factory.session.start opens its session in a project's workcell seat, and no project of this World holds one (Workcell's seat join)".into());
         }
         several => {
+            // A drop names no project, so the empty track waits; a press that names its project (Setup's Launch, one per agent that
+            // starts) runs that project's own seat act, `seat:<project>`.
+            for (world, project) in several {
+                acts.insert(format!("seat:{project}"), seat_in(world, project));
+            }
             let named: Vec<&str> = several
                 .iter()
                 .map(|(_, project)| project.as_str())
@@ -2518,6 +2538,16 @@ mod tests {
                 &json!({"world": "/w/Central", "project": "atelier", "session": "agent-session/atelier-chat-1"})
             )
         );
+        let write = &seated.acts["writeTask"];
+        assert_eq!(
+            (write.action.as_str(), &write.input, write.takes.as_deref()),
+            (
+                "factory.task.write",
+                &json!({"world": "/w/Central", "project": "atelier", "session": "agent-session/atelier-chat-1"}),
+                Some("instruction")
+            ),
+            "a message dropped on the track is written as its next task"
+        );
         let stop = &seated.acts["stopTrack"];
         assert_eq!(
             (stop.action.as_str(), &stop.input),
@@ -2581,6 +2611,43 @@ mod tests {
             "{}",
             free.waiting["track.seat"]
         );
+    }
+
+    #[test]
+    fn where_several_projects_hold_a_seat_each_has_its_own_seat_act_and_the_empty_track_waits() {
+        let located = json!([{"project": "atelier", "root": "/w/Central/Work/atelier", "state": "located"},
+            {"project": "kiln", "root": "/w/Central/Work/kiln", "state": "located"}]);
+        let held = json!([{"name": "env-1", "seats": [{"product": "atelier", "state": "held", "live_branch": "atelier-work"},
+            {"product": "kiln", "state": "held", "live_branch": "kiln-work"}]}]);
+        let set = build(
+            Mode::Factory,
+            &[agency(json!([])), field(json!([]), located), seats(held)],
+        );
+        assert!(
+            !set.acts.contains_key("seat"),
+            "a drop names no project, so the empty track seats none"
+        );
+        assert!(
+            set.waiting["track.seat"].contains("several hold a workcell seat (atelier, kiln)"),
+            "{}",
+            set.waiting["track.seat"]
+        );
+        for project in ["atelier", "kiln"] {
+            let seat = &set.acts[&format!("seat:{project}")];
+            assert_eq!(
+                (seat.action.as_str(), &seat.input, seat.takes.as_deref()),
+                (
+                    "factory.session.start",
+                    &json!({"world": "/w/Central", "project": project}),
+                    Some("agent")
+                ),
+                "{project}'s own seat act"
+            );
+            assert_eq!(
+                seat.done.as_deref(),
+                Some(format!("The agent is seated on a new track in {project}: its session is open.").as_str())
+            );
+        }
     }
 
     #[test]
