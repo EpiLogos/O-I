@@ -30,6 +30,10 @@
 # Git / landing is Workcell's own Actions on the held seat: the seat's work committed on its lane (workcell.lane.commit), the lane
 # pushed to the project's remote (workcell.lane.push), and landed as a merge into the remote's main (workcell.lane.land), each read
 # back from git. The project's remote is a bare repository this run keeps beside the World.
+#
+# Expressions (O-I #1008): its Actions run in the running desktop's kernel, which holds the expression store, and no desktop runs in
+# this World. `oi act` lists them and describes each by its id with no app, each unavailable in words; an invocation is refused in
+# words and makes nothing. Act 6 of the foundation gate (tests/foundation.rs) runs them on the kernel itself.
 set -uo pipefail
 
 keep=0
@@ -50,7 +54,8 @@ home="$(cd "$home" && pwd -P)"
 if [ "$keep" = 1 ]; then echo "act-registry: the fresh World stays at $home"; else trap 'rm -rf "$root"' EXIT; fi
 real_home="$HOME"
 export HOME="$home" TMPDIR="$root/t" HISTFILE=/dev/null OI_WORLD_FOLDER="$home"
-unset CENTRAL_NATIVE_TOKEN OI_CENTRAL_ROOT CENTRAL_ROOT AIKIT_HOME OI_HOME XDG_CONFIG_HOME OI_EXPRESSION_HOME OI_CENTRAL_PROJECT_QUERY
+unset CENTRAL_NATIVE_TOKEN OI_CENTRAL_ROOT CENTRAL_ROOT AIKIT_HOME OI_HOME XDG_CONFIG_HOME OI_EXPRESSION_HOME OI_CENTRAL_PROJECT_QUERY \
+  OI_EXPRESSION_SOCKET
 # A GIT_* exported around a run aims its git at the wrong repository.
 for name in $(env | sed -n 's/^\(GIT_[A-Z_]*\)=.*/\1/p'); do unset "$name"; done
 cd "$home"
@@ -219,6 +224,38 @@ if [ -n "$run_ref" ] && attempts="$(act factory.attempt.list "$(jq -nc --arg s "
   holds factory.attempt.list "$run_ref has $(jq -r '.totalTasks // 0' <<<"$attempts") attempt task(s), nothing executed"
 else
   fails factory.attempt.list "no attempt reading for the commissioned Run"
+fi
+
+echo "act-registry: Expressions' core"
+# --- Expressions' Actions (O-I #1008): the kernel's own field, listed and described with no app running. Each runs in the running
+# desktop's kernel, which holds the expression store; no desktop runs in this World, so each is unavailable in words, and an
+# invocation is refused in words and makes nothing. Act 6 of the foundation gate runs them on the kernel itself. ----------------------
+expressions="expressions.new expressions.open expressions.studio.set expressions.scene.save expressions.scene.launch
+  expressions.scene.stop expressions.scene.capture expressions.arm expressions.take.keep expressions.save expressions.mix.set
+  expressions.duplicate expressions.delete"
+listed="$("$oi" act --json 2>/dev/null | jq -c '[.fields[]? | select(.owner == "expressions")] | first // {}')"
+if [ "$(jq -r '.count // 0' <<<"$listed")" = "$(wc -w <<<"$expressions" | tr -d ' ')" ] \
+  && jq -e '.actions | all(.availability.available == false and (.availability.reason | test("no O:I desktop answers")))' \
+    <<<"$listed" >/dev/null; then
+  holds "oi act" "lists Expressions' $(jq -r .count <<<"$listed") Actions, each unavailable with no desktop, in words"
+else
+  fails "oi act" "Expressions' Actions are not listed, or not said unavailable with no desktop: $listed"
+fi
+for id in $expressions; do
+  if described="$("$oi" act describe "$id" --json 2>/dev/null)" && [ "$(jq -r .id <<<"$described")" = "$id" ] \
+    && [ "$(jq -r .mutation_class <<<"$described")" = locally-mutating ] \
+    && [ "$(jq -r .output.type <<<"$described")" = oi.expression-act/v1 ]; then
+    holds "$id" "described with no app: $(jq -r .title <<<"$described"), locally-mutating, answering oi.expression-act/v1"
+  else
+    fails "$id" "not described by its id"
+  fi
+done
+if words="$(act expressions.new '{"title":"Act registry"}' 2>&1 >/dev/null)"; then
+  fails expressions.new "it ran with no desktop to run it"
+elif [[ "$words" == *"no desktop answers"* ]] && ! ls "$world/Control/user/flows" 2>/dev/null | grep -qF .expression.json; then
+  holds expressions.new "refused with no desktop, in words, and nothing made: ${words#expressions.new refused: }"
+else
+  fails expressions.new "refused without the words that say why, or a work was made: $words"
 fi
 
 echo "act-registry: Workcell and Factory's sessions"

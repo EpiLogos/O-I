@@ -123,6 +123,8 @@ mod unix {
             .env("OI_HOME", home.path())
             .env("OI_DATA_HOME", home.path().join("data"))
             .env("PATH", bin.path())
+            // The Expression socket an Action of Expressions crosses: the test's own, never a running desktop's.
+            .env("OI_EXPRESSION_SOCKET", home.path().join("expression.sock"))
             .output()
             .expect("run O:I CLI")
     }
@@ -448,7 +450,8 @@ mod unix {
                 "workcell",
                 "workcell",
                 "actuation",
-                "ql"
+                "ql",
+                "expressions"
             ]
         );
         assert_eq!(field("central")["count"], 1);
@@ -470,6 +473,55 @@ mod unix {
                 "{absent} is named: {value}"
             );
         }
+        // O-I #1008: Expressions' field is the kernel's own, listed with no app running; while no
+        // desktop answers on the Expression socket, each Action says so in words.
+        let expressions = field("expressions");
+        assert_eq!(expressions["count"], 13, "{value}");
+        for action in expressions["actions"]
+            .as_array()
+            .expect("expressions' actions")
+        {
+            assert!(action["id"]
+                .as_str()
+                .is_some_and(|id| id.starts_with("expressions.")));
+            assert_eq!(action["mutation_class"], "locally-mutating");
+            assert_eq!(action["availability"]["available"], false, "{action}");
+            assert!(
+                action["availability"]["reason"]
+                    .as_str()
+                    .is_some_and(|why| why.contains("no O:I desktop answers")),
+                "{action}"
+            );
+        }
+        let described = run_oi_args(
+            &home,
+            &bin,
+            &["act", "describe", "expressions.studio.set", "--json"],
+        );
+        assert!(described.status.success());
+        let descriptor: serde_json::Value =
+            serde_json::from_slice(&described.stdout).expect("descriptor");
+        assert_eq!(descriptor["title"], "Set a Studio value");
+        assert_eq!(descriptor["output"]["type"], "oi.expression-act/v1");
+        let refused = run_oi_args(
+            &home,
+            &bin,
+            &[
+                "act",
+                "invoke",
+                "expressions.new",
+                "--input",
+                r#"{"title": "A"}"#,
+            ],
+        );
+        assert_ne!(refused.status.code(), Some(0));
+        assert!(refused.stdout.is_empty());
+        assert!(
+            String::from_utf8_lossy(&refused.stderr)
+                .contains("runs in the O:I desktop's kernel, which holds the expression store, and no desktop answers"),
+            "{}",
+            String::from_utf8_lossy(&refused.stderr)
+        );
 
         let described = run_oi_args(
             &home,
@@ -538,6 +590,82 @@ mod unix {
             fs::read_to_string(bin.path().join("seat.payload")).expect("seat payload"),
             r#"{"workcell":"env-2"}"#
         );
+    }
+
+    /// O-I #1008: with a desktop answering on the Expression socket, `oi act invoke expressions.*`
+    /// runs at its kernel's act door through the one dispatch, as the desktop serves the socket
+    /// (src-tauri main.rs: `dispatch_kernel_op(&handle, request.op())`), here a real socket the
+    /// kernel crate serves over a kernel of its own: the store's answer on stdout, its refusal in
+    /// its words, and each Action described available.
+    #[test]
+    fn act_invoke_runs_an_action_of_expressions_in_the_desktops_kernel() {
+        let _serial = serial();
+        let home = TempDir::new().expect("home");
+        let bin = TempDir::new().expect("bin");
+        // A short path: a socket's address is bounded.
+        let socket = Path::new("/tmp").join(format!("oi-cli-act-{}.sock", std::process::id()));
+        let kernel = std::sync::Arc::new(Mutex::new(oi_cradle_kernel::Kernel::new(
+            oi_cradle_kernel::flow::CentralClient::with(
+                std::path::PathBuf::from("/nonexistent/ctrl"),
+                None,
+                "test".into(),
+            ),
+        )));
+        let held = kernel.clone();
+        let server =
+            oi_cradle_kernel::expression_transport::serve_routed(&socket, move |request| {
+                let outcome = oi_cradle_kernel::dispatch::dispatch(&held, request.op()).0?;
+                serde_json::to_value(outcome).map_err(|error| error.to_string())
+            })
+            .expect("serve the Expression socket");
+        let oi = |args: &[&str]| {
+            Command::new(env!("CARGO_BIN_EXE_oi"))
+                .args(args)
+                .env("OI_HOME", home.path())
+                .env("OI_DATA_HOME", home.path().join("data"))
+                .env("PATH", bin.path())
+                .env("OI_EXPRESSION_SOCKET", &socket)
+                .output()
+                .expect("run O:I CLI")
+        };
+
+        let stopped = oi(&["act", "invoke", "expressions.scene.stop", "--input", "{}"]);
+        assert!(
+            stopped.status.success(),
+            "{}",
+            String::from_utf8_lossy(&stopped.stderr)
+        );
+        let answer: serde_json::Value =
+            serde_json::from_slice(&stopped.stdout).expect("the store's answer");
+        assert_eq!(answer["schema"], "oi.expression-act/v1");
+        assert_eq!(answer["action"], "expressions.scene.stop");
+        assert_eq!(answer["ref"], "expressions:all");
+        assert_eq!(answer["state"], "stopped");
+
+        let refused = oi(&[
+            "act",
+            "invoke",
+            "expressions.arm",
+            "--input",
+            r#"{"expression_ref": "expression:none", "on": true}"#,
+        ]);
+        assert_ne!(refused.status.code(), Some(0));
+        assert!(refused.stdout.is_empty());
+        assert!(
+            !String::from_utf8_lossy(&refused.stderr).trim().is_empty(),
+            "the store's refusal is in words"
+        );
+
+        let described = oi(&["act", "describe", "expressions.arm", "--json"]);
+        assert!(described.status.success());
+        let descriptor: serde_json::Value =
+            serde_json::from_slice(&described.stdout).expect("descriptor");
+        assert_eq!(
+            descriptor["availability"]["available"], true,
+            "{descriptor}"
+        );
+        drop(server);
+        assert!(!socket.exists());
     }
 
     /// O-I #1002: an AIKit Action's input reaches AIKit on stdin (`--input -`), never in argv —

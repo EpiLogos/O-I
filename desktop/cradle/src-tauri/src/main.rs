@@ -646,17 +646,12 @@ fn main() {
                 if let Some(directory) = path.parent() { std::fs::create_dir_all(directory)?; }
                 let handle = app.handle().clone();
                 match oi_cradle_kernel::expression_transport::serve_routed(&path, move |request| {
-                    let host = handle.state::<KernelHost>();
-                    // A body whose schema is oi.expression-world/v1 reaches the
-                    // world seam (acts, material, selection); others are
-                    // ordinary Expression requests.
-                    let op = match request {
-                        oi_cradle_kernel::expression_transport::Request::Expression(request) => KernelOp::Expression { request },
-                        oi_cradle_kernel::expression_transport::Request::World(request) => KernelOp::ExpressionWorld { request },
-                    };
-                    let outcome = host.0.lock().map_err(|_| "kernel lock unavailable")?.apply(op)?;
-                    for receipt in &outcome.receipts { let _ = handle.emit(KERNEL_EVENT_TOPIC, receipt); }
-                    serde_json::to_value(outcome).map_err(|e| e.to_string())
+                    // A body whose schema is oi.expression-world/v1 reaches the world seam (acts, material, selection), one whose
+                    // schema is oi.expression-act-request/v1 the act door as an agent's `oi act invoke expressions.*` (O-I ticket
+                    // 1008); others are ordinary Expression requests. Each runs through the host's one dispatch, as a page's op
+                    // does: the World Model reads again what it wrote, and its receipts reach the shell.
+                    let (outcome, _) = dispatch_kernel_op(&handle, request.op());
+                    serde_json::to_value(outcome?).map_err(|e| e.to_string())
                 }) {
                     Ok(server) => { app.manage(Mutex::new(server)); eprintln!("Expression application: {}", path.display()); }
                     Err(error) => eprintln!("Expression Agent transport unavailable: {error}"),

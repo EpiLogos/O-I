@@ -375,7 +375,9 @@ struct ActionOwner {
 /// actions --json`, its `data.actions`), AIKit its contextual field (`aikit act discover`, its
 /// `data.rows`), every other owner [`OWNER_ACTION_FIELD_SCHEMA`]. The Workcell's seats are held by
 /// the seat instrument (`seat`, Control/user/workcell), so the Workcell field is read from both.
-const ACTION_OWNERS: [ActionOwner; 7] = [
+/// Expressions' field is the kernel's own (`expression_actions::field`), and its Actions run in
+/// the running desktop's kernel, which holds the expression store (O-I #1008).
+const ACTION_OWNERS: [ActionOwner; 8] = [
     ActionOwner { owner: "central", source: "central", prefix: None },
     ActionOwner { owner: "ai-kit", source: "aikit", prefix: Some("aikit.") },
     ActionOwner { owner: "factory", source: "factory", prefix: Some("factory.") },
@@ -383,6 +385,7 @@ const ACTION_OWNERS: [ActionOwner; 7] = [
     ActionOwner { owner: "workcell", source: "seat", prefix: Some("workcell.seat.") },
     ActionOwner { owner: "actuation", source: "actuation", prefix: Some("actuation.") },
     ActionOwner { owner: "ql", source: "ql", prefix: Some("ql.") },
+    ActionOwner { owner: "expressions", source: "expressions", prefix: Some("expressions.") },
 ];
 
 /// The owner whose prefix an Action id carries — the longest that matches, so a seat's
@@ -531,7 +534,95 @@ fn read_owner_field(owner: &ActionOwner) -> Result<Vec<serde_json::Value>, Strin
     match owner.source {
         "central" => read_central_action_field(),
         "aikit" => read_aikit_act_field(),
+        "expressions" => Ok(read_expressions_field()),
         _ => read_shared_action_field(owner),
+    }
+}
+
+/// Expressions' field, as the kernel declares it (`expression_actions::field`): listed and
+/// described with no app running. Each Action runs in the running desktop's kernel, so it is
+/// available from here while a desktop answers on the Expression socket an invocation crosses,
+/// and unavailable, in those words, while none does.
+fn read_expressions_field() -> Vec<serde_json::Value> {
+    let mut actions = oi_cradle_kernel::expression_actions::field()["actions"]
+        .as_array()
+        .cloned()
+        .unwrap_or_default();
+    if let Some(absent) = expressions_desktop_absent() {
+        for action in &mut actions {
+            action["availability"]["available"] = json!(false);
+            action["availability"]["reason"] = json!(absent);
+        }
+    }
+    actions
+}
+
+/// Why no desktop can run an Action of Expressions from here; `None` while one answers.
+fn expressions_desktop_absent() -> Option<String> {
+    #[cfg(unix)]
+    {
+        let socket = match oi_cradle_kernel::expression_transport::default_socket_path() {
+            Ok(socket) => socket,
+            Err(error) => return Some(error),
+        };
+        match std::os::unix::net::UnixStream::connect(&socket) {
+            Ok(_) => None,
+            Err(_) => Some(format!(
+                "no O:I desktop answers at {}: Expressions' Actions run in its kernel, which holds the expression store",
+                socket.display()
+            )),
+        }
+    }
+    #[cfg(not(unix))]
+    Some("Expressions' Actions reach the O:I desktop over a Unix socket, which this platform lacks".to_owned())
+}
+
+/// One Action of Expressions, run by the running desktop's kernel (O-I #1008): it crosses the
+/// Expression socket the desktop serves and runs at the kernel's act door as an agent's act,
+/// through the host's one dispatch. Its answer is the expression store's
+/// (`oi.expression-act/v1`), on stdout as every owner's `action run` answers; a refusal is the
+/// store's words. With no desktop answering, the invocation is refused in words.
+fn invoke_expressions(reference: &str, input: serde_json::Value) -> Result<i32, String> {
+    #[cfg(unix)]
+    {
+        use oi_cradle_kernel::expression_transport::{call, default_socket_path, Request};
+        let socket = default_socket_path()?;
+        let request = Request::Act { action: reference.to_owned(), input };
+        let response = call(&socket, &request).map_err(|error| {
+            format!(
+                "`{reference}` runs in the O:I desktop's kernel, which holds the expression store, and no desktop answers at {}: open O:I, then invoke it again ({error})",
+                socket.display()
+            )
+        })?;
+        if response["ok"] != true {
+            return Err(format!(
+                "the O:I desktop refused `{reference}`: {}",
+                response["error"].as_str().unwrap_or("it gave no words")
+            ));
+        }
+        let dispatch = &response["outcome"]["dispatch"];
+        match dispatch["state"].as_str() {
+            Some("invoked") => {
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&dispatch["data"])
+                        .map_err(|error| format!("cannot encode the answer of `{reference}`: {error}"))?
+                );
+                Ok(0)
+            }
+            Some("owner_refused") => Err(dispatch["message"]
+                .as_str()
+                .unwrap_or("Expressions refused it and gave no words")
+                .to_owned()),
+            _ => Err(format!("`{reference}` did not run; the desktop answered {dispatch}")),
+        }
+    }
+    #[cfg(not(unix))]
+    {
+        let _ = input;
+        Err(format!(
+            "`{reference}` reaches the O:I desktop over a Unix socket, which this platform lacks"
+        ))
     }
 }
 
@@ -618,6 +709,7 @@ fn act_list(json: bool) -> Result<i32, String> {
         let named = match owner.source {
             "aikit" => "AIKit (ai-kit)".to_owned(),
             "seat" => "Workcell seats (the seat instrument)".to_owned(),
+            "expressions" => "Expressions (the O:I desktop's kernel)".to_owned(),
             source => format!("{} ({source})", owner.owner),
         };
         match read {
@@ -832,6 +924,15 @@ fn act_invoke(args: &[OsString]) -> Result<i32, String> {
     };
     match action_owner_of(reference) {
         Some(owner) if owner.source == "aikit" => return aikit_invoke(passthrough),
+        Some(owner) if owner.source == "expressions" => {
+            if let Some(extra) = passthrough.first() {
+                return Err(format!(
+                    "`oi act invoke {reference}` takes its input only; `{}` is not part of it",
+                    extra.to_string_lossy()
+                ));
+            }
+            return invoke_expressions(reference, parsed);
+        }
         // Every other owner runs its own Action from the JSON on stdin and answers its route's
         // JSON (OWNER_ACTION_FIELD_SCHEMA): the owner decides its input, never this doorway.
         Some(owner) => {
