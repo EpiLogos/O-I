@@ -117,3 +117,23 @@ test('the bodies the system reads are one value until the system changes: a snap
   const store = await import('../src/projections/atlas/system/systemStore.ts')
   assert.equal(store.systemBodies(), store.systemBodies(), 'unread, the bodies are one empty list, not a new one per read')
 })
+
+// O-I ticket 1005 (the #1004 leftover "Day entries on the Day track"): the Day's entries lie on the Day, the Main track, at their instants
+// on today's ruler in Arrangement view, and stand in no Session row (kernel mode_set.rs
+// central_lays_the_days_entries_on_the_day_at_their_instants_and_in_no_session_slot lays them from the day slice's receipts).
+test('the Day\'s entries lie on the Main track at their instants in Arrangement view, and in no Session row', async () => {
+  const {modeSetOf, setTrack, setClip} = await import('./support/modeSetFixture.mjs')
+  const {kernelSetTracks} = await import('../src/frame/tracks/kernelSet.ts')
+  const {placeClips} = await import('../src/frame/tracks/clipCuts.ts')
+  const at = Date.UTC(2026, 10, 13, 9, 30)
+  const set = kernelSetTracks(modeSetOf({owner: 'Central', ruler: {kind: 'day', unit: 'minutes (UTC) of 2026-11-13', date: '2026-11-13'},
+    rows: [{id: 'central:slot:1', name: '1'}],
+    tracks: [setTrack('central:world:central:wiki:root', 'Your world'), setTrack('central:day', 'Day', {main: true})],
+    clips: [setClip('central:day:entry:r-1', 'central:day', '', 'page saved · Control/user/flows/plan.html', {state: 'done', at: {start_unix_ms: at}})]}),
+  {nowMs: at})
+  const entry = set.clips.find(clip => clip.id === 'central:day:entry:r-1')
+  assert.equal(entry.trackId, 'central:day')
+  assert.equal(entry.at.start, 9 * 60 + 30, 'the entry stands at its minute on today\'s ruler')
+  assert.ok(!set.columns.some(column => column.id === entry.columnId), 'the entry stands in no Session row')
+  assert.deepEqual(placeClips(set).placed.map(place => [place.clip.id, place.start]), [['central:day:entry:r-1', 570]])
+})
