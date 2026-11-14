@@ -17,11 +17,14 @@
 #
 # Workcell and Factory's sessions (O-I #1006): the fresh World declares its first workcell (workcell.declare), and its seat is
 # joined and released by the seat instrument's own Actions with CENTRAL_ROOT naming this World — the instrument resolves the
-# machine's own register unless CENTRAL_ROOT names another, so no seat Action here runs without it. Factory's session start, a
-# task written, run, stopped (paused, then cancelled) and its log read, and the session's end are Factory's own Actions; the
-# task's run sends the agent one prompt, cancelled at once. The agent is FOUNDATION_AGENT, else the first the census lists that
-# starts. Choosing a take (factory.attempt.receiving) carries a Return into the Flow page a Run was made from, and a session's
-# task is made from no page, so it is not run here.
+# machine's own register unless CENTRAL_ROOT names another, so no seat Action here runs without it. Factory's session start, the
+# sessions it keeps (factory.session.list), a task written, run to its end and its log read, the task's unit retried
+# (factory.attempt.retry), the retry stopped (paused, then cancelled), and the session's end are Factory's own Actions. Factory
+# retries only a unit that failed, and a session's task that leaves no difference in its checkout ends failed, so the task asks for
+# a reading and no change: the agent is sent two prompts, the task's (answered) and its retry's (cancelled at once). The agent is
+# FOUNDATION_AGENT, else the first the census lists that starts. Choosing a take (factory.attempt.choose) proposes an attempt's
+# Return into the Central Flow its Run belongs to, and a session's task is commissioned from the person's words with no Flow:
+# Factory refuses it in those words, its difference staying in the session's checkout for Git / landing, so it is not run here.
 set -uo pipefail
 
 keep=0
@@ -289,15 +292,22 @@ else
   fails factory.session.start "no session opened in the seat's checkout"
 fi
 
-# --- A task written, run, stopped twice and its log read ------------------------------------------------------------------------
-task_state="" task_run="" attempt=""
+# --- A task written and listed on its session, run to its end, its log read; its unit retried, and the retry stopped twice ----------
+task_state="" task_run="" unit="" attempt=""
 if [ -n "$session" ] && written="$(act factory.task.write "$(jq -nc --arg w "$world" --arg p "$project" --arg s "$session" \
-    '{world:$w, project:$p, session:$s, instruction:"Read NOTES.md and say what it holds. Change nothing."}')")" \
+    '{world:$w, project:$p, session:$s, instruction:"Read NOTES.md and say in one line what it holds. Change no file."}')")" \
   && task_state="$(jq -r .factory_state <<<"$written")" && task_run="$(jq -r .run_ref <<<"$written")" \
-  && [ "$(jq -r .state <<<"$written")" = "written" ]; then
+  && unit="$(jq -r '.unit_ref // empty' <<<"$written")" && [ "$(jq -r .state <<<"$written")" = "written" ]; then
   holds factory.task.write "$task_run written on $session"
 else
   fails factory.task.write "no task written"
+fi
+if [ -n "$task_run" ] && listed="$(act factory.session.list "$(jq -nc --arg st "$task_state" '{state:$st}')")" \
+  && jq -e --arg s "$session" --arg r "$task_run" \
+    'any(.sessions[]; .session == $s and .state == "open" and any(.tasks[]?; .run_ref == $r))' <<<"$listed" >/dev/null; then
+  holds factory.session.list "$session open, its task $task_run among $(jq -r '.sessions | length' <<<"$listed") session(s)"
+else
+  fails factory.session.list "the session is not listed open with its task"
 fi
 task() { jq -nc --arg st "$task_state" --arg r "$task_run" --arg a "$attempt" '{state:$st, run_ref:$r, attempt_ref:$a}'; }
 if [ -n "$task_run" ] && ran="$(keyed factory.task.run "$(jq -nc --arg st "$task_state" --arg r "$task_run" --arg s "$session" \
@@ -306,17 +316,37 @@ if [ -n "$task_run" ] && ran="$(keyed factory.task.run "$(jq -nc --arg st "$task
 else
   fails factory.task.run "the task did not run"
 fi
-if [ -n "$attempt" ] && [ "$(keyed factory.task.stop "$(task)" | jq -r .state)" = "paused" ] \
-  && [ "$(keyed factory.task.stop "$(task)" | jq -r .state)" = "cancelled" ]; then
-  holds factory.task.stop "$attempt paused, then cancelled"
-else
-  fails factory.task.stop "the task was not paused and then cancelled"
+# Its end, as Factory settles it: the agent's turn answered and the checkout holds no difference, so Factory reads the attempt failed.
+ended="" log=""
+if [ -n "$attempt" ]; then
+  for _ in $(seq 1 200); do
+    log="$(act factory.task.log "$(task)")" || break
+    case "$(jq -r '.attempt.status // empty' <<<"$log")" in *Fail*|*Return*) ended="$(jq -r .attempt.status <<<"$log")"; break ;; esac
+    sleep 3
+  done
 fi
-if [ -n "$attempt" ] && log="$(act factory.task.log "$(task)")" \
-  && jq -e '(.lines | length) > 0 and (.attempt.status | test("Cancel"))' <<<"$log" >/dev/null; then
-  holds factory.task.log "$(jq -r '.lines | length' <<<"$log") lines; Factory reads the attempt $(jq -r .attempt.status <<<"$log")"
+if [ -n "$ended" ] && jq -e '(.lines | length) > 0' <<<"$log" >/dev/null; then
+  holds factory.task.log "$(jq -r '.lines | length' <<<"$log") lines; Factory reads $attempt $ended"
 else
-  fails factory.task.log "no log, or the attempt not read cancelled"
+  fails factory.task.log "no log, or the attempt not seen to end within 10 minutes"
+fi
+prior="$attempt"
+attempt=""
+if [ "${ended#*Fail}" != "$ended" ] && [ -n "$unit" ] \
+  && retried="$(keyed factory.attempt.retry "$(jq -nc --arg st "$task_state" --arg r "$task_run" --arg u "$unit" '{state:$st, run_ref:$r, unit_ref:$u}')")" \
+  && [ "$(jq -r '.prior_attempt_ref // empty' <<<"$retried")" = "$prior" ] && attempt="$(jq -r '.attempt_ref // empty' <<<"$retried")" \
+  && [ -n "$attempt" ] && [ "$attempt" != "$prior" ]; then
+  holds factory.attempt.retry "$prior failed; $attempt $(jq -r .state <<<"$retried") under the unit's grant"
+else
+  attempt=""
+  fails factory.attempt.retry "the failed attempt's unit was not retried"
+fi
+if [ -n "$attempt" ] && [ "$(keyed factory.task.stop "$(task)" | jq -r .state)" = "paused" ] \
+  && [ "$(keyed factory.task.stop "$(task)" | jq -r .state)" = "cancelled" ] && log="$(act factory.task.log "$(task)")" \
+  && jq -e '.attempt.status | test("Cancel")' <<<"$log" >/dev/null; then
+  holds factory.task.stop "$attempt paused, then cancelled; Factory reads it $(jq -r .attempt.status <<<"$log")"
+else
+  fails factory.task.stop "the retry was not paused and then cancelled"
 fi
 
 # --- Session end, then the seat released ----------------------------------------------------------------------------------------
