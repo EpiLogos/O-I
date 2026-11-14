@@ -26,7 +26,7 @@
   {
     "act": "the-day-holds-it-and-closes",
     "test": "act_5_the_day_holds_it_and_closes",
-    "standing": "red",
-    "reason": "14 Nov 2026 (export of a82ccc3eb, codex): today's Day opened by itself, held the page saved and the passage sent and answered, and closed by itself at its turn; the act stays red on act 4: Factory's Set holds no task (no .factory in the fresh World), so no Factory task run is held in the Day"
+    "standing": "green",
+    "reason": "14 Nov 2026 (export of 209b30305, codex; Central#362's ctrl c714f4a, AIKit 347de5ae, Factory 6665ed6a, Workcell b558b43f, oi b2592c58): in a fresh World, today's Day opened by itself on the civil day, its page made from the Day form Setup keeps; Central's own reading of it (central.day.read) held the page saved, the passage sent to codex and answered, and the Factory task run (its attempt with its diff), each laid in the Day as its act's receipt; the Day closed by itself at its turn and today is the next civil day (#1005)"
   }
 ]
