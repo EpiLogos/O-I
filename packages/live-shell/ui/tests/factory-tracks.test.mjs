@@ -109,3 +109,69 @@ test('a slice the Set could not read stands as its track, saying why in its owne
   assert.equal(unread.tracks[0].kind, 'Factory\'s runs, tasks and attempts · Factory\'s runs are unread: no Factory state in scope')
   assert.deepEqual(unread.clips, [])
 })
+
+test('a session Factory ran a task on carries Run, Stop and End session, and the empty track seats an agent of the census by its slug', async () => {
+  // FIXTURE: the acts as the kernel's Set carries them (kernel mode_set.rs
+  // `a_session_factory_ran_a_task_on_is_its_track_with_its_end_stop_and_run_and_the_set_seats_an_agent`): each Action by its id and input.
+  const state = '/w/Central/Work/atelier/.factory/development-state.json'
+  const track = 'session-space/atelier-chat-1:agent-session/atelier-chat-1'
+  const act = (action, input, words, done, takes) => ({action, input, words, done, ...(takes ? {takes} : {})})
+  const sessionSet = modeSetOf({owner: 'Factory and AIKit · the Agent sessions, Factory\'s tasks and their attempts',
+    tracks: [setTrack(track, 'codex · atelier', {kind: 'an Agent session · its agent codex', acts: {
+      stopTrack: act('factory.task.stop', {state, run_ref: 'run:b', attempt_ref: 'attempt:b'},
+        'Factory\'s factory.task.stop: the running task paused (AIKit cancels the turn); pressed again, its attempt cancelled',
+        'codex · atelier\'s task is stopped: paused, or cancelled when it was paused already.'),
+      endSession: act('factory.session.end', {world: '/w/Central', project: 'atelier', session: 'agent-session/atelier-chat-1'},
+        'Factory\'s factory.session.end: the session ended — a running turn stopped, its record closed, its body released',
+        'codex · atelier\'s session has ended: its record is closed.')}})],
+    clips: [setClip(`${track}#task/1`, track, 'batch:1', 'Keep notes', {subject: 'task:a', acts: {
+      launch: act('factory.task.run', {state, run_ref: 'run:a', session: 'agent-session/atelier-chat-1'},
+        'Factory\'s factory.task.run: the task run on its session under your grant, its log streaming, its end an attempt with its diff',
+        'Task task:a is running on its session.')}}),
+    setClip(`${track}#task/2`, track, 'batch:2', 'Keep more notes', {subject: 'task:b', status: 'running'})],
+    acts: {seat: act('factory.session.start', {world: '/w/Central', project: 'atelier'},
+      'Factory\'s factory.session.start: the agent seated on a new track in atelier, its session opened in the checkout atelier\'s workcell seat holds and its record opened',
+      'The agent is seated on a new track in atelier: its session is open.', 'agent')},
+  })
+  const asked = []
+  const runner = {act: async (action, input, project) => { asked.push([action, input, project]); return {state: 'open'} }, shell: async () => ({ok: false, error: 'no setter'})}
+  const a = kernelSetTracks(sessionSet, {nowMs: NOW, runner}).actions
+  assert.match(a.launch.op, /^Factory's factory\.task\.run/)
+  assert.deepEqual(await a.launch.run(`${track}#task/1`), {ok: true, note: 'Task task:a is running on its session.'})
+  assert.match((await a.launch.run(`${track}#task/2`)).error, /its owner gives it none/, 'a running task does not launch again')
+  assert.deepEqual(await a.stopTrack.run(track), {ok: true, note: 'codex · atelier\'s task is stopped: paused, or cancelled when it was paused already.'})
+  assert.deepEqual(await a.endSession.run(track), {ok: true, note: 'codex · atelier\'s session has ended: its record is closed.'})
+  // The seat: an agent dropped from the browser (the chain's agent payload); a census row's ref gives the census slug.
+  const drop = (family, ref) => JSON.stringify({family, ref, label: ref})
+  assert.equal(a.seat.accepts, 'application/x-oi-agent-chain-item')
+  assert.deepEqual(await a.seat.run(drop('agent', 'harness:codex')), {ok: true, note: 'The agent is seated on a new track in atelier: its session is open.'})
+  await a.seat.run(drop('agent', 'agent:roster-nara'))
+  assert.match((await a.seat.run(drop('skillset', 'skill-set:foundation'))).error, /Only an agent takes a seat here/)
+  assert.match((await a.seat.run('not json')).error, /Only an agent takes a seat here/, 'a drop that is no agent is refused before Factory is asked')
+  assert.deepEqual(asked, [
+    ['factory.task.run', {state, run_ref: 'run:a', session: 'agent-session/atelier-chat-1'}, undefined],
+    ['factory.task.stop', {state, run_ref: 'run:b', attempt_ref: 'attempt:b'}, undefined],
+    ['factory.session.end', {world: '/w/Central', project: 'atelier', session: 'agent-session/atelier-chat-1'}, undefined],
+    ['factory.session.start', {world: '/w/Central', project: 'atelier', agent: 'codex'}, undefined],
+    ['factory.session.start', {world: '/w/Central', project: 'atelier', agent: 'agent:roster-nara'}, undefined],
+  ], 'each the Set\'s Action with its input; the seat\'s with the agent the drop named')
+  // A seat that takes something other than an agent is no agent drop; a Set with no seat act seats nothing.
+  const worldSeat = modeSetOf({acts: {seat: act('central.today.seat', {}, 'a world into today', 'In today.', 'world')}})
+  assert.equal(kernelSetTracks(worldSeat, {nowMs: NOW, runner}).actions.seat, undefined)
+  assert.equal(kernelSetTracks(modeSetOf(), {nowMs: NOW, runner}).actions.seat, undefined)
+
+  // End session on the track's menu (manual §19.1 "End session, on the track's menu, ends it"), where the Set seats a session on it.
+  globalThis.document.documentElement ??= {}
+  const menus = await import('../src/frame/menu/objectActions.ts')
+  const presses = []
+  const context = {view: 'session', binding: null, press: (key, what, run) => { presses.push([key, what]); return run() }, rename: () => {}, writeClip: async () => ({ok: true})}
+  const drawn = kernelSetTracks(sessionSet, {nowMs: NOW, runner})
+  const menu = menus.objectMenu({kind: 'track', id: track, name: 'codex · atelier'}, drawn, context)
+  const end = menu.find(item => item.id === 'end-session')
+  assert.ok(end && !end.disabled, 'End session is on the track\'s menu')
+  await end.onSelect()
+  assert.deepEqual(presses.at(-1), [`end:${track}`, 'End codex · atelier\'s session'])
+  assert.deepEqual(asked.at(-1)[0], 'factory.session.end')
+  const bare = menus.objectMenu({kind: 'track', id: 'space:a:session:1', name: 'Answer'}, set, context)
+  assert.equal(bare.find(item => item.id === 'end-session'), undefined, 'a track the Set seats no session on lists no End session')
+})

@@ -23,6 +23,7 @@ import {useModeSet} from '../../owners/modeSets'
 import type {WorldActionReceipt, WorldMixer, WorldTakeLane, WorldTrack, WorldTrackActions, WorldTrackClip, WorldTrackSet} from '../../timeline/worldTrackAdapter'
 import type {UseModeTracks} from './modeTracks'
 import {refusingMaker} from './clipMakers'
+import {AGENT_CHAIN_MIME, parseAgentChainDrag} from '../../agent/agentChainDrag'
 
 const MINUTES_PER_DAY = 1440
 
@@ -70,11 +71,13 @@ export function attendedOf(tracks: readonly {readonly id: string; readonly paren
 }
 
 /** The acts the views call on one clip, by their key in the Set (and in WorldTrackActions). */
-const CLIP_ACTS = ['openFile', 'revealFile'] as const
+const CLIP_ACTS = ['openFile', 'revealFile', 'launch'] as const
 /** The acts the views call on one track; `renameTrack` takes the name the person gives. */
-const TRACK_ACTS = ['openFolder', 'revealFolder'] as const
+const TRACK_ACTS = ['openFolder', 'revealFolder', 'stopTrack', 'endSession'] as const
 
 const refused = (error: string): WorldActionReceipt => ({ok: false, error})
+/** The ref a census row of the browser carries before an agent's slug (frame/browser/places.ts `harness:<slug>`). */
+const CENSUS_ROW = 'harness:'
 const clock = (minute: number): string => `${String(Math.floor(minute / 60)).padStart(2, '0')}:${String(minute % 60).padStart(2, '0')}`
 
 /** The Set's instants on its ruler: where an instant (unix ms) stands, and the ruler the views draw. A Set with no ruler lays its rows end
@@ -237,6 +240,16 @@ function actionsOf(set: ModeSet, runner: SetActRunner | undefined, attention: Se
     if (!act) return refused(track ? `${track.name} takes no name here: ${rename.action} names a project's world, on the revision its owner disclosed.` : `"${trackId}" is no track of this Set.`)
     if (!name.trim()) return refused('A name is text.')
     return runAct(runner, act, name.trim())
+  }}
+  // Seating an agent (manual §19.1: "To seat an agent, drag it from the browser onto an empty track"): the Set's seat act, given the agent
+  // the drop names. A drop carrying a census row's ref (`harness:<slug>`, frame/browser/places.ts) gives the act the agent's slug, the
+  // census's name for it; any other agent's ref goes to the owner as it was dropped, and the owner answers it.
+  const seat = set.acts.seat
+  if (seat?.takes === 'agent') actions.seat = {op: seat.words, accepts: AGENT_CHAIN_MIME, run: (payload: string) => {
+    let drag: ReturnType<typeof parseAgentChainDrag> = null
+    try { drag = parseAgentChainDrag(JSON.parse(payload)) } catch { drag = null }
+    if (drag?.family !== 'agent') return refused('Only an agent takes a seat here: drag one of your agents from the browser onto the empty track.')
+    return runAct(runner, seat, drag.ref.startsWith(CENSUS_ROW) ? drag.ref.slice(CENSUS_ROW.length) : drag.ref)
   }}
   const arm = set.acts.arm
   if (arm) actions.mixer = {arm: {op: arm.words, run: (_trackId: string, on: boolean) => runAct(runner, arm, on)}}
