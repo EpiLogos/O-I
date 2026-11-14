@@ -25,9 +25,8 @@
 //! with no advance, `changed: false`, `already-applied`) records no receipt.
 //! The ordered arms in lib.rs `apply` run these same steps under the lock.
 use crate::{
-    action, agency, agent_prepared::PreparedWorld, configuration, credentials,
-    events::KernelEvent, factory, files, owner_read, CentralClient, Kernel, KernelOp,
-    KernelOpOutcome, KernelOpResult,
+    action, agency, agent_prepared::PreparedWorld, configuration, credentials, events::KernelEvent,
+    factory, files, owner_read, CentralClient, Kernel, KernelOp, KernelOpOutcome, KernelOpResult,
 };
 use serde_json::Value;
 use std::path::PathBuf;

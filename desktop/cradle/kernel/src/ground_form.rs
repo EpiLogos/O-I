@@ -22,16 +22,18 @@ pub const GROUND_FORMS: &str = "Control/forms";
 /// Where today's Day is made from (Central's `central.day.turn` `form`): the Day form the ground's O-I project carries, else the
 /// one the ground keeps itself, each as Central's file route gives it. None where neither stands or its owner withholds it.
 pub fn day_form(client: &CentralClient) -> Option<crate::files::Location> {
-    [PROJECT_FORMS, GROUND_FORMS].into_iter().find_map(|directory| {
-        crate::files::list(client, directory)
-            .ok()?
-            .entries
-            .into_iter()
-            .find(|entry| {
-                entry.kind == "file" && entry.name == DAY_FORM_NAME && entry.retrieval_allowed
-            })
-            .map(|entry| entry.location)
-    })
+    [PROJECT_FORMS, GROUND_FORMS]
+        .into_iter()
+        .find_map(|directory| {
+            crate::files::list(client, directory)
+                .ok()?
+                .entries
+                .into_iter()
+                .find(|entry| {
+                    entry.kind == "file" && entry.name == DAY_FORM_NAME && entry.retrieval_allowed
+                })
+                .map(|entry| entry.location)
+        })
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]

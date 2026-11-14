@@ -135,7 +135,9 @@ fn turn(client: &CentralClient, project: Option<&str>) -> Result<Value, String> 
     let turned = &value["turn"];
     if turned["opened"] == true
         || turned["document"]["state"] == "made"
-        || turned["closed"].as_array().is_some_and(|closed| !closed.is_empty())
+        || turned["closed"]
+            .as_array()
+            .is_some_and(|closed| !closed.is_empty())
     {
         crate::read_cache::written();
     }
@@ -284,7 +286,8 @@ impl Receipt {
         match op {
             crate::KernelOp::InvokeAction { invocation, .. } => {
                 let action = invocation.action.as_str();
-                if matches!(action, TURN | RECEIPT_RECORD) || action.starts_with("action:decision.") {
+                if matches!(action, TURN | RECEIPT_RECORD) || action.starts_with("action:decision.")
+                {
                     return None;
                 }
                 let input = invocation.input.clone().unwrap_or(Value::Null);
@@ -320,7 +323,11 @@ impl Receipt {
 
     /// Lay it into today's Day of the root register, once its owner answered. A Central whose catalogue names no receipt record is
     /// not asked; a receipt Central refuses is said on the host's log and leaves the act as it was.
-    pub(crate) fn lay(self, client: &CentralClient, result: &Result<crate::KernelOpOutcome, String>) {
+    pub(crate) fn lay(
+        self,
+        client: &CentralClient,
+        result: &Result<crate::KernelOpOutcome, String>,
+    ) {
         let Ok(outcome) = result else {
             return;
         };
@@ -362,7 +369,9 @@ impl Receipt {
 /// The product an Action id belongs to, by its own spelling.
 fn owner_of(action: &str) -> &str {
     match action.split(['.', ':', '/']).next().unwrap_or(action) {
-        "central" | "projectcentral" | "control" | "personal" | "agent-profile" | "action" => "Central",
+        "central" | "projectcentral" | "control" | "personal" | "agent-profile" | "action" => {
+            "Central"
+        }
         "aikit" | "knowledge" => "AIKit",
         "factory" => "Factory",
         "workcell" | "seat" => "Workcell",
