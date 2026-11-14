@@ -92,7 +92,7 @@ import {FRAMES_ID, mainDevices} from './mainTrackBindings'
 import {askRowsOf, shownSession, threadBinding, threadJson} from './threadBinding'
 import {CAPTURE_PAGE, REFINE_PAGE, SEAT_PAGE, carryPages, composeAgentBinding, withAgentGit} from './oneAgentBinding'
 import {testRefinement, useScopeWaits, writeSessionSettings} from '../sessionSettings'
-import {useIdentityDevice} from '../../central/devices/agentChainDevices'
+import {identityFromModel, useIdentityHolds} from '../../central/devices/agentChainDevices'
 import {useAgentSetReadings, useCentralAction} from '../../central/devices/useCentralReadings'
 import {actionAnswerOf, centralActionOp} from '../../central/devices/centralActions'
 import {useAtSearch} from '../../central/searchPane'
@@ -596,7 +596,13 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const custodyRead = sessionCustody.read ?? undefined
   const custodyDesignBinding = useMemo(() => custodyBinding({sessionRef, agent: agentDesignBinding?.values ?? {}, holds, grants, person: currentPerson,
     custody: custodyRead}, scopeDesignBinding, custodyHoldPorts), [sessionRef, agentDesignBinding, scopeDesignBinding, holds, grants, currentPerson, custodyRead, custodyHoldPorts])
-  const identityDesignBinding = useIdentityDevice(transport, track?.agentRef ?? null, FACTORY_IDENTITY_ID)
+  // The Identity page reads your roster as the World Model's roster slice holds it (agentChainDevices.ts identityFromModel; O-I ticket 1005).
+  const rosterSlice = useModelSlice(transport, 'roster')
+  const identityHolds = useIdentityHolds()
+  const identityAgent = track?.agentRef ?? null
+  const identityDesignBinding = useMemo(() => identityFromModel(FACTORY_IDENTITY_ID, rosterSlice, identityAgent),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the holds' version re-binds the Identity page's choices
+    [rosterSlice, identityAgent, identityHolds])
   // The Context page's Git row: the session's own repository, and Diff to Files' Diff page (§19.4 Context; §23.2).
   const oneAgent = useMemo(() => (agentDesignBinding ? withAgentGit(composeAgentBinding(agentDesignBinding, {custody: custodyDesignBinding, identity: identityDesignBinding, thread: threadDesignBinding}),
     {...sessionGit, openDiff: openSeatDiff}) : null),
