@@ -18,9 +18,11 @@
 //   - the Day's own settings, a move's press, tomorrow's opening and the close with its carry are Central's actions through the kernel's
 //     invoke_action, which carries the person's own presses (action.rs PERSON_ACTS: central.day.settings.write, move.record, rollover,
 //     close-carry), each on the revision Central gave (centralWrite; W2);
+//   - a law statement written on the root world's tier 0 is adopted on the revision Central gives for it now (adoptLaw: central.files.read,
+//     then control.law.adopt as the person's press), and Central renders the root's floor again (manual §18.5, O-I ticket 1005);
 // A refusal is the owner's own words, thrown as they came; the device keeps the change and says so. Pure of React.
 import {readGround} from '../../../../../../desktop/cradle/src/central/client'
-import {kernelOp} from '../../../../../../desktop/cradle/src/kernel/bridge'
+import {kernelOp, kernelRead} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import {DAY_ENTRY_PART_ACTION, DAY_FIELD_RECORD_ACTION, type DayFieldRecord, type DaySettingsPatch} from './dayBinding'
 import {actionAnswerOf, centralActionOp} from './centralActions'
 import {DayFormSession, isObject, unmappedChanges, validateDocumentBasis} from '../../../../../../desktop/cradle/src/central/dayForm'
@@ -86,6 +88,40 @@ export async function centralWrite(transport: KernelTransportStatus, action: str
   const answer = actionAnswerOf({status: 'answered', value: call.outcome?.result === 'action_dispatched' ? call.outcome : null, error: null}, action)
   if (answer.status === 'answered') return answer.value
   throw new Error(answer.status === 'refused' ? answer.error : `${action} did not answer.`)
+}
+
+/** The root world's tier 0: the law statements the person's agents work under (manual §18.5), as Central keeps them. */
+export const LAW_DIR = 'Control/agents/governance'
+/** The floor Central renders at the root from the adopted law; the instruction files the agents read are made links to it. */
+export const LAW_FLOOR = 'AGENTS.md'
+
+/** Adopt one law statement written on the root world's tier 0 (manual §18.5: "Adopting it writes it into the instructions every harness
+ * reads"): the statement read through Central at its revision now (central.files.list, then central.files.read — the revision the
+ * adoption is checked against), then Central's control.law.adopt as the person's press (action.rs PERSON_ACTS; Central admits it on the
+ * person's native credential only): the statement stands durable and human-authored, and Central renders the root's floor again, each
+ * of `files` (the instruction files the agents on this machine read, other than the floor itself) made a link to it. Central's receipt,
+ * or its refusal in its words. */
+export async function adoptLaw(transport: KernelTransportStatus, statement: string, files: readonly string[]): Promise<unknown> {
+  const path = statement.startsWith(`${LAW_DIR}/`) ? statement : `${LAW_DIR}/${statement}`
+  const folder = path.slice(0, path.lastIndexOf('/'))
+  const listed = actionAnswerOf(await readCall(transport, 'central.files.list', {path: folder}), 'central.files.list')
+  if (listed.status !== 'answered') throw new Error(listed.status === 'refused' ? listed.error : 'Central did not list the statement\'s folder.')
+  const entries = (listed.value as {entries?: {kind?: string; location?: CentralLocation}[]} | null)?.entries ?? []
+  const location = entries.find(entry => entry.kind === 'file' && entry.location?.path === path)?.location
+  if (!location) throw new Error(`${path} is not written on tier 0, so there is nothing to adopt: write the statement first.`)
+  const read = actionAnswerOf(await readCall(transport, 'central.files.read', {location}), 'central.files.read')
+  if (read.status !== 'answered') throw new Error(read.status === 'refused' ? read.error : `Central did not read ${path}.`)
+  const revision = (read.value as {revision?: unknown} | null)?.revision
+  if (typeof revision !== 'string' || !revision) throw new Error(`Central read ${path} without its revision, so its adoption cannot be checked against it; nothing was adopted.`)
+  const links = [...new Set(files.filter(file => file && file !== LAW_FLOOR))]
+  return centralWrite(transport, 'control.law.adopt', {statement: path, expected_revision: revision, files: links})
+}
+
+/** One of Central's readings through invoke_action, asked of Central itself (the read that precedes a write). */
+async function readCall(transport: KernelTransportStatus, action: string, input: Readonly<Record<string, unknown>>): Promise<Parameters<typeof actionAnswerOf>[0]> {
+  const call = await kernelRead(transport, centralActionOp(action, input), {fresh: true})
+  if (call.error) return {status: 'refused', value: null, error: call.error}
+  return {status: 'answered', value: call.outcome?.result === 'action_dispatched' ? call.outcome : null, error: null}
 }
 
 /** Save settings of the Day's own on the revision read (central.day.settings.write: exact revision, `absent` before the first save). */
