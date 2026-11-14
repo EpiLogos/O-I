@@ -27,6 +27,6 @@
     "act": "the-day-holds-it-and-closes",
     "test": "act_5_the_day_holds_it_and_closes",
     "standing": "red",
-    "reason": "13 Nov 2026: today's Day opens on the ground Setup keeps, but no Action receipt lays an entry in it: the page saved is absent from the Day Central reads"
+    "reason": "14 Nov 2026 (export of a82ccc3eb, codex): today's Day opened by itself, held the page saved and the passage sent and answered, and closed by itself at its turn; the act stays red on act 4: Factory's Set holds no task (no .factory in the fresh World), so no Factory task run is held in the Day"
   }
 ]
