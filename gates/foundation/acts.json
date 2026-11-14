@@ -32,7 +32,7 @@
   {
     "act": "make-an-expression-and-keep-a-take",
     "test": "act_6_make_an_expression_and_keep_a_take",
-    "standing": "red",
-    "reason": "14 Nov 2026: Expressions has no slice of the World Model and no expressions.* Action; the act is written and fails at step 0"
+    "standing": "green",
+    "reason": "14 Nov 2026 (export of 35dd479f1; Central main's ctrl 61549e0ef): on a fresh World the World Model's expressions slice reads the kernel's expression store and Expressions' Set is built from it; expressions.new makes a work of one blank Scene and saves it into the works home (Control/user/flows/gate-act-six-<id>.expression.json), read back the same from Central's central.files.read and from the disk; two presses by the act the Set declares on the track's Studio (expressions.studio.set) write Turbulence and Curl Speed into the Scene; expressions.scene.save keeps its saved version and moves the file; a launch plays it in the kernel's playback, the clip running from where it lands; Arm and a second launch record take 1, the two presses made while it records lie on its lane in time, and Stop lays it on the Scene; the take's own keep (expressions.take.keep) writes its points into the Scene's main lane and the take stands; expressions.save keeps all of it in the file; the kernel started again holds no working copy, and the closed track's open act (expressions.open) reopens the work with the same saved Scene, the take kept and its lane, as the Set shows (#1008)"
   }
 ]
