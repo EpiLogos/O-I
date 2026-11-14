@@ -261,11 +261,12 @@ stop_now() { "$aikit" --json now-context service stop >/dev/null 2>&1 || true; }
 # The owner processes this World's Actions started (a session's encounter server outlives its end): every process whose command
 # line names this World's root, each stopped by its pid, never by a pattern.
 stop_owners() {
-  local pid
+  local pid waited
   for pid in $(ps -axww -o pid=,command= | awk -v root="$root" -v me="$$" 'index($0, root) && $1 != me {print $1}'); do
     kill -TERM "$pid" 2>/dev/null || continue
-    for _ in 1 2 3 4 5 6 7 8 9 10; do kill -0 "$pid" 2>/dev/null || break; sleep 0.5; done
-    kill -KILL "$pid" 2>/dev/null || true
+    waited=0
+    while kill -0 "$pid" 2>/dev/null && [ "$waited" -lt 10 ]; do sleep 0.5; waited=$((waited + 1)); done
+    if kill -0 "$pid" 2>/dev/null; then kill -KILL "$pid" 2>/dev/null || true; fi
   done
 }
 trap 'stop_now; stop_owners; [ "$keep" = 1 ] || rm -rf "$root"' EXIT
