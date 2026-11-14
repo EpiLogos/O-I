@@ -9,7 +9,8 @@
 //! | `day`       | Central   | today's Day of the root register (`day_read`)                           | root, clock   |
 //! | `agents`    | Actuation | the census (census.rs): detection, a start of each, AIKit's detail and  | clock (a day) |
 //! |             |           | what each carries (its model, skill set, and its floor's law: Central)  |               |
-//! | `sessions`  | AIKit     | the root register's Agent sessions (`agency_read`)                      | aikit, root   |
+//! | `sessions`  | AIKit     | the root register's Agent sessions (`agency_read`), and the gateway:    | aikit, root   |
+//! |             |           | its ecology, its conversation binding and that binding's harness reading|               |
 //! | `models`    | AIKit     | the resolved model catalogue (`model_catalogue`)                        | aikit         |
 //! | `factory`   | Factory   | runs, tasks and attempts: the sources in scope (`factory_owner` locate),  | root, work    |
 //! |             |           | each one's journeys and runs, each run's reading and attempt field      |               |
@@ -563,6 +564,8 @@ pub fn written_by(op: &KernelOp) -> Vec<Slice> {
             vec![Slice::Agents, Slice::Models, Slice::Sessions]
         }
         "workcell_write" => vec![Slice::Workcells],
+        // A gateway binding's ingress rule is AIKit's gateway, which the sessions slice carries (its ecology names the rules).
+        "harness_ingress_rule" => vec![Slice::Sessions],
         _ => Vec::new(),
     }
 }
@@ -620,6 +623,7 @@ pub fn wrote(op_name: &str, outcome: &KernelOpOutcome) -> bool {
                 | "aikit_write"
                 | "client_install"
                 | "encounter_provision"
+                | "harness_ingress_rule"
         )
 }
 
@@ -632,7 +636,7 @@ fn load(slice: Slice, via: Via<'_>) -> Result<Value, String> {
         Slice::Worlds => worlds(via),
         Slice::Day => payload(ask(via, json!({"op": "day_read"}))?),
         Slice::Agents => crate::census::read(via),
-        Slice::Sessions => payload(ask(via, json!({"op": "agency_read", "project": ""}))?),
+        Slice::Sessions => sessions(via),
         Slice::Models => payload(ask(via, json!({"op": "model_catalogue"}))?),
         Slice::Factory => factory(via),
         Slice::Workcells => workcells(via),
@@ -847,6 +851,58 @@ fn part(read: Result<Value, String>) -> Value {
     }
 }
 
+/// The root register's Agent sessions (`agency_read`), with AIKit's gateway beside them as its own part (`gateway`), so a gateway
+/// that does not answer leaves the sessions as they were read. The Factory chain's Gateway, Agent and Scope read the gateway here
+/// (O-I #1006), never the owner.
+fn sessions(via: Via<'_>) -> Result<Value, String> {
+    let mut agency = payload(ask(via, json!({"op": "agency_read", "project": ""}))?)?;
+    if let Some(object) = agency.as_object_mut() {
+        object.insert("gateway".to_owned(), part(gateway(via)));
+    }
+    Ok(agency)
+}
+
+/// AIKit's gateway: its ecology (`aikit gateway ecology`), the conversation binding the harness controls address (the first
+/// conversation surface's `binding_ref` it names), and that binding's harness reading (`aikit gateway agent --binding B sessions`,
+/// the kernel's `harness_agent_read`) as its own part. A gateway that names no conversation leaves the binding null and says so.
+fn gateway(via: Via<'_>) -> Result<Value, String> {
+    let read = payload(ask(
+        via,
+        json!({"op": "aikit_read", "request": {"kind": "gateway-ecology"}}),
+    )?)?;
+    let ecology = read.get("data").cloned().unwrap_or(read);
+    let Some(binding) = conversation_binding(&ecology) else {
+        return Ok(
+            json!({"ecology": ecology, "binding": null, "agent": part(Err(
+                "AIKit's gateway names no conversation binding (`aikit gateway ecology`): no harness control has a binding to address.".to_owned(),
+            ))}),
+        );
+    };
+    let agent = ask(via, json!({"op": "harness_agent_read", "binding": binding}))
+        .and_then(payload)
+        .map(|reading| reading.get("document").cloned().unwrap_or(reading));
+    Ok(json!({"ecology": ecology, "binding": binding, "agent": part(agent)}))
+}
+
+/// The binding the shell's harness controls address: the first conversation surface's `binding_ref` in AIKit's gateway ecology
+/// (`{type: "ecology", ecology: {agencies[].sessions[].surfaces[].binding_ref}}`). Client status names harnesses, never a binding.
+fn conversation_binding(ecology: &Value) -> Option<String> {
+    if ecology["type"] != "ecology" {
+        return None;
+    }
+    ecology["ecology"]["agencies"]
+        .as_array()?
+        .iter()
+        .flat_map(|agency| agency["sessions"].as_array().into_iter().flatten())
+        .flat_map(|session| session["surfaces"].as_array().into_iter().flatten())
+        .find_map(|surface| {
+            surface["binding_ref"]
+                .as_str()
+                .filter(|binding| !binding.is_empty())
+                .map(str::to_owned)
+        })
+}
+
 /// The seats and the workcells, each its own reading: one unreadable leaves the other.
 fn workcells(via: Via<'_>) -> Result<Value, String> {
     let seats = ask(via, json!({"op": "seat_status_read"})).and_then(payload);
@@ -1001,6 +1057,125 @@ mod tests {
             Err("Central returned no root disclosure".to_owned())
         );
         assert_eq!(browsed.load(std::sync::atomic::Ordering::SeqCst), 6);
+    }
+
+    #[test]
+    fn the_sessions_slice_carries_the_gateway_its_binding_and_that_bindings_harness_reading() {
+        use crate::KernelOpResult::{AgencyReading, HarnessAgentReading, OwnerRouteReading};
+        let ecology =
+            |agencies: Value| json!({"type": "ecology", "ecology": {"agencies": agencies}});
+        let named = ecology(
+            json!([{"sessions": [{"surfaces": [{"kind": "tui"}, {"binding_ref": "gateway-binding/lanea"}]}]}]),
+        );
+        let read = |gateway: Result<Value, String>, agent: Result<Value, String>| {
+            let asked = Mutex::new(Vec::new());
+            let via = |op: KernelOp| -> Result<KernelOpOutcome, String> {
+                let body = serde_json::to_value(&op).expect("an op serialises");
+                asked
+                    .lock()
+                    .unwrap()
+                    .push(body["op"].as_str().unwrap_or_default().to_owned());
+                let result = match body["op"].as_str().unwrap_or_default() {
+                    "agency_read" => AgencyReading {
+                        project_ref: "project:root".into(),
+                        spaces: json!([]),
+                        harness_disclosure: json!({}),
+                        observed_at_unix_ms: 1,
+                    },
+                    "aikit_read" if body["request"]["kind"] == "gateway-ecology" => {
+                        OwnerRouteReading {
+                            route: "aikit gateway ecology".into(),
+                            data: gateway.clone()?,
+                            warnings: Vec::new(),
+                        }
+                    }
+                    "harness_agent_read" => HarnessAgentReading {
+                        binding: body["binding"].as_str().unwrap_or_default().to_owned(),
+                        document: agent.clone()?,
+                    },
+                    other => panic!("the sessions slice asked {other}"),
+                };
+                Ok(KernelOpOutcome {
+                    receipts: Vec::new(),
+                    read_scopes: None,
+                    result,
+                })
+            };
+            let value = sessions(&via).expect("the agency reads");
+            (value, asked.into_inner().unwrap())
+        };
+
+        let (value, asked) = read(
+            Ok(named.clone()),
+            Ok(json!({"model": "gpt-5", "approvals": "ask"})),
+        );
+        assert_eq!(
+            value["spaces"],
+            json!([]),
+            "the agency reading stands as it was read"
+        );
+        assert_eq!(value["gateway"]["state"], "read");
+        assert_eq!(
+            value["gateway"]["reading"]["binding"], "gateway-binding/lanea",
+            "the first conversation surface's binding"
+        );
+        assert_eq!(
+            value["gateway"]["reading"]["ecology"], named,
+            "the ecology is carried whole: Scope's Calls and the Frames read it"
+        );
+        assert_eq!(
+            value["gateway"]["reading"]["agent"],
+            json!({"state": "read", "reading": {"model": "gpt-5", "approvals": "ask"}})
+        );
+        assert_eq!(asked, ["agency_read", "aikit_read", "harness_agent_read"]);
+
+        let (value, asked) = read(
+            Ok(ecology(
+                json!([{"sessions": [{"surfaces": [{"kind": "tui"}]}]}]),
+            )),
+            Ok(json!({})),
+        );
+        assert_eq!(
+            value["gateway"]["reading"]["binding"],
+            Value::Null,
+            "a gateway that holds no conversation names no binding"
+        );
+        assert!(value["gateway"]["reading"]["agent"]["why"]
+            .as_str()
+            .unwrap()
+            .contains("names no conversation binding"));
+        assert!(
+            !asked.contains(&"harness_agent_read".to_owned()),
+            "no binding is read when none is named"
+        );
+        assert_eq!(
+            conversation_binding(
+                &json!({"type": "client-status", "harnesses": [{"binding_ref": "x"}]})
+            ),
+            None,
+            "client status names harnesses, never a binding"
+        );
+
+        let (value, _) = read(Err("aikit: no gateway is configured".into()), Ok(json!({})));
+        assert_eq!(
+            value["gateway"],
+            json!({"state": "refused", "why": "aikit: no gateway is configured"}),
+            "a gateway refusal leaves the sessions"
+        );
+        assert_eq!(value["project_ref"], "project:root");
+
+        let (value, _) = read(
+            Ok(named),
+            Err("the gateway at its socket did not answer".into()),
+        );
+        assert_eq!(
+            value["gateway"]["state"], "read",
+            "the binding's reading refused is that part's alone"
+        );
+        assert_eq!(
+            value["gateway"]["reading"]["agent"],
+            json!({"state": "refused", "why": "the gateway at its socket did not answer"})
+        );
     }
 
     #[test]
