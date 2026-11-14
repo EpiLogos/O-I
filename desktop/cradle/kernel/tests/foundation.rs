@@ -1430,8 +1430,10 @@ fn keep_the_answer(
         .replace('&', "&amp;")
         .replace('<', "&lt;")
         .replace('>', "&gt;");
-    let entry = json!({"id": format!("foundation-{}-{agent}", std::process::id()), "author": initial,
-        "at": "2026-11-13T00:00:00.000Z", "html": format!("<p>{escaped}</p>"), "replyTo": null, "touched": false});
+    let id = format!("foundation-{}-{agent}", std::process::id());
+    let html_of_entry = format!("<p>{escaped}</p>");
+    let entry = json!({"id": id, "author": initial,
+        "at": "2026-11-13T00:00:00.000Z", "html": html_of_entry, "replyTo": null, "touched": false});
     doc["entries"]
         .as_array_mut()
         .ok_or("the page's island has no entries")?
@@ -1458,10 +1460,25 @@ fn keep_the_answer(
         .as_str()
         .or_else(|| back["text"].as_str())
         .unwrap_or_default();
-    if !content.contains(&escaped) || back["revision"].as_str() != Some(kept.as_str()) {
+    // The answer as the page holds it: its entry in the island, read as the form reads it (an answer's newline or quote stands
+    // escaped in the island's JSON, never as the words themselves).
+    let (_, _, held) = island_of(content)?;
+    let holds = held["entries"].as_array().is_some_and(|entries| {
+        entries
+            .iter()
+            .any(|entry| entry["id"] == id.as_str() && entry["html"] == html_of_entry.as_str())
+    });
+    if !holds {
         return Err(format!(
-            "Central reads the page without {agent}'s answer at revision {kept}: {}",
-            clip(&back)
+            "Central reads the page without {agent}'s answer (entry {id}) at revision {}; its last entry: {}",
+            back["revision"],
+            clip(held["entries"].as_array().and_then(|entries| entries.last()).unwrap_or(&Value::Null))
+        ));
+    }
+    if back["revision"].as_str() != Some(kept.as_str()) {
+        return Err(format!(
+            "Central reads the page at revision {}, not at {kept}, the revision keeping {agent}'s answer answered",
+            back["revision"]
         ));
     }
     Ok(kept)
