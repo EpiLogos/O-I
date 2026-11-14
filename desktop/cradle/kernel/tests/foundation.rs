@@ -1666,7 +1666,14 @@ fn write_and_run(
 
 /// git in one folder, the gate's commits signed by the gate.
 fn git(cwd: &Path, args: &[&str]) -> Result<String, String> {
-    let output = Command::new("git")
+    let mut git = Command::new("git");
+    // A GIT_* the gate was run with never aims these at a repository it did not make (round 896 1T): its children get none of them.
+    for (name, _) in std::env::vars_os() {
+        if name.to_string_lossy().starts_with("GIT_") {
+            git.env_remove(name);
+        }
+    }
+    let output = git
         .args([
             "-c",
             "user.name=foundation",
