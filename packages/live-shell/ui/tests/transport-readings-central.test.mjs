@@ -196,6 +196,39 @@ test('Central\'s core: Play, Overdub and Arm press their writes, Stop while Play
   // No write arm mounted: Arm stands refused with why.
   const {setArm: _unused, ...unarmed} = core
   assert.match(R.coreSlots(unarmed).arm.refused, /write arm is not mounted/)
+  // A passage selected in the page the hand reached: Capture presses the page's own To packet, and its title names the passage.
+  const capturing = R.coreSlots({...core, capture: () => pressed.push(['capture']), captured: 'the  code is\nQX-4821'})
+  capturing.capture.press()
+  assert.deepEqual(pressed.at(-1), ['capture'])
+  assert.match(capturing.capture.title, /^Capture — “the code is QX-4821” goes to the page's packet, as the page's own To packet; Play sends it/)
+  assert.match(R.coreSlots({...core, capture: () => {}, captured: 'w'.repeat(200)}).capture.title, /“w{79}…”/, 'a long passage is named by its opening words')
+  // No page reached, or a form with no packet: Capture says which.
+  assert.equal(R.coreSlots({...core, captureRefused: 'No page is reached.'}).capture.refused, 'No page is reached.')
+})
+
+// O-I ticket 1005 (world-shell.md §9.3 "Capture (selection → packet)"): the passage selected in a Flow crosses the host bridge — the page
+// tells its host (ql-flow.html `oi:selection`), the face publishes it with the page's own To packet on the door (DocumentFlowFace.tsx), and
+// the transport's Capture presses that To packet; the face reads the island at once, so the Packet, the Key count and Play follow.
+test('Capture carries the passage selected in the reached page to its packet by the page\'s own To packet, across the host bridge', async () => {
+  const page = await readFile(new URL('../../../../desktop/cradle/documents/ql-flow.html', import.meta.url), 'utf8')
+  assert.match(page, /placeTool\._t=setTimeout\(\(\)=>\{ placeTool\(\); postSel\(\); \},120\)/, 'each settled selection is told to the host')
+  assert.match(page, /window\.parent\.postMessage\(\{type:'oi:selection',text,entry\},'\*'\)/, 'its words and its entry')
+  assert.match(page, /if\(window\.parent===window\) return;/, 'standing alone, nothing is posted')
+  assert.match(page, /ev\.source!==window\.parent\|\|!ev\.data\|\|ev\.data\.type!=='oi:to-packet'/, 'only its host presses To packet')
+  // One To packet: the selection tool's button and the host's press run the same function.
+  assert.match(page, /else if\(kind==='packet'\)\{ toPacket\(c,e\); \}/)
+  assert.match(page, /toPacket\(c,e\); heldSel=null;/)
+  assert.equal(page.match(/D\.packet\.push\(\{id:uid\(\),entryId:e\.id,scope:'selection'/g)?.length, 1, 'a selection is put in the packet in one place')
+  const face = await source('inhabitants/DocumentFlowFace.tsx')
+  assert.match(face, /event\.source !== frame\.current\?\.contentWindow \|\| \(event\.data as \{type\?: unknown\}\)\?\.type !== SELECTION_MESSAGE/, 'from its own frame only')
+  assert.match(face, /postMessage\(\{type: TO_PACKET_MESSAGE\}, '\*'\)\n    void refreshDraftStanding\(\)/, 'the island is read at once after the press')
+  assert.ok(face.includes('...(selection ? {selection, toPacket} : {})'), 'the door carries the passage and the page\'s To packet')
+  const {selectionOf} = await import('../src/inhabitants/DocumentFlowFace.tsx')
+  assert.deepEqual(selectionOf({type: 'oi:selection', text: '  the code is QX-4821 ', entry: 'e-2'}), {text: 'the code is QX-4821', entry: 'e-2'})
+  assert.equal(selectionOf({type: 'oi:selection', text: '   ', entry: null}), null, 'empty words: no passage stands')
+  assert.deepEqual(selectionOf({text: 'w', entry: 7}), {text: 'w', entry: null})
+  const hook = await source('shell/transports/useCentralTransport.tsx')
+  assert.ok(hook.includes('document?.selection && document.toPacket ? {capture: document.toPacket, captured: document.selection.text}'), 'Capture presses the reached page\'s To packet')
 })
 
 test('O-I ticket 1005: the hook sends through the packet\'s conversation\'s one session and keeps the answer through the Flow\'s own write, or proposes it with Arm off', async () => {

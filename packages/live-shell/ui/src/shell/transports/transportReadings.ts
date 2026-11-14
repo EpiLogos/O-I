@@ -270,10 +270,16 @@ export interface CentralCore {
   readonly setArm?: (on: boolean) => void
   readonly take: AnswerTake
   readonly setTake: (take: AnswerTake) => void
+  /** Capture: the passage selected in the page the hand reached, carried to the page's packet by the page's own To packet (documentDoor.ts
+   * DocumentInPane.toPacket; ql-flow.html `oi:to-packet`); absent while no passage stands selected, with why (`captureRefused`). */
+  readonly capture?: () => void
+  readonly captureRefused?: string
+  /** The passage Capture would carry, in the page's words. */
+  readonly captured?: string
 }
 
-/** Why Capture stands refused in the transport: the page's selection never reaches the shell. */
-export const CENTRAL_CAPTURE_WHY = 'The page\'s selection does not cross the host bridge (ql-flow.html currentSel; documentDoor.ts reads the island only): select the passage in the page\'s pane and press To packet there. The Packet, the Key count and Play read the page\'s packet.'
+/** Why Capture stands dimmed while no page's passage stands selected (the selection crosses the host bridge: ql-flow.html `oi:selection`). */
+export const CENTRAL_CAPTURE_WHY = 'No passage stands selected in a page: select one in an entry of a Flow open in a pane, and Capture carries it to the page\'s packet (its own To packet). The Packet, the Key count and Play read the page\'s packet.'
 const OUTSIDE = (what: string) => `${what} is outside Central's core (world-shell.md §9.3: Play, Stop, Overdub, Arm, Capture, Load); it waits until the core passes its gate.`
 /** The slots outside the core, each dimmed with its reason where nothing else binds it. */
 export const CENTRAL_OUTSIDE_CORE: Readonly<Partial<Record<TransportSlotId, string>>> = {
@@ -282,7 +288,8 @@ export const CENTRAL_OUTSIDE_CORE: Readonly<Partial<Record<TransportSlotId, stri
   'loop-length': OUTSIDE('Day span'), draw: OUTSIDE('The highlight pen'), keys: OUTSIDE('Keys'), 'key-map': OUTSIDE('Key mapping'), 'midi-map': OUTSIDE('MIDI mapping'),
 }
 
-/** The core's slots: Play and Stop on the packet's conversation, Overdub and Arm as held, Capture refused with why. Pure. */
+/** The core's slots: Play and Stop on the packet's conversation, Overdub and Arm as held, Capture on the page's selection or dimmed with
+ * why. Pure. */
 export function coreSlots(core: CentralCore): TransportBindings {
   return {
     play: core.play ? {press: core.play, title: core.playWords} : {refused: core.playRefused ?? 'Play waits for the packet\'s conversation.', title: core.playWords},
@@ -295,8 +302,16 @@ export function coreSlots(core: CentralCore): TransportBindings {
       title: core.arm ? 'Arm — on: the answer lands in the page as the agent\'s entry, with its sources and the owner\'s receipt. Press to make answers proposals.'
         : 'Arm — off: the answer is a proposal and nothing is written in the page: Central\'s source Return, which Approvals accepts or refuses. Press to let it land in the page.'}
       : {refused: 'The shell\'s write arm is not mounted here (AgentShellContext).'},
-    capture: {refused: CENTRAL_CAPTURE_WHY},
+    capture: core.capture
+      ? {press: core.capture, title: `Capture — “${clipWords(core.captured ?? '')}” goes to the page's packet, as the page's own To packet; Play sends it with the conversation.`}
+      : {refused: core.captureRefused ?? CENTRAL_CAPTURE_WHY},
   }
+}
+
+/** A passage as a title names it: its opening words, cut with an ellipsis past 80 characters. Pure. */
+const clipWords = (words: string): string => {
+  const flat = words.replace(/\s+/g, ' ').trim()
+  return flat.length > 80 ? `${flat.slice(0, 79)}…` : flat
 }
 
 /** Central's Autosave and Save timing (the Metronome and Quantize slots; §17.8 Transport "Saves as you go", "Sets when a save lands"): the

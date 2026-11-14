@@ -43,6 +43,11 @@ export interface DocumentInPane {
   /** The page's own packet as its form holds it now (a Flow's island, `D.packet`, read by the face's bounded read): what To packet put
    * there, saved or not. The Packet device and the transport's count read it (walk 739 gap 14: the packet is the document's). */
   packet?: readonly PagePacketItem[]
+  /** The passage selected in the page now, as its form tells its host (a Flow's `oi:selection`; DocumentFlowFace.tsx), and the page's own
+   * To packet on it (`oi:to-packet`): Central's Capture (world-shell.md §9.3, selection → packet; O-I ticket 1005). Absent while none
+   * stands. */
+  selection?: {readonly text: string; readonly entry: string | null}
+  toPacket?: () => void
 }
 
 /** A Day held open in a pane: the face its form shows and the turn that reaches it (the form's own turn, through the face's bridge). */

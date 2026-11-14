@@ -17,7 +17,9 @@
 //    and keeps the answer per Arm — the shell's one write arm (AgentShellContext `writeArm`): on, in the page the hand reached as the agent's
 //    entry with its sources (centralDeviceWrites.ts keepAgentAnswer), a new entry or the replacement Overdub names; off, a proposal for that
 //    page, nothing written: Central's source Return, which Approvals accepts or refuses (proposeAgentAnswer; a page of a project). Stop cancels
-//    the turn Play sent. Capture stands refused with why; Load is the Save state slot.
+//    the turn Play sent. Capture carries the passage selected in the page the hand reached to the page's packet, by the page's own To
+//    packet (documentDoor.ts DocumentInPane.toPacket; ql-flow.html `oi:selection`, `oi:to-packet`), or stands dimmed with why; Load is the
+//    Save state slot.
 // The Day is the kernel's to keep current (its watch, its own writes, the Day's turn) — never polled.
 import {useContext, useState} from 'react'
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
@@ -116,7 +118,12 @@ export const useCentralTransport: UseModeTransport = ({readouts}) => {
   const playWords = [`Play — send what ${agent}'s conversation holds, with the packet (${sources.length} item${sources.length === 1 ? '' : 's'}); the answer ${arm
     ? `lands in ${page ? page.title || 'the page' : 'the open Flow page'} as ${take === 'replace' ? 'the replacement of the agent\'s last entry' : 'a new entry'}, with its sources`
     : `is a proposal for ${page ? page.title || 'the page' : 'the open Flow page'} (Arm is off), which Approvals accepts or refuses: nothing is written in the page`}.`, played].filter(Boolean).join(' ')
-  const core = {playWords, arm, take, setTake, ...(play ? {play} : {}), ...(playRefused ? {playRefused} : {}),
+  // Capture: the passage selected in the page the hand reached, to its packet by the page's own To packet; dimmed with why otherwise.
+  const captureRefused = !document ? 'No page is reached: open a Flow in a pane and select a passage in one of its entries; Capture carries it to the page\'s packet.'
+    : document.form !== 'Flow' ? `The ${document.form} keeps no packet of its own: Capture carries a passage selected in a Flow's entry to that page's packet.` : null
+  const capture = document?.selection && document.toPacket ? {capture: document.toPacket, captured: document.selection.text}
+    : captureRefused ? {captureRefused} : {}
+  const core = {playWords, arm, take, setTake, ...capture, ...(play ? {play} : {}), ...(playRefused ? {playRefused} : {}),
     ...(playing && conversation ? {stop: () => encounterSessionOf(transport, conversation).cancel()} : {}),
     ...(shell ? {setArm: shell.setWriteArm} : {})}
   return centralBindings({ground: ground.reading, groundError: ground.error, packet, config, transport, readouts, turn, turned, document, autosave, core,
