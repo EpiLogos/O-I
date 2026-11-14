@@ -348,6 +348,37 @@ test('the Flow refuses in words: an agent\'s entry, a page holding a draft, a mo
   assert.equal(parseInstance(moved.state.html).entries.length, 5, 'a conflict overwrites nothing')
 })
 
+// O-I ticket 1005 (world-shell.md §9.3): Play with Arm on keeps the agent's answer in the page as the agent's own entry, its sources named under
+// it, through the Flow's revision-checked write; Overdub's replace writes it as the correction of the agent's last entry; a new agent joins
+// the page by its session. FIXTURE owner (the fake above).
+test('Play keeps the answer in the page as the agent\'s entry with its sources: a new entry, or the replacement of its last one', async () => {
+  const owner = fakeFlowOwner()
+  await withOwner(owner, () => writes.keepAgentAnswer(bridge, LOCATION, {text: 'Omarchy first.\n\nThen the image.', agent: 'Factory coordinator', session: 'codex:01a0',
+    sources: ['Factory Run · entry 4 (F)'], take: 'new'}))
+  let after = parseInstance(owner.state.html)
+  let added = after.entries.at(-1)
+  assert.equal(after.entries.length, 6)
+  assert.equal(added.authorKey, 'p-c', 'the agent the page already names, by its session')
+  assert.match(added.html, /<p>Omarchy first\.<\/p><p>Then the image\.<\/p>/)
+  assert.match(added.html, /Sources:<\/em> Factory Run · entry 4 \(F\)/)
+  assert.deepEqual(added.relations ?? [], [], 'a new entry corrects nothing')
+  await withOwner(owner, () => writes.keepAgentAnswer(bridge, LOCATION, {text: 'Omarchy, then the image.', agent: 'Factory coordinator', session: 'codex:01a0', sources: [], take: 'replace'}))
+  after = parseInstance(owner.state.html)
+  added = after.entries.at(-1)
+  assert.deepEqual(added.relations.map(relation => [relation.type, relation.entryId]), [['correct', after.entries.at(-2).id]], 'the replacement corrects the agent\'s last entry')
+  // An agent the page does not name yet joins it by its session; it has nothing to replace.
+  await withOwner(owner, () => writes.keepAgentAnswer(bridge, LOCATION, {text: 'A third view.', agent: 'claude-code', session: 'agent-session:fresh', sources: [], take: 'new'}))
+  after = parseInstance(owner.state.html)
+  const joined = after.meta.participants.find(person => person.ref === 'agent-session:fresh')
+  assert.equal(joined?.kind, 'agent'); assert.equal(joined?.name, 'claude-code')
+  assert.equal(after.entries.at(-1).authorKey, joined.key)
+  await withOwner(owner, () => assert.rejects(writes.keepAgentAnswer(bridge, LOCATION, {text: 'x', agent: 'gemini', session: 'agent-session:none', sources: [], take: 'replace'}), /has no entry on this page to replace/))
+  const moved = fakeFlowOwner({conflict: true})
+  await withOwner(moved, () => assert.rejects(writes.keepAgentAnswer(bridge, LOCATION, {text: 'Kept words.', agent: 'Factory coordinator', session: 'codex:01a0', sources: [], take: 'new'}),
+    /page moved twice[\s\S]*Kept words\./))
+  assert.equal(parseInstance(moved.state.html).entries.length, 5, 'a conflict overwrites nothing')
+})
+
 // ─────────────────────────────────────────────────────────────────────────────────────────────────── the effects
 
 test('Text reads each paragraph\'s style and each word\'s emphasis from the page\'s own tags; size and selection are absent, and every write is the page\'s', async () => {

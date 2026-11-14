@@ -280,7 +280,6 @@ test('Relate, Recognise, Ensure, Reproject and Initialise root write through Cen
 // press channel. Central's answers are its own on an isolated ground (14 Nov 2026), the root written <root>; SCRIPTED channel.
 test('a law statement is adopted on the revision Central reads now, with the files the agents read, by the person\'s press', async () => {
   const writes = await import('../src/central/devices/centralDeviceWrites.ts')
-  const {lawFilesOf} = await import('../src/central/devices/pageDevices.ts')
   const path = 'Control/agents/governance/craft/plain-words.md'
   const location = {schema: 'central.path-ref/v1', root: '<root>', path, ref: `central:path:<root>:${path}`}
   const revision = 'central.content-fnv1a64/v1:58:5d2bf5e4f2a8e0c1'
@@ -289,6 +288,11 @@ test('a law statement is adopted on the revision Central reads now, with the fil
     'central.files.read': {revision, content: '# Plain words\n\nSay what the work is in the words of the work.\n', schema: 'central.file-reading/v1'},
     'control.law.adopt': {adopted: true, schema: 'central.law-adoption/v1', floor: {floor: 'AGENTS.md', links: [{file: 'CLAUDE.md', state: 'made', to: 'AGENTS.md'}]}},
   }
+  // The World Model's agents as the kernel answers the slice (census.rs: each agent's floor, carries.law.file).
+  const agentsHeld = {state: 'held', answer: {schema: 'oi.world-model-slice/v1', slice: 'agents', version: 3, owner: 'kernel', value: {agents: [
+    {slug: 'claude-code', carries: {law: {file: 'CLAUDE.md', state: 'absent'}}}, {slug: 'codex', carries: {law: {file: 'AGENTS.md'}}},
+    {slug: 'claude', carries: {law: {file: 'CLAUDE.md'}}}, {slug: 'gemini', carries: {law: {file: 'GEMINI.md'}}},
+    {slug: 'pi', carries: {law: {why: 'AIKit names no instruction file pi reads'}}}]}}}
   const invoked = []
   const priorWindow = globalThis.window
   globalThis.window = {__TAURI_INTERNALS__: {invoke: async (command, args) => {
@@ -297,7 +301,7 @@ test('a law statement is adopted on the revision Central reads now, with the fil
     return {result: 'action_dispatched', dispatch: {state: 'invoked', owner_operation: action, data: answers[action]}}
   }}}
   try {
-    const receipt = await writes.adoptLaw({kind: 'tauri'}, 'craft/plain-words.md', ['AGENTS.md', 'CLAUDE.md', 'CLAUDE.md', 'GEMINI.md'])
+    const receipt = await writes.adoptLaw({kind: 'tauri'}, 'craft/plain-words.md', async () => agentsHeld)
     assert.equal(receipt.adopted, true)
     assert.deepEqual(invoked.map(([command, action]) => [command, action]), [['kernel_press', 'central.files.list'], ['kernel_press', 'central.files.read'], ['kernel_press', 'control.law.adopt']])
     assert.deepEqual(invoked[0][2], {path: 'Control/agents/governance/craft'})
@@ -305,17 +309,14 @@ test('a law statement is adopted on the revision Central reads now, with the fil
     assert.deepEqual(invoked[2][2], {statement: path, expected_revision: revision, files: ['CLAUDE.md', 'GEMINI.md']}, 'the floor is not linked to itself, and each file once')
     // A statement not written yet is refused before anything is adopted.
     invoked.length = 0
-    await assert.rejects(writes.adoptLaw({kind: 'tauri'}, 'craft/unwritten.md', []), /is not written on tier 0/)
+    await assert.rejects(writes.adoptLaw({kind: 'tauri'}, 'craft/unwritten.md', async () => agentsHeld), /is not written on tier 0/)
     assert.deepEqual(invoked.map(([, action]) => action), ['central.files.list'])
   } finally {
     if (priorWindow === undefined) delete globalThis.window; else globalThis.window = priorWindow
   }
   // The files come from the World Model's agents: each agent's floor, once.
-  const held = {state: 'held', answer: {schema: 'oi.world-model-slice/v1', slice: 'agents', version: 3, owner: 'kernel', value: {agents: [
-    {slug: 'claude-code', carries: {law: {file: 'CLAUDE.md', state: 'absent'}}}, {slug: 'codex', carries: {law: {file: 'AGENTS.md'}}},
-    {slug: 'claude', carries: {law: {file: 'CLAUDE.md'}}}, {slug: 'pi', carries: {law: {why: 'AIKit names no instruction file pi reads'}}}]}}}
-  assert.deepEqual(lawFilesOf(held), ['CLAUDE.md', 'AGENTS.md'])
-  assert.deepEqual(lawFilesOf({state: 'reading'}), [])
+  assert.deepEqual(writes.lawFilesOf(agentsHeld), ['CLAUDE.md', 'AGENTS.md', 'GEMINI.md'])
+  assert.deepEqual(writes.lawFilesOf({state: 'reading'}), [])
 })
 
 // The Docs device's family note says what Docs reads: held equal to the readings the binding asks (DOCS_ACTIONS, and AIKit's reflection laws

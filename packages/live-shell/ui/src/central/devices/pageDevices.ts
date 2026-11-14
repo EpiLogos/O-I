@@ -23,7 +23,6 @@ import {revealDocumentPane, subjectOf} from '../documents/centralDocuments'
 import {useReachedDocument, type DocumentInPane} from '../documents/documentDoor'
 import {centralDeviceId, type CentralReads} from './centralDeviceModel'
 import {adoptLaw, appendFlowEntry, centralWrite, setFlowMeta} from './centralDeviceWrites'
-import {sliceValue, useModelSlice} from '../../owners/model'
 import {civilDayName, type DayAperture} from './dayBinding'
 import {DOCS_ACTIONS, docsBinding, docsHorizonInput, readDocsMeaning, documentBinding, flowBinding, highlightBinding, holdsVersion, notesBinding, subscribeHolds, textBinding, workspaceBinding, type BookWorkspace,
   type AikitAsk, type DocsPorts, type TrackWorld, type PageMaterial, type ReachedPage} from './pageBindings'
@@ -216,11 +215,8 @@ export function useDocsDevice(transport: KernelTransportStatus, id: string, worl
   [project, meaningRead.status, meaningRead.value, meaningRead.error])
   const horizonInput = useMemo(() => docsHorizonInput(project, meaning), [project, meaning])
   const horizon = useCentralActionAsked(transport, DOCS_ACTIONS.horizon, horizonInput)
-  // The root world's tier 0 is its law (manual §18.5): Central's index of it, and the instruction files the agents on this machine read
-  // (the World Model's agents: each one's floor, census.rs `carries.law.file`), which an adoption makes links to the floor.
+  // The root world's tier 0 is its law (manual §18.5): Central's index of it; Recognise adopts a statement (adoptLaw).
   const law = useCentralActionAsked(transport, DOCS_ACTIONS.law, project ? null : NO_INPUT)
-  const agents = useModelSlice(project ? null : transport, 'agents')
-  const floors = useMemo(() => lawFilesOf(agents), [agents])
   useSyncExternalStore(subscribeHolds, holdsVersion, holdsVersion)
   const holds = holdsVersion()
   const readAgain = useMemo(() => [inspect.again, ground.again, doctor.again, plan.again, horizon.again, law.again, askAgain],
@@ -228,22 +224,14 @@ export function useDocsDevice(transport: KernelTransportStatus, id: string, worl
   const ports = useMemo((): DocsPorts => (transport.kind === 'unavailable' ? {} : {
     central: (action, input) => centralWrite(transport, action, input),
     reread: () => { for (const again of readAgain) again() },
-    ...(project ? {} : {adopt: (statement: string) => adoptLaw(transport, statement, floors)}),
-  }), [transport, readAgain, project, floors])
+    ...(project ? {} : {adopt: (statement: string) => adoptLaw(transport, statement)}),
+  }), [transport, readAgain, project])
   return useMemo(() => docsBinding(id, world, {...(project ? {inspect: inspect.answer, ground: ground.answer, plan: plan.answer, meaning, ...(horizonInput ? {horizon: horizon.answer} : {})} : {law: law.answer}),
     doctor: doctor.answer}, ports),
   // eslint-disable-next-line react-hooks/exhaustive-deps -- the holds' version re-binds the view's own keys
   [id, world, project, inspect.answer, ground.answer, doctor.answer, plan.answer, meaning, horizonInput, horizon.answer, law.answer, ports, holds])
 }
 const NO_INPUT: Readonly<Record<string, unknown>> = {}
-
-/** The instruction files the agents on this machine read at the root (the World Model's agents slice, census.rs: each agent's floor,
- * `carries.law.file`), each once; none while the slice is not held. */
-export function lawFilesOf(reading: Parameters<typeof sliceValue>[0]): string[] {
-  const held = sliceValue<{agents?: readonly {carries?: {law?: {file?: unknown}}}[]}>(reading)
-  if (!held.ok) return []
-  return [...new Set((held.value.agents ?? []).flatMap(agent => (typeof agent.carries?.law?.file === 'string' ? [agent.carries.law.file] : [])))]
-}
 
 /** The Workspace's Ground and Self pages (pageGround.ts): Central's inspection and self reading of the workspace's project world, held for
  * the window; the preview asked by a press; and the person's Ensure and Relate, written through invoke_action as the person's own presses

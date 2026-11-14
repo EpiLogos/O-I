@@ -165,7 +165,8 @@ const SHELL_SENDERS = {
   'packages/live-shell/ui/src/agent/devices/messagesBinding.ts': ['agent-profile.accept', 'agent-profile.express', 'agent-profile.remove', 'agent-profile.save', 'central.agent-set.propose', 'central.agent-set.remove', 'central.agent-set.save'],
   'packages/live-shell/ui/src/agent/devices/ownerRoutes.ts': ['control.skills.revision.accept', 'control.skills.revision.discard'],
   'packages/live-shell/ui/src/agent/devices/sessionChainBindings.ts': ['agent-profile.chain-admit', 'agent-profile.chain-order', 'agent-profile.chain-replace', 'agent-profile.pin-source', 'agent-profile.rename', 'agent-profile.unpin-source'],
-  'packages/live-shell/ui/src/central/devices/centralDeviceWrites.ts': ['central.day.close-carry', 'central.day.move.record', 'central.day.rollover', 'central.day.settings.write'],
+  // adoptLaw sends control.law.adopt on the person's press of Recognise on a statement of the root world's tier 0 (Docs, O-I ticket 1005).
+  'packages/live-shell/ui/src/central/devices/centralDeviceWrites.ts': ['central.day.close-carry', 'central.day.move.record', 'central.day.rollover', 'central.day.settings.write', 'control.law.adopt'],
   'packages/live-shell/ui/src/central/devices/contextWorldBinding.ts': ['central.world-relations.save'],
   // dayBinding.ts names the act (DAY_ENTRY_PART_ACTION, from O-I main, #858 SF06); its one sender is centralDeviceWrites.ts dayEntryPart,
   // by bringDayEntry, on the person's press of Show (SHOW_SENDS below). It names the field record's act too (useFieldRecords, no press).

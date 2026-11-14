@@ -23,6 +23,7 @@
 // A refusal is the owner's own words, thrown as they came; the device keeps the change and says so. Pure of React.
 import {readGround} from '../../../../../../desktop/cradle/src/central/client'
 import {kernelOp, kernelRead} from '../../../../../../desktop/cradle/src/kernel/bridge'
+import {modelSlice, sliceValue, type ModelSliceReading} from '../../owners/model'
 import {DAY_ENTRY_PART_ACTION, DAY_FIELD_RECORD_ACTION, type DayFieldRecord, type DaySettingsPatch} from './dayBinding'
 import {actionAnswerOf, centralActionOp} from './centralActions'
 import {DayFormSession, isObject, unmappedChanges, validateDocumentBasis} from '../../../../../../desktop/cradle/src/central/dayForm'
@@ -95,13 +96,22 @@ export const LAW_DIR = 'Control/agents/governance'
 /** The floor Central renders at the root from the adopted law; the instruction files the agents read are made links to it. */
 export const LAW_FLOOR = 'AGENTS.md'
 
+/** The instruction files the agents on this machine read at the root (the World Model's agents slice, census.rs: each agent's floor,
+ * `carries.law.file`), each once; none while the slice is not held. Pure. */
+export function lawFilesOf(reading: ModelSliceReading): string[] {
+  const held = sliceValue<{agents?: readonly {carries?: {law?: {file?: unknown}}}[]}>(reading)
+  if (!held.ok) return []
+  return [...new Set((held.value.agents ?? []).flatMap(agent => (typeof agent.carries?.law?.file === 'string' ? [agent.carries.law.file] : [])))]
+}
+
 /** Adopt one law statement written on the root world's tier 0 (manual §18.5: "Adopting it writes it into the instructions every harness
  * reads"): the statement read through Central at its revision now (central.files.list, then central.files.read — the revision the
- * adoption is checked against), then Central's control.law.adopt as the person's press (action.rs PERSON_ACTS; Central admits it on the
- * person's native credential only): the statement stands durable and human-authored, and Central renders the root's floor again, each
- * of `files` (the instruction files the agents on this machine read, other than the floor itself) made a link to it. Central's receipt,
- * or its refusal in its words. */
-export async function adoptLaw(transport: KernelTransportStatus, statement: string, files: readonly string[]): Promise<unknown> {
+ * adoption is checked against), the agents on this machine read afresh from the World Model (`agents`, the read that precedes a write),
+ * then Central's control.law.adopt as the person's press (action.rs PERSON_ACTS; Central admits it on the person's native credential
+ * only): the statement stands durable and human-authored, and Central renders the root's floor again, each instruction file the agents
+ * read (other than the floor itself) made a link to it. Central's receipt, or its refusal in its words. */
+export async function adoptLaw(transport: KernelTransportStatus, statement: string,
+  agents: () => Promise<ModelSliceReading> = () => modelSlice(transport, 'agents', {fresh: true})): Promise<unknown> {
   const path = statement.startsWith(`${LAW_DIR}/`) ? statement : `${LAW_DIR}/${statement}`
   const folder = path.slice(0, path.lastIndexOf('/'))
   const listed = actionAnswerOf(await readCall(transport, 'central.files.list', {path: folder}), 'central.files.list')
@@ -113,7 +123,7 @@ export async function adoptLaw(transport: KernelTransportStatus, statement: stri
   if (read.status !== 'answered') throw new Error(read.status === 'refused' ? read.error : `Central did not read ${path}.`)
   const revision = (read.value as {revision?: unknown} | null)?.revision
   if (typeof revision !== 'string' || !revision) throw new Error(`Central read ${path} without its revision, so its adoption cannot be checked against it; nothing was adopted.`)
-  const links = [...new Set(files.filter(file => file && file !== LAW_FLOOR))]
+  const links = lawFilesOf(await agents()).filter(file => file !== LAW_FLOOR)
   return centralWrite(transport, 'control.law.adopt', {statement: path, expected_revision: revision, files: links})
 }
 
@@ -368,6 +378,43 @@ export async function appendFlowEntry(transport: KernelTransportStatus, location
   const result = await writeFlowInstance(transport, instance.location, instance.revision, html)
   if (result.outcome === 'conflict') throw new Error(`The Flow moved while the entry was written (the owner holds ${result.current?.revision ?? 'a newer revision'}): nothing was overwritten. Re-read the Flow and write the entry again.`)
   return {revision: result.revision ?? null}
+}
+
+/** What Play's answer is kept as in the page (world-shell.md §9.3 Overdub): a new entry, or one that replaces the agent's last entry on the page —
+ * written as its correction, so the Flow keeps both (flow/plural.ts relation `correct`). */
+export type AnswerTake = 'new' | 'replace'
+
+/** Keep an agent's answer in a Flow as its own entry (Play with Arm on, world-shell.md §9.3; the Flow's own keep, FlowSurface.tsx
+ * `appendAgentResponse`): the file read again, the answer appended as the agent's entry — the agent a participant of the page by its session
+ * (the letter it has there, else the first free one), the answer's sources named under it (what the packet carried) — and written with the
+ * owner's revision check, read again once if the page moved. `take` `replace` writes it as the correction of the agent's last entry. Resolves
+ * with the owner's new revision; refuses in words, the answer kept in them, when the page moved twice. */
+export async function keepAgentAnswer(transport: KernelTransportStatus, location: CentralLocation, answer: {readonly text: string; readonly agent: string;
+  readonly session: string; readonly sources: readonly string[]; readonly take: AnswerTake}): Promise<{revision: string | null; entryId: string | null}> {
+  const text = answer.text.trim()
+  if (!text) throw new Error(`${answer.agent} answered without words; nothing was kept in the page.`)
+  const escape = (words: string) => words.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const html = [...text.split(/\n{2,}/).map(part => `<p>${escape(part.trim()).replace(/\n/g, '<br>')}</p>`),
+    ...(answer.sources.length ? [`<p><em>Sources:</em> ${answer.sources.map(escape).join(' · ')}</p>`] : [])].join('')
+  let instance = await readFlowInstance(transport, location)
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const plural = isCurrentFormat(instance.doc)
+    const participants = (instance.doc.meta.participants ?? []) as PluralParticipant[]
+    const known = participants.find(person => person.kind === 'agent' && person.ref === answer.session)
+    const taken = new Set(participants.map(person => person.initial))
+    const initial = known?.initial ?? ([...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'].find(letter => !taken.has(letter)) ?? 'Z')
+    const participant = known ?? {initial, name: answer.agent, kind: 'agent' as const, ref: answer.session}
+    // The agent's last entry here: by its participant's key on the plural form, by its letter on an earlier one.
+    const last = answer.take === 'replace' && known ? [...instance.doc.entries].reverse()
+      .find(entry => (known.key && (entry as {authorKey?: string}).authorKey === known.key) || entry.author === known.initial) : undefined
+    if (answer.take === 'replace' && !last) throw new Error(`Replace: ${answer.agent} has no entry on this page to replace; switch Overdub to a new entry.`)
+    const relations: Relation[] = plural && last ? [{type: 'correct', entryId: last.id, revision: instance.doc.meta.revision, anchor: null}] : []
+    const written = appendEntry(instance.html, text, {participant, html, ...(plural ? {basisRevision: instance.doc.meta.revision, ...(relations.length ? {relations} : {})} : {})})
+    const result = await writeFlowInstance(transport, instance.location, instance.revision, written.html)
+    if (result.outcome !== 'conflict') return {revision: result.revision ?? null, entryId: written.entry?.id ?? null}
+    instance = await readFlowInstance(transport, location)
+  }
+  throw new Error(`${answer.agent} answered, but the page moved twice while the answer was kept; nothing was overwritten. The answer, unlost:\n\n${text}`)
 }
 
 /** The controls for the next entry as Clip view holds them for this Flow (manual §18.1 "In a Flow, the controls for the next entry stand

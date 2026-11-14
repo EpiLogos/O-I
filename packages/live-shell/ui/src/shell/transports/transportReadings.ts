@@ -10,11 +10,12 @@ import {validateDocumentBasis} from '../../../../../../desktop/cradle/src/centra
 import type {PreparedContext} from '../../../../../../desktop/cradle/src/context/nativeContext'
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import type {ShellConfig} from '../../native/application'
-import type {TransportBindings} from '../../frame/transport/slots'
+import type {TransportBindings, TransportSlotId} from '../../frame/transport/slots'
 import {civilDateOfDayRef, NO_CIVIL_TIME, wantsCivilTime} from '../../central/centralVertical'
 import {DIE_POSITIONS, dieFaceLabel, dieFaceOf} from '../../central/devices/dayDie'
 import {revisionShort} from '../../central/documents/documentDoor'
 import {AUTOSAVE_DELAY_MS, nextSaveTiming, saveTimingWords, type AutosaveSetting, type SaveTiming} from '../../central/documents/autosave'
+import type {AnswerTake} from '../../central/devices/centralDeviceWrites'
 
 export interface Readout {value: string; title: string}
 
@@ -220,6 +221,8 @@ export function centralBindings(input: {
   face?: number
   /** Autosave, the one setting for Central's pages (central/documents/autosave.ts), and its two turns: the Autosave and Save timing slots. */
   autosave?: {setting: AutosaveSetting; set: (on: boolean) => void; time: (timing: SaveTiming) => void}
+  /** The core's controls (world-shell.md §9.3): Play, Stop, Overdub, Arm, Capture (coreSlots). */
+  core?: CentralCore
 }): TransportBindings {
   const read = dayDieOf(input.ground, input.groundError)
   const die = read.state === 'ready' && input.face !== undefined ? {...read, face: input.face} : read
@@ -231,7 +234,7 @@ export function centralBindings(input: {
   const waits = die.state === 'waiting' ? die.reason : null
   const refused = input.groundError ? `Central's ground read refused: ${input.groundError}` : null
   const readout = (value: Readout | null | undefined) => value ? {readout: value} : {}
-  return {
+  const bound: TransportBindings = {
     ...Object.fromEntries(Object.entries(input.readouts ?? {}).map(([id, value]) => [id, {readout: value}])),
     tempo: {...readout(faces.tempo), ...(faces.tempo && input.turn ? {step: input.turn} : {}),
       title: [faces.tempo?.title ?? `Die face — the Day die's open face; ‹ › turn it. ${waits ?? ''}`.trim(), input.turned].filter(Boolean).join(' ')},
@@ -244,6 +247,55 @@ export function centralBindings(input: {
     ...(carrier ? {rate: {readout: carrier}} : {}),
     ...(input.document ? {cpu: {readout: documentLoad(input.document)}} : {}),
     ...(input.autosave ? autosaveSlots(input.autosave) : {}),
+    ...(input.core ? coreSlots(input.core) : {}),
+  }
+  // The rest stand dimmed with their reason (§9.3: nothing outside the core is built until the core passes its gate).
+  for (const [id, why] of Object.entries(CENTRAL_OUTSIDE_CORE) as [TransportSlotId, string][]) if (!bound[id]) bound[id] = {refused: why}
+  return bound
+}
+
+
+/** Central's transport core (docs/architecture/world-shell.md §9.3: "Play sends the packet; Stop; Overdub (new entry or replace); Arm (direct
+ * or proposal); Capture (selection → packet); Load (saved)"). Load is the Save state slot (documentLoad). */
+export interface CentralCore {
+  /** Play: the packet's conversation's one send (encounter/session.ts `ask`), the answer then kept per Arm and Overdub; absent with why. */
+  readonly play?: () => void
+  readonly playRefused?: string
+  /** What Play does now, in words: where the answer goes, and the last Play's outcome. */
+  readonly playWords: string
+  /** Stop: the turn Play sent cancelled in its conversation; absent while nothing Play sent runs. */
+  readonly stop?: () => void
+  /** The shell's one write arm (AgentShellContext `writeArm`): on, the answer lands in the page with a receipt; off, it is a proposal. */
+  readonly arm: boolean
+  readonly setArm?: (on: boolean) => void
+  readonly take: AnswerTake
+  readonly setTake: (take: AnswerTake) => void
+}
+
+/** Why Capture stands refused in the transport: the page's selection never reaches the shell. */
+export const CENTRAL_CAPTURE_WHY = 'The page\'s selection does not cross the host bridge (ql-flow.html currentSel; documentDoor.ts reads the island only): select the passage in the page\'s pane and press To packet there. The Packet, the Key count and Play read the page\'s packet.'
+const OUTSIDE = (what: string) => `${what} is outside Central's core (world-shell.md §9.3: Play, Stop, Overdub, Arm, Capture, Load); it waits until the core passes its gate.`
+/** The slots outside the core, each dimmed with its reason where nothing else binds it. */
+export const CENTRAL_OUTSIDE_CORE: Readonly<Partial<Record<TransportSlotId, string>>> = {
+  tap: OUTSIDE('Stamp Now'), root: OUTSIDE('The packet\'s root subject'), follow: OUTSIDE('Follow'), record: OUTSIDE('Dictate'),
+  're-enable': OUTSIDE('Hand back'), loop: OUTSIDE('The close routine as a transport control (Close now stays on the Day device)'),
+  'loop-length': OUTSIDE('Day span'), draw: OUTSIDE('The highlight pen'), keys: OUTSIDE('Keys'), 'key-map': OUTSIDE('Key mapping'), 'midi-map': OUTSIDE('MIDI mapping'),
+}
+
+/** The core's slots: Play and Stop on the packet's conversation, Overdub and Arm as held, Capture refused with why. Pure. */
+export function coreSlots(core: CentralCore): TransportBindings {
+  return {
+    play: core.play ? {press: core.play, title: core.playWords} : {refused: core.playRefused ?? 'Play waits for the packet\'s conversation.', title: core.playWords},
+    stop: core.stop ? {press: core.stop, title: 'Stop — cancel the turn Play sent, in its conversation; nothing is kept in the page.'}
+      : {refused: 'Nothing Play sent is running.'},
+    overdub: {lit: core.take === 'replace', press: () => core.setTake(core.take === 'new' ? 'replace' : 'new'),
+      title: core.take === 'new' ? 'Overdub — new entry: Play keeps the answer as a new entry. Press to replace the agent\'s last entry instead.'
+        : 'Overdub — replace: Play keeps the answer as the correction of the agent\'s last entry on the page (the page keeps both). Press for a new entry.'},
+    arm: core.setArm ? {lit: core.arm, press: () => core.setArm!(!core.arm),
+      title: core.arm ? 'Arm — on: the answer lands in the page as the agent\'s entry, with its sources and the owner\'s receipt. Press to make answers proposals.'
+        : 'Arm — off: the answer is a proposal and nothing is written in the page. Press to let it land in the page.'}
+      : {refused: 'The shell\'s write arm is not mounted here (AgentShellContext).'},
+    capture: {refused: CENTRAL_CAPTURE_WHY},
   }
 }
 

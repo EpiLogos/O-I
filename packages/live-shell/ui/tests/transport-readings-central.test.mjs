@@ -160,6 +160,48 @@ test('the Central hook reads through the owners\' own readers and writes only th
   assert.match(await source('shell/modeTransports.tsx'), /base: \(\) => import\('\.\/transports\/useCentralTransport'\)\.then\(module => module\.useCentralTransport\)/)
 })
 
+// O-I ticket 1005 (world-shell.md §9.3 Central's transport: "Play sends the packet; Stop; Overdub (new entry or replace); Arm (direct or
+// proposal); Capture (selection → packet); Load (saved)"): the core's slots press their writes; Capture and the slots outside the core stand
+// dimmed, each with its reason.
+test('Central\'s core: Play, Overdub and Arm press their writes, Stop while Play runs; Capture and the rest stand dimmed with their reasons', () => {
+  const pressed = []
+  const core = {playWords: 'Play — send what the conversation holds, with the packet.', arm: false, take: 'new',
+    setTake: take => pressed.push(['take', take]), setArm: on => pressed.push(['arm', on]), play: () => pressed.push(['play'])}
+  const bindings = R.centralBindings({ground: ground(), groundError: null, packet, config: CONFIG, transport: NATIVE, core})
+  bindings.play.press(); bindings.overdub.press(); bindings.arm.press()
+  assert.deepEqual(pressed, [['play'], ['take', 'replace'], ['arm', true]])
+  assert.equal(bindings.play.title, core.playWords)
+  assert.equal(bindings.stop.refused, 'Nothing Play sent is running.')
+  assert.equal(bindings.capture.refused, R.CENTRAL_CAPTURE_WHY)
+  assert.equal(bindings.arm.lit, false); assert.match(bindings.arm.title, /proposal and nothing is written/)
+  assert.equal(bindings.overdub.lit, false); assert.match(bindings.overdub.title, /new entry/)
+  for (const id of Object.keys(R.CENTRAL_OUTSIDE_CORE)) assert.match(bindings[id].refused, /outside Central's core \(world-shell\.md §9\.3/, `${id} names why it is dimmed`)
+  const markup = renderToStaticMarkup(React.createElement(Transport, {bindings, words: id => slotWords('base', id)}))
+  const tag = id => markup.match(new RegExp(`<button[^>]*data-slot="${id}"[^>]*>`))[0]
+  for (const id of ['play', 'overdub', 'arm']) assert.doesNotMatch(tag(id), /disabled=""/, `${id} presses`)
+  for (const id of ['stop', 'capture', 'record', 'loop', 'draw', 're-enable']) assert.match(tag(id), /disabled=""/, `${id} stands dimmed`)
+  // While Play runs, Stop cancels it; a Play that cannot be made says why; armed and replacing, the slots say so.
+  const running = R.coreSlots({...core, stop: () => pressed.push(['stop'])})
+  running.stop.press()
+  assert.deepEqual(pressed.at(-1), ['stop'])
+  const refused = R.coreSlots({...core, play: undefined, playRefused: 'No conversation holds the packet: open the Agent on the chain, or select a session, then Play.'})
+  assert.match(refused.play.refused, /No conversation holds the packet/)
+  const armed = R.coreSlots({...core, arm: true, take: 'replace'})
+  assert.equal(armed.arm.lit, true); assert.match(armed.arm.title, /lands in the page/)
+  assert.equal(armed.overdub.lit, true); assert.match(armed.overdub.title, /correction of the agent's last entry/)
+  // No write arm mounted: Arm stands refused with why.
+  const {setArm: _unused, ...unarmed} = core
+  assert.match(R.coreSlots(unarmed).arm.refused, /write arm is not mounted/)
+})
+
+test('O-I ticket 1005: the hook sends through the packet\'s conversation\'s one session and keeps the answer through the Flow\'s own write', async () => {
+  const code = await source('shell/transports/useCentralTransport.tsx')
+  for (const call of ['encounterSessionOf(transport, conversation)', 'session.ask(asked, agent, PLAY_WAIT_MS', 'keepAgentAnswer(transport, keepIn.location', 'shell?.writeArm === true', 'setArm: shell.setWriteArm',
+    'encounterSessionOf(transport, conversation).cancel()']) {
+    assert.ok(code.includes(call), `the hook makes ${call}`)
+  }
+})
+
 test('the Load slot is the reached document\'s save standing (the mockup\'s `edited`), from the document door — never a guess', async () => {
   const {centralBindings, documentLoad} = await import('../src/shell/transports/transportReadings.ts')
   const base = {ground: null, groundError: null, packet: null, config: null, transport: {kind: 'unavailable', reason: 'test'}}

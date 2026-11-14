@@ -12,11 +12,18 @@
 //  - the machine serving the ground (Rate): the host's configuration (ShellConfigContext, native/application.ts ShellConfig);
 //  - Autosave and Save timing (Metronome, Quantize; §17.8): the one autosave setting for Central's pages (central/documents/autosave.ts),
 //    which the slots turn, as the Document's Autosave does — each page then saves through its own Save.
+//  - the core (world-shell.md §9.3; O-I ticket 1005): Play sends what the packet's conversation holds, with the packet, through that
+//    conversation's one shared session (encounter/session.ts `encounterSessionOf(...).ask`, the send the Packet's Send and the Flow make),
+//    and keeps the answer per Arm — the shell's one write arm (AgentShellContext `writeArm`): on, in the page the hand reached as the agent's
+//    entry with its sources (centralDeviceWrites.ts keepAgentAnswer), a new entry or the replacement Overdub names; off, a proposal, nothing
+//    written. Stop cancels the turn Play sent. Capture stands refused with why; Load is the Save state slot.
 // The Day is read again when the window returns (focus, visibility) and after the die turns — never polled.
 import {useContext, useEffect, useState} from 'react'
 import {nativeContext, PREPARED_CONTEXT_CHANGED, type PreparedContext} from '../../../../../../desktop/cradle/src/context/nativeContext'
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
-import {turnDieFace} from '../../central/devices/centralDeviceWrites'
+import {keepAgentAnswer, turnDieFace, type AnswerTake} from '../../central/devices/centralDeviceWrites'
+import {encounterSessionOf} from '../../../../../../desktop/cradle/src/encounter/session'
+import {useAgentShellOptional} from '../../agent/AgentShellContext'
 import {dieFaceLabel} from '../../central/devices/dayDie'
 import {useCentralGroundAnswer} from '../../central/devices/useCentralReadings'
 import {useOptionalContinuity} from '../../continuity/workspace'
@@ -81,6 +88,9 @@ export function usePacketReading(transport: KernelTransportStatus, selectionRef:
   return held?.key === key ? held : null
 }
 
+/** How long Play waits for the agent's answer. */
+const PLAY_WAIT_MS = 5 * 60_000
+
 export const useCentralTransport: UseModeTransport = ({readouts}) => {
   const transport = useContext(Workspace)?.transport ?? NO_CARRIER
   const config = useContext(ShellConfigContext)
@@ -106,6 +116,45 @@ export const useCentralTransport: UseModeTransport = ({readouts}) => {
   const document = useReachedDocument()
   // Autosave and Save timing: the one setting for Central's pages, as the Document's Autosave turns it.
   const autosave = {setting: useAutosaveSetting(), set: setAutosave, time: setSaveTiming}
-  return centralBindings({ground: ground.reading, groundError: ground.error, packet, config, transport, readouts, turn, turned, document, autosave,
+  // The core: Play, Stop, Overdub and Arm on the packet's conversation (the one the Packet holds: usePacketReading).
+  const shell = useAgentShellOptional()
+  const agency = useAgencySessions(transport)
+  const held = conversationOf(agency.tracks, COMPANIONS.base.name, selection?.ref ?? null).track
+  const conversation = held ? {project: held.project ?? ROOT_REGISTER, ref: held.sessionRef, space: held.spaceRef} : null
+  const agent = held?.agentName ?? 'The agent'
+  const [take, setTake] = useState<AnswerTake>('new')
+  const [playing, setPlaying] = useState(false)
+  const [played, setPlayed] = useState<string | null>(null)
+  const arm = shell?.writeArm === true
+  const page = document?.form === 'Flow' && document.location ? document : null
+  const sources = packet?.context?.items.map(item => item.selection.title) ?? []
+  const playRefused = transport.kind === 'unavailable' ? transport.reason
+    : !conversation ? 'No conversation holds the packet: open the Agent on the chain, or select a session, then Play.'
+    : playing ? `${agent} is answering the last Play; Stop cancels it.`
+    : arm && !page ? 'Arm is on and no Flow page is open to keep the answer in: open one, or turn Arm off to have the answer as a proposal.' : undefined
+  const play = !playRefused && conversation ? () => {
+    const session = encounterSessionOf(transport, conversation)
+    const asked = session.snapshot().draft.trim()
+    if (!asked) { setPlayed(`↳ Nothing was sent: Play sends what you write in ${agent}'s conversation, with the packet. Write your ask there first.`); return }
+    const keepIn = arm ? page : null
+    setPlaying(true)
+    setPlayed(null)
+    session.ask(asked, agent, PLAY_WAIT_MS, `${agent} has not finished answering: the ask stands in the conversation, and nothing was kept in the page.`)
+      .then(async answer => {
+        if (!keepIn?.location) { setPlayed(`↳ ${agent} answered. Arm is off, so the answer is a proposal: it waits in the conversation, and nothing was written in the page.`); return }
+        const kept = await keepAgentAnswer(transport, keepIn.location, {text: answer.text, agent, session: conversation.ref, sources, take})
+        setPlayed(`↳ ${agent}'s answer is in ${keepIn.title || 'the page'} ${take === 'replace' ? 'replacing its last entry' : 'as a new entry'}${kept.revision ? ` at ${kept.revision}` : ''}.`)
+        keepIn.reread?.()
+      })
+      .catch(cause => setPlayed(`↳ Refused — ${message(cause)}`))
+      .finally(() => setPlaying(false))
+  } : undefined
+  const playWords = [`Play — send what ${agent}'s conversation holds, with the packet (${sources.length} item${sources.length === 1 ? '' : 's'}); the answer ${arm
+    ? `lands in ${page ? page.title || 'the page' : 'the open Flow page'} as ${take === 'replace' ? 'the replacement of the agent\'s last entry' : 'a new entry'}, with its sources`
+    : 'is a proposal (Arm is off): nothing is written in the page'}.`, played].filter(Boolean).join(' ')
+  const core = {playWords, arm, take, setTake, ...(play ? {play} : {}), ...(playRefused ? {playRefused} : {}),
+    ...(playing && conversation ? {stop: () => encounterSessionOf(transport, conversation).cancel()} : {}),
+    ...(shell ? {setArm: shell.setWriteArm} : {})}
+  return centralBindings({ground: ground.reading, groundError: ground.error, packet, config, transport, readouts, turn, turned, document, autosave, core,
     ...(shownFace !== null ? {face: shownFace} : {})})
 }
