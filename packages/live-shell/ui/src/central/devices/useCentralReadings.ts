@@ -4,32 +4,30 @@
 //     (inhabitants/DocumentDayDieFace.tsx:105-106);
 //   - the Nara conversation: the dialogue binding (`lookupNativeDialogue`) once an identity and an expression stand
 //     (inhabitants/ConversationNaraFace.tsx:67-90);
-//   - the roster: Central's accepted agents (the shared roster answer, owners/readers.ts; central.agent-profile-roster/v1; the
-//     first accepted agent is the identity, agent/AgentDeviceChain.tsx:38-46);
 //   - the workcell: `workcell_status_read` (the shared workcell answer, owners/readers.ts);
-//   - Central's ground: the `central` op `inspect` (readGround) — the civil-time policy and today's Day reading — held once for the
-//     window (owners/ownerReading.ts), as the Day's own answer is (owners/day.ts);
-//   - Central's readings carried by invoke_action (useCentralAction): the Day's own settings and moves (T-COVERAGE §1.3).
+//   - Central's ground: the `central` op `inspect` — the civil-time policy and today's Day reading — as the World Model's day slice
+//     holds it (useCentralGroundAnswer; O-I ticket 1005);
+//   - Central's readings carried by invoke_action (useCentralAction).
 // Lane W3's receipts (owners/notices.ts): a receiving act or a Day write the kernel carried (`receiving_changed`, `day_changed`)
 // reads the Day document again, and a Day write reads the ground again — no timer, and nothing the kernel did not carry.
 import {useCallback, useContext, useEffect, useMemo, useRef, useState} from 'react'
 import type {KernelReceipt} from '../../../../../../desktop/cradle/src/kernel/types'
 import {receiving} from '../../../../../../desktop/cradle/src/receiving/client'
-import {readGround, type CentralGroundReading} from '../../../../../../desktop/cradle/src/central/client'
+import type {CentralGroundReading} from '../../../../../../desktop/cradle/src/central/client'
 import {validateDocumentBasis, type DayDocumentField} from '../../../../../../desktop/cradle/src/central/dayForm'
-import {onAttentionRegained} from '../../owners/attention'
-import {ownerReadings, useOwnerReading, useOwnerReadingsOf, type OwnerRead} from '../../owners/ownerReading'
+import {useOwnerReadingsOf} from '../../owners/ownerReading'
 import {opKey, readOp, useOwnerOp, useStableMap} from '../../owners/ownerCall'
 import {useSpineEpoch} from '../../owners/spine'
-import {useRosterAgents, useWorkcellAnswer} from '../../owners/readers'
-import {createReceiptCursor, receiptMovesDay, receiptMovesReceiving} from '../../owners/notices'
+import {useWorkcellAnswer} from '../../owners/readers'
+import {modelSlice, useModelSlice} from '../../owners/model'
+import {createReceiptCursor, receiptMovesReceiving} from '../../owners/notices'
 import {Workspace} from '../../shell/workspaceContext'
 import {lookupNativeDialogue, type NativeDialogue} from '../../../../../../desktop/cradle/src/nara/nativeDialogue'
 import {currentIdentity} from '../../../../../../desktop/cradle/src/nara/identity/current'
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {conversationGap} from '../centralVertical'
 import {dieFaceOf} from './dayDie'
-import {DAY_FIELD_ACTION, DAY_MOVES_ACTION, DAY_SETTINGS_ACTION, type DayOwnReadings} from './dayBinding'
+import {dayFromModel} from './dayBinding'
 import {actionAnswerOf, centralActionOp, type ActionAnswer} from './centralActions'
 import type {CentralReads, NaraState} from './centralDeviceModel'
 
@@ -89,33 +87,9 @@ export function useDayDieReading(transport: KernelTransportStatus, day: DayDieAp
     : {face: null, revision: null, payload: null, fields: null, contributions: null, refresh}
 }
 
+/** The kernel op a project's ground is read by (`central` inspect; projections/atlas/system/SystemReadings.tsx keys a project's ground by
+ * it). The root's is the World Model's (useCentralGroundAnswer). */
 export const GROUND_OP = 'central inspect'
-/** A window return reads an answered ground again only when it is at least this old (focus and visibility arrive together). */
-export const GROUND_ATTENTION_MIN_AGE_MS = 5_000
-
-export const groundKey = (transport: KernelTransportStatus): string => JSON.stringify([GROUND_OP, transport, null])
-
-/** The root register's ground (`central` inspect): an answer, or the owner's refusal in its words. */
-export function readGroundOf(transport: KernelTransportStatus): OwnerRead<CentralGroundReading> {
-  return async () => ({value: await readGround(transport, null)})
-}
-
-let groundNotices = false
-/** A Day can be ensured or initialised outside this shell: an answered ground is read again when the window is regained (the
- * Day answer's own rule, owners/day.ts:36-49). */
-function installGroundNotices() {
-  if (groundNotices || typeof window === 'undefined') return
-  groundNotices = true
-  onAttentionRegained(() => {
-    const at = Date.now()
-    for (const entry of ownerReadings.entries()) {
-      if (!entry.key.startsWith(`["${GROUND_OP}"`) || entry.readers === 0) continue
-      const standing = entry.snapshot()
-      const age = entry.ageAt(at)
-      if (standing.epoch && standing.status === 'answered' && (age === null || age >= GROUND_ATTENTION_MIN_AGE_MS)) void entry.refresh(standing.epoch)
-    }
-  })
-}
 
 // The action helpers live in centralActions.ts (pure, free of the held readings), re-exported for the readers that import them here.
 export {actionAnswerOf, centralActionOp, type ActionAnswer} from './centralActions'
@@ -153,35 +127,18 @@ export function useCentralActionAsked(transport: KernelTransportStatus, action: 
   return useMemo(() => ({answer, again: retry}), [answer, retry])
 }
 
-/** The Day's own settings (central.day.settings.read), and the moves and the field records of the Day shown (central.day.moves.read,
- * central.day.field.read {day_ref}, only when its document stands), with the policy's timezone: the readings dayBinding.ts
- * dayOwnValuesOf reads. */
-export function useDayOwnReadings(transport: KernelTransportStatus, dayRef: string | null, timezone: string | null): DayOwnReadings {
-  const settings = useCentralAction(transport, DAY_SETTINGS_ACTION, {})
-  const moves = useCentralAction(transport, DAY_MOVES_ACTION, dayRef ? {day_ref: dayRef} : null)
-  const field = useCentralAction(transport, DAY_FIELD_ACTION, dayRef ? {day_ref: dayRef} : null)
-  return useMemo(() => ({
-    settings: settings.status === 'answered' ? settings.value : null,
-    settingsRefusal: settings.status === 'refused' ? settings.error : null,
-    moves: !dayRef ? null : moves.status === 'answered' ? moves.value : undefined,
-    movesRefusal: dayRef && moves.status === 'refused' ? moves.error : null,
-    timezone,
-    field: !dayRef ? null : field.status === 'answered' ? field.value : undefined,
-    fieldRefusal: dayRef && field.status === 'refused' ? field.error : null,
-  }), [settings, moves, field, dayRef, timezone])
-}
-
-/** Central's ground for the root register, held once for the window: the reading, the refusal in the owner's words (or the
- * carrier's, when no kernel carrier stands), and the reads again a write asks for. */
+/** Central's ground for the root register, as the World Model's day slice holds it (kernel world_model.rs `day` `ground`; O-I ticket
+ * 1005): the reading, the refusal in the owner's words (or the carrier's, when no kernel carrier stands), and the read again a write asks
+ * for — a fresh read of the slice. The window's one reading of the ground: the Day device, the transport, Factory's rail and the World's
+ * readings all read it here, and the kernel keeps it current (its watch, its own writes, the Day's turn). */
 export function useCentralGroundAnswer(transport: KernelTransportStatus): {reading: CentralGroundReading | null; error: string | null; refresh: () => void; retry: () => void} {
-  installGroundNotices()
-  const epoch = useSpineEpoch()
-  const carried = transport.kind !== 'unavailable'
-  const {reading, refresh, retry} = useOwnerReading(carried ? groundKey(transport) : null, readGroundOf(transport), epoch)
-  // A Day write the kernel carried moves today's Day reading: the ground is read again, a remembered refusal too.
-  useReceiptsMove(receiptMovesDay, retry)
-  if (!carried) return {reading: null, error: `the kernel carrier is unavailable: ${transport.reason}`, refresh, retry}
-  return {reading: reading.status === 'answered' ? reading.value : null, error: reading.status === 'refused' ? reading.error : null, refresh, retry}
+  const slice = useModelSlice(transport, 'day')
+  const again = useCallback(() => { if (transport.kind !== 'unavailable') void modelSlice(transport, 'day', {fresh: true}) }, [transport])
+  return useMemo(() => {
+    if (transport.kind === 'unavailable') return {reading: null, error: `the kernel carrier is unavailable: ${transport.reason}`, refresh: again, retry: again}
+    const model = dayFromModel(slice)
+    return {reading: model.ground, error: model.groundError, refresh: again, retry: again}
+  }, [slice, transport, again])
 }
 
 type NaraStanding = {readonly state: Exclude<NaraState, 'bound'>} | {readonly state: 'bound'; readonly dialogue: NativeDialogue}
@@ -217,19 +174,6 @@ export function useNaraReading(transport: KernelTransportStatus, project: string
     resume: dialogue && typeof dialogue.provisioning.resume_required === 'boolean' ? dialogue.provisioning.resume_required : null,
     refresh,
   }), [standing.state, conversation, expressionRef, dialogue, refresh])
-}
-
-/** Central's accepted agents (the root register), from the window's shared roster answer (owners/readers.ts) — the same one
- * the agent browser, the Factory chain and the sessions provider read. The first accepted agent is the identity the agent
- * face shows. */
-export function useRosterReading(transport: KernelTransportStatus): NonNullable<CentralReads['roster']> {
-  const roster = useRosterAgents(transport)
-  return useMemo((): NonNullable<CentralReads['roster']> => {
-    if (roster.state === 'reading') return {answer: 'reading', identity: null, accepted: 0, total: 0, fault: null}
-    if (roster.state === 'error') return {answer: 'refused', identity: null, accepted: 0, total: 0, fault: roster.error ?? 'The agent roster did not answer'}
-    const accepted = roster.agents.filter(agent => agent.accepted)
-    return {answer: 'read', identity: accepted[0]?.ref ?? null, accepted: accepted.length, total: roster.agents.length, fault: null}
-  }, [roster])
 }
 
 /** The workcell status the ground hygiene stands on: its ref and health, or the owner's refusal — the window's shared

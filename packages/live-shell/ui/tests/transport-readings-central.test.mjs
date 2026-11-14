@@ -147,14 +147,18 @@ test('Central\'s bar draws the mockup\'s readings from the owners, steps the die
   assert.match(refused['punch-in'].title, /refused: no kernel transport/); assert.equal(refused.rate, undefined)
 })
 
-test('the Central hook reads through the owners\' own readers and writes only through the die\'s route', async () => {
+test('the Central hook reads the World Model\'s slices, as the chain\'s Day and Packet do, and writes only through the die\'s route', async () => {
   const code = await source('shell/transports/useCentralTransport.tsx')
-  for (const call of ['useCentralGroundAnswer(transport)', 'nativeContext(transport, project, session, {operation: \'read\'})', 'turnDieFace(transport, die.aperture, face)', 'conversationOf(agency.tracks, COMPANIONS.base.name, selectionRef)']) {
+  // O-I ticket 1005: the packet is the World Model's packet slice for the conversation the Packet holds, as the chain's Packet reads it.
+  for (const call of ['useCentralGroundAnswer(transport)', 'useModelSlice(transport, \'packet\')', 'packetFromModel(packetSlice, {session: held?.sessionRef ?? null, project: held?.project ?? ROOT_REGISTER})',
+    'turnDieFace(transport, die.aperture, face)', 'conversationOf(agency.tracks, COMPANIONS.base.name, selection?.ref ?? null)']) {
     assert.ok(code.includes(call), `the hook makes ${call}`)
   }
-  // The ground is read once for the window: the transport and the Day device share Central's one answer (useCentralReadings.ts).
-  assert.doesNotMatch(code, /readGround\(/, 'no second ground read of its own')
-  assert.ok((await source('central/devices/useCentralReadings.ts')).includes('readGround(transport, null)'), 'the one answer reads the root ground')
+  // The ground is read once for the window: the transport and the Day device share the World Model's day slice (useCentralReadings.ts).
+  assert.doesNotMatch(code, /readGround\(|nativeContext\(/, 'no ground or packet read of its own')
+  const readings = await source('central/devices/useCentralReadings.ts')
+  assert.ok(readings.includes('useModelSlice(transport, \'day\')') && readings.includes('dayFromModel(slice)'), 'the one answer is the day slice\'s ground')
+  assert.doesNotMatch(readings, /readGround\(/, 'and reads no ground of its own')
   assert.doesNotMatch(code, /setInterval|kernelOp\(|fetch\(/, 'no poll and no owner call of its own')
   // Registered as the module that holds it, loaded when Central's transport first draws (O-I #740).
   assert.match(await source('shell/modeTransports.tsx'), /base: \(\) => import\('\.\/transports\/useCentralTransport'\)\.then\(module => module\.useCentralTransport\)/)

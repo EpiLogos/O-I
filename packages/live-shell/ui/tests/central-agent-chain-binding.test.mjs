@@ -550,3 +550,121 @@ test('a reached Day draws its face and date: the Day device\'s own document, or 
   assert.deepEqual(pageDevices.dayPageOf(door(null, {title: 'day-document:2026-10-05'}), dayReading, null), {date: null, material: {form: 'day', page: null, face: null, date: null, refusal: null}})
   assert.equal(pageDevices.dayPageOf(door(null, {title: TODAY.documentId}), dayReading, null).material.face, 2)
 })
+
+// ─────────────────────────────────────────────────────────────────────────────────────────────────── the chain as declarations
+
+// O-I ticket 1005 (docs/architecture/world-shell.md §9.2.5): Central's chain devices — the Packet, the Agent, Scope and the Day — are
+// declarations: a face of a family, the World Model slice it reads, the field each parameter reads there, and the Action each control
+// invokes or why none carries it. Each binds on the slices the kernel holds (world_model.rs `packet`, `roster`, `scope`, `day`), composed
+// here over a fake owner as the kernel composes them (support/worldModelFixture.mjs). SCRIPTED; the hooks they replace are deleted
+// (CODE-READING), and no device reads an owner itself.
+const {packetSliceOver, rosterSliceOver, scopeSliceOver} = await import('./support/worldModelFixture.mjs')
+const worldModel = await import('../src/owners/model.ts')
+// Central's roster as op agent_definition roster answers it (central.agent-profile-roster/v1): RAW_ROSTER's entry with the profile's own ref,
+// name and revision, which roster.ts rosterFromReading lists by. FIXTURE, not a capture.
+const ROSTER_READ = {...RAW_ROSTER, profiles: RAW_ROSTER.profiles.map(entry => ({...entry, profile: {...entry.profile, ref: 'agent-profile:expressed-ba63', name: 'Flint', revision: 'r1'}}))}
+const SETTINGS = {schema: 'aikit.encounter-session-settings/v1', agent_session: SESSION, revision: 'settings-rev-4', track: {telemetry: false, solo: false, wait: 1800, no_answer: 'deny', set: []}, task: null}
+/** A fake owner answering what the kernel asks for the slices, as the owners answer it (FIXTURE): AIKit's agency (one root session), its
+ * prepared contexts and the session's settings; Central's effective sources, relations, roster and Flint's cards. */
+function sliceOwner({refuse = {}} = {}) {
+  const asked = []
+  const read = (result, data) => ({ok: true, outcome: {result, data}})
+  const invoked = data => ({ok: true, outcome: {result: 'action_dispatched', dispatch: {state: 'invoked', data}}})
+  const ask = async op => {
+    asked.push(op)
+    const name = op.op === 'act' ? op.action : op.op
+    if (refuse[name]) return {ok: false, error: refuse[name]}
+    if (op.op === 'agency_read') return read('agency_reading', {spaces: [{agent_sessions: {[SESSION]: {}}}]})
+    if (op.op === 'encounter' && op.request.action === 'context') return read('encounter_reading', op.request.agent_session ? prepared([TEXT_ITEM]) : prepared([], null, 1))
+    if (op.op === 'encounter_session_settings') return read('encounter_session_settings', {...SETTINGS, agent_session: op.agent_session})
+    if (op.op === 'act' && op.action === 'central.world.effective-sources') return invoked({schema: 'central.world-effective-sources/v1', world_ref: 'control:root', sources: []})
+    if (op.op === 'act' && op.action === 'central.world-relations.read') return invoked({schema: 'central.world-relations/v1', revision: 'relations-rev', relations: []})
+    if (op.op === 'agent_definition') return read('agent_definition', ROSTER_READ)
+    if (op.op === 'agent_card') return op.world_ref ? {ok: false, error: `${op.world_ref} holds no card of ${op.agent_ref}`} : read('agent_card', CARD)
+    return {ok: false, error: `the fake owner answers no ${name}`}
+  }
+  return {ask, asked}
+}
+const held = async (compose, ask, slice) => worldModel.sliceOf((await compose(ask)).outcome, undefined, slice)
+
+test('the Packet, the Agent, Scope and the Day are declarations — a slice, its fields, its controls\' Actions — and the hooks they replace are gone', async () => {
+  const {DAY_FIELD_RECORD_ACTION} = await import('../src/central/devices/dayBinding.ts')
+  const {receivingOp} = await import('../../../../desktop/cradle/src/receiving/client.ts')
+  assert.deepEqual(chain.CENTRAL_CHAIN_DECLARATIONS.map(declared => declared.device), ['packet', 'agent', 'scope', 'day'], '§16.2: the world\'s chain — Packet → Agent → Scope — and the Main track\'s Day')
+  const SLICES = new Set(['worlds', 'day', 'agents', 'sessions', 'models', 'factory', 'workcells', 'sky', 'packet', 'scope', 'roster'])
+  for (const slice of ['packet', 'scope', 'roster']) assert.deepEqual(worldModel.modelChangedOf({event: 'model_changed', slice, version: 2}), {slice, version: 2}, `${slice}: a slice the window hears move`)
+  for (const declared of chain.CENTRAL_CHAIN_DECLARATIONS) {
+    const [family, face] = declared.face.split(':')
+    assert.ok(inhabitantManifest(family)?.faces.some(one => one.id === face), `${declared.face}: a face its family's manifest carries (with its extensions)`)
+    assert.ok(SLICES.has(declared.slice), `${declared.device}: reads a slice the World Model holds`)
+    for (const [key, field] of Object.entries(declared.fields)) assert.ok(SLICES.has(field.slice(0, field.indexOf(':'))), `${declared.device}.${key}: ${field} is a field of a World Model slice`)
+    for (const [key, control] of Object.entries(declared.controls)) {
+      if ('action' in control) assert.match(control.action, /^[a-z-]+(\.[a-z-]+)+$/, `${declared.device}.${key}: an Action id`)
+      else assert.ok(control.none.length > 20, `${declared.device}.${key}: why no Action carries it, in words`)
+    }
+    for (const [key, why] of Object.entries(declared.unheld)) assert.ok(why.length > 20, `${declared.device}.${key}: why the World Model holds none, in words`)
+    assert.equal(chain.centralChainDeclaration(declared.device), declared)
+  }
+  // The Day's controls are the Actions its writes send — one id each — and the die's turn is the receiving client's own Action.
+  const day = chain.centralChainDeclaration('day').controls
+  assert.deepEqual(['closeNow', 'settings', 'begin', 'openTomorrow'].map(key => day[key].action), ['closeNow', 'settings', 'begin', 'openTomorrow'].map(key => writes.DAY_ACTIONS[key]))
+  assert.equal(day.field.action, DAY_FIELD_RECORD_ACTION)
+  assert.equal(day.face.action, receivingOp(null, {kind: 'mutate-field', source_ref: 's', document_id: 'd', expected_revision: 'r', field_id: 'original:meta', value: {face: 1}}).action)
+  assert.equal(chain.centralChainDeclaration('scope').controls['r:<place>'].action, world.WORLD_RELATIONS_SAVE)
+
+  // The Packet: the conversation's session's prepared context, else the root register's; a project's register is not held yet.
+  const owner = sliceOwner()
+  const packetSlice = await held(packetSliceOver, owner.ask, 'packet')
+  assert.equal(chain.packetFromModel({state: 'reading'}, {session: SESSION}), null, 'the slice not answered: nothing yet')
+  assert.deepEqual(chain.packetFromModel(packetSlice, {session: SESSION}).context.items.map(item => item.id), [TEXT_ITEM.id], 'the session\'s own packet')
+  assert.deepEqual(chain.packetFromModel(packetSlice, {session: null}).context.items, [], 'no conversation: the root register\'s')
+  assert.match(chain.packetFromModel(packetSlice, {session: 'agent-session/unlisted'}).error, /holds no prepared context of agent-session\/unlisted/)
+  assert.equal(chain.packetFromModel(packetSlice, {session: SESSION, project: 'O-I'}).error, chain.PROJECT_PACKET('O-I'))
+  const refusedPacket = await held(packetSliceOver, sliceOwner({refuse: {encounter: 'AIKit is not installed'}}).ask, 'packet')
+  assert.equal(chain.packetFromModel(refusedPacket, {session: SESSION}).error, 'AIKit is not installed', 'AIKit\'s refusal, in its words')
+  const bound = chain.packetDeviceBinding({kind: 'unavailable', reason: 'no carrier'}, chain.packetFromModel(packetSlice, {session: SESSION}), {companion: 'Fizz', bound: true}, null)
+  assert.equal(parse(bound.values.packet).length, 1, 'the Packet draws the slice\'s packet')
+
+  // The Agent: your roster, and the chosen agent's card in its home World; a World it ratifies but holds no card in says so.
+  holds.resetHolds()
+  const rosterSlice = await held(rosterSliceOver, owner.ask, 'roster')
+  assert.deepEqual(chain.rosterAgentsFromModel(rosterSlice).agents.map(agent => [agent.ref, agent.accepted]), [[FLINT, true]])
+  assert.deepEqual(chain.rosterReadingOf(chain.rosterAgentsFromModel(rosterSlice)), {answer: 'read', identity: FLINT, accepted: 1, total: 1, fault: null})
+  const id = 'central:agent-identity'
+  const page = chain.identityFromModel(id, rosterSlice, FLINT)
+  assert.equal(page.values.agent, FLINT)
+  assert.equal(parse(page.values.card).purpose, CARD.why_im_here.text, 'the card the slice holds for Flint at home')
+  holds.setHeld(id, 'world', 'control:root')
+  assert.match(chain.identityFromModel(id, rosterSlice, FLINT).standing.agent.refused, /control:root holds no card of/, 'the owner\'s words for the World it ratifies')
+  holds.setHeld(id, 'world', undefined)
+  const noRoster = await held(rosterSliceOver, sliceOwner({refuse: {agent_definition: 'Central has no agent profiles here'}}).ask, 'roster')
+  assert.deepEqual([chain.rosterAgentsFromModel(noRoster).state, chain.rosterAgentsFromModel(noRoster).error], ['error', 'Central has no agent profiles here'])
+
+  // Scope: your world's sources and relations as Central resolves them, and the session's own Wait and On no answer, written on the
+  // revision the slice holds.
+  const scopeSlice = await held(scopeSliceOver, owner.ask, 'scope')
+  const scope = chain.scopeFromModel(scopeSlice, SESSION)
+  assert.deepEqual([scope.effective.status, scope.relations.status, scope.settings.reading.revision], ['answered', 'answered', 'settings-rev-4'])
+  const written = []
+  const waits = chain.scopeWaitsOf(SESSION, scope.settings, (change, basis) => { written.push([change, basis.revision]); return Promise.resolve() })
+  assert.deepEqual([waits.track.wait, waits.track.no_answer], [1800, 'deny'])
+  await waits.write({wait: 3600})
+  assert.deepEqual(written, [[{wait: 3600}, 'settings-rev-4']], 'the write is checked against the revision the slice holds')
+  assert.equal(chain.scopeFromModel(scopeSlice, SESSION, 'O-I').settings.why, chain.PROJECT_SETTINGS('O-I'))
+  assert.match(chain.scopeWaitsOf(null, null, null).why, /no session stands/)
+  const noRelations = chain.scopeFromModel(await held(scopeSliceOver, sliceOwner({refuse: {'central.world-relations.read': 'the relations source is not JSON'}}).ask, 'scope'), SESSION)
+  assert.deepEqual([noRelations.effective.status, noRelations.relations.status, noRelations.relations.error], ['answered', 'refused', 'the relations source is not JSON'])
+
+  // No device reads an owner itself: the hooks the declarations replace are deleted, and the chain, the transport and the rail read the
+  // World Model's slices (CODE-READING).
+  const src = path => readFile(new URL(`../src/${path}`, import.meta.url), 'utf8')
+  const devices = await src('central/devices/agentChainDevices.ts'), chainSource = await src('central/devices/CentralDevices.tsx')
+  for (const hook of ['usePacketDevice', 'useScopeDevice', 'useIdentityDevice', 'useDayDevice', 'usePacketReading', 'useScopeWaits', 'useRosterAgents', 'useDayOwnReadings', 'useRosterReading']) {
+    assert.doesNotMatch(devices + chainSource, new RegExp(`function ${hook}\\b|${hook}\\(`), `${hook} is gone`)
+  }
+  assert.deepEqual([...devices.matchAll(/useOwnerOp\(transport, ref \? \{op: '([a-z_]+)'/g)].map(match => match[1]), ['ql_read', 'ql_read'], 'only Search\'s VAK reads stand, and Search is no declaration')
+  assert.doesNotMatch(devices, /nativeContext\(|readGround\(|kernelRead\(|kernelOp\(|useOwnerReading/, 'the declared devices read no owner')
+  for (const slice of ['day', 'packet', 'roster', 'scope']) assert.ok(chainSource.includes(`useModelSlice(transport, '${slice}')`), `the chain reads the ${slice} slice`)
+  assert.doesNotMatch(await src('shell/transports/useCentralTransport.tsx'), /nativeContext\(|readGround\(/)
+  assert.doesNotMatch(await src('widgets/railChainDevices.tsx'), /nativeContext\(|readGround\(/)
+})

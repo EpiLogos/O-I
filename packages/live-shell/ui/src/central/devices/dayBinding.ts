@@ -3,13 +3,14 @@
 // reports is a reading; a key no owner reports is absent, never the design's default (manual §16.12); a key is written only where an
 // owner op stands behind it (manual §16.13). Pure: no React, no transport.
 //
-// The readings, each from the owner that holds it:
-//   - Central's ground (`central` op `inspect`, desktop/cradle/src/central/client.ts readGround): the civil-time policy — civil today,
+// The readings, each from the owner that holds it, as the World Model's day slice holds them (kernel world_model.rs `day`; dayFromModel,
+// O-I ticket 1005 — the Day reads no owner itself):
+//   - Central's ground (`central` op `inspect`, which the kernel's `day` loader asks): the civil-time policy — civil today,
 //     the day boundary, automatic rollover, its revision — and today's Day reading, which the kernel marks `stale` when the Day
 //     pointer belongs to an earlier civil Day (desktop/cradle/kernel/src/central.rs, Request::Inspect);
 //   - a Day the person selected (the browser's ground, a Timeline clip): the owner's `open-day` standing (centralVertical.ts
 //     interpretDayOpen), as the chain read it before;
-//   - the shown Day's document (`receiving` kind:document, useCentralReadings.ts useDayDieReading): its open face (`meta.face`) and
+//   - the shown Day's document (today's page, the Day reading's `document`, central.document-reading/v1): its open face (`meta.face`) and
 //     its records — the capture ledger, the three task tiers, the sessions ledger (desktop/cradle/documents/ql-daily-die.html:329
 //     `D.capture ||= []`, `D.sessions ||= []`; the `fields.p1_must|should|could` lists of its ql-doc island).
 // The writes, each Central's own Action through the kernel's `act`:
@@ -37,9 +38,11 @@
 //   - Refine (`refinePattern`) on the Patterns move opens a refinement of the one skill or method its pattern points at (Central's
 //     `gave.points_at`) on the Skillset rack's Refining page, through the chain's hand: it writes nothing to any owner.
 // Each is checked by Central against the revision read; a refusal comes back in Central's words, and the readings are asked again behind
-// every write (the kernel's write notice retires the held answers).
+// every write (the write moves the World Model's day slice, world_model.rs `written_by`).
 import type {CentralGroundReading} from '../../../../../../desktop/cradle/src/central/client'
-import type {DayDocumentField} from '../../../../../../desktop/cradle/src/central/dayForm'
+import {validateDocumentBasis, type DayDocumentField} from '../../../../../../desktop/cradle/src/central/dayForm'
+import type {ModelSliceReading} from '../../owners/model'
+import {dieFaceOf} from './dayDie'
 import type {DesignBinding, Standing, Value, ValueChange} from '../../frame/devices/designed'
 import {canCloseDay, civilDayName, currentDayOf, offersEntries, type DayAperture, type DayDocumentStanding} from '../centralVertical'
 import type {ReachedCame, ReachedRow} from '../../projections/atlas/system/fieldModel'
@@ -204,6 +207,9 @@ export interface DayOwnReadings {
    * it has not answered or before the window reads it. */
   readonly field?: unknown
   readonly fieldRefusal?: string | null
+  /** Why the Day shown has no moves and field read here, where that is not Central's refusal (a Day you selected that is not today:
+   * the World Model holds today's). */
+  readonly unheld?: string | null
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value)
@@ -293,7 +299,7 @@ export function dayOwnValuesOf(own: DayOwnReadings): Record<string, Value> {
 export function dayOwnAbsent(own: DayOwnReadings, values: Readonly<Record<string, Value>> = dayOwnValuesOf(own)): Record<string, string> {
   const why: Record<string, string> = {}
   const settings = own.settingsRefusal ? `Central refused its Day settings: ${own.settingsRefusal}` : 'Central\'s Day settings have not answered yet (central.day.settings.read).'
-  const runs = own.movesRefusal ? `Central refused the Day's moves: ${own.movesRefusal}`
+  const runs = own.unheld ? own.unheld : own.movesRefusal ? `Central refused the Day's moves: ${own.movesRefusal}`
     : own.moves === null ? 'The Day shown has no document, so its moves are not read (central.day.moves.read reads one Day).' : 'The Day\'s moves have not answered yet (central.day.moves.read).'
   for (const key of DAY_SETTINGS_KEYS) if (values[key] === undefined) why[key] = settings
   for (const key of DAY_RUN_KEYS) if (values[key] === undefined) {
@@ -307,7 +313,7 @@ export function dayOwnAbsent(own: DayOwnReadings, values: Readonly<Record<string
   // A settings reading from a Central before the field source (Central#324) names no field source: neither On nor Off.
   if (values.src_field === undefined && settingsRevisionOf(own)) why.src_field = FIELD_SOURCE_UNNAMED
   if (values.fieldKept === undefined) {
-    why.fieldKept = own.fieldRefusal ? `Central refused the Day's field: ${own.fieldRefusal}`
+    why.fieldKept = own.unheld ? own.unheld : own.fieldRefusal ? `Central refused the Day's field: ${own.fieldRefusal}`
       : own.field === null ? 'The Day shown has no document, so what it keeps of the field is not read (central.day.field.read reads one Day).'
         : 'The Day\'s field has not answered yet (central.day.field.read).'
   }
@@ -562,6 +568,88 @@ export function dayCountsOf(payload: unknown): {c0?: number; c1?: number; c2done
   const sessions = listLength(payload.sessions)
   if (sessions !== null) out.c2done = sessions
   return out
+}
+
+/** One part of the day slice (world_model.rs `part`): its reading, or the owner's words why it has none; null where none is named. */
+function modelPart(part: unknown): {ok: true; value: unknown} | {ok: false; why: string} | null {
+  if (!isRecord(part)) return null
+  if (part.state === 'read') return {ok: true, value: part.reading}
+  return part.state === 'refused' ? {ok: false, why: typeof part.why === 'string' ? part.why : 'Central refused this reading.'} : null
+}
+
+/** Today's page as the Day device reads it: its open face, the revision a turn is checked against, its payload, its field map and its
+ * contributions. */
+export interface DayPage {
+  readonly face: number
+  readonly revision: string
+  readonly payload: unknown
+  readonly fields: readonly DayDocumentField[]
+  readonly contributions: readonly unknown[]
+}
+
+/** The Day's readings as the World Model's day slice holds them (world_model.rs `day`; O-I ticket 1005): Central's ground, or why none;
+ * the Day's own settings, or Central's refusal; and today's Day as Central reads it — its ref, its page where the turn has made it, its
+ * moves and its field, each a part. Nothing while the slice has not answered. */
+export interface DayModel {
+  readonly ground: CentralGroundReading | null
+  readonly groundError: string | null
+  readonly settings: {ok: true; value: unknown} | {ok: false; why: string} | null
+  /** Today's Day: its ref, its reading (central.day-reading/v1) and its parts; null where Central's reading of it refused or is unread. */
+  readonly today: {readonly dayRef: string; readonly reading: Record<string, unknown>; readonly moves: unknown; readonly field: unknown} | null
+  /** Central's words where its reading of today's Day refused. */
+  readonly todayRefused: string | null
+}
+
+/** The Day's readings from the World Model's day slice. Pure. */
+export function dayFromModel(slice: ModelSliceReading): DayModel {
+  if (slice.state === 'reading') return {ground: null, groundError: null, settings: null, today: null, todayRefused: null}
+  if (slice.state === 'unavailable') return {ground: null, groundError: slice.reason, settings: {ok: false, why: slice.reason}, today: null, todayRefused: slice.reason}
+  const value = slice.answer.value
+  if (!isRecord(value)) {
+    const why = slice.answer.error ?? `${slice.answer.owner} has not been read yet.`
+    return {ground: null, groundError: why, settings: {ok: false, why}, today: null, todayRefused: why}
+  }
+  const ground = modelPart(value.ground)
+  const dayRef = typeof value.day_ref === 'string' ? value.day_ref : null
+  return {
+    ground: ground?.ok ? ground.value as CentralGroundReading : null,
+    groundError: ground && !ground.ok ? ground.why : ground ? null : 'The World Model\'s Day holds no reading of Central\'s ground.',
+    settings: modelPart(value.settings),
+    today: dayRef ? {dayRef, reading: value, moves: value.moves, field: value.field} : null,
+    todayRefused: typeof value.refused === 'string' ? value.refused : null,
+  }
+}
+
+/** The page of the Day the device shows, where the World Model holds it: today's (the Day reading's `document`), when the aperture names
+ * that page; else none. A page that is not the aperture's is none. Pure. */
+export function todaysPageOf(model: DayModel, aperture: DayAperture | null): DayPage | null {
+  const document = model.today?.reading.document
+  if (!aperture || !isRecord(document)) return null
+  try {
+    const basis = validateDocumentBasis(document, aperture.sourceRef, aperture.documentId)
+    const contributions = isRecord(document.document) ? document.document.contributions : undefined
+    return {face: dieFaceOf(basis.payload), revision: basis.revision, payload: basis.payload, fields: basis.fields, contributions: Array.isArray(contributions) ? contributions : []}
+  } catch {
+    return null
+  }
+}
+
+/** Why the Day device reads no moves or field of a Day you selected: the World Model's Day is today's. */
+export const NOT_TODAY = 'The World Model holds today\'s Day (world_model.rs `day`): the Day you selected is not today, so its moves and field are read on its own page, not here.'
+
+/** The Day's own readings for the Day shown (`shownDayRef`, the Day whose document stands): its settings, and its moves and field when
+ * it is today's — the World Model holds today's (NOT_TODAY otherwise). Pure. */
+export function dayOwnOf(model: DayModel, shownDayRef: string | null, timezone: string | null): DayOwnReadings {
+  const settings = model.settings
+  const own = {settings: settings?.ok ? settings.value : null, settingsRefusal: settings && !settings.ok ? settings.why : null, timezone}
+  if (!shownDayRef) return {...own, moves: null, movesRefusal: null, field: null, fieldRefusal: null}
+  if (!model.today || model.today.dayRef !== shownDayRef) {
+    return model.today ? {...own, moves: null, movesRefusal: null, field: null, fieldRefusal: null, unheld: NOT_TODAY}
+      : {...own, moves: undefined, movesRefusal: model.todayRefused, field: undefined, fieldRefusal: model.todayRefused}
+  }
+  const moves = modelPart(model.today.moves), field = modelPart(model.today.field)
+  return {...own, moves: moves?.ok ? moves.value : undefined, movesRefusal: moves && !moves.ok ? moves.why : null,
+    field: field?.ok ? field.value : undefined, fieldRefusal: field && !field.ok ? field.why : null}
 }
 
 export interface DayFacts {

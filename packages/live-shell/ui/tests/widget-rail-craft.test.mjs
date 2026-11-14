@@ -147,9 +147,11 @@ test('Answer this is the conversation\'s own Send, and says which owner conditio
   assert.match(answerRefusal({...base, draft: '  '}), /Write the question in Anima's composer/)
   assert.match(answerRefusal({...base, items: 0}), /packet is empty/)
   const widget = await source('widgets/railChainDevices.tsx')
-  assert.match(widget, /usePacketDevice\(transport, packetReading, \{companion, bound: !!track, handle: session \? handles\[session\] : undefined\}, document\)/,
+  assert.match(widget, /packetDeviceBinding\(transport, packetReading, \{companion, bound: !!track, handle\}, document\)/,
     'the press is the shared encounter session\'s Send, through Central\'s Packet binding')
-  assert.match(widget, /nativeContext\(transport, project, session \?\? undefined, \{operation: 'read'\}\)/, 'the packet is read from its owner')
+  // O-I ticket 1005: the packet is the World Model's packet slice, as the chain's Packet reads it; the tile reads no owner itself.
+  assert.match(widget, /packetFromModel\(packetSlice, \{session, project\}\)/, 'the packet is the World Model\'s, for the conversation\'s session')
+  assert.doesNotMatch(widget, /nativeContext\(/, 'no read of its own')
   assert.match(widget, /const project = track\?\.project \?\? ROOT_REGISTER/, 'in the conversation\'s session\'s register, else the root (agent/worldScope.ts)')
 })
 

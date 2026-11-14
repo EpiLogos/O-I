@@ -21,11 +21,11 @@
 //   - a law statement written on the root world's tier 0 is adopted on the revision Central gives for it now (adoptLaw: central.files.read,
 //     then control.law.adopt as the person's press), and Central renders the root's floor again (manual §18.5, O-I ticket 1005);
 // A refusal is the owner's own words, thrown as they came; the device keeps the change and says so. Pure of React.
-import {readGround} from '../../../../../../desktop/cradle/src/central/client'
+import type {CentralGroundReading} from '../../../../../../desktop/cradle/src/central/client'
 import {kernelOp, kernelRead} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import {modelSlice, sliceValue, type ModelSliceReading} from '../../owners/model'
 import {readWorlds, type CentralWorldsReading} from '../centralWorlds'
-import {DAY_ENTRY_PART_ACTION, DAY_FIELD_RECORD_ACTION, type DayFieldRecord, type DaySettingsPatch} from './dayBinding'
+import {DAY_ENTRY_PART_ACTION, DAY_FIELD_RECORD_ACTION, dayFromModel, type DayFieldRecord, type DaySettingsPatch} from './dayBinding'
 import {actionAnswerOf, centralActionOp} from './centralActions'
 import {DayFormSession, isObject, unmappedChanges, validateDocumentBasis} from '../../../../../../desktop/cradle/src/central/dayForm'
 import {receiving} from '../../../../../../desktop/cradle/src/receiving/client'
@@ -61,6 +61,17 @@ export function dieFaceOfLabel(label: string): number | null {
   const position = DIE_POSITIONS.find(candidate => dieFaceLabel(candidate.n) === label)
   return position ? position.n : null
 }
+
+/** The Day's writes as Central's Actions (O-I ticket 1005): the ids these writes send, and the Day's declaration names
+ * (agentChainDevices.ts CENTRAL_CHAIN_DECLARATIONS `day`). The die's turn goes as `central.document.mutate` through the receiving client
+ * (desktop/cradle/src/receiving/client.ts receivingAction, `mutate-field`), its open face set on the page's revision read. */
+export const DAY_ACTIONS = Object.freeze({
+  face: 'central.document.mutate',
+  closeNow: 'central.day.close-carry',
+  settings: 'central.day.settings.write',
+  begin: 'central.day.move.record',
+  openTomorrow: 'central.day.rollover',
+} as const)
 
 /** Turn the Day die to `face`: write the Day document's open face (`meta.face`) through the owner. Resolves to the revision
  * the owner holds afterwards. Nothing is written when the face is already open; a document whose field map carries no field
@@ -144,7 +155,7 @@ async function readCall(transport: KernelTransportStatus, action: string, input:
 
 /** Save settings of the Day's own on the revision read (central.day.settings.write: exact revision, `absent` before the first save). */
 export const writeDaySettings = (transport: KernelTransportStatus, patch: DaySettingsPatch, expectedRevision: string): Promise<unknown> =>
-  centralWrite(transport, 'central.day.settings.write', {expected_revision: expectedRevision, ...patch})
+  centralWrite(transport, DAY_ACTIONS.settings, {expected_revision: expectedRevision, ...patch})
 
 /** Central's answer for one record of a batch (central.day-field-records/v1 `results`): made, kept already (`created: false`), or refused
  * in its words. */
@@ -308,6 +319,14 @@ export function sameEntryLabel(central: string, offered: string): boolean {
   return a.startsWith(b) || b.startsWith(a)
 }
 
+/** Central's root ground read again, as the World Model's day slice holds it (world_model.rs `day`, read fresh): the one reading every
+ * Day write checks its basis against (O-I ticket 1005). A ground the slice does not hold is refused in its words, and nothing is written. */
+export async function groundReadAgain(transport: KernelTransportStatus): Promise<CentralGroundReading> {
+  const model = dayFromModel(await modelSlice(transport, 'day', {fresh: true}))
+  if (!model.ground) throw new Error(model.groundError ?? 'Central\'s ground is not read yet; nothing was written.')
+  return model.ground
+}
+
 /** The press of Show on an entry of today's Day (SF06; DLW build ruling 2026-11-09): Central's ground read again, so the Day must still be
  * the open one Central names as today; the part read on the revision it was offered from; and Central's label compared with the label
  * offered, joiners aside (sameEntryLabel). Central's label is the one passed on. Any of these refused is said in words, and nothing
@@ -315,7 +334,7 @@ export function sameEntryLabel(central: string, offered: string): boolean {
 export async function bringDayEntry(transport: KernelTransportStatus, offered: {readonly dayRef: string; readonly revision: string},
   offer: {readonly kind: string; readonly label: string; readonly select: Readonly<Record<string, string | number>> | null; readonly why?: string}): Promise<{id: string; kind: string; label: string}> {
   if (offer.why || !offer.select) throw new Error(offer.why ?? 'That entry of the Day is not offered to show.')
-  const ground = await readGround(transport, null, true)
+  const ground = await groundReadAgain(transport)
   const day = ground.day.data
   if (centralsOpenToday(ground)?.day_ref !== offered.dayRef) {
     const today = ground.time.state === 'ready' ? ground.time.data?.civil_date : null
@@ -333,25 +352,25 @@ export async function bringDayEntry(transport: KernelTransportStatus, offered: {
 /** A pad's press: the move's begin on the Day named, pressed at `atUnixMs` (central.day.move.record {event begin, trigger press}). Central
  * refuses a move already running, in its words. */
 export const beginDayMove = (transport: KernelTransportStatus, move: string, dayRef: string, atUnixMs = Date.now()): Promise<unknown> =>
-  centralWrite(transport, 'central.day.move.record', {event: 'begin', move, at_unix_ms: atUnixMs, trigger: 'press', day_ref: dayRef})
+  centralWrite(transport, DAY_ACTIONS.begin, {event: 'begin', move, at_unix_ms: atUnixMs, trigger: 'press', day_ref: dayRef})
 
 /** Open tomorrow's Day beside today's (central.day.rollover) on the civil-time policy's revision, read again first. */
 export async function openTomorrow(transport: KernelTransportStatus): Promise<unknown> {
-  const ground = await readGround(transport, null, true)
+  const ground = await groundReadAgain(transport)
   if (wantsCivilTime(ground)) throw new Error(`${NO_CIVIL_TIME}, then open tomorrow's Day.`)
   if (ground.time.state !== 'ready' || !ground.time.data) throw new Error(`Central's civil time is ${ground.time.state}${ground.time.error?.message ? `: ${ground.time.error.message}` : ''}; tomorrow's Day cannot be opened`)
-  return centralWrite(transport, 'central.day.rollover', {expected_time_policy_revision: ground.time.data.revision})
+  return centralWrite(transport, DAY_ACTIONS.openTomorrow, {expected_time_policy_revision: ground.time.data.revision})
 }
 
 /** Close now, the close routine: the Day Central names closed through central.day.close-carry on its content and relations revisions,
  * read again first — face 5's proposal carried into tomorrow's face 0 when Close routine is On (Central opens tomorrow's Day if it must). */
 export async function closeCarry(transport: KernelTransportStatus): Promise<{closed: string; civilDate: string; carry: unknown}> {
-  const ground = await readGround(transport, null, true)
+  const ground = await groundReadAgain(transport)
   const day = ground.day.data
   if (!day) throw new Error(`Central's Day reading is ${ground.day.state}${ground.day.error?.message ? `: ${ground.day.error.message}` : ''}; there is no Day to close`)
   if (day.temporal.lifecycle === 'closed') throw new Error(`The Day of ${day.temporal.civil_date} is closed already.`)
   if (!day.relations_revision) throw new Error('Central\'s Day reading carries no relations revision, so the close cannot be checked against it; nothing was closed')
-  const answer = await centralWrite(transport, 'central.day.close-carry', {day_ref: day.day_ref, expected_revision: day.revision.revision, expected_relations_revision: day.relations_revision}) as {carry?: unknown} | null
+  const answer = await centralWrite(transport, DAY_ACTIONS.closeNow, {day_ref: day.day_ref, expected_revision: day.revision.revision, expected_relations_revision: day.relations_revision}) as {carry?: unknown} | null
   return {closed: day.day_ref, civilDate: day.temporal.civil_date, carry: answer?.carry ?? null}
 }
 

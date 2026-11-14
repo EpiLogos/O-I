@@ -52,7 +52,7 @@ const bind = await import('../src/central/devices/dayBinding.ts')
 const {interpretDayOpen} = await import('../src/central/centralVertical.ts')
 const writes = await import('../src/central/devices/centralDeviceWrites.ts')
 const daySet = await import('../src/central/daySet.ts')
-const readings = await import('../src/central/devices/useCentralReadings.ts')
+const model = await import('../src/owners/model.ts')
 const chain = await import('../src/central/devices/CentralDevices.tsx')
 const dayPanel = await import('../src/inhabitants/catalogue/panels/day.tsx')
 const {day: catalogueDay} = dayPanel
@@ -71,8 +71,6 @@ function WholeBand() {
 const {DeviceFullPane} = await import('../src/frame/devices/devicePane.tsx')
 const {inhabitantManifest} = await import('../src/inhabitants/manifest.ts')
 const {loadWorldShellFamilies} = await import('../src/inhabitants/worldShellFamilies.ts')
-const {ownerReadings} = await import('../src/owners/ownerReading.ts')
-const {spineEpochKey} = await import('../src/owners/spine.ts')
 loadWorldShellFamilies()
 
 const html = element => renderToStaticMarkup(element)
@@ -144,6 +142,11 @@ function fakeOwner({grounds = [STALE, READY], refuseEnsure = null, now = {}, gro
     if (body.op === 'central') {
       if (body.request.kind === 'inspect') return ok('central_reading', grounds[Math.min(inspected++, grounds.length - 1)])
       if (body.request.kind === 'initialise-day') { initialised.push(body.request); return ok('central_reading', {schema: 'central.document-create/v1'}) }
+    }
+    // Today's Day as the kernel's `day_read` gives it (central.rs `day`): the ground's Day reading when it is today's, else refused.
+    if (body.op === 'day_read') {
+      const ground = grounds[Math.min(inspected, grounds.length - 1)]
+      return ground.day.state === 'ready' ? ok('day_reading', ground.day.data) : refused(`The native today pointer is stale: Central did not turn the Day (${ground.day.error?.message ?? 'no turn'})`)
     }
     if (body.op === 'act' && body.action === 'central.day.ensure') {
       if (refuseEnsure) return ownerRefused(body.action, refuseEnsure)
@@ -432,28 +435,36 @@ test('the five views move together: the hand\'s face shows in every view at once
 
 // ── the chain reads today on its own, from the window's one ground answer ─────────────────────────────────────────────────────
 
-test('with no Day selected the Day device stands on today as Central\'s ground reads it — one shared answer, no Day lifecycle read or written', async () => {
-  const epoch = spineEpochKey(0, null)
+test('with no Day selected the Day device stands on today as Central\'s ground reads it — the World Model\'s day slice, no read of its own, no Day lifecycle read or written', async () => {
+  // A carrier of its own, so the window's store holds this test's slice alone.
+  const here = {kind: 'bridge', url: 'http://owner.fixture/today'}
   const owner = fakeOwner({grounds: [STALE]})
-  await withOwner(owner, () => ownerReadings.entry(readings.groundKey(bridge), readings.readGroundOf(bridge)).ensure(epoch))
-  assert.deepEqual(owner.sent.map(body => [body.op, body.request.kind]), [['central', 'inspect']], 'one read: the ground')
-  function Probe() {
-    const device = chain.useDayDevice(bridge, null)
-    return createElement('pre', null, JSON.stringify({values: device.binding?.values ?? null, writes: device.binding ? ['face', 'closeNow', 'rollover'].map(key => device.binding.writes(key)) : null}))
-  }
-  const read = JSON.parse(html(createElement(Probe)).replace(/^<pre>|<\/pre>$/g, '').replace(/&quot;/g, '"'))
-  assert.equal(read.values.date, 'Fri 16 Oct')
-  assert.match(read.values.notice, /Today has not opened yet/)
-  assert.deepEqual(read.writes, [true, true, true], 'Rollover goes to the binding, which refuses it naming the person\'s route')
-  // The chain's own plate: the binding stands as soon as the ground answers (no shell design to wait for), so the Day's design draws
-  // on today's date, the light off.
-  const markup = html(createElement(chain.CentralDevicesChain, {transport: bridge, dayStanding: null}))
+  const held = await withOwner(owner, () => model.modelSlice(here, 'day'))
+  assert.equal(held.state, 'held', 'the World Model answers the day slice')
+  // What the kernel asks for the slice (world_model.rs `day`), as the fixture composes it: today's Day — refused, its pointer is
+  // stale —, the ground beside it, and the Day's settings; no moves or field, as no Day of today stands. Nothing opens or closes a Day.
+  assert.deepEqual(owner.sent.map(body => [body.op, body.request?.kind ?? body.action ?? null]),
+    [['day_read', null], ['central', 'inspect'], ['act', 'central.day.settings.read']], 'the slice\'s own reads, and nothing else')
+  const dayModel = bind.dayFromModel(held)
+  assert.match(dayModel.todayRefused, /today pointer is stale/, 'today\'s Day refused, in the kernel\'s words')
+  assert.equal(dayModel.groundError, null, 'the ground beside it is read')
+  // The Day device as the chain composes it (CentralDevices.tsx, CENTRAL_CHAIN_DECLARATIONS `day`): the slice's fields, no fetch of its own.
+  const facts = bind.dayFactsOf({ground: dayModel.ground, groundError: dayModel.groundError, selected: null})
+  const own = bind.dayOwnOf(dayModel, null, null)
+  const values = bind.dayValuesOf(facts, null, own)
+  const binding = bind.dayDesignBinding(ID, facts, values, {turn: async () => {}, closeNow: async () => {}, openTomorrow: async () => {}}, own)
+  assert.equal(values.date, 'Fri 16 Oct')
+  assert.match(values.notice, /Today has not opened yet/)
+  assert.deepEqual(['face', 'closeNow', 'rollover'].map(key => binding.writes(key)), [true, true, true], 'Rollover goes to the binding, which refuses it naming the person\'s route')
+  // The chain's own plate: the binding stands as soon as the slice is held, so the Day's design draws on today's date, the light off.
+  const sent = owner.sent.length
+  const markup = html(createElement(chain.CentralDevicesChain, {transport: here, dayStanding: null}))
   // The Day closes the Main track's chain; the workspace's chain follows it (R4: the Answer no longer stands after it).
   const day = markup.slice(markup.indexOf(`data-device="${ID}"`), markup.indexOf('data-track="workspace"'))
   assert.match(day, /data-device-light="off"/, 'the owner says no Day stands for today: off')
   assert.match(day, /data-device-design="central:day-die"/, 'the design draws on the chain')
   assert.match(day, /<span class="dp-display-corner">Fri 16<\/span>/, 'on civil today')
-  assert.equal(owner.sent.length, 1, 'rendering asked the owner nothing more: no ensure, no close, no lifecycle')
+  assert.equal(owner.sent.length, sent, 'rendering asked the owner nothing more: no ensure, no close, no lifecycle')
 })
 
 test('the Day design is the catalogue\'s own in all five views; its Full is the Day\'s page, published with the device (MOVED: dayDesign.tsx → PublishedDevice.full)', async () => {
@@ -1140,9 +1151,10 @@ test('SF06 (DLW build ruling 2026-11-09): the Day device offers today’s entrie
     // the revision it was offered from.
     const sent = [], real = globalThis.fetch
     const ok = outcome => ({json: async () => ({ok: true, outcome})})
-    globalThis.fetch = async (_url, init) => {
+    // The kernel's own asks for the World Model's day slice (`quiet`, world_model.rs `day`) are not the press's.
+    const composed = withWorldModel(async (_url, init, {quiet = false} = {}) => {
       const body = JSON.parse(init.body)
-      sent.push(body)
+      if (!quiet) sent.push(body)
       // Central's ground read again stands at another revision than the one offered: the press still sends the offered one (be2g)
       if (body.op === 'central' && body.request.kind === 'inspect') return ok({result: 'central_reading', data: MOVED_ON})
       if (body.op === 'invoke_action' && body.invocation.action === 'central.day.entry.part') {
@@ -1150,6 +1162,11 @@ test('SF06 (DLW build ruling 2026-11-09): the Day device offers today’s entrie
           data: {schema: 'central.day-entry-part/v1', part: {id: 'day-entry:0123456789abcdef', kind: 'page', label: 'one'}}}})
       }
       return {json: async () => ({ok: false, error: `unexpected op ${body.op}`})}
+    })
+    globalThis.fetch = async (url, init) => {
+      const body = JSON.parse(init.body)
+      if (body.op === 'model_subscribe') sent.push(body)
+      return composed(url, init)
     }
     try {
       const held = systemStore.dayEntries()
@@ -1157,10 +1174,10 @@ test('SF06 (DLW build ruling 2026-11-09): the Day device offers today’s entrie
     } finally {
       globalThis.fetch = real
     }
-    assert.deepEqual(sent.map(body => (body.op === 'invoke_action' ? [body.invocation.action, body.invocation.input] : [body.op, body.request?.kind])), [
-      ['central', 'inspect'],
+    assert.deepEqual(sent.map(body => (body.op === 'invoke_action' ? [body.invocation.action, body.invocation.input] : [body.op, body.slice, body.fresh])), [
+      ['model_subscribe', 'day', true],
       ['central.day.entry.part', {day_ref: 'central:day:control:root:2026-10-16', expected_revision: 'rev-1', field_id: 'p3_pattern'}],
-    ], 'the press sends the revision the hook offered from')
+    ], 'Central\'s ground read again (the World Model\'s day slice, fresh), then the entry on the revision the hook offered from')
     today.unmount()
     devices.pop()
     assert.equal(systemStore.dayEntries(), null, 'unmounted, it lets go of its own')

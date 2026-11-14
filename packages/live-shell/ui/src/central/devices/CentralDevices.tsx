@@ -63,10 +63,10 @@ import {beginDayMove, bringDayEntry, centralWrite, centralWriters, closeCarry, F
 import {turnDay, useDayInPane, useReachedDocument} from '../documents/documentDoor'
 import {documentPacketOf, packetItemOf} from './packetBinding'
 import type {DayDocumentField} from '../../../../../../desktop/cradle/src/central/dayForm'
-import {dayDesignBinding, dayEntryCandidates, dayFactsOf, dayFieldRecords, dayValuesOf, fieldSkippedWords, type DayFacts, type DayFieldRecord} from './dayBinding'
+import {dayDesignBinding, dayEntryCandidates, dayFactsOf, dayFieldRecords, dayFromModel, dayOwnOf, dayValuesOf, fieldSkippedWords, todaysPageOf, type DayFacts, type DayFieldRecord} from './dayBinding'
 import {heldField, holdDayEntries, starHand, subscribeSystem, systemReading} from '../../projections/atlas/system/systemStore'
 import {dayFieldOf, dayFieldReading} from '../../projections/atlas/system/fieldModel'
-import {useCentralAction, useCentralGroundAnswer, useDayDieReading, useDayOwnReadings, useNaraReading, useRosterReading, type DayDieAperture} from './useCentralReadings'
+import {useCentralAction, useNaraReading, type DayDieAperture} from './useCentralReadings'
 import {useDocsDevice, usePageDevices, type PageDevices} from './pageDevices'
 import {CENTRAL_AGENT_ID, centralAgentBinding, centralAgentRef} from './answerBinding'
 import {useAnswerVoice} from './useAnswerVoice'
@@ -93,23 +93,20 @@ import {voiceBinding} from '../../agent/devices/voiceBinding'
 import {voiceBodyReadings, type AnswerVoiceState, type VoiceKey} from './answerVoice'
 import {PERSONAL_ANCHOR_ACTION, acceptSourceReturn, personRefOf, rejectSourceReturn} from './sourceReturnAccept'
 import {commentSourceReturn, withReturnComments} from './sourceReturnComment'
-import {useRosterAgents} from '../../owners/readers'
-import {useScopeWaits} from '../../agent/sessionSettings'
+import {writeSessionSettings} from '../../agent/sessionSettings'
 import {bindConversation} from './centralDeviceWrites'
 import {useAgencySessions} from '../../agent/useAgencySessions'
 import {useOptionalContinuity} from '../../continuity/workspace'
 import {COMPANIONS} from '../../shell/modeDockTiles'
-import {usePacketReading} from '../../shell/transports/useCentralTransport'
 import {conversationOf} from '../../widgets/agentConversation'
-import {CENTRAL_SCOPE_ID, CONTEXT_WORLD_DEVICE_ID, IDENTITY_DEVICE_ID, PACKET_DEVICE_ID, SEARCH_DEVICE_ID, useIdentityDevice, usePacketDevice, useScopeDevice} from './agentChainDevices'
-import {EFFECTIVE_SOURCES_ACTION, ROOT_WORLD_RELATIONS, WORLD_RELATIONS_READ, WORLD_RELATIONS_SAVE, type ChangeHorizon} from './contextWorldBinding'
+import {CENTRAL_SCOPE_ID, CONTEXT_WORLD_DEVICE_ID, IDENTITY_DEVICE_ID, PACKET_DEVICE_ID, SEARCH_DEVICE_ID, identityFromModel, packetDeviceBinding, packetFromModel,
+  rosterAgentsFromModel, rosterReadingOf, scopeFromModel, scopeWaitsOf, useIdentityHolds} from './agentChainDevices'
+import {centralScopeBinding, WORLD_RELATIONS_SAVE, type ChangeHorizon} from './contextWorldBinding'
 import {useAtSearch} from '../searchPane'
 import {openNotificationTarget, useOwnerRequests} from '../../widgets/railDevices'
 import {openedHold, openedOf, withOwnerRequests} from '../../widgets/railBindings'
 import './centralDevices.css'
 
-/** The root register's world, whose effective sources Scope reads (central.world.effective-sources {scope, world_ref}). */
-const ROOT_WORLD_SOURCES: Readonly<Record<string, unknown>> = {scope: 'root', world_ref: 'control:root'}
 /** An action asked with no input (Central's personal anchor). */
 const NO_INPUT: Readonly<Record<string, unknown>> = {}
 
@@ -385,66 +382,6 @@ function useTurnToFactory(): (() => void) | undefined {
   return useMemo(() => (present ? () => { setMode.current?.(REFINING_MODE) } : undefined), [present])
 }
 
-/** The Day device's own readings and writes: the facts its owners give, the shown Day's document, and the binding the design reads
- * (null until the Day's date is known — before that the design would draw its date as missing words, so the generic plate stands). */
-export function useDayDevice(transport: KernelTransportStatus, selected: {standing: DayDocumentStanding | null; aperture: DayDieAperture | null} | null): {
-  facts: DayFacts
-  document: {face: number | null; revision: string | null; payload: unknown; refresh: () => void}
-  binding: DesignBinding | null
-} {
-  const ground = useCentralGroundAnswer(transport)
-  const epoch = useSpineEpoch()
-  const selectedKey = selected ? `${selected.standing?.state ?? ''}|${selected.standing?.dayRef ?? ''}|${selected.aperture?.sourceRef ?? ''}|${selected.aperture?.documentId ?? ''}` : null
-  const facts = useMemo(() => dayFactsOf({ground: ground.reading, groundError: ground.error, selected}),
-    // The selection is identity: a fresh object with the same parts is the same Day.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [ground.reading, ground.error, selectedKey])
-  const document = useDayDieReading(transport, facts.aperture)
-  useDayEntriesOffered(transport, facts, document)
-  // The Day's own settings, and the moves of the Day shown when its document stands (T-COVERAGE §1.3).
-  const timezone = ground.reading?.time.state === 'ready' ? ground.reading.time.data?.policy.timezone ?? null : null
-  const own = useDayOwnReadings(transport, facts.standing?.state === 'ready' ? facts.standing.dayRef : null, timezone)
-  // A Day held open in a pane shows its own face, which the owner holds at that Day's next Save: the device reads and turns that one.
-  const inPane = useDayInPane(facts.aperture?.documentId ?? null)
-  const shownFace = inPane?.face ?? document.face
-  const refreshGround = ground.refresh, refreshDocument = document.refresh
-  const toFactory = useTurnToFactory()
-  // The held field beside the Day (SF06, SF08): the star your world is at with its day, and what has reached you, as the window holds them
-  // while the World's readings stand; what reached you is recorded into today's open Day while its field source is On (Central#324).
-  const held = useSyncExternalStore(subscribeSystem, heldField, heldField)
-  const bound = useSyncExternalStore(subscribeSystem, () => systemReading().state !== 'unbound', () => false)
-  const searches = useSyncExternalStore(subscribeSystem, () => starHand().searches, () => starHand().searches)
-  const read = useMemo(() => (bound && held.state === 'read' ? dayFieldOf(held, searches) : null), [held, bound, searches])
-  const field = useMemo(() => (read ? {fieldDay: JSON.stringify(read)} : dayFieldReading(held, bound, searches)), [read, held, bound, searches])
-  const recording = useMemo(() => dayFieldRecords(read ? read.reached : null, own, facts), [read, own, facts])
-  const fieldRefusal = useFieldRecords(transport, facts.canClose && facts.standing?.state === 'ready' ? facts.standing.dayRef : null, recording)
-  const fieldSkipped = useMemo(() => fieldSkippedWords(recording.skipped), [recording])
-  const binding = useMemo(() => {
-    if (!facts.civilDate) return null
-    const values = dayValuesOf(facts, facts.aperture && shownFace !== null ? {face: shownFace, payload: document.payload} : null, own,
-      {...field, ...(fieldRefusal ? {fieldRefusal} : {}), ...(fieldSkipped ? {fieldSkipped} : {})})
-    return dayDesignBinding(DAY_DEVICE_ID, facts, values, {
-      turn: async (aperture, face) => { if (await turnDay(aperture.documentId, face, () => turnDieFace(transport, aperture, face)) === 'owner') refreshDocument() },
-      // Close now is the close routine (W2): central.day.close-carry, which carries face 5's proposal when Close routine is On.
-      closeNow: async () => {
-        try { await closeCarry(transport) } finally {
-          refreshGround()
-          void ownerReadings.entries().find(entry => entry.key === dayStandingKey(transport, null))?.retry(epoch)
-        }
-      },
-      // The Day's own settings, a pad's press and tomorrow's opening, through Central's actions on the revisions read (W2). The readings are
-      // asked again behind each write (the kernel's write notice); the ground too, where a Day moved.
-      settings: async (patch, revision) => { await writeDaySettings(transport, patch, revision) },
-      begin: async (move, dayRef) => { await beginDayMove(transport, move, dayRef) },
-      openTomorrow: async () => { try { await openTomorrow(transport) } finally { refreshGround() } },
-      // Refine on the Patterns pad (§18.2): a refinement of the one skill or method its pattern points at, on the Skillset rack's
-      // Refining page in Factory (§19.7). It writes nothing to any owner.
-      refine: member => openRefinement(member, {toFactory}),
-    }, own)
-  }, [facts, shownFace, document.payload, own, field, fieldRefusal, fieldSkipped, transport, refreshDocument, refreshGround, epoch, toFactory])
-  return {facts, document, binding}
-}
-
 /** Today's open Day offers its entries to the World's Show (O-I #858 SF06; systemStore.ts DayEntries): what it holds, each as an offer on
  * the revision of the reading it came from, and how its part is brought on the person's press (bringDayEntry: Central's today checked
  * again, the part read on that revision and its label compared). Only the open Day Central names as today offers (facts.offersEntries):
@@ -495,10 +432,63 @@ function useFieldRecords(transport: KernelTransportStatus, shownDay: string | nu
  * (centralChainOf, centralWorldOf). */
 export function CentralDevicesChain({transport, dayStanding, day = null, conversation = null, flow = null, projects, deviceWindows = null}: CentralDevicesProps) {
   const manifest = inhabitantManifest(CENTRAL_FAMILY)
-  const dayDevice = useDayDevice(transport, dayStanding ? {standing: dayStanding, aperture: day} : null)
-  const dayBinding = dayDevice.binding
   const toFactory = useTurnToFactory()
-  const dayAperture = dayDevice.facts.aperture
+  // The page bindings' holds (the Identity page's agent and World, the Packet's and Scope's own keys): the declared devices bind again
+  // when they move.
+  const holdsAt = useIdentityHolds()
+  // The Day (O-I ticket 1005; CENTRAL_CHAIN_DECLARATIONS `day`): the World Model's day slice — Central's ground, today's Day and its page,
+  // the Day's own settings, today's moves and field — composed here (dayBinding.ts dayFromModel). The Day selected, else today as the
+  // ground reads it; the Day opens itself at Central's turn, and no press stands in for it.
+  const daySlice = useModelSlice(transport, 'day')
+  const dayModel = useMemo(() => dayFromModel(daySlice), [daySlice])
+  const selectedKey = dayStanding ? `${dayStanding.state}|${dayStanding.dayRef}|${day?.sourceRef ?? ''}|${day?.documentId ?? ''}` : null
+  const dayFacts = useMemo(() => dayFactsOf({ground: dayModel.ground, groundError: dayModel.groundError, selected: dayStanding ? {standing: dayStanding, aperture: day} : null}),
+    // The selection is identity: a fresh object with the same parts is the same Day.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [dayModel.ground, dayModel.groundError, selectedKey])
+  const dayPage = useMemo(() => todaysPageOf(dayModel, dayFacts.aperture), [dayModel, dayFacts.aperture])
+  const dayDocument = useMemo(() => ({face: dayPage?.face ?? null, revision: dayPage?.revision ?? null, payload: dayPage?.payload ?? null,
+    fields: dayPage?.fields ?? null, contributions: dayPage?.contributions ?? null}), [dayPage])
+  useDayEntriesOffered(transport, dayFacts, dayDocument)
+  const timezone = dayModel.ground?.time.state === 'ready' ? dayModel.ground.time.data?.policy.timezone ?? null : null
+  const dayOwn = useMemo(() => dayOwnOf(dayModel, dayFacts.standing?.state === 'ready' ? dayFacts.standing.dayRef : null, timezone), [dayModel, dayFacts.standing, timezone])
+  // A Day held open in a pane shows its own face, which the owner holds at that Day's next Save: the device reads and turns that one.
+  const inPane = useDayInPane(dayFacts.aperture?.documentId ?? null)
+  const shownFace = inPane?.face ?? dayDocument.face
+  const epoch = useSpineEpoch()
+  // The held field beside the Day (SF06, SF08): the star your world is at with its day, and what has reached you, as the window holds them
+  // while the World's readings stand; what reached you is recorded into today's open Day while its field source is On (Central#324).
+  const heldSky = useSyncExternalStore(subscribeSystem, heldField, heldField)
+  const bound = useSyncExternalStore(subscribeSystem, () => systemReading().state !== 'unbound', () => false)
+  const searches = useSyncExternalStore(subscribeSystem, () => starHand().searches, () => starHand().searches)
+  const fieldRead = useMemo(() => (bound && heldSky.state === 'read' ? dayFieldOf(heldSky, searches) : null), [heldSky, bound, searches])
+  const field = useMemo(() => (fieldRead ? {fieldDay: JSON.stringify(fieldRead)} : dayFieldReading(heldSky, bound, searches)), [fieldRead, heldSky, bound, searches])
+  const recording = useMemo(() => dayFieldRecords(fieldRead ? fieldRead.reached : null, dayOwn, dayFacts), [fieldRead, dayOwn, dayFacts])
+  const fieldRefusal = useFieldRecords(transport, dayFacts.canClose && dayFacts.standing?.state === 'ready' ? dayFacts.standing.dayRef : null, recording)
+  const fieldSkipped = useMemo(() => fieldSkippedWords(recording.skipped), [recording])
+  const dayBinding = useMemo(() => {
+    if (!dayFacts.civilDate) return null
+    const values = dayValuesOf(dayFacts, dayFacts.aperture && shownFace !== null ? {face: shownFace, payload: dayDocument.payload} : null, dayOwn,
+      {...field, ...(fieldRefusal ? {fieldRefusal} : {}), ...(fieldSkipped ? {fieldSkipped} : {})})
+    // Each write is Central's Action (CENTRAL_CHAIN_DECLARATIONS `day`); the World Model reads the Day again behind it.
+    return dayDesignBinding(DAY_DEVICE_ID, dayFacts, values, {
+      turn: async (aperture, face) => { await turnDay(aperture.documentId, face, () => turnDieFace(transport, aperture, face)) },
+      // Close now is the close routine (W2): central.day.close-carry, which carries face 5's proposal when Close routine is On.
+      closeNow: async () => {
+        try { await closeCarry(transport) } finally {
+          void ownerReadings.entries().find(entry => entry.key === dayStandingKey(transport, null))?.retry(epoch)
+        }
+      },
+      // The Day's own settings, a pad's press and tomorrow's opening, through Central's actions on the revisions read (W2).
+      settings: async (patch, revision) => { await writeDaySettings(transport, patch, revision) },
+      begin: async (move, dayRef) => { await beginDayMove(transport, move, dayRef) },
+      openTomorrow: async () => { await openTomorrow(transport) },
+      // Refine on the Patterns pad (§18.2): a refinement of the one skill or method its pattern points at, on the Skillset rack's
+      // Refining page in Factory (§19.7). It writes nothing to any owner.
+      refine: member => openRefinement(member, {toFactory}),
+    }, dayOwn)
+  }, [dayFacts, shownFace, dayDocument.payload, dayOwn, field, fieldRefusal, fieldSkipped, transport, epoch, toFactory])
+  const dayAperture = dayFacts.aperture
   const selection = useOptionalContinuity()?.current.context?.selection ?? null
   const selectionRef = selection?.ref ?? null
   // The world the selected track holds (§16.2 "Track: a world"), from the worlds Central discloses, held here, and, for a project's world,
@@ -516,20 +506,24 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
   }), // eslint-disable-next-line react-hooks/exhaustive-deps -- the world is its ref
   [selectedWorldRef, worlds])
   // The document the hand reached, for the Agent's and Scope's page (the page family itself stands on no chain: R4).
-  const pages = usePageDevices(transport, {aperture: dayAperture, face: dayDevice.document.face, payload: dayDevice.document.payload, civilDate: dayDevice.facts.civilDate}, pageWorld)
+  const pages = usePageDevices(transport, {aperture: dayAperture, face: dayDocument.face, payload: dayDocument.payload, civilDate: dayFacts.civilDate}, pageWorld)
   const nara = useNaraReading(transport, conversation?.project ?? null, conversation?.expressionRef ?? null, conversation?.conversation ?? null)
   // The Agent (answerBinding.ts centralAgentBinding): the bound session's exchange through the ONE shared encounter observer (lane BF2's),
   // the roster's agent of the binding's role. The Packet goes with the conversation the Agent widget holds (THE selection's session, else
-  // the companion's own: the read the Packet widget and the transport's Key slot make, useCentralTransport.tsx usePacketReading).
+  // the companion's own: the World Model's packet slice, which the Packet widget and the transport's Key slot read too).
   const chainWorld = useMemo(() => chainWorldOf(selectedWorld, codeProject ? {status: git.status, error: git.error} : null),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- the world is its ref
     [selectedWorld?.ref, codeProject, git.status, git.error])
-  const packetReading = usePacketReading(transport, selectionRef)
   const agency = useAgencySessions(transport)
   const nowUnixMs = useAgentSessionsOptional()?.nowUnixMs ?? 0
   const companion = COMPANIONS.base.name
   const packetTrack = conversationOf(agency.tracks, companion, selectionRef).track
   const packetSessionRef = packetTrack?.sessionRef ?? null, packetSpaceRef = packetTrack?.spaceRef ?? null, packetProject = packetTrack?.project
+  // The Packet (CENTRAL_CHAIN_DECLARATIONS `packet`): AIKit's prepared context of the conversation's session, as the World Model's packet
+  // slice holds it — the read the transport's Key slot and the rail's tile make too.
+  const packetSlice = useModelSlice(transport, 'packet')
+  const packetReading = useMemo(() => packetFromModel(packetSlice, {session: packetSessionRef, project: packetProject ?? ROOT_REGISTER}),
+    [packetSlice, packetSessionRef, packetProject])
   // Each observed session in its own register (agent/worldScope.ts): the Nara conversation where its dialogue was looked up, the packet's
   // session where its agency read listed it.
   const naraProject = conversation?.project ?? ROOT_REGISTER
@@ -543,25 +537,30 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
   const reachedPacket = reached?.packet, reachedForm = reached?.form, reachedTitle = reached?.title
   const documentPacket = useMemo(() => documentPacketOf(reachedPacket && reachedForm ? {form: reachedForm, title: reachedTitle ?? '', packet: reachedPacket} : null),
     [reachedPacket, reachedForm, reachedTitle])
-  const packet = usePacketDevice(transport, packetReading, {companion, bound: !!packetTrack, handle: packetSessionRef ? encounters.handles[packetSessionRef] : undefined}, documentPacket)
+  const packetHandle = packetSessionRef ? encounters.handles[packetSessionRef] : undefined
+  const packet = useMemo(() => packetDeviceBinding(transport, packetReading, {companion, bound: !!packetTrack, handle: packetHandle}, documentPacket),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the holds' version re-binds the view's own keys
+    [transport, packetReading, companion, packetTrack, packetHandle, documentPacket, holdsAt])
   const packetSession = packetReading?.context ? packetReading.context.scope.agent_session : null
   // What the Agent's conversation receives with a Send: AIKit's prepared context (the Packet shows the document's packet while one is reached).
   const preparedItems = useMemo(() => (packetReading?.context ? JSON.stringify(packetReading.context.items.map(packetItemOf)) : null), [packetReading])
   const answerHandle = nara.session ? encounters.handles[nara.session] : undefined
   const answerObserved = observedState(answerHandle)
-  const answerRoster = useRosterAgents(transport)
-  const roster = useRosterReading(transport)
-  const refreshDay = dayDevice.document.refresh, refreshConversation = nara.refresh, refreshPage = pages.refresh
-  const afterWrite = useMemo(() => ({day: refreshDay, conversation: refreshConversation, page: refreshPage}), [refreshDay, refreshConversation, refreshPage])
+  // Your roster (CENTRAL_CHAIN_DECLARATIONS `agent`): the World Model's roster slice — the agents the Agent answers as, and the Identity page.
+  const rosterSlice = useModelSlice(transport, 'roster')
+  const answerRoster = useMemo(() => rosterAgentsFromModel(rosterSlice), [rosterSlice])
+  const roster = useMemo(() => rosterReadingOf(answerRoster), [answerRoster])
+  const refreshConversation = nara.refresh, refreshPage = pages.refresh
+  const afterWrite = useMemo(() => ({conversation: refreshConversation, page: refreshPage}), [refreshConversation, refreshPage])
   const reads = useMemo<CentralReads>(() => ({
-    day: {standing: dayDevice.facts.standing, face: dayDevice.document.face, revision: dayDevice.document.revision},
+    day: {standing: dayFacts.standing, face: dayDocument.face, revision: dayDocument.revision},
     nara, roster,
     page: pages.reads.page, workspace: pages.reads.workspace, flow: pages.reads.flow,
-  }), [dayDevice.facts.standing, dayDevice.document.face, dayDevice.document.revision, nara, roster, pages.reads])
+  }), [dayFacts.standing, dayDocument.face, dayDocument.revision, nara, roster, pages.reads])
   const pageWrite = pages.page
   const entries = useMemo(
     () => centralDeviceEntries({transport, faces: manifest?.faces ?? [], manifest, reads, day: dayAperture, conversation, flow, projects, deviceWindows, afterWrite,
-      dayStanding: dayDevice.facts.standing, page: pageWrite}),
+      dayStanding: dayFacts.standing, page: pageWrite}),
     // The apertures are identity: a fresh object with the same parts is the same device.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [transport, manifest, reads, afterWrite, dayAperture?.sourceRef, dayAperture?.documentId, dayAperture?.project, conversation?.conversation, conversation?.expressionRef, conversation?.project, flow?.location.ref, projects, deviceWindows, pageWrite],
@@ -592,30 +591,36 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
   // of its own in the 22 Oct manual rewrite ("Answer is the Agent on a page's chain", PROGRAMME R25 item 5).
   const voice = useAnswerVoice({transport, conversation, bound: nara.state === 'bound', session: nara.session, send: answerSend, reading: answerObserved?.reading})
   const voiceDesign = useMemo(() => centralVoiceBinding(voice.state, voice.why, voice.write), [voice.state, voice.why, voice.write])
-  // Scope (one Scope): the Agent's session's scope over Central's ground (the one ground answer the Day reads) and the Packet.
-  const ground = useCentralGroundAnswer(transport)
-  // The world's effective sources as Central resolves them (T-COVERAGE §1.3): the root register's, the ground's world.
-  const effective = useCentralAction(transport, EFFECTIVE_SOURCES_ACTION, ROOT_WORLD_SOURCES)
-  // The world's authored relations, which a read place's include or exclude is saved on (W2: central.world-relations.save).
-  const relations = useCentralAction(transport, WORLD_RELATIONS_READ, ROOT_WORLD_RELATIONS)
+  // Scope (one Scope; CENTRAL_CHAIN_DECLARATIONS `scope`): the Agent's session's scope over Central's ground (the change horizon the Day's
+  // slice holds) and the Packet; the world's effective sources and authored relations, and the dialogue's session's own settings in AIKit
+  // (its Wait and On no answer, which its executor plays at the Wait), as the World Model's scope slice holds them.
+  const scopeSlice = useModelSlice(transport, 'scope')
+  const naraSession = nara.state === 'bound' ? nara.session : null
+  const scopeModel = useMemo(() => scopeFromModel(scopeSlice, naraSession, naraProject), [scopeSlice, naraSession, naraProject])
   const saveRelations = useMemo(() => async (record: Record<string, unknown>, expectedRevision: string) => {
     await centralWrite(transport, WORLD_RELATIONS_SAVE, {scope: 'root', record, expected_revision: expectedRevision})
   }, [transport])
-  // Wait and On no answer (§19.12 Asks): the dialogue's session's own settings in AIKit, which its executor plays at the Wait.
-  const naraWaits = useScopeWaits(transport, nara.state === 'bound' ? nara.session : null, naraProject)
-  const scope = useScopeDevice({
+  const naraWaits = useMemo(() => scopeWaitsOf(naraSession, scopeModel.settings, transport.kind === 'unavailable' || !naraSession ? null
+    : (change, basis) => writeSessionSettings(transport, naraProject, naraSession, {track: change}, basis)), [naraSession, scopeModel.settings, transport, naraProject])
+  const packetItems = packetReading?.context ? packetReading.context.items.length : null
+  const scope = useMemo(() => centralScopeBinding(CENTRAL_SCOPE_ID, {
     waits: naraWaits,
     answer: {bound: nara.state === 'bound', session: nara.session},
-    horizon: (ground.reading?.sources ?? null) as ChangeHorizon | null, groundError: ground.error,
+    horizon: (dayModel.ground?.sources ?? null) as ChangeHorizon | null, groundError: dayModel.groundError,
     document: pages.reads.page?.title ?? null,
-    packet: packetReading?.context ? {items: packetReading.context.items.length, session: packetSession} : null,
-    effective, relations, saveRelations,
-  })
+    packet: packetItems === null ? null : {items: packetItems, session: packetSession},
+    effective: scopeModel.effective, relations: scopeModel.relations, saveRelations,
+  }),
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- the holds' version re-binds the view's own keys
+  [naraWaits, nara.state, nara.session, dayModel.ground, dayModel.groundError, pages.reads.page?.title, packetItems, packetSession, scopeModel.effective, scopeModel.relations, saveRelations, holdsAt])
   // The Agent's pages (oneAgentBinding.ts): Identity reads the agent that answers until you choose another (the hold Agent identity kept);
   // Custody the dialogue's session, which reports no custody (each setting disabled with the op it lacks; its write mode Scope's); the
   // Thread the bound session's conversation, on the same shared observer, its Approve and Hard stop that session's own encounter verbs;
   // Voice the Answer's voice, above.
-  const identity = useIdentityDevice(transport, centralAgentRef(answerInput), IDENTITY_DEVICE_ID)
+  const talkingTo = centralAgentRef(answerInput)
+  const identity = useMemo(() => identityFromModel(IDENTITY_DEVICE_ID, rosterSlice, talkingTo),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the holds' version re-binds the Identity page's choices
+    [rosterSlice, talkingTo, holdsAt])
   const holds = useChainHolds()
   const custody = useMemo(() => custodyBinding({sessionRef: nara.session, agent: own.values}, scope), [nara.session, own.values, scope])
   // The session the Thread page shows (the dialogue's, or the one it is pinned to), and that session's asks to the decision helper.
@@ -703,7 +708,7 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
   // family, Agent identity, Context & world, Search) are cleared once, so nothing stale of them stays on the door.
   const published = useRef(new Set<string>())
   // Tomorrow's Day, once Central has opened it beside today's: its page, for the Day's Full's Tomorrow tab.
-  const tomorrowDate = dayDevice.facts.tomorrow ?? null
+  const tomorrowDate = dayFacts.tomorrow ?? null
   const tomorrowPage = useMemo(() => (tomorrowDate
     ? () => <div className="central-device-body" data-central-body="day-die" data-day-page="tomorrow"><DayDocument transport={transport} dayRef={dayRefOfDate(tomorrowDate)} /></div>
     : undefined), [transport, tomorrowDate])

@@ -128,8 +128,11 @@ test('the door names the pane the hand last reached when a Day stands in two, an
 
 test('the Day device and the transport turn through the door, and read the face the pane shows', () => {
   const devices = read('../src/central/devices/CentralDevices.tsx'), transport = read('../src/shell/transports/useCentralTransport.tsx')
-  assert.match(devices, /turn: async \(aperture, face\) => \{ if \(await turnDay\(aperture\.documentId, face, \(\) => turnDieFace\(transport, aperture, face\)\) === 'owner'\) refreshDocument\(\) \}/)
-  assert.match(devices, /const shownFace = inPane\?\.face \?\? document\.face/)
+  // O-I ticket 1005: the turn is Central's Action (central.document.mutate), which moves the World Model's day slice, so the device asks
+  // nothing again itself after it.
+  assert.match(devices, /turn: async \(aperture, face\) => \{ await turnDay\(aperture\.documentId, face, \(\) => turnDieFace\(transport, aperture, face\)\) \}/)
+  assert.doesNotMatch(devices, /refreshDocument/)
+  assert.match(devices, /const shownFace = inPane\?\.face \?\? dayDocument\.face/)
   assert.match(transport, /turnDay\(die\.aperture\.documentId, face, \(\) => turnDieFace\(transport, die\.aperture, face\)\)/)
   assert.match(transport, /centralBindings\(\{[^}]*\.\.\.\(shownFace !== null \? \{face: shownFace\} : \{\}\)\}\)/)
 })

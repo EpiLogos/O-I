@@ -19,6 +19,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {readFileSync} from 'node:fs'
 import {register} from 'node:module'
+import {withWorldModel} from './support/worldModelFixture.mjs'
 
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
 register(`data:text/javascript,${encodeURIComponent(`
@@ -83,9 +84,10 @@ function drawsOn(design, binding, fixture, reasons = []) {
 function kernel({actions = {}, ground: groundAnswer = null, changed = null} = {}) {
   const sent = []
   const ok = outcome => ({json: async () => ({ok: true, outcome})})
-  const fetch = async (_url, init) => {
+  // The kernel's own asks for a World Model slice it composes (`quiet`, support/worldModelFixture.mjs) are not the shell's: unrecorded.
+  const fetch = async (_url, init, {quiet = false} = {}) => {
     const body = JSON.parse(init.body)
-    sent.push(body)
+    if (!quiet) sent.push(body)
     if (body.op === 'central' && body.request?.kind === 'inspect' && groundAnswer) return ok({result: 'central_reading', data: groundAnswer})
     if (body.op === 'flow_changed_since' && changed) return ok({result: 'flow_changed_since', reading: changed})
     if (body.op === 'invoke_action') {
@@ -101,7 +103,14 @@ function kernel({actions = {}, ground: groundAnswer = null, changed = null} = {}
 }
 async function withKernel(owner, run) {
   const real = globalThis.fetch
-  globalThis.fetch = owner.fetch
+  // The World Model's slices composed over this kernel's answers, as the kernel composes them (O-I ticket 1005: a Day write reads its
+  // ground again through the day slice).
+  const composed = withWorldModel(owner.fetch)
+  globalThis.fetch = async (url, init) => {
+    const body = JSON.parse(init.body)
+    if (body.op === 'model_subscribe') owner.sent.push(body)
+    return composed(url, init)
+  }
   try { return await run() } finally { globalThis.fetch = real }
 }
 const bridge = url => ({kind: 'bridge', url})
@@ -201,7 +210,8 @@ test('SF06 (DLW build ruling 2026-11-09): Show checks Central’s today again at
   const t = bridge('http://bring-entry.fixture')
   const today = kernel({ground: CLOSE_GROUND, actions: answering('Call the harbour')})
   await withKernel(today, async () => assert.deepEqual(await writes.bringDayEntry(t, offered, offer), {id: 'day-entry:0123456789abcdef', kind: 'page', label: 'Call the harbour'}))
-  assert.deepEqual(today.sent.map(body => body.op === 'central' ? `central ${body.request.kind}` : body.invocation.action), ['central inspect', 'central.day.entry.part'], 'Central’s ground is read again first, fresh')
+  assert.deepEqual(today.sent.map(body => body.op === 'model_subscribe' ? `model ${body.slice}${body.fresh ? ' fresh' : ''}` : body.invocation.action), ['model day fresh', 'central.day.entry.part'],
+    'Central’s ground is read again first, fresh: the World Model\'s day slice (O-I ticket 1005)')
   const moved = kernel({ground: CLOSE_GROUND, actions: answering('Call the harbour master')})
   await withKernel(moved, () => assert.rejects(writes.bringDayEntry(t, offered, offer),
     {message: 'Central reads this entry as “Call the harbour master” now, not “Call the harbour” as it was offered: look again; nothing reached the field.'}))
