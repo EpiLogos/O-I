@@ -1707,7 +1707,7 @@ fn seat_a_project(world: &World, project: &str) -> Result<PathBuf, String> {
     action(world, "central.ground.project.adopt", adopt)?;
     std::fs::write(
         work.join("README.md"),
-        &format!("# {project}\n\nA project of the foundation gate's World.\n"),
+        format!("# {project}\n\nA project of the foundation gate's World.\n"),
     )
     .and_then(|()| std::fs::write(work.join("NOTES.md"), "# Notes\n"))
     .map_err(|e| format!("the project's files: {e}"))?;
