@@ -501,8 +501,8 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
   const dayAperture = dayDevice.facts.aperture
   const selection = useOptionalContinuity()?.current.context?.selection ?? null
   const selectionRef = selection?.ref ?? null
-  // The world the selected track holds (§16.2 "Track: a world"), from the worlds Central discloses — the one held reading the tracks read
-  // (frame/tracks/useCentralTracks.ts) — and, for a project's world, whether its folder holds code: Central's git reading of the project.
+  // The world the selected track holds (§16.2 "Track: a world"), from the worlds Central discloses, held here, and, for a project's world,
+  // whether its folder holds code: Central's git reading of the project.
   const worldsAnswer = useHeldRead(['worlds', transport], () => readWorlds(transport))
   const worlds = worldsAnswer.status === 'answered' ? worldsAnswer.value ?? null : null
   const selectedWorld = centralWorldOf(selection, worlds)

@@ -74,7 +74,7 @@ const SET = {columns: [{id: 'r1', name: '1'}], clips: [], tracks: [{id: WORLD_TR
 
 test('a mode names the device its tracks\' heads open; the Session grid and the Arrangement ruler draw one head button for it, and a track no mode names draws none', () => {
   const opened = []
-  // REPLACED (#725): the head named the Workspace — retired; a world's head opens its Docs (useCentralTracks.ts, §18.1, §18.5).
+  // REPLACED (#725): the head named the Workspace — retired; a world's head opens its Docs (central/worldDocsHeads.ts, §18.1, §18.5).
   heads.nameTrackHeadDevices('central', new Map([[WORLD_TRACK, {title: 'Docs', does: 'Open O-I\'s Docs full in a pane', open: () => opened.push('central:docs')}]]))
   try {
     const selected = []

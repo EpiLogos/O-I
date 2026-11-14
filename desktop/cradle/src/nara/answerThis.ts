@@ -14,7 +14,7 @@
  *
  * Arm decides how the answer arrives (manual §24.1 "Arm — Lets Nara write into your practice pages directly, each write with a receipt.
  * Off by default: every answer arrives as a proposal"; §19.4 "With Arm off, each change arrives as a proposal card; with Arm on, it lands
- * directly with a receipt"). The track's Arm is the shell's one write arm (frame/tracks/useCentralTracks.ts).
+ * directly with a receipt"). The track's Arm is the shell's one write arm (the kernel's Central Set, mode_set.rs: arming one world arms every one).
  *   Arm off   Nara answers in her conversation, and the completed answer is read back from it (readNativeAnswer: the turn completed, its
  *             basis this page's passage); nothing is written in the page. The answer waits on its page as a proposal (answerProposals).
  *   Arm on    the answer is written into the Flow on the revision read, and the write's receipt is read back from Central (the Flow read

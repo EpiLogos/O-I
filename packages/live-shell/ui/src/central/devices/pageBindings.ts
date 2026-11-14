@@ -53,7 +53,7 @@ export const NOTES_DESIGN = 'central:notes'
 export const BEINGS_DESIGN = 'central:beings'
 export const THINGS_DESIGN = 'central:things'
 export const WORKSPACE_DESIGN = 'central:workspace'
-/** The Workspace on the door: the track's Workspace device a world's head opens (§18.1; frame/tracks/useCentralTracks.ts). */
+/** The Workspace on the door (§18.1). A world's head opens its Docs (central/worldDocsHeads.ts), not this. */
 export const WORKSPACE_DEVICE_ID = WORKSPACE_DESIGN
 
 const ON_THE_PAGE = 'the hosted form is the page\'s one writer while it holds the page (DocumentFlowFace.tsx: the bridge reads its island and never pushes into it)'
