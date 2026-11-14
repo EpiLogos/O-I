@@ -19,8 +19,9 @@
 //! ```
 //!
 //! Owners come from `OI_AIKIT_BIN`, `OI_CENTRAL_CTRL_BIN`, `OI_FACTORY_BIN`, `OI_ACTUATION_BIN`, `OI_WORKCELL_BIN`, `OI_QL_BIN` and
-//! `OI_BIN`, defaulting to the installed suite. Every owner process an act started (its command line names the act's own home) is
-//! stopped by pid at the end, failure included.
+//! `OI_BIN`, defaulting to the installed suite, and an owner that calls another by its name gets the same one (the World's `bin`
+//! comes first on PATH). Every owner process an act started (its command line names the act's own home) is stopped by pid at the
+//! end, failure included.
 use oi_cradle_kernel::{
     dispatch, person_press, watch, world_model, Kernel, KernelOp, KernelOpOutcome,
 };
@@ -93,6 +94,11 @@ impl World {
             }
         }
         let root = root.canonicalize().unwrap();
+        // An owner that calls another by its name (AIKit reads Central's ground with `ctrl`) reaches the owner under test, not
+        // the one installed on this Mac: the World's `bin` comes first on PATH, one `exec` of each owner in it. A wrapper, not a
+        // link, so an owner that finds its own files beside its executable still finds them.
+        let named = root.join("bin");
+        std::fs::create_dir_all(&named).unwrap();
         for (var, name) in OWNERS {
             let bin = owner_bin(var, name);
             assert!(
@@ -100,8 +106,22 @@ impl World {
                 "{var}: no owner executable at {}",
                 bin.display()
             );
+            let quoted = bin.to_string_lossy().replace('\'', r"'\''");
+            let wrapper = named.join(name);
+            std::fs::write(&wrapper, format!("#!/bin/sh\nexec '{quoted}' \"$@\"\n")).unwrap();
+            #[cfg(unix)]
+            std::fs::set_permissions(
+                &wrapper,
+                std::os::unix::fs::PermissionsExt::from_mode(0o755),
+            )
+            .unwrap();
             std::env::set_var(var, bin);
         }
+        let mut path = vec![named];
+        path.extend(std::env::split_paths(
+            &std::env::var_os("PATH").unwrap_or_default(),
+        ));
+        std::env::set_var("PATH", std::env::join_paths(path).unwrap());
         std::env::set_var("HOME", &home);
         // The window is the World's own (the host's world_folder.rs).
         std::env::set_var("OI_WORLD_FOLDER", &home);
@@ -1023,8 +1043,9 @@ fn launch_seat(world: &World) -> Result<LaunchSeat, String> {
 /// One Launch (O-I #1003; world-shell.md §9.2 "The session starts oriented: its world, its project, today's Day ... come with the
 /// start"), as Settings' press runs it (windowPages.ts launchAgent): the seat act run with the agent in the place it takes. Read
 /// back from Factory: the session open in the seat's checkout, in this World and the project. From AIKit: its SessionStart record
-/// kept, the session itself (AIKit's own status of it), and what the hook gives the harness at its start naming the project and
-/// today's Day. The session is then ended by Factory's own Action, whatever was read. Answers the models the session advertised
+/// kept, the session itself (AIKit's own status of it), and the ground the harness takes in at its start, asked the way the harness
+/// asks (Factory's record `ground`), naming the project and today's Day. The session is then ended by Factory's own Action, whatever
+/// was read. Answers the models the session advertised
 /// (by the ids a model default names), the one it runs, and apart from them whether its start was oriented.
 struct Launched {
     advertised: Vec<String>,
@@ -1086,15 +1107,15 @@ fn launch(world: &World, seat: &LaunchSeat, agent: &str) -> Result<Launched, Str
             .as_str()
             .unwrap_or_default()
             .to_owned();
-        // What the hook gives the harness at its start: its project and today's Day.
-        let ground = record["answer"]["hookSpecificOutput"]["additionalContext"]
-            .as_str()
-            .unwrap_or_default();
+        // What the harness takes into the session at its start, as Factory keeps it from AIKit's answer, asked the way the
+        // harness asks (`ground`: a hook command's additionalContext, or the `injected` pi's carrier appends): its project and
+        // today's Day.
+        let ground = record["ground"].as_str().unwrap_or_default();
         let oriented = if ground.contains(&seat.day_ref) && ground.contains(project) {
             Ok(())
         } else {
             Err(format!(
-                "{agent}'s session started without its project and today's Day ({}): AIKit's SessionStart hook gave it {}",
+                "{agent}'s session started without its project and today's Day ({}): AIKit's SessionStart answer gave it {}",
                 seat.day_ref,
                 if ground.is_empty() {
                     format!(
