@@ -156,8 +156,14 @@ test('a place\'s row drags what the manual\'s target for it takes; the identity 
   assert.deepEqual(JSON.parse(acts.placeRowDrag(machine).data), {kind: 'workcell', ref: 'workcell:mac', label: 'This machine'})
   assert.equal(acts.placeRowDrag(machine).type, acts.RUNNING_DRAG, 'a running thing onto the rail')
   assert.equal(acts.placeRowDrag(places.identityRows({profiles: [{name: 'Frank', source_ref: 'Control/user/identity/nara.json'}]})[0]), null)
-  // A harness row is a census agent (O-I ticket 1003): it names no target either.
-  assert.equal(acts.placeRowDrag(places.harnessRows([{slug: 'codex', harnessRef: 'harness/codex', executable: '/x/codex', starts: true, talks: true, aikit: null}])[0]), null)
+  // A harness row is a census agent (O-I ticket 1003). One that starts drags as an agent, by its census ref, and an empty Factory track
+  // seats it (the Set's seat act takes the slug from `harness:<slug>`, frame/tracks/kernelSet.ts); one that does not start drags nowhere.
+  const [starting, idle] = places.harnessRows([{slug: 'codex', harnessRef: 'harness/codex', executable: '/x/codex', starts: true, talks: true, aikit: null},
+    {slug: 'gemini', harnessRef: 'harness/gemini', executable: '/x/gemini', starts: false, talks: false, why: 'it exited 1', aikit: null}])
+  const seat = acts.placeRowDrag(starting)
+  assert.equal(seat.type, AGENT_CHAIN_MIME, 'a census agent that starts drags as an agent')
+  assert.deepEqual(decodeChainDrag(seat.data), {kind: 'chain-item', drag: {family: 'agent', ref: 'harness:codex', label: 'Codex'}})
+  assert.equal(acts.placeRowDrag(idle), null, 'an agent that does not start takes no seat')
   assert.equal(acts.placeRowDrag(places.workRows({work: {projects: [{name: 'Loose', path: '/w/Loose', projectcentral: {}}]}})[0]), null, 'a folder that is no world')
   const rows = source('../src/frame/browser/PlaceRows.tsx')
   assert.match(rows, /draggable=\{drag !== null\}/)

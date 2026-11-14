@@ -10,6 +10,7 @@ import {useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore}
 import type {Value} from '../frame/devices/designed'
 import type {ChangeRequest, ScopeAddress, SettingsAdapter, SetupSource} from './adapter'
 import type {KernelOp, ModelSliceAnswer, PresentationDocument} from '../../../../../desktop/cradle/src/kernel/types'
+import {modeSetOf, type ModeSetReading} from '../owners/modeSets'
 import type {HarnessReading} from '../../../../../desktop/cradle/src/configuration/harnessSource'
 import {agentName, censusOf, type CensusReading} from '../../../../../desktop/cradle/src/agency/census'
 import type {ProfileDocument} from '../../../../../desktop/cradle/src/configuration/contracts'
@@ -23,7 +24,7 @@ import {authorityAllowsTrigger, eligibleProofs, routineBasis, scheduleFromInput,
 import {appearanceValues, automationValues, credentialValues, NEW_SCHEDULE, ROUTINE_FORM, scanWords, workcellSecretValues, folderOf, harnessValues, machineValues, NO_AUTHORING, NO_HARNESS, NO_INVOKE, NO_MACHINES, NO_NAVIGATE, NO_PRODUCTS,
   NO_PROFILES, NO_SETUP_AIKIT, NO_SETUP_SOURCE, NO_VISUALS, groundBound, productValues, profileValues, SECRET_REFERENCE, setupFolder, setupAgentTools, setupRootAgent, setupHarnessProviders,
   setupKeyFindings, setupNamespace, setupSkillRoots, setupValues, systemValues, type CredentialRow, type SetupCredentials, type SetupHarnesses, type SetupMachine, type SetupPreview,
-  harnessLoginClients, harnessLoginsOf, loginCheckOf, loginReadBack, commandWords, type HarnessLoginClient, type HarnessLoginReading,
+  harnessLoginClients, harnessLoginsOf, loginCheckOf, loginReadBack, commandWords, type HarnessLoginClient, type HarnessLoginReading, launchSaid, launchSeats, launchValues,
   setupExtensionLine, setupPlacementLine, possessive, type SetupExtension, type SetupLeft, type SetupPlacement, type SetupSnapshot, type SetupWorkFolder, type SetupFounding, type SetupKey, type SetupAgreement, type SetupForm, type SetupMusic, type SetupAuthority, type CivilTimePreview, type SetupBirth, type SetupCivilTime, type SetupDisclosure, groundNameRefusal, groundParts, groundPath} from './windowValues'
 import type {IdentityProfile} from '../../../../../desktop/cradle/src/nara/identity/types'
 import {chooseFolder, nativeFolderChooser, NO_NATIVE_FOLDER_CHOOSER} from './folderChooser'
@@ -182,6 +183,59 @@ export function useHarnessPage(adapter: SettingsAdapter, enabled: boolean, login
 }
 
 // ---------------------------------------------------------------------------------------------------------------- Sign in
+
+// ---------------------------------------------------------------------------------------------------------------- Launch
+
+/** Why Launch starts no session where the host hands the window no Action door. */
+const NO_LAUNCH_ACT = 'Launch reaches no Action door here (SetupSource.act, the kernel\'s act), so no session can be started from Settings.'
+
+/** Factory's Set over the adapter's kernel channel (`set_subscribe factory`, kernel mode_set.rs), as Launch reads its seat acts. */
+async function readFactorySet(adapter: SettingsAdapter): Promise<ModeSetReading> {
+  if (!adapter.invoke) return {state: 'unavailable', reason: NO_INVOKE('Factory\'s Set')}
+  const answer = await adapter.invoke({op: 'set_subscribe', mode: 'factory'})
+  return modeSetOf(answer.outcome, answer.error ?? undefined, 'factory')
+}
+
+/** One Launch press (useLaunch): the seat act Factory's Set offers for the project the press names (`<agent slug>|<project>`; with no
+ * project, the Set's only one), run with the agent through the registry's door (SetupSource.act), and Factory's answer read back
+ * (launchSaid). Each refusal in words: the Set's, the press's, or the owner's. */
+export async function launchAgent(set: ModeSetReading | null, act: SetupSource['act'] | undefined, value: Value): Promise<string> {
+  const [agent = '', project = ''] = String(value ?? '').split('|')
+  if (!agent) throw new Error('Launch names no agent.')
+  const seats = launchSeats(set)
+  if ('why' in seats) throw new Error(seats.why)
+  const seat = project ? seats.seats.find(one => one.project === project) : seats.seats.length === 1 ? seats.seats[0] : undefined
+  if (!seat) {
+    const offered = seats.seats.map(one => one.project).join(', ')
+    throw new Error(project ? `Factory's Set offers no seat in ${project}: it offers one in ${offered}.` : `Choose the project ${agent} starts in: ${offered}.`)
+  }
+  if (!act) throw new Error(NO_LAUNCH_ACT)
+  const bound = seat.act.input && typeof seat.act.input === 'object' && !Array.isArray(seat.act.input) ? seat.act.input as Record<string, unknown> : {}
+  return launchSaid(agent, await act(seat.act.action, {...bound, [seat.act.takes ?? 'agent']: agent}))
+}
+
+/** Launch (O-I #1003: "Launch starts a session that comes with its world, its project and today's Day"; R36), beside each agent that
+ * starts on Harnesses & models and on Setup's Harnesses and skills step: one press seats the agent on a new track of Factory's, through
+ * the seat act Factory's Set offers for the project chosen (kernel mode_set.rs: factory.session.start bound to this World and a project
+ * that holds a workcell seat, taking the agent) and the registry's door (SetupSource.act, the kernel's `act`). The window computes no
+ * World and no seat: where the Set offers none, its own words say why (launchSeats). What Factory answered is read back (launchSaid).
+ * The press's value is `<agent slug>|<project>`. One reading of the Set for both pages. */
+export function useLaunch(adapter: SettingsAdapter, enabled: boolean): PagePart {
+  const set = useRead<ModeSetReading>(enabled, adapter, !!adapter.invoke, readFactorySet, 'factory-set')
+  const launch = useCallback(async (value: Value): Promise<string> => {
+    const setup = adapter.setup
+    const said = await launchAgent(set.value, setup?.act ? (action, input) => setup.act!(action, input) : undefined, value)
+    // The new track stands in Factory's Set: read it again.
+    await set.refresh()
+    return said
+  }, [adapter, set])
+  return useMemo(() => {
+    const why: Record<string, string> = adapter.setup?.act ? {} : {launch: NO_LAUNCH_ACT}
+    const standing = readStanding(['launchProjects'], set, adapter.invoke ? null : NO_INVOKE('Launch'))
+    return {values: launchValues(launchSeats(set.value ?? (set.error ? {state: 'unavailable', reason: set.error} : null))), why, refused: standing.refused,
+      waiting: standing.waiting, reread: set.refresh, acts: {launch}}
+  }, [adapter, set, launch])
+}
 
 /** AIKit carries no profile for this harness: it has no login of its own to offer, which is no fault of the page's. */
 const NO_PROFILE = /harness_auth\.unknown_harness|not a harness AIKit carries a profile/

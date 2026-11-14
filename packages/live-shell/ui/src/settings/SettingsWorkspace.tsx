@@ -15,7 +15,7 @@ import type { DesignBinding, Standing, Value, ValueChange } from '../frame/devic
 import { HostedDevice, hostState, sayOnInfoLine, setHostPage } from '../frame/devices/deviceHost'
 import { design as windowDesign, searchResults } from '../inhabitants/catalogue/panels/settings__window'
 import { SETTINGS_LOCAL_KEYS, SETTINGS_WINDOW_ID, SETTINGS_WINDOW_WIRING, automationsRequestHolds, projectScopes, searchStep, windowCoreValues } from './windowValues'
-import { useAppearancePage, useAutomationsPage, useCredentialsPage, useHarnessPage, useMachinesPage, useProductsPage, useProfilesPage, useSetupPage, useSignIn, type Act, type PagePart } from './windowPages'
+import { useAppearancePage, useAutomationsPage, useCredentialsPage, useHarnessPage, useLaunch, useMachinesPage, useProductsPage, useProfilesPage, useSetupPage, useSignIn, type Act, type PagePart } from './windowPages'
 import { themeOwned } from './presentationSetting'
 import { configPlansOf, ownedRef, withOwnerAnswers, withOwnerPlans, type OwnedSetting } from './ownedSettings'
 import { ShellConfigContext } from '../shell/useSet'
@@ -337,7 +337,10 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, re
   const products = useProductsPage(adapter, wanted && (visited.has('products') || visited.has('inspection')))
   const setup = useSetupPage(adapter, wanted && setupOpened, held, done, [holds.folder, holds.make, holds.wiki, holds.where, holds.credential, holds.reference,
     holds.groundFolder, holds.groundName, holds.birthName, holds.birthDate])
-  const parts: readonly PagePart[] = [harness, credentials, signIn, appearance, profiles, machines, automations, products, setup]
+  // Launch stands beside each agent that starts on Harnesses & models and on Setup's Harnesses and skills step: one reading of Factory's
+  // Set for both pages (O-I #1003).
+  const launch = useLaunch(adapter, wanted && (visited.has('agents') || setupOpened))
+  const parts: readonly PagePart[] = [harness, credentials, signIn, launch, appearance, profiles, machines, automations, products, setup]
 
   // ── the window's own presses ────────────────────────────────────────────────────────────────────────────────────────────────────
   const entryOf = (ref: string) => allEntries.find(entry => entry.spec.setting_ref === ref)

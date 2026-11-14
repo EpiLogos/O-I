@@ -49,6 +49,9 @@
 //               button), signInUnread why its logins could not be read (that harness's alone), loginNow what AIKit finds now
 //               (harness_status's credential leg). loginSaid the result read back after a login's terminal ended. aikitWhy why AIKit's
 //               facts on the agents could not be read (drawn on its column, the agents standing as the census read them).
+//   launchProjects [project]  the projects of this World a Launch starts a session in: each one Factory's Set offers a seat act for
+//               (set_subscribe factory: `seat`, or `seat:<project>` where several hold a workcell seat; O-I #1003), on this page and on
+//               Setup's Harnesses and skills step; or launchWhy, why none, in the Set's own words.
 //   routes      [{model, name, routes: [{provider, key, standing?}]}]  the catalogue's declared routes (model_catalogue
 //               declared_routes: provider, credential_required as key); standing (unproven | observed | usable) is AIKit's model
 //               field; routesWhy says why it stands unread (AIKit's catalogue is identity only; availability is `aikit compose`).
@@ -104,14 +107,17 @@
 // Settings the shell holds: search, hit (the result ↑/↓ marked), scope, focus (the setting a contextual entry or a press opened), details
 //   (the setting whose Details are open), show (Automations: routines | methods | timers | history), context (Automations' work context),
 //   routine, product, owner (System's owner), axes ('disclosure' | 'configuration'), adding (the open form: machine | credential |
-//   routine | profile), rotating (the credential whose reference you replace), new.* (the open form's fields; new.expects and new.scopes
+//   routine | profile), rotating (the credential whose reference you replace), launchIn (the project Launch starts a session in, where
+//   Factory's Set offers more than one), new.* (the open form's fields; new.expects and new.scopes
 //   are JSON lists), Setup's choices, and a local change for each setting
 //   as draft:<ref> (a JSON string for a list or a table); setting draft:<ref> to nothing is its Undo.
 // Acts, each on its own key, with their owners:
 //   plan (config_plan_reviewed) · apply (config_apply_reviewed) · reset <ref> (config_reset) · keep <ref> (re-bases a draft on the
 //   current reading) · discard (drops every local change) · returnToWork (the work Settings was opened from) · reread (every owner read
 //   again) · install <client> (client_install) · reveal <client> (settings_reveal) ·
-//   signIn <client>|<provider> (the harness's own login, run in a terminal in the Workbench, the result read back) · discover (credential_discover) · verify
+//   signIn <client>|<provider> (the harness's own login, run in a terminal in the Workbench, the result read back) · launch <agent>|<project>
+//   (factory.session.start through Factory's Set's seat act for the project in launchIn, by the registry's door; Factory's answer read
+//   back: the session open in its World, project and seat checkout, AIKit's SessionStart hook keeping its record) · discover (credential_discover) · verify
 //   <credential> (credential_verify) · rotate <credential> with new.reference (credential_rotate) · revoke <credential>
 //   (credential_revoke) · bind with new.credential, new.reference (credential_setup) · useProfile <ref> (profile_use_plan: stages its
 //   settings as local changes) · saveProfile with new.name (profile_create, profile_edit) · importProfile (the shell's file picker,
@@ -579,20 +585,51 @@ function Carries({h, span}: {h: Rec; span: number}) {
   </td></tr>
 }
 
-/** The agents on this machine in Setup's Harnesses and skills step: exactly the census (O-I #1003), each with whether it starts and what
- * it carries. */
-function SetupAgents({reading}: {reading: Rec | undefined}) {
+/** Launch (O-I #1003): the projects of this World a session can start in, as Factory's Set offers them (launchProjects), the one chosen
+ * (launchIn; the only one where it offers one), or why none (launchWhy, in the Set's words). */
+function launchOf(p: ViewProps): {projects: string[]; project?: string; why?: string} {
+  const projects = has(p.v, 'launchProjects') ? strs(json<unknown[]>(p.v, 'launchProjects', [])) : []
+  const chosen = strOf(p.v, 'launchIn')
+  return {projects, project: projects.length === 1 ? projects[0] : chosen && projects.includes(chosen) ? chosen : undefined, why: strOf(p.v, 'launchWhy')}
+}
+
+/** Where Launch starts a session, where Factory's Set offers more than one project: chosen once, for every agent's Launch. */
+function LaunchIn({p}: {p: ViewProps}) {
+  const {projects, project} = launchOf(p)
+  if (projects.length < 2) return null
+  return <Chooser label="Sessions start in" does="The project of this World a Launch starts its session in. Each holds a workcell seat, and Factory seats the agent on a new track there."
+    value={project ?? ''} options={projects.map(x => ({value: x, label: x}))} onChange={value => p.set('launchIn', value)} />
+}
+
+/** Launch, beside an agent that starts (O-I #1003): Factory seats it on a new track in the project chosen, its session opened with this
+ * World, that project and today's Day (factory.session.start through Factory's Set's seat act); what Factory answered is read back. */
+function LaunchPress({p, h}: {p: ViewProps; h: Rec}) {
+  const agent = txt(h.agent), name = txt(h.harness) ?? agent ?? NONE
+  if (h.starts !== true || !agent) return null
+  const {projects, project, why} = launchOf(p), standing = st(p, 'launch')
+  return <Action {...standing} label="Launch" does={`Starts a session of ${name}${project ? ` in ${project}` : ''}: Factory seats it on a new track there, with this World, the project and today's Day.`}
+    disabled={standing.disabled ?? why ?? (project ? undefined : projects.length ? 'Choose the project it starts in first.' : 'Factory\'s Set is being read.')}
+    onPress={() => p.set('launch', `${agent}|${project ?? ''}`)} />
+}
+
+/** The agents on this machine in Setup's Harnesses and skills step: exactly the census (O-I #1003), each with whether it starts, what
+ * it carries, and Launch beside each one that starts. */
+function SetupAgents({p, reading}: {p: ViewProps; reading: Rec | undefined}) {
   const agents = Array.isArray(reading?.agents) ? reading!.agents.filter(rec) : undefined
-  return <table className="st-tbl" aria-label="The agents on this machine">
-    <Cols w={[150, undefined]} />
-    <thead><tr><th>Agent</th><th>Starts</th></tr></thead>
-    <tbody>{agents === undefined ? <tr><td colSpan={2} className="st-none">{txt(reading?.agentsWhy) ?? NONE}</td></tr>
-      : agents.length === 0 ? <tr><td colSpan={2} className="st-none">There is no agent on this computer.</td></tr>
-      : agents.flatMap(h => [<tr key={txt(h.agent)} data-census-agent={txt(h.agent)} data-read={h.starts === true ? undefined : 'true'}>
-        <td><b>{txt(h.harness) ?? txt(h.agent) ?? NONE}</b></td>
-        <td data-i={h.starts !== true && txt(h.why) ? `Doesn't start|${h.why}` : undefined}>{h.starts === true ? txt(h.version) ?? 'yes' : txt(h.why) ?? 'no'}</td>
-      </tr>, ...(h.starts === true ? [<Carries key={`${txt(h.agent)}:carries`} h={h} span={2} />] : [])])}</tbody>
-  </table>
+  return <>
+    <LaunchIn p={p} />
+    <table className="st-tbl" aria-label="The agents on this machine">
+      <Cols w={[150, undefined, 90]} />
+      <thead><tr><th>Agent</th><th>Starts</th><th /></tr></thead>
+      <tbody>{agents === undefined ? <tr><td colSpan={3} className="st-none">{txt(reading?.agentsWhy) ?? NONE}</td></tr>
+        : agents.length === 0 ? <tr><td colSpan={3} className="st-none">There is no agent on this computer.</td></tr>
+        : agents.flatMap(h => [<tr key={txt(h.agent)} data-census-agent={txt(h.agent)} data-read={h.starts === true ? undefined : 'true'}>
+          <td><b>{txt(h.harness) ?? txt(h.agent) ?? NONE}</b></td>
+          <td data-i={h.starts !== true && txt(h.why) ? `Doesn't start|${h.why}` : undefined}>{h.starts === true ? txt(h.version) ?? 'yes' : txt(h.why) ?? 'no'}</td>
+          <td className="st-acts"><LaunchPress p={p} h={h} /></td>
+        </tr>, ...(h.starts === true ? [<Carries key={`${txt(h.agent)}:carries`} h={h} span={3} />] : [])])}</tbody>
+    </table>
+  </>
 }
 
 /** What AIKit reads of each tool besides its skills (its disclosure): where its instructions and settings lie and the providers its
@@ -628,7 +665,7 @@ function SetupPage({p}: {p: ViewProps}) {
         <Lamp state={steps ? STEP_LIGHT[txt(r?.state) ?? ''] ?? 'unknown' : 'unknown'} tone="green" /><i>{i + 1}</i>{s.label}</button>
     })}</nav>
     {at === 'projects' ? <ProjectsStep p={p} /> : at === 'credentials' ? <CredentialsStep p={p} reading={reading} /> : <>
-      {at === 'harnesses' && reading && <SetupAgents reading={reading} />}
+      {at === 'harnesses' && reading && <SetupAgents p={p} reading={reading} />}
       <table className="st-tbl">
         <Cols w={[150, 210, undefined]} />
         <thead><tr><th>Found {pager}</th><th>Where</th><th>The change Accept makes</th></tr></thead>
@@ -662,6 +699,7 @@ function HarnessesPage({p}: {p: ViewProps}) {
     <OwnerRows p={p} category="agents" size={3} title="Agent settings" />
     <section className="st-sec">
       <h4>Agents on this machine<small>{harnesses ? `${harnesses.filter(h => h.talks === true).length} of ${harnesses.length} you can talk to` : <Unread p={p} k="harnesses" what="the agents on this machine" />}</small></h4>
+      {harnesses && <LaunchIn p={p} />}
       {harnesses && <table className="st-tbl">
         <Cols w={[118, 150, 50, 64, undefined, 150]} />
         <thead><tr><th>Agent</th><th>Starts</th><th>AIKit{strOf(v, 'aikitWhy') && <i className="st-why" data-i={`AIKit|${strOf(v, 'aikitWhy')}`}>!</i>}</th><th>Capability</th><th>After a change</th><th /></tr></thead>
@@ -674,6 +712,7 @@ function HarnessesPage({p}: {p: ViewProps}) {
             <td>{txt(h.capability) ?? NONE}</td>
             <td className="st-dim" data-i={txt(h.effect) ? `After a change|${h.effect}` : undefined}>{txt(h.effect) ?? NONE}</td>
             <td className="st-acts">
+              <LaunchPress p={p} h={h} />
               {client && h.folderPresent === false && <Action {...st(p, 'install')} label="Install" does="The native owner installs this harness client. Read detection again before you start work." onPress={() => p.set('install', client)} />}
               {client && txt(h.folder) && <Action {...st(p, 'reveal')} label="Folder" does={`Shows its configuration folder in Finder: ${h.folder}.`} onPress={() => p.set('reveal', client)} />}
               {/* Sign in runs the harness's own login in a terminal, where you answer it, and the page reads the result back; one that signs in

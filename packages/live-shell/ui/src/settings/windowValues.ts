@@ -12,7 +12,8 @@ import type {HarnessReading} from '../../../../../desktop/cradle/src/configurati
 import {agentName, type AgentCarries, type CensusAgent, type CensusReading} from '../../../../../desktop/cradle/src/agency/census'
 import type {ProfileDocument} from '../../../../../desktop/cradle/src/configuration/contracts'
 import type {SystemCompositionReading} from '../../../../../desktop/cradle/src/workspace/settings/types'
-import type {PresentationDocument} from '../../../../../desktop/cradle/src/kernel/types'
+import type {ModeSetAct, PresentationDocument} from '../../../../../desktop/cradle/src/kernel/types'
+import type {ModeSetReading} from '../owners/modeSets'
 import type {MachineConnection, RemoteMachineDeclaration} from './machines'
 import type {Invocation, MethodRow, RoutineDetail, RoutineList} from '../../../../../desktop/cradle/src/contributions/automations/client'
 import {actionMessage, nextOccurrenceTimes} from '../../../../../desktop/cradle/src/contributions/automations/client'
@@ -347,6 +348,49 @@ export function harnessValues(reading: HarnessReading | null, logins: HarnessLog
   }
   return values
 }
+// ---------------------------------------------------------------------------------------------------------------- Launch
+
+/** One place Launch can start a session (O-I #1003): a project of this World that holds a workcell seat, and the seat act Factory's Set
+ * offers for it (factory.session.start bound to the World and the project, taking the agent). */
+export interface LaunchSeat {readonly project: string; readonly act: ModeSetAct}
+export type LaunchSeats = {readonly seats: readonly LaunchSeat[]} | {readonly why: string}
+
+/** Where Launch starts a session (O-I #1003: "Launch starts a session that comes with its world, its project and today's Day"; R36): the
+ * seat acts of Factory's Set (kernel mode_set.rs), each Factory's `factory.session.start` bound to this World and one project that holds
+ * a workcell seat, taking the agent: `seat` where one project holds one, `seat:<project>` for each where several do. Where none stands,
+ * the Set's own words for why (its waiting `track.seat`), or why the Set is not read. The window computes no World and no seat. Pure. */
+export function launchSeats(set: ModeSetReading | null | undefined): LaunchSeats {
+  if (!set || set.state === 'reading') return {why: 'Factory\'s Set is being read.'}
+  if (set.state === 'unavailable') return {why: `Factory's Set is not read, so no session can be started here: ${sentence(set.reason)}`}
+  const seats = Object.entries(set.answer.set.acts ?? {})
+    .filter(([key, act]) => (key === 'seat' || key.startsWith('seat:')) && act.action === 'factory.session.start' && act.takes === 'agent')
+    .flatMap(([, act]): LaunchSeat[] => { const project = txt(rec(act.input) ? act.input.project : undefined); return project ? [{project, act}] : [] })
+    .sort((a, b) => a.project.localeCompare(b.project))
+  if (seats.length) return {seats}
+  const waiting = txt(set.answer.set.waiting?.['track.seat'])
+  return {why: waiting ? `Factory starts no session here yet: ${sentence(waiting)}` : 'Factory\'s Set offers no seat: no project of this World holds a workcell seat (Workcell\'s seat join).'}
+}
+
+/** What the design draws for Launch: the projects a session can start in (`launchProjects`), or why none (`launchWhy`). Pure. */
+export function launchValues(seats: LaunchSeats): Record<string, Value> {
+  return 'why' in seats ? {launchWhy: seats.why} : {launchProjects: json(seats.seats.map(seat => seat.project))}
+}
+
+/** What a Launch press read back (O-I #1003): Factory's answer to factory.session.start (factory.session/v1, Factory session.rs): the
+ * session open in the World and the project it was started in, in the checkout that project's workcell seat holds, and whether AIKit's
+ * SessionStart hook kept the session's record (R36: a session's NOW opens and closes with its hooks). An answer that is no open session
+ * throws, with what Factory answered. Pure. */
+export function launchSaid(agent: string, answer: unknown): string {
+  const opened = rec(answer) ? answer : {}
+  if (opened.contract !== 'factory.session/v1' || opened.state !== 'open' || !txt(opened.session)) {
+    throw new Error(`Factory answered factory.session.start for ${agent} without an open session: ${JSON.stringify(answer ?? null).slice(0, 400)}`)
+  }
+  const record = rec(opened.record) ? opened.record : {}
+  const hook = record.kept === true ? 'AIKit\'s SessionStart hook kept its record'
+    : `AIKit's SessionStart hook did not keep its record${txt(record.words) ? ` (${txt(record.words)!.replace(/[.\s]+$/, '')})` : ''}`
+  return `${agent} is seated on a new track in ${txt(opened.project) ?? 'its project'}, in the World ${txt(opened.world) ?? 'this World'}: its session is open in ${txt(opened.checkout) ?? 'the seat\'s checkout'}, and ${hook}.`
+}
+
 // ---------------------------------------------------------------------------------------------------------------- Sign in
 
 /** One login a harness has of its own, as AIKit's profile declares it (`aikit harness auth <client> --json`: own_login): a runnable one
@@ -1212,6 +1256,7 @@ export const SETTINGS_WINDOW_WIRING = {
     secretRefs: 'the credential references Workcell records, each with where it is observed (workcell_read secret-list: `workcell secret list`, workcell.secret-reference-inventory/v1)',
     projections: 'Workcell\'s projection ledger, the projections it holds active (workcell_read secret-projections: `workcell secret projections`)',
     outside: 'the credentials Workcell\'s last scan found outside a secret store, by location and presence only (workcell_read secret-scan: `workcell secret scan`)',
+    launchProjects: 'the projects of this World a Launch starts a session in: each one Factory\'s Set offers a seat act for (set_subscribe factory: `seat`, or `seat:<project>` where several projects hold a workcell seat; kernel mode_set.rs)', launchWhy: 'why Launch starts no session here, in the Set\'s own words (its waiting track.seat), or why Factory\'s Set is not read',
     loginSaid: 'the result read back after a login\'s terminal ended, in words: the harness\'s own logged-in check where AIKit declares one (harness_auth_describe with check: `aikit harness auth <client> --check --json`, what it answered for that provider), and otherwise, or when that check gives no answer, AIKit\'s client status read again (harness_status: that client\'s credential leg)',
     routesWhy: 'why a route\'s standing stands unread (NO_STANDING: AIKit\'s catalogue is identity only; availability is `aikit compose` of a project)', profiles: 'O:I\'s named profiles (SettingsAdapter.profiles listProfiles)',
     machines: 'Workcell\'s machine declarations (RemoteMachinesSource.readMachines)', connections: 'its connection receipts (RemoteMachinesSource.readConnections)',
@@ -1237,6 +1282,7 @@ export const SETTINGS_WINDOW_WIRING = {
     discard: 'every local change dropped (the window\'s own)', returnToWork: 'the work Settings was opened from (the host\'s return)',
     reread: 'the owners read again: config_registry_read, config_resolutions_read and every opened page\'s reading',
     install: 'client_install',
+    launch: 'factory.session.start through Factory\'s Set\'s seat act for the project chosen (its World and project bound by the kernel, the agent the census slug pressed), by the registry\'s door (SetupSource.act, the kernel\'s act); Factory\'s answer (factory.session/v1) read back: the session open in its World, project and seat checkout, and AIKit\'s SessionStart hook keeping its record (R36; O-I #1003)',
     reveal: 'settings_reveal', scan: 'Workcell\'s scan for material outside a secret store (workcell_read secret-scan: `workcell secret scan`), said on the Info line',
     revokeProjection: 'Workcell\'s revocation at the origin (workcell_write revoke-projection: `workcell secret revoke-projection --name`), the ledger read back', signIn: 'the harness\'s own login as AIKit declares it (harness_auth_describe: `aikit harness auth <client> --json`) for each agent of the census AIKit has a client for (model_subscribe agents, asked afresh on Read again; harness_status its credential leg, as detail), run in a terminal in the Workbench (LOGIN_TERMINAL_PRESENT, settings/host.ts), and the result read back when that terminal ends (the harness\'s own check, harness_auth_describe with check: `--check`, where AIKit declares one; harness_status otherwise)', discover: 'credential_discover', verify: 'credential_verify',
     rotate: 'credential_rotate with new.reference', revoke: 'credential_revoke', bind: 'credential_setup with new.credential and new.reference',
@@ -1263,6 +1309,7 @@ export const SETTINGS_WINDOW_WIRING = {
     setupStep: 'the Setup step shown', folder: 'the folder the Projects step shows', make: 'what to make of it', wiki: 'its wiki to keep or copy', where: 'where it is adopted',
     groundFolder: 'the folder you type for a new ground (else the one chosen or read)', groundName: 'the name you give a new ground (else the one native oi reads)',
     birthName: 'your name, kept with your date of birth', birthDate: 'your date of birth, until Keep keeps it',
+    launchIn: 'the project Launch starts a session in, where Factory\'s Set offers more than one',
     credential: 'the key the Credentials step binds (a found key\'s credential)', reference: 'where that key lies in your secure store, which Accept binds it to: a reference, never the key',
     'new.<field>': 'the open form\'s fields', 'new.from': 'what opened the new routine (SettingsRequest.newRoutine: a pad\'s Make routine, a song\'s Routine…), forgotten when the form closes', 'draft:<ref>': 'your local change of a setting, until Review and Apply',
   },
@@ -1274,7 +1321,7 @@ export const SETTINGS_WINDOW_WIRING = {
 
 /** The design keys the window holds as its own (SETTINGS_WINDOW_WIRING.local), exact. */
 export const SETTINGS_LOCAL_KEYS = ['search', 'hit', 'scope', 'focus', 'details', 'show', 'context', 'routine', 'product', 'owner', 'axes', 'adding', 'rotating',
-  'setupStep', 'folder', 'make', 'wiki', 'where', 'credential', 'reference', 'groundFolder', 'groundName', 'birthName', 'birthDate',
+  'setupStep', 'folder', 'make', 'wiki', 'where', 'credential', 'reference', 'groundFolder', 'groundName', 'birthName', 'birthDate', 'launchIn',
   'new.name', 'new.description', 'new.method', 'new.proof', 'new.trigger', 'new.repeat', 'new.schedule', 'new.authority', 'new.profile', 'new.scopes', 'new.grant', 'new.reproof',
   'new.label', 'new.endpoint', 'new.credential', 'new.reference', 'new.note', 'new.expects'] as const
 

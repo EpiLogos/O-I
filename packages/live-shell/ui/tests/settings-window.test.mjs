@@ -2180,6 +2180,62 @@ test('CODE-DERIVED — a census read while AIKit\'s client status did not answer
   assert.equal(censusOf({state: 'held', answer: LOGIN_CENSUS}).aikitWhy, undefined)
 })
 
+test('CODE-DERIVED — Launch beside each agent that starts: Factory\'s Set says where a session can start, the press runs factory.session.start through the registry\'s door with the agent, and Factory\'s answer is read back (O-I ticket 1003)', async () => {
+  const setOf = (acts, waiting = {}) => ({state: 'held', answer: {schema: 'oi.mode-set/v1', mode: 'factory', version: 3, set: {acts, waiting}}})
+  const seatIn = project => ({action: 'factory.session.start', input: {world: '/w/Central', project}, takes: 'agent',
+    words: `Factory's factory.session.start: the agent seated on a new track in ${project}`, done: `The agent is seated on a new track in ${project}: its session is open.`})
+  // kernel mode_set.rs: one project holding a workcell seat is the Set's `seat`; several are each `seat:<project>`, the empty track's drop waiting.
+  const one = setOf({seat: seatIn('atelier'), arm: {action: 'shell.setWriteArm', words: 'Arm', takes: 'on'}})
+  assert.deepEqual(win.launchValues(win.launchSeats(one)), {launchProjects: '["atelier"]'})
+  const several = setOf({'seat:kiln': seatIn('kiln'), 'seat:atelier': seatIn('atelier')},
+    {'track.seat': 'an agent seated on a new track: factory.session.start opens its session in one project, and several hold a workcell seat (atelier, kiln), which a drop does not choose between'})
+  assert.deepEqual(win.launchValues(win.launchSeats(several)), {launchProjects: '["atelier","kiln"]'}, 'a press names its project, so each project\'s seat stands')
+  const none = setOf({}, {'track.seat': 'an agent seated on a new track: factory.session.start opens its session in a project\'s workcell seat, and no project of this World holds one (Workcell\'s seat join)'})
+  assert.deepEqual(win.launchValues(win.launchSeats(none)), {launchWhy: 'Factory starts no session here yet: an agent seated on a new track: factory.session.start opens its session in a project\'s workcell seat, and no project of this World holds one (Workcell\'s seat join).'})
+  assert.deepEqual(win.launchValues(win.launchSeats({state: 'unavailable', reason: 'the kernel is not running'})),
+    {launchWhy: 'Factory\'s Set is not read, so no session can be started here: the kernel is not running.'})
+  // The press: the seat act for the project named, the agent in the place it takes, through the registry's door; Factory's answer read back.
+  const called = []
+  const opened = (project, kept = true) => ({contract: 'factory.session/v1', state: 'open', session: `agent-session/${project}-chat-1`, space: `session-space/${project}-chat-1`,
+    agent: 'codex', world: '/w/Central', project, checkout: `/w/Central/worktrees/env-1/${project}`,
+    record: kept ? {event: 'SessionStart', client: 'codex', kept: true, answer: '', words: '', by: 'aikit hook dispatch'}
+      : {event: 'SessionStart', client: 'codex', kept: false, words: 'AIKit\'s hook dispatch could not start: No such file', by: 'aikit hook dispatch'}})
+  const act = async (action, input) => { called.push([action, input]); return opened(input.project) }
+  assert.equal(await settingsPages.launchAgent(several, act, 'codex|kiln'),
+    'codex is seated on a new track in kiln, in the World /w/Central: its session is open in /w/Central/worktrees/env-1/kiln, and AIKit\'s SessionStart hook kept its record.')
+  assert.equal(await settingsPages.launchAgent(one, act, 'claude-code|'), 'claude-code is seated on a new track in atelier, in the World /w/Central: its session is open in /w/Central/worktrees/env-1/atelier, and AIKit\'s SessionStart hook kept its record.',
+    'where the Set offers one project, the press needs none named')
+  assert.deepEqual(called, [['factory.session.start', {world: '/w/Central', project: 'kiln', agent: 'codex'}], ['factory.session.start', {world: '/w/Central', project: 'atelier', agent: 'claude-code'}]])
+  // Several projects and none named, a project with no seat, a Set with none, and no door: each refuses in words, and no owner is asked.
+  await assert.rejects(settingsPages.launchAgent(several, act, 'codex|'), /^Error: Choose the project codex starts in: atelier, kiln\.$/)
+  await assert.rejects(settingsPages.launchAgent(several, act, 'codex|loose'), /^Error: Factory's Set offers no seat in loose: it offers one in atelier, kiln\.$/)
+  await assert.rejects(settingsPages.launchAgent(none, act, 'codex|atelier'), /^Error: Factory starts no session here yet: an agent seated on a new track/)
+  await assert.rejects(settingsPages.launchAgent(null, act, 'codex|atelier'), /^Error: Factory's Set is being read\.$/)
+  await assert.rejects(settingsPages.launchAgent(one, undefined, 'codex|atelier'), /^Error: Launch reaches no Action door here/)
+  assert.equal(called.length, 2, 'no refused press reached an owner')
+  // An answer that is no open session is said, never read as a start; a SessionStart hook that kept no record says so, in AIKit's words.
+  await assert.rejects(settingsPages.launchAgent(one, async () => ({contract: 'factory.session/v1', state: 'ended'}), 'codex|atelier'), /^Error: Factory answered factory\.session\.start for codex without an open session: /)
+  assert.match(win.launchSaid('codex', opened('atelier', false)), /, and AIKit's SessionStart hook did not keep its record \(AIKit's hook dispatch could not start: No such file\)\.$/)
+  // Drawn on Harnesses & models: Launch beside the agent that starts, none beside the one that does not; several projects are chosen
+  // between once, above the agents; a Set with no seat says why on the press.
+  const harnesses = json([{agent: 'codex', harness: 'Codex', starts: true, talks: true}, {agent: 'gemini', harness: 'Gemini', starts: false, talks: false, why: 'it exited 1'}])
+  const launches = markup => [...markup.matchAll(/data-i="(Launch\|[^"]*)"( data-disabled="true")?/g)].map(match => [match[1], !!match[2]])
+  const single = drawn({harnesses, launchProjects: '["atelier"]'}, 'harnesses')
+  assert.deepEqual(launches(single).map(([words, off]) => [words.split('|')[1], off]),
+    [['Starts a session of Codex in atelier: Factory seats it on a new track there, with this World, the project and today&#x27;s Day.', false]], 'one Launch, beside Codex, which starts')
+  assert.doesNotMatch(single, /Sessions start in/, 'one project: nothing to choose')
+  const choose = drawn({harnesses, launchProjects: '["atelier","kiln"]'}, 'harnesses')
+  assert.match(choose, /aria-label="Sessions start in"/)
+  assert.deepEqual(launches(choose).map(([words, off]) => [words.includes('Choose the project it starts in first.'), off]), [[true, true]], 'several projects: Launch waits for the choice')
+  assert.deepEqual(launches(drawn({harnesses, launchProjects: '["atelier","kiln"]', launchIn: 'kiln'}, 'harnesses')).map(([words, off]) => [words.split('|')[1].split(':')[0], off]),
+    [['Starts a session of Codex in kiln', false]])
+  const waits = drawn({harnesses, launchWhy: 'Factory starts no session here yet: no project of this World holds one (Workcell&#x27;s seat join).'}, 'harnesses')
+  assert.deepEqual(launches(waits).map(([words, off]) => [words.includes('no project of this World holds one'), off]), [[true, true]], 'the Set\'s why, on the press')
+  // The wiring names the seat act and the registry's door.
+  assert.match(win.SETTINGS_WINDOW_WIRING.writes.launch, /factory\.session\.start through Factory's Set's seat act/)
+  assert.ok(win.SETTINGS_LOCAL_KEYS.includes('launchIn'))
+})
+
 test('SCRIPTED — Sign in runs the login in a terminal in the Workbench, where you answer it: the request names its id and command, a refusal comes back in words, and the end of that terminal is what the page reads back on', async () => {
   const was = globalThis.window, target = new EventTarget(), heard = []
   globalThis.window = target
