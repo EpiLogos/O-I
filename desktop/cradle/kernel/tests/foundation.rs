@@ -2115,7 +2115,8 @@ fn act_4_run_a_factory_task() {
 
 /// Setup's Ground Accept, as far as a Day needs it (windowPages.ts keepDays
 /// and keepFounding): the ground's days, bounds, the Day's form and the
-/// person's key, each kept on its preview's digest and read back.
+/// person's key, each kept on its preview's digest and read back; then the
+/// person's Day (keepDay), the Day form and Close saved on their key.
 fn keep_ground(world: &World) -> Act {
     let acceptance = format!("foundation-setup-adoption:{}", std::process::id());
     let accepted = |digest: &Value| {
@@ -2167,6 +2168,56 @@ fn keep_ground(world: &World) -> Act {
             return Err(format!(
                 "{op} {act} answered, but its preview reads {}",
                 clip(&now["data"])
+            ));
+        }
+    }
+    // Your Day, on your key (windowPages.ts keepDay; O-I #1005): the Day form ground_form names, at the revision it reads, while
+    // none is saved or the saved one is not it, and Close at Day start, as Setup proposes it, while none is saved; on the settings'
+    // revision, read back. Central makes today's page from that form alone, and its civil clock closes a Day only as Close lets it.
+    let form = world.send(json!({"op": "ground_form", "request": {"operation": "preview"}}))?
+        ["data"]["day_form"]
+        .clone();
+    if !form["path"].is_string() || !form["revision"].is_string() {
+        return Err(format!(
+            "ground_form names no Day form to save: {}",
+            clip(&form)
+        ));
+    }
+    let settings = action(world, "central.day.settings.read", json!({"project": null}))?;
+    if settings["schema"] != "central.day-settings-reading/v1" {
+        return Err(format!(
+            "central.day.settings.read answered no reading of the Day's settings: {}",
+            clip(&settings)
+        ));
+    }
+    let saved = &settings["settings"]["day_form"];
+    let mut patch = serde_json::Map::new();
+    if saved["path"] != form["path"] || saved["revision"] != form["revision"] {
+        patch.insert("day_form".into(), form.clone());
+    }
+    if settings["standing"]["moves"]["close"]["runs_at"] != "saved" {
+        patch.insert(
+            "moves".into(),
+            json!({"close": {"runs_at": {"kind": "day_start"}}}),
+        );
+    }
+    if !patch.is_empty() {
+        let writes_close = patch.contains_key("moves");
+        patch.insert("project".into(), Value::Null);
+        patch.insert("expected_revision".into(), settings["revision"].clone());
+        action(world, "central.day.settings.write", Value::Object(patch))?;
+        let now = action(world, "central.day.settings.read", json!({"project": null}))?;
+        let (day_form, close) = (
+            &now["settings"]["day_form"],
+            &now["settings"]["moves"]["close"]["runs_at"],
+        );
+        if day_form["path"] != form["path"]
+            || day_form["revision"] != form["revision"]
+            || (writes_close && close["kind"] != "day_start")
+        {
+            return Err(format!(
+                "central.day.settings.write answered, but the Day's settings read back {}",
+                clip(&json!({"day_form": day_form, "close": close}))
             ));
         }
     }
@@ -2326,9 +2377,14 @@ fn the_day_closes_at_its_turn(world: &World, day_ref: &str) -> Act {
             return Ok(());
         }
         if Instant::now() > deadline {
+            // A Day whose Close does not let the clock close it, or whose carry it cannot file, says why it stays open: no pass.
             return Err(format!(
-                "the Day {day_ref} did not close by itself at its turn ({turns_at}): Central reads it {}",
-                read["temporal"]["lifecycle"]
+                "the Day {day_ref} did not close by itself at its turn ({turns_at}): Central reads it {}{}",
+                read["temporal"]["lifecycle"],
+                read["stays_open"]
+                    .as_str()
+                    .map(|why| format!(", and says why it stays open: {why}"))
+                    .unwrap_or_default()
             ));
         }
     }
