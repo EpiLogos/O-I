@@ -20,8 +20,8 @@
   {
     "act": "run-a-factory-task",
     "test": "act_4_run_a_factory_task",
-    "standing": "red",
-    "reason": "13 Nov 2026: Factory's Set (set_subscribe factory; #1004) holds no task in a fresh World, in Factory's own words: it finds no state (no .factory under its Central), so no task can be written or run"
+    "standing": "green",
+    "reason": "14 Nov 2026 (export of b4dde3416, codex; Factory 47068fa, Workcell 5286cd5, AIKit 347de5ae, oi with b86355b6a): in a fresh World with a project, Workcell declares its workcell (workcell.declare) and the project takes a seat; codex from the census is seated on a track by factory.session.start in the seat's checkout, AIKit's hook dispatch keeping its SessionStart; a task written (factory.task.write) and run (factory.task.run) streams its log through factory.task.log (1, 2, 4, 8, 12, 15 lines) and returns an attempt with its diff (NOTES.md) in the checkout, standing as the clip with its take on the session's track in Factory's Set (set_subscribe factory) with End session on the track; a second task is paused, then cancelled by factory.task.stop; factory.session.end ends the session, AIKit keeping its SessionEnd (#1006)"
   },
   {
     "act": "the-day-holds-it-and-closes",
