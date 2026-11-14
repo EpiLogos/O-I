@@ -269,8 +269,20 @@ export async function kernelOp(
 ): Promise<KernelOpCall> {
   const call = await kernelReadSend(transport, op, signal);
   if (!call.error && writesOwner(op, call.outcome)) for (const listener of [...writeListeners]) listener();
+  if (!call.error && op.op === "act" && call.outcome?.result === "action_dispatched" && call.outcome.dispatch.state === "invoked") {
+    const data = call.outcome.dispatch.data;
+    for (const listener of [...actAnswerListeners]) listener(op.action, data);
+  }
   return call;
 }
+
+/** What an Action answered through the registry's `act`, by its id: heard once its owner answered, whichever press asked it. The window
+ * presents what an answer opens (a session Factory started opens where it runs: packages/live-shell/ui agent/factoryCentre.ts
+ * sessionInWindowOf, App.tsx), and asks no owner again. */
+export type ActAnswerListener = (action: string, data: unknown) => void;
+const actAnswerListeners = new Set<ActAnswerListener>();
+/** Hear each Action's answer that came through `act` (`kernelOp`, `kernelAct`). */
+export function onActAnswered(listener: ActAnswerListener): () => void { actAnswerListeners.add(listener); return () => { actAnswerListeners.delete(listener); }; }
 
 /** The owner's data from an Action's dispatch, or its words thrown: its refusal verbatim, or why it was not reached. The one reading of a
  * dispatch (the devices' `actionAnswerOf`, owner routes and harness controls read through it). */

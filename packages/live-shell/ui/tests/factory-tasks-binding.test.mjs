@@ -214,6 +214,52 @@ test('(O-I 1006) a session\'s Launch, Stop after and Retry are its own acts in F
   assert.deepEqual(handed, [], 'nothing is launched, retried or stopped from the Tasks device')
 })
 
+// One press starts a session you can see (manual §19.1: "It runs in a terminal in the window, or attaches to one you started outside it").
+// Factory's answer to factory.session.start names in `terminal.in_window` the agent session the window opens (Factory session.rs
+// `terminal`); whichever press started it, the window hears the answer once (bridge.ts onActAnswered), and App presents the Workbench and
+// opens the session's pane there (Workbench.tsx openEncounter, by `oi:open-encounter`). SCRIPTED: the host's act answers, in Factory's shape.
+test('(O-I 1006) a session Factory starts opens in the window: its start\'s answer names it, the window hears it once, and App opens its pane', async () => {
+  const {sessionInWindowOf, SESSION_START} = await import('../src/agent/factoryCentre.ts')
+  const {kernelAct, kernelOp, onActAnswered} = await import('../../../../desktop/cradle/src/kernel/bridge.ts')
+  const SPACE = 'session-space/fx-codex', S = 'agent-session/fx-codex'
+  const started = {contract: 'factory.session/v1', state: 'open', session: S, space: SPACE, track: `${SPACE}:${S}`, agent: 'codex', project: 'notes',
+    world: '/w', checkout: '/w/seats/notes', terminal: {cwd: '/w/seats/notes', in_window: {agent_session: S}, outside: ['aikit', 'session-space', 'encounter']}}
+  const ROW = {space: SPACE, ref: S, title: 'codex · notes', project: 'notes'}
+  assert.equal(SESSION_START, 'factory.session.start')
+  assert.deepEqual(sessionInWindowOf('factory.session.start', started), ROW)
+  assert.equal(sessionInWindowOf('factory.session.end', started), null, 'only a start opens a session')
+  assert.equal(sessionInWindowOf('factory.session.start', {...started, state: 'ended'}), null, 'an ended session opens nothing')
+  assert.equal(sessionInWindowOf('factory.session.start', {...started, contract: 'factory.session-task/v1'}), null)
+  assert.equal(sessionInWindowOf('factory.session.start', {...started, terminal: {cwd: '/w', outside: ['aikit']}}), null, 'one that names none in the window opens none')
+  assert.equal(sessionInWindowOf('factory.session.start', {...started, project: ''}), null)
+  assert.equal(sessionInWindowOf('factory.session.start', null), null)
+  assert.deepEqual(sessionInWindowOf('factory.session.start', {...started, agent: undefined}), {...ROW, title: `${S} · notes`})
+  // The bridge tells each Action's answer once its owner answered, by its id; a refusal and a reading op tell nothing.
+  const heard = []
+  const stop = onActAnswered((action, data) => heard.push([action, data]))
+  const real = globalThis.fetch
+  const reply = outcome => { globalThis.fetch = async () => ({json: async () => ({ok: true, outcome})}) }
+  const transport = {kind: 'bridge', url: 'http://act.fixture'}
+  try {
+    reply({result: 'action_dispatched', dispatch: {state: 'invoked', owner_operation: 'factory session start', data: started}, receipts: []})
+    assert.deepEqual(await kernelAct(transport, 'factory.session.start', {world: '/w', project: 'notes', agent: 'codex'}), started)
+    assert.deepEqual(heard, [['factory.session.start', started]])
+    reply({result: 'action_dispatched', dispatch: {state: 'owner_refused', owner_operation: 'factory session start', message: 'no seat'}, receipts: []})
+    await assert.rejects(() => kernelAct(transport, 'factory.session.start', {}), {message: 'no seat'})
+    reply({result: 'model_catalogue_reading', data: {entries: []}})
+    await kernelOp(transport, {op: 'model_catalogue'})
+    assert.equal(heard.length, 1, 'a refusal and a reading are heard by no one')
+  } finally { globalThis.fetch = real; stop() }
+  // App: the answer steps Settings back and presents the Workbench in Pane view, then hands it the session's row (CODE-READING).
+  const app = readFileSync(new URL('../src/App.tsx', import.meta.url), 'utf8')
+  assert.match(app, /useEffect\(\(\) => onActAnswered\(\(action, answer\) => \{\s*const row = sessionInWindowOf\(action, answer\)\s*if \(!row\) return\s*presentSettings\(false\); openSettings\(null\); showMainView\('pane'\); setCenterPanel\('native\.workbench'\); setSessionIntent\(row\)/)
+  assert.match(app, /if \(!sessionIntent \|\| settingsPresented \|\| centerPanel !== 'native\.workbench' \|\| mainView !== 'pane'\) return\s*window\.dispatchEvent\(new CustomEvent\('oi:open-encounter', \{detail: sessionIntent\}\)\)/)
+  // The Workbench opens an encounter row's pane on that event, while it is presented.
+  const workbench = readFileSync(new URL('../src/native/Workbench.tsx', import.meta.url), 'utf8')
+  assert.match(workbench, /\['oi:open-encounter', encounterOpen\]/)
+  assert.match(workbench, /const encounterOpen = \(event: Event\) => \{if \(!ownsPresented\(\)\) return; const row = \(event as CustomEvent<EncounterRow>\)\.detail; if \(row && typeof row\.ref === 'string' && typeof row\.project === 'string'\) void callbacks\.current\.openEncounter\(row\)/)
+})
+
 // ---------------------------------------------------------------------------------------------------------------- Results (BD r25)
 // The Results tile (DLW §19.1 On the rail): "The takes of the selected run: each result with its author and its diff. Open a diff to read
 // it. Press Accept to send a result to review in Approvals. Beside them, the outputs Workcell collected from the world the run stood in,
