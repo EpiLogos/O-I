@@ -53,6 +53,8 @@ const design = await import('../src/inhabitants/catalogue/panels/central__search
 const bridge = await import('../../../../desktop/cradle/src/kernel/bridge.ts')
 const {readFlowInstance} = await import('../../../../desktop/cradle/src/flow/instances.ts')
 const nativeContext = await import('../../../../desktop/cradle/src/context/nativeContext.ts')
+const packetSlice = await import('../../../../desktop/cradle/src/context/packetSlice.ts')
+const {packetSliceOver} = await import('./support/worldModelFixture.mjs')
 const packetContext = await import('../src/central/devices/documentPacketContext.ts')
 const packet = await import('../src/central/devices/packetBinding.ts')
 const doors = await import('../src/central/documents/documentDoor.ts')
@@ -171,12 +173,30 @@ test('BINDING — readFlowInstance carries its fresh flag to the owner read; the
 // ---------------------------------------------------------------------------------------------------------------------
 // 3 · the document's packet in the prepared context before the Send
 
-/** AIKit's prepared context as its owner keeps it (aikit-store encounter_context.rs): read, and edited at its revision. */
-function preparedOwner(initial = []) {
-  const state = {revision: 4, items: [...initial], n: 0}
+/** AIKit's prepared context as its owner keeps it (aikit-store encounter_context.rs): edited at its revision, and read as the kernel's World
+ * Model reads it into its packet slice (world_model.rs `packet`, composed here over the owners' answers as the kernel asks them:
+ * support/worldModelFixture.mjs packetSliceOver) — Central's root discloses one project, O-I, whose register holds the conversation. */
+function preparedOwner(initial = [], conversation = null) {
+  const state = {revision: 4, items: [...initial], n: 0, version: 0}
   const context = () => ({schema: 'aikit.prepared-context/v1', scope: {project: 'O-I', agent_session: 'agent-session/fizz'}, revision: state.revision, digest: `blake3:${state.revision}`, items: state.items})
   const edits = []
-  const ops = kernel(op => {
+  const answered = (result, data) => ({ok: true, outcome: {result, data}})
+  const ownerAsk = async op => {
+    if (op.op === 'world_browse') return {ok: true, outcome: {result: 'world_read', snapshot: {navigator: {root: {work: {projects: [{name: 'O-I'}]}}}}}}
+    if (op.op === 'agency_read') return answered('agency_reading', {spaces: op.project === 'O-I' ? [{agent_sessions: {'agent-session/fizz': {}}}] : []})
+    if (op.op === 'encounter' && op.request.request.operation === 'read') {
+      return answered('encounter_reading', op.request.agent_session ? context()
+        : {schema: 'aikit.prepared-context/v1', scope: {project: op.project, agent_session: null}, revision: 0, digest: 'blake3:0', items: []})
+    }
+    return {ok: false, error: `the fake owner answers no ${op.op}`}
+  }
+  const ops = kernel(async op => {
+    if (op.op === 'model_subscribe') {
+      const slice = await packetSliceOver(ownerAsk, ++state.version)
+      return slice.ok ? slice.outcome : new Error(slice.error)
+    }
+    // The conversation's own acts (its view, draft, Send and status), where the test holds one.
+    if (op.op === 'encounter' && op.request.action !== 'context') return conversation ? {result: 'encounter_reading', data: conversation(op.request)} : new Error(`the fake owner answers no ${op.request.action}`)
     const request = op.request.request
     if (request.operation === 'edit') {
       assert.equal(request.basis, state.revision, 'each edit is made at the revision the owner last answered')
@@ -213,7 +233,10 @@ test('BINDING — before the Send, the prepared context is brought to the docume
   const prepared = await packetContext.prepareDocumentPacket(TRANSPORT, 'O-I', 'agent-session/fizz', DOCUMENT)
   assert.deepEqual(owner.edits, [['remove', 'item-old'], ['add', 'the Packet device reads it'], ['add', 'The packet should be the document’s.']])
   assert.deepEqual(prepared.items.map(item => item.selection.text), ITEMS.map(item => item.text), 'the prepared context holds exactly the Packet\'s items, in its order')
-  for (const op of owner.ops) assert.deepEqual([op.op, op.project, op.request.action, op.request.agent_session], ['encounter', 'O-I', 'context', 'agent-session/fizz'])
+  // The read before the edits is the World Model's packet slice, read fresh (O-I ticket 1005; #1001): no surface reads AIKit's prepared
+  // context itself; each edit is the owner's own, at the revision the slice gave and then each edit answered.
+  assert.deepEqual(owner.ops[0], {op: 'model_subscribe', slice: 'packet', fresh: true}, 'the packet is read from the World Model, fresh, before it is edited')
+  for (const op of owner.ops.slice(1)) assert.deepEqual([op.op, op.project, op.request.action, op.request.agent_session, op.request.request.operation], ['encounter', 'O-I', 'context', 'agent-session/fizz', 'edit'])
   // The Send's review takes each item: the person saw it whole in the Packet (no validator stands in the shell).
   for (const item of prepared.items) await nativeContext.validatePreparedItem(item, prepared)
   // Read again with nothing moved, nothing is edited.
@@ -230,15 +253,45 @@ test('BINDING — the provider the Send runs follows the document the hand reach
     assert.deepEqual(owner.ops, [], 'another world\'s conversation is not touched')
     await packetContext.documentPacketProvider({transport: TRANSPORT, project: 'O-I', session: 'agent-session/fizz'})
     assert.equal(owner.edits.length, 2)
-    // The Send's own review runs the provider first, then reads the context it reviews.
+    // The Send's own review runs the provider first, then reads the context it reviews: the World Model's packet, fresh.
     owner.edits.length = 0
+    owner.ops.length = 0
     const leave = packetContext.followDocumentPacket()
-    const expectation = await nativeContext.reviewedContext(TRANSPORT, 'O-I', 'agent-session/fizz')
+    const expectation = await packetSlice.reviewedContext(TRANSPORT, 'O-I', 'agent-session/fizz')
     leave()
     assert.deepEqual(expectation.reviewed, owner.state.items.map(item => item.id), 'what the Send carries is the Packet\'s items')
+    assert.deepEqual(owner.ops.map(op => op.op === 'model_subscribe' ? `${op.slice}${op.fresh ? ' fresh' : ''}` : op.request.request.operation), ['packet fresh', 'packet fresh'],
+      'the provider\'s read and the review\'s are the slice\'s; the packet already stood, so nothing was edited')
   } finally { doors.withdrawDocument(DOCUMENT.key) }
   const face = await read('../src/inhabitants/DocumentFlowFace.tsx')
   assert.match(face, /useEffect\(\(\) => \(inPane \? followDocumentPacket\(\) : undefined\), \[inPane\]\)/, 'a Flow in a pane follows its packet')
+})
+
+test('BINDING — the conversation\'s Send carries the packet the World Model holds: reviewed from the slice read fresh, and read again after it', async () => {
+  // The conversation as AIKit's encounter answers it (aikit.encounter-view/v1): its draft, Send and prepared context enabled; the draft
+  // taken at its basis; the Send taken with the reviewed context. FAKE OWNER, as AIKit answers each act.
+  const draft = {revision: 0, text: ''}
+  let sent = null
+  const ACTIONS = ['draft', 'prompt', 'context'].map(name => ({ref: `aikit.encounter.${name}`, enabled: true, reason: null}))
+  const owner = preparedOwner([], request => {
+    if (request.action === 'view') return {schema: 'aikit.encounter-view/v1', agent_session: request.agent_session, blocks: [], more: false, draft: {...draft}, actions: ACTIONS}
+    if (request.action === 'draft') { assert.equal(request.basis, draft.revision); Object.assign(draft, {revision: draft.revision + 1, text: request.text}); return {...draft} }
+    if (request.action === 'prompt-context') { sent = request; Object.assign(draft, {revision: draft.revision + 1, text: ''}); return {draft: {...draft}} }
+    if (request.action === 'status') return {state: 'idle'}
+    throw new Error(`the conversation answers no ${request.action}`)
+  })
+  doors.publishDocument(DOCUMENT, true)
+  const leave = packetContext.followDocumentPacket()
+  try {
+    const {encounterSessionOf} = await import('../../../../desktop/cradle/src/encounter/session.ts')
+    await encounterSessionOf(TRANSPORT, {project: 'O-I', ref: 'agent-session/fizz'}).submit('What does the packet say?')
+    assert.ok(sent, 'the Send went with its prepared context (prompt-context)')
+    assert.deepEqual(sent.context.reviewed, owner.state.items.map(item => item.id), 'what the Send carries is the Packet\'s items')
+    assert.deepEqual([sent.context.revision, sent.context.digest], [owner.state.revision, `blake3:${owner.state.revision}`], 'at the revision the owner holds')
+    const acts = owner.ops.map(op => op.op === 'model_subscribe' ? `${op.slice}${op.fresh ? ' fresh' : ''}` : op.request.action === 'context' ? `context ${op.request.request.operation}` : op.request.action)
+    assert.deepEqual(acts, ['view', 'draft', 'packet fresh', 'context edit', 'context edit', 'packet fresh', 'prompt-context', 'packet fresh', 'status'],
+      'the document\'s packet brought to the context on the slice read fresh, the review read fresh, the Send, and the packet read again for every view that holds it: no read of AIKit\'s own')
+  } finally { leave(); doors.withdrawDocument(DOCUMENT.key) }
 })
 
 test('BINDING — Answer this sends the document\'s packet with the question: the conversation\'s own Send, refused only in the conversation\'s words', async () => {

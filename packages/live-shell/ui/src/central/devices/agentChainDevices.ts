@@ -3,12 +3,13 @@
 // inhabitants/agentParamAddresses.ts CHAIN_DECLARATIONS): the Packet, the Agent's Identity page, Scope and the Day — each the World
 // Model slice it reads (kernel world_model.rs), the field each reading stands on there, why the World Model holds none where it holds
 // none, and the Action each control invokes. The chain (CentralDevices.tsx) holds the slices (owners/model.ts useModelSlice) and makes
-// each binding from them here, purely (packetFromModel, identityFromModel, scopeFromModel; dayBinding.ts dayFromModel): no device reads
-// an owner. Search is no chain device (§18.4: a pane, and the line where you type @) — its pane (central/searchPane.tsx) reads it
-// through useSearchDevice.
+// each binding from them here, purely (identityFromModel, scopeFromModel; dayBinding.ts dayFromModel; the Packet's packetFromModel is
+// the cradle's packetSlice.ts, which the cradle's own surfaces of the Packet read through too): no device reads an owner. Search is no
+// chain device (§18.4: a pane, and the line where you type @) — its pane (central/searchPane.tsx) reads it through useSearchDevice.
 import {useEffect, useMemo, useState, useSyncExternalStore} from 'react'
 import type {EncounterSessionSettingsReading, KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
-import {assertPreparedContext, type PreparedContext} from '../../../../../../desktop/cradle/src/context/nativeContext'
+import type {PreparedContext} from '../../../../../../desktop/cradle/src/context/nativeContext'
+import {PROJECT_PACKET, packetFromModel} from '../../../../../../desktop/cradle/src/context/packetSlice'
 import {knowledge} from '../../../../../../desktop/cradle/src/knowledge/client'
 import {progressiveSearch} from '../../../../../../desktop/cradle/src/knowledge/searchProgress'
 import {rosterFromReading, type RosterAgent} from '../../../../../../desktop/cradle/src/agency/roster'
@@ -17,7 +18,7 @@ import type {DesignBinding} from '../../frame/devices/designed'
 import type {ObservedHandle} from '../../agent/devices/EncounterObservers'
 import type {ScopeWaits} from '../../agent/devices/designBindings'
 import type {ChainDeviceDeclaration} from '../../inhabitants/agentParamAddresses'
-import {sliceValue, type ModelSliceReading} from '../../owners/model'
+import {partOf, projectPartOf, sliceValue, type ModelSliceReading} from '../../owners/model'
 import {centralDeviceId, type CentralReads} from './centralDeviceModel'
 import {CENTRAL_SCOPE_ID, EFFECTIVE_SOURCES_ACTION, WORLD_RELATIONS_READ, WORLD_RELATIONS_SAVE} from './contextWorldBinding'
 import {DAY_FIELD_RECORD_ACTION, NOT_TODAY} from './dayBinding'
@@ -40,13 +41,11 @@ export const CONTEXT_WORLD_DEVICE_ID = centralDeviceId('context-world')
 export {CENTRAL_SCOPE_ID}
 
 const message = (cause: unknown): string => (cause instanceof Error ? cause.message : String(cause))
-const isObject = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value)
 
 // ---------------------------------------------------------------------------------------------------------------- the declarations
 
-/** Why the World Model holds no packet of a conversation in a project's register: the project was not among those it knew (its worlds
- * slice's root) when the packet was read. */
-export const PROJECT_PACKET = (project: string): string => `The World Model holds the packets of your world's root register and of each project it knows (AIKit's prepared context, world_model.rs \`packet\`); ${project} was not among them when the packet was read.`
+/** The Packet's reading of the packet slice, and why it holds none of a project it did not know (the cradle's packetSlice.ts). */
+export {PROJECT_PACKET, packetFromModel}
 /** Why the World Model holds no settings of a session in a project's register: the project was not among those it knew when Scope was read. */
 export const PROJECT_SETTINGS = (project: string): string => `the World Model holds the settings of the sessions of your world's root register and of each project it knows (world_model.rs \`scope\`); ${project} was not among them when Scope was read.`
 /** Why no card stands for an agent you have not accepted, or in a World it does not ratify. */
@@ -108,15 +107,6 @@ export const CENTRAL_CHAIN_DECLARATIONS: readonly ChainDeviceDeclaration[] = Obj
 /** The declaration of one of Central's chain devices (as agentParamAddresses.ts chainDeclaration is the Factory chain's). */
 export const centralChainDeclaration = (device: string): ChainDeviceDeclaration | undefined => CENTRAL_CHAIN_DECLARATIONS.find(declared => declared.device === device)
 
-/** One part of a slice's value as the kernel holds it (world_model.rs `part`: `{state: read, reading}` or `{state: refused, why}`): its
- * reading, or the owner's words why it has none; null where the value names no such part. Pure. */
-export function partOf<T = unknown>(part: unknown): {ok: true; value: T} | {ok: false; why: string} | null {
-  if (!isObject(part)) return null
-  if (part.state === 'read') return {ok: true, value: part.reading as T}
-  if (part.state === 'refused') return {ok: false, why: typeof part.why === 'string' ? part.why : 'The owner refused this reading.'}
-  return null
-}
-
 /** A part as an Action's answer (centralActions.ts ActionAnswer), as the bindings read Central's readings: the slice not answered yet
  * reads as reading. Pure. */
 export function answerOfPart(slice: ModelSliceReading, part: unknown, what: string): ActionAnswer {
@@ -147,39 +137,6 @@ export function packetDeviceBinding(transport: KernelTransportStatus, reading: {
     edit: context ? async mutation => { await editPacket(transport, context, mutation) } : null,
     send: handle && 'actions' in handle ? () => handle.actions.send() : null,
   })
-}
-
-/** One register's packets as the packet slice holds them (world_model.rs `packet`): its own, and each of its sessions'. */
-type RegisterPackets = {register?: unknown; sessions?: Record<string, unknown>}
-
-/** A project's register as a slice holds it: its part of the value's `projects` (each project the World Model knows, by project); or why
- * the slice holds none, in its words (`unknown` for a project it did not know when it was read). Pure. */
-function projectPartOf<T>(value: {projects?: unknown}, project: string, unknown: (project: string) => string): {ok: true; value: T} | {ok: false; why: string} {
-  const projects = partOf<Record<string, unknown>>(value.projects)
-  if (!projects) return {ok: false, why: unknown(project)}
-  if (!projects.ok) return projects
-  return partOf<T>(projects.value[project]) ?? {ok: false, why: unknown(project)}
-}
-
-/** The packet the agent will read, from the World Model's packet slice (world_model.rs `packet`): AIKit's prepared context of the
- * conversation's session, or of its register while no conversation stands — your world's root register, or the project's it stands in;
- * or why there is none, in the owner's words. Null while the slice has not answered. Pure. */
-export function packetFromModel(packet: ModelSliceReading, conversation: {readonly session: string | null; readonly project?: string | null}): {context?: PreparedContext; error?: string} | null {
-  if (packet.state === 'reading') return null
-  const {session} = conversation, project = conversation.project ?? ROOT_REGISTER
-  const held = sliceValue<RegisterPackets & {projects?: unknown}>(packet)
-  if (!held.ok) return {error: held.reason}
-  const register = project === ROOT_REGISTER ? {ok: true as const, value: held.value} : projectPartOf<RegisterPackets>(held.value, project, PROJECT_PACKET)
-  if (!register.ok) return {error: register.why}
-  const read = partOf(session ? register.value.sessions?.[session] : register.value.register)
-  if (!read) return {error: session ? `The World Model's packet holds no prepared context of ${session} yet: AIKit's agency had not listed it when the packet was read.` : `The World Model's packet holds no prepared context of ${project === ROOT_REGISTER ? 'your world\'s root register' : `${project}'s register`}.`}
-  if (!read.ok) return {error: read.why}
-  try {
-    assertPreparedContext(read.value, session ?? undefined)
-    return {context: read.value}
-  } catch (cause) {
-    return {error: message(cause)}
-  }
 }
 
 // ---------------------------------------------------------------------------------------------------------------- the Agent's Identity

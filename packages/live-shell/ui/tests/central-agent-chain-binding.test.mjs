@@ -693,3 +693,31 @@ test('the Packet, the Agent, Scope and the Day are declarations — a slice, its
   assert.doesNotMatch(await src('shell/transports/useCentralTransport.tsx'), /nativeContext\(|readGround\(/)
   assert.doesNotMatch(await src('widgets/railChainDevices.tsx'), /nativeContext\(|readGround\(/)
 })
+
+test('the cradle\'s surfaces of the Packet read it from the World Model\'s slice too, and read no prepared context of AIKit\'s themselves (CODE-READING)', async () => {
+  // O-I ticket 1005 (#1001: no device reads an owner at the point of use): the Context plane and its count, the selection tray, the
+  // field's contribution, the Send's review and the document's packet hold the packet slice (packetSlice.ts usePacket) or read it fresh
+  // before an edit or a Send (packetNow, reviewedContext, refreshPacket). AIKit's context edit stays the owner's write. Only a hosted
+  // world's packet, which no slice of this World Model holds, is read from its host — in packetSlice.ts alone.
+  const cradle = path => readFile(new URL(`../../../../desktop/cradle/src/${path}`, import.meta.url), 'utf8')
+  const shell = path => readFile(new URL(`../src/${path}`, import.meta.url), 'utf8')
+  const surfaces = {
+    'context/PreparedContextView.tsx': await cradle('context/PreparedContextView.tsx'),
+    'agent/panel/ContextPreparation.tsx': await cradle('agent/panel/ContextPreparation.tsx'),
+    'context/ContextTray.tsx': await cradle('context/ContextTray.tsx'),
+    'context/fieldContext.ts': await cradle('context/fieldContext.ts'),
+    'encounter/session.ts': await cradle('encounter/session.ts'),
+    'central/devices/documentPacketContext.ts': await shell('central/devices/documentPacketContext.ts'),
+  }
+  for (const [surface, text] of Object.entries(surfaces)) {
+    assert.doesNotMatch(text, /operation\s*:\s*["']read["']/, `${surface}: reads no prepared context of AIKit's itself`)
+    assert.match(text, /\b(usePacket|packetNow|reviewedContext|refreshPacket)\(/, `${surface}: reads the World Model's packet`)
+  }
+  const native = await cradle('context/nativeContext.ts')
+  assert.doesNotMatch(native, /reviewedContext/, 'the Send\'s review reads the World Model\'s packet (packetSlice.ts), not the owner')
+  assert.doesNotMatch(native, /request:ContextOperation=/, 'an owner operation names itself: no read stands as its default')
+  const slice = await cradle('context/packetSlice.ts')
+  assert.deepEqual([...slice.matchAll(/\bnativeContext\(([^)]*)\)/g)].map(call => call[1]), ['transport, project, session, {operation: "read"}, sourceWorldRef'],
+    'one read of AIKit\'s prepared context stands: a hosted world\'s, from its host')
+  assert.match(slice, /if \(sourceWorldRef\) return nativeContext\(/, 'and only for a hosted world')
+})

@@ -4,7 +4,8 @@
 // device, the transport's Key and the Packet widget read that packet; the Agent conversation's Send carries AIKit's prepared context
 // (encounter/session.ts send: prompt-context with the reviewed context). So before the Send reads it, the prepared context is brought to
 // the document's packet through the owner's own edit (op encounter context edit: remove what the packet does not hold, add what it holds
-// and the context does not), and the Send carries exactly what the Packet shows.
+// and the context does not), made on the packet the World Model holds, read fresh (O-I ticket 1005: desktop/cradle/src/context/
+// packetSlice.ts packetNow), and the Send carries exactly what the Packet shows.
 //
 // It runs where the Send already asks for it: a context provider (desktop/cradle/src/context/nativeContext.ts registerContextProvider,
 // "Contributors that bring the prepared context up to date just before a turn reads it … they never send"), registered while a Flow face
@@ -12,6 +13,7 @@
 // Packet before they send: it is approved as that captured snapshot (approveCapturedSnapshot), as the Context plane's "Use this exact
 // captured snapshot" approves one, so the Send's review takes it.
 import {announceContext, approveCapturedSnapshot, nativeContext, registerContextProvider, type ContextProvider, type PreparedContext, type SelectionSnapshot} from '../../../../../../desktop/cradle/src/context/nativeContext'
+import {packetNow} from '../../../../../../desktop/cradle/src/context/packetSlice'
 import type {CentralLocation, KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {reachedDocument, type DocumentInPane} from '../documents/documentDoor'
 import type {PagePacketItem} from './pageReadings'
@@ -55,13 +57,13 @@ export function packetEdits(context: Pick<PreparedContext, 'items'>, wanted: rea
   }
 }
 
-/** Bring the prepared context of `project`/`session` to the document's packet through the owner's edits, each made at the revision the
- * owner last answered, and approve each item as the snapshot the Packet shows. Returns the context as the owner now holds it. Throws the
- * owner's refusal (a stale basis, a full packet) in its words. */
+/** Bring the prepared context of `project`/`session` to the document's packet through the owner's edits — the first at the revision of the
+ * packet the World Model holds, read fresh; each after at the revision the owner last answered — and approve each item as the snapshot
+ * the Packet shows. Returns the context as the owner now holds it. Throws the owner's refusal (a stale basis, a full packet) in its words. */
 export async function prepareDocumentPacket(transport: KernelTransportStatus, project: string, session: string | undefined, document: PacketDocument,
   now: Date = new Date()): Promise<PreparedContext> {
   const wanted = (document.packet ?? []).flatMap((item, at) => (item.text.trim() ? [packetSelectionOf(document, item, at, now)] : []))
-  let context = await nativeContext(transport, project, session, {operation: 'read'})
+  let context = await packetNow(transport, project, session)
   const {remove, add} = packetEdits(context, wanted)
   for (const id of remove) context = await nativeContext(transport, project, session, {operation: 'edit', basis: context.revision, mutation: {operation: 'remove', id}})
   for (const selection of add) context = await nativeContext(transport, project, session, {operation: 'edit', basis: context.revision, mutation: {operation: 'add', selection}})

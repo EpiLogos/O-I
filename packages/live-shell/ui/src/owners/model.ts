@@ -52,6 +52,26 @@ export function sliceValue<T = unknown>(reading: ModelSliceReading): {ok: true; 
   return {ok: true, value: answer.value as T, answer}
 }
 
+/** One part of a slice's value as the kernel holds it (world_model.rs `part`: `{state: read, reading}` or `{state: refused, why}`): its
+ * reading, or the owner's words why it has none; null where the value names no such part. Pure. */
+export function partOf<T = unknown>(part: unknown): {ok: true; value: T} | {ok: false; why: string} | null {
+  if (!part || typeof part !== 'object' || Array.isArray(part)) return null
+  const {state, reading, why} = part as {state?: unknown; reading?: unknown; why?: unknown}
+  if (state === 'read') return {ok: true, value: reading as T}
+  if (state === 'refused') return {ok: false, why: typeof why === 'string' ? why : 'The owner refused this reading.'}
+  return null
+}
+
+/** A project's register in a slice that reads each register a conversation can stand in (world_model.rs `packet` and `scope`: the value's
+ * `projects`, by project, one part for each project the World Model knows; O-I ticket 1005): its part, or why the slice holds none, in its
+ * words — `unknown`'s for a project it did not know when it was read. Pure. */
+export function projectPartOf<T>(value: {projects?: unknown}, project: string, unknown: (project: string) => string): {ok: true; value: T} | {ok: false; why: string} {
+  const projects = partOf<Record<string, unknown>>(value.projects)
+  if (!projects) return {ok: false, why: unknown(project)}
+  if (!projects.ok) return projects
+  return partOf<T>(projects.value[project]) ?? {ok: false, why: unknown(project)}
+}
+
 interface Entry {
   reading: ModelSliceReading
   asking: Promise<ModelSliceReading> | null

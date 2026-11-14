@@ -1,4 +1,5 @@
-import {reviewedContext,nativeContext,announceContext,clearSnapshotApprovals} from "../context/nativeContext";
+import {clearSnapshotApprovals} from "../context/nativeContext";
+import {refreshPacket,reviewedContext} from "../context/packetSlice";
 /**
  * One observer per encounter session.
  *
@@ -317,7 +318,8 @@ class EncounterSession implements EncounterSessionActions {
    attempted=true;
    const response=await this.call<{draft:Draft}>(context?{action:"prompt-context",agent_session:this.state.agentSession,draft_revision:this.canonical.revision,context}:{action:"prompt",agent_session:this.state.agentSession,draft_revision:this.canonical.revision});
    clearSnapshotApprovals(this.state.sourceWorldRef);
-   if(context)void nativeContext(this.transport,this.state.project,this.state.agentSession,{operation:"read"},this.state.sourceWorldRef).then(value=>announceContext(this.state.project,value,this.state.sourceWorldRef)).catch(()=>{});
+   // The packet the turn took, read again for every view that holds it: the World Model's, fresh (O-I ticket 1005).
+   if(context)void refreshPacket(this.transport,this.state.project,this.state.agentSession,this.state.sourceWorldRef).catch(()=>{});
    this.canonical=response.draft;
    if(this.input===submitted){this.input=response.draft.text;this.set({draft:response.draft.text});}else{this.dirty=true;}
    this.wake("a conversation turn was sent");
