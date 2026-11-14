@@ -9,7 +9,6 @@ import type {ChangeSetDocument, ConfigResolution, ContributionMount, PlanBundle,
 import {basisChanged, categoryOf, displayValue, draftOwnerChanged, editableValue, isSensitiveSetting, rawValue, settingHelp, settingKey, settingWords, tableRepresentation,
   type Draft, type SettingEntry} from './model'
 import type {HarnessReading} from '../../../../../desktop/cradle/src/configuration/harnessSource'
-import {shapeHarnessClients} from '../../../../../desktop/cradle/src/configuration/harnessSource'
 import {agentName, type AgentCarries, type CensusAgent, type CensusReading} from '../../../../../desktop/cradle/src/agency/census'
 import type {ProfileDocument} from '../../../../../desktop/cradle/src/configuration/contracts'
 import type {SystemCompositionReading} from '../../../../../desktop/cradle/src/workspace/settings/types'
@@ -25,6 +24,8 @@ const json = (value: unknown): string => JSON.stringify(value)
 const rec = (x: unknown): x is Record<string, unknown> => !!x && typeof x === 'object' && !Array.isArray(x)
 const txt = (x: unknown): string | undefined => (typeof x === 'string' && x ? x : undefined)
 const at = (unixMs: number | null | undefined): string | undefined => (typeof unixMs === 'number' && unixMs > 0 ? new Date(unixMs).toISOString().slice(0, 16).replace('T', ' ') : undefined)
+/** An owner's words as one sentence: ended by one full stop. */
+const sentence = (words: string): string => `${words.replace(/[.\s]+$/, '')}.`
 
 // ---------------------------------------------------------------------------------------------------------------- scopes
 
@@ -351,28 +352,31 @@ export function harnessValues(reading: HarnessReading | null, logins: HarnessLog
 /** One login a harness has of its own, as AIKit's profile declares it (`aikit harness auth <client> --json`: own_login): a runnable one
  * carries the argv it runs; one with no command to run carries only its note, the harness's own words for how it signs in. */
 export interface HarnessLogin {readonly provider: string; readonly command?: readonly string[]; readonly note?: string; readonly check?: readonly string[]}
-/** What AIKit reads of one harness client for Sign in (manual §10.10 Rules): from its client status (harness_status), whether it is on this
- * computer and its credential leg (whether AIKit finds what the client needs to sign in, and if not, why, in AIKit's words); from
+/** One agent Sign in reads (manual §10.10 Rules): an agent of the census that AIKit has a client for (O-I ticket 1003: AIKit adds detail,
+ * never a row), by AIKit's client and harness names; its credential leg from AIKit's client status (harness_status: whether AIKit finds
+ * what the client needs to sign in, and if not, why, in AIKit's words), or why that status could not be read (`credentialUnread`); from
  * harness_auth_describe, its logins, or why they could not be read (that client's alone). */
 export interface HarnessLoginClient {
   readonly client: string
   readonly harness: string
-  readonly detected: boolean
   readonly credential?: string
   readonly credentialWhy?: string
+  readonly credentialUnread?: string
   readonly logins?: readonly HarnessLogin[]
   readonly unread?: string
 }
 export interface HarnessLoginReading {readonly clients: readonly HarnessLoginClient[]}
 
-/** The clients of AIKit's client status with their credential leg (aikit-cli client.rs: `credential` ok | credential-gated | unsupported
- * …, and `credential_reason`). Pure. */
-export function harnessLoginClients(status: unknown): Omit<HarnessLoginClient, 'logins' | 'unread'>[] {
-  const raw = rec(status) && Array.isArray(status.clients) ? status.clients.filter(rec) : []
-  return shapeHarnessClients(status).flatMap(row => {
-    if (!row.client) return []
-    const from = raw.find(item => item.client === row.client) ?? {}, credential = txt(from.credential), why = txt(from.credential_reason)
-    return [{client: row.client, harness: row.harness || row.client, detected: row.detected, ...(credential ? {credential} : {}), ...(why ? {credentialWhy: why} : {})}]
+/** The clients Sign in reads: the census's agents AIKit has a client for (setupAgentTools, as Setup asks AIKit about them), each with its
+ * credential leg from AIKit's client status (aikit-cli client.rs: `credential` ok | credential-gated | unsupported …, and
+ * `credential_reason`), or why that status could not be read. A client the status names that the census does not list is no agent here,
+ * and is not read. Pure. */
+export function harnessLoginClients(census: CensusReading, status: {readonly data: unknown} | {readonly unread: string}): Omit<HarnessLoginClient, 'logins' | 'unread'>[] {
+  const rows = 'data' in status && rec(status.data) && Array.isArray(status.data.clients) ? status.data.clients.filter(rec) : []
+  return setupAgentTools(census).map(({client, harness}) => {
+    if ('unread' in status) return {client, harness, credentialUnread: status.unread}
+    const row = rows.find(item => item.client === client), credential = txt(row?.credential), why = txt(row?.credential_reason)
+    return {client, harness, ...(credential ? {credential} : {}), ...(why ? {credentialWhy: why} : {})}
   })
 }
 /** A harness's declared logins (harness_auth.rs AuthFace own_login). A login whose command cannot run (no argv) is offered by its note only,
@@ -405,28 +409,30 @@ export const loginKey = (client: string, provider: string): string => `${client}
 /** The login's command as you would type it. */
 export const commandWords = (command: readonly string[]): string => command.join(' ')
 
-/** What AIKit finds now for a client's login, in words (its credential leg). */
+/** What AIKit finds now for a client's login, in words (its credential leg), or why its client status does not say. */
 function loginNow(client: HarnessLoginClient): string | undefined {
+  if (client.credentialUnread) return `AIKit's client status could not be read, so whether AIKit finds what ${client.harness} needs to sign in is not known: ${client.credentialUnread}`
   if (client.credential === 'ok') return `AIKit finds what ${client.harness} needs to sign in.`
   if (client.credential === 'credential-gated') return `AIKit does not find what ${client.harness} needs to sign in yet: ${client.credentialWhy ?? 'its credential is missing'}.`
   return client.credential ? `AIKit cannot check ${client.harness}'s login: ${client.credentialWhy ?? client.credential}.` : undefined
 }
 /** One harness row's Sign in, from AIKit's reading of that client (manual §10.10 Rules): a runnable login, the command it runs; one that
- * signs in only inside itself, its note and no button; a login AIKit could not read, why, on that row alone. A client not on this
- * computer has none: it is installed first. Pure. */
+ * signs in only inside itself, its note and no button; a login AIKit could not read, why, on that row alone. A client that is no agent
+ * of the census has none. Pure. */
 function harnessSignIn(logins: HarnessLoginReading | null, client: string): Record<string, unknown> {
   const found = logins?.clients.find(item => item.client === client)
-  if (!found?.detected) return {}
+  if (!found) return {}
   if (found.unread) return {signInUnread: found.unread}
   const runnable = (found.logins ?? []).filter(login => login.command), notes = (found.logins ?? []).filter(login => !login.command).map(login => login.note!)
   const now = loginNow(found)
   return {...(runnable.length ? {signIn: runnable.map(login => ({key: loginKey(client, login.provider), provider: providerName(login.provider), command: commandWords(login.command!)}))} : {}),
     ...(!runnable.length && notes.length ? {signInNote: notes.join(' ')} : {}), ...(runnable.length && now ? {loginNow: now} : {})}
 }
-/** Beside a provider's key on Credentials: the runnable logins of the harnesses on this computer that serve that provider. Pure. */
+/** Beside a provider's key on Credentials: the runnable logins of the agents on this computer (the census's, as Sign in reads them) that
+ * serve that provider. Pure. */
 function providerSignIn(logins: HarnessLoginReading | null, row: CredentialRow): Record<string, unknown> {
   const names = new Set([providerName(row.provider), providerName(row.credential)])
-  const offered = (logins?.clients ?? []).filter(client => client.detected && !client.unread).flatMap(client => (client.logins ?? [])
+  const offered = (logins?.clients ?? []).filter(client => !client.unread).flatMap(client => (client.logins ?? [])
     .filter(login => login.command && names.has(providerName(login.provider))).map(login => ({key: loginKey(client.client, login.provider), harness: client.harness, command: commandWords(login.command!)})))
   return offered.length ? {signIn: offered} : {}
 }
@@ -438,9 +444,10 @@ export function loginReadBack(login: {readonly client: string; readonly harness:
   if (login.check && check && 'signedIn' in check)
     return check.signedIn ? `${ended}, and ${commandWords(login.check)} says ${login.harness} is signed in.` : `${ended}, but ${commandWords(login.check)} says ${login.harness} is not signed in.`
   if (login.check && check && 'unread' in check) return `${commandWords(login.check)} did not answer: ${check.unread}. ${loginReadBack({client: login.client, harness: login.harness, command: login.command}, after, error)}`
-  if (!after) return `${ended}, but AIKit's client status could not be read again: ${error ?? 'no reading came back'}`
+  if (!after) return `${ended}, but the agents' logins could not be read again: ${error ?? 'no reading came back'}`
   const client = after.clients.find(item => item.client === login.client)
-  if (!client) return `${ended}, but AIKit no longer reports ${login.harness} on this computer.`
+  if (!client) return `${ended}, but ${login.harness} is no longer among the agents on this computer.`
+  if (client.credentialUnread) return `${ended}, but AIKit's client status could not be read again: ${client.credentialUnread}`
   if (client.credential === 'ok') return `${ended}, and AIKit now finds what ${client.harness} needs to sign in.`
   if (client.credential === 'credential-gated') return `${ended}, but AIKit does not find what ${client.harness} needs yet: ${client.credentialWhy ?? 'its credential is missing'}.`
   return `${ended}. AIKit cannot check ${client.harness}'s login: ${client.credentialWhy ?? client.credential ?? 'it reports no credential leg'}.`
@@ -682,9 +689,11 @@ export interface SetupKeyFinding {readonly source: string; readonly location: st
 /** A provider a detected tool reaches (`aikit harness auth <harness>`): the variable that carries its key, and its own login in AIKit's
  * words; or AIKit's refusal to say (`unread`). */
 export interface SetupHarnessProvider {readonly harness: string; readonly folder?: string; readonly provider: string; readonly envVar?: string; readonly ownLogin?: string; readonly unread?: string}
-/** The Credentials step: the keys found, the providers the tools reach and AIKit's bindings (metadata only), or AIKit's refusal. */
-export type SetupCredentials = {readonly state: 'read'; readonly findings: readonly SetupKeyFinding[]; readonly providers: readonly SetupHarnessProvider[]; readonly bindings: readonly CredentialRow[]}
-  | {readonly state: 'refused'; readonly error: string}
+/** The Credentials step: the keys found, the providers the tools reach and AIKit's bindings (metadata only), or AIKit's refusal.
+ * `agentsWhy`: why no agent's providers were asked, the census not being read when the keys were (its why); `aikitWhy`: the census read
+ * without AIKit's client status, so no agent carries AIKit's client to ask (AIKit's why). */
+export type SetupCredentials = {readonly state: 'read'; readonly findings: readonly SetupKeyFinding[]; readonly providers: readonly SetupHarnessProvider[]; readonly bindings: readonly CredentialRow[]
+  readonly agentsWhy?: string; readonly aikitWhy?: string} | {readonly state: 'refused'; readonly error: string}
 /** What Setup holds: native oi's adoption state for the Ground step (the cradle's AdoptionController snapshot), AIKit for the Harnesses
  * and skills and Credentials steps, Central's Work and the folders of work elsewhere for the Projects step (`elsewhere`: Central's
  * refusal to read them, in its words), Workcell and Central for the Machines step, the preview asked last, and the folder brought into
@@ -964,8 +973,9 @@ export function setupMachineStep(machine: SetupMachine | undefined): Record<stri
   return {step: 'machines', state: 'found', items: [item]}
 }
 
-/** The agents Setup asks AIKit about: the census's agents (the one list of agents, O-I #1003) that AIKit has a client for, each with
- * AIKit's client and harness names and its folder. An agent AIKit has no client for has nothing of AIKit's to read. Pure. */
+/** The agents Setup and Sign in ask AIKit about: the census's agents (the one list of agents, O-I ticket 1003) that AIKit has a client for,
+ * each with AIKit's client and harness names and its folder. An agent AIKit has no client for has nothing of AIKit's to read; a census
+ * not read names none. Pure. */
 export function setupAgentTools(census: CensusReading | undefined): SetupHarness[] {
   return census?.state === 'read' ? census.agents.flatMap((agent): SetupHarness[] => {
     const client = txt(agent.aikit?.client), folder = agentFolder(agent)
@@ -1002,11 +1012,13 @@ const skillsWord = (n: number) => `${n} skill${n === 1 ? '' : 's'}`
  * set and its floor's law), or `agentsWhy` where the census is not read; and each skill root under the agent whose folder holds it (else
  * under AIKit's label for it), with the change Accept makes — AIKit adopts its skills, and the agent reads them where they were, its
  * settings and instructions as they are — or, once AIKit holds the root, that it does. A root AIKit cannot place is named and left alone.
- * Accepted once AIKit holds every root that keeps skills. Pure. */
+ * Accepted once AIKit holds every root that keeps skills; with nothing to bring in it says so, and a census not read is said as not read,
+ * with its why, never as no agent. Pure. */
 export function setupHarnessStep(reading: SetupHarnesses | undefined, census?: CensusReading, disclosure?: SetupDisclosure): Record<string, unknown> | undefined {
   if (!reading) return undefined
   const agents = census?.state === 'read' ? census.agents : []
-  const listed = census?.state === 'read' ? {agents: agents.map(censusRow)} : {agentsWhy: census?.state === 'unavailable' ? census.why : 'The agents on this machine are not read yet.'}
+  const agentsWhy = census?.state === 'read' ? undefined : census?.state === 'unavailable' ? census.why : 'The agents on this machine are not read yet.'
+  const listed = agentsWhy === undefined ? {agents: agents.map(censusRow)} : {agentsWhy}
   if (reading.state === 'refused') return {step: 'harnesses', state: 'found', ...listed, items: [{name: 'Your agents\' skills', why: reading.error}]}
   const items: Record<string, unknown>[] = reading.roots.map(root => {
     const agent = setupRootAgent(census, root.path), name = agent ? agentName(agent) : root.label, by = agent ? agentName(agent) : 'The agent'
@@ -1021,9 +1033,11 @@ export function setupHarnessStep(reading: SetupHarnesses | undefined, census?: C
   // What AIKit reads of each agent besides its skills (its disclosure): its instructions, settings and models; or why it said nothing.
   const tools = disclosure?.state === 'read' ? setupAgentTools(census).flatMap(tool => { const row = setupToolDisclosure(disclosure.reading, tool); return row ? [row] : [] }) : []
   const said = disclosure?.state === 'refused' ? {disclosure: `AIKit did not say what it reads of each agent's settings and instructions: ${disclosure.error}`} : {}
-  // Nothing to bring in is done (manual §10.11: what you leave out is not shown as missing), and says so.
+  // Nothing to bring in is done (manual §10.11: what you leave out is not shown as missing), and says so; the census not read is said as
+  // that, with its why, never as no agent on this computer.
   if (!keeping.length) return {step: 'harnesses', state: 'accepted', ...listed, items, tools, ...said,
-    said: `Nothing to bring in: ${agents.length ? 'no agent here keeps skills AIKit can adopt' : 'there is no agent on this computer'}. Each agent stays as it is.`}
+    said: agentsWhy !== undefined ? `Nothing to bring in: no skill root here keeps skills AIKit can adopt. The agents on this computer are not read: ${sentence(agentsWhy)}`
+      : `Nothing to bring in: ${agents.length ? 'no agent here keeps skills AIKit can adopt' : 'there is no agent on this computer'}. Each agent stays as it is.`}
   return {step: 'harnesses', state: keeping.every(root => SETUP_HELD.has(root.standing)) ? 'accepted' : 'found', ...listed, items, tools, ...said}
 }
 /** What AIKit's disclosure says of one detected tool (aikit.harness-disclosure/v1, its profile by the tool's harness name): where its
@@ -1069,9 +1083,10 @@ export const SECRET_REFERENCE = /^(keychain|op|pass|varlock):\/\/\S+$/
 
 /** The Credentials step (manual §10.11: "Where each provider's key lies: the place, never the value"; Accept "binds each key by
  * reference"): each key AIKit found, where it lies and the binding Accept makes of it by the reference you give (the one you chose shows
- * it), or that it is bound and to what; a name AIKit knows no provider for is left as it is; each provider a detected tool reaches that no
- * key or binding covers is named with how the tool reaches it (its own login, in AIKit's words) and left alone; a binding AIKit keeps
- * that no finding shows stands as bound. Accepted once a key is bound and none found waits. Pure. */
+ * it), or that it is bound and to what; a name AIKit knows no provider for is left as it is; each provider an agent of the census
+ * reaches that no key or binding covers is named with how the agent reaches it (its own login, in AIKit's words) and left alone; a
+ * binding AIKit keeps that no finding shows stands as bound; where the agents on this computer were not read, why no agent's providers
+ * were asked. Accepted once a key is bound and none found waits. Pure. */
 export function setupCredentialStep(reading: SetupCredentials | undefined, held: (key: string) => Value | undefined): Record<string, unknown> | undefined {
   if (!reading) return undefined
   if (reading.state === 'refused') return {step: 'credentials', state: 'found', items: [{name: 'Your keys', why: reading.error}]}
@@ -1095,6 +1110,10 @@ export function setupCredentialStep(reading: SetupCredentials | undefined, held:
     items.push({name: `${provider.provider} for ${provider.harness}`, where: provider.folder ?? provider.harness,
       why: provider.ownLogin ?? `No key for it lies on this computer${provider.envVar ? ` (${provider.envVar} is not set)` : ''}.`})
   }
+  // The census not read: no agent was asked which providers it reaches, and the step says so, with its why.
+  if (reading.agentsWhy !== undefined) items.push({name: 'Your agents\' providers', why: `The agents on this computer are not read, so no agent's providers were asked: ${sentence(reading.agentsWhy)}`})
+  // The census read without AIKit's client status: no agent carries AIKit's client, so none was asked, and the step says so.
+  if (reading.aikitWhy !== undefined) items.push({name: 'Your agents\' providers', why: `AIKit's client status was not read with the agents on this computer, so no agent's providers were asked: ${sentence(reading.aikitWhy)}`})
   // Nothing waiting to be bound is done (manual §10.11: what you leave out is not shown as missing), and says so.
   if (!open.length) return {step: 'credentials', state: 'accepted', items, ...(bound.size ? {} : {said: 'Nothing to bind: AIKit finds no provider\'s key waiting on this computer. Each tool keeps its own login.'})}
   return {step: 'credentials', state: 'found', items}
@@ -1188,7 +1207,7 @@ export const SETTINGS_WINDOW_WIRING = {
     result: 'the owners\' answer to Apply or Reset (config_apply_reviewed, config_reset)',
     back: 'the name of the work Settings returns to: a contextual entry\'s own (SettingsRequest.returnLabel), else the mode the frame stands in (settings/host.ts setSettingsReturnLabel)',
     harnesses: 'the agents on this machine: the census (the World Model\'s agents, O-I #1003), each with what it carries (its model and skill set from AIKit\'s client status, the law its floor carries from Central\'s control.floor.read) and AIKit\'s client facts (harness_status) as detail',
-    routes: 'the catalogue\'s declared routes (model_catalogue)', credentials: 'AIKit\'s credential binding metadata (credential_list), each Verify\'s verdict (credential_verify)',
+    routes: 'the catalogue\'s declared routes (model_catalogue)', credentials: 'AIKit\'s credential binding metadata (credential_list), each Verify\'s verdict (credential_verify), and beside each the own logins of the census\'s agents that serve its provider (Sign in)',
     found: 'keys discovery found (credential_discover, presence only)',
     secretRefs: 'the credential references Workcell records, each with where it is observed (workcell_read secret-list: `workcell secret list`, workcell.secret-reference-inventory/v1)',
     projections: 'Workcell\'s projection ledger, the projections it holds active (workcell_read secret-projections: `workcell secret projections`)',
@@ -1207,7 +1226,7 @@ export const SETTINGS_WINDOW_WIRING = {
     visualLayer: 'the renderer\'s visual layer (SettingsAdapter.visualPreferences)', welcome: 'the renderer\'s welcome scene (SettingsAdapter.visualPreferences)',
     products: 'each product\'s mount and operations (system_composition_read)', ran: 'the last operation\'s answer (product_action_run)',
     system: 'each owner\'s System disclosure on its four axes (system_composition_read)',
-    setup: 'Setup\'s steps (manual §10.11): Ground from native oi\'s adoption (the kernel op `setup`: status and discover) and Central\'s civil-time preview (central.time.policy.preview: how your days are kept), its bounds (central.ground.placement.preview), its Day\'s form (SetupSource.groundForm: the kernel\'s ground_form preview, carried by the ground\'s O-I project or kept in Control/forms) and the person\'s key (SetupSource.groundAuthority: the kernel\'s ground_authority preview, never the key), once the ground stands the world\'s Music folder (SetupSource.groundMusic: the kernel\'s ground_music preview, whether Central\'s file map keeps it as a folder scope), whether the person\'s grant holds the root acts Setup grants today (central.ground.agreement.preview: the acts an older grant lacks, or a grant kept by hand named and left as it is), and the World\'s standing authority in Actuation (SetupSource.act: actuation.authority.list, granted by Accept through actuation.authority.grant-world, held by the person and rooted at the World\'s root, renewed as each project becomes theirs), accepted once the ground is bound and recognised, Central keeps its days, bounds, Day form and key, the grant agrees or is kept by hand, and Actuation keeps the World\'s standing authority; Harnesses and skills also show what AIKit discloses of each tool (SetupSource.harnessDisclosure: aikit harness disclose), and a step with nothing to adopt or bind is accepted and says so; Machines from Workcell\'s status (op workcell_status_read) and Central\'s machine.declaration of role current, accepted once that binds the Workcell this computer answers as; Projects from Central\'s Work, accepted once a project stands with its ground. Harnesses and skills: the agents, exactly the census (the World Model\'s agents slice through model_subscribe, O-I #1003), each with its model, its skill set and the law its floor carries; from AIKit, the skill roots aikit init discovers (aikit_read init) with who owns each (its ownership: foreign, adopted, generated), and the skills aikit collate --all names in each, accepted once AIKit holds every root that keeps skills. Credentials from AIKit: where aikit credential discover finds each key (presence only), the providers aikit harness auth names for each agent of the census AIKit has a client for (op harness_auth_describe) and the bindings aikit credential list keeps (metadata only), accepted once a key is bound and none found waits; items carry the credential a row binds, and bound',
+    setup: 'Setup\'s steps (manual §10.11): Ground from native oi\'s adoption (the kernel op `setup`: status and discover) and Central\'s civil-time preview (central.time.policy.preview: how your days are kept), its bounds (central.ground.placement.preview), its Day\'s form (SetupSource.groundForm: the kernel\'s ground_form preview, carried by the ground\'s O-I project or kept in Control/forms) and the person\'s key (SetupSource.groundAuthority: the kernel\'s ground_authority preview, never the key), once the ground stands the world\'s Music folder (SetupSource.groundMusic: the kernel\'s ground_music preview, whether Central\'s file map keeps it as a folder scope), whether the person\'s grant holds the root acts Setup grants today (central.ground.agreement.preview: the acts an older grant lacks, or a grant kept by hand named and left as it is), and the World\'s standing authority in Actuation (SetupSource.act: actuation.authority.list, granted by Accept through actuation.authority.grant-world, held by the person and rooted at the World\'s root, renewed as each project becomes theirs), accepted once the ground is bound and recognised, Central keeps its days, bounds, Day form and key, the grant agrees or is kept by hand, and Actuation keeps the World\'s standing authority; Harnesses and skills also show what AIKit discloses of each tool (SetupSource.harnessDisclosure: aikit harness disclose), and a step with nothing to adopt or bind is accepted and says so; Machines from Workcell\'s status (op workcell_status_read) and Central\'s machine.declaration of role current, accepted once that binds the Workcell this computer answers as; Projects from Central\'s Work, accepted once a project stands with its ground. Harnesses and skills: the agents, exactly the census (the World Model\'s agents slice through model_subscribe, O-I #1003), each with its model, its skill set and the law its floor carries; from AIKit, the skill roots aikit init discovers (aikit_read init) with who owns each (its ownership: foreign, adopted, generated), and the skills aikit collate --all names in each, accepted once AIKit holds every root that keeps skills. Credentials from AIKit: where aikit credential discover finds each key (presence only), the providers aikit harness auth names for each agent of the census AIKit has a client for (op harness_auth_describe; where the census is not read, why no agent\'s providers were asked, in its words) and the bindings aikit credential list keeps (metadata only), accepted once a key is bound and none found waits; items carry the credential a row binds, and bound',
     folders: 'the folders of the ground\'s Work (Central work.list), each with Central\'s projectcentral.inspect, its material and its ProjectCentral parts (central.files.list); then the folders of work that stand elsewhere under the world\'s folder (Central work.candidates)',
     groundFolder: 'the folder the Ground step would make your ground in: the one chosen (the system\'s chooser, then native oi\'s discover with it), else the folder native oi reads the world\'s ground in',
     birth: 'your name and date of birth as the identity owner keeps them (SetupSource.identity: the kernel\'s nara_identity list and open), once the ground is made; absent until you give them, never shown as missing',
@@ -1219,7 +1238,7 @@ export const SETTINGS_WINDOW_WIRING = {
     reread: 'the owners read again: config_registry_read, config_resolutions_read and every opened page\'s reading',
     install: 'client_install',
     reveal: 'settings_reveal', scan: 'Workcell\'s scan for material outside a secret store (workcell_read secret-scan: `workcell secret scan`), said on the Info line',
-    revokeProjection: 'Workcell\'s revocation at the origin (workcell_write revoke-projection: `workcell secret revoke-projection --name`), the ledger read back', signIn: 'the harness\'s own login as AIKit declares it (harness_auth_describe: `aikit harness auth <client> --json`), run in a terminal in the Workbench (LOGIN_TERMINAL_PRESENT, settings/host.ts), and the result read back when that terminal ends (the harness\'s own check, harness_auth_describe with check: `--check`, where AIKit declares one; harness_status otherwise)', discover: 'credential_discover', verify: 'credential_verify',
+    revokeProjection: 'Workcell\'s revocation at the origin (workcell_write revoke-projection: `workcell secret revoke-projection --name`), the ledger read back', signIn: 'the harness\'s own login as AIKit declares it (harness_auth_describe: `aikit harness auth <client> --json`) for each agent of the census AIKit has a client for (model_subscribe agents, asked afresh on Read again; harness_status its credential leg, as detail), run in a terminal in the Workbench (LOGIN_TERMINAL_PRESENT, settings/host.ts), and the result read back when that terminal ends (the harness\'s own check, harness_auth_describe with check: `--check`, where AIKit declares one; harness_status otherwise)', discover: 'credential_discover', verify: 'credential_verify',
     rotate: 'credential_rotate with new.reference', revoke: 'credential_revoke', bind: 'credential_setup with new.credential and new.reference',
     useProfile: 'profile_use_plan, staged as local changes', saveProfile: 'createProfile and saveProfile with your valid local changes', importProfile: 'the system file picker, then createProfile and saveProfile',
     runNow: 'routine run_now on the basis read', disableRoutine: 'routine disable on the basis read', revertTheme: 'theme_revert', removeTheme: 'theme_remove',

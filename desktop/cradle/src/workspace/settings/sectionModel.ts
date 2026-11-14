@@ -1,13 +1,16 @@
 /**
  * Pure derivations the Settings sections render (docs/cradle/12-SETTINGS.md
- * §3): harness grouping, credential cards, model availability (routes joined
- * with the BOUND credentials, S14), skill grouping, and the plain words for
- * owner vocabulary. No kernel access here — `tests/settings-model.test.mjs`
- * pins these against owner-shaped documents.
+ * §3): the census's agents in counts and words, AIKit's sign-in rows,
+ * credential cards, model availability (routes joined with the BOUND
+ * credentials, S14), skill grouping, and the plain words for owner
+ * vocabulary. No kernel access here — `tests/settings-model.test.mjs` pins
+ * these against owner-shaped documents.
  */
 import type {CatalogueEntry, HarnessRow} from "../../configuration/harnessSource";
 import type {SystemDisclosureReading} from "../../configuration/systemDisclosure";
 import type {CredentialBinding, SettingEntry, SettingsSnapshot} from "./settingsData";
+import {agentName, talkingAgents, type CensusReading} from "../../agency/census";
+import type {AdvertisedModes} from "../../encounter/advertisedModes";
 
 // ---------------------------------------------------------------------------
 // names
@@ -46,30 +49,63 @@ export function providerName(ref: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// harnesses (§3.2)
+// harnesses (§3.2): the agents on this machine are the census (O-I #1003)
 
-/** Ready: an AIKit adapter exists and the harness is on this machine. */
-export function readyHarnesses(reading: SystemDisclosureReading): HarnessRow[] {
-  const rows = reading.harness.harnesses.state === "ok" ? reading.harness.harnesses.rows : [];
-  return rows.filter((row) => row.detected && row.capability === "descriptor");
+/** The census's agents as the Harnesses section's navigator count and its
+ * Status card read them: how many the census lists, how many of those start
+ * on this machine, and how many of those a person can talk to. Null until
+ * the census is read. */
+export function agentCounts(census: CensusReading): {agents: number; starting: number; talking: number} | null {
+  if (census.state !== "read") return null;
+  return {agents: census.agents.length, starting: census.agents.filter((agent) => agent.starts).length, talking: talkingAgents(census).length};
 }
 
-export function adapterNeeded(reading: SystemDisclosureReading): HarnessRow[] {
-  const rows = reading.harness.harnesses.state === "ok" ? reading.harness.harnesses.rows : [];
-  return rows.filter((row) => row.detected && row.capability !== "descriptor");
+/** The Status card's line for the agents on this machine, in words; null
+ * until the census is read. */
+export function agentsLine(census: CensusReading): string | null {
+  const counts = agentCounts(census);
+  if (!counts) return null;
+  if (counts.agents === 0) return "Actuation detects no agent harness on this machine.";
+  return `${counts.starting} of ${counts.agents} start on this machine · ${counts.talking} you can talk to`;
 }
 
-/** Why a detected harness sits outside the ready set. A row whose owner
- * plans an effect carries a working AIKit adapter — what it lacks is the
- * native capability census, not the adapter. Only an unplanned row is
- * genuinely adapterless. */
-export function adapterNeededReason(row: HarnessRow): "census-pending" | "no-adapter" {
-  return row.effect ? "census-pending" : "no-adapter";
+/** Whom a default permission mode is chosen for: the census's agents a
+ * person can talk to, by name, or "each agent" while there is none to name. */
+export function permissionModeAgents(census: CensusReading): string {
+  const names = talkingAgents(census).map(agentName);
+  return names.length ? names.join(", ") : "each agent";
 }
 
-export function notFound(reading: SystemDisclosureReading): HarnessRow[] {
-  const rows = reading.harness.harnesses.state === "ok" ? reading.harness.harnesses.rows : [];
-  return rows.filter((row) => !row.detected);
+/** One row of AIKit's default-permission-mode table: a connection, the modes
+ * this app has seen its sessions offer, and whether it is a name the table
+ * holds that is no agent of the census. */
+export type PermissionModeRow = AdvertisedModes & {readonly stray: boolean};
+
+/** The rows of AIKit's default-permission-mode table (Permissions): one per
+ * agent of the census a person can talk to (O-I #1003), with the modes this
+ * app has seen that agent's sessions offer (a session records them under the
+ * census slug it was opened by), then each entry the table holds for a name
+ * that is no such agent, so it can still be cleared. A connection seen in a
+ * session that is no agent here is not a row: the agents are the census's.
+ * Pure. */
+export function permissionModeRows(census: CensusReading, seen: readonly AdvertisedModes[], table: Readonly<Record<string, string>>): PermissionModeRow[] {
+  const agents = talkingAgents(census);
+  return [
+    ...agents.map((agent): PermissionModeRow => {
+      const held = seen.find((row) => row.provider === agent.slug);
+      return {provider: agent.slug, label: agentName(agent), modes: held?.modes ?? [], seenAt: held?.seenAt ?? 0, stray: false};
+    }),
+    ...Object.keys(table).filter((provider) => !agents.some((agent) => agent.slug === provider))
+      .map((provider): PermissionModeRow => ({provider, label: titleCase(provider), modes: [], seenAt: 0, stray: census.state === "read"})),
+  ];
+}
+
+/** The AIKit clients a sign-in is offered for (AuthLogin): the census's
+ * agents AIKit has a client for, by AIKit's client name, as the shell's Sign
+ * in reads them (settings/windowValues.ts setupAgentTools). Signing in is
+ * AIKit's own job; the agents are the census's (O-I #1003). Pure. */
+export function signInClients(census: CensusReading): string[] {
+  return census.state === "read" ? census.agents.flatMap((agent) => (typeof agent.aikit?.client === "string" ? [agent.aikit.client] : [])) : [];
 }
 
 /** The owner's effect text, as a sentence a person reads. */

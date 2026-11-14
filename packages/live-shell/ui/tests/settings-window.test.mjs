@@ -1539,6 +1539,63 @@ test('CODE-DERIVED — Harnesses and skills and Credentials with nothing to adop
   assert.ok(drawnNone.includes(escaped(none.said)), 'the step says it in words')
 })
 
+test('CODE-DERIVED — a census not read is said as not read, with its why, never as no agent on this computer: Harnesses and skills with nothing to bring in says so, and Credentials says why no agent\'s providers were asked', () => {
+  // A fresh home whose Actuation detection cannot be read: the World Model refuses the agents slice, in its words (census.rs).
+  const why = 'Actuation\'s harness detection: actuation detect did not answer within 10s'
+  const unread = win.setupHarnessStep({state: 'read', roots: []}, {state: 'unavailable', why})
+  assert.equal(unread.state, 'accepted', 'nothing to bring in is done by the skill roots, as before')
+  assert.equal(unread.said, `Nothing to bring in: no skill root here keeps skills AIKit can adopt. The agents on this computer are not read: ${why}.`)
+  assert.doesNotMatch(unread.said, /there is no agent/, 'a census never read is not an empty one')
+  assert.deepEqual([unread.agents, unread.agentsWhy], [undefined, why])
+  assert.equal(win.setupHarnessStep({state: 'read', roots: []}, {state: 'reading'}).said,
+    'Nothing to bring in: no skill root here keeps skills AIKit can adopt. The agents on this computer are not read: The agents on this machine are not read yet.', 'asked and not answered yet: said as that')
+  // Only a census read that lists no agent says there is none.
+  assert.equal(win.setupHarnessStep({state: 'read', roots: []}, {state: 'read', agents: []}).said, 'Nothing to bring in: there is no agent on this computer. Each agent stays as it is.')
+  // Credentials: no agent was asked which providers it reaches, and the step says why, in the census's words.
+  const credentials = win.setupCredentialStep({state: 'read', findings: [], providers: [], bindings: [], agentsWhy: why}, held({}))
+  assert.deepEqual(credentials.items, [{name: 'Your agents\' providers', why: `The agents on this computer are not read, so no agent's providers were asked: ${why}.`}])
+  assert.deepEqual(win.setupCredentialStep({state: 'read', findings: [], providers: [], bindings: []}, held({})).items, [], 'a census read: no such row')
+  // Drawn: the step's own words, and the why on the Credentials row.
+  const harnesses = drawn({setup: json([{step: 'harnesses', state: unread.state, said: unread.said, agentsWhy: unread.agentsWhy, items: unread.items}]), setupStep: 'harnesses'}, 'setup')
+  assert.ok(harnesses.includes(escaped(unread.said)), 'the census not read, in words')
+  assert.ok(!harnesses.includes('there is no agent'), 'never that there is no agent')
+  const keys = drawn({setup: json([{step: 'credentials', state: credentials.state, said: credentials.said, items: credentials.items}]), setupStep: 'credentials'}, 'setup')
+  assert.ok(keys.includes(escaped(`The agents on this computer are not read, so no agent's providers were asked: ${why}.`)), 'Credentials says why no agent was asked')
+})
+
+test('SCRIPTED — Setup where the World Model does not answer the census: Harnesses and skills says the agents are not read, with why; Credentials asks AIKit of no agent, and says why', async () => {
+  const {source, calls, world, HOME} = scriptedSetup()
+  world.tools.set('claude', {client: 'claude', harness: 'claude-code', folder: `${HOME}/.claude`, names: [], standing: 'foreign', revision: 1})
+  world.censusRefusal = 'Actuation\'s harness detection: actuation detect did not answer within 10s'
+  const walk = new settingsPages.SetupWalk(source)
+  await walk.read(); await walk.accept('ground', held({}))
+  const harnesses = stepOf(win.setupValues(walk.snapshot(), held({})), 'harnesses')
+  assert.deepEqual([harnesses.state, harnesses.agents, harnesses.agentsWhy], ['accepted', undefined, world.censusRefusal])
+  assert.equal(harnesses.said, `Nothing to bring in: no skill root here keeps skills AIKit can adopt. The agents on this computer are not read: ${world.censusRefusal}.`)
+  const credentials = stepOf(win.setupValues(walk.snapshot(), held({})), 'credentials')
+  assert.deepEqual(credentials.items, [{name: 'Your agents\' providers', why: `The agents on this computer are not read, so no agent's providers were asked: ${world.censusRefusal}.`}])
+  assert.ok(!calls.some(([kind, op]) => kind === 'aikit' && op === 'harness_auth_describe'), 'AIKit is asked of no agent')
+  // The census answers again: the agents stand, and the row is gone.
+  world.censusRefusal = null
+  await walk.read({fresh: true})
+  assert.deepEqual(stepOf(win.setupValues(walk.snapshot(), held({})), 'credentials').items.map(row => row.name), ['anthropic for claude-code'])
+})
+
+test('SCRIPTED — the window\'s Read again on Setup asks the census afresh, as Setup\'s own Read again does: an agent installed or a model default changed outside the window shows then', async () => {
+  const {source, calls, world, GROUND, HOME} = scriptedSetup()
+  world.bound = GROUND; world.outcome = 'recognized'
+  world.tools.set('claude', {client: 'claude', harness: 'claude-code', folder: `${HOME}/.claude`, names: [], standing: 'foreign', revision: 1})
+  let part
+  const Probe = () => { part = settingsPages.useSetupPage({setup: source}, true, held({}), () => {}, []); return null }
+  renderToStaticMarkup(createElement(Probe))
+  const census = () => calls.filter(([kind]) => kind === 'agents')
+  // The window's Read again presses each part's reread, with nothing (SettingsWorkspace).
+  await part.reread()
+  assert.deepEqual(census(), [['agents', true]], 'the window\'s Read again asks past what the kernel holds')
+  await part.acts.rereadSetup()
+  assert.deepEqual(census(), [['agents', true], ['agents', true]], 'Setup\'s own Read again, the same')
+})
+
 /** AIKit's own disclosure of a tool (REAL shape: `aikit harness disclose claude-code --json`, data, 29 Oct; trimmed to its layers). */
 const DISCLOSURE = {schema: 'aikit.harness-disclosure/v1', standing: 'Native profile declarations and source observations; not installed-harness detection or session activation proof',
   profiles: [{activation: {state: 'unobserved'}, disclosure: {edition: 'cli', slug: 'claude-code', layers: [
@@ -1910,9 +1967,24 @@ const LOGIN_FACES = {
     note: 'Login with Google (OAuth) is Gemini CLI\'s default auth; the API key delivers only when credential:gemini is bound'}]},
   opencode: {slug: 'opencode', own_login: [{provider_ref: 'provider:openai', runnable: true, argv: ['opencode', 'auth', 'login']}]},
 }
-const loginAdapter = (status = LOGIN_STATUS, asked = []) => ({invoke: async op => {
+/** The census as the kernel answers it (`model_subscribe` agents: census.rs census_of in the World Model's slice, O-I ticket 1003): each
+ * harness Actuation detects with an executable to start is an agent, AIKit's client row on it as detail; the others are no agents
+ * (`not_agents`), each with why. `refused`: a census the World Model could not read, in its words. */
+const censusAnswer = (agents, notAgents = [], refused = null) => ({schema: 'oi.world-model-slice/v1', slice: 'agents', owner: 'kernel', scopes: ['machine'], version: 1,
+  state: refused ? 'refused' : 'read', error: refused, read_at_unix_ms: refused ? null : 1,
+  value: refused ? null : {schema: 'oi.agents-census/v1', detection_ref: 'd1', observed_at: 'now', agents, not_agents: notAgents, aikit_detail: {state: 'read'}}})
+const censusAgent = row => ({slug: row.harness, harness_ref: `harness/${row.harness}`, native_kind: 'harness', state: 'detected', executable: `/usr/local/bin/${row.client}`, aikit: row,
+  starts: true, version: '1.0.0', start_seconds: 0.2, talks: true})
+const notAnAgent = (row, why) => ({slug: row.harness, harness_ref: `harness/${row.harness}`, native_kind: 'harness', state: row.detection === 'detected' ? 'detected' : 'absent', executable: null,
+  aikit: row, starts: false, talks: false, why})
+/** LOGIN_STATUS's clients as the census lists them: the five on this computer are agents; opencode, not installed, is none. */
+const LOGIN_CENSUS = censusAnswer(LOGIN_STATUS.clients.filter(row => row.detection === 'detected').map(censusAgent),
+  LOGIN_STATUS.clients.filter(row => row.detection !== 'detected').map(row => notAnAgent(row, `Actuation does not detect ${row.harness} on this machine (absent)`)))
+/** A kernel channel answering Sign in's reads: the census, AIKit's client status (`{error}`: one that does not answer) and each declared login. */
+const loginAdapter = (status = LOGIN_STATUS, asked = [], census = LOGIN_CENSUS) => ({invoke: async op => {
   asked.push(op)
-  if (op.op === 'harness_status') return {outcome: {result: 'harness_status_reading', data: status}}
+  if (op.op === 'model_subscribe' && op.slice === 'agents') return {outcome: {result: 'model_slice', data: census}}
+  if (op.op === 'harness_status') return status.error ? {error: status.error} : {outcome: {result: 'harness_status_reading', data: status}}
   if (op.op === 'harness_auth_describe' && LOGIN_FACES[op.harness]) return {outcome: {result: 'harness_auth_reading', data: LOGIN_FACES[op.harness]}}
   if (op.op === 'harness_auth_describe' && op.harness === 'pi') return {error: '[harness_auth.unknown_harness] `pi` is not a harness AIKit carries a profile for'}
   return {error: `aikit harness auth ${op.harness} did not answer within 10s`}
@@ -1956,8 +2028,9 @@ test('CODE-DERIVED — Harnesses & models shows what each agent that starts carr
 test('CODE-DERIVED — Sign in is each harness\'s own login as AIKit declares it: a runnable one runs its command (Claude Code\'s claude auth login as Codex\'s codex login), one that signs in inside itself says so in its own words and offers no button, a login that cannot be read affects that harness alone', async () => {
   const asked = []
   const logins = await settingsPages.harnessLogins(loginAdapter(LOGIN_STATUS, asked)).read()
-  assert.deepEqual(asked.map(op => op.op === 'harness_auth_describe' ? op.harness : op.op), ['harness_status', 'codex', 'claude-code', 'gemini', 'hermes', 'pi'],
-    'AIKit\'s client status, then the declared logins of each client it detects')
+  assert.deepEqual(asked.map(op => op.op === 'harness_auth_describe' ? op.harness : op.op), ['model_subscribe', 'harness_status', 'codex', 'claude-code', 'gemini', 'hermes', 'pi'],
+    'the census and AIKit\'s client status, then the declared logins of each agent of the census AIKit has a client for')
+  assert.ok(!asked.some(op => op.op === 'model_subscribe' && op.fresh), 'a plain read takes the census the kernel holds')
   const rows = Object.fromEntries(JSON.parse(win.harnessValues(HARNESS_READING, logins, HARNESS_CENSUS).harnesses).map(row => [row.client, row]))
   assert.deepEqual(rows.codex.signIn, [{key: 'codex|provider:openai', provider: 'openai', command: 'codex login'}], 'a runnable login: its command, as AIKit declares it')
   assert.match(rows.codex.loginNow, /^AIKit does not find what codex needs to sign in yet: credential:openai is unbound/, 'what AIKit finds now, in its words')
@@ -1983,12 +2056,12 @@ test('CODE-DERIVED — Sign in is each harness\'s own login as AIKit declares it
   assert.deepEqual([claude.command, claude.title, claude.check], [['claude', 'auth', 'login'], 'Sign in · claude-code', ['claude', 'auth', 'status', '--json']], 'Claude Code\'s login runs, with its check')
   assert.throws(() => settingsPages.loginOf(logins, 'gemini|provider:gemini'), /^Error: Login with Google \(OAuth\) is Gemini CLI's default auth/)
   assert.throws(() => settingsPages.loginOf(logins, 'hermes|provider:x'), /AIKit did not say how hermes signs in/)
-  assert.throws(() => settingsPages.loginOf(null, 'codex|provider:openai'), /AIKit's client status is not read yet/)
-  assert.throws(() => settingsPages.loginOf(logins, 'nosuch|provider:x'), /nosuch is no harness client AIKit finds on this computer/)
+  assert.throws(() => settingsPages.loginOf(null, 'codex|provider:openai'), /the agents' logins are not read yet/)
+  assert.throws(() => settingsPages.loginOf(logins, 'nosuch|provider:x'), /nosuch is no agent on this computer that AIKit has a client for/)
   const after = await settingsPages.harnessLogins(loginAdapter({clients: LOGIN_STATUS.clients.map(row => row.client === 'codex' ? {...row, credential: 'ok', credential_reason: null} : row)})).read()
   assert.equal(win.loginReadBack(codex, after), 'codex login has ended, and AIKit now finds what codex needs to sign in.')
   assert.match(win.loginReadBack(codex, logins), /^codex login has ended, but AIKit does not find what codex needs yet: credential:openai is unbound/)
-  assert.match(win.loginReadBack(codex, null, 'the kernel did not answer'), /^codex login has ended, but AIKit's client status could not be read again: the kernel did not answer$/)
+  assert.match(win.loginReadBack(codex, null, 'the kernel did not answer'), /^codex login has ended, but the agents' logins could not be read again: the kernel did not answer$/)
   await assert.rejects(settingsPages.harnessLogins({}).read(), /not connected/, 'no kernel channel: said, never an empty list')
 })
 
@@ -1997,6 +2070,7 @@ test('CODE-DERIVED — Sign in reads the result back through the harness\'s own 
   const faces = {...LOGIN_FACES, codex: {...LOGIN_FACES.codex, own_login: [{...LOGIN_FACES.codex.own_login[0], status: CHECK}]}}
   const checkAdapter = (answer, asked = []) => ({invoke: async op => {
     asked.push(op)
+    if (op.op === 'model_subscribe' && op.slice === 'agents') return {outcome: {result: 'model_slice', data: LOGIN_CENSUS}}
     if (op.op === 'harness_status') return {outcome: {result: 'harness_status_reading', data: LOGIN_STATUS}}
     if (op.op === 'harness_auth_describe' && op.check) return answer(op)
     if (op.op === 'harness_auth_describe' && faces[op.harness]) return {outcome: {result: 'harness_auth_reading', data: faces[op.harness]}}
@@ -2030,14 +2104,80 @@ test('CODE-DERIVED — Sign in reads the result back through the harness\'s own 
   assert.equal((await settingsPages.loginResult(checkAdapter(claudeChecks, claudeRan), claude)).said, 'claude auth login has ended, and claude auth status --json says claude-code is signed in.')
   assert.deepEqual(claudeRan.filter(op => op.check).map(op => op.harness), ['claude-code'], 'its check is asked of AIKit, for that client')
   // A login with no declared check: the credential leg, and no check is asked.
-  const opencode = {client: 'opencode', harness: 'opencode', provider: 'provider:openai', command: ['opencode', 'auth', 'login'], title: 'Sign in · opencode'}
+  const plainCodex = {client: 'codex', harness: 'codex', provider: 'provider:openai', command: ['codex', 'login'], title: 'Sign in · codex'}
   const plain = []
-  const leg = await settingsPages.loginResult(checkAdapter(checks(signedIn), plain), opencode)
+  const leg = await settingsPages.loginResult(checkAdapter(checks(signedIn), plain), plainCodex)
   assert.ok(plain.every(op => !op.check), 'no declared check: none is asked')
-  assert.equal(leg.said, 'opencode auth login has ended, but AIKit does not find what opencode needs yet: not on PATH.')
+  assert.equal(leg.said, 'codex login has ended, but AIKit does not find what codex needs yet: credential:openai is unbound and the harness\'s own login store at ~/.codex is absent — the ChatGPT OAuth flow.')
+  assert.ok(!plain.some(op => op.op === 'model_subscribe' && op.fresh), 'the read back takes the census the kernel holds: a login moves no agent')
+  // A login of a harness the census does not list (opencode is not installed): never a credential leg of a client that is no agent here.
+  const opencode = {client: 'opencode', harness: 'opencode', provider: 'provider:openai', command: ['opencode', 'auth', 'login'], title: 'Sign in · opencode'}
+  assert.equal((await settingsPages.loginResult(checkAdapter(checks(signedIn)), opencode)).said, 'opencode auth login has ended, but opencode is no longer among the agents on this computer.')
   const pages = readFileSync(new URL('../src/settings/windowPages.ts', import.meta.url), 'utf8')
   assert.match(pages, /const result = await loginResult\(source, login\)/, 'Sign in reads back through loginResult')
   assert.match(win.SETTINGS_WINDOW_WIRING.reads.loginSaid ?? '', /--check/, 'the wiring names the check')
+})
+
+test('CODE-DERIVED — Sign in stands on the census (O-I ticket 1003: AIKit adds detail, never a row): a client AIKit\'s status calls detected that the census lists as no agent is never asked nor offered, on Credentials or Harnesses & models; a census not read is said with its why', async () => {
+  const {censusOf} = await import('../../../../desktop/cradle/src/agency/census.ts')
+  // ~/.codex and ~/.claude stand but neither codex nor claude is on PATH: Actuation detects both by their folders and AIKit's client status
+  // passes that on as detected; the census lists both among the harnesses that are no agents (census.rs: no executable to start).
+  const gone = ['codex', 'claude-code']
+  const census = censusAnswer(LOGIN_STATUS.clients.filter(row => row.detection === 'detected' && !gone.includes(row.client)).map(censusAgent),
+    LOGIN_STATUS.clients.filter(row => row.detection !== 'detected' || gone.includes(row.client)).map(row => notAnAgent(row, row.detection === 'detected'
+      ? `Actuation detects ${row.harness} but found no executable to start` : `Actuation does not detect ${row.harness} on this machine (absent)`)))
+  const asked = []
+  const logins = await settingsPages.harnessLogins(loginAdapter(LOGIN_STATUS, asked, census)).read()
+  assert.deepEqual(logins.clients.map(client => client.client), ['gemini', 'hermes', 'pi'], 'exactly the census\'s agents AIKit has a client for')
+  assert.deepEqual(asked.filter(op => op.op === 'harness_auth_describe').map(op => op.harness), ['gemini', 'hermes', 'pi'], 'AIKit is asked how each of them signs in, and of no other client')
+  const keys = [{credential: 'ai-kit:credential:openai', provider: 'provider:openai', reference: 'keychain://aikit/openai', revoked: false, verifiedAt: null},
+    {credential: 'ai-kit:credential:anthropic', provider: 'provider:anthropic', reference: 'keychain://aikit/anthropic', revoked: false, verifiedAt: null}]
+  assert.deepEqual(JSON.parse(win.credentialValues(keys, {}, null, logins).credentials).map(row => row.signIn), [undefined, undefined],
+    'no codex login beside OpenAI\'s key and no claude auth login beside Anthropic\'s: neither runs on this computer')
+  assert.throws(() => settingsPages.loginOf(logins, 'codex|provider:openai'), /^Error: codex is no agent on this computer that AIKit has a client for, so there is nothing to sign in to\.$/)
+  assert.deepEqual(JSON.parse(win.harnessValues(HARNESS_READING, logins, censusOf({state: 'held', answer: census})).harnesses).map(row => row.agent), ['gemini', 'hermes', 'pi'],
+    'Harnesses & models lists the same agents Sign in reads')
+  // A census the World Model could not read: no client is asked, and Sign in says why, never an empty list of agents.
+  const refused = []
+  await assert.rejects(settingsPages.harnessLogins(loginAdapter(LOGIN_STATUS, refused, censusAnswer([], [], 'Actuation\'s harness detection: actuation detect did not answer within 10s'))).read(),
+    /^Error: The agents on this computer are not read: Actuation's harness detection: actuation detect did not answer within 10s$/)
+  assert.ok(!refused.some(op => op.op === 'harness_auth_describe'), 'no client is asked how it signs in')
+  // AIKit's client status not answering: the census's agents stand with their logins, each saying its credential leg is not known.
+  const unknown = 'aikit client status did not answer within 10s'
+  const statusless = await settingsPages.harnessLogins(loginAdapter({error: unknown})).read()
+  assert.deepEqual(statusless.clients.map(client => [client.client, client.credentialUnread]), ['codex', 'claude-code', 'gemini', 'hermes', 'pi'].map(client => [client, unknown]))
+  const codex = JSON.parse(win.harnessValues(HARNESS_READING, statusless, HARNESS_CENSUS).harnesses).find(row => row.client === 'codex')
+  assert.deepEqual(codex.signIn, [{key: 'codex|provider:openai', provider: 'openai', command: 'codex login'}], 'its login is offered still')
+  assert.equal(codex.loginNow, `AIKit's client status could not be read, so whether AIKit finds what codex needs to sign in is not known: ${unknown}`)
+  assert.equal(win.loginReadBack(settingsPages.loginOf(statusless, 'codex|provider:openai'), statusless), `codex login has ended, but AIKit's client status could not be read again: ${unknown}`)
+  // Read again on Sign in asks the census afresh, as Harnesses & models does: both pages stand on one reading of the agents.
+  const pressed = []
+  let part
+  const Probe = () => { part = settingsPages.useSignIn(loginAdapter(LOGIN_STATUS, pressed), true); return null }
+  renderToStaticMarkup(createElement(Probe))
+  await part.reread()
+  assert.deepEqual(pressed.filter(op => op.op === 'model_subscribe').map(op => op.fresh), [true])
+  // The wiring names the census as Sign in's list.
+  assert.match(win.SETTINGS_WINDOW_WIRING.writes.signIn ?? '', /model_subscribe agents/)
+})
+
+test('CODE-DERIVED — a census read while AIKit\'s client status did not answer: Sign in says AIKit\'s why, never an empty list of logins, and Setup\'s Credentials says why no agent\'s providers were asked (O-I ticket 1003)', async () => {
+  const {censusOf} = await import('../../../../desktop/cradle/src/agency/census.ts')
+  // census.rs read(): Actuation's agents stand, each with no AIKit row, and `aikit_detail` says why AIKit was not read.
+  const why = 'AIKit client status is unavailable: aikit client status did not answer within 10s'
+  const bare = LOGIN_STATUS.clients.filter(row => row.detection === 'detected').map(row => ({...censusAgent(row), aikit: null, talks: false}))
+  const census = {...censusAnswer(bare), value: {...censusAnswer(bare).value, aikit_detail: {state: 'unavailable', why}}}
+  const read = censusOf({state: 'held', answer: census})
+  assert.equal(read.state, 'read')
+  assert.equal(read.aikitWhy, why, 'the census carries AIKit\'s why beside its agents')
+  const asked = []
+  await assert.rejects(settingsPages.harnessLogins(loginAdapter(LOGIN_STATUS, asked, census)).read(),
+    new RegExp(`^Error: AIKit's client status was not read with the agents on this computer, so no agent's login is known: ${why}$`))
+  assert.ok(!asked.some(op => op.op === 'harness_auth_describe'), 'no client is asked how it signs in')
+  const credentials = win.setupCredentialStep({state: 'read', findings: [], providers: [], bindings: [], aikitWhy: why}, () => undefined)
+  assert.deepEqual(credentials.items, [{name: 'Your agents\' providers', why: `AIKit's client status was not read with the agents on this computer, so no agent's providers were asked: ${why}.`}])
+  // A census read with AIKit's detail carries no such why.
+  assert.equal(censusOf({state: 'held', answer: LOGIN_CENSUS}).aikitWhy, undefined)
 })
 
 test('SCRIPTED — Sign in runs the login in a terminal in the Workbench, where you answer it: the request names its id and command, a refusal comes back in words, and the end of that terminal is what the page reads back on', async () => {

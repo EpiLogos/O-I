@@ -41,7 +41,8 @@ export interface CensusAgent {
   carries?: AgentCarries;
 }
 
-export type CensusReading = {state: "reading"} | {state: "unavailable"; why: string} | {state: "read"; agents: CensusAgent[]};
+/** `aikitWhy`: AIKit's client status was not read with the census (its `aikit_detail`), so no row carries AIKit's detail, in its words. */
+export type CensusReading = {state: "reading"} | {state: "unavailable"; why: string} | {state: "read"; agents: CensusAgent[]; aikitWhy?: string};
 
 const text = (value: unknown): string | undefined => (typeof value === "string" && value.trim() ? value : undefined);
 const record = (value: unknown): Record<string, unknown> | null => (value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null);
@@ -85,7 +86,9 @@ export function censusOf(reading: ModelSliceReading): CensusReading {
     agents.push({slug, harnessRef: text(row.harness_ref) ?? `harness/${slug}`, executable: text(row.executable) ?? null, starts: row.starts === true, talks: row.talks === true,
       ...(text(row.version) ? {version: text(row.version)} : {}), ...(text(row.why) ? {why: text(row.why)} : {}), aikit, ...(carries ? {carries} : {})});
   }
-  return {state: "read", agents};
+  const detail = record((answer.value as {aikit_detail?: unknown} | null)?.aikit_detail);
+  const aikitWhy = detail?.state === "unavailable" ? text(detail.why) ?? "AIKit's client status was not read." : undefined;
+  return {state: "read", agents, ...(aikitWhy ? {aikitWhy} : {})};
 }
 
 /** The census, kept current by the World Model's `model_changed`. */

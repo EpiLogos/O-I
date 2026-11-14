@@ -159,7 +159,7 @@ const dayNamesOf = count => Array.from({length: count}, (_, index) => new Date(D
 /** The fake kernel behind `transport.url`: every op recorded in the order asked, with how many were in flight together. `carries`
  * says which Flows the listing carries the words of; `gate` holds the World Model's answer until released (a read still running);
  * `version` is the worlds slice's version the kernel holds. */
-function fakeKernel({url, flows = fixture.flows, carries = () => true, days = 0, gate = null, version = 1}) {
+function fakeKernel({url, flows = fixture.flows, carries = () => true, days = 0, gate = null, version = 1, cap = Infinity}) {
   const asked = []
   const state = {inflight: 0, mostInflight: 0, fileReadsInflight: 0, mostFileReadsInflight: 0}
   const original = globalThis.fetch
@@ -189,6 +189,8 @@ function fakeKernel({url, flows = fixture.flows, carries = () => true, days = 0,
     if (op.op === 'file_read') { state.fileReadsInflight++; state.mostFileReadsInflight = Math.max(state.mostFileReadsInflight, state.fileReadsInflight) }
     try {
       await null
+      // Past `cap` asks the kernel answers no more (a loop of asks is held still, so the suite reports it instead of hanging).
+      if (asked.length > cap) await new Promise(() => {})
       if (gate && op.op === 'model_subscribe') await gate.promise
       return {json: async () => answer(op)}
     } finally {
@@ -427,4 +429,28 @@ test('Days: each listed day is read for its standing, one after another and no m
     assert.deepEqual(rows.rows()[39], [words.dayWords(dayNamesOf(40)[39]), ''], 'a day past the 31 read keeps its listed words')
     rows.close()
   })
+})
+
+test('the Agents place asks the census once: a kernel that refuses it is not asked again in a loop, and the place says why (O-I ticket 1003)', async () => {
+  // The fake kernel answers no `model_subscribe` of the agents slice: a refusal, which the window's store never holds as current. A
+  // subscription made anew on each render would ask again on each render, without end (owners/model.ts useModelSlice).
+  const {PlaceRows} = await import('../src/frame/browser/PlaceRows.tsx?g=1003')
+  const {StubWorkspaceProvider} = await import('../src/shell/workspaceContext.tsx?g=1003')
+  const transport = transportFor('agents')
+  const tree = () => createElement(StubWorkspaceProvider, {transport}, createElement(PlaceRows, {controlled: {category: 'agents', query: '', previewHost: null}}))
+  await over({url: transport.url, cap: 50}, async kernel => {
+    const container = new Element_('div')
+    document_.body.appendChild(container)
+    const root = createRoot(container)
+    flushSync(() => root.render(tree()))
+    await quiet(kernel)
+    const census = kernel.asked.filter(op => op.op === 'model_subscribe' && op.slice === 'agents').length
+    assert.ok(census >= 1 && census <= 2, `the census is asked once (the mount and its first read share one ask), not ${census} times`)
+    assert.match(container.textContent, /The agents on this computer are not read\./, 'the refusal is said in plain words')
+    flushSync(() => root.unmount())
+    document_.body.removeChild(container)
+  })
+  // A static render reads what the window holds, as a drawn page does; it needs no subscription.
+  const {renderToStaticMarkup} = await import('react-dom/server')
+  assert.doesNotThrow(() => renderToStaticMarkup(tree()))
 })

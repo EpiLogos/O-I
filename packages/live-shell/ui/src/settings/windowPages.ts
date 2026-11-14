@@ -113,6 +113,14 @@ async function operation(adapter: SettingsAdapter, op: KernelOp, expected: strin
   return response.outcome
 }
 
+/** The agents on this computer, the census (the World Model's agents slice, O-I ticket 1003), over the adapter's kernel channel: the one
+ * reading of them every page that names an agent takes (Harnesses & models, Sign in). `fresh`: read from its owners past what the kernel
+ * holds, as Read again asks it. */
+async function readCensus(adapter: SettingsAdapter, fresh = false): Promise<CensusReading> {
+  const outcome = await operation(adapter, {op: 'model_subscribe', slice: 'agents', ...(fresh ? {fresh: true} : {})}, 'model_slice') as {data: ModelSliceAnswer}
+  return censusOf({state: 'held', answer: outcome.data})
+}
+
 /** The system's own file picker, for an import (the old pages' hidden file inputs). Null when you cancel. */
 export function pickFile(accept: string): Promise<File | null> {
   return new Promise(resolve => {
@@ -139,11 +147,10 @@ export function useHarnessPage(adapter: SettingsAdapter, enabled: boolean, login
   // Read again asks the census afresh, past what the kernel holds: a model default or Skill Set changed in AIKit's own tools moves no
   // slice (world_model.rs: the census is not re-read on AIKit's churn), and is read then.
   const fresh = useRef(false)
-  const census = useRead<CensusReading>(enabled, adapter, !!adapter.invoke, async source => {
+  const census = useRead<CensusReading>(enabled, adapter, !!adapter.invoke, source => {
     const asked = fresh.current
     fresh.current = false
-    const outcome = await operation(source, {op: 'model_subscribe', slice: 'agents', ...(asked ? {fresh: true} : {})}, 'model_slice') as {data: ModelSliceAnswer}
-    return censusOf({state: 'held', answer: outcome.data})
+    return readCensus(source, asked)
   }, 'census')
   const rows = read.value?.harnesses.state === 'ok' ? read.value.harnesses.rows : []
   const run = useCallback(async (client: Value, install: boolean): Promise<string> => {
@@ -181,16 +188,22 @@ const NO_PROFILE = /harness_auth\.unknown_harness|not a harness AIKit carries a 
 /** How long the Workbench has to take a login terminal before Sign in says that nothing took it. */
 const LOGIN_DEADLINE_MS = 10_000
 
-/** What Sign in reads, over the adapter's kernel channel (manual §10.10 Rules): AIKit's client status (harness_status: each client, whether
- * it is on this computer, and its credential leg), then the logins each client on this computer declares (harness_auth_describe: `aikit
- * harness auth <client> --json`). A client whose logins cannot be read stands with why, and the others stand as read. */
+/** What Sign in reads, over the adapter's kernel channel (manual §10.10 Rules): the agents on this computer, which are the census (O-I
+ * ticket 1003; `fresh` as Read again asks it), and of those AIKit has a client for (setupAgentTools, as Setup asks), the logins each
+ * declares (harness_auth_describe: `aikit harness auth <client> --json`), with its credential leg from AIKit's client status
+ * (harness_status), detail on the agent and never a list of its own. A census not read refuses, with its why; a client status that
+ * cannot be read leaves each agent's logins and says why on each; a client whose logins cannot be read stands with why, and the others
+ * stand as read. */
 export function harnessLogins(adapter: SettingsAdapter) {
   return {
-    read: async (): Promise<HarnessLoginReading> => {
-      const status = await operation(adapter, {op: 'harness_status'}, 'harness_status_reading')
-      const clients = harnessLoginClients(status.result === 'harness_status_reading' ? status.data : null)
-      return {clients: await Promise.all(clients.map(async (client): Promise<HarnessLoginClient> => {
-        if (!client.detected) return client
+    read: async (options: {readonly fresh?: boolean} = {}): Promise<HarnessLoginReading> => {
+      const [census, status] = await Promise.all([readCensus(adapter, options.fresh),
+        operation(adapter, {op: 'harness_status'}, 'harness_status_reading').then(answer => ({data: answer.result === 'harness_status_reading' ? answer.data : null}),
+          (cause: unknown) => ({unread: words(cause)}))])
+      if (census.state !== 'read') throw new Error(`The agents on this computer are not read: ${census.state === 'unavailable' ? census.why : 'the World Model has not answered yet.'}`)
+      // The census read without AIKit's detail: no agent carries AIKit's client, so no login can be known, and Sign in says why.
+      if (census.aikitWhy) throw new Error(`AIKit's client status was not read with the agents on this computer, so no agent's login is known: ${census.aikitWhy}`)
+      return {clients: await Promise.all(harnessLoginClients(census, status).map(async (client): Promise<HarnessLoginClient> => {
         try {
           const face = await operation(adapter, {op: 'harness_auth_describe', harness: client.client}, 'harness_auth_reading')
           return {...client, logins: harnessLoginsOf(face.result === 'harness_auth_reading' ? face.data : null)}
@@ -205,10 +218,10 @@ export function harnessLogins(adapter: SettingsAdapter) {
 /** The login a Sign in press names (`<client>|<provider>`, harnessValues' and credentialValues' `signIn` key), as AIKit declares it; or why
  * there is none to run, in words: one that signs in only inside itself is refused with its own note. */
 export function loginOf(reading: HarnessLoginReading | null, key: string): {client: string; harness: string; provider: string; command: readonly string[]; title: string; check?: readonly string[]} {
-  if (!reading) throw new Error('Sign in: AIKit\'s client status is not read yet, so no login is known here. Read again.')
+  if (!reading) throw new Error('Sign in: the agents\' logins are not read yet, so no login is known here. Read again.')
   const cut = key.indexOf('|'), name = cut < 0 ? key : key.slice(0, cut), provider = cut < 0 ? '' : key.slice(cut + 1)
   const client = reading.clients.find(item => item.client === name)
-  if (!client?.detected) throw new Error(`${name} is no harness client AIKit finds on this computer, so there is nothing to sign in to.`)
+  if (!client) throw new Error(`${name} is no agent on this computer that AIKit has a client for, so there is nothing to sign in to.`)
   if (client.unread) throw new Error(client.unread)
   const logins = (client.logins ?? []).filter(login => !provider || login.provider === provider)
   const login = logins.find(item => item.command)
@@ -217,8 +230,9 @@ export function loginOf(reading: HarnessLoginReading | null, key: string): {clie
 }
 
 /** What Sign in reads back once a login's terminal ended (manual §10.10 Rules: "the page reads the result back"): the logins read again
- * (AIKit's client status and each client's declared logins), and, where AIKit declares the harness's own logged-in check, that check run
- * (harness_auth_describe with `check`: `aikit harness auth <client> --check --json`); the result in words (loginReadBack). */
+ * (the census's agents, AIKit's client status and each client's declared logins), and, where AIKit declares the harness's own logged-in
+ * check, that check run (harness_auth_describe with `check`: `aikit harness auth <client> --check --json`); the result in words
+ * (loginReadBack). */
 export async function loginResult(source: SettingsAdapter, login: ReturnType<typeof loginOf>): Promise<{after: HarnessLoginReading | null; said: string}> {
   let after: HarnessLoginReading | null = null, error: string | undefined, check: {signedIn: boolean} | {unread: string} | undefined
   try { after = await harnessLogins(source).read() } catch (cause) { error = words(cause) }
@@ -268,9 +282,14 @@ export function loginEnded(id: string, signal?: AbortSignal): Promise<void> {
 /** Sign in, for Harnesses & models and Credentials alike (manual §10.10 Rules: "Sign in runs it in a terminal, where you answer it, and the
  * page reads the result back"): one reading of the logins (`logins`, which both pages draw), the press that runs one in a terminal in the
  * Workbench, and the result read back when that terminal ends (`loginSaid`), or why the logins could not be read. Read when either page
- * opens. */
+ * opens; Read again asks the census afresh, as Harnesses & models does, so Sign in stands on the agents that page lists. */
 export function useSignIn(adapter: SettingsAdapter, enabled: boolean): PagePart & {logins: HarnessLoginReading | null} {
-  const read = useRead<HarnessLoginReading>(enabled, adapter, !!adapter.invoke, source => harnessLogins(source).read(), 'harness-logins')
+  const fresh = useRef(false)
+  const read = useRead<HarnessLoginReading>(enabled, adapter, !!adapter.invoke, source => {
+    const asked = fresh.current
+    fresh.current = false
+    return harnessLogins(source).read({fresh: asked})
+  }, 'harness-logins')
   const [said, setSaid] = useState<string | null>(null)
   const watching = useRef<AbortController | null>(null)
   useEffect(() => () => watching.current?.abort(), [])
@@ -292,9 +311,9 @@ export function useSignIn(adapter: SettingsAdapter, enabled: boolean): PagePart 
   return useMemo(() => {
     const why: Record<string, string> = {}
     if (!adapter.invoke) why.signIn = NO_INVOKE('Sign in')
-    const loginSaid = said ?? (read.error ? `Sign in: AIKit's client status could not be read, so no harness's own login is offered: ${read.error}` : null)
+    const loginSaid = said ?? (read.error ? `Sign in: no agent's own login is offered: ${read.error}` : null)
     const values: Record<string, Value> = loginSaid ? {loginSaid} : {}
-    return {values, why, refused: {}, logins: read.value, reread: read.refresh, acts: {signIn}}
+    return {values, why, refused: {}, logins: read.value, reread: async () => { fresh.current = true; await read.refresh() }, acts: {signIn}}
   }, [adapter, read.value, read.error, read.refresh, said, signIn])
 }
 
@@ -335,7 +354,8 @@ export function workcellSecrets(adapter: SettingsAdapter) {
 }
 
 /** Credentials (OwnerPreferences.tsx CredentialPreferences, CredentialConnection): AIKit's binding metadata, Discover, Verify, Rotate, Revoke
- * and a new binding, by reference only; beside a provider's key, the Sign in of each harness here that serves it (useSignIn's `logins`). */
+ * and a new binding, by reference only; beside a provider's key, the Sign in of each agent on this computer (the census's, as useSignIn's
+ * `logins` read them) that serves it. */
 export function useCredentialsPage(adapter: SettingsAdapter, enabled: boolean, held: Held, done: (keys: readonly string[]) => void, logins: HarnessLoginReading | null = null): PagePart {
   const read = useRead<CredentialRow[]>(enabled, adapter, !!adapter.invoke, async source => {
     const answer = await operation(source, {op: 'credential_list'}, 'credential_reading')
@@ -1034,17 +1054,19 @@ export class SetupWalk {
     return agents(fresh).then(answer => censusOf({state: 'held', answer}), (cause: unknown): CensusReading => ({state: 'unavailable', why: words(cause)}))
   }
   /** AIKit's keys and bindings (SetupCredentials): `aikit credential discover` (presence only), the providers `aikit harness auth` names
-   * for each detected tool (a refusal named on its tool), and `aikit credential list` (metadata only). */
+   * for each agent of the census AIKit has a client for (a refusal named on its agent; a census not read, why no agent was asked), and
+   * `aikit credential list` (metadata only). */
   private async readCredentials(): Promise<void> {
     const aikit = this.source.aikit
     if (!groundBound(this.controller.getSnapshot().discovery)) { this.credentials = undefined; this.publish(); return }
     if (!aikit) { this.credentials = {state: 'refused', error: NO_SETUP_AIKIT}; this.publish(); return }
     try {
-      const tools = setupAgentTools(this.agents ??= await this.readAgents())
+      const census = this.agents ??= await this.readAgents(), tools = setupAgentTools(census)
       const [discover, list, providers] = await Promise.all([aikit({op: 'credential_discover'}), aikit({op: 'credential_list'}),
         Promise.all(tools.map(tool => aikit({op: 'harness_auth_describe', harness: tool.harness}).then(auth => setupHarnessProviders(tool, auth),
           (cause: unknown) => [{harness: tool.harness, ...(tool.folder ? {folder: tool.folder} : {}), provider: '', unread: `AIKit did not say which providers ${tool.harness} reaches: ${words(cause)}`}])))])
-      this.credentials = {state: 'read', findings: setupKeyFindings(discover), providers: providers.flat(), bindings: credentialMetadata(list)}
+      this.credentials = {state: 'read', findings: setupKeyFindings(discover), providers: providers.flat(), bindings: credentialMetadata(list),
+        ...(census.state === 'read' ? (census.aikitWhy ? {aikitWhy: census.aikitWhy} : {}) : {agentsWhy: census.state === 'unavailable' ? census.why : 'The agents on this machine are not read yet.'})}
     } catch (cause) { this.credentials = {state: 'refused', error: words(cause)} }
     this.publish()
   }
@@ -1670,6 +1692,8 @@ export function useSetupPage(adapter: SettingsAdapter, enabled: boolean, held: H
     setReading(n => n + 1)
     try { await walk.read({fresh}) } finally { setReading(n => n - 1) }
   }, [walk])
+  // Read again, Setup's own and the window's alike, reads the census afresh: an agent installed or changed outside the window shows then.
+  const readAgain = useCallback(() => readAll(true), [readAll])
   useEffect(() => { if (enabled && walk) void readAll() }, [enabled, walk, readAll])
   // A folder the Projects step was opened for (Add folder…) stands among its folders, whether or not Central found it.
   const asked = text(held('folder'))
@@ -1695,7 +1719,7 @@ export function useSetupPage(adapter: SettingsAdapter, enabled: boolean, held: H
     if (snapshot.adoption.busy) why.acceptStep = why.rereadSetup = why.chooseGroundFolder = 'Waiting for native oi…'
     const refusal = snapshot.folders.state === 'refused' ? snapshot.folders.error : null
     return {values: setupValues(snapshot, held), why, refused: refusedOn('rereadSetup', refusal), waiting: reading > 0 || snapshot.adoption.busy === 'reading' ? ['setup', 'setupReading'] : [],
-      reread: enabled ? readAll : async () => {},
+      reread: enabled ? readAgain : async () => {},
       acts: {
         acceptStep: async step => {
           try {
@@ -1708,8 +1732,7 @@ export function useSetupPage(adapter: SettingsAdapter, enabled: boolean, held: H
           }
         },
         previewStep: async () => { await walk.preview(held) },
-        // Read again reads the census afresh: an agent installed or changed outside the window shows then.
-        rereadSetup: async () => { await readAll(true) },
+        rereadSetup: readAgain,
         // The system's folder chooser (folderChooser.ts), then native oi reads the ground there under the name shown.
         chooseGroundFolder: async () => {
           const folder = await chooseFolder('ground')
@@ -1723,5 +1746,5 @@ export function useSetupPage(adapter: SettingsAdapter, enabled: boolean, held: H
         keepBirth: async () => { const said = await walk.keepBirth(held); done(['birthName', 'birthDate']); return said },
       }}
     // eslint-disable-next-line react-hooks/exhaustive-deps -- the held choices name what the values read
-  }, [walk, snapshot, held, done, enabled, reading, readAll, ...choices])
+  }, [walk, snapshot, held, done, enabled, reading, readAgain, ...choices])
 }

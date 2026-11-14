@@ -7,8 +7,8 @@ import {readFileSync} from 'node:fs'
 // four kinds above, as Live's categories; and Places, where your ground lies" — You (My World, your Days, the identity you share),
 // Agents (the roster, accepted and proposed, with the harnesses and skills they carry), Machines (your machines and the workcells each
 // holds), Work (your projects, each a world with its pages; Add folder…). The Places read their real owners (Central's world
-// disclosure and day surface, the Nara chain's identities, Central's agent profiles, AIKit's harnesses, Workcell's status and machine
-// list); Central keeps the Collections (ctrl collections.rs: central.collections.read, .add, .remove), whose real answers are the
+// disclosure and day surface, the Nara chain's identities, Central's agent profiles, the census of the agents on this computer with
+// AIKit's harness disclosure as detail, Workcell's status and machine list); Central keeps the Collections (ctrl collections.rs: central.collections.read, .add, .remove), whose real answers are the
 // fixture. Channels: SCRIPTED (pure rows from real owner answers; the browser rendered on the server). Not a screen pass (#821).
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
 register(`data:text/javascript,${encodeURIComponent(`
@@ -92,7 +92,17 @@ test('You: My World from Central\'s root, your Days newest first, the identity y
   assert.deepEqual(identities.map(row => [row.label, row.ref, row.kind]), [['Frank', 'Control/user/identity/nara.json', 'identity']])
 })
 
-test('Agents: the roster accepted then proposed, with the skills each carries; then the harnesses AIKit reads', () => {
+// O-I ticket 1003 (one census): the agents on this computer are the census, the World Model's agents slice (kernel census.rs), and AIKit
+// adds detail to a row, never a row. AIKit's real disclosure (HARNESSES) declares profiles for claude-code and codex, installed or not;
+// the census, as the kernel answers the slice, lists claude-code, an agent AIKit has no profile for (prime) and one that does not start
+// (gemini) — and not codex, which nothing detects here.
+const CENSUS_SLICE = {schema: 'oi.world-model-slice/v1', slice: 'agents', owner: 'kernel', scopes: ['machine'], version: 2, state: 'read', error: null, read_at_unix_ms: 1,
+  value: {agents: [
+    {slug: 'claude-code', harness_ref: 'harness/claude-code', executable: '/x/claude', starts: true, talks: true, version: '2.1.323 (Claude Code)', aikit: {client: 'claude', harness: 'claude-code'}},
+    {slug: 'prime', harness_ref: 'harness/prime', executable: '/x/prime', starts: true, talks: false, version: '0.10.0', why: 'AIKit names no client for prime, so it opens no conversation with it', aikit: null},
+    {slug: 'gemini', harness_ref: 'harness/gemini', executable: '/x/gemini', starts: false, talks: false, why: '/x/gemini --version exited exit status: 1: its node runtime could not load a library.', aikit: null}]}}
+
+test('Agents: the roster accepted then proposed, with the skills each carries; then the agents on this computer, which are the census', async () => {
   const agents = places.agentRows([
     {ref: 'agent:expressed-1', profileRef: 'p2', name: 'Scout', accepted: false, skillRefs: [], governanceRefs: []},
     {ref: 'agent/central-guardian', profileRef: 'p1', name: 'Central guardian', purpose: 'Keeps the ground', role: 'central-guardian', accepted: true, skillRefs: ['s1', 's2'], governanceRefs: []},
@@ -100,10 +110,28 @@ test('Agents: the roster accepted then proposed, with the skills each carries; t
   assert.deepEqual(agents.map(row => [row.label, row.meta]), [['Central guardian', 'accepted'], ['Scout', 'proposed']])
   assert.match(agents[0].words, /Keeps the ground; its role central-guardian; it carries 2 skills/)
   assert.match(agents[1].words, /proposed to your roster, not yet accepted/)
-  const harnesses = places.harnessRows(HARNESSES)
-  assert.deepEqual(harnesses.map(row => [row.label, row.ref, row.group]), [['claude-code', 'harness:claude-code', 'Harnesses'], ['codex', 'harness:codex', 'Harnesses']], 'AIKit\'s real disclosure')
-  assert.match(harnesses[0].words, /its skills, guidance, hooks, tools, models/)
-  assert.deepEqual(places.harnessRows({context: {}, data: HARNESSES}).map(row => row.label), ['claude-code', 'codex'], 'the envelope read through')
+  const {censusOf} = await import('../../../../desktop/cradle/src/agency/census.ts')
+  const census = censusOf({state: 'held', answer: CENSUS_SLICE})
+  const harnesses = places.harnessRows(census.agents, HARNESSES)
+  assert.deepEqual(harnesses.map(row => [row.label, row.ref, row.meta, row.group]), [
+    ['Claude Code', 'harness:claude-code', 'you can talk to it', 'Harnesses'],
+    ['Prime', 'harness:prime', 'you cannot talk to it', 'Harnesses'],
+    ['Gemini CLI', 'harness:gemini', 'does not start', 'Harnesses'],
+  ], 'the census\'s agents in its order: codex, a profile AIKit declares, is no agent here, and prime, which AIKit has no profile for, is one')
+  assert.equal(harnesses[0].words, 'Claude Code — an agent on this computer. It starts, at version 2.1.323 (Claude Code), and you can talk to it. AIKit reads its skills, guidance, hooks, tools, models, sessions, settings.',
+    'what AIKit reads of it is detail on the census\'s row')
+  assert.equal(harnesses[1].words, 'Prime — an agent on this computer. It starts, at version 0.10.0, but you cannot talk to it: AIKit names no client for prime, so it opens no conversation with it.')
+  assert.equal(harnesses[2].words, 'Gemini CLI — an agent on this computer. It does not start: /x/gemini --version exited exit status: 1: its node runtime could not load a library.')
+  assert.deepEqual(places.harnessRows(census.agents, {context: {}, data: HARNESSES}).map(row => row.words), harnesses.map(row => row.words), 'the disclosure\'s envelope read through')
+  assert.equal(places.harnessRows(census.agents)[0].words, 'Claude Code — an agent on this computer. It starts, at version 2.1.323 (Claude Code), and you can talk to it.', 'without AIKit\'s disclosure the rows stand, without its detail')
+  assert.deepEqual(places.harnessRows([], HARNESSES), [], 'a census of no agent lists none, whatever profiles AIKit declares (a fresh world)')
+  assert.match(places.harnessRows([{slug: 'pi', harnessRef: 'harness/pi', executable: null, starts: false, talks: false, aikit: null}])[0].words, /It does not start, and the census does not say why\.$/)
+  assert.match(places.PLACES.find(place => place.id === 'agents').info, /then the agents on this computer, each saying whether it starts and whether you can talk to it, or why not/)
+  // The place reads the census through the World Model's door (model_subscribe), and AIKit's disclosure only as detail on its rows.
+  const source = readFileSync(new URL('../src/frame/browser/PlaceRows.tsx', import.meta.url), 'utf8')
+  assert.match(source, /const census = censusOf\(useModelSlice\(transport, 'agents'\)\)/)
+  assert.match(source, /harnessRows\(census\.agents, disclosure\.status === 'answered' \? disclosure\.value : null\)/)
+  assert.doesNotMatch(source, /partOf\([^\n]*harnessRows/, 'no list of agents built from AIKit\'s disclosure')
 })
 
 test('Machines: this machine and its workcell from Workcell\'s status, then the machines Workcell declares', () => {

@@ -237,42 +237,57 @@ test('one publisher: the rail\'s own publisher draws it in every mode; Factory\'
 
 const HARNESS_CAPTURE = JSON.parse(readFileSync(new URL('./fixtures/aikit-harness-binding-2026-11-13.json', import.meta.url), 'utf8'))
 
-test('the harness binding is read from the owners\' real shapes: harnesses from client status clients[], the binding from the gateway\'s ecology', async () => {
-  const {foundHarnesses, gatewayBindingOf} = await import('../src/agent/useHarnessBinding.ts')
+test('the harness binding is read from the gateway\'s ecology, and lists no agents: the agents here are the census\'s (O-I ticket 1003)', async () => {
+  const harness = await import('../src/agent/useHarnessBinding.ts')
+  assert.equal('foundHarnesses' in harness, false, 'no list of the harnesses found here stands beside the census')
+  assert.doesNotMatch(read('agent/useHarnessBinding.ts'), /harness_status/, 'AIKit\'s client status is not read for the binding')
+  const {gatewayBindingOf} = harness
   // Client status names harnesses and no binding (the shape `harnesses[{id,binding}]` was never AIKit's).
-  assert.deepEqual(foundHarnesses(HARNESS_CAPTURE.client_status), [], 'no harness is detected in the captured isolated home')
-  assert.deepEqual(foundHarnesses({clients: [{harness: 'pi', detection: 'detected'}, {harness: 'codex', detection: 'not-installed'}]}), ['pi'])
   assert.equal(gatewayBindingOf(HARNESS_CAPTURE.client_status), null, 'client status names no gateway binding')
   assert.equal(gatewayBindingOf(HARNESS_CAPTURE.gateway_ecology), 'gateway-binding/lanea', 'the gateway names its binding in its ecology')
   assert.equal(gatewayBindingOf({type: 'ecology', ecology: {agencies: []}}), null, 'a gateway with no conversation names none')
 })
 
-test('the harness binding is read once for the window: the chain and the rail\'s publisher share the held answer (harness_status, harness_agent_read)', async () => {
+// The census as the kernel answers the World Model's agents slice (census.rs): claude-code and prime start, gemini does not. AIKit's client
+// status below marks gemini detected (its binary is found, though it fails its start) and has no client for prime: a list made from it
+// would offer gemini and miss prime.
+const AGENTS_SLICE = {schema: 'oi.world-model-slice/v1', slice: 'agents', owner: 'kernel', scopes: ['machine'], version: 1, state: 'read', error: null, read_at_unix_ms: 1,
+  value: {agents: [
+    {slug: 'claude-code', harness_ref: 'harness/claude-code', executable: '/x/claude', starts: true, talks: true, version: '2.1.323', aikit: {client: 'claude', harness: 'claude-code'}},
+    {slug: 'prime', harness_ref: 'harness/prime', executable: '/x/prime', starts: true, talks: false, why: 'AIKit names no client for prime, so it opens no conversation with it', aikit: null},
+    {slug: 'gemini', harness_ref: 'harness/gemini', executable: '/x/gemini', starts: false, talks: false, why: '/x/gemini --version exited exit status: 1', aikit: null}]}}
+const AIKIT_CLIENTS = {clients: [{client: 'claude', harness: 'claude-code', detection: 'detected'}, {client: 'gemini', harness: 'gemini', detection: 'detected'}]}
+
+test('the harness binding is read once for the window: the chain and the rail\'s publisher share the held answers (the census, harness_agent_read); the Harness chooser offers the census\'s agents that start', async () => {
   const {useAgentChainReading} = await import('../src/agent/devices/useAgentChainReading.ts')
-  // A counting stand-in for the kernel bridge: each op asked is recorded; the harness answers in its own shapes, every other read refuses.
+  // A counting stand-in for the kernel bridge: each op asked is recorded; the owners answer in their own shapes, every other read refuses.
   const asked = []
   const realFetch = globalThis.fetch
   globalThis.fetch = async (url, init) => {
     const op = JSON.parse(init.body)
-    asked.push(op.binding ? `${op.op}:${op.binding}` : op.op)
-    // The owners' own shapes, captured from the real AIKit (fixtures/aikit-harness-binding-2026-11-13.json): client status carries clients[]
-    // (harness names, no binding); the gateway's bindings are its ecology's surfaces.
-    const outcome = op.op === 'harness_status' ? {result: 'harness_status_reading', data: HARNESS_CAPTURE.client_status}
+    asked.push(op.binding ? `${op.op}:${op.binding}` : op.op === 'model_subscribe' ? `${op.op}:${op.slice}` : op.op)
+    // The owners' own shapes, captured from the real AIKit (fixtures/aikit-harness-binding-2026-11-13.json): the gateway's bindings are its
+    // ecology's surfaces. The agents are the World Model's agents slice.
+    const outcome = op.op === 'model_subscribe' && op.slice === 'agents' ? {result: 'model_slice', data: AGENTS_SLICE}
+      : op.op === 'harness_status' ? {result: 'harness_status_reading', data: AIKIT_CLIENTS}
       : op.op === 'aikit_read' && op.request?.kind === 'gateway-ecology' ? {result: 'owner_route_reading', route: 'aikit gateway ecology', data: HARNESS_CAPTURE.gateway_ecology}
       : op.op === 'harness_agent_read' ? {result: 'harness_agent_reading', binding: op.binding, document: {state: 'ready'}} : null
     return {json: async () => (outcome ? {ok: true, outcome} : {ok: false, error: `${op.op} is not answered in this suite`})}
   }
   const bridge = {kind: 'bridge', url: 'http://kernel.test/harness-shared'}
-  /** What the chain reads (FactoryDeviceChain.tsx: useAgentChainReading for its session). */
-  function ChainReads() { useAgentChainReading('agent-session/one'); return null }
+  /** What the chain reads (FactoryDeviceChain.tsx: useAgentChainReading for its session), and the harnesses it hands the Agent's chooser. */
+  let harnesses
+  function ChainReads() { harnesses = useAgentChainReading('agent-session/one').harnesses; return null }
   const container = new Element_('div')
   document_.body.appendChild(container)
   const root = createRoot(container)
   try {
     flushSync(() => root.render(createElement(StubWorkspaceProvider, {transport: bridge}, createElement(ChainReads), createElement(rail.AgentRailDevices))))
-    for (let tick = 0; tick < 20 && !asked.includes('harness_agent_read:gateway-binding/lanea'); tick++) await new Promise(resolve => setTimeout(resolve, 10))
+    for (let tick = 0; tick < 20 && (!asked.includes('harness_agent_read:gateway-binding/lanea') || !harnesses); tick++) await new Promise(resolve => setTimeout(resolve, 10))
     await settle()
-    assert.equal(asked.filter(op => op === 'harness_status').length, 1, 'harness_status: one ask for both readers')
+    assert.deepEqual(harnesses, ['claude-code', 'prime'], 'the census\'s agents that start, by slug: not gemini, which does not start, and prime, which AIKit has no client for')
+    assert.equal(asked.filter(op => op === 'harness_status').length, 0, 'AIKit\'s client status is not read for a list of agents')
+    assert.equal(asked.filter(op => op === 'model_subscribe:agents').length, 1, 'the census: one ask for both readers')
     // Each binding is one ask for both readers: the shell's default before the owner names one, then the binding the owner named.
     assert.equal(asked.filter(op => op === 'harness_agent_read:gateway-binding/lanea').length, 1, 'harness_agent_read on the binding the gateway names: one ask for both readers')
     assert.ok(asked.filter(op => op === 'harness_agent_read:cursor').length <= 1, 'and on the default, at most one')

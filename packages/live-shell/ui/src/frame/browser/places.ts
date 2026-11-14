@@ -10,14 +10,16 @@
 //
 // Each place reads its real owner, through a read the shell already asks (PlaceRows.tsx): You — Central's world disclosure
 // (world_browse), its day surface (files_list at Control/user/day) and the identities the Studio's Nara chain keeps (nara_identity
-// list); Agents — Central's agent profiles (agent_definition roster: accepted and proposed, with their skills) and AIKit's harnesses
-// (aikit harness disclose); Machines — Workcell's status for this machine and its workcell (workcell_status_read) and the machines
-// Workcell declares (workcell machine list); Work — Central's Work projects (world_browse). Packs has no owner that lists what was
+// list); Agents — Central's agent profiles (agent_definition roster: accepted and proposed, with their skills) and the agents on this
+// computer, which are the census (the World Model's agents slice, O-I ticket 1003), each with what AIKit reads of it (aikit harness
+// disclose) as detail on its row, never a row of AIKit's own; Machines — Workcell's status for this machine and its workcell
+// (workcell_status_read) and the machines Workcell declares (workcell machine list); Work — Central's Work projects (world_browse). Packs has no owner that lists what was
 // installed together (O-I #844): AIKit keeps sets and Factory keeps songs, each read in its own place, and no product's read names a pack
 // of them, so the place stands refused, naming the read it waits for (PACKS_WAIT). A place's rows are pure functions of those
 // readings here; every row carries the ref its owner gives the thing, so a row can be put in a collection (collections.ts).
 import type {RootWorld, WorldProject, NativeFileEntry} from '../../../../../../desktop/cradle/src/kernel/types'
 import type {RosterAgent} from '../../../../../../desktop/cradle/src/agency/roster'
+import {agentName, type CensusAgent} from '../../../../../../desktop/cradle/src/agency/census'
 import {civilDateOfDayFile, dayWords} from './rowWords'
 
 export type PlaceId = 'you' | 'agents' | 'machines' | 'work' | 'packs'
@@ -27,7 +29,7 @@ export const PLACES: readonly {readonly id: PlaceId; readonly label: string; rea
   {id: 'you', label: 'You', hint: 'My World, your Days, and the identity you share',
     info: 'You: My World, your Days and the identity you share, from Central and the Studio\'s Nara chain. Select a row to preview it; double-click your world to bring it into today, or a Day to open it. Put any row in a collection from its preview.'},
   {id: 'agents', label: 'Agents', hint: 'the agents of your roster, accepted and proposed, with the harnesses and skills they carry',
-    info: 'Agents: the agents of your roster, accepted and proposed, from Central\'s agent profiles, with the skills each carries; then the harnesses AIKit reads on this computer. Select one to preview it; put it in a collection from its preview.'},
+    info: 'Agents: the agents of your roster, accepted and proposed, from Central\'s agent profiles, with the skills each carries; then the agents on this computer, each saying whether it starts and whether you can talk to it, or why not. Select one to preview it; put it in a collection from its preview.'},
   {id: 'machines', label: 'Machines', hint: 'your machines, and the workcells each one holds',
     info: 'Machines: this machine and the workcell it holds, from Workcell\'s status, then the machines Workcell declares, each with what it may be asked. Select one to preview it; put it in a collection from its preview.'},
   {id: 'work', label: 'Work', hint: 'your projects, each a world with its pages; Add folder… brings in another',
@@ -107,17 +109,38 @@ export function agentRows(agents: readonly RosterAgent[]): PlaceRow[] {
   })
 }
 
-/** The harnesses AIKit reads on this computer (aikit.harness-disclosure/v1 `profiles[].disclosure`: its slug and layers). Pure. */
-export function harnessRows(disclosure: unknown): PlaceRow[] {
+/** What AIKit's harness disclosure says it reads of each harness (aikit.harness-disclosure/v1 `profiles[].disclosure`: its slug and
+ * layers), by slug; the disclosure's envelope is read through. Pure. */
+function disclosedLayers(disclosure: unknown): ReadonlyMap<string, readonly string[]> {
   const body = isRecord(disclosure) && isRecord(disclosure.data) && Array.isArray(disclosure.data.profiles) ? disclosure.data : disclosure
   const profiles = isRecord(body) && Array.isArray(body.profiles) ? body.profiles.filter(isRecord) : []
-  return profiles.flatMap((profile): PlaceRow[] => {
+  return new Map(profiles.flatMap((profile): [string, string[]][] => {
     const disclosed = isRecord(profile.disclosure) ? profile.disclosure : null
     const slug = text(disclosed?.slug)
     if (!slug) return []
-    const layers = Array.isArray(disclosed?.layers) ? disclosed.layers.filter(isRecord).flatMap(layer => text(layer.layer) ? [layer.layer as string] : []) : []
-    return [{key: `harness:${slug}`, ref: `harness:${slug}`, label: slug, kind: 'harness', meta: 'harness', group: 'Harnesses',
-      words: `${slug} — an agent harness AIKit reads on this computer${layers.length ? `: its ${layers.join(', ')}` : ''}.`}]
+    return [[slug, Array.isArray(disclosed?.layers) ? disclosed.layers.filter(isRecord).flatMap(layer => text(layer.layer) ? [layer.layer as string] : []) : []]]
+  }))
+}
+
+/** A why as the end of a sentence: one full stop. */
+const sentence = (why: string) => `${why.trim().replace(/[.\s]+$/, '')}.`
+
+/** The agents on this computer: the census (the World Model's agents slice, O-I ticket 1003), one row per agent harness Actuation
+ * detects, in its order, saying whether it starts here and whether you can talk to it, or why not. What AIKit reads of an agent (its
+ * harness disclosure, `disclosure`) is detail on that agent's row, found by its slug: a harness AIKit only declares a profile for is
+ * no agent here, and an agent AIKit has no profile for is listed all the same. Pure. */
+export function harnessRows(agents: readonly CensusAgent[], disclosure: unknown = null): PlaceRow[] {
+  const layersOf = disclosedLayers(disclosure)
+  return agents.map(agent => {
+    const name = agentName(agent)
+    const why = agent.why ? `: ${sentence(agent.why)}` : ', and the census does not say why.'
+    const at = agent.version ? `, at version ${agent.version},` : ''
+    const said = !agent.starts ? `It does not start${why}`
+      : agent.talks ? `It starts${at} and you can talk to it.` : `It starts${at} but you cannot talk to it${why}`
+    const layers = layersOf.get(agent.slug) ?? []
+    return {key: `harness:${agent.slug}`, ref: `harness:${agent.slug}`, label: name, kind: 'harness' as const,
+      meta: !agent.starts ? 'does not start' : agent.talks ? 'you can talk to it' : 'you cannot talk to it', group: 'Harnesses',
+      words: `${name} — an agent on this computer. ${said}${layers.length ? ` AIKit reads its ${layers.join(', ')}.` : ''}`}
   })
 }
 

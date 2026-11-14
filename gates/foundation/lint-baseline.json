@@ -2,7 +2,7 @@
   "schema": "oi.foundation-lint-baseline/v1",
   "rule": "Counts of kernel ops named in device and view code (packages/live-shell/ui/src) other than the foundation doors. Each count may only fall.",
   "totals": {
-    "direct-read": 124,
+    "direct-read": 123,
     "non-action-write": 106
   },
   "files": {
@@ -69,9 +69,6 @@
     },
     "packages/live-shell/ui/src/agent/taskActivity.ts": {
       "non-action-write": 2
-    },
-    "packages/live-shell/ui/src/agent/useHarnessBinding.ts": {
-      "direct-read": 1
     },
     "packages/live-shell/ui/src/agent/wavePlan.ts": {
       "non-action-write": 1

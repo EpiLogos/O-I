@@ -56,7 +56,9 @@ export async function setup({cradleRoot}) {
   // Return. No new provider kind is launched and no unrelated conversation
   // is touched; the walk ground and home are disposable.
   native("encounter-configure", "--provider-json", JSON.stringify({id: "canvas-walk-false", label: "Canvas walk failing provider", argv: ["/usr/bin/false"]}));
-  native("encounter-configure", "--provider-json", JSON.stringify({protocol: "pi-rpc", id: "canvas-walk-pi", label: "Canvas walk Pi (existing provider)", argv: walkPiArgv()}));
+  // The pi row is keyed by Pi's census slug: the conversation's choices are the census's agents (O-I #1003), and the kernel opens a
+  // census agent by its slug, so pressing Pi opens this configured row (its argv), never a row of its own.
+  native("encounter-configure", "--provider-json", JSON.stringify({protocol: "pi-rpc", id: "pi", label: "Pi", argv: walkPiArgv()}));
   const owner = native("encounter-start");
   if (!owner.ok) throw new Error(JSON.stringify(owner));
   const request = (action, fields = {}) => {
@@ -184,7 +186,7 @@ export default async function run({page, baseUrl, check, shot, channel, provisio
   // itself is pinned natively by aikit-store
   // `failed_dispatch_retains_draft_and_selections`; a provider that cannot
   // spawn cannot open, so the UI never reaches a failed send.)
-  await page.locator(".encounter-connect").getByRole("button", {name: "Canvas walk Pi (existing provider)"}).click({timeout: 15000});
+  await page.locator(".encounter-connect").getByRole("button", {name: "Pi", exact: true}).click({timeout: 15000});
   await page.locator(".encounter-send").waitFor({state: "visible", timeout: 30000});
   await page.getByText("Connected", {exact: true}).waitFor({timeout: 60000});
   check(await page.getByRole("dialog").count() === 0, "the prepared-context surface opens no modal");

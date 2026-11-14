@@ -19,6 +19,7 @@ import type {SdkParamRow} from '../../inhabitants/sdk/define'
 import type {DispatchReceipt} from '../../inhabitants/sdk/shellSetters'
 import type {Form, Member, Rung} from '../../inhabitants/catalogue/panels/practice'
 import type {ConfigRequestWire} from '../../../../../../desktop/cradle/src/kernel/types'
+import type {CensusReading} from '../../../../../../desktop/cradle/src/agency/census'
 import {CHAIN_ADMIT_WORDS} from '../agentChainDrag'
 import {harnessKeyUncarried} from '../aikitGatewayOps'
 import {chainDeviceId, type AgentChainReading} from './agentChainDevices'
@@ -352,7 +353,8 @@ export interface AgentInput {
   readonly thread?: string
   /** The models AIKit's catalogue names (`aikit model-catalogue show --json` entries[].model, kernel model_catalogue). */
   readonly models?: readonly string[] | null
-  /** The harnesses found on this machine (`aikit --json client status` clients[] detected, kernel harness_status). */
+  /** The agents that start on this machine, by their census slug (harnessChoices: the World Model's agents slice, O-I ticket 1003):
+   * what the Harness chooser offers. Null while the census is not read. */
   readonly harnesses?: readonly string[] | null
   /** The kernel's temporal events (the sessions provider's one read): the session's run as the stage plays it. */
   readonly events?: readonly TemporalEventLike[] | null
@@ -362,6 +364,16 @@ export interface AgentInput {
    * K0): the model the session last reported using, where the gateway names none. Absent: not read here. */
   readonly usage?: AikitAnswer
 }
+
+/** The Harness chooser's options: the census's agents that start, by slug (the census is the one list of the agents on this machine,
+ * O-I ticket 1003; AIKit adds detail to its rows, never a row). Null while the census is not read; empty where it lists none that
+ * starts. Pure. */
+export function harnessChoices(census: CensusReading): string[] | null {
+  return census.state === 'read' ? census.agents.filter(agent => agent.starts).map(agent => agent.slug) : null
+}
+
+/** Why the Harness chooser offers nothing: the census lists no agent that starts here. */
+export const AGENT_NO_HARNESS = 'No agent on this computer starts, so there is no harness to choose. Settings › Harnesses & models says why each one does not.'
 
 /** The model the session last reported using: the newest usage record's `usage.model.name` that Actuation lists for it
  * (actuation.usage-listing/v1, records in stream order), where a record names one. Pure. */
@@ -446,7 +458,7 @@ function agentOwnValues(input: AgentInput): Record<string, Value> {
   put(values, 'draft', held.composer.draft)
   put(values, 'sent', held.composer.sent)
   // The owners' lists the choosers and the well draw (the design's `thread`, `models` and `harnesses`, actuation__harness-model.tsx:
-  // 20-21): each the owner's own, or absent.
+  // 20-21): each the owner's own, or absent. The harnesses are the census's agents that start (harnessChoices).
   if (sessionRef != null) put(values, 'thread', input.thread)
   if (input.models) values.models = JSON.stringify(input.models)
   if (input.harnesses) values.harnesses = JSON.stringify(input.harnesses)
@@ -516,6 +528,8 @@ export function agentBinding(id: string, input: AgentInput, rows: AgentRows, wri
       autonomy: {disabled: AGENT_AUTONOMY_RETIRED},
       ...Object.fromEntries(Object.entries(AGENT_UNCARRIED).map(([key, rowKey]) => [key, {disabled: harnessKeyUncarried(rowKey)!.reason}])),
       sent: {disabled: input.sessionRef == null ? AGENT_NO_SESSION : AGENT_SEND_UNCARRIED},
+      // A census that lists no agent that starts leaves the chooser nothing to offer: it says so instead of drawing an empty list.
+      ...(input.harnesses?.length === 0 ? {harness: {disabled: AGENT_NO_HARNESS}} : {}),
       ...(rows.model?.writePath ? {} : {model: {disabled: 'Model: the row is not adopted on this chain, so nothing carries it.'}})},
     writes: key => AGENT_WRITES.has(key),
     write: async (changes: readonly ValueChange[]) => {

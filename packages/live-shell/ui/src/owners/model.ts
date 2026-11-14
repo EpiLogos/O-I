@@ -6,7 +6,7 @@
 //
 // Pure TypeScript and one React hook.
 
-import {useEffect, useSyncExternalStore} from 'react'
+import {useCallback, useEffect, useSyncExternalStore} from 'react'
 import {kernelReadSend, onKernelWrite} from '../../../../../desktop/cradle/src/kernel/bridge'
 import type {KernelOutcome, KernelReceipt, KernelTransportStatus, ModelSliceAnswer, ModelSliceName} from '../../../../../desktop/cradle/src/kernel/types'
 
@@ -175,10 +175,12 @@ export function modelSlice(transport: KernelTransportStatus, slice: ModelSliceNa
 /** One slice as a view holds it: asked when first used, asked again on each newer `model_changed`. */
 export function useModelSlice(transport: KernelTransportStatus | null | undefined, slice: ModelSliceName, store: ModelStore = windowModel): ModelSliceReading {
   const usable = transport ?? null
-  const reading = useSyncExternalStore(
-    listener => (usable ? store.listen(usable, slice, listener) : () => {}),
-    () => (usable ? store.held(usable, slice) : NO_TRANSPORT),
-  )
+  // One subscription per carrier and slice: a subscribe made anew each render would listen (and so ask) again on every render, and
+  // a refusal, never current, would ask without end.
+  const subscribe = useCallback((listener: () => void) => (usable ? store.listen(usable, slice, listener) : () => {}), [usable, slice, store])
+  const snapshot = useCallback(() => (usable ? store.held(usable, slice) : NO_TRANSPORT), [usable, slice, store])
+  // A static render (the node suites) reads what is held, as the window does.
+  const reading = useSyncExternalStore(subscribe, snapshot, snapshot)
   useEffect(() => { if (usable) void store.read(usable, slice) }, [usable, slice, store])
   return reading
 }

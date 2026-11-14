@@ -4,15 +4,18 @@
 // same refusals named by the same owners. What changed is only where the answers rest: one reading the devices are built over,
 // null where the owner has not answered (a light stays dark; no default stands in for a value). The roster, the task record and
 // the seat are the window's shared answers (owners/readers.ts) — the same ones the sessions provider, the agent browser and the
-// Central devices read, one owner read between them; the gateway and the repository are read here, for the bound harness.
+// Central devices read, one owner read between them; the gateway and the repository are read here, for the bound harness. The agents
+// the Harness chooser offers are the census's that start (the World Model's agents slice, O-I ticket 1003), never a list of their own.
 import {useEffect, useMemo, useState} from 'react'
 import {kernelRead} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
+import {censusOf} from '../../../../../../desktop/cradle/src/agency/census'
 import {useWorkspace} from '../../shell/workspaceContext'
 import {OWNER_BINDINGS, SKILLSETS_ARRIVE, ownerRefusalLine} from '../agentChainDrag'
 import {refusalLine, safeJson} from '../RefusalCard'
 import {useHarnessBinding} from '../useHarnessBinding'
 import {useGatewayGeneration} from '../../owners/gatewayGeneration'
+import {useModelSlice} from '../../owners/model'
 import {useRosterAnswer, useTaskAnswer, useWorkcellAnswer} from '../../owners/readers'
 import {useAgentSessionsOptional} from '../AgentSessionsProvider'
 import {gitRepositoryAbsence, projectOfSession} from '../worldScope'
@@ -20,6 +23,7 @@ import {
   INITIAL_READING, gatewayLine, gitRepoReading, rosterAdmits, rosterChains, rosterIdentity, taskReading,
   type AgentChainReading,
 } from './agentChainDevices'
+import {harnessChoices} from './designBindings'
 import type {AgentGit} from './oneAgentBinding'
 
 const isObj = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value)
@@ -55,11 +59,15 @@ function gitOf(sessionRef: string | null, project: string, read: {doc: unknown; 
 export function useAgentChainReading(sessionRef: string | null): {reading: AgentChainReading; transport: KernelTransportStatus; binding: string; resolved: boolean
   /** The session's own repository, for the Agent's Context page (the same answer the chain's Git reads). */
   git: AgentGit
-  /** The harnesses found on this machine, from the same harness_status answer the binding is read from (null: not read). */
+  /** The agents that start on this machine, by their census slug: the census is the World Model's agents slice (O-I ticket 1003),
+   * the one list of the agents here (null: not read). */
   harnesses: string[] | null} {
   const {transport} = useWorkspace()
-  // `resolved`: the owner named the binding (until it has, 'cursor' is only the shell's default — useHarnessBinding.ts:8).
-  const {binding, resolved, harnesses} = useHarnessBinding(transport)
+  // `resolved`: the owner named the binding (until it has, 'cursor' is only the shell's default — useHarnessBinding.ts).
+  const {binding, resolved} = useHarnessBinding(transport)
+  // The agents the Harness chooser offers: the census's that start, kept current by the World Model's `model_changed`.
+  const agents = useModelSlice(transport, 'agents')
+  const harnesses = useMemo(() => harnessChoices(censusOf(agents)), [agents])
   const roster = useRosterAnswer(transport, null).reading
   // The chain's register: the session's own (agent/worldScope.ts), else your world's root register.
   const project = projectOfSession(useAgentSessionsOptional()?.rows ?? [], sessionRef)
